@@ -19,29 +19,36 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.*;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
+import java.util.*;
+
 /**
  * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class ODistributedConfiguration {
-  public static final String       NEW_NODE_TAG         = "<NEW_NODE>";
-  public static final String       ALL_WILDCARD         = "*";
-  private static final Set<String> DEFAULT_CLUSTER_NAME = Collections.singleton(ALL_WILDCARD);
-  private ODocument                configuration;
+  public static final String        NEW_NODE_TAG         = "<NEW_NODE>";
+  public static final String        ALL_WILDCARD         = "*";
+
+  public static final String        QUORUM_MAJORITY      = "majority";
+  public static final String        QUORUM_ALL           = "all";
+  public static final Integer       DEFAULT_READ_QUORUM  = 1;
+  public static final String        DEFAULT_WRITE_QUORUM = QUORUM_MAJORITY;
+
+  private static final List<String> DEFAULT_CLUSTER_NAME = Collections.singletonList(ALL_WILDCARD);
+  private ODocument                 configuration;
 
   public enum ROLES {
     MASTER, REPLICA
-  };
+  }
+
+  ;
 
   public ODistributedConfiguration(final ODocument iConfiguration) {
     configuration = iConfiguration;
@@ -49,7 +56,7 @@ public class ODistributedConfiguration {
 
   /**
    * Returns true if the replication is active, otherwise false.
-   * 
+   *
    * @param iClusterName
    *          Cluster name, or null for *
    */
@@ -65,7 +72,7 @@ public class ODistributedConfiguration {
 
   /**
    * Returns true if hot alignment is supported.
-   * 
+   *
    * @return
    */
   public boolean isHotAlignment() {
@@ -79,64 +86,26 @@ public class ODistributedConfiguration {
 
   /**
    * Returns the read quorum.
-   * 
+   *
    * @param iClusterName
    *          Cluster name, or null for *
+   * @param iAvailableNodes
+   *          Total node available
    */
-  public int getReadQuorum(final String iClusterName) {
-    synchronized (configuration) {
-      Object value = getClusterConfiguration(iClusterName).field("readQuorum");
-      if (value == null) {
-        value = configuration.field("readQuorum");
-        if (value == null) {
-          OLogManager.instance().warn(this, "readQuorum setting not found for cluster=%s in distributed-config.json", iClusterName);
-          return 1;
-        }
-      }
-      return (Integer) value;
-    }
+  public int getReadQuorum(final String iClusterName, final int iAvailableNodes) {
+    return getQuorum("readQuorum", iClusterName, iAvailableNodes, DEFAULT_READ_QUORUM);
   }
 
   /**
    * Returns the write quorum.
-   * 
+   *
    * @param iClusterName
    *          Cluster name, or null for *
+   * @param iAvailableNodes
+   *          Total node available
    */
-  public int getWriteQuorum(final String iClusterName) {
-    synchronized (configuration) {
-      Object value = getClusterConfiguration(iClusterName).field("writeQuorum");
-      if (value == null) {
-        value = configuration.field("writeQuorum");
-        if (value == null) {
-          OLogManager.instance().warn(this, "writeQuorum setting not found for cluster=%s in distributed-config.json",
-              iClusterName);
-          return 2;
-        }
-      }
-      return (Integer) value;
-    }
-  }
-
-  /**
-   * Returns the write quorum.
-   * 
-   * @param iClusterName
-   *          Cluster name, or null for *
-   */
-  public boolean getFailureAvailableNodesLessQuorum(final String iClusterName) {
-    synchronized (configuration) {
-      Object value = getClusterConfiguration(iClusterName).field("failureAvailableNodesLessQuorum");
-      if (value == null) {
-        value = configuration.field("failureAvailableNodesLessQuorum");
-        if (value == null) {
-          OLogManager.instance().warn(this,
-              "failureAvailableNodesLessQuorum setting not found for cluster=%s in distributed-config.json", iClusterName);
-          return false;
-        }
-      }
-      return (Boolean) value;
-    }
+  public int getWriteQuorum(final String iClusterName, final int iAvailableNodes) {
+    return getQuorum("writeQuorum", iClusterName, iAvailableNodes, DEFAULT_WRITE_QUORUM);
   }
 
   /**
@@ -164,7 +133,7 @@ public class ODistributedConfiguration {
 
   /**
    * Reads your writes.
-   * 
+   *
    * @param iClusterName
    *          Cluster name, or null for *
    */
@@ -184,25 +153,9 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns maximum queue size for offline nodes. After this threshold the queue is removed and the offline server needs a complete
-   * database deployment as soon as return online.
-   */
-  public int getOfflineMsgQueueSize() {
-    synchronized (configuration) {
-      final Object value = configuration.field("offlineMsgQueueSize");
-      if (value != null)
-        return (Integer) value;
-      else {
-        OLogManager.instance().debug(this, "offlineMsgQueueSize setting not found in distributed-config.json");
-        return 100;
-      }
-    }
-  }
-
-  /**
    * Returns the list of servers that can manage a list of clusters. The algorithm makes its best to involve the less servers as it
    * can.
-   * 
+   *
    * @param iClusterNames
    *          Set of cluster names to find
    * @param iLocalNode
@@ -276,9 +229,9 @@ public class ODistributedConfiguration {
 
       // BROWSER ORDERED SERVER MAP PUTTING THE MINIMUM SERVER TO COVER ALL THE CLUSTERS
       final Set<String> remainingClusters = new HashSet<String>(iClusterNames); // KEEPS THE REMAINING CLUSTER TO ADD IN FINAL
-                                                                                // RESULT
+      // RESULT
       final Set<String> includedClusters = new HashSet<String>(iClusterNames.size()); // KEEPS THE COLLECTION OF ALREADY INCLUDED
-                                                                                      // CLUSTERS
+      // CLUSTERS
       for (String s : orderedServers) {
         final Collection<String> clusters = serverMap.get(s);
 
@@ -301,27 +254,26 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the local cluster. This is used when a cluster must be selected: local is always the best choice.
-   * 
+   * Returns the clusters where a server is owner. This is used when a cluster must be selected: locality is always the best choice.
+   *
    * @param iClusterNames
    *          Set of cluster names
-   * @param iLocalNode
-   *          Local node name
+   * @param iNode
+   *          Node
    */
-  public String getLocalCluster(Collection<String> iClusterNames, final String iLocalNode) {
+  public List<String> getOwnedClusters(Collection<String> iClusterNames, final String iNode) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
         iClusterNames = DEFAULT_CLUSTER_NAME;
 
+      final List<String> notDefinedClusters = new ArrayList<String>(5);
       final List<String> candidates = new ArrayList<String>(5);
 
       for (String p : iClusterNames) {
-        final String masterServer = getLeaderServer(p);
-        if (iLocalNode.equals(masterServer)) {
-          if (p.endsWith(iLocalNode.toLowerCase()))
-            // BEST CANDIDATE: NODE SUFFIX
-            return p;
-
+        final String masterServer = getOwnerOfCluster(p);
+        if (masterServer == null)
+          notDefinedClusters.add(p);
+        else if (iNode.equals(masterServer)) {
           // COLLECT AS CANDIDATE
           candidates.add(p);
         }
@@ -329,21 +281,21 @@ public class ODistributedConfiguration {
 
       if (!candidates.isEmpty())
         // RETURN THE FIRST ONE
-        return candidates.get(0);
+        return candidates;
 
-      final String masterServer = getLeaderServer(ALL_WILDCARD);
-      if (iLocalNode.equals(masterServer))
-        // DEFAULT IS OK: RETURN THE FIRST CLUSTER NAME
-        return iClusterNames.iterator().next();
+      final String masterServer = getOwnerOfCluster(ALL_WILDCARD);
+      if (iNode.equals(masterServer))
+        // CURRENT SERVER IS MASTER OF DEFAULT: RETURN ALL THE NON CONFIGURED CLUSTERS
+        return notDefinedClusters;
 
-      // NO MASTER FOUND
-      return null;
+      // NO MASTER FOUND, RETURN EMPTY LIST
+      return candidates;
     }
   }
 
   /**
    * Returns the set of server names involved on the passed cluster collection.
-   * 
+   *
    * @param iClusterNames
    *          Set of cluster names to find
    */
@@ -367,7 +319,7 @@ public class ODistributedConfiguration {
 
   /**
    * Returns the server list for the requested cluster cluster excluding any tags like <NEW_NODES> and iExclude if any.
-   * 
+   *
    * @param iClusterName
    *          Cluster name, or null for *
    * @param iExclude
@@ -410,7 +362,7 @@ public class ODistributedConfiguration {
 
   /**
    * Returns the set of clusters managed by a server.
-   * 
+   *
    * @param iNodeName
    *          Server name
    */
@@ -425,14 +377,29 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the leader server for the given cluster excluding the passed node. The Leader server is the first in server list.
+   * Returns the set of clusters where server is the owner.
+   *
+   * @param iNodeName
+   *          Server name
+   */
+  public Set<String> getClustersWithOwner(final String iNodeName) {
+    final Set<String> clusters = new HashSet<String>();
+    for (String cl : getClusterNames()) {
+      if (iNodeName.equals(getOwnerOfCluster(cl)))
+        clusters.add(cl);
+    }
+    return clusters;
+  }
+
+  /**
+   * Returns the owner server for the given cluster excluding the passed node. The Owner server is the first in server list.
    *
    * @param iClusterName
    *          Cluster name, or null for *
    */
-  public String getLeaderServer(final String iClusterName) {
+  public String getOwnerOfCluster(final String iClusterName) {
     synchronized (configuration) {
-      String leader = null;
+      String owner = null;
 
       final ODocument clusters = configuration.field("clusters");
       if (clusters == null)
@@ -445,20 +412,22 @@ public class ODistributedConfiguration {
         final List<String> serverList = cfg.field("servers");
         if (serverList != null && !serverList.isEmpty()) {
           // RETURN THE FIRST ONE
-          leader = serverList.get(0);
-          if (NEW_NODE_TAG.equals(leader) && serverList.size() > 1)
+          owner = serverList.get(0);
+          if (NEW_NODE_TAG.equals(owner) && serverList.size() > 1)
             // DON'T RETURN <NEW_NODE>
-            leader = serverList.get(1);
+            owner = serverList.get(1);
         }
-      }
+      } else
+        // RETURN THE OWNER OF *
+        return getOwnerOfCluster(ALL_WILDCARD);
 
-      return leader;
+      return owner;
     }
   }
 
   /**
    * Returns the server list for the requested cluster.
-   * 
+   *
    * @param iClusterName
    *          Cluster name, or null for *
    */
@@ -522,7 +491,7 @@ public class ODistributedConfiguration {
 
   /**
    * Get the document representing the cluster configuration.
-   * 
+   *
    * @param iClusterName
    *          Cluster name, or null for *
    * @return Always a ODocument
@@ -582,12 +551,12 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Sets the master server for the given cluster. Master server is the first in server list
-   * 
+   * Sets the server as owner for the given cluster. The owner server is the first in server list.
+   *
    * @param iClusterName
    *          Cluster name or *. Doesn't accept null.
    */
-  public void setMasterServer(final String iClusterName, final String iServerName) {
+  public void setServerOwner(final String iClusterName, final String iServerName) {
     if (iClusterName == null)
       throw new IllegalArgumentException("cluster name cannot be null");
 
@@ -670,7 +639,7 @@ public class ODistributedConfiguration {
     return null;
   }
 
-  public List<String> removeMasterServer(final String iServerName) {
+  public List<String> removeOwnerServer(final String iServerName) {
     final List<String> changedPartitions = new ArrayList<String>();
 
     synchronized (configuration) {
@@ -685,7 +654,7 @@ public class ODistributedConfiguration {
           continue;
 
         if (!serverList.get(0).equals(iServerName))
-          // WASN'T MASTER
+          // WASN'T OWNER
           continue;
 
         // PUT THE FIRST NODE AS LAST
@@ -714,11 +683,50 @@ public class ODistributedConfiguration {
     return servers;
   }
 
+  public int getVersion() {
+    final Integer v = configuration.field("version");
+    if (v == null)
+      return 0;
+    return v;
+  }
+
   protected void incrementVersion() {
     // INCREMENT VERSION
     Integer oldVersion = configuration.field("version");
     if (oldVersion == null)
       oldVersion = 0;
     configuration.field("version", oldVersion.intValue() + 1);
+  }
+
+  /**
+   * Returns the read quorum.
+   *
+   * @param iClusterName
+   *          Cluster name, or null for *
+   * @param iAvailableNodes
+   *          Total nodes available
+   */
+  protected int getQuorum(final String quorumSetting, final String iClusterName, final int iAvailableNodes,
+      final Object defaultValue) {
+    synchronized (configuration) {
+      Object value = getClusterConfiguration(iClusterName).field(quorumSetting);
+      if (value == null) {
+        value = configuration.field(quorumSetting);
+        if (value == null) {
+          OLogManager.instance().warn(this, "%s setting not found for cluster=%s in distributed-config.json", quorumSetting,
+              iClusterName);
+          value = defaultValue;
+        }
+      }
+
+      if (value instanceof String) {
+        if (value.toString().equalsIgnoreCase(ODistributedConfiguration.QUORUM_MAJORITY)) {
+          value = iAvailableNodes / 2 + 1;
+        } else if (value.toString().equalsIgnoreCase(ODistributedConfiguration.QUORUM_ALL))
+          value = iAvailableNodes;
+      }
+
+      return (Integer) value;
+    }
   }
 }

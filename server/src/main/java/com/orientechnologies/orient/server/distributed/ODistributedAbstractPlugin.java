@@ -52,16 +52,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract implements ODistributedServerManager,
-    ODatabaseLifecycleListener {
+public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
+    implements ODistributedServerManager, ODatabaseLifecycleListener {
   protected static final String                            PAR_DEF_DISTRIB_DB_CONFIG   = "configuration.db.default";
-  protected static final String                            FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
   protected OServer                                        serverInstance;
   protected Map<String, ODocument>                         cachedDatabaseConfiguration = new HashMap<String, ODocument>();
 
   protected boolean                                        enabled                     = true;
   protected String                                         nodeName                    = null;
+  protected int                                            nodeId                      = -1;
   protected File                                           defaultDatabaseConfigFile;
   protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
 
@@ -236,8 +236,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     return "cluster";
   }
 
-  public String getLocalNodeId() {
-    return nodeName;
+  public int getLocalNodeId() {
+    return nodeId;
   }
 
   public boolean updateCachedDatabaseConfiguration(final String iDatabaseName, final ODocument cfg, final boolean iSaveToDisk) {
@@ -249,7 +249,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
       Integer currVersion = (Integer) cfg.field("version");
       if (currVersion == null)
-        currVersion = 0;
+        currVersion = 1;
 
       final boolean modified = currVersion >= oldVersion;
 
@@ -265,9 +265,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       cachedDatabaseConfiguration.put(iDatabaseName, cfg);
 
       // PRINT THE NEW CONFIGURATION
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "updated distributed configuration for database: %s:\n----------\n%s\n----------", iDatabaseName,
-          cfg.toJSON("prettyPrint"));
+      final String cfgOutput = ODistributedOutput.formatClusterTable(new ODistributedConfiguration(cfg),
+          getAvailableNodes(iDatabaseName));
+
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "New distributed configuration for database: %s (version=%d)%s\n", iDatabaseName, cfg.field("version"), cfgOutput);
 
       if (iSaveToDisk) {
         // SAVE THE CONFIGURATION TO DISK
@@ -346,7 +348,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       f.read(buffer);
 
       final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
-      doc.field("version", 0);
+      doc.field("version", 1);
       updateCachedDatabaseConfiguration(iDatabaseName, doc, false);
       return doc;
 

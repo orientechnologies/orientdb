@@ -29,19 +29,14 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Insert records concurrently against the cluster
  */
 public abstract class AbstractDistributedWriteTest extends AbstractServerClusterTest {
-  protected static final int                      delayWriter = 0;
-  protected static final int                      writerCount = 5;
+  protected final int                             delayWriter = 0;
+  protected int                                   writerCount = 5;
   protected volatile int                          count       = 100;
   protected CountDownLatch                        runningWriters;
   protected final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
@@ -64,8 +59,8 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
         final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
         try {
           if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + threadId + "(" + database.getURL() + ") managed " + (i + 1) + "/" + count
-                + " records so far");
+            System.out.println(
+                "\nWriter " + threadId + "(" + database.getURL() + ") managed " + (i + 1) + "/" + count + " records so far");
 
           final ODocument person = createRecord(database, i);
           updateRecord(database, i);
@@ -117,8 +112,8 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
     }
 
     private void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
-      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?")).execute(
-          key);
+      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?"))
+          .execute(key);
       Assert.assertNotNull(result);
       Assert.assertEquals(result.size(), 1);
       Assert.assertNotNull(result.get(0).getRecord());
@@ -128,8 +123,8 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
     private ODocument loadRecord(ODatabaseDocumentTx database, int i) {
       final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId
-          + "'"));
+      List<ODocument> result = database
+          .query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId + "'"));
       if (result.size() == 0)
         Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)

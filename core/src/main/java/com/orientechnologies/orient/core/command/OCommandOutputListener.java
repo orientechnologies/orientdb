@@ -26,5 +26,5 @@ package com.orientechnologies.orient.core.command;
  * 
  */
 public interface OCommandOutputListener {
-	public void onMessage(String iText);
+  void onMessage(String iText);
 }

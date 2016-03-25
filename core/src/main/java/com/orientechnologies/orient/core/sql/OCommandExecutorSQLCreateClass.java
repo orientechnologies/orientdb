@@ -103,9 +103,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
               throw new OCommandSQLParsingException(
                   "Syntax error after EXTENDS for class " + className + ". Expected the super-class name. Use " + getSyntax(),
                   parserText, oldPos);
-            if (!database.getMetadata().getSchema().existsClass(word.toString()))
+            String superclassName = decodeClassName(word.toString());
+
+            if (!database.getMetadata().getSchema().existsClass(superclassName))
               throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
-            superClass = database.getMetadata().getSchema().getClass(word.toString());
+            superClass = database.getMetadata().getSchema().getClass(superclassName);
             superClasses.add(superClass);
             hasNext = false;
             for (; pos < parserText.length(); pos++) {
@@ -174,6 +176,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
     }
     return this;
   }
+
 
   @Override
   public long getDistributedTimeout() {

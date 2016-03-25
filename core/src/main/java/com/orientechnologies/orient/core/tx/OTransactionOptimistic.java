@@ -30,11 +30,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
@@ -66,8 +62,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
 
-  private boolean usingLog = true;
-  private int     txStartCounter;
+  private boolean              usingLog = true;
+  private int                  txStartCounter;
 
   private class CommitIndexesCallback implements Runnable {
     private final Map<String, OIndex<?>> indexes;
@@ -83,7 +79,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         final Map<String, OIndexInternal<?>> indexesToCommit = new HashMap<String, OIndexInternal<?>>();
 
         for (Entry<String, Object> indexEntry : indexEntries) {
-          final OIndexInternal<?> index = indexes.get(indexEntry.getKey()).getInternal();
+          final OIndex<?> idx = indexes.get(indexEntry.getKey());
+          if (idx == null)
+            throw new OTransactionException("Cannot find index '" + indexEntry.getKey() + "' while committing transaction");
+
+          final OIndexInternal<?> index = idx.getInternal();
           indexesToCommit.put(index.getName(), index.getInternal());
         }
 
@@ -210,13 +210,15 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     // CLEAR THE CACHE
     database.getLocalCache().clear();
 
-    // REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
-    // EXECUTED
-    //    for (ORecordOperation v : recordEntries.values())
-    //      v.getRecord().unload();
-
-    for (ORecordOperation v : allEntries.values())
-      v.getRecord().unload();
+    // REMOVE ALL THE DIRTY ENTRIES AND UNDO ANY DIRTY DOCUMENT IF POSSIBLE.
+    for (ORecordOperation v : allEntries.values()) {
+      final ORecord rec = v.getRecord();
+      if (rec.isDirty())
+        if (rec instanceof ODocument && ((ODocument) rec).isTrackingChanges())
+          ((ODocument) rec).undo();
+        else
+          rec.unload();
+    }
 
     close();
 
@@ -269,7 +271,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     final ORecord txRecord = getRecord(rid);
     if (txRecord == OTransactionRealAbstract.DELETED_RECORD)
       // DELETED IN TX
-      throw new ORecordNotFoundException("Record with id " + rid + " was not found in database.");
+      throw new ORecordNotFoundException(rid);
 
     if (txRecord != null) {
       if (txRecord.getVersion() > recordVersion)
@@ -279,7 +281,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
 
     if (rid.isTemporary())
-      throw new ORecordNotFoundException("Record with id " + rid + " was not found in database.");
+      throw new ORecordNotFoundException(rid);
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record = database.executeReadRecord((ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache,
@@ -372,7 +374,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       return null;
 
     boolean originalSaved = false;
-    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
+    final ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
     do {
       Set<ORecord> newRecord = dirtyManager.getNewRecords();
       Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
@@ -447,7 +449,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       case ORecordOperation.LOADED:
         /**
          * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord}
-         * .
          */
         break;
       case ORecordOperation.UPDATED: {

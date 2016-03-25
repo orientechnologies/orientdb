@@ -24,9 +24,9 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 
 import java.io.IOException;
@@ -39,25 +39,25 @@ import java.util.*;
  * @since 12/3/13
  */
 public class OAtomicOperation {
-  private final int                storageId;
-  private final OLogSequenceNumber startLSN;
-  private final OOperationUnitId   operationUnitId;
+  private final int                                      storageId;
+  private final OLogSequenceNumber                       startLSN;
+  private final OOperationUnitId                         operationUnitId;
 
-  private int       startCounter;
-  private boolean   rollback;
-  private Exception rollbackException;
+  private int                                            startCounter;
+  private boolean                                        rollback;
+  private Exception                                      rollbackException;
 
-  private Set<String>            lockedObjects        = new HashSet<String>();
-  private Map<Long, FileChanges> fileChanges          = new HashMap<Long, FileChanges>();
-  private Map<String, Long>      newFileNamesId       = new HashMap<String, Long>();
-  private Set<Long>              deletedFiles         = new HashSet<Long>();
-  private Map<String, Long>      deletedFileNameIdMap = new HashMap<String, Long>();
+  private Set<String>                                    lockedObjects        = new HashSet<String>();
+  private Map<Long, FileChanges>                         fileChanges          = new HashMap<Long, FileChanges>();
+  private Map<String, Long>                              newFileNamesId       = new HashMap<String, Long>();
+  private Set<Long>                                      deletedFiles         = new HashSet<Long>();
+  private Map<String, Long>                              deletedFileNameIdMap = new HashMap<String, Long>();
 
-  private OReadCache                   readCache;
-  private OWriteCache                  writeCache;
-  private OStoragePerformanceStatistic storagePerformanceStatistic;
+  private OReadCache                                     readCache;
+  private OWriteCache                                    writeCache;
+  private OStoragePerformanceStatistic                   storagePerformanceStatistic;
 
-  private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
+  private final Map<String, OAtomicOperationMetadata<?>> metadata             = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId, OReadCache readCache,
       OWriteCache writeCache, OStoragePerformanceStatistic storagePerformanceStatistic, int storageId) {
@@ -122,10 +122,11 @@ public class OAtomicOperation {
   }
 
   /**
-   * Add metadata with given key inside of atomic operation.
-   * If metadata with the same key insist inside of atomic operation it will be overwritten.
+   * Add metadata with given key inside of atomic operation. If metadata with the same key insist inside of atomic operation it will
+   * be overwritten.
    *
-   * @param metadata Metadata to add.
+   * @param metadata
+   *          Metadata to add.
    * @see OAtomicOperationMetadata
    */
   public void addMetadata(OAtomicOperationMetadata<?> metadata) {
@@ -133,7 +134,8 @@ public class OAtomicOperation {
   }
 
   /**
-   * @param key Key of metadata which is looking for.
+   * @param key
+   *          Key of metadata which is looking for.
    * @return Metadata by associated key or <code>null</code> if such metadata is absent.
    */
   public OAtomicOperationMetadata<?> getMetadata(String key) {
@@ -293,7 +295,9 @@ public class OAtomicOperation {
       newFileNamesId.remove(fileChanges.fileName);
     else {
       deletedFiles.add(fileId);
-      deletedFileNameIdMap.put(writeCache.fileNameById(fileId), fileId);
+      final String f = writeCache.fileNameById(fileId);
+      if (f != null)
+        deletedFileNameIdMap.put(f, fileId);
     }
   }
 

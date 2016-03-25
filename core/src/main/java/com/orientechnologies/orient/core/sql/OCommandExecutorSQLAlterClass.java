@@ -80,10 +80,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       if (pos == -1)
         throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
 
-      className = word.toString();
-      if (className.startsWith("`") && className.endsWith("`") && className.length() > 1) {
-        className = className.substring(1, className.length() - 1);
-      }
+      className = decodeClassName(word.toString());
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
@@ -100,10 +97,10 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       }
 
       value = parserText.substring(pos + 1).trim();
-      if (value.startsWith("`") && value.endsWith("`") && value.length() > 1) {
-        value = value.substring(1, value.length() - 1);
-      }
 
+      if("addcluster".equalsIgnoreCase(attributeAsString) || "removecluster".equalsIgnoreCase(attributeAsString) ){
+        value = decodeClassName(value);
+      }
       OAlterClassStatement stm = (OAlterClassStatement) preParsedStatement;
       if (this.preParsedStatement != null && stm.property == ATTRIBUTES.CUSTOM) {
         value = "" + stm.customKey.getValue() + "=" + stm.customValue.toString();
@@ -150,12 +147,12 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       getDatabase().getMetadata().getCommandCache().invalidateResultsOfCluster(getDatabase().getClusterNameById(clId));
 
     if (value != null && attribute == ATTRIBUTES.SUPERCLASS) {
-      checkClassExists(database, className, value);
+      checkClassExists(database, className, decodeClassName(value));
     }
     if (value != null && attribute == ATTRIBUTES.SUPERCLASSES) {
       List<String> classes = Arrays.asList(value.split(",\\s*"));
       for (String cName : classes) {
-        checkClassExists(database, className, cName);
+        checkClassExists(database, className, decodeClassName(cName));
       }
     }
     if (!unsafe && value != null && attribute == ATTRIBUTES.NAME) {
@@ -178,8 +175,8 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     if (superClass.startsWith("+") || superClass.startsWith("-")) {
       superClass = superClass.substring(1);
     }
-    if (database.getMetadata().getSchema().getClass(superClass) == null) {
-      throw new OCommandExecutionException("Cannot alter superClass of '" + targetClass + "' because  " + superClass
+    if (database.getMetadata().getSchema().getClass(decodeClassName(superClass)) == null) {
+      throw new OCommandExecutionException("Cannot alter superClass of '" + targetClass + "' because " + superClass
           + " class not found");
     }
   }

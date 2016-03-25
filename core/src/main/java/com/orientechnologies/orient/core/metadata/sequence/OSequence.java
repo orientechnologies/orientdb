@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -24,7 +23,7 @@ public abstract class OSequence extends ODocumentWrapper {
   public static final int     DEFAULT_INCREMENT = 1;
   public static final int     DEFAULT_CACHE     = 20;
 
-  protected static final int  RETRY_COUNT       = 100;
+  protected static final int  DEF_MAX_RETRY     = 100;
   public static final String  CLASS_NAME        = "OSequence";
 
   private static final String FIELD_START       = "start";
@@ -67,8 +66,10 @@ public abstract class OSequence extends ODocumentWrapper {
   }
 
   public enum SEQUENCE_TYPE {
-    CACHED, ORDERED, ;
+    CACHED, ORDERED,;
   }
+
+  private int maxRetry = DEF_MAX_RETRY;
 
   protected OSequence() {
     this(null, null);
@@ -142,6 +143,14 @@ public abstract class OSequence extends ODocumentWrapper {
     document.field(FIELD_START, value);
   }
 
+  public int getMaxRetry() {
+    return maxRetry;
+  }
+
+  public void setMaxRetry(final int maxRetry) {
+    this.maxRetry = maxRetry;
+  }
+
   public String getName() {
     return getSequenceName(document);
   }
@@ -196,35 +205,35 @@ public abstract class OSequence extends ODocumentWrapper {
     }
   }
 
-  protected <T> T callRetry(Callable<T> callable) {
-    int retry = RETRY_COUNT;
-    while (retry > 0) {
+  protected <T> T callRetry(final Callable<T> callable, final String method) {
+    for (int retry = 0; retry < maxRetry; ++retry) {
       try {
         return callInTx(callable);
       } catch (OConcurrentModificationException ex) {
-        --retry;
         reloadSequence();
       } catch (OStorageException e) {
         if (e.getCause() instanceof OConcurrentModificationException) {
-          --retry;
           reloadSequence();
         } else {
-          throw OException.wrapException(new OSequenceException("Error in transaction processing of sequence method"), e);
+          throw OException
+              .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
         }
       } catch (OException ex) {
-        --retry;
         reloadSequence();
       } catch (Exception e) {
-        throw OException.wrapException(new OSequenceException("Error in transaction processing of sequence method"), e);
+        throw OException
+            .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
       }
     }
+
     try {
       return callInTx(callable);
     } catch (Exception e) {
       if (e.getCause() instanceof OConcurrentModificationException) {
         throw ((OConcurrentModificationException) e.getCause());
       }
-      throw OException.wrapException(new OSequenceException("Error in transaction processing of sequence method"), e);
+      throw OException
+          .wrapException(new OSequenceException("Error in transactional processing of " + getName() + "." + method + "()"), e);
     }
   }
 

@@ -169,7 +169,8 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
         if (batch > 0 && result.size() % batch == 0) {
           graph.commit();
-          graph.begin();
+          if (!graph.isAutoStartTx())
+            graph.begin();
         }
       }
 

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
@@ -39,16 +40,19 @@ import java.util.TimerTask;
  */
 public class ORestartNodeTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
+  public static final int   FACTORYID        = 10;
 
   public ORestartNodeTask() {
   }
 
   @Override
-  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+  public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
 
     ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
         "restarting server...");
+
+    iManager.setNodeStatus(ODistributedServerManager.NODE_STATUS.OFFLINE);
 
     Orient.instance().scheduleTask(new TimerTask() {
       @Override
@@ -72,7 +76,7 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
 
   @Override
   public String getName() {
-    return "unjoin_node";
+    return "restart_node";
   }
 
   @Override
@@ -82,4 +86,10 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
   }
+
+  @Override
+  public int getFactoryId() {
+    return FACTORYID;
+  }
+
 }

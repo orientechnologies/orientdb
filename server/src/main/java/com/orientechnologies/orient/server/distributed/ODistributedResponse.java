@@ -19,24 +19,88 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.*;
+import java.util.Arrays;
+
 /**
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public interface ODistributedResponse {
+public class ODistributedResponse implements Externalizable {
+  private ODistributedRequestId requestId;
+  private String                executorNodeName;
+  private String                senderNodeName;
+  private Object                payload;
 
-  String getExecutorNodeName();
+  /**
+   * Constructor used by serializer.
+   */
+  public ODistributedResponse() {
+  }
 
-  ODistributedResponse setExecutorNodeName(String iExecutor);
+  public ODistributedResponse(final ODistributedRequestId iRequestId, final String executorNodeName, final String senderNodeName,
+      final Serializable payload) {
+    this.requestId = iRequestId;
+    this.executorNodeName = executorNodeName;
+    this.senderNodeName = senderNodeName;
+    this.payload = payload;
+  }
 
-  String getSenderNodeName();
+  public ODistributedRequestId getRequestId() {
+    return requestId;
+  }
 
-  Object getPayload();
+  public String getExecutorNodeName() {
+    return executorNodeName;
+  }
 
-  ODistributedResponse setPayload(Object iPayload);
+  public String getSenderNodeName() {
+    return senderNodeName;
+  }
 
-  long getRequestId();
+  public void setSenderNodeName(final String senderNodeName) {
+    this.senderNodeName = senderNodeName;
+  }
 
-  boolean isExecutedOnLocalNode();
+  public Object getPayload() {
+    return payload;
+  }
+
+  public ODistributedResponse setPayload(final Object payload) {
+    this.payload = payload;
+    return this;
+  }
+
+  public ODistributedResponse setExecutorNodeName(final String executorNodeName) {
+    this.executorNodeName = executorNodeName;
+    return this;
+  }
+
+  @Override
+  public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeObject(requestId);
+    out.writeUTF(executorNodeName);
+    out.writeUTF(senderNodeName);
+    out.writeObject(payload);
+  }
+
+  @Override
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    requestId = (ODistributedRequestId) in.readObject();
+    executorNodeName = in.readUTF();
+    senderNodeName = in.readUTF();
+    payload = (Serializable) in.readObject();
+  }
+
+  @Override
+  public String toString() {
+    if (payload == null)
+      return "null";
+
+    if (payload.getClass().isArray())
+      return Arrays.toString((Object[]) payload);
+
+    return payload.toString();
+  }
 }

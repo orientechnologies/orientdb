@@ -19,31 +19,33 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.statistic;
 
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
 /**
- * Container for performance statistic gathered after
- * call of {@link OAbstractPaginatedStorage#startGatheringPerformanceStatisticForCurrentThread()}.
+ * Container for performance statistic gathered after call of
+ * {@link OAbstractPaginatedStorage#startGatheringPerformanceStatisticForCurrentThread()}.
  * <p>
- * Statistic is gathered on component and system level.
- * Each {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent}
- * provides separate data for this tool which allows to detect performance problems on component level.
+ * Statistic is gathered on component and system level. Each
+ * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent} provides separate data for this
+ * tool which allows to detect performance problems on component level.
  * <p>
- * To stop gathering of performance statistic call {@link OAbstractPaginatedStorage#completeGatheringPerformanceStatisticForCurrentThread()}.
+ * To stop gathering of performance statistic call
+ * {@link OAbstractPaginatedStorage#completeGatheringPerformanceStatisticForCurrentThread()}.
  * <p>
- * List of gathered performance characteristics can be deduced from getXXX methods.
- * There are 2 kind of methods , one kind do not accept any parameter, they return performance data on system level
- * and, other kind accept component name, they return performance data gathered on separate component or on system level if null is
- * passed as method name. If data from component with passed in name is absent then -1 is returned.
+ * List of gathered performance characteristics can be deduced from getXXX methods. There are 2 kind of methods , one kind do not
+ * accept any parameter, they return performance data on system level and, other kind accept component name, they return performance
+ * data gathered on separate component or on system level if null is passed as method name. If data from component with passed in
+ * name is absent then -1 is returned.
  * <p>
- * At the moment all performance data are shared between durable components and whole system with exception of {@link #getCommitTimeAvg()}.
+ * At the moment all performance data are shared between durable components and whole system with exception of
+ * {@link #getCommitTimeAvg()}.
  *
  * @author Andrey Lomakin
  */
@@ -51,12 +53,12 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Amount of bytes in megabyte
    */
-  private static final int MEGABYTE = 1024 * 1024;
+  private static final int                                              MEGABYTE        = 1024 * 1024;
 
   /**
    * Amount of nanoseconds in second
    */
-  private static final int NANOS_IN_SECOND = 1000000000;
+  private static final int                                              NANOS_IN_SECOND = 1000000000;
 
   /**
    * Thread local which contains performance statistic for current session.
@@ -64,13 +66,14 @@ public class OSessionStoragePerformanceStatistic {
    * @see OAbstractPaginatedStorage#startGatheringPerformanceStatisticForCurrentThread()
    * @see OAbstractPaginatedStorage#completeGatheringPerformanceStatisticForCurrentThread()
    */
-  private static final ThreadLocal<OSessionStoragePerformanceStatistic> THREAD_LOCAL = new ThreadLocal<OSessionStoragePerformanceStatistic>();
+  private static final ThreadLocal<OSessionStoragePerformanceStatistic> THREAD_LOCAL    = new ThreadLocal<OSessionStoragePerformanceStatistic>();
 
   /**
-   * Initiates new session for gathering performance statistic for storage.
-   * Typically is used in {@link OAbstractPaginatedStorage#startGatheringPerformanceStatisticForCurrentThread()}
+   * Initiates new session for gathering performance statistic for storage. Typically is used in
+   * {@link OAbstractPaginatedStorage#startGatheringPerformanceStatisticForCurrentThread()}
    *
-   * @param pageSize Size of page for storage is used for calculation of metrics which are measured in megabytes.
+   * @param pageSize
+   *          Size of page for storage is used for calculation of metrics which are measured in megabytes.
    */
   public static void initThreadLocalInstance(final int pageSize) {
     THREAD_LOCAL.set(new OSessionStoragePerformanceStatistic(pageSize));
@@ -88,8 +91,8 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * @return instance of container for gathering of storage performance statistic if session of gathering performance is initiated by
-   * call if {@link #initThreadLocalInstance(int)} or <code>null</code> otherwise.
+   * @return instance of container for gathering of storage performance statistic if session of gathering performance is initiated
+   *         by call if {@link #initThreadLocalInstance(int)} or <code>null</code> otherwise.
    */
   public static OSessionStoragePerformanceStatistic getStatisticInstance() {
     return THREAD_LOCAL.get();
@@ -98,51 +101,51 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Stack of time stamps which is used to init clock in startTimerXXX methods.
    */
-  private final Deque<Long> timeStamps = new ArrayDeque<Long>();
+  private final Deque<Long>                      timeStamps                = new ArrayDeque<Long>();
 
   /**
-   * Stack of active components or in another words
-   * components which currently perform actions inside current thread.
+   * Stack of active components or in another words components which currently perform actions inside current thread.
    */
-  private Deque<String> componentsStack = new ArrayDeque<String>();
+  private Deque<String>                          componentsStack           = new ArrayDeque<String>();
 
   /**
    * Container for performance counters of system performance as whole.
    * <p>
-   * Counters are put in separate class because each component also has given performance counters, so
-   * definition of counters on component and system level is reused.
+   * Counters are put in separate class because each component also has given performance counters, so definition of counters on
+   * component and system level is reused.
    */
-  private final PerformanceCountersHolder performanceCountersHolder = new PerformanceCountersHolder();
+  private final PerformanceCountersHolder        performanceCountersHolder = new PerformanceCountersHolder();
 
   /**
    * Amount of times when atomic operation commit was performed.
    */
-  private long commitCount = 0;
+  private long                                   commitCount               = 0;
 
   /**
    * Summary time which was spent on atomic operation commits.
    */
-  private long commitTime = 0;
+  private long                                   commitTime                = 0;
 
   /**
    * Page size in cache.
    */
-  private final int pageSize;
+  private final int                              pageSize;
 
   /**
    * Object which is used to get current PC nano time.
    */
-  private final NanoTimer nanoTimer;
+  private final NanoTimer                        nanoTimer;
 
   /**
    * Map containing performance counters specific for concrete software component.
    */
-  private Map<String, PerformanceCountersHolder> countersByComponent = new HashMap<String, PerformanceCountersHolder>();
+  private Map<String, PerformanceCountersHolder> countersByComponent       = new HashMap<String, PerformanceCountersHolder>();
 
   /**
    * Creates object and initiates it with value of size of page in cache.
    *
-   * @param pageSize Page size in cache.
+   * @param pageSize
+   *          Page size in cache.
    */
   public OSessionStoragePerformanceStatistic(int pageSize) {
     this(pageSize, new NanoTimer() {
@@ -154,11 +157,12 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * Creates object and initiates it with page size for storage and time service is needed
-   * to get current value of PC nano time.
+   * Creates object and initiates it with page size for storage and time service is needed to get current value of PC nano time.
    *
-   * @param pageSize  Size of page in storage
-   * @param nanoTimer Service to get current value of PC nano time.
+   * @param pageSize
+   *          Size of page in storage
+   * @param nanoTimer
+   *          Service to get current value of PC nano time.
    */
   public OSessionStoragePerformanceStatistic(int pageSize, NanoTimer nanoTimer) {
     this.pageSize = pageSize;
@@ -166,14 +170,15 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * Called inside of {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent} to notify
-   * that component started to perform operation on data. After that all performance characteristic started to be gathered
-   * for this component till method {@link #completeComponentOperation()} will be called.
+   * Called inside of {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent} to notify that
+   * component started to perform operation on data. After that all performance characteristic started to be gathered for this
+   * component till method {@link #completeComponentOperation()} will be called.
    * <p>
-   * Components can be stacked, so if components <code>c1</code> and then <code>c2</code> call this method than performance data
-   * for both components at once started to be gathered.
+   * Components can be stacked, so if components <code>c1</code> and then <code>c2</code> call this method than performance data for
+   * both components at once started to be gathered.
    *
-   * @param componentName Name of component which started to perform operation on data. Name is case sensitive.
+   * @param componentName
+   *          Name of component which started to perform operation on data. Name is case sensitive.
    */
   public void startComponentOperation(String componentName) {
     final String currentComponent = componentsStack.peek();
@@ -185,8 +190,8 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * Indicates that the most earliest component in stack of components has completed it's operation on data , so
-   * performance data for this component is stopped to be gathered.
+   * Indicates that the most earliest component in stack of components has completed it's operation on data , so performance data
+   * for this component is stopped to be gathered.
    *
    * @see #startComponentOperation(String)
    */
@@ -205,21 +210,22 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * @return Read speed of data in megabytes per second on cache level
-   * or value which is less than 0, which means that value can not be calculated.
+   * @return Read speed of data in megabytes per second on cache level or value which is less than 0, which means that value cannot
+   *         be calculated.
    */
   public long getReadSpeedFromCacheInMB() {
     return performanceCountersHolder.getReadSpeedFromCacheInMB();
   }
 
   /**
-   * Read speed of data in megabytes per second for component name of which is passed as method argument.
-   * If null value is passed then value for whole system will be returned.
-   * If data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * Read speed of data in megabytes per second for component name of which is passed as method argument. If null value is passed
+   * then value for whole system will be returned. If data for component with passed in name does not exist then <code>-1</code>
+   * will be returned.
    *
-   * @param componentName Name of component data of which should be returned. Name is case sensitive.
-   * @return Read speed of data in megabytes per second on cache level
-   * or value which is less than 0, which means that value can not be calculated.
+   * @param componentName
+   *          Name of component data of which should be returned. Name is case sensitive.
+   * @return Read speed of data in megabytes per second on cache level or value which is less than 0, which means that value cannot
+   *         be calculated.
    */
   public long getReadSpeedFromCacheInMB(String componentName) {
     if (componentName == null)
@@ -233,21 +239,22 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * @return Read speed of data in pages per second on cache level
-   * or value which is less than 0, which means that value can not be calculated.
+   * @return Read speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
+   *         calculated.
    */
   public long getReadSpeedFromCacheInPages() {
     return performanceCountersHolder.getReadSpeedFromCacheInPages();
   }
 
   /**
-   * Read speed of data in pages per second on cache level for component name of which is passed as method argument.
-   * If null value is passed then value for whole system will be returned.
-   * If data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * Read speed of data in pages per second on cache level for component name of which is passed as method argument. If null value
+   * is passed then value for whole system will be returned. If data for component with passed in name does not exist then
+   * <code>-1</code> will be returned.
    *
-   * @param componentName Name of component data of which should be returned. Name is case sensitive.
-   * @return Read speed of data in pages per second on cache level
-   * or value which is less than 0, which means that value can not be calculated.
+   * @param componentName
+   *          Name of component data of which should be returned. Name is case sensitive.
+   * @return Read speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
+   *         calculated.
    */
   public long getReadSpeedFromCacheInPages(String componentName) {
     if (componentName == null)
@@ -261,21 +268,22 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * @return Read speed of data from file system in pages per second
-   * or value which is less than 0, which means that value can not be calculated.
+   * @return Read speed of data from file system in pages per second or value which is less than 0, which means that value cannot be
+   *         calculated.
    */
   public long getReadSpeedFromFileInPages() {
     return performanceCountersHolder.getReadSpeedFromFileInPages();
   }
 
   /**
-   * Read speed of data from file system in pages for component name of which is passed as method argument.
-   * If null value is passed then value for whole system will be returned.
-   * If data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * Read speed of data from file system in pages for component name of which is passed as method argument. If null value is passed
+   * then value for whole system will be returned. If data for component with passed in name does not exist then <code>-1</code>
+   * will be returned.
    *
-   * @param componentName Name of component data of which should be returned. Name is case sensitive.
-   * @return Read speed of data from file system in pages per second
-   * or value which is less than 0, which means that value can not be calculated.
+   * @param componentName
+   *          Name of component data of which should be returned. Name is case sensitive.
+   * @return Read speed of data from file system in pages per second or value which is less than 0, which means that value cannot be
+   *         calculated.
    */
   public long getReadSpeedFromFileInPages(String componentName) {
     if (componentName == null)
@@ -289,21 +297,22 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * @return Read speed of data from file system in megabytes per second
-   * or value which is less than 0, which means that value can not be calculated.
+   * @return Read speed of data from file system in megabytes per second or value which is less than 0, which means that value
+   *         cannot be calculated.
    */
   public long getReadSpeedFromFileInMB() {
     return performanceCountersHolder.getReadSpeedFromFileInMB();
   }
 
   /**
-   * Read speed of data from file system in megabytes per second for component name of which is passed as method argument.
-   * If null value is passed then value for whole system will be returned.
-   * If data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * Read speed of data from file system in megabytes per second for component name of which is passed as method argument. If null
+   * value is passed then value for whole system will be returned. If data for component with passed in name does not exist then
+   * <code>-1</code> will be returned.
    *
-   * @param componentName Name of component data of which should be returned. Name is case sensitive.
-   * @return Read speed of data from file system in megabytes per second
-   * or value which is less than 0, which means that value can not be calculated.
+   * @param componentName
+   *          Name of component data of which should be returned. Name is case sensitive.
+   * @return Read speed of data from file system in megabytes per second or value which is less than 0, which means that value
+   *         cannot be calculated.
    */
   public long getReadSpeedFromFileInMB(String componentName) {
     if (componentName == null)
@@ -324,11 +333,12 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * Amount of pages read from cache for component name of which is passed as method argument.
-   * If null value is passed then value for whole system will be returned.
-   * If data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * Amount of pages read from cache for component name of which is passed as method argument. If null value is passed then value
+   * for whole system will be returned. If data for component with passed in name does not exist then <code>-1</code> will be
+   * returned.
    *
-   * @param componentName Name of component data of which should be returned. Name is case sensitive.
+   * @param componentName
+   *          Name of component data of which should be returned. Name is case sensitive.
    * @return Amount of pages read from cache in total.
    */
   public long getAmountOfPagesReadFromCache(String componentName) {
@@ -350,11 +360,12 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * Amount of pages are read from file for component name of which is passed as method argument.
-   * If null value is passed then value for whole system will be returned.
-   * If data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * Amount of pages are read from file for component name of which is passed as method argument. If null value is passed then value
+   * for whole system will be returned. If data for component with passed in name does not exist then <code>-1</code> will be
+   * returned.
    *
-   * @param componentName Name of component data of which should be returned. Name is case sensitive.
+   * @param componentName
+   *          Name of component data of which should be returned. Name is case sensitive.
    * @return Amount of pages are read from file.
    */
   public long getAmountOfPagesReadFromFile(String componentName) {
@@ -369,21 +380,22 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * @return Write speed of data in pages per second on cache level
-   * or value which is less than 0, which means that value can not be calculated.
+   * @return Write speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
+   *         calculated.
    */
   public long getWriteSpeedInCacheInPages() {
     return performanceCountersHolder.getWriteSpeedInCacheInPages();
   }
 
   /**
-   * Write speed of data in pages per second on cache level for component name of which is passed as method argument.
-   * If null value is passed then value for whole system will be returned.
-   * If data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * Write speed of data in pages per second on cache level for component name of which is passed as method argument. If null value
+   * is passed then value for whole system will be returned. If data for component with passed in name does not exist then
+   * <code>-1</code> will be returned.
    *
-   * @param componentName Name of component data of which should be returned. Name is case sensitive.
-   * @return Write speed of data in pages per second on cache level
-   * or value which is less than 0, which means that value can not be calculated.
+   * @param componentName
+   *          Name of component data of which should be returned. Name is case sensitive.
+   * @return Write speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
+   *         calculated.
    */
   public long getWriteSpeedInCacheInPages(String componentName) {
     if (componentName == null)
@@ -397,21 +409,22 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * @return Write speed of data in megabytes per second on cache level
-   * or value which is less than 0, which means that value can not be calculated.
+   * @return Write speed of data in megabytes per second on cache level or value which is less than 0, which means that value cannot
+   *         be calculated.
    */
   public long getWriteSpeedInCacheInMB() {
     return performanceCountersHolder.getWriteSpeedInCacheInMB();
   }
 
   /**
-   * Write speed of data in megabytes per second on cache level for component name of which is passed as method argument.
-   * If null value is passed then value for whole system will be returned.
-   * If data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * Write speed of data in megabytes per second on cache level for component name of which is passed as method argument. If null
+   * value is passed then value for whole system will be returned. If data for component with passed in name does not exist then
+   * <code>-1</code> will be returned.
    *
-   * @param componentName Name of component data of which should be returned. Name is case sensitive.
-   * @return Write speed of data in megabytes per second on cache level
-   * or value which is less than 0, which means that value can not be calculated.
+   * @param componentName
+   *          Name of component data of which should be returned. Name is case sensitive.
+   * @return Write speed of data in megabytes per second on cache level or value which is less than 0, which means that value cannot
+   *         be calculated.
    */
   public long getWriteSpeedInCacheInMB(String componentName) {
     if (componentName == null)
@@ -432,11 +445,12 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * Amount of pages written to cache for component name of which is passed as method argument.
-   * If null value is passed then value for whole system will be returned.
-   * If data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * Amount of pages written to cache for component name of which is passed as method argument. If null value is passed then value
+   * for whole system will be returned. If data for component with passed in name does not exist then <code>-1</code> will be
+   * returned.
    *
-   * @param componentName Name of component data of which should be returned. Name is case sensitive.
+   * @param componentName
+   *          Name of component data of which should be returned. Name is case sensitive.
    * @return Amount of pages written to cache.
    */
   public long getAmountOfPagesWrittenInCache(String componentName) {
@@ -451,8 +465,8 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * @return Average time of commit of atomic operation in nanoseconds
-   * or value which is less than 0, which means that value can not be calculated.
+   * @return Average time of commit of atomic operation in nanoseconds or value which is less than 0, which means that value cannot
+   *         be calculated.
    */
   public long getCommitTimeAvg() {
     if (commitCount == 0)
@@ -462,21 +476,19 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * @return Percent of cache hits
-   * or value which is less than 0, which means that value can not be calculated.
+   * @return Percent of cache hits or value which is less than 0, which means that value cannot be calculated.
    */
   public int getCacheHits() {
     return performanceCountersHolder.getCacheHits();
   }
 
   /**
-   * Percent of cache hits for component name of which is passed as method argument.
-   * If null value is passed then value for whole system will be returned.
-   * If data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * Percent of cache hits for component name of which is passed as method argument. If null value is passed then value for whole
+   * system will be returned. If data for component with passed in name does not exist then <code>-1</code> will be returned.
    *
-   * @param componentName Name of component data of which should be returned. Name is case sensitive.
-   * @return Percent of cache hits
-   * or value which is less than 0, which means that value can not be calculated.
+   * @param componentName
+   *          Name of component data of which should be returned. Name is case sensitive.
+   * @return Percent of cache hits or value which is less than 0, which means that value cannot be calculated.
    */
   public int getCacheHits(String componentName) {
     if (componentName == null)
@@ -492,12 +504,12 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Average amount of pages which were read from cache for component with given name during single data operation.
    * <p>
-   * If null value is passed or
-   * data for component with passed in name does not exist then <code>-1</code> will be returned.
+   * If null value is passed or data for component with passed in name does not exist then <code>-1</code> will be returned.
    *
-   * @param componentName Name of component data of which should be returned. Name is case sensitive.
-   * @return Average amount of pages which were read from cache for component with given name during single data operation
-   * or value which is less than 0, which means that value can not be calculated.
+   * @param componentName
+   *          Name of component data of which should be returned. Name is case sensitive.
+   * @return Average amount of pages which were read from cache for component with given name during single data operation or value
+   *         which is less than 0, which means that value cannot be calculated.
    */
   public long getAmountOfPagesPerOperation(String componentName) {
     if (componentName == null) {
@@ -512,15 +524,14 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * Converts properties of given class into values of fields of returned document.
-   * Names of fields equal to names of properties.
+   * Converts properties of given class into values of fields of returned document. Names of fields equal to names of properties.
    * <p>
    * All data related to separate components are stored in field <code>dataByComponent</code> map which has type
-   * {@link OType#EMBEDDEDMAP} where key of map entry is name of component, and value is document which contains the same fields
-   * as high level document but with values for single component not whole system.
+   * {@link OType#EMBEDDEDMAP} where key of map entry is name of component, and value is document which contains the same fields as
+   * high level document but with values for single component not whole system.
    *
    * @return Performance characteristics of storage gathered after call of
-   * {@link OAbstractPaginatedStorage#startGatheringPerformanceStatisticForCurrentThread()}
+   *         {@link OAbstractPaginatedStorage#startGatheringPerformanceStatisticForCurrentThread()}
    */
   public ODocument toDocument() {
     final ODocument document = performanceCountersHolder.toDocument();
@@ -540,8 +551,8 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Increments counter of page accesses from cache.
    * <p>
-   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)}
-   * method before the call and {@link #completeComponentOperation()} after the call.
+   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)} method
+   * before the call and {@link #completeComponentOperation()} after the call.
    */
   public void incrementPageAccessOnCacheLevel(boolean cacheHit) {
     performanceCountersHolder.cacheAccessCount++;
@@ -571,10 +582,11 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Stops and records results of timer which counts how much time was spent on read of page from file system.
    * <p>
-   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)}
-   * method before the call and {@link #completeComponentOperation()} after the call.
+   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)} method
+   * before the call and {@link #completeComponentOperation()} after the call.
    *
-   * @param readPages Amount of pages which were read by single call to file system.
+   * @param readPages
+   *          Amount of pages which were read by single call to file system.
    */
   public void stopPageReadFromFileTimer(int readPages) {
     final long entTs = nanoTimer.getNano();
@@ -605,8 +617,8 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Stops and records results of timer which counts how much time was spent on read of page from disk cache.
    * <p>
-   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)}
-   * method before the call and {@link #completeComponentOperation()} after the call.
+   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)} method
+   * before the call and {@link #completeComponentOperation()} after the call.
    */
   public void stopPageReadFromCacheTimer() {
     final long entTs = nanoTimer.getNano();
@@ -637,8 +649,8 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Stops and records results of timer which counts how much time was spent to write page to disk cache.
    * <p>
-   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)}
-   * method before the call and {@link #completeComponentOperation()} after the call.
+   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)} method
+   * before the call and {@link #completeComponentOperation()} after the call.
    */
   public void stopPageWriteInCacheTimer() {
     final long entTs = nanoTimer.getNano();
@@ -678,8 +690,8 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * Interface which is used by this tool to get current PC nano time.
-   * Implementation which calls <code>System.nanoTime()</code> is used by default.
+   * Interface which is used by this tool to get current PC nano time. Implementation which calls <code>System.nanoTime()</code> is
+   * used by default.
    */
   public interface NanoTimer {
     /**
@@ -692,32 +704,32 @@ public class OSessionStoragePerformanceStatistic {
    * Container for all performance counters which are shared between durable components and whole system.
    */
   private final class PerformanceCountersHolder {
-    private long operationsCount = 0;
+    private long operationsCount        = 0;
 
     /**
      * Amount of times when cache was accessed during the session.
      */
-    private long cacheAccessCount = 0;
+    private long cacheAccessCount       = 0;
 
     /**
      * Amount of "cache hit" times during the session.
      */
-    private long cacheHit = 0;
+    private long cacheHit               = 0;
 
     /**
      * Summary time which was spent on access of pages from file system.
      */
-    private long pageReadFromFileTime = 0;
+    private long pageReadFromFileTime   = 0;
 
     /**
      * Amount of pages in total which were accessed from file system.
      */
-    private long pageReadFromFileCount = 0;
+    private long pageReadFromFileCount  = 0;
 
     /**
      * Summary time which was spent on access of pages from disk cache.
      */
-    private long pageReadFromCacheTime = 0;
+    private long pageReadFromCacheTime  = 0;
 
     /**
      * Amount of pages in total which were accessed from disk cache.
@@ -727,16 +739,16 @@ public class OSessionStoragePerformanceStatistic {
     /**
      * Summary time which was spent to write pages to disk cache.
      */
-    private long pageWriteToCacheTime = 0;
+    private long pageWriteToCacheTime   = 0;
 
     /**
      * Amount of pages in total which were written to disk cache.
      */
-    private long pageWriteToCacheCount = 0;
+    private long pageWriteToCacheCount  = 0;
 
     /**
-     * @return Read speed of data in megabytes per second on cache level
-     * or value which is less than 0, which means that value can not be calculated.
+     * @return Read speed of data in megabytes per second on cache level or value which is less than 0, which means that value
+     *         cannot be calculated.
      */
     public long getReadSpeedFromCacheInMB() {
       final long pageSpeed = getReadSpeedFromCacheInPages();
@@ -747,8 +759,8 @@ public class OSessionStoragePerformanceStatistic {
     }
 
     /**
-     * @return Read speed of data in pages per second on cache level
-     * or value which is less than 0, which means that value can not be calculated.
+     * @return Read speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
+     *         calculated.
      */
     public long getReadSpeedFromCacheInPages() {
       if (pageReadFromCacheTime == 0)
@@ -758,8 +770,8 @@ public class OSessionStoragePerformanceStatistic {
     }
 
     /**
-     * @return Read speed of data on file system level in pages per second
-     * or value which is less than 0, which means that value can not be calculated.
+     * @return Read speed of data on file system level in pages per second or value which is less than 0, which means that value
+     *         cannot be calculated.
      */
     public long getReadSpeedFromFileInPages() {
       if (pageReadFromFileTime == 0)
@@ -769,8 +781,8 @@ public class OSessionStoragePerformanceStatistic {
     }
 
     /**
-     * @return Read speed of data on file system level in megabytes per second
-     * or value which is less than 0, which means that value can not be calculated.
+     * @return Read speed of data on file system level in megabytes per second or value which is less than 0, which means that value
+     *         cannot be calculated.
      */
     public long getReadSpeedFromFileInMB() {
       final long pageSpeed = getReadSpeedFromFileInPages();
@@ -795,8 +807,8 @@ public class OSessionStoragePerformanceStatistic {
     }
 
     /**
-     * @return Write speed of data in pages per second on cache level
-     * or value which is less than 0, which means that value can not be calculated.
+     * @return Write speed of data in pages per second on cache level or value which is less than 0, which means that value cannot
+     *         be calculated.
      */
     public long getWriteSpeedInCacheInPages() {
       if (pageWriteToCacheTime == 0)
@@ -806,8 +818,8 @@ public class OSessionStoragePerformanceStatistic {
     }
 
     /**
-     * @return Write speed of data in megabytes per second on cache level
-     * or value which is less than 0, which means that value can not be calculated.
+     * @return Write speed of data in megabytes per second on cache level or value which is less than 0, which means that value
+     *         cannot be calculated.
      */
     public long getWriteSpeedInCacheInMB() {
       final long pageSpeed = getWriteSpeedInCacheInPages();
@@ -825,8 +837,7 @@ public class OSessionStoragePerformanceStatistic {
     }
 
     /**
-     * @return Percent of cache hits
-     * or value which is less than 0, which means that value can not be calculated.
+     * @return Percent of cache hits or value which is less than 0, which means that value cannot be calculated.
      */
     public int getCacheHits() {
       if (cacheAccessCount == 0)
@@ -843,8 +854,7 @@ public class OSessionStoragePerformanceStatistic {
     }
 
     /**
-     * Converts properties of given class into values of fields of returned document.
-     * Names of fields equal to names of properties.
+     * Converts properties of given class into values of fields of returned document. Names of fields equal to names of properties.
      *
      * @return Performance characteristics of storage.
      */

@@ -104,6 +104,7 @@ public class OServer {
   private OClientConnectionManager                         clientConnectionManager;
   private ClassLoader                                      extensionClassLoader;
   private OTokenHandler                                    tokenHandler;
+  private Map<String, OServerUserConfiguration>            temporaryUsers         = new ConcurrentHashMap<String, OServerUserConfiguration>();
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -360,9 +361,9 @@ public class OServer {
         throw OException.wrapException(new OConfigurationException(message), e);
       }
 
-      registerPlugins();
-
       tokenHandler = new OTokenHandlerImpl(this);
+
+      registerPlugins();
 
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onAfterActivate();
@@ -442,10 +443,10 @@ public class OServer {
             OLogManager.instance().error(this, "Error during deactivation of server lifecycle listener %s", e, l);
           }
 
+        clientConnectionManager.shutdown();
+
         if (pluginManager != null)
           pluginManager.shutdown();
-
-        clientConnectionManager.shutdown();
 
       } finally {
         lock.unlock();
@@ -629,7 +630,7 @@ public class OServer {
 
   /**
    * Authenticate a server user.
-   * 
+   *
    * @param iUserName
    *          Username to authenticate
    * @param iPassword
@@ -683,7 +684,10 @@ public class OServer {
   }
 
   public OServerUserConfiguration getUser(final String iUserName) {
-    return serverCfg.getUser(iUserName);
+    OServerUserConfiguration user = temporaryUsers.get(iUserName);
+    if (user == null)
+      user = serverCfg.getUser(iUserName);
+    return user;
   }
 
   public void dropUser(final String iUserName) throws IOException {
@@ -767,6 +771,10 @@ public class OServer {
     else
       variables.put(iName, iValue);
     return this;
+  }
+
+  public void addTemporaryUser(final String iName, final String iPassword, final String iPermissions) {
+    temporaryUsers.put(iName, new OServerUserConfiguration(iName, iPassword, iPermissions));
   }
 
   public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {

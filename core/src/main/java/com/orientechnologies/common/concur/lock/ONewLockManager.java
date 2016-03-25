@@ -40,7 +40,7 @@ public class ONewLockManager<T> {
   private final ReadWriteLock[]          locks;
   private final OReadersWriterSpinLock[] spinLocks;
 
-  private final boolean useSpinLock;
+  private final boolean                  useSpinLock;
 
   private static final class SpinLockWrapper implements Lock {
     private final boolean                readLock;
@@ -177,6 +177,7 @@ public class ONewLockManager<T> {
     final ReadWriteLock rwLock = locks[index];
 
     final Lock lock = rwLock.writeLock();
+
     lock.lock();
     return lock;
   }
@@ -250,7 +251,7 @@ public class ONewLockManager<T> {
   }
 
   public void acquireExclusiveLocksInBatch(Collection<T> values) {
-    if (values == null)
+    if (values == null || values.isEmpty())
       return;
 
     final List<T> valCopy = new ArrayList<T>(values);

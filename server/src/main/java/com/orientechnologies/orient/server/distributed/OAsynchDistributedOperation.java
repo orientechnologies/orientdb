@@ -20,35 +20,36 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.Collection;
 import java.util.Set;
 
 /**
- * Asynchronous sistributed operation.
- * 
+ * Asynchronous distributed operation.
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OAsynchDistributedOperation {
-  private final String              databaseName;
-  private final Set<String>         clusterNames;
-  private final Collection<String>  nodes;
-  private final OAbstractRemoteTask task;
-  private final OCallable           callback;
+  private final String                                                  databaseName;
+  private final Set<String>                                             clusterNames;
+  private final Collection<String>                                      nodes;
+  private final ORemoteTask                                             task;
+  private final OCallable<Object, OPair<ODistributedRequestId, Object>> callback;
+  private final Object                                                  localResult;
+  private final OCallable<Void, ODistributedRequestId>                  afterRequestCallback;
 
   public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
-      final OAbstractRemoteTask iTask) {
-    this(iDatabaseName, iClusterNames, iNodes, iTask, null);
-  }
-
-  public OAsynchDistributedOperation(final String iDatabaseName, final Set<String> iClusterNames, final Collection<String> iNodes,
-      final OAbstractRemoteTask iTask, final OCallable iCallback) {
+      final ORemoteTask iTask, final OCallable<Object, OPair<ODistributedRequestId, Object>> iCallback, final Object iLocalResult,
+      final OCallable<Void, ODistributedRequestId> iAfterRequestCallback) {
     databaseName = iDatabaseName;
     clusterNames = iClusterNames;
     nodes = iNodes;
     task = iTask;
     callback = iCallback;
+    localResult = iLocalResult;
+    afterRequestCallback = iAfterRequestCallback;
   }
 
   public Set<String> getClusterNames() {
@@ -59,7 +60,7 @@ public class OAsynchDistributedOperation {
     return nodes;
   }
 
-  public OAbstractRemoteTask getTask() {
+  public ORemoteTask getTask() {
     return task;
   }
 
@@ -67,7 +68,15 @@ public class OAsynchDistributedOperation {
     return databaseName;
   }
 
-  public OCallable getCallback() {
+  public OCallable<Object, OPair<ODistributedRequestId, Object>> getCallback() {
     return callback;
+  }
+
+  public Object getLocalResult() {
+    return localResult;
+  }
+
+  public OCallable<Void, ODistributedRequestId> getAfterRequestCallback() {
+    return afterRequestCallback;
   }
 }

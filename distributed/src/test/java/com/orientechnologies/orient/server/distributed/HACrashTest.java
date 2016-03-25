@@ -31,11 +31,13 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   volatile int     serverStarted = 0;
   volatile boolean lastServerOn  = false;
 
+//  @Ignore
   @Test
   public void test() throws Exception {
     startupNodesInSequence = true;
     count = 500;
     maxRetries = 10;
+    delayWriter = 50;
     useTransactions = false;
     init(SERVERS);
     prepare(false);
@@ -62,7 +64,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
                 final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
                     .acquire();
                 try {
-                  return database.countClass("Person") > (count * SERVERS) * 1 / 3;
+                  return database.countClass("Person") > (count * SERVERS) * 1 / 4;
                 } finally {
                   database.close();
                 }
@@ -82,7 +84,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
                     final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
                         .acquire();
                     try {
-                      return database.countClass("Person") > (count * SERVERS) * 2 / 3;
+                      return database.countClass("Person") > (count * SERVERS) * 2 / 4;
                     } finally {
                       database.close();
                     }
@@ -91,6 +93,8 @@ public class HACrashTest extends AbstractServerClusterTxTest {
                   @Override
                   public Object call() throws Exception {
                     Assert.assertTrue("Insert was too fast", inserting);
+
+                    delayWriter = 100;
 
                     banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
                     try {

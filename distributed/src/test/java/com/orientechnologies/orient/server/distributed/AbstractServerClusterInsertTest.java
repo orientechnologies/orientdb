@@ -16,14 +16,20 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.*;
+
+import org.junit.Assert;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -33,25 +39,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import org.junit.Assert;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Insert records concurrently against the cluster
  */
 public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
-  protected int              delayWriter           = 0;
-  protected int              delayReader           = 1000;
+  protected volatile int     delayWriter           = 0;
+  protected volatile int     delayReader           = 1000;
   protected static final int writerCount           = 5;
   protected int              baseCount             = 0;
   protected int              expected;
@@ -62,8 +56,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
   protected class BaseWriter implements Callable<Void> {
     protected final String databaseUrl;
-    protected int          serverId;
-    protected int          threadId;
+    protected final int    serverId;
+    protected final int    threadId;
 
     protected BaseWriter(final int iServerId, final int iThreadId, final String db) {
       serverId = iServerId;
@@ -113,6 +107,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
               Thread.currentThread().interrupt();
               break;
             } catch (ORecordDuplicatedException e) {
+              System.out.println("Writer received exception (db=" + database.getURL());
               // IGNORE IT
             } catch (ONeedRetryException e) {
               System.out.println("Writer received exception (db=" + database.getURL());
@@ -258,6 +253,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void executeMultipleTest() throws InterruptedException, java.util.concurrent.ExecutionException {
+    poolFactory.reset();
     ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
     try {
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
@@ -268,37 +264,31 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     System.out.println("Creating Writers and Readers threads...");
 
-    final ExecutorService writerExecutors = Executors.newCachedThreadPool();
-    final ExecutorService readerExecutors = Executors.newCachedThreadPool();
+    final ExecutorService executors = Executors.newCachedThreadPool();
 
     runningWriters = new CountDownLatch(executeTestsOnServers.size() * writerCount);
 
     int serverId = 0;
     int threadId = 0;
-    List<Callable<Void>> writerWorkers = new ArrayList<Callable<Void>>();
+
+    List<Callable<Void>> workers = new ArrayList<Callable<Void>>();
     for (ServerRun server : executeTestsOnServers) {
       if (server.isActive()) {
         for (int j = 0; j < writerCount; j++) {
           Callable writer = createWriter(serverId, threadId++, getDatabaseURL(server));
-          writerWorkers.add(writer);
+          workers.add(writer);
         }
+
+        Callable<Void> reader = createReader(getDatabaseURL(server));
+        workers.add(reader);
+
         serverId++;
       }
     }
 
     expected = writerCount * count * serverId + baseCount;
 
-    List<Future<Void>> futures = writerExecutors.invokeAll(writerWorkers);
-
-    List<Callable<Void>> readerWorkers = new ArrayList<Callable<Void>>();
-    for (ServerRun server : executeTestsOnServers) {
-      if (server.isActive()) {
-        Callable<Void> reader = createReader(getDatabaseURL(server));
-        readerWorkers.add(reader);
-      }
-    }
-
-    List<Future<Void>> rFutures = readerExecutors.invokeAll(readerWorkers);
+    List<Future<Void>> futures = executors.invokeAll(workers);
 
     System.out.println("Threads started, waiting for the end");
 
@@ -306,17 +296,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       future.get();
     }
 
-    writerExecutors.shutdown();
-    Assert.assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
-
-    System.out.println("All writer threads have finished, shutting down readers");
-
-    for (Future<Void> future : rFutures) {
-      future.get();
-    }
-
-    readerExecutors.shutdown();
-    Assert.assertTrue(readerExecutors.awaitTermination(1, TimeUnit.MINUTES));
+    executors.shutdown();
+    Assert.assertTrue(executors.awaitTermination(1, TimeUnit.MINUTES));
 
     System.out.println("All threads have finished, shutting down server instances");
 
@@ -325,6 +306,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         printStats(getDatabaseURL(server));
       }
     }
+
+    Thread.sleep(2000);
 
     checkInsertedEntries();
     checkIndexedEntries();
@@ -450,7 +433,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         try {
           final int total = (int) database.countClass("Person");
 
-          Assert.assertEquals(expected, total);
+          Assert.assertEquals("Server " + server.getServerId() + " count is not what was expected", expected, total);
+
         } finally {
           database.close();
         }
@@ -465,24 +449,13 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   private void printStats(final String databaseUrl) {
     final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
     try {
-      database.reload();
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
 
       final String name = database.getURL();
 
-      System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
-          + " counting cluster: " + database.countClusterElements("Person"));
+      System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person"));
 
-      if (((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().existsClass("ODistributedConflict"))
-        try {
-          List<ODocument> conflicts = database
-              .query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));
-          long totalConflicts = conflicts.get(0).field("count");
-          Assert.assertEquals(0l, totalConflicts);
-          System.out.println("\nReader " + name + " conflicts: " + totalConflicts);
-        } catch (OQueryParsingException e) {
-          // IGNORE IT
-        }
+    } catch (Exception e) {
 
     } finally {
       database.close();

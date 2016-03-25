@@ -1,5 +1,13 @@
 package com.orientechnologies.orient.server.token;
 
+import java.io.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Random;
+import java.util.UUID;
+
+import javax.crypto.Mac;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
@@ -16,22 +24,11 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-
-import javax.crypto.Mac;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.UUID;
 
 /**
  * Created by emrul on 27/10/2014.
@@ -39,16 +36,16 @@ import java.util.UUID;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OTokenHandlerImpl implements OTokenHandler {
-  public static final String ENCRYPTION_ALGORITHM_DEFAULT = "HmacSHA256";
+  public static final String            ENCRYPTION_ALGORITHM_DEFAULT = "HmacSHA256";
 
-  private static       String           algorithm      = ENCRYPTION_ALGORITHM_DEFAULT;
-  private static final ThreadLocal<Mac> threadLocalMac = new MacThreadLocal();
+  private static String                 algorithm                    = ENCRYPTION_ALGORITHM_DEFAULT;
+  private static final ThreadLocal<Mac> threadLocalMac               = new MacThreadLocal();
 
-  protected static final int JWT_DELIMITER = '.';
-  private OBinaryTokenSerializer binarySerializer;
-  private long sessionInMills = 1000 * 60 * 60; // 1 HOUR
-  private OKeyProvider keyProvider;
-  private Random keyGenerator = new Random();
+  protected static final int            JWT_DELIMITER                = '.';
+  private OBinaryTokenSerializer        binarySerializer;
+  private long                          sessionInMills               = 1000 * 60 * 60;              // 1 HOUR
+  private OKeyProvider                  keyProvider;
+  private Random                        keyGenerator                 = new Random();
 
   public OTokenHandlerImpl(OServer server) {
     byte[] key = null;
@@ -81,7 +78,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
       throw new IllegalArgumentException("Can't find encryption algorithm '" + algorithm + "'", nsa);
     }
 
-    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keyProvider.getKeys(), new String[] { this.algorithm }, new String[] { "OrientDB" });
+    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keyProvider.getKeys(),
+        new String[] { this.algorithm }, new String[] { "OrientDB" });
   }
 
   protected OTokenHandlerImpl() {
@@ -92,7 +90,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
     keyProvider = new DefaultKeyProvider(key);
     this.algorithm = algorithm;
     sessionInMills = sessionLength * 1000 * 60;
-    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keyProvider.getKeys(), new String[] { this.algorithm }, new String[] { "OrientDB" });
+    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keyProvider.getKeys(),
+        new String[] { this.algorithm }, new String[] { "OrientDB" });
   }
 
   @Override
@@ -120,7 +119,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
 
     final byte[] decodedHeader = OBase64Utils.decode(tokenBytes, 0, firstDot, OBase64Utils.URL_SAFE);
     final byte[] decodedPayload = OBase64Utils.decode(tokenBytes, firstDot + 1, secondDot - (firstDot + 1), OBase64Utils.URL_SAFE);
-    final byte[] decodedSignature = OBase64Utils.decode(tokenBytes, secondDot + 1, tokenBytes.length - (secondDot + 1), OBase64Utils.URL_SAFE);
+    final byte[] decodedSignature = OBase64Utils.decode(tokenBytes, secondDot + 1, tokenBytes.length - (secondDot + 1),
+        OBase64Utils.URL_SAFE);
 
     final OrientJwtHeader header = deserializeWebHeader(decodedHeader);
     final OJwtPayload deserializeWebPayload = deserializeWebPayload(header.getType(), decodedPayload);
@@ -137,7 +137,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
       return false;
     }
     final OrientJwtPayload payload = (OrientJwtPayload) ((JsonWebToken) token).getPayload();
-    if (token.getDatabase().equalsIgnoreCase(database) && token.getExpiry() > System.currentTimeMillis() && payload.getNotBefore() < System.currentTimeMillis()) {
+    if (token.getDatabase().equalsIgnoreCase(database) && token.getExpiry() > System.currentTimeMillis()
+        && payload.getNotBefore() < System.currentTimeMillis()) {
       valid = true;
     }
     // TODO: Other validations... (e.g. check audience, etc.)
@@ -183,7 +184,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return tokenByteOS.toByteArray();
   }
 
-  public byte[] getSignedBinaryToken(final ODatabaseDocumentInternal db, final OSecurityUser user, final ONetworkProtocolData data) {
+  public byte[] getSignedBinaryToken(final ODatabaseDocumentInternal db, final OSecurityUser user,
+      final ONetworkProtocolData data) {
     try {
 
       final OBinaryToken token = new OBinaryToken();
@@ -229,8 +231,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return baos.toByteArray();
   }
 
-
-  public ONetworkProtocolData getProtocolDataFromToken(final OToken token) {
+  public ONetworkProtocolData getProtocolDataFromToken(OClientConnection connection, final OToken token) {
     if (token instanceof OBinaryToken) {
       final OBinaryToken binary = (OBinaryToken) token;
       final ONetworkProtocolData data = new ONetworkProtocolData();
@@ -241,6 +242,9 @@ public class OTokenHandlerImpl implements OTokenHandler {
       data.driverVersion = binary.getDriverVersion();
       data.serverUser = binary.isServerUser();
       data.serverUsername = binary.getUserName();
+      data.serverUsername = binary.getUserName();
+      data.supportsPushMessages = connection.getData().supportsPushMessages;
+      data.collectStats = connection.getData().collectStats;
       return data;
     }
     return null;
@@ -387,7 +391,8 @@ public class OTokenHandlerImpl implements OTokenHandler {
     return keyProvider;
   }
 
-  private boolean verifyTokenSignature(final OJwtHeader header, final byte[] base, final int baseOffset, final int baseLength, final byte[] signature) {
+  private boolean verifyTokenSignature(final OJwtHeader header, final byte[] base, final int baseOffset, final int baseLength,
+      final byte[] signature) {
     final Mac mac = threadLocalMac.get();
 
     try {
@@ -396,14 +401,14 @@ public class OTokenHandlerImpl implements OTokenHandler {
       final byte[] calculatedSignature = mac.doFinal();
       boolean valid = MessageDigest.isEqual(calculatedSignature, signature);
       if (!valid) {
-        OLogManager.instance().warn(this, "Signature failure: %s", OBase64Utils.encodeBytes(base));
+        OLogManager.instance().warn(this, "Token signature failure: %s", OBase64Utils.encodeBytes(base));
       }
       return valid;
 
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
-      throw OException.wrapException(new OSystemException("Token signature can not be verified"), e);
+      throw OException.wrapException(new OSystemException("Token signature cannot be verified"), e);
     } finally {
       mac.reset();
     }
@@ -425,7 +430,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     try {
       return binarySerializer.deserialize(bais);
     } catch (Exception e) {
-      throw OException.wrapException(new OSystemException("Can not deserialize binary token"), e);
+      throw OException.wrapException(new OSystemException("Cannot deserialize binary token"), e);
     }
   }
 

@@ -64,7 +64,7 @@ public class OAlterClassStatement extends OStatement {
       if (identifierValue != null) {
         identifierValue.toString(params, builder);
       } else if (customString!=null){
-        builder.append(customString);
+        builder.append('\'').append(customString).append('\'');
       }else{
         builder.append("null");
       }

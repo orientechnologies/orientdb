@@ -24,14 +24,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Proxied single value index.
@@ -82,6 +76,11 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
     }
 
     return map.entrySet().iterator();
+  }
+
+  @Override
+  public boolean isUnique() {
+    return true;
   }
 
   @Override

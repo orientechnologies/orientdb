@@ -98,11 +98,6 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   @Override
-  public void init() {
-
-  }
-
-  @Override
   public boolean contains(Object key) {
     return false;
   }

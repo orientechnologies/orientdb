@@ -96,7 +96,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
       @Override
       public Object callEngine(OIndexEngine engine) {
         OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
-        oIndexEngine.initIndex( getType(), getDefinition(), isAutomatic(), getMetadata());
+        oIndexEngine.init( getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
         return null;
       }
     });

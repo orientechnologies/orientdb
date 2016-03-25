@@ -19,16 +19,15 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Manager of indexes.
@@ -45,26 +44,26 @@ public interface OIndexManager {
    * 
    * @return this
    */
-  public OIndexManager load();
+  OIndexManager load();
 
   /**
    * Creates a document where index manager configuration is saved and creates a "dictionary" index.
    * 
    * IMPORTANT! Only for internal usage.
    */
-  public void create();
+  void create();
 
   /**
    * Drops all indexes and creates them from scratch.
    */
-  public void recreateIndexes();
+  void recreateIndexes();
 
   /**
    * Returns all indexes registered in database.
    * 
    * @return list of registered indexes.
    */
-  public Collection<? extends OIndex<?>> getIndexes();
+  Collection<? extends OIndex<?>> getIndexes();
 
   /**
    * Index by specified name.
@@ -73,7 +72,15 @@ public interface OIndexManager {
    *          name of index
    * @return index if one registered in database or null otherwise.
    */
-  public OIndex<?> getIndex(final String iName);
+  OIndex<?> getIndex(final String iName);
+
+  /**
+   * Returns the auto-sharding index defined for the class, if any.
+   * 
+   * @param className
+   *          Class name
+   */
+  OIndex<?> getClassAutoShardingIndex(String className);
 
   /**
    * Checks if index with specified name exists in database.
@@ -82,8 +89,7 @@ public interface OIndexManager {
    *          name of index.
    * @return true if index with specified name exists, false otherwise.
    */
-  public boolean existsIndex(final String iName);
-
+  boolean existsIndex(final String iName);
 
   /**
    * Creates a new index with default algorithm.
@@ -102,8 +108,8 @@ public interface OIndexManager {
    *          document with additional properties that can be used by index engine.
    * @return a newly created index instance
    */
-  public OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition indexDefinition,
-      final int[] clusterIdsToIndex, final OProgressListener progressListener, ODocument metadata);
+  OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition indexDefinition, final int[] clusterIdsToIndex,
+      final OProgressListener progressListener, ODocument metadata);
 
   /**
    * Creates a new index.
@@ -126,8 +132,8 @@ public interface OIndexManager {
    *          tip to an index factory what algorithm to use
    * @return a newly created index instance
    */
-  public OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition indexDefinition,
-      final int[] clusterIdsToIndex, final OProgressListener progressListener, ODocument metadata, String algorithm);
+  OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition indexDefinition, final int[] clusterIdsToIndex,
+      final OProgressListener progressListener, ODocument metadata, String algorithm);
 
   /**
    * Drop index with specified name. Do nothing if such index does not exists.
@@ -137,14 +143,14 @@ public interface OIndexManager {
    * @return this
    */
   @OApi(maturity = OApi.MATURITY.STABLE)
-  public OIndexManager dropIndex(final String iIndexName);
+  OIndexManager dropIndex(final String iIndexName);
 
   /**
    * IMPORTANT! Only for internal usage.
    * 
    * @return name of default cluster.
    */
-  public String getDefaultClusterName();
+  String getDefaultClusterName();
 
   /**
    * Sets the new default cluster.
@@ -154,20 +160,20 @@ public interface OIndexManager {
    * @param defaultClusterName
    *          name of new default cluster
    */
-  public void setDefaultClusterName(String defaultClusterName);
+  void setDefaultClusterName(String defaultClusterName);
 
   /**
    * Return a dictionary index. Could be helpful to store different kinds of configurations.
    * 
    * @return a dictionary
    */
-  public ODictionary<ORecord> getDictionary();
+  ODictionary<ORecord> getDictionary();
 
   /**
    * Flushes all indexes that is registered in this manager. There might be some changes stored in memory, this method ensures that
    * all this changed are stored to the disk.
    */
-  public void flush();
+  void flush();
 
   /**
    * Returns a record where configurations are saved.
@@ -176,7 +182,7 @@ public interface OIndexManager {
    * 
    * @return a document that used to store index configurations.
    */
-  public ODocument getConfiguration();
+  ODocument getConfiguration();
 
   /**
    * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
@@ -190,7 +196,7 @@ public interface OIndexManager {
    *          Field names.
    * @return list of indexes that contain passed in fields names as their first keys.
    */
-  public Set<OIndex<?>> getClassInvolvedIndexes(String className, Collection<String> fields);
+  Set<OIndex<?>> getClassInvolvedIndexes(String className, Collection<String> fields);
 
   /**
    * Returns list of indexes that contain passed in fields names as their first keys. Order of fields does not matter.
@@ -204,7 +210,7 @@ public interface OIndexManager {
    *          Field names.
    * @return list of indexes that contain passed in fields names as their first keys.
    */
-  public Set<OIndex<?>> getClassInvolvedIndexes(String className, String... fields);
+  Set<OIndex<?>> getClassInvolvedIndexes(String className, String... fields);
 
   /**
    * Indicates whether given fields are contained as first key fields in class indexes. Order of fields does not matter. If there
@@ -216,7 +222,7 @@ public interface OIndexManager {
    *          Field names.
    * @return <code>true</code> if given fields are contained as first key fields in class indexes.
    */
-  public boolean areIndexed(String className, Collection<String> fields);
+  boolean areIndexed(String className, Collection<String> fields);
 
   /**
    * @param className
@@ -226,7 +232,7 @@ public interface OIndexManager {
    * @return <code>true</code> if given fields are contained as first key fields in class indexes.
    * @see #areIndexed(String, java.util.Collection)
    */
-  public boolean areIndexed(String className, String... fields);
+  boolean areIndexed(String className, String... fields);
 
   /**
    * Gets indexes for a specified class (excluding indexes for sub-classes).
@@ -235,7 +241,7 @@ public interface OIndexManager {
    *          name of class which is indexed.
    * @return a set of indexes related to specified class
    */
-  public Set<OIndex<?>> getClassIndexes(String className);
+  Set<OIndex<?>> getClassIndexes(String className);
 
   /**
    * Gets indexes for a specified class (excluding indexes for sub-classes).
@@ -248,6 +254,11 @@ public interface OIndexManager {
   void getClassIndexes(String className, Collection<OIndex<?>> indexes);
 
   /**
+   * Returns the unique index for a class, if any.
+   */
+  OIndexUnique getClassUniqueIndex(String className);
+
+  /**
    * Searches for index for a specified class with specified name.
    * 
    * @param className
@@ -256,12 +267,12 @@ public interface OIndexManager {
    *          name of index.
    * @return an index instance or null if such does not exist.
    */
-  public OIndex<?> getClassIndex(String className, String indexName);
+  OIndex<?> getClassIndex(String className, String indexName);
 
   /**
    * Blocks current thread till indexes will be restored.
    */
-  public void waitTillIndexRestore();
+  void waitTillIndexRestore();
 
   /**
    * Checks if indexes should be automatically recreated.
@@ -270,7 +281,7 @@ public interface OIndexManager {
    * 
    * @return true if crash is happened and database configured to automatically recreate indexes after crash.
    */
-  public boolean autoRecreateIndexesAfterCrash();
+  boolean autoRecreateIndexesAfterCrash();
 
   /**
    * Adds a cluster to tracked cluster list of specified index.
@@ -282,7 +293,7 @@ public interface OIndexManager {
    * @param indexName
    *          name of index.
    */
-  public void addClusterToIndex(String clusterName, String indexName);
+  void addClusterToIndex(String clusterName, String indexName);
 
   /**
    * Removes a cluster from tracked cluster list of specified index.
@@ -294,14 +305,14 @@ public interface OIndexManager {
    * @param indexName
    *          name of index.
    */
-  public void removeClusterFromIndex(String clusterName, String indexName);
+  void removeClusterFromIndex(String clusterName, String indexName);
 
   /**
    * Saves index manager data.
    * 
    * IMPORTANT! Only for internal usage.
    */
-  public <RET extends ODocumentWrapper> RET save();
+  <RET extends ODocumentWrapper> RET save();
 
   /**
    * Removes index from class-property map.

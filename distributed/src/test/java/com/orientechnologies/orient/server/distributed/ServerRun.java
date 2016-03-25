@@ -20,7 +20,10 @@ import java.io.IOException;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -125,6 +128,26 @@ public class ServerRun {
   protected void shutdownServer() {
     if (server != null)
       server.shutdown();
+
+    closeStorages();
+  }
+
+  public void closeStorages() {
+    for (OStorage s : Orient.instance().getStorages()) {
+      if (s instanceof OLocalPaginatedStorage && ((OLocalPaginatedStorage) s).getStoragePath().startsWith(getDatabasePath(""))) {
+        s.close(true, false);
+        Orient.instance().unregisterStorage(s);
+      }
+    }
+  }
+
+  public void deleteStorages() {
+    for (OStorage s : Orient.instance().getStorages()) {
+      if (s instanceof OLocalPaginatedStorage && ((OLocalPaginatedStorage) s).getStoragePath().startsWith(getDatabasePath(""))) {
+        s.close(true, true);
+        Orient.instance().unregisterStorage(s);
+      }
+    }
   }
 
   protected String getServerHome() {

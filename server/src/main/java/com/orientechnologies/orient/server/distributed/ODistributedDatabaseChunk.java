@@ -21,13 +21,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
-import java.io.Externalizable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.util.zip.GZIPInputStream;
 
 public class ODistributedDatabaseChunk implements Externalizable {
@@ -42,9 +36,8 @@ public class ODistributedDatabaseChunk implements Externalizable {
   public ODistributedDatabaseChunk() {
   }
 
-  public ODistributedDatabaseChunk(final long iLastOperationId, final File iFile, final long iOffset, final int iMaxSize,
-      final OLogSequenceNumber iLSN, final boolean gzipCompressed) throws IOException {
-    lastOperationId = iLastOperationId;
+  public ODistributedDatabaseChunk(final File iFile, final long iOffset, final int iMaxSize, final OLogSequenceNumber iLSN,
+      final boolean gzipCompressed) throws IOException {
     filePath = iFile.getAbsolutePath();
     offset = iOffset;
     lsn = iLSN;
@@ -100,13 +93,8 @@ public class ODistributedDatabaseChunk implements Externalizable {
     return filePath + "[" + offset + "-" + buffer.length + "] (last=" + last + ")";
   }
 
-  public long getLastOperationId() {
-    return lastOperationId;
-  }
-
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeLong(lastOperationId);
     out.writeUTF(filePath);
     out.writeLong(offset);
     out.writeInt(buffer.length);
@@ -120,7 +108,6 @@ public class ODistributedDatabaseChunk implements Externalizable {
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    lastOperationId = in.readLong();
     filePath = in.readUTF();
     offset = in.readLong();
     final int size = in.readInt();

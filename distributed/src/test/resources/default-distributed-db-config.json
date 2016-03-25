@@ -2,16 +2,13 @@
   "autoDeploy": true,
   "hotAlignment": false,
   "readQuorum": 1,
-  "writeQuorum": 2,
-  "failureAvailableNodesLessQuorum": false,
+  "writeQuorum": "majority",
   "readYourWrites": true,
   "servers": {
     "*": "master"
   },
   "clusters": {
     "internal": {
-    },
-    "index": {
     },
     "*": {
       "servers": ["<NEW_NODE>"]

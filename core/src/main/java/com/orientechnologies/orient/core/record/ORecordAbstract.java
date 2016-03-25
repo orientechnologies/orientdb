@@ -47,17 +47,17 @@ import java.util.WeakHashMap;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract implements ORecord {
-  protected ORecordId _recordId;
-  protected int       _recordVersion = 0;
+  protected ORecordId                            _recordId;
+  protected int                                  _recordVersion             = 0;
 
-  protected byte[] _source;
-  protected int    _size;
+  protected byte[]                               _source;
+  protected int                                  _size;
 
-  protected transient ORecordSerializer    _recordFormat;
-  protected boolean                        _dirty          = true;
-  protected boolean                        _contentChanged = true;
-  protected ORecordElement.STATUS          _status         = ORecordElement.STATUS.LOADED;
-  protected transient Set<ORecordListener> _listeners      = null;
+  protected transient ORecordSerializer          _recordFormat;
+  protected boolean                              _dirty                     = true;
+  protected boolean                              _contentChanged            = true;
+  protected ORecordElement.STATUS                _status                    = ORecordElement.STATUS.LOADED;
+  protected transient Set<ORecordListener>       _listeners                 = null;
 
   private transient Set<OIdentityChangeListener> newIdentityChangeListeners = null;
   protected ODirtyManager                        _dirtyManager;
@@ -222,17 +222,17 @@ public abstract class ORecordAbstract implements ORecord {
 
   public ORecord load() {
     if (!getIdentity().isValid())
-      throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
+      throw new ORecordNotFoundException(getIdentity(), "The record has no id, probably it's new or transient yet ");
 
     try {
       final ORecord result = getDatabase().load(this);
 
       if (result == null)
-        throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found");
+        throw new ORecordNotFoundException(getIdentity());
 
       return result;
     } catch (Exception e) {
-      throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found"), e);
+      throw OException.wrapException(new ORecordNotFoundException(getIdentity()), e);
     }
   }
 
@@ -259,7 +259,7 @@ public abstract class ORecordAbstract implements ORecord {
   @Override
   public ORecord reload(String fetchPlan, boolean ignoreCache, boolean force) throws ORecordNotFoundException {
     if (!getIdentity().isValid())
-      throw new ORecordNotFoundException("The record has no id. It is probably new or still transient");
+      throw new ORecordNotFoundException(getIdentity(), "The record has no id. It is probably new or still transient");
 
     try {
       getDatabase().reload(this, fetchPlan, ignoreCache, force);
@@ -271,7 +271,7 @@ public abstract class ORecordAbstract implements ORecord {
     } catch (ORecordNotFoundException e) {
       throw e;
     } catch (Exception e) {
-      throw OException.wrapException(new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found"), e);
+      throw OException.wrapException(new ORecordNotFoundException(getIdentity()), e);
     }
   }
 

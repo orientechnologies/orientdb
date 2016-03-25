@@ -26,5 +26,5 @@ package com.orientechnologies.common.util;
  * 
  */
 public interface OCallable<RET, PAR> {
-	public RET call(PAR iArgument);
+  RET call(PAR iArgument);
 }

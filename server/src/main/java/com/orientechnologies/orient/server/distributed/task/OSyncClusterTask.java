@@ -30,17 +30,10 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPo
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 
@@ -53,6 +46,7 @@ import java.util.concurrent.locks.Lock;
 public class OSyncClusterTask extends OAbstractReplicatedTask {
   public final static int    CHUNK_MAX_SIZE = 4194304;         // 4MB
   public static final String DEPLOYCLUSTER  = "deploycluster.";
+  public static final int    FACTORYID      = 12;
 
   public enum MODE {
     FULL_REPLACE, MERGE
@@ -71,8 +65,8 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public Object execute(final OServer iServer, final ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+  public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database) throws Exception {
 
     if (getNodeSource() == null || !getNodeSource().equals(iManager.getLocalNodeName())) {
       if (database == null)
@@ -170,7 +164,7 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
                 "Sending the compressed cluster '%s.%s' over the NETWORK to node '%s', size=%s...", databaseName, clusterName,
                 getNodeSource(), OFileUtils.getSizeAsString(fileSize));
 
-            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(0, backupFile, 0, CHUNK_MAX_SIZE,
+            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE,
                 new OLogSequenceNumber(-1, -1), false);
 
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
@@ -204,11 +198,6 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public boolean isRequireNodeOnline() {
-    return false;
-  }
-
-  @Override
   public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
@@ -236,8 +225,8 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public boolean isRequiredOpenDatabase() {
-    return true;
+  public int getFactoryId() {
+    return FACTORYID;
   }
 
 }

@@ -77,7 +77,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
       if (pos == -1)
         throw new OCommandSQLParsingException("Expected cluster name. Use " + getSyntax(), parserText, oldPos);
 
-      clusterName = word.toString();
+      clusterName = decodeClusterName(word.toString());
 
       if (preParsedStatement != null) { // new parser, this will be removed and implemented with the new executor
         OIdentifier name = ((OTruncateClusterStatement) preParsedStatement).clusterName;
@@ -93,6 +93,10 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
       textRequest.setText(originalQuery);
     }
     return this;
+  }
+
+  private String decodeClusterName(String s) {
+    return decodeClassName(s);
   }
 
   /**

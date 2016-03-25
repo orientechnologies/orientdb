@@ -19,6 +19,23 @@
  */
 package com.orientechnologies.orient.core.storage.cache.local;
 
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.lang.management.ManagementFactory;
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.zip.CRC32;
+
+import javax.management.*;
+
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -74,27 +91,30 @@ import java.util.zip.CRC32;
 public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCachePointer.WritersListener, OWOWCacheMXBean {
   // we add 8 bytes before and after cache pages to prevent word tearing in mt case.
 
-  private final int MAX_PAGES_PER_FLUSH;
+  private final int                                        MAX_PAGES_PER_FLUSH;
 
-  public static final String NAME_ID_MAP_EXTENSION = ".cm";
+  public static final String                               NAME_ID_MAP_EXTENSION    = ".cm";
 
-  private static final String NAME_ID_MAP = "name_id_map" + NAME_ID_MAP_EXTENSION;
+  private static final String                              NAME_ID_MAP              = "name_id_map" + NAME_ID_MAP_EXTENSION;
 
-  public static final int MIN_CACHE_SIZE = 16;
+  public static final int                                  MIN_CACHE_SIZE           = 16;
 
-  public static final long MAGIC_NUMBER = 0xFACB03FEL;
+  public static final long                                 MAGIC_NUMBER             = 0xFACB03FEL;
 
-  private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024L * 1024L;
+  private final long                                       freeSpaceLimit           = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
+      .getValueAsLong() * 1024L * 1024L;
 
-  private final int                                        diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES
+  private final int                                        diskSizeCheckInterval    = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES
       .getValueAsInteger();
-  private final List<WeakReference<OLowDiskSpaceListener>> listeners             = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
+  private final List<WeakReference<OLowDiskSpaceListener>> listeners                = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
 
-  private final AtomicLong lastDiskSpaceCheck = new AtomicLong(System.currentTimeMillis());
-  private final String storagePath;
+  private final AtomicLong                                 lastDiskSpaceCheck       = new AtomicLong(System.currentTimeMillis());
+  private final String                                     storagePath;
 
-  private final ConcurrentSkipListMap<PageKey, PageGroup> writeCachePages     = new ConcurrentSkipListMap<PageKey, PageGroup>();
-  private final ConcurrentSkipListSet<PageKey>            exclusiveWritePages = new ConcurrentSkipListSet<PageKey>();
+  private final ConcurrentSkipListMap<PageKey, PageGroup>  writeCachePages          = new ConcurrentSkipListMap<PageKey, PageGroup>();
+  private final ConcurrentSkipListSet<PageKey>             exclusiveWritePages      = new ConcurrentSkipListSet<PageKey>();
+  private final ODistributedCounter                        writeCacheSize           = new ODistributedCounter();
+  private final ODistributedCounter                        exclusiveWriteCacheSize  = new ODistributedCounter();
 
   private final OBinarySerializer<String>            stringSerializer;
   private final ConcurrentMap<Integer, OFileClassic> files;
@@ -104,15 +124,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final OWriteAheadLog                       writeAheadLog;
   private final AtomicLong amountOfNewPagesAdded = new AtomicLong();
 
-  private final ODistributedCounter writeCacheSize          = new ODistributedCounter();
-  private final ODistributedCounter exclusiveWriteCacheSize = new ODistributedCounter();
+  private final ONewLockManager<PageKey>                   lockManager              = new ONewLockManager<PageKey>();
+  private final OLocalPaginatedStorage                     storageLocal;
+  private final OReadersWriterSpinLock                     filesLock                = new OReadersWriterSpinLock();
+  private final ScheduledExecutorService                   commitExecutor;
 
-  private final ONewLockManager<PageKey> lockManager = new ONewLockManager<PageKey>();
-  private final OLocalPaginatedStorage storageLocal;
-  private final OReadersWriterSpinLock filesLock = new OReadersWriterSpinLock();
-  private final ScheduledExecutorService commitExecutor;
-
-  private final ExecutorService lowSpaceEventsPublisher;
+  private final ExecutorService                            lowSpaceEventsPublisher;
 
   private volatile ConcurrentMap<String, Integer> nameIdMap;
 
@@ -120,25 +137,25 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final int              writeCacheMaxSize;
   private final int              cacheMaxSize;
 
-  private final OStoragePerformanceStatistic storagePerformanceStatistic;
+  private final OStoragePerformanceStatistic               storagePerformanceStatistic;
 
-  private int fileCounter = 1;
+  private int                                              fileCounter              = 1;
 
-  private PageKey lastPageKey      = new PageKey(0, -1);
-  private PageKey lastWritePageKey = new PageKey(0, -1);
+  private PageKey                                          lastPageKey              = new PageKey(0, -1);
+  private PageKey                                          lastWritePageKey         = new PageKey(0, -1);
 
-  private File nameIdMapHolderFile;
+  private File                                             nameIdMapHolderFile;
 
-  private final int id;
+  private final int                                        id;
 
-  private final AtomicReference<Date> lastFuzzyCheckpointDate  = new AtomicReference<Date>();
-  private final AtomicLong            lastAmountOfFlushedPages = new AtomicLong();
-  private final AtomicLong            durationOfLastFlush      = new AtomicLong();
+  private final AtomicReference<Date>                      lastFuzzyCheckpointDate  = new AtomicReference<Date>();
+  private final AtomicLong                                 lastAmountOfFlushedPages = new AtomicLong();
+  private final AtomicLong                                 durationOfLastFlush      = new AtomicLong();
 
-  private final OByteBufferPool bufferPool;
+  private final OByteBufferPool                            bufferPool;
 
-  private final       AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
-  public static final String        MBEAN_NAME        = "com.orientechnologies.orient.core.storage.cache.local:type=OWOWCacheMXBean";
+  private final AtomicBoolean                              mbeanIsRegistered        = new AtomicBoolean();
+  public static final String                               MBEAN_NAME               = "com.orientechnologies.orient.core.storage.cache.local:type=OWOWCacheMXBean";
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, OByteBufferPool bufferPool, long groupTTL, OWriteAheadLog writeAheadLog,
       long pageFlushInterval, long writeCacheMaxSize, long cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize,
@@ -257,8 +274,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             try {
               listener.lowDiskSpace(information);
             } catch (Exception e) {
-              OLogManager.instance()
-                  .error(this, "Error during notification of low disk space for storage " + storageLocal.getName(), e);
+              OLogManager.instance().error(this,
+                  "Error during notification of low disk space for storage " + storageLocal.getName(), e);
             }
         }
       }
@@ -473,9 +490,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       try {
         future.get();
       } catch (Exception e) {
-        throw OException
-            .wrapException(new OStorageException("Error during fuzzy checkpoint execution for storage " + storageLocal.getName()),
-                e);
+        throw OException.wrapException(
+            new OStorageException("Error during fuzzy checkpoint execution for storage " + storageLocal.getName()), e);
       }
     }
   }
@@ -801,8 +817,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final OFileClassic file = files.get(intId);
       final String osFileName = file.getName();
       if (osFileName.startsWith(oldFileName)) {
-        final File newFile = new File(storageLocal.getStoragePath() + File.separator + newFileName + osFileName
-            .substring(osFileName.lastIndexOf(oldFileName) + oldFileName.length()));
+        final File newFile = new File(storageLocal.getStoragePath() + File.separator + newFileName
+            + osFileName.substring(osFileName.lastIndexOf(oldFileName) + oldFileName.length()));
         boolean renamed = file.renameTo(newFile);
         while (!renamed) {
           renamed = file.renameTo(newFile);
@@ -922,9 +938,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             if (magicNumber != MAGIC_NUMBER) {
               magicNumberIncorrect = true;
               if (commandOutputListener != null)
-                commandOutputListener.onMessage(
-                    "Error: Magic number for page " + (pos / pageSize) + " in file " + fileClassic.getName()
-                        + " does not much !!!");
+                commandOutputListener.onMessage("Error: Magic number for page " + (pos / pageSize) + " in file "
+                    + fileClassic.getName() + " does not much !!!");
               fileIsCorrect = false;
             }
 
@@ -1019,7 +1034,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     filesLock.acquireReadLock();
     try {
-      return files.get(intId).getName();
+      final OFileClassic f = files.get(intId);
+      return f != null ? f.getName() : null;
     } finally {
       filesLock.releaseReadLock();
     }
@@ -1041,7 +1057,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           mbeanIsRegistered.set(false);
           OLogManager.instance().warn(this,
               "MBean with name %s has already registered. Probably your system was not shutdown correctly"
-                  + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
+                  + " or you have several running applications which use OrientDB engine inside",
+              mbeanName.getCanonicalName());
         }
 
       } catch (MalformedObjectNameException e) {
