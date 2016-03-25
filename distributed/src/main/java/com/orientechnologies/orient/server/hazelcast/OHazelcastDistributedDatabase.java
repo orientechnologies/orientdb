@@ -60,7 +60,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected ODistributedSyncConfiguration                                   syncConfiguration;
   protected AtomicBoolean                                                   status                         = new AtomicBoolean(
       false);
-  protected Map<ORID, ODistributedRequestId>                                lockManager                    = new ConcurrentHashMap<ORID, ODistributedRequestId>(
+  protected ConcurrentHashMap<ORID, ODistributedRequestId>                                lockManager                    = new ConcurrentHashMap<ORID, ODistributedRequestId>(
       256);
   protected ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts               = new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext>(
       64);
