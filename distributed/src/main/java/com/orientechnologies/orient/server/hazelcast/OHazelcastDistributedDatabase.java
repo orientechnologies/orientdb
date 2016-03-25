@@ -60,8 +60,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected ODistributedSyncConfiguration                                   syncConfiguration;
   protected AtomicBoolean                                                   status                         = new AtomicBoolean(
       false);
-  protected ConcurrentHashMap<ORID, ODistributedRequestId>                  lockManager                    = new ConcurrentHashMap<ORID, ODistributedRequestId>();
-  protected ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts               = new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext>();
+  protected Map<ORID, ODistributedRequestId>                                lockManager                    = new ConcurrentHashMap<ORID, ODistributedRequestId>(
+      256);
+  protected ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext> activeTxContexts               = new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContext>(
+      64);
   protected final List<ODistributedWorker>                                  workerThreads                  = new ArrayList<ODistributedWorker>();
   protected volatile ReadWriteLock                                          processLock                    = new ReentrantReadWriteLock();
 
@@ -272,13 +274,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   public boolean lockRecord(final OIdentifiable iRecord, final ODistributedRequestId iRequestId) {
     final ODistributedRequestId oldReqId = lockManager.putIfAbsent(iRecord.getIdentity(), iRequestId);
 
-    // final StringWriter writer = new StringWriter();
-    // new Exception("DEBUG").printStackTrace(new PrintWriter(writer));
-    // String stack = writer.getBuffer().toString();
-    //
-    // ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-    // "locking record %s in database '%s' by %s. Previous was: %s", iRecord, databaseName, iRequestId, oldReqId);
-
     final boolean locked = oldReqId == null;
 
     if (!locked) {
@@ -303,17 +298,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   public void unlockRecord(final OIdentifiable iRecord) {
     final ODistributedRequestId owner = lockManager.remove(iRecord.getIdentity());
 
-    // final StringWriter writer = new StringWriter();
-    // new Exception("DEBUG").printStackTrace(new PrintWriter(writer));
-    // String stack = writer.getBuffer().toString();
-    //
-    // ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "unlocking record %s in database '%s' owned by
-    // %s",
-    // iRecord, databaseName, owner);
-
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Distributed transaction: unlocked record %s in database '%s'", iRecord, databaseName);
+          "Distributed transaction: unlocked record %s in database '%s' (owner=%s)", iRecord, databaseName, owner);
   }
 
   @Override
