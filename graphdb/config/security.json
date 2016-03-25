@@ -4,7 +4,7 @@
 
 	"server" :
 	{
-		"createDefaultUsers" : false,
+		"createDefaultUsers" : true,
 	},
 
 	"authentication" :
