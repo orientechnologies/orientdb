@@ -58,7 +58,7 @@ public class ODistributedOutput {
     // READ DEFAULT CFG (CLUSTER=*)
     final int defaultWQ = cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes);
     final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes);
-    final String defaultOwner = "" + cfg.getOwnerOfCluster(ODistributedConfiguration.ALL_WILDCARD);
+    final String defaultOwner = "" + cfg.getClusterOwner(ODistributedConfiguration.ALL_WILDCARD);
     final List<String> defaultServers = cfg.getOriginalServers(ODistributedConfiguration.ALL_WILDCARD);
 
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
@@ -66,7 +66,7 @@ public class ODistributedOutput {
     for (String cluster : cfg.getClusterNames()) {
       final int wQ = cfg.getWriteQuorum(cluster, availableNodes);
       final int rQ = cfg.getReadQuorum(cluster, availableNodes);
-      final String owner = cfg.getOwnerOfCluster(cluster);
+      final String owner = cfg.getClusterOwner(cluster);
       final List<String> servers = cfg.getOriginalServers(cluster);
 
       if (!cluster.equals(ODistributedConfiguration.ALL_WILDCARD) && defaultWQ == wQ && defaultRQ == rQ

@@ -38,20 +38,21 @@ public class TestSharding extends AbstractServerClusterTest {
 
   @Override
   protected void onAfterDatabaseCreation(OrientBaseGraph graphNoTx) {
-    final OrientVertexType clientType = graphNoTx.createVertexType("Client-Type");
+    final OrientVertexType clientType = graphNoTx.createVertexType("Client-Type", 1);
     final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name-property", OType.STRING);
     prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    clientType.addCluster("client-type_europe");
+    graphNoTx.command(new OCommandSQL("alter cluster `Client-Type` name `Client-Type_europe`")).execute();
+
     clientType.addCluster("client-type_usa");
     clientType.addCluster("client-type_asia");
 
-    graphNoTx.createVertexType("Product-Type");
-    graphNoTx.createVertexType("Hobby-Type");
+    graphNoTx.createVertexType("Product-Type", 1);
+    graphNoTx.createVertexType("Hobby-Type", 1);
 
-    graphNoTx.createEdgeType("Knows-Type");
-    graphNoTx.createEdgeType("Buy-Type");
-    graphNoTx.createEdgeType("Loves-Type");
+    graphNoTx.createEdgeType("Knows-Type", 1);
+    graphNoTx.createEdgeType("Buy-Type", 1);
+    graphNoTx.createEdgeType("Loves-Type", 1);
   }
 
   @Override
@@ -89,7 +90,8 @@ public class TestSharding extends AbstractServerClusterTest {
 
           final int clId = vertices[i].getIdentity().getClusterId();
 
-          final int clusterId = graph.getRawGraph().getClusterIdByName("client-type_" + nodeName);
+          final String expectedClusterNameAssigned = "client-type_" + nodeName;
+          final int clusterId = graph.getRawGraph().getClusterIdByName(expectedClusterNameAssigned);
           Assert.assertEquals("Error on assigning cluster client_" + nodeName, clId, clusterId);
 
           vertices[i].setProperty("name-property", "shard_" + i);

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -27,6 +28,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -122,9 +126,15 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
   public void prepareUndoOperation() {
     if (previousRecord == null) {
-      previousRecord = rid.getRecord();
-      if (previousRecord == null)
+      // READ DIRECTLY FROM THE UNDERLYING STORAGE
+      final OStorageOperationResult<ORawBuffer> loaded = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying()
+          .readRecord(rid, null, true, null);
+
+      if (loaded == null || loaded.getResult() == null)
         throw new ORecordNotFoundException(rid);
+
+      previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType);
+      ORecordInternal.fill(previousRecord, rid, loaded.getResult().version, loaded.getResult().getBuffer(), false);
     }
   }
 

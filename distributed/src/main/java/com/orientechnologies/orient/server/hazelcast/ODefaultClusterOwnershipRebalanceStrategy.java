@@ -80,10 +80,19 @@ public class ODefaultClusterOwnershipRebalanceStrategy implements OClusterOwners
     // ORDER OWNERSHIP BY SIZE
     final List<OPair<String, List<String>>> nodeOwners = new ArrayList<OPair<String, List<String>>>(availableNodes.size());
     for (String server : availableNodes) {
-      final List<String> ownedClusters = cfg.getOwnedClusters(clusterNames, server);
+      final List<String> ownedClusters = cfg.getOwnedClustersByServer(clusterNames, server);
+
+      // FILTER ALL THE CLUSTERS WITH A STATIC OWNER CFG
+      for (Iterator<String> it = ownedClusters.iterator(); it.hasNext();) {
+        final String cluster = it.next();
+        if (cfg.getConfiguredClusterOwner(cluster) != null)
+          it.remove();
+      }
+
       nodeOwners.add(new OPair<String, List<String>>(server, ownedClusters));
     }
 
+    // ORDER BY NODES OWNING THE MORE CLUSTERS
     Collections.sort(nodeOwners, new Comparator<OPair<String, List<String>>>() {
       @Override
       public int compare(OPair<String, List<String>> o1, OPair<String, List<String>> o2) {
@@ -96,7 +105,7 @@ public class ODefaultClusterOwnershipRebalanceStrategy implements OClusterOwners
       final List<String> ownedClusters = owner.getValue();
 
       if (ownedClusters.size() > targetClustersPerNode) {
-        // REMOVE CLUSTERS
+        // REMOVE CLUSTERS IF THERE IS NO STATIC CFG OF THE OWNER
         while (ownedClusters.size() > targetClustersPerNode) {
           clustersOfClassToReassign.add(ownedClusters.remove(ownedClusters.size() - 1));
         }
@@ -131,7 +140,7 @@ public class ODefaultClusterOwnershipRebalanceStrategy implements OClusterOwners
 
     // CHECK OWNER AFTER RE-BALANCE AND CREATE NEW CLUSTERS IF NEEDED
     for (String server : availableNodes) {
-      final List<String> ownedClusters = cfg.getOwnedClusters(clusterNames, server);
+      final List<String> ownedClusters = cfg.getOwnedClustersByServer(clusterNames, server);
       if (ownedClusters.isEmpty()) {
         // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
         String newClusterName;

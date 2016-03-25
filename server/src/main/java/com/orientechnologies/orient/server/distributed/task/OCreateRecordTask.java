@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.List;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -41,6 +35,12 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Distributed create record task used for synchronization.
@@ -73,6 +73,11 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // RESETTING FOR AVOID DESERIALIZATION ISSUE.
       ((ORecordId) record.getIdentity()).clusterId = ORID.CLUSTER_ID_INVALID;
     }
+  }
+
+  @Override
+  public void prepareUndoOperation() {
+    // NO UNDO IS NEEDED
   }
 
   @Override

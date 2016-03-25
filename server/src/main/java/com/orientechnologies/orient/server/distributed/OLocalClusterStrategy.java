@@ -102,7 +102,7 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
 
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
-    final List<String> bestClusters = cfg.getOwnedClusters(clusterNames, nodeName);
+    final List<String> bestClusters = cfg.getOwnedClustersByServer(clusterNames, nodeName);
     if (bestClusters.isEmpty()) {
 
       // FILL THE MAP CLUSTER/SERVERS

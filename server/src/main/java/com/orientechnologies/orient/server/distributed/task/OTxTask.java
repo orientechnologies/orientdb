@@ -94,6 +94,9 @@ public class OTxTask extends OAbstractReplicatedTask {
 
       for (OAbstractRecordReplicatedTask task : tasks) {
         reqContext.lock(task.getRid());
+
+        task.prepareUndoOperation();
+
         final Object taskResult = task.execute(requestId, iServer, iManager, database);
 
         reqContext.addUndoTask(task.getUndoTask(requestId));
