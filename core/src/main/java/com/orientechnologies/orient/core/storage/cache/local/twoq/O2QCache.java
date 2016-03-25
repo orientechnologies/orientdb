@@ -377,8 +377,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   public OCacheEntry load(long fileId, final long pageIndex, final boolean checkPinnedPages, OWriteCache writeCache,
       final int pageCount) throws IOException {
 
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-        .getStatisticInstance();
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = writeCache.getPerformanceStatisticManager()
+        .getSessionPerformanceStatistic();
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
@@ -473,8 +473,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
   @Override
   public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) throws IOException {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-        .getStatisticInstance();
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = writeCache.getPerformanceStatisticManager()
+        .getSessionPerformanceStatistic();
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
@@ -537,8 +537,8 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
           assert cacheEntry.getUsagesCount() >= 0;
 
           if (cacheEntry.getUsagesCount() == 0 && cacheEntry.isDirty()) {
-            final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-                .getStatisticInstance();
+            final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = writeCache.getPerformanceStatisticManager()
+                .getSessionPerformanceStatistic();
 
             if (sessionStoragePerformanceStatistic != null) {
               sessionStoragePerformanceStatistic.startPageWriteInCacheTimer();

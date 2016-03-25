@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import javax.management.*;
@@ -128,6 +129,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private final int id;
 
+  private final OPerformanceStatisticManager performanceStatisticManager;
+
   private final AtomicReference<Date> lastFuzzyCheckpointDate  = new AtomicReference<Date>();
   private final AtomicLong            lastAmountOfFlushedPages = new AtomicLong();
   private final AtomicLong            durationOfLastFlush      = new AtomicLong();
@@ -165,6 +168,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       this.storageLocal = storageLocal;
 
       this.storagePath = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath());
+      this.performanceStatisticManager = storageLocal.getPerformanceStatisticManager();
 
       final OBinarySerializerFactory binarySerializerFactory = storageLocal.getComponentsFactory().binarySerializerFactory;
       this.stringSerializer = binarySerializerFactory.getObjectSerializer(OType.STRING);
@@ -199,6 +203,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   @Override
   public File getRootDirectory() {
     return new File(storagePath);
+  }
+
+  @Override
+  public OPerformanceStatisticManager getPerformanceStatisticManager() {
+    return performanceStatisticManager;
   }
 
   public void startFuzzyCheckpoints() {
@@ -1271,8 +1280,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final long firstPageEndPosition = firstPageStartPosition + pageSize;
 
     if (fileClassic.getFileSize() >= firstPageEndPosition) {
-      final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-          .getStatisticInstance();
+      final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
+          .getSessionPerformanceStatistic();
       if (sessionStoragePerformanceStatistic != null) {
         sessionStoragePerformanceStatistic.startPageReadFromFileTimer();
       }

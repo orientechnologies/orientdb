@@ -93,8 +93,7 @@ public enum OGlobalConfiguration {
    * default value is 10000.
    */
   COMPONENTS_LOCK_CACHE("storage.componentsLock.cache",
-      "Amount of cached locks is used for component lock to avoid constant creation of new lock instances", Integer.class,
-      10000),
+      "Amount of cached locks is used for component lock to avoid constant creation of new lock instances", Integer.class, 10000),
 
   DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages", "Maximum amount of pinned pages which may be contained in cache,"
       + " if this percent is reached next pages will be left in unpinned state. You can not set value more than 50", Integer.class,
@@ -465,6 +464,12 @@ public enum OGlobalConfiguration {
   }),
 
   PROFILER_MAXVALUES("profiler.maxValues", "Maximum values to store. Values are managed in a LRU", Integer.class, 200),
+
+  /**
+   * Interval between snapshots of profiler state in milliseconds, default value is 100.
+   */
+  STORAGE_PROFILER_SNAPSHOT_INTERVAL("storageProfiler.intervalBetweenSnapshots",
+      "Interval between snapshots of profiler state in milliseconds", Integer.class, 100),
 
   // LOG
   LOG_CONSOLE_LEVEL("log.console.level", "Console logging level.", String.class, "info", new OConfigurationChangeCallback() {

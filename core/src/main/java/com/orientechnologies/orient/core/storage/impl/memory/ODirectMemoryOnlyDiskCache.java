@@ -25,14 +25,10 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OAbstractWriteCache;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import java.io.File;
@@ -64,12 +60,19 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   private int counter = 0;
 
-  private final int pageSize;
-  private final int id;
+  private final int                          pageSize;
+  private final int                          id;
+  private final OPerformanceStatisticManager performanceStatisticManager;
 
-  public ODirectMemoryOnlyDiskCache(int pageSize, int id) {
+  public ODirectMemoryOnlyDiskCache(int pageSize, int id, OPerformanceStatisticManager performanceStatisticManager) {
     this.pageSize = pageSize;
     this.id = id;
+    this.performanceStatisticManager = performanceStatisticManager;
+  }
+
+  @Override
+  public OPerformanceStatisticManager getPerformanceStatisticManager() {
+    return performanceStatisticManager;
   }
 
   /**
@@ -183,8 +186,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages, OWriteCache writeCache, final int pageCount) {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-        .getStatisticInstance();
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
+        .getSessionPerformanceStatistic();
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
@@ -216,8 +219,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
 
   @Override
   public OCacheEntry allocateNewPage(long fileId, OWriteCache writeCache) {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-        .getStatisticInstance();
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
+        .getSessionPerformanceStatistic();
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();

@@ -38,21 +38,17 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
+import javax.management.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -83,6 +79,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final AtomicReference<WaitingListNode> waitingTail = new AtomicReference<WaitingListNode>();
 
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
+  private final OPerformanceStatisticManager performanceStatisticManager;
 
   /**
    * Flag which indicates whether we work in unsafe mode for current thread.
@@ -112,9 +109,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     });
   }
 
-  private final OAbstractPaginatedStorage    storage;
-  private final OWriteAheadLog               writeAheadLog;
-  private final OLockManager<String> lockManager = new OLockManager<String>(true, -1, OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
+  private final OAbstractPaginatedStorage storage;
+  private final OWriteAheadLog            writeAheadLog;
+  private final OLockManager<String> lockManager = new OLockManager<String>(true, -1,
+      OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
   private final OReadCache  readCache;
   private final OWriteCache writeCache;
 
@@ -125,6 +123,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.writeAheadLog = storage.getWALInstance();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
+    this.performanceStatisticManager = storage.getPerformanceStatisticManager();
   }
 
   /**
@@ -198,7 +197,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId());
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), performanceStatisticManager);
     currentOperation.set(operation);
 
     if (trackAtomicOperations) {
@@ -458,9 +457,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
           server.registerMBean(this, mbeanName);
         } else {
           mbeanIsRegistered.set(false);
-          OLogManager.instance().warn(this, "MBean with name %s has already registered. Probably your system was not shutdown correctly "
-              + "or you have several running applications which use OrientDB engine inside",
-              mbeanName.getCanonicalName());
+          OLogManager.instance().warn(this,
+              "MBean with name %s has already registered. Probably your system was not shutdown correctly "
+                  + "or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
         }
 
       } catch (MalformedObjectNameException e) {

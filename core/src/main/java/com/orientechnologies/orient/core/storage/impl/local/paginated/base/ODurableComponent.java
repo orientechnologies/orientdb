@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import java.io.IOException;
@@ -57,16 +58,16 @@ import java.io.IOException;
  * @since 8/27/13
  */
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
-  protected final OAtomicOperationsManager  atomicOperationsManager;
-  protected final OAbstractPaginatedStorage storage;
-  protected final OReadCache                readCache;
-  protected final OWriteCache               writeCache;
+  protected final OAtomicOperationsManager     atomicOperationsManager;
+  protected final OAbstractPaginatedStorage    storage;
+  protected final OReadCache                   readCache;
+  protected final OWriteCache                  writeCache;
+  private final   OPerformanceStatisticManager performanceStatisticManager;
 
   private volatile String name;
   private volatile String fullName;
 
   protected final String extension;
-
 
   public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension) {
     super(true);
@@ -79,6 +80,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
+    this.performanceStatisticManager = storage.getPerformanceStatisticManager();
   }
 
   public String getName() {
@@ -212,16 +214,16 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   }
 
   protected void startOperation() {
-    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-        .getStatisticInstance();
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
+        .getSessionPerformanceStatistic();
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startComponentOperation(getFullName());
     }
   }
 
   protected void completeOperation() {
-    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-        .getStatisticInstance();
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
+        .getSessionPerformanceStatistic();
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.completeComponentOperation();
     }

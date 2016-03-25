@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
 import java.io.IOException;
@@ -55,13 +56,16 @@ public class OAtomicOperation {
   private OReadCache  readCache;
   private OWriteCache writeCache;
 
+  private final OPerformanceStatisticManager performanceStatisticManager;
+
   private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId, OReadCache readCache,
-      OWriteCache writeCache, int storageId) {
+      OWriteCache writeCache, int storageId, OPerformanceStatisticManager performanceStatisticManager) {
     this.storageId = storageId;
     this.startLSN = startLSN;
     this.operationUnitId = operationUnitId;
+    this.performanceStatisticManager = performanceStatisticManager;
     startCounter = 1;
     this.readCache = readCache;
     this.writeCache = writeCache;
@@ -350,8 +354,9 @@ public class OAtomicOperation {
   }
 
   public void commitChanges(OWriteAheadLog writeAheadLog) throws IOException {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-        .getStatisticInstance();
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
+        .getSessionPerformanceStatistic();
+
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startCommitTimer();
       sessionStoragePerformanceStatistic.startComponentOperation("atomic operation");

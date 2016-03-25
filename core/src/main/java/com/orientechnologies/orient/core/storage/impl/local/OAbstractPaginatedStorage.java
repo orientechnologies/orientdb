@@ -73,6 +73,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -114,9 +115,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   private volatile ThreadLocal<OStorageTransaction> transaction          = new ThreadLocal<OStorageTransaction>();
   private final    AtomicBoolean                    checkpointInProgress = new AtomicBoolean();
-  protected final    OSBTreeCollectionManagerShared sbTreeCollectionManager;
-  protected volatile OWriteAheadLog                 writeAheadLog;
-  private            OStorageRecoverListener        recoverListener;
+  protected final OSBTreeCollectionManagerShared sbTreeCollectionManager;
+
+  private final OPerformanceStatisticManager performanceStatisticManager = new OPerformanceStatisticManager(
+      OGlobalConfiguration.STORAGE_PROFILER_SNAPSHOT_INTERVAL.getValueAsInteger() * 1000000L);
+
+  protected volatile OWriteAheadLog          writeAheadLog;
+  private            OStorageRecoverListener recoverListener;
 
   protected volatile OReadCache  readCache;
   protected volatile OWriteCache writeCache;
@@ -1154,6 +1159,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  public OPerformanceStatisticManager getPerformanceStatisticManager() {
+    return performanceStatisticManager;
+  }
+
   /**
    * Starts to gather information about storage performance for current thread. Details which performance characteristics are
    * gathered can be found at {@link OSessionStoragePerformanceStatistic}.
@@ -1161,8 +1170,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @see #completeGatheringPerformanceStatisticForCurrentThread()
    */
   public void startGatheringPerformanceStatisticForCurrentThread() {
-    OSessionStoragePerformanceStatistic
-        .initThreadLocalInstance(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
+    performanceStatisticManager.startThreadMonitoring();
   }
 
   /**
@@ -1173,7 +1181,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * <code>null</code> if profiling of storage was not started.
    */
   public OSessionStoragePerformanceStatistic completeGatheringPerformanceStatisticForCurrentThread() {
-    return OSessionStoragePerformanceStatistic.clearThreadLocalInstance();
+    return performanceStatisticManager.stopThreadMonitoring();
   }
 
   @Override
@@ -3254,7 +3262,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         makeFullCheckpoint();
 
       preCloseSteps();
-
 
       sbTreeCollectionManager.close();
 
