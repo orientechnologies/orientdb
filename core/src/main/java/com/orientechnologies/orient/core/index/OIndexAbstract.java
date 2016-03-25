@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -52,11 +57,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * Handles indexing when records change.
  *
@@ -67,6 +67,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   protected static final String                 CONFIG_MAP_RID  = "mapRid";
   protected static final String                 CONFIG_CLUSTERS = "clusters";
   protected final String                        type;
+  // protected final OLockManager<Object> keyLockManager = new OLockManager<Object>(true, -1,
+  // OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
   protected final ONewLockManager<Object>       keyLockManager  = new ONewLockManager<Object>();
   protected volatile IndexConfiguration         configuration;
 
@@ -540,12 +542,16 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   @Override
-  public void lockKeysForUpdateNoTx(Collection<Object> keys) {
+  public void lockKeysForUpdateNoTx(final Collection<Object> keys) {
+    if (keys == null || keys.isEmpty())
+      return;
+
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (!txIsActive)
+    if (!txIsActive) {
       keyLockManager.acquireExclusiveLocksInBatch(keys);
+    }
   }
 
   @Override
@@ -564,8 +570,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   @Override
-  public void releaseKeysForUpdateNoTx(Collection<Object> keys) {
-    if (keys == null)
+  public void releaseKeysForUpdateNoTx(final Collection<Object> keys) {
+    if (keys == null || keys.isEmpty())
       return;
 
     final ODatabase database = getDatabase();

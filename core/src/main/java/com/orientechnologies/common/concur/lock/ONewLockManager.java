@@ -32,15 +32,39 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 8/11/14
  */
 public class ONewLockManager<T> {
-  private static final int HASH_BITS = 0x7fffffff;
+  private static final int               HASH_BITS         = 0x7fffffff;
 
-  private static final int CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() << 6);
-  private static final int MASK              = CONCURRENCY_LEVEL - 1;
+  private static final int               CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() << 6);
+  public static final int                MASK              = CONCURRENCY_LEVEL - 1;
 
   private final ReadWriteLock[]          locks;
   private final OReadersWriterSpinLock[] spinLocks;
 
   private final boolean                  useSpinLock;
+  public static final Comparator         COMPARATOR        = new Comparator() {
+                                                             @Override
+                                                             public int compare(final Object one, final Object two) {
+                                                               final int indexOne;
+                                                               if (one == null)
+                                                                 indexOne = 0;
+                                                               else
+                                                                 indexOne = index(one.hashCode());
+
+                                                               final int indexTwo;
+                                                               if (two == null)
+                                                                 indexTwo = 0;
+                                                               else
+                                                                 indexTwo = index(two.hashCode());
+
+                                                               if (indexOne > indexTwo)
+                                                                 return 1;
+
+                                                               if (indexOne < indexTwo)
+                                                                 return -1;
+
+                                                               return 0;
+                                                             }
+                                                           };
 
   private static final class SpinLockWrapper implements Lock {
     private final boolean                readLock;
@@ -121,7 +145,7 @@ public class ONewLockManager<T> {
     return shuffleHashCode(hashCode) & MASK;
   }
 
-  private static int shuffleHashCode(int h) {
+  public static int shuffleHashCode(int h) {
     return (h ^ (h >>> 16)) & HASH_BITS;
   }
 
@@ -254,31 +278,7 @@ public class ONewLockManager<T> {
     if (values == null || values.isEmpty())
       return;
 
-    final List<T> valCopy = new ArrayList<T>(values);
-    Collections.sort(valCopy, new Comparator<T>() {
-      @Override
-      public int compare(T one, T two) {
-        final int indexOne;
-        if (one == null)
-          indexOne = 0;
-        else
-          indexOne = index(one.hashCode());
-
-        final int indexTwo;
-        if (two == null)
-          indexTwo = 0;
-        else
-          indexTwo = index(two.hashCode());
-
-        if (indexOne > indexTwo)
-          return 1;
-
-        if (indexOne < indexTwo)
-          return -1;
-
-        return 0;
-      }
-    });
+    final Collection<T> valCopy = getOrderedValues(values);
 
     for (T val : valCopy) {
       acquireExclusiveLock(val);
@@ -458,33 +458,28 @@ public class ONewLockManager<T> {
     lock.unlock();
   }
 
-  private T[] getOrderedValues(final T[] value) {
-    final T[] values = Arrays.copyOf(value, value.length);
+  public static <T> T[] getOrderedValues(final T[] values) {
+    if (values.length < 2) {
+      // OPTIMIZED VERSION WITH JUST 1 ITEM (THE MOST COMMON)
+      return values;
+    }
 
-    Arrays.sort(values, 0, values.length, new Comparator<T>() {
-      @Override
-      public int compare(T one, T two) {
-        final int indexOne;
-        if (one == null)
-          indexOne = 0;
-        else
-          indexOne = index(one.hashCode());
+    final T[] copy = Arrays.copyOf(values, values.length);
 
-        final int indexTwo;
-        if (two == null)
-          indexTwo = 0;
-        else
-          indexTwo = index(two.hashCode());
+    Arrays.sort(copy, 0, copy.length, COMPARATOR);
 
-        if (indexOne > indexTwo)
-          return 1;
+    return copy;
+  }
 
-        if (indexOne < indexTwo)
-          return -1;
+  public static <T> Collection<T> getOrderedValues(final Collection<T> values) {
+    if (values.size() < 2) {
+      // OPTIMIZED VERSION WITH JUST 1 ITEM (THE MOST COMMON)
+      return values;
+    }
 
-        return 0;
-      }
-    });
-    return values;
+    final List<T> valCopy = new ArrayList<T>(values);
+    Collections.sort(valCopy, COMPARATOR);
+
+    return valCopy;
   }
 }
