@@ -21,8 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -38,14 +36,13 @@ import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
-import com.orientechnologies.orient.core.OUnfinishedCommit;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -84,6 +81,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -93,16 +91,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -1331,7 +1319,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
 
           for (ORecordOperation txEntry : entries) {
-            commitEntry(txEntry, positions.get(txEntry));
+            commitEntry(txEntry, positions.get(txEntry))  ;
             result.add(txEntry);
           }
 
@@ -1361,7 +1349,93 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public OUnfinishedCommit initiateCommit(OTransaction iTx, Runnable callback) {
+  public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction clientTx, Runnable callback) {
+    checkOpeness();
+    checkLowDiskSpaceAndFullCheckpointRequests();
+
+    final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
+    ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
+    final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
+
+    for (ORecordOperation txEntry : entries) {
+      if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+        final ORecord record = txEntry.getRecord();
+        if (record instanceof ODocument)
+          ((ODocument) record).validate();
+      }
+    }
+
+    final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
+
+    stateLock.acquireReadLock();
+    try {
+      try {
+        dataLock.acquireExclusiveLock();
+        try {
+
+          checkOpeness();
+
+          if (writeAheadLog == null && clientTx.isUsingLog())
+            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
+
+          makeStorageDirty();
+          startStorageTx(clientTx);
+
+          Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
+          for (ORecordOperation txEntry : entries) {
+            ORecord rec = txEntry.getRecord();
+
+            if (txEntry.type == ORecordOperation.CREATED && rec.isDirty()) {
+              ORecordId rid = (ORecordId) rec.getIdentity().copy();
+              ORecordId oldRID = rid.copy();
+              int clusterId = rid.clusterId;
+              if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
+                  && ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)) != null) {
+                // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
+                final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec));
+                clusterId = schemaClass.getClusterForNewInstance((ODocument) rec);
+              }
+
+              final OCluster cluster = getClusterById(clusterId);
+              OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+              positions.put(txEntry, ppos);
+              rid.clusterId = cluster.getId();
+
+              if (rid.clusterPosition > -1 && rid.clusterPosition != ppos.clusterPosition)
+                throw new OTransactionException(
+                    "New record allocated #" + rid.clusterId + ":" + ppos.clusterPosition + " but the expected was " + rid);
+
+              rid.clusterPosition = ppos.clusterPosition;
+
+              clientTx.updateIdentityAfterCommit(oldRID, rid);
+            }
+          }
+
+          for (ORecordOperation txEntry : entries) {
+            commitEntry(txEntry, positions.get(txEntry));
+            result.add(txEntry);
+          }
+
+          if (callback != null)
+            callback.run();
+
+          return new UncompletedCommit(clientTx, entries, result, atomicOperationsManager.initiateCommit());
+        } catch (IOException ioe) {
+          makeRollback(clientTx, ioe);
+        } catch (RuntimeException e) {
+          makeRollback(clientTx, e);
+        } finally {
+          dataLock.releaseExclusiveLock();
+        }
+      } finally {
+        ((OMetadataInternal) databaseRecord.getMetadata()).clearThreadLocalSchemaSnapshot();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+    }
+
+    // not reachable
+    assert false;
     return null;
   }
 
@@ -3979,4 +4053,98 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
     return ridsPerCluster;
   }
+
+  private class UncompletedCommit implements OUncompletedCommit<List<ORecordOperation>> {
+    private final OTransaction clientTx;
+    private final Iterable<ORecordOperation> entries;
+    private final List<ORecordOperation> result;
+    private final OUncompletedCommit<OAtomicOperation> nestedCommit;
+
+    public UncompletedCommit(OTransaction clientTx, Iterable<ORecordOperation> entries,
+        List<ORecordOperation> result, OUncompletedCommit<OAtomicOperation> nestedCommit) {
+      this.clientTx = clientTx;
+      this.entries = entries;
+      this.result = result;
+      this.nestedCommit = nestedCommit;
+    }
+
+    @Override
+    public List<ORecordOperation> complete() {
+      checkOpeness();
+
+      stateLock.acquireReadLock();
+      try {
+        try {
+          dataLock.acquireExclusiveLock();
+          try {
+            checkOpeness();
+
+            nestedCommit.complete();
+
+            OTransactionAbstract.updateCacheFromEntries(clientTx, entries, true);
+          } catch (RuntimeException e) {
+            makeRollback(clientTx, e);
+          } finally {
+            transaction.set(null);
+            dataLock.releaseExclusiveLock();
+          }
+        } finally {
+          ((OMetadataInternal)clientTx.getDatabase().getMetadata()).clearThreadLocalSchemaSnapshot();
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
+
+      return result;
+    }
+
+    @Override
+    public void rollback() {
+      checkOpeness();
+      stateLock.acquireReadLock();
+      try {
+        dataLock.acquireExclusiveLock();
+        try {
+          checkOpeness();
+
+          if (transaction.get() == null)
+            return;
+
+          if (writeAheadLog == null)
+            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
+
+          if (transaction.get().getClientTx().getId() != clientTx.getId())
+            throw new OStorageException(
+                "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
+
+          makeStorageDirty();
+
+          nestedCommit.rollback();
+          assert atomicOperationsManager.getCurrentOperation() == null;
+
+          OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
+        } catch (IOException e) {
+          throw OException.wrapException(new OStorageException("Error during transaction rollback"), e);
+        } finally {
+          transaction.set(null);
+          dataLock.releaseExclusiveLock();
+        }
+      } finally {
+        stateLock.releaseReadLock();
+      }
+    }
+
+    private void makeRollback(OTransaction clientTx, Exception e) {
+      // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+      OLogManager.instance()
+          .debug(this, "Error during transaction commit completion, transaction will be rolled back (tx-id=%d)", e,
+              clientTx.getId());
+      rollback();
+      if (e instanceof OException)
+        throw ((OException) e);
+      else
+        throw OException.wrapException(new OStorageException("Error during transaction commit completion"), e);
+    }
+  }
+
 }

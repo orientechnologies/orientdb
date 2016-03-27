@@ -24,7 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.OUnfinishedCommit;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -1410,8 +1410,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public OUnfinishedCommit initiateCommit(OTransaction iTx, Runnable callback) {
-    throw new UnsupportedOperationException("Unfinished commits are not supported by the distributed storage.");
+  public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction iTx, Runnable callback) {
+    throw new UnsupportedOperationException("Uncompleted commits are not supported by the distributed storage.");
   }
 
   protected ODistributedDatabase acquireMultipleRecordLocks(final OTransaction iTx, final int maxAutoRetry,

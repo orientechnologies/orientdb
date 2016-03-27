@@ -27,6 +27,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -424,6 +425,23 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return operation;
   }
 
+  public OUncompletedCommit<OAtomicOperation> initiateCommit() throws IOException {
+    if (unsafeMode.get() || writeAheadLog == null)
+      return new OUncompletedCommit.NoOperation<OAtomicOperation>(null);
+
+    final OAtomicOperation operation = currentOperation.get();
+    assert operation != null;
+
+    final int counter = operation.decrementCounter();
+    assert counter >= 0;
+
+    if (counter > 0)
+      return new OUncompletedCommit.NoOperation<OAtomicOperation>(operation);
+
+    final UncompletedCommit uncompletedCommit = new UncompletedCommit(operation, operation.initiateCommit(writeAheadLog));
+    return uncompletedCommit;
+  }
+
   private void acquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String fullName) {
     if (operation.containsInLockedObjects(fullName))
       return;
@@ -551,6 +569,48 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     public WaitingListNode(Thread item) {
       this.item = item;
+    }
+  }
+
+  private class UncompletedCommit implements OUncompletedCommit<OAtomicOperation> {
+    private final OAtomicOperation operation;
+    private final OUncompletedCommit<Void> nestedCommit;
+
+    public UncompletedCommit(OAtomicOperation operation, OUncompletedCommit<Void> nestedCommit) {
+      this.operation = operation;
+      this.nestedCommit = nestedCommit;
+    }
+
+    @Override
+    public OAtomicOperation complete() {
+      nestedCommit.complete();
+
+      currentOperation.set(null);
+
+      if (trackAtomicOperations)
+        activeAtomicOperations.remove(operation.getOperationUnitId());
+
+      for (String lockObject : operation.lockedObjects())
+        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+
+      atomicOperationsCount.decrement();
+
+      return operation;
+    }
+
+    @Override
+    public void rollback() {
+      nestedCommit.rollback();
+
+      currentOperation.set(null);
+
+      if (trackAtomicOperations)
+        activeAtomicOperations.remove(operation.getOperationUnitId());
+
+      for (String lockObject : operation.lockedObjects())
+        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+
+      atomicOperationsCount.decrement();
     }
   }
 }

@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.OUnfinishedCommit;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -55,11 +55,11 @@ public interface OTransaction {
 
   void commit(boolean force);
 
+  OUncompletedCommit<Void> initiateCommit();
+
+  OUncompletedCommit<Void> initiateCommit(boolean force);
+
   void rollback();
-
-  OUnfinishedCommit initiateCommit();
-
-  OUnfinishedCommit initiateCommit(boolean force);
 
   /**
    * Returns the current isolation level.

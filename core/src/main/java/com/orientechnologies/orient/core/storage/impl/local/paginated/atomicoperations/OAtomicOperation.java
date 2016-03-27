@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -442,6 +444,52 @@ public class OAtomicOperation {
     }
   }
 
+  public OUncompletedCommit<Void> initiateCommit(OWriteAheadLog writeAheadLog) throws IOException {
+    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+        .getStatisticInstance();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic.startCommitTimer();
+      sessionStoragePerformanceStatistic.startComponentOperation("atomic operation");
+    }
+    storagePerformanceStatistic.startCommitTimer();
+
+    try {
+      for (long deletedFileId : deletedFiles) {
+        writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, deletedFileId));
+      }
+
+      for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
+        final FileChanges fileChanges = fileChangesEntry.getValue();
+        final long fileId = fileChangesEntry.getKey();
+
+        if (fileChanges.isNew)
+          writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId));
+        else if (fileChanges.truncate)
+          writeAheadLog.log(new OFileTruncatedWALRecord(operationUnitId, fileId));
+
+        for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
+          final long pageIndex = filePageChangesEntry.getKey();
+          final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
+
+          filePageChanges.lsn = writeAheadLog
+              .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
+        }
+      }
+
+      writeAheadLog
+          .logAtomicOperationEndRecord(operationUnitId, false, startLSN, metadata);
+
+      return new UncompletedCommit();
+    } finally {
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.stopCommitTimer();
+        sessionStoragePerformanceStatistic.completeComponentOperation();
+      }
+
+      storagePerformanceStatistic.stopCommitTimer();
+    }
+  }
+
   void incrementCounter() {
     startCounter++;
   }
@@ -529,5 +577,81 @@ public class OAtomicOperation {
     }
 
     return fileId;
+  }
+
+  private class UncompletedCommit implements OUncompletedCommit<Void> {
+    @Override
+    public Void complete() {
+      final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
+          .getStatisticInstance();
+      if (sessionStoragePerformanceStatistic != null) {
+        sessionStoragePerformanceStatistic.startCommitTimer();
+        sessionStoragePerformanceStatistic.startComponentOperation("atomic operation");
+      }
+      storagePerformanceStatistic.startCommitTimer();
+
+      try {
+        for (long deletedFileId : deletedFiles) {
+          readCache.deleteFile(deletedFileId, writeCache);
+        }
+
+        for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
+          final FileChanges fileChanges = fileChangesEntry.getValue();
+          final long fileId = fileChangesEntry.getKey();
+
+          if (fileChanges.isNew)
+            readCache.addFile(fileChanges.fileName, newFileNamesId.get(fileChanges.fileName), writeCache);
+          else if (fileChanges.truncate)
+            readCache.truncateFile(fileId, writeCache);
+
+          for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
+            final long pageIndex = filePageChangesEntry.getKey();
+            final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
+
+            OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1, storagePerformanceStatistic);
+            if (cacheEntry == null) {
+              assert filePageChanges.isNew;
+              do {
+                if (cacheEntry != null)
+                  readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
+
+                cacheEntry = readCache.allocateNewPage(fileId, writeCache, storagePerformanceStatistic);
+              } while (cacheEntry.getPageIndex() != pageIndex);
+            }
+
+            cacheEntry.acquireExclusiveLock();
+            try {
+              ODurablePage durablePage = new ODurablePage(cacheEntry, null);
+              durablePage.restoreChanges(filePageChanges.changes);
+
+              durablePage.setLsn(filePageChanges.lsn);
+
+              if (filePageChanges.pinPage)
+                readCache.pinPage(cacheEntry);
+
+              readCache.release(cacheEntry, writeCache, storagePerformanceStatistic);
+            } finally {
+              cacheEntry.releaseExclusiveLock();
+            }
+          }
+        }
+      }
+      catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error while completing a commit."), e);
+      } finally {
+        // TODO: performance counters must be fixed to avoid commit double counting
+        if (sessionStoragePerformanceStatistic != null) {
+          sessionStoragePerformanceStatistic.stopCommitTimer();
+          sessionStoragePerformanceStatistic.completeComponentOperation();
+        }
+
+        storagePerformanceStatistic.stopCommitTimer();
+      }
+      return null;
+    }
+
+    @Override
+    public void rollback() {
+    }
   }
 }

@@ -26,7 +26,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.orientechnologies.orient.core.OUnfinishedCommit;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -488,7 +488,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public OUnfinishedCommit initiateCommit(OTransaction iTx, Runnable callback) {
+  public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction iTx, Runnable callback) {
     pushSession();
     try {
       return delegate.initiateCommit(iTx, null);

@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.OUnfinishedCommit;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -79,13 +79,13 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
-  public OUnfinishedCommit initiateCommit() {
-    return OUnfinishedCommit.NO_OPERATION;
+  public OUncompletedCommit<Void> initiateCommit() {
+    return OUncompletedCommit.NO_OPERATION;
   }
 
   @Override
-  public OUnfinishedCommit initiateCommit(boolean force) {
-    return OUnfinishedCommit.NO_OPERATION;
+  public OUncompletedCommit<Void> initiateCommit(boolean force) {
+    return OUncompletedCommit.NO_OPERATION;
   }
 
   @Deprecated
