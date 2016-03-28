@@ -318,4 +318,138 @@ public class OSessionStoragePerformanceStatisticTest {
     final ODocument docC2PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c2po");
     Assert.assertEquals(docC2PO.field("cacheHits"), 100);
   }
+
+  public void testPushCounters() {
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatisticOne = new OSessionStoragePerformanceStatistic(100,
+        new OSessionStoragePerformanceStatistic.NanoTimer() {
+          private long counter = 0;
+
+          @Override
+          public long getNano() {
+            return counter += 100;
+          }
+        });
+
+    sessionStoragePerformanceStatisticOne.startComponentOperation("c3po");
+
+    sessionStoragePerformanceStatisticOne.incrementPageAccessOnCacheLevel(false);
+    sessionStoragePerformanceStatisticOne.incrementPageAccessOnCacheLevel(false);
+    sessionStoragePerformanceStatisticOne.incrementPageAccessOnCacheLevel(false);
+    sessionStoragePerformanceStatisticOne.incrementPageAccessOnCacheLevel(true);
+
+    sessionStoragePerformanceStatisticOne.startPageReadFromCacheTimer();
+    sessionStoragePerformanceStatisticOne.stopPageReadFromCacheTimer();
+
+    sessionStoragePerformanceStatisticOne.startPageReadFromCacheTimer();
+    sessionStoragePerformanceStatisticOne.stopPageReadFromCacheTimer();
+
+    sessionStoragePerformanceStatisticOne.startPageReadFromCacheTimer();
+    sessionStoragePerformanceStatisticOne.stopPageReadFromCacheTimer();
+
+    sessionStoragePerformanceStatisticOne.startPageReadFromFileTimer();
+    sessionStoragePerformanceStatisticOne.stopPageReadFromFileTimer(2);
+
+    sessionStoragePerformanceStatisticOne.startPageWriteInCacheTimer();
+    sessionStoragePerformanceStatisticOne.stopPageWriteInCacheTimer();
+
+    sessionStoragePerformanceStatisticOne.startCommitTimer();
+    sessionStoragePerformanceStatisticOne.stopCommitTimer();
+
+    sessionStoragePerformanceStatisticOne.completeComponentOperation();
+
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatisticTwo = new OSessionStoragePerformanceStatistic(100,
+        new OSessionStoragePerformanceStatistic.NanoTimer() {
+          private long counter = 0;
+
+          @Override
+          public long getNano() {
+            return counter += 100;
+          }
+        });
+
+    sessionStoragePerformanceStatisticTwo.startComponentOperation("c3po");
+    sessionStoragePerformanceStatisticTwo.incrementPageAccessOnCacheLevel(true);
+    sessionStoragePerformanceStatisticTwo.completeComponentOperation();
+
+    sessionStoragePerformanceStatisticTwo.startComponentOperation("c1po");
+
+    sessionStoragePerformanceStatisticTwo.startPageReadFromCacheTimer();
+    sessionStoragePerformanceStatisticTwo.stopPageReadFromCacheTimer();
+
+    sessionStoragePerformanceStatisticTwo.startPageReadFromFileTimer();
+    sessionStoragePerformanceStatisticTwo.stopPageReadFromFileTimer(1);
+
+    sessionStoragePerformanceStatisticTwo.startPageWriteInCacheTimer();
+    sessionStoragePerformanceStatisticTwo.stopPageWriteInCacheTimer();
+
+    sessionStoragePerformanceStatisticTwo.completeComponentOperation();
+
+    OSessionStoragePerformanceStatistic.PerformanceCountersHolder performanceCountersHolder = new OSessionStoragePerformanceStatistic.PerformanceCountersHolder();
+
+    sessionStoragePerformanceStatisticOne.pushComponentCounters("c3po", performanceCountersHolder);
+
+    Assert.assertEquals(performanceCountersHolder.getCacheHits(), sessionStoragePerformanceStatisticOne.getCacheHits());
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesPerOperation(),
+        sessionStoragePerformanceStatisticOne.getAmountOfPagesPerOperation("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesReadFromCache(),
+        sessionStoragePerformanceStatisticOne.getAmountOfPagesReadFromCache("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesReadFromFile(),
+        sessionStoragePerformanceStatisticOne.getAmountOfPagesReadFromFile("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesWrittenInCache(),
+        sessionStoragePerformanceStatisticOne.getAmountOfPagesWrittenInCache("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getReadSpeedFromCacheInPages(),
+        sessionStoragePerformanceStatisticOne.getReadSpeedFromCacheInPages("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getReadSpeedFromFileInPages(),
+        sessionStoragePerformanceStatisticOne.getReadSpeedFromFileInPages("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getWriteSpeedInCacheInPages(),
+        sessionStoragePerformanceStatisticOne.getWriteSpeedInCacheInPages("c3po"));
+
+    performanceCountersHolder = new OSessionStoragePerformanceStatistic.PerformanceCountersHolder();
+    sessionStoragePerformanceStatisticTwo.pushComponentCounters("c3po", performanceCountersHolder);
+
+    Assert.assertEquals(performanceCountersHolder.getCacheHits(), sessionStoragePerformanceStatisticTwo.getCacheHits());
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesPerOperation(),
+        sessionStoragePerformanceStatisticTwo.getAmountOfPagesPerOperation("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesReadFromCache(),
+        sessionStoragePerformanceStatisticTwo.getAmountOfPagesReadFromCache("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesReadFromFile(),
+        sessionStoragePerformanceStatisticTwo.getAmountOfPagesReadFromFile("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesWrittenInCache(),
+        sessionStoragePerformanceStatisticTwo.getAmountOfPagesWrittenInCache("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getReadSpeedFromCacheInPages(),
+        sessionStoragePerformanceStatisticTwo.getReadSpeedFromCacheInPages("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getReadSpeedFromFileInPages(),
+        sessionStoragePerformanceStatisticTwo.getReadSpeedFromFileInPages("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getWriteSpeedInCacheInPages(),
+        sessionStoragePerformanceStatisticTwo.getWriteSpeedInCacheInPages("c3po"));
+
+    sessionStoragePerformanceStatisticOne.pushComponentCounters("c3po", performanceCountersHolder);
+    Assert.assertEquals(performanceCountersHolder.getCacheHits(), 40);
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesPerOperation(), 1);
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesReadFromCache(),
+        sessionStoragePerformanceStatisticOne.getAmountOfPagesReadFromCache("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesReadFromFile(),
+        sessionStoragePerformanceStatisticOne.getAmountOfPagesReadFromFile("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesWrittenInCache(),
+        sessionStoragePerformanceStatisticOne.getAmountOfPagesWrittenInCache("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getReadSpeedFromCacheInPages(),
+        sessionStoragePerformanceStatisticOne.getReadSpeedFromCacheInPages("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getReadSpeedFromFileInPages(),
+        sessionStoragePerformanceStatisticOne.getReadSpeedFromFileInPages("c3po"));
+    Assert.assertEquals(performanceCountersHolder.getWriteSpeedInCacheInPages(),
+        sessionStoragePerformanceStatisticOne.getWriteSpeedInCacheInPages("c3po"));
+
+    performanceCountersHolder = new OSessionStoragePerformanceStatistic.PerformanceCountersHolder();
+    sessionStoragePerformanceStatisticOne.pushComponentCounters("c3po", performanceCountersHolder);
+    sessionStoragePerformanceStatisticTwo.pushComponentCounters("c1po", performanceCountersHolder);
+
+    Assert.assertEquals(performanceCountersHolder.getCacheHits(), sessionStoragePerformanceStatisticOne.getCacheHits());
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesPerOperation(), 2);
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesReadFromCache(), 4);
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesReadFromFile(), 3);
+    Assert.assertEquals(performanceCountersHolder.getAmountOfPagesWrittenInCache(), 2);
+    Assert.assertEquals(performanceCountersHolder.getReadSpeedFromCacheInPages(), 10000000);
+    Assert.assertEquals(performanceCountersHolder.getReadSpeedFromFileInPages(), 15000000);
+    Assert.assertEquals(performanceCountersHolder.getWriteSpeedInCacheInPages(), 10000000);
+  }
 }
