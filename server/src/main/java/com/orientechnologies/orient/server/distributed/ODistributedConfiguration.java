@@ -48,8 +48,6 @@ public class ODistributedConfiguration {
     MASTER, REPLICA
   }
 
-  ;
-
   public ODistributedConfiguration(final ODocument iConfiguration) {
     configuration = iConfiguration;
   }
@@ -338,6 +336,23 @@ public class ODistributedConfiguration {
         return filteredServerList;
       }
       return Collections.EMPTY_LIST;
+    }
+  }
+
+  /**
+   * Returns true if the server has a cluster.
+   * 
+   * @param iServer
+   *          Server name
+   * @param iClusterName
+   *          Cluster name
+   */
+  public boolean hasCluster(final String iServer, final String iClusterName) {
+    synchronized (configuration) {
+      final List<String> serverList = getClusterConfiguration(iClusterName).field("servers");
+      if (serverList != null)
+        return serverList.contains(iServer);
+      return false;
     }
   }
 

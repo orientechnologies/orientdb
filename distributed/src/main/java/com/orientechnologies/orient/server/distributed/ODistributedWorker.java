@@ -17,7 +17,7 @@
  *  * For more information: http://www.orientechnologies.com
  *  
  */
-package com.orientechnologies.orient.server.hazelcast;
+package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
@@ -45,17 +44,17 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 public class ODistributedWorker extends Thread {
 
-  protected final OHazelcastDistributedDatabase           distributed;
-  protected final ODistributedServerManager               manager;
-  protected final OHazelcastDistributedMessageService     msgService;
-  protected final String                                  databaseName;
-  protected final ArrayBlockingQueue<ODistributedRequest> localQueue;
-  protected volatile ODatabaseDocumentTx                  database;
-  protected volatile OUser                                lastUser;
+  protected final    ODistributedDatabaseImpl                distributed;
+  protected final    ODistributedServerManager               manager;
+  protected final    ODistributedMessageServiceImpl          msgService;
+  protected final    String                                  databaseName;
+  protected final    ArrayBlockingQueue<ODistributedRequest> localQueue;
+  protected volatile ODatabaseDocumentTx                     database;
+  protected volatile OUser                                   lastUser;
   protected volatile boolean                              running = true;
   protected final int                                     id;
 
-  public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final String iDatabaseName, final int i) {
+  public ODistributedWorker(final ODistributedDatabaseImpl iDistributed, final String iDatabaseName, final int i) {
     id = i;
     setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;

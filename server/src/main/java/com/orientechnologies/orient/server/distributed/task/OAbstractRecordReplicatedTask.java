@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -89,6 +90,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   @Override
   public final Object execute(final ODistributedRequestId requestId, final OServer iServer,
       final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
+
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
     if (lockRecords)
       // TRY LOCKING RECORD
@@ -122,6 +124,11 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
   public int getVersion() {
     return version;
+  }
+
+  protected boolean checkForClusterAvailability(final String localNode, final ODistributedConfiguration cfg) {
+    final String clusterName = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.clusterId);
+    return cfg.hasCluster(localNode, clusterName);
   }
 
   public void prepareUndoOperation() {

@@ -17,7 +17,7 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.server.hazelcast;
+package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OPair;
@@ -26,10 +26,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.OLocalClusterStrategy;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.util.*;
 

@@ -96,7 +96,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected Map<String, Member>                                  activeNodes                       = new ConcurrentHashMap<String, Member>();
   protected List<String>                                         registeredNodeById;
   protected Map<String, Integer>                                 registeredNodeByName;
-  protected OHazelcastDistributedMessageService                  messageService;
+  protected ODistributedMessageServiceImpl                       messageService;
   protected Date                                                 startedOn                         = new Date();
 
   protected volatile NODE_STATUS                                 status                            = NODE_STATUS.OFFLINE;
@@ -238,7 +238,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         if (!m.equals(nodeName))
           getRemoteServer(m);
 
-      messageService = new OHazelcastDistributedMessageService(this);
+      messageService = new ODistributedMessageServiceImpl(this);
 
       installNewDatabases(true);
 
@@ -476,7 +476,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       // SET CURRENT DATABASE NAME
       req.setUserRID(currentDatabase.getUser().getIdentity().getIdentity());
 
-    final OHazelcastDistributedDatabase db = messageService.getDatabase(iDatabaseName);
+    final ODistributedDatabaseImpl db = messageService.getDatabase(iDatabaseName);
 
     if (iTargetNodes == null || iTargetNodes.isEmpty()) {
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.OUT, "No nodes configured for partition '%s.%s' request: %s",
@@ -590,7 +590,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (getConfigurationMap().containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + iDatabase.getName()))
         throw new ODistributedException("Cannot create a new database with the same name of one available distributed");
 
-      final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
+      final ODistributedDatabaseImpl distribDatabase = messageService.registerDatabase(iDatabase.getName());
       distribDatabase.setOnline();
       onOpen(iDatabase);
 
@@ -1109,7 +1109,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   @Override
-  public OHazelcastDistributedMessageService getMessageService() {
+  public ODistributedMessageServiceImpl getMessageService() {
     return messageService;
   }
 
@@ -1169,7 +1169,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         return false;
     }
 
-    final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
+    final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName);
 
     // CREATE THE DISTRIBUTED QUEUE
     if (distrDatabase.getSyncConfiguration().isEmpty()) {
@@ -1192,7 +1192,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   }
 
-  protected boolean requestFullDatabase(String databaseName, boolean backupDatabase, OHazelcastDistributedDatabase distrDatabase) {
+  protected boolean requestFullDatabase(String databaseName, boolean backupDatabase, ODistributedDatabaseImpl distrDatabase) {
     for (int retry = 0; retry < DEPLOY_DB_MAX_RETRIES; ++retry) {
       // ASK DATABASE TO THE FIRST NODE, THE FIRST ATTEMPT, OTHERWISE ASK TO EVERYONE
       if (requestDatabaseFullSync(distrDatabase, backupDatabase, databaseName, retry > 0))
@@ -1203,7 +1203,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return false;
   }
 
-  protected boolean requestDatabaseDelta(final OHazelcastDistributedDatabase distrDatabase, final String databaseName) {
+  protected boolean requestDatabaseDelta(final ODistributedDatabaseImpl distrDatabase, final String databaseName) {
     final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
     // GET ALL THE OTHER SERVERS
@@ -1258,12 +1258,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         if (value instanceof Boolean)
           continue;
-        else if (value instanceof ODiscardedResponse) {
-          // RETRY WITH NEXT NODE, IF ANY
-          ODistributedServerLog.warn(this, nodeName, selectedNodes.toString(), DIRECTION.OUT,
-              "Requesting sync of delta database '%s' on local server failed, retrying...", databaseName);
-          return false;
-        } else if (value instanceof ODistributedDatabaseDeltaSyncException) {
+        else if (value instanceof ODistributedDatabaseDeltaSyncException) {
           ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN,
               "Error on installing database delta %s, requesting full database sync...", databaseName, dbPath);
           throw (ODistributedDatabaseDeltaSyncException) value;
@@ -1292,7 +1287,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return true;
   }
 
-  protected boolean requestDatabaseFullSync(final OHazelcastDistributedDatabase distrDatabase, final boolean backupDatabase,
+  protected boolean requestDatabaseFullSync(final ODistributedDatabaseImpl distrDatabase, final boolean backupDatabase,
       final String databaseName, final boolean iAskToAllNodes) {
     final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
@@ -1336,12 +1331,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       if (value instanceof Boolean)
         continue;
-      else if (value instanceof ODiscardedResponse) {
-        // RETRY WITH NEXT NODE, IF ANY
-        ODistributedServerLog.warn(this, nodeName, selectedNodes.toString(), DIRECTION.OUT,
-            "requesting deploy of database '%s' on local server failed, retrying...", databaseName);
-        return false;
-      } else if (value instanceof Throwable) {
+      else if (value instanceof Throwable) {
         ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN, "error on installing database %s in %s",
             (Exception) value, databaseName, dbPath);
       } else if (value instanceof ODistributedDatabaseChunk) {
@@ -1404,7 +1394,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    * Returns the clusters where sync is required.
    */
   protected Set<String> installDatabaseFromNetwork(final String dbPath, final String databaseName,
-      final OHazelcastDistributedDatabase distrDatabase, final String iNode, final ODistributedDatabaseChunk value,
+      final ODistributedDatabaseImpl distrDatabase, final String iNode, final ODistributedDatabaseChunk value,
       final boolean delta) {
 
     final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
@@ -1847,9 +1837,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return chunk.buffer.length;
   }
 
-  protected ODatabaseDocumentTx installDatabaseOnLocalNode(final OHazelcastDistributedDatabase distrDatabase,
-      final String databaseName, final String dbPath, final String iNode, final String iDatabaseCompressedFile,
-      final boolean delta) {
+  protected ODatabaseDocumentTx installDatabaseOnLocalNode(final ODistributedDatabaseImpl distrDatabase, final String databaseName,
+      final String dbPath, final String iNode, final String iDatabaseCompressedFile, final boolean delta) {
     ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "installing database '%s' to: %s...", databaseName, dbPath);
 
     try {

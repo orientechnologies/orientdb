@@ -42,7 +42,21 @@ public class OTxTaskResult implements Externalizable {
     if (!(obj instanceof OTxTaskResult))
       return false;
 
-    return results.equals(((OTxTaskResult) obj).results);
+    final OTxTaskResult other = (OTxTaskResult) obj;
+    if (results.size() != other.results.size())
+      return false;
+
+    for (int i = 0; i < results.size(); ++i) {
+      final Object currentResult = results.get(i);
+      final Object otherResult = other.results.get(i);
+      if (!currentResult.equals(otherResult)) {
+        if (OTxTask.NON_LOCAL_CLUSTER.equals(currentResult) || OTxTask.NON_LOCAL_CLUSTER.equals(otherResult))
+          continue;
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Override

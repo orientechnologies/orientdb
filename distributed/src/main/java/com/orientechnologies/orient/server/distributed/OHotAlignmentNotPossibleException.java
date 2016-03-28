@@ -16,9 +16,7 @@
  *  
  */
 
-package com.orientechnologies.orient.server.hazelcast;
-
-import com.orientechnologies.orient.server.distributed.ODistributedException;
+package com.orientechnologies.orient.server.distributed;
 
 /**
  * Hot Aligment is not possible, if autoDeploy:true restore of entire database

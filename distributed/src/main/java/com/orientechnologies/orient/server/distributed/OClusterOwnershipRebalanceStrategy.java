@@ -15,17 +15,23 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://www.orientechnologies.com
- *  
+ *
  */
-
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.Serializable;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+
+import java.util.Set;
 
 /**
- * Immutable class used to report back a discarded response.
+ * Interface to manage balancing of cluster ownership.
+ *
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class ODiscardedResponse implements Serializable {
-  public ODiscardedResponse() {
-  }
+public interface OClusterOwnershipRebalanceStrategy {
+
+  boolean rebalanceClusterOwnershipOfClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
+      final OClass iClass, final Set<String> availableNodes, final Set<String> clustersToReassign);
+
 }
