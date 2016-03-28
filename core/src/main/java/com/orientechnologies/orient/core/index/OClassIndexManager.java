@@ -20,34 +20,13 @@
 
 package com.orientechnologies.orient.core.index;
 
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -58,9 +37,14 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
+import java.util.*;
+
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
+
 /**
  * Handles indexing when records change.
- * 
+ *
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract implements OOrientStartupListener, OOrientShutdownListener {
@@ -99,7 +83,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
             if (dirtyFields.contains(field)) {
               origValues.add(iRecord.getOriginalValue(field));
             } else {
-              origValues.add(iRecord.<Object> field(field));
+              origValues.add(iRecord.<Object>field(field));
             }
         }
 
@@ -125,7 +109,10 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
             processIndexUpdateFieldAssignment(index, iRecord, origValue, newValue);
           } else {
-            if (dirtyFields.size() == 1) {
+            //in case of null values support and empty collection field we put null placeholder in
+            //place where collection item should be located so we can not use "fast path" to
+            //update index values
+            if (dirtyFields.size() == 1 && indexDefinition.isNullValuesIgnored()) {
               final Map<OCompositeKey, Integer> keysToAdd = new HashMap<OCompositeKey, Integer>();
               final Map<OCompositeKey, Integer> keysToRemove = new HashMap<OCompositeKey, Integer>();
 
@@ -227,7 +214,8 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     }
   }
 
-  private static boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
+  private static boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields,
+      final ODocument iRecord) {
     final OCompositeIndexDefinition indexDefinition = (OCompositeIndexDefinition) index.getDefinition();
 
     final String multiValueField = indexDefinition.getMultiValueField();
@@ -243,7 +231,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
             if (dirtyFields.contains(field))
               origValues.add(iRecord.getOriginalValue(field));
             else
-              origValues.add(iRecord.<Object> field(field));
+              origValues.add(iRecord.<Object>field(field));
         }
 
         if (multiValueField != null) {
@@ -367,7 +355,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     for (final OIndex<?> index : indexes) {
 
       if (index.getInternal() instanceof OIndexUnique) {
-        final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexInternal<OIdentifiable>)index.getInternal());
+        final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexInternal<OIdentifiable>) index.getInternal());
         processIndexUpdate(record, dirtyFields, indexRecorder);
 
         indexKeysMap.put(index, indexRecorder.getAffectedKeys());
