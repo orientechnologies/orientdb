@@ -52,7 +52,7 @@ public class OServerTest {
     if (server.isActive())
       server.shutdown();
 
-    //invariants
+    // invariants
     OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.setValue(allowJvmShutdownPrev);
 
     if (prevOrientHome != null)
@@ -64,7 +64,7 @@ public class OServerTest {
   }
 
   @Test
-  public void shouldShutdownOnPlguinStartupException() {
+  public void shouldShutdownOnPluginStartupException() {
 
     try {
       server = new OServer(true);

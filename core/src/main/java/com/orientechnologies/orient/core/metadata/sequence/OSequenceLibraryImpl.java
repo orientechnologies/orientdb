@@ -4,10 +4,9 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.util.List;
@@ -21,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OSequenceLibraryImpl implements OSequenceLibrary {
   private final Map<String, OSequence> sequences = new ConcurrentHashMap<String, OSequence>();
-
 
   @Override
   public void create() {
@@ -62,6 +60,10 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
   @Override
   public OSequence getSequence(String iName) {
+    final OSequence seq = sequences.get(iName.toUpperCase());
+    if (seq == null)
+      load();
+
     return sequences.get(iName.toUpperCase());
   }
 

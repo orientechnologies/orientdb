@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 public interface OSchema {
 
@@ -36,6 +36,8 @@ public interface OSchema {
   OClass createClass(String iClassName);
 
   OClass createClass(String iClassName, OClass iSuperClass);
+
+  OClass createClass(String className, int clusters, OClass... superClasses);
 
   OClass createClass(String iClassName, OClass... superClasses);
 
@@ -101,8 +103,6 @@ public interface OSchema {
    * @param iClusterName Cluster name
    */
   Set<OClass> getClassesRelyOnCluster(String iClusterName);
-
-  OClass createClass(String className, int clusters, OClass... superClasses);
 
   OClass getClassByClusterId(int clusterId);
 

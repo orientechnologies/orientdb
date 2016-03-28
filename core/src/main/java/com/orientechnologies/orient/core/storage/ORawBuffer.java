@@ -65,8 +65,8 @@ public class ORawBuffer extends OBuffer {
 
   public void writeExternal(final ObjectOutput iOutput) throws IOException {
     super.writeExternal(iOutput);
-    iOutput.write(version);
-    iOutput.write(recordType);
+    iOutput.writeInt(version);
+    iOutput.writeByte(recordType);
   }
 
   @Override

@@ -7,13 +7,13 @@
     "clusters": {
         "internal": {
         },
-        "client": {
+        "client-type": {
             "servers" : [ "europe", "usa" ]
         },
-        "client_usa": {
+        "client-type_usa": {
             "servers" : [ "usa" ]
         },
-        "client_asia": {
+        "client-type_asia": {
             "servers" : [ "asia", "europe", "usa" ]
         },
         "*": {

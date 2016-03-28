@@ -1251,6 +1251,21 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
+   * Creates a new Vertex persistent class.
+   *
+   * @param iClassName
+   *          Vertex class name
+   * @param clusters
+   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @return OrientVertexType instance representing the persistent class
+   */
+  public OrientVertexType createVertexType(final String iClassName, final int clusters) {
+    makeActive();
+    return createVertexType(iClassName, (String) null, clusters);
+  }
+
+  /**
    * Creates a new Vertex persistent class specifying the super class.
    *
    * @param iClassName
@@ -1261,8 +1276,24 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    */
   public OrientVertexType createVertexType(final String iClassName, final String iSuperClassName) {
     makeActive();
-
     return createVertexType(iClassName, iSuperClassName == null ? getVertexBaseType() : getVertexType(iSuperClassName));
+  }
+
+  /**
+   * Creates a new Vertex persistent class specifying the super class.
+   *
+   * @param iClassName
+   *          Vertex class name
+   * @param iSuperClassName
+   *          Vertex class name to extend
+   * @param clusters
+   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @return OrientVertexType instance representing the persistent class
+   */
+  public OrientVertexType createVertexType(final String iClassName, final String iSuperClassName, final int clusters) {
+    makeActive();
+    return createVertexType(iClassName, iSuperClassName == null ? getVertexBaseType() : getVertexType(iSuperClassName), clusters);
   }
 
   /**
@@ -1276,7 +1307,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    */
   public OrientVertexType createVertexType(final String iClassName, final OClass iSuperClass) {
     makeActive();
-
     OrientVertexType.checkType(iSuperClass);
 
     return executeOutsideTx(new OCallable<OrientVertexType, OrientBaseGraph>() {
@@ -1285,6 +1315,27 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         return new OrientVertexType(g, getRawGraph().getMetadata().getSchema().createClass(iClassName, iSuperClass));
       }
     }, "create vertex type '", iClassName, "' as subclass of '", iSuperClass.getName(), "'");
+  }
+
+  /**
+   * Creates a new Vertex persistent class specifying the super class.
+   *
+   * @param iClassName
+   *          Vertex class name
+   * @param iSuperClass
+   *          OClass Vertex to extend
+   * @return OrientVertexType instance representing the persistent class
+   */
+  public OrientVertexType createVertexType(final String iClassName, final OClass iSuperClass, final int clusters) {
+    makeActive();
+    OrientVertexType.checkType(iSuperClass);
+
+    return executeOutsideTx(new OCallable<OrientVertexType, OrientBaseGraph>() {
+      @Override
+      public OrientVertexType call(final OrientBaseGraph g) {
+        return new OrientVertexType(g, getRawGraph().getMetadata().getSchema().createClass(iClassName, clusters, iSuperClass));
+      }
+    }, "create vertex type '", iClassName, "' as subclass of '", iSuperClass.getName(), "' (clusters=" + clusters + ")");
   }
 
   /**
@@ -1340,8 +1391,22 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    */
   public OrientEdgeType createEdgeType(final String iClassName) {
     makeActive();
-
     return createEdgeType(iClassName, (String) null);
+  }
+
+  /**
+   * Creates a new Edge persistent class.
+   *
+   * @param iClassName
+   *          Edge class name
+   * @param clusters
+   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @return OrientEdgeType instance representing the persistent class
+   */
+  public OrientEdgeType createEdgeType(final String iClassName, final int clusters) {
+    makeActive();
+    return createEdgeType(iClassName, (String) null, clusters);
   }
 
   /**
@@ -1355,8 +1420,48 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    */
   public OrientEdgeType createEdgeType(final String iClassName, final String iSuperClassName) {
     makeActive();
-
     return createEdgeType(iClassName, iSuperClassName == null ? getEdgeBaseType() : getEdgeType(iSuperClassName));
+  }
+
+  /**
+   * Creates a new Edge persistent class specifying the super class.
+   *
+   * @param iClassName
+   *          Edge class name
+   * @param iSuperClassName
+   *          Edge class name to extend
+   * @param clusters
+   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @return OrientEdgeType instance representing the persistent class
+   */
+  public OrientEdgeType createEdgeType(final String iClassName, final String iSuperClassName, final int clusters) {
+    makeActive();
+    return createEdgeType(iClassName, iSuperClassName == null ? getEdgeBaseType() : getEdgeType(iSuperClassName), clusters);
+  }
+
+  /**
+   * Creates a new Edge persistent class specifying the super class.
+   *
+   * @param iClassName
+   *          Edge class name
+   * @param iSuperClass
+   *          OClass Edge to extend
+   * @param clusters
+   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @return OrientEdgeType instance representing the persistent class
+   */
+  public OrientEdgeType createEdgeType(final String iClassName, final OClass iSuperClass, final int clusters) {
+    makeActive();
+
+    OrientEdgeType.checkType(iSuperClass);
+    return executeOutsideTx(new OCallable<OrientEdgeType, OrientBaseGraph>() {
+      @Override
+      public OrientEdgeType call(final OrientBaseGraph g) {
+        return new OrientEdgeType(g, getRawGraph().getMetadata().getSchema().createClass(iClassName, clusters, iSuperClass));
+      }
+    }, "create edge type '", iClassName, "' as subclass of '", iSuperClass.getName(), "' (clusters=" + clusters + ")");
   }
 
   /**

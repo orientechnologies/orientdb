@@ -61,7 +61,8 @@ public class OServerConfigurationManager {
     if (iServerUserName == null || iServerUserName.length() == 0)
       throw new IllegalArgumentException("User name is null or empty");
 
-    if (iServerUserPasswd == null || iServerUserPasswd.length() == 0)
+    // An empty password is permissible as some security implementations do not require it.
+    if (iServerUserPasswd == null)
       throw new IllegalArgumentException("User password is null or empty");
 
     if (iPermissions == null || iPermissions.length() == 0)

@@ -22,6 +22,7 @@ package com.orientechnologies.common.concur.lock;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.exception.OException;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,11 +34,12 @@ public class OLockManager<T> {
     SHARED, EXCLUSIVE
   }
 
-  private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
-  private         long                                      acquireTimeout;
+  private static final int                                  DEFAULT_CONCURRENCY_LEVEL = 16;
+  private long                                              acquireTimeout;
   protected final ConcurrentLinkedHashMap<T, CountableLock> map;
-  private final   boolean                                   enabled;
-  private final   int                                       amountOfCachedInstances;
+  private final boolean                                     enabled;
+  private final int                                         amountOfCachedInstances;
+  private final static Object                               NULL_KEY                  = new Object();
 
   @SuppressWarnings("serial")
   private static class CountableLock {
@@ -62,6 +64,22 @@ public class OLockManager<T> {
     enabled = iEnabled;
   }
 
+  public void acquireSharedLock(final T key) {
+    acquireLock(key, LOCK.SHARED);
+  }
+
+  public void releaseSharedLock(final T key) {
+    releaseLock(Thread.currentThread(), key, LOCK.SHARED);
+  }
+
+  public void acquireExclusiveLock(final T key) {
+    acquireLock(key, LOCK.EXCLUSIVE);
+  }
+
+  public void releaseExclusiveLock(final T key) {
+    releaseLock(Thread.currentThread(), key, LOCK.EXCLUSIVE);
+  }
+
   public void acquireLock(final T iResourceId, final LOCK iLockType) {
     acquireLock(iResourceId, iLockType, acquireTimeout);
   }
@@ -73,7 +91,9 @@ public class OLockManager<T> {
     if (!enabled)
       return;
 
-    final T immutableResource = getImmutableResourceId(iResourceId);
+    T immutableResource = getImmutableResourceId(iResourceId);
+    if( immutableResource == null )
+      immutableResource = (T) NULL_KEY;
 
     CountableLock lock;
     do {
@@ -148,8 +168,8 @@ public class OLockManager<T> {
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw OException
-              .wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"), e);
+          throw OException.wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"),
+              e);
         }
       }
     } catch (RuntimeException e) {
@@ -161,15 +181,17 @@ public class OLockManager<T> {
     }
   }
 
-  public void releaseLock(final Object iRequester, final T iResourceId, final LOCK iLockType) throws OLockException {
+  public void releaseLock(final Object iRequester, T iResourceId, final LOCK iLockType) throws OLockException {
     if (!enabled)
       return;
 
+    if( iResourceId == null )
+      iResourceId = (T) NULL_KEY;
+
     final CountableLock lock = map.get(iResourceId);
     if (lock == null)
-      throw new OLockException(
-          "Error on releasing a non acquired lock by the requester '" + iRequester + "' against the resource: '" + iResourceId
-              + "'");
+      throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
+          + "' against the resource: '" + iResourceId + "'");
 
     lock.countLocks.decrementAndGet();
 
@@ -177,6 +199,40 @@ public class OLockManager<T> {
       lock.readWriteLock.readLock().unlock();
     else
       lock.readWriteLock.writeLock().unlock();
+  }
+
+  public void acquireExclusiveLocksInBatch(final T... values) {
+    if (values == null || values.length == 0)
+      return;
+
+    final T[] sortedValues = ONewLockManager.getOrderedValues(values);
+
+    for (int n = 0; n < sortedValues.length; n++) {
+      acquireLock(sortedValues[n], LOCK.EXCLUSIVE);
+    }
+  }
+
+  public void acquireExclusiveLocksInBatch(Collection<T> values) {
+    if (values == null || values.isEmpty())
+      return;
+
+    final Collection<T> valCopy = ONewLockManager.getOrderedValues(values);
+
+    for (T val : valCopy) {
+      acquireExclusiveLock(val);
+    }
+  }
+
+  public void lockAllExclusive() {
+    for (CountableLock lock : map.values()) {
+      lock.readWriteLock.writeLock().lock();
+    }
+  }
+
+  public void unlockAllExclusive() {
+    for (CountableLock lock : map.values()) {
+      lock.readWriteLock.writeLock().unlock();
+    }
   }
 
   // For tests purposes.
@@ -189,9 +245,8 @@ public class OLockManager<T> {
   }
 
   private static int defaultConcurrency() {
-    return (Runtime.getRuntime().availableProcessors() << 6) > DEFAULT_CONCURRENCY_LEVEL ?
-        (Runtime.getRuntime().availableProcessors() << 6) :
-        DEFAULT_CONCURRENCY_LEVEL;
+    return (Runtime.getRuntime().availableProcessors() << 6) > DEFAULT_CONCURRENCY_LEVEL
+        ? (Runtime.getRuntime().availableProcessors() << 6) : DEFAULT_CONCURRENCY_LEVEL;
   }
 
   private static int closestInteger(int value) {

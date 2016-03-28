@@ -79,9 +79,10 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     OSequenceLibrary seq1 = dbs[0].getMetadata().getSequenceLibrary();
     OSequenceLibrary seq2 = dbs[1].getMetadata().getSequenceLibrary();
 
-    //
     seq1.createSequence(sequenceName, SEQUENCE_TYPE.ORDERED, null);
     Assert.assertEquals(SEQUENCE_TYPE.ORDERED, seq1.getSequence(sequenceName).getSequenceType());
+
+    Assert.assertNotNull("The sequence has not be propagated to the 2nd server", seq2.getSequence(sequenceName));
 
     ODatabaseRecordThreadLocal.INSTANCE.set(dbs[0]);
     Assert.assertEquals(0L, seq1.getSequence(sequenceName).current());
