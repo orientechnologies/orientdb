@@ -1986,11 +1986,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     final long startTime = System.currentTimeMillis();
+    String fName= null;
     try {
       if (incremental) {
         out.println(new StringBuilder("Executing incremental backup of database '" + currentDatabaseName + "' to: ").append(iText)
             .append("..."));
-        currentDatabase.incrementalBackup(fileName);
+        fName = currentDatabase.incrementalBackup(fileName);
+
+        message("\nIncremental Backup executed in %.2f seconds stored in file %s", ((float) (System.currentTimeMillis() - startTime) / 1000),fName);
+
       } else {
         out.println(
             new StringBuilder("Executing full backup of database '" + currentDatabaseName + "' to: ").append(iText).append("..."));

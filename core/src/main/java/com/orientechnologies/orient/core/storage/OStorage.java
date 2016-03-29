@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -38,6 +32,12 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
@@ -248,7 +248,12 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   void setConflictStrategy(ORecordConflictStrategy iResolver);
 
-  void incrementalBackup(String backupDirectory);
+  /**
+   *
+   * @param backupDirectory
+   * @return Backup file name
+   */
+  String incrementalBackup(String backupDirectory);
 
   void restoreFromIncrementalBackup(String filePath);
 

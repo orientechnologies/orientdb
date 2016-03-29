@@ -97,10 +97,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   private CONNECTION_STRATEGY                  connectionStrategy      = CONNECTION_STRATEGY.STICKY;
 
-  private final   OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote();
-  protected final List<String>                   serverURLs              = new ArrayList<String>();
-  protected final Map<String, OCluster>          clusterMap              = new ConcurrentHashMap<String, OCluster>();
-  private final ExecutorService asynchExecutor;
+  private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote();
+  protected final List<String>                 serverURLs              = new ArrayList<String>();
+  protected final Map<String, OCluster>        clusterMap              = new ConcurrentHashMap<String, OCluster>();
+  private final ExecutorService                asynchExecutor;
   private final ODocument                      clusterConfiguration    = new ODocument();
   private final String                         clientId;
   private OContextConfiguration                clientConfiguration;
@@ -230,14 +230,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           || this.tokens.isEmpty()) {
 
         OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
-		
-        if(ci != null)
-		  {	
+
+        if (ci != null) {
           ci.intercept(getURL(), iUserName, iUserPassword);
           connectionUserName = ci.getUsername();
           connectionUserPassword = ci.getPassword();
-        }
-        else // Do Nothing
+        } else // Do Nothing
         {
           connectionUserName = iUserName;
           connectionUserPassword = iUserPassword;
@@ -588,7 +586,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endResponse(network);
         }
       }
-    }, "Error on read record "+ rid);
+    }, "Error on read record " + rid);
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
@@ -650,10 +648,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public void incrementalBackup(final String backupDirectory) {
-    networkOperation(new OStorageRemoteOperation<Void>() {
+  public String incrementalBackup(final String backupDirectory) {
+    return networkOperation(new OStorageRemoteOperation<String>() {
       @Override
-      public Void execute(OChannelBinaryAsynchClient network) throws IOException {
+      public String execute(OChannelBinaryAsynchClient network) throws IOException {
         try {
           network = beginRequest(network, OChannelBinaryProtocol.REQUEST_INCREMENTAL_BACKUP);
           network.writeString(backupDirectory);
@@ -661,9 +659,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endRequest(network);
         }
 
-        beginResponse(network);
-        endResponse(network);
-        return null;
+        try {
+          beginResponse(network);
+          String fileName = network.readString();
+          return fileName;
+        } finally {
+          endResponse(network);
+        }
+
       }
     }, "Error on incremental backup");
   }
@@ -1679,7 +1682,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     // CHECK IF THE EXCEPTION SHOULD BE JUST PROPAGATED
     if (!(firstCause instanceof IOException) && !(firstCause instanceof OIOException)
-        && !(firstCause instanceof IllegalMonitorStateException) && !(firstCause instanceof OOfflineNodeException) && !tokenException) {
+        && !(firstCause instanceof IllegalMonitorStateException) && !(firstCause instanceof OOfflineNodeException)
+        && !tokenException) {
       if (exception instanceof OException)
         // NOT AN IO CAUSE, JUST PROPAGATE IT
         throw (OException) exception;
@@ -1742,7 +1746,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         // FORCE RESET OF THREAD DATA (SERVER URL + SESSION ID)
         setSessionId(null, -1, null);
-        if(tokenException)
+        if (tokenException)
           tokens.remove(iNetwork.getServerURL());
         // REACQUIRE DB SESSION ID
         final String currentURL = reopenRemoteDatabase();

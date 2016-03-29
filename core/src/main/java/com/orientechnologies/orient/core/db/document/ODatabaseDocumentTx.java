@@ -2798,11 +2798,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public void incrementalBackup(final String path) {
+  public String incrementalBackup(final String path) {
     checkOpeness();
     checkIfActive();
 
-    storage.incrementalBackup(path);
+    return storage.incrementalBackup(path);
   }
 
   @Override

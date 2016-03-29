@@ -811,8 +811,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements O
   }
 
   @Override
-  public void incrementalBackup(String path) {
-    underlying.incrementalBackup(path);
+  public String incrementalBackup(String path) {
+    return underlying.incrementalBackup(path);
   }
 
   @Override

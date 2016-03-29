@@ -810,11 +810,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String path = channel.readString();
 
-    connection.getDatabase().incrementalBackup(path);
+    String fileName = connection.getDatabase().incrementalBackup(path);
 
     beginResponse();
     try {
       sendOk(clientTxId);
+      channel.writeString(fileName);
     } finally {
       endResponse();
     }

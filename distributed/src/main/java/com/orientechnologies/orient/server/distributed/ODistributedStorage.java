@@ -1119,8 +1119,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public void incrementalBackup(final String backupDirectory) {
-    wrapped.incrementalBackup(backupDirectory);
+  public String incrementalBackup(final String backupDirectory) {
+    return wrapped.incrementalBackup(backupDirectory);
   }
 
   @Override
