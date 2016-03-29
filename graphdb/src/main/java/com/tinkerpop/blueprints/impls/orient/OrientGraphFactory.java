@@ -26,7 +26,10 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   }
 
   /**
-   * Creates a factory with given credentials.
+   * Creates a factory with given credentials and pool with maximum amount of connections equal to
+   * amount of CPU cores.
+   *
+   * If you wish to change pool settings call com.tinkerpop.blueprints.impls.orient.OrientGraphFactory#setupPool(int, int) method.
    *
    * @param iURL      to the database
    * @param iUser     name of the user
@@ -36,6 +39,25 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     url = iURL;
     user = iUser;
     password = iPassword;
+    pool = new OPartitionedDatabasePool(url, user, password, 64, Runtime.getRuntime().availableProcessors()).setAutoCreate(true);
+  }
+
+  /**
+   * Creates a factory with given credentials also you may pass pool which you already use in "document part" of your application.
+   * It is mandatory to use the same pool for document and graph databases.
+   *
+   *
+   * @param iURL      to the database
+   * @param iUser     name of the user
+   * @param iPassword password of the user
+   * @param pool      Pool which is used in "document part" of your application.
+   *
+   */
+  public OrientGraphFactory(final String iURL, final String iUser, final String iPassword, OPartitionedDatabasePool pool) {
+    url = iURL;
+    user = iUser;
+    password = iPassword;
+    this.pool = pool;
   }
 
   /**
@@ -134,7 +156,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
 
   /**
    * Check if the database with path given to the factory exists.
-   *
+   * <p>
    * this api can be used only in embedded mode, and has no need of authentication.
    *
    * @return true if database is exists
@@ -156,6 +178,10 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * @return this
    */
   public OrientGraphFactory setupPool(final int iMin, final int iMax) {
+    if (pool != null) {
+      pool.close();
+    }
+
     pool = new OPartitionedDatabasePool(url, user, password, 64, iMax).setAutoCreate(true);
     return this;
   }
