@@ -19,11 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.Collection;
-
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+import java.util.Collection;
 
 /**
  * Generic Distributed Database interface.
@@ -42,7 +42,7 @@ public interface ODistributedDatabase {
    * Locks the record to be sure distributed transactions never work concurrently against the same records in the meanwhile the
    * transaction is executed and the OCompleteTxTask is not arrived.
    *
-   * @see #unlockRecord(OIdentifiable)
+   * @see #unlockRecord(OIdentifiable, ODistributedRequestId)
    * @param iRecord
    *          Record to lock
    * @param iRequestId
@@ -56,9 +56,9 @@ public interface ODistributedDatabase {
    *
    * @see #lockRecord(OIdentifiable, ODistributedRequestId)
    * @param iRecord
-   *          Record to lock
+   * @param requestId
    */
-  void unlockRecord(OIdentifiable iRecord);
+  void unlockRecord(OIdentifiable iRecord, ODistributedRequestId requestId);
 
   /**
    * Unlocks all the record locked by node iNodeName

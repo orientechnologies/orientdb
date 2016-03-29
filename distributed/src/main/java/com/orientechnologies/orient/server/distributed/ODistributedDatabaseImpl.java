@@ -51,21 +51,21 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
-  private static final String                                               NODE_LOCK_PREFIX               = "orientdb.reqlock.";
-  private static final String                                               DISTRIBUTED_SYNC_JSON_FILENAME = "/distributed-sync.json";
-  protected final ODistributedAbstractPlugin     manager;
-  protected final ODistributedMessageServiceImpl msgService;
-  protected final String                         databaseName;
-  protected final Lock                           requestLock;
-  protected       ODistributedSyncConfiguration  syncConfiguration;
-  protected AtomicBoolean                                                       status           = new AtomicBoolean(
+  private static final String                                                   NODE_LOCK_PREFIX               = "orientdb.reqlock.";
+  private static final String                                                   DISTRIBUTED_SYNC_JSON_FILENAME = "/distributed-sync.json";
+  protected final ODistributedAbstractPlugin                                    manager;
+  protected final ODistributedMessageServiceImpl                                msgService;
+  protected final String                                                        databaseName;
+  protected final Lock                                                          requestLock;
+  protected ODistributedSyncConfiguration                                       syncConfiguration;
+  protected AtomicBoolean                                                       status                         = new AtomicBoolean(
       false);
-  protected ConcurrentHashMap<ORID, ODistributedRequestId>                      lockManager      = new ConcurrentHashMap<ORID, ODistributedRequestId>(
+  protected ConcurrentHashMap<ORID, ODistributedRequestId>                      lockManager                    = new ConcurrentHashMap<ORID, ODistributedRequestId>(
       256);
-  protected ConcurrentHashMap<ODistributedRequestId, ODistributedTxContextImpl> activeTxContexts = new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContextImpl>(
+  protected ConcurrentHashMap<ODistributedRequestId, ODistributedTxContextImpl> activeTxContexts               = new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContextImpl>(
       64);
-  protected final List<ODistributedWorker>                                      workerThreads    = new ArrayList<ODistributedWorker>();
-  protected volatile ReadWriteLock                                              processLock      = new ReentrantReadWriteLock();
+  protected final List<ODistributedWorker>                                      workerThreads                  = new ArrayList<ODistributedWorker>();
+  protected volatile ReadWriteLock                                              processLock                    = new ReentrantReadWriteLock();
 
   public ODistributedDatabaseImpl(final OHazelcastPlugin manager, final ODistributedMessageServiceImpl msgService,
       final String iDatabaseName) {
@@ -277,30 +277,34 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     final boolean locked = oldReqId == null;
 
     if (!locked) {
-      if (iRequestId.equals(oldReqId))
+      if (iRequestId.equals(oldReqId)) {
         // SAME ID, ALREADY LOCKED
+        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "Distributed transaction: %s re=locked record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
+            iRequestId);
         return true;
+      }
     }
 
-    if (ODistributedServerLog.isDebugEnabled())
-      if (locked)
-        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "Distributed transaction: locked record %s in database '%s' owned by server '%s'", iRecord, databaseName,
-            manager.getNodeNameById(iRequestId.getNodeId()));
-      else
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "Distributed transaction: cannot lock record %s in database '%s' owned by %s", iRecord, databaseName, oldReqId);
+    // if (ODistributedServerLog.isDebugEnabled())
+    if (locked)
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Distributed transaction: %s locked record %s in database '%s'", iRequestId, iRecord, databaseName);
+    else
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Distributed transaction: %s cannot lock record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
+          oldReqId);
 
     return locked;
   }
 
   @Override
-  public void unlockRecord(final OIdentifiable iRecord) {
+  public void unlockRecord(final OIdentifiable iRecord, final ODistributedRequestId requestId) {
     final ODistributedRequestId owner = lockManager.remove(iRecord.getIdentity());
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Distributed transaction: unlocked record %s in database '%s' (owner=%s)", iRecord, databaseName, owner);
+    // if (ODistributedServerLog.isDebugEnabled())
+    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+        "Distributed transaction: %s unlocked record %s in database '%s' (owner=%s)", requestId, iRecord, databaseName, owner);
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -125,7 +126,13 @@ public class OIncrementalServerSync {
                       ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion - 1, recordContent,
                           true);
 
-                      newRecord.save();
+                      try {
+                        newRecord.save();
+                      } catch (ORecordNotFoundException e) {
+                        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+                            "DELTA <- error on saving record rid=%s type=%d size=%d v=%d content=%s", rid, recordType, recordSize, recordVersion,
+                            newRecord);
+                      }
 
                       if (newRecord.getIdentity().getClusterPosition() < clusterPos) {
                         // DELETE THE RECORD TO CREATE A HOLE

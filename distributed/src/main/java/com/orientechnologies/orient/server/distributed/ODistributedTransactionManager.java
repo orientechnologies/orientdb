@@ -94,7 +94,7 @@ public class ODistributedTransactionManager {
             @Override
             public Object call(final OCallable<Void, ODistributedRequestId> unlockCallback) {
               try {
-                final ODistributedDatabase ddb = acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay);
+                final ODistributedRequestId requestId = acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay);
 
                 try {
                   final List<ORecordOperation> uResult = (List<ORecordOperation>) ODistributedAbstractPlugin
@@ -138,24 +138,27 @@ public class ODistributedTransactionManager {
                         continue;
                       }
 
+                      // OK, DISTRIBUTED COMMIT SUCCEED
                       return null;
                     }
 
-                    if (ODistributedServerLog.isDebugEnabled())
-                      ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                          "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
-
                     // ONLY CASE: ODistributedRecordLockedException MORE THAN AUTO-RETRY
-                    throw (ODistributedRecordLockedException) lastResult.getPayload();
-                  }
+                    ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                        "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
 
-                  // ASYNC, MANAGE REPLICATION CALLBACK
-                  executeAsyncTx(nodes, localResult, unlockCallback, involvedClusters, txTask, localNodeName);
+                    // ROLLBACK TX
+                    sendTxCompleted(localNodeName, involvedClusters, nodes, lastResult.getRequestId(), false);
+
+                    throw (ODistributedRecordLockedException) lastResult.getPayload();
+
+                  } else
+                    // ASYNC, MANAGE REPLICATION CALLBACK
+                    executeAsyncTx(nodes, localResult, unlockCallback, involvedClusters, txTask, localNodeName);
 
                 } finally {
                   // UNLOCK ALL THE RECORDS
                   for (ORecordOperation op : iTx.getAllRecordEntries()) {
-                    ddb.unlockRecord(op.record);
+                    localDistributedDatabase.unlockRecord(op.record, requestId);
                   }
                 }
               } catch (RuntimeException e) {
@@ -348,7 +351,7 @@ public class ODistributedTransactionManager {
     }
   }
 
-  protected ODistributedDatabase acquireMultipleRecordLocks(final OTransaction iTx, final int maxAutoRetry,
+  protected ODistributedRequestId acquireMultipleRecordLocks(final OTransaction iTx, final int maxAutoRetry,
       final int autoRetryDelay) throws InterruptedException {
     // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED
     final ODistributedRequestId localReqId = new ODistributedRequestId(dManager.getLocalNodeId(),
@@ -369,7 +372,7 @@ public class ODistributedTransactionManager {
       if (!recordLocked)
         throw new ODistributedRecordLockedException(op.record.getIdentity());
     }
-    return localDistributedDatabase;
+    return localReqId;
   }
 
   /**
@@ -463,9 +466,11 @@ public class ODistributedTransactionManager {
       // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-            "distributed transaction error: %s", result, result.toString());
+            "Distributed transaction error: %s", result, result.toString());
 
+      // ROLLBACK TX
       storage.executeUndoOnLocalServer(dResponse.getRequestId(), txTask);
+      sendTxCompleted(localNodeName, involvedClusters, nodes, dResponse.getRequestId(), false);
 
       if (result instanceof OTransactionException || result instanceof ONeedRetryException)
         throw (RuntimeException) result;
@@ -476,7 +481,11 @@ public class ODistributedTransactionManager {
       // UNKNOWN RESPONSE TYPE
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-            "distributed transaction error, received unknown response type: %s", result);
+            "Distributed transaction error, received unknown response type: %s", result);
+
+      // ROLLBACK TX
+      storage.executeUndoOnLocalServer(dResponse.getRequestId(), txTask);
+      sendTxCompleted(localNodeName, involvedClusters, nodes, dResponse.getRequestId(), false);
 
       throw new OTransactionException("Error on committing distributed transaction, received unknown response type " + result);
     }

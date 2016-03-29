@@ -969,14 +969,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
           ODistributedServerLog.info(this, nodeName, eventNodeName, DIRECTION.IN, "Updated configuration db=%s", databaseName);
 
-          final ODatabaseDocumentTx database = (ODatabaseDocumentTx) serverInstance.openDatabase(databaseName, "internal",
-              "internal", null, true);
-          try {
-
-          } finally {
-            database.close();
-          }
-
+//          final ODatabaseDocumentTx database = (ODatabaseDocumentTx) serverInstance.openDatabase(databaseName, "internal",
+//              "internal", null, true);
+//          try {
+//
+//          } finally {
+//            database.close();
+//          }
+//
           checkDatabaseEvent(iEvent, databaseName);
         }
       } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
