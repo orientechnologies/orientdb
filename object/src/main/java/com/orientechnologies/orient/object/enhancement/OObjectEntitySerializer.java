@@ -655,7 +655,6 @@ public class OObjectEntitySerializer {
           reloadSchema = true;
         } else {
           oSuperClass = oSchema.getClass(currentClass.getSimpleName());
-          reloadSchema = true;
         }
 
         if (!currentOClass.getSuperClasses().contains(oSuperClass)) {
