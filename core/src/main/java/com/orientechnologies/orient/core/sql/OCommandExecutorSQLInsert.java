@@ -131,7 +131,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
         throwSyntaxErrorException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'");
 
       final String temp = parseOptionalWord(true);
-      if (temp.equals("CLUSTER")) {
+      if (parserGetLastWord().equalsIgnoreCase("cluster")) {
         clusterName = parserRequiredWord(false);
 
         parserSkipWhiteSpaces();
@@ -331,8 +331,13 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     if (endFields == -1)
       throwSyntaxErrorException("Missed closed brace");
 
+    final ArrayList<String> fieldNamesQuoted = new ArrayList<String>();
+    parserSetCurrentPosition(OStringSerializerHelper.getParameters(parserText, beginFields, endFields, fieldNamesQuoted));
     final ArrayList<String> fieldNames = new ArrayList<String>();
-    parserSetCurrentPosition(OStringSerializerHelper.getParameters(parserText, beginFields, endFields, fieldNames));
+    for(String fieldName:fieldNamesQuoted){
+      fieldNames.add(decodeClassName(fieldName));
+    }
+
     if (fieldNames.size() == 0)
       throwSyntaxErrorException("Set of fields is empty. Example: (name, surname)");
 
