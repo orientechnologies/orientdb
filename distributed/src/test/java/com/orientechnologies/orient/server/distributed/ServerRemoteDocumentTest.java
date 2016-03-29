@@ -46,7 +46,7 @@ public class ServerRemoteDocumentTest extends AbstractServerClusterTest {
 
   @Override
   protected String getDistributedServerConfiguration(ServerRun server) {
-    return "orientdb-server-config.xml";
+    return "orientdb-dserver-config-0.xml";
   }
 
   @Override
