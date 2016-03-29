@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import java.io.Closeable;
 import java.util.*;
 
@@ -43,7 +44,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 
-import java.io.Closeable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -733,6 +733,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
   ODatabase<T> commit(boolean force) throws OTransactionException;
 
+  OUncompletedCommit<Void> initiateCommit();
+
+  OUncompletedCommit<Void> initiateCommit(boolean force);
+
   /**
    * Aborts the current running transaction. All the pending changed entities will be restored in the datastore. Memory instances
    * are not guaranteed to being restored as well.
@@ -872,7 +876,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Restores content of database stored using {@link #incrementalBackup(String)} method.
    *
    * During data restore database can not be used in normal mode you should wait till database restore will be finished.
-   * 
+   *
    * @param path
    *          Path to backup folder.
    * @since 2.2

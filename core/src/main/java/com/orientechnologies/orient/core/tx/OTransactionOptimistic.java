@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
@@ -37,13 +38,10 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -52,6 +50,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -154,6 +153,31 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       doCommit();
     } else if (txStartCounter > 0)
       OLogManager.instance().debug(this, "Nested transaction was closed but transaction itself was not committed.");
+    else
+      throw new OTransactionException("Transaction was committed more times than it is started.");
+  }
+
+  @Override
+  public OUncompletedCommit<Void> initiateCommit() {
+    return initiateCommit(false);
+  }
+
+  @Override
+  public OUncompletedCommit<Void> initiateCommit(boolean force) {
+    checkTransaction();
+
+    if (txStartCounter < 0)
+      throw new OStorageException("Invalid value of tx counter");
+
+    if (force)
+      txStartCounter = 0;
+    else
+      txStartCounter--;
+
+    if (txStartCounter == 0)
+      return doInitiateCommit();
+    else if (txStartCounter > 0)
+      return new UncompletedCommit(false, null);
     else
       throw new OTransactionException("Transaction was committed more times than it is started.");
   }
@@ -593,6 +617,101 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     close();
 
     status = TXSTATUS.COMPLETED;
+  }
+
+  private OUncompletedCommit<Void> doInitiateCommit() {
+    if (status == TXSTATUS.ROLLED_BACK || status == TXSTATUS.ROLLBACKING)
+      throw new ORollbackException("Given transaction was rolled back and cannot be used.");
+
+    status = TXSTATUS.COMMITTING;
+
+    if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
+      if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
+          && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
+        return new UncompletedCommit(true, database.getStorage().initiateCommit(this, null));
+      else {
+        final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
+        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
+          indexes.put(index.getName(), index);
+
+        final Runnable callback = new CommitIndexesCallback(indexes);
+
+        final String storageType = database.getStorage().getUnderlying().getType();
+
+        if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
+          return new UncompletedCommit(true, database.getStorage().initiateCommit(OTransactionOptimistic.this, callback));
+        else
+          return database.getStorage().callInLock(new Callable<OUncompletedCommit<Void>>() {
+            @Override
+            public OUncompletedCommit<Void> call() throws Exception {
+              return new UncompletedCommit(true, database.getStorage().initiateCommit(OTransactionOptimistic.this, callback));
+            }
+          }, true);
+      }
+    }
+
+    return new UncompletedCommit(true, null);
+  }
+
+  private class UncompletedCommit implements OUncompletedCommit<Void> {
+
+    private final boolean                                    topLevel;
+    private final OUncompletedCommit<List<ORecordOperation>> nestedCommit;
+
+    public UncompletedCommit(boolean topLevel, OUncompletedCommit<List<ORecordOperation>> nestedCommit) {
+      this.topLevel = topLevel;
+      this.nestedCommit = nestedCommit;
+    }
+
+    @Override
+    public Void complete() {
+      checkTransaction();
+
+      if (!topLevel) {
+        OLogManager.instance().debug(this, "Nested transaction was closed but transaction itself was not committed.");
+        return null;
+      }
+
+      if (nestedCommit != null)
+        nestedCommit.complete();
+
+      close();
+      status = TXSTATUS.COMPLETED;
+
+      return null;
+    }
+
+    @Override
+    public void rollback() {
+      checkTransaction();
+
+      if (!topLevel) {
+        OTransactionOptimistic.this.rollback(false, 0);
+        return;
+      }
+
+      status = TXSTATUS.ROLLBACKING;
+
+      if (nestedCommit != null)
+        nestedCommit.rollback();
+
+      // CLEAR THE CACHE
+      database.getLocalCache().clear();
+
+      // REMOVE ALL THE DIRTY ENTRIES AND UNDO ANY DIRTY DOCUMENT IF POSSIBLE.
+      for (ORecordOperation v : allEntries.values()) {
+        final ORecord rec = v.getRecord();
+        if (rec.isDirty())
+          if (rec instanceof ODocument && ((ODocument) rec).isTrackingChanges())
+            ((ODocument) rec).undo();
+          else
+            rec.unload();
+      }
+
+      close();
+
+      status = TXSTATUS.ROLLED_BACK;
+    }
   }
 
 }
