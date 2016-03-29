@@ -1350,6 +1350,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   @Override
   public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction clientTx, Runnable callback) {
+    boolean success = false;
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
 
@@ -1372,7 +1373,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         dataLock.acquireExclusiveLock();
         try {
-
           checkOpeness();
 
           if (writeAheadLog == null && clientTx.isUsingLog())
@@ -1419,7 +1419,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           if (callback != null)
             callback.run();
 
-          return new UncompletedCommit(clientTx, entries, result, atomicOperationsManager.initiateCommit());
+          final OUncompletedCommit<List<ORecordOperation>> uncompletedCommit = new UncompletedCommit(clientTx, entries, result,
+              atomicOperationsManager.initiateCommit());
+          success = true;
+          return uncompletedCommit;
         } catch (IOException ioe) {
           makeRollback(clientTx, ioe);
         } catch (RuntimeException e) {
@@ -1428,7 +1431,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           dataLock.releaseExclusiveLock();
         }
       } finally {
-        ((OMetadataInternal) databaseRecord.getMetadata()).clearThreadLocalSchemaSnapshot();
+        if (!success)
+          ((OMetadataInternal) databaseRecord.getMetadata()).clearThreadLocalSchemaSnapshot();
       }
     } finally {
       stateLock.releaseReadLock();
@@ -4075,7 +4079,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.acquireReadLock();
       try {
         try {
-          dataLock.acquireExclusiveLock();
           try {
             checkOpeness();
 
@@ -4086,7 +4089,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             makeRollback(clientTx, e);
           } finally {
             transaction.set(null);
-            dataLock.releaseExclusiveLock();
           }
         } finally {
           ((OMetadataInternal)clientTx.getDatabase().getMetadata()).clearThreadLocalSchemaSnapshot();
@@ -4103,31 +4105,34 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       checkOpeness();
       stateLock.acquireReadLock();
       try {
-        dataLock.acquireExclusiveLock();
         try {
-          checkOpeness();
+          try {
+            checkOpeness();
 
-          if (transaction.get() == null)
-            return;
+            if (transaction.get() == null)
+              return;
 
-          if (writeAheadLog == null)
-            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
+            if (writeAheadLog == null)
+              throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
 
-          if (transaction.get().getClientTx().getId() != clientTx.getId())
-            throw new OStorageException(
-                "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
+            if (transaction.get().getClientTx().getId() != clientTx.getId())
+              throw new OStorageException(
+                  "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
 
-          makeStorageDirty();
+            makeStorageDirty();
 
-          nestedCommit.rollback();
-          assert atomicOperationsManager.getCurrentOperation() == null;
+            nestedCommit.rollback();
+            assert atomicOperationsManager.getCurrentOperation() == null;
 
-          OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
-        } catch (IOException e) {
-          throw OException.wrapException(new OStorageException("Error during transaction rollback"), e);
-        } finally {
-          transaction.set(null);
-          dataLock.releaseExclusiveLock();
+            OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
+          } catch (IOException e) {
+            throw OException.wrapException(new OStorageException("Error during transaction rollback"), e);
+          } finally {
+            transaction.set(null);
+          }
+        }
+        finally {
+          ((OMetadataInternal)clientTx.getDatabase().getMetadata()).clearThreadLocalSchemaSnapshot();
         }
       } finally {
         stateLock.releaseReadLock();
@@ -4135,7 +4140,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     private void makeRollback(OTransaction clientTx, Exception e) {
-      // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
       OLogManager.instance()
           .debug(this, "Error during transaction commit completion, transaction will be rolled back (tx-id=%d)", e,
               clientTx.getId());

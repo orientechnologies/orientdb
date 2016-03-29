@@ -2537,11 +2537,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public ODatabaseDocument commit(boolean force) throws OTransactionException {
-    if (true) {
-      initiateCommit(force).complete();
-      return this;
-    }
-
     checkOpeness();
     checkIfActive();
 
@@ -2642,7 +2637,32 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
                 + "#onBeforeTxCommit()"), e);
       }
 
-    return new UncompletedCommit(true, currentTx.initiateCommit(force));
+    try {
+      return new UncompletedCommit(true, currentTx.initiateCommit(force));
+    } catch (RuntimeException e) {
+      OLogManager.instance().debug(this, "Error on transaction commit", e);
+
+      // WAKE UP ROLLBACK LISTENERS
+      for (ODatabaseListener listener : browseListeners())
+        try {
+          listener.onBeforeTxRollback(this);
+        } catch (Throwable t) {
+          OLogManager.instance().error(this, "Error before transaction rollback", t);
+        }
+
+      // ROLLBACK TX AT DB LEVEL
+      currentTx.rollback(false, 0);
+      getLocalCache().clear();
+
+      // WAKE UP ROLLBACK LISTENERS
+      for (ODatabaseListener listener : browseListeners())
+        try {
+          listener.onAfterTxRollback(this);
+        } catch (Throwable t) {
+          OLogManager.instance().error(this, "Error after transaction rollback", t);
+        }
+      throw e;
+    }
   }
 
   /**
@@ -3118,13 +3138,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       checkIfActive();
 
       if (!topLevel) {
-        try {
-          nestedCommit.complete();
-        } catch (RuntimeException e) {
-          OLogManager.instance().debug(this, "Error on transaction commit", e);
-          nestedCommit.rollback();
-          throw e;
-        }
+        nestedCommit.complete();
         return null;
       }
 

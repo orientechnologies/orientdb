@@ -68,4 +68,6 @@ public interface OWALChanges {
    */
   int fromStream(int offset, byte[] stream);
 
+  OWALChanges inverse(ByteBuffer buffer);
+
 }

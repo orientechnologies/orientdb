@@ -575,11 +575,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object>implements O
 
   @Override
   public ODatabasePojoAbstract<Object> commit(boolean force) throws OTransactionException {
-    if (true) {
-      initiateCommit(force).complete();
-      return this;
-    }
-
     underlying.commit(force);
 
     if (getTransaction().isActive())

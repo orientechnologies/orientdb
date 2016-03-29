@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -438,8 +439,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (counter > 0)
       return new OUncompletedCommit.NoOperation<OAtomicOperation>(operation);
 
-    final UncompletedCommit uncompletedCommit = new UncompletedCommit(operation, operation.initiateCommit(writeAheadLog));
-    return uncompletedCommit;
+    return new UncompletedCommit(operation, operation.initiateCommit(writeAheadLog));
   }
 
   private void acquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String fullName) {
@@ -585,6 +585,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     public OAtomicOperation complete() {
       nestedCommit.complete();
 
+      try {
+        writeAheadLog
+            .logAtomicOperationEndRecord(operation.getOperationUnitId(), false, operation.getStartLSN(), operation.getMetadata());
+      }
+      catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error while completing an uncompleted commit."), e);
+      }
+
       currentOperation.set(null);
 
       if (trackAtomicOperations)
@@ -600,7 +608,17 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     @Override
     public void rollback() {
+      operation.rollback(null);
+
       nestedCommit.rollback();
+
+      try {
+        writeAheadLog
+            .logAtomicOperationEndRecord(operation.getOperationUnitId(), true, operation.getStartLSN(), operation.getMetadata());
+      }
+      catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error while rollbacking an uncompleted commit."), e);
+      }
 
       currentOperation.set(null);
 

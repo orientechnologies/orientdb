@@ -445,49 +445,7 @@ public class OAtomicOperation {
   }
 
   public OUncompletedCommit<Void> initiateCommit(OWriteAheadLog writeAheadLog) throws IOException {
-    final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
-        .getStatisticInstance();
-    if (sessionStoragePerformanceStatistic != null) {
-      sessionStoragePerformanceStatistic.startCommitTimer();
-      sessionStoragePerformanceStatistic.startComponentOperation("atomic operation");
-    }
-    storagePerformanceStatistic.startCommitTimer();
-
-    try {
-      for (long deletedFileId : deletedFiles) {
-        writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, deletedFileId));
-      }
-
-      for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
-        final FileChanges fileChanges = fileChangesEntry.getValue();
-        final long fileId = fileChangesEntry.getKey();
-
-        if (fileChanges.isNew)
-          writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId));
-        else if (fileChanges.truncate)
-          writeAheadLog.log(new OFileTruncatedWALRecord(operationUnitId, fileId));
-
-        for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
-          final long pageIndex = filePageChangesEntry.getKey();
-          final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
-
-          filePageChanges.lsn = writeAheadLog
-              .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
-        }
-      }
-
-      writeAheadLog
-          .logAtomicOperationEndRecord(operationUnitId, false, startLSN, metadata);
-
-      return new UncompletedCommit();
-    } finally {
-      if (sessionStoragePerformanceStatistic != null) {
-        sessionStoragePerformanceStatistic.stopCommitTimer();
-        sessionStoragePerformanceStatistic.completeComponentOperation();
-      }
-
-      storagePerformanceStatistic.stopCommitTimer();
-    }
+      return new UncompletedCommit(writeAheadLog);
   }
 
   void incrementCounter() {
@@ -580,6 +538,13 @@ public class OAtomicOperation {
   }
 
   private class UncompletedCommit implements OUncompletedCommit<Void> {
+
+    private final OWriteAheadLog writeAheadLog;
+
+    public UncompletedCommit(OWriteAheadLog writeAheadLog) {
+      this.writeAheadLog = writeAheadLog;
+    }
+
     @Override
     public Void complete() {
       final OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = OSessionStoragePerformanceStatistic
@@ -591,6 +556,28 @@ public class OAtomicOperation {
       storagePerformanceStatistic.startCommitTimer();
 
       try {
+        for (long deletedFileId : deletedFiles) {
+          writeAheadLog.log(new OFileDeletedWALRecord(operationUnitId, deletedFileId));
+        }
+
+        for (Map.Entry<Long, FileChanges> fileChangesEntry : fileChanges.entrySet()) {
+          final FileChanges fileChanges = fileChangesEntry.getValue();
+          final long fileId = fileChangesEntry.getKey();
+
+          if (fileChanges.isNew)
+            writeAheadLog.log(new OFileCreatedWALRecord(operationUnitId, fileChanges.fileName, fileId));
+          else if (fileChanges.truncate)
+            writeAheadLog.log(new OFileTruncatedWALRecord(operationUnitId, fileId));
+
+          for (Map.Entry<Long, FilePageChanges> filePageChangesEntry : fileChanges.pageChangesMap.entrySet()) {
+            final long pageIndex = filePageChangesEntry.getKey();
+            final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
+
+            filePageChanges.lsn = writeAheadLog
+                .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
+          }
+        }
+
         for (long deletedFileId : deletedFiles) {
           readCache.deleteFile(deletedFileId, writeCache);
         }
@@ -635,11 +622,9 @@ public class OAtomicOperation {
             }
           }
         }
-      }
-      catch (IOException e) {
-        throw OException.wrapException(new OStorageException("Error while completing a commit."), e);
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error while completing an uncompleted commit."), e);
       } finally {
-        // TODO: performance counters must be fixed to avoid commit double counting
         if (sessionStoragePerformanceStatistic != null) {
           sessionStoragePerformanceStatistic.stopCommitTimer();
           sessionStoragePerformanceStatistic.completeComponentOperation();
@@ -647,11 +632,13 @@ public class OAtomicOperation {
 
         storagePerformanceStatistic.stopCommitTimer();
       }
+
       return null;
     }
 
     @Override
     public void rollback() {
+      // no operation for now
     }
   }
 }

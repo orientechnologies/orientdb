@@ -664,7 +664,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
 
     @Override
-    public Void complete() { // TODO: locks?
+    public Void complete() {
       checkTransaction();
 
       if (!topLevel) {
@@ -682,7 +682,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
 
     @Override
-    public void rollback() { // TODO: locks?
+    public void rollback() {
       checkTransaction();
 
       if (!topLevel) {
@@ -692,7 +692,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
       status = TXSTATUS.ROLLBACKING;
 
-      nestedCommit.rollback();
+      if (nestedCommit != null)
+        nestedCommit.rollback();
 
       // CLEAR THE CACHE
       database.getLocalCache().clear();
