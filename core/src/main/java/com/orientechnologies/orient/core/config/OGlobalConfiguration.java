@@ -476,6 +476,12 @@ public enum OGlobalConfiguration {
 
   PROFILER_MAXVALUES("profiler.maxValues", "Maximum values to store. Values are managed in a LRU", Integer.class, 200),
 
+  /**
+   * Interval between snapshots of profiler state in milliseconds, default value is 100.
+   */
+  STORAGE_PROFILER_SNAPSHOT_INTERVAL("storageProfiler.intervalBetweenSnapshots",
+      "Interval between snapshots of profiler state in milliseconds", Integer.class, 100),
+
   // LOG
   LOG_CONSOLE_LEVEL("log.console.level", "Console logging level.", String.class, "info", new OConfigurationChangeCallback() {
     public void change(final Object iCurrentValue, final Object iNewValue) {
@@ -674,6 +680,43 @@ public enum OGlobalConfiguration {
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database.", String.class,
       ORecordSerializerBinary.NAME),
+
+  /**
+   * @Since 2.2
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  CLIENT_KRB5_CONFIG("client.krb5.config", "Location of the Kerberos configuration file", String.class, null),
+
+  /**
+   * @Since 2.2
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  CLIENT_KRB5_CCNAME("client.krb5.ccname", "Location of the Kerberos client ticketcache", String.class, null),
+
+  /**
+   * @Since 2.2
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  CLIENT_KRB5_KTNAME("client.krb5.ktname", "Location of the Kerberos client keytab", String.class, null),
+
+  /**
+   * @Since 2.2
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  CLIENT_CREDENTIAL_INTERCEPTOR("client.credentialinterceptor", "The name of the CredentialInterceptor class", String.class, null),
+  
+  /**
+   * @Since 2.2
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  CREATE_DEFAULT_USERS("security.createDefaultUsers", "Indicates where default database users should be created", Boolean.class, false),
+
+  /**
+   * @Since 2.2
+   */
+  @OApi(maturity = OApi.MATURITY.NEW)
+  SERVER_SECURITY_FILE("server.security.file", "Location of the OrientDB security.json configuration file", String.class, null),
+
 
   @Deprecated DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout",
       "Maximum timeout (in ms) to wait for the response in replication.", Long.class, 500000l, true),

@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTx
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -89,7 +88,6 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     when(storage.getName()).thenReturn("localPaginatedClusterWithWALTestOne");
     when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
     when(storage.getVariableParser()).thenReturn(new OStorageVariableParser(storageDir));
-    when(storage.getStoragePerformanceStatistic()).thenReturn(new OStoragePerformanceStatistic(1024, "test", 1));
 
     File buildDir = new File(buildDirectory);
     if (!buildDir.exists())
@@ -133,7 +131,6 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     testStorageDir = buildDirectory + "/localPaginatedClusterWithWALTestTwo";
     when(testStorage.getStoragePath()).thenReturn(testStorageDir);
     when(testStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
-    when(testStorage.getStoragePerformanceStatistic()).thenReturn(new OStoragePerformanceStatistic(1024, "test", 1));
 
     when(testStorage.getName()).thenReturn("localPaginatedClusterWithWALTestTwo");
     when(testStorage.getVariableParser()).thenReturn(new OStorageVariableParser(testStorageDir));
@@ -428,13 +425,13 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
           if (!testWriteCache.isOpen(fileId))
             testReadCache.openFile(fileId, testWriteCache);
 
-          OCacheEntry cacheEntry = testReadCache.load(fileId, pageIndex, true, testWriteCache, 0, storagePerformanceStatistic);
+          OCacheEntry cacheEntry = testReadCache.load(fileId, pageIndex, true, testWriteCache, 0);
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
-                readCache.release(cacheEntry, testWriteCache, storagePerformanceStatistic);
+                readCache.release(cacheEntry, testWriteCache);
 
-              cacheEntry = testReadCache.allocateNewPage(fileId, testWriteCache, storagePerformanceStatistic);
+              cacheEntry = testReadCache.allocateNewPage(fileId, testWriteCache);
             } while (cacheEntry.getPageIndex() != pageIndex);
           }
           cacheEntry.acquireExclusiveLock();
@@ -446,7 +443,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
             cacheEntry.markDirty();
           } finally {
             cacheEntry.releaseExclusiveLock();
-            testReadCache.release(cacheEntry, testWriteCache, storagePerformanceStatistic);
+            testReadCache.release(cacheEntry, testWriteCache);
           }
         }
         atomicUnit.clear();

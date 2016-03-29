@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Manages network connections against OrientDB servers. All the connection pools are managed in a Map<url,pool>, but in the future
@@ -37,10 +38,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ORemoteConnectionManager {
-  public static final String                                       PARAM_MAX_POOL = "maxpool";
+  public static final String                                   PARAM_MAX_POOL = "maxpool";
 
-  protected final ConcurrentHashMap<String, ORemoteConnectionPool> connections;
-  protected final long                                             timeout;
+  protected final ConcurrentMap<String, ORemoteConnectionPool> connections;
+  protected final long                                         timeout;
 
   public ORemoteConnectionManager(final long iTimeout) {
     connections = new ConcurrentHashMap<String, ORemoteConnectionPool>();

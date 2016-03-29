@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
@@ -79,6 +80,11 @@ public class OUserTrigger extends ODocumentHookAbstract {
 
     if (password == null)
       throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
+
+    if(Orient.instance().getSecurity() != null)
+    {
+      Orient.instance().getSecurity().validatePassword(password);
+    }
 
     if (!password.startsWith("{")) {
       iDocument.field("password", OUser.encryptPassword(password));

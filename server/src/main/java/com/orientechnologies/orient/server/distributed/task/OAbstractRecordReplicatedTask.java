@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -27,7 +28,11 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -85,6 +90,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   @Override
   public final Object execute(final ODistributedRequestId requestId, final OServer iServer,
       final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
+
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
     if (lockRecords)
       // TRY LOCKING RECORD
@@ -98,7 +104,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     } finally {
       if (lockRecords)
         // UNLOCK THE SINGLE OPERATION. IN TX WAIT FOR THE 2-PHASE COMMIT/ROLLBACK/FIX MESSAGE
-        ddb.unlockRecord(rid);
+        ddb.unlockRecord(rid, requestId);
     }
   }
 
@@ -120,11 +126,22 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     return version;
   }
 
+  protected boolean checkForClusterAvailability(final String localNode, final ODistributedConfiguration cfg) {
+    final String clusterName = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.clusterId);
+    return cfg.hasCluster(localNode, clusterName);
+  }
+
   public void prepareUndoOperation() {
     if (previousRecord == null) {
-      previousRecord = rid.getRecord();
-      if (previousRecord == null)
+      // READ DIRECTLY FROM THE UNDERLYING STORAGE
+      final OStorageOperationResult<ORawBuffer> loaded = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying()
+          .readRecord(rid, null, true, null);
+
+      if (loaded == null || loaded.getResult() == null)
         throw new ORecordNotFoundException(rid);
+
+      previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType);
+      ORecordInternal.fill(previousRecord, rid, loaded.getResult().version, loaded.getResult().getBuffer(), false);
     }
   }
 

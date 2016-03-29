@@ -72,7 +72,7 @@
     </handlers>
     <network>
         <sockets>
-            <socket implementation="com.orientechnologies.orient.server.network.OServerSSLSocketFactory" name="ssl">
+            <socket implementation="com.orientechnologies.orient.server.network.OServerTLSSocketFactory" name="ssl">
                 <parameters>
                     <parameter value="false" name="network.ssl.clientAuth"/>
                     <parameter value="config/cert/orientdb.ks" name="network.ssl.keyStore"/>
@@ -81,7 +81,7 @@
                     <parameter value="password" name="network.ssl.trustStorePassword"/>
                 </parameters>
             </socket>
-            <socket implementation="com.orientechnologies.orient.server.network.OServerSSLSocketFactory" name="https">
+            <socket implementation="com.orientechnologies.orient.server.network.OServerTLSSocketFactory" name="https">
                 <parameters>
                     <parameter value="false" name="network.ssl.clientAuth"/>
                     <parameter value="config/cert/orientdb.ks" name="network.ssl.keyStore"/>

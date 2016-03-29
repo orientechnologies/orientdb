@@ -51,6 +51,8 @@ import com.orientechnologies.orient.core.metadata.security.OTokenException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OCredentialInterceptor;
+import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
@@ -226,8 +228,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     try {
       if (status == STATUS.CLOSED || !iUserName.equals(connectionUserName) || !iUserPassword.equals(connectionUserPassword)
           || this.tokens.isEmpty()) {
-        connectionUserName = iUserName;
-        connectionUserPassword = iUserPassword;
+
+        OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
+		
+        if(ci != null)
+		  {	
+          ci.intercept(getURL(), iUserName, iUserPassword);
+          connectionUserName = ci.getUsername();
+          connectionUserPassword = ci.getPassword();
+        }
+        else // Do Nothing
+        {
+          connectionUserName = iUserName;
+          connectionUserPassword = iUserPassword;
+        }
+
         parseOptions(iOptions);
 
         openRemoteDatabase();
@@ -497,7 +512,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         return new OStorageOperationResult<OPhysicalPosition>(ppos);
       }
-    }, "Error on create record in cluster: " + iRid.clusterId);
+    }, "Error on create record in cluster " + iRid.clusterId);
 
   }
 
@@ -573,7 +588,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endResponse(network);
         }
       }
-    }, "Error on read record \" + rid");
+    }, "Error on read record "+ rid);
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
@@ -631,7 +646,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
 
       }
-    }, "Error on read record \" + rid");
+    }, "Error on read record " + iRid);
   }
 
   @Override
@@ -1792,7 +1807,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             network = null;
           }
 
-          OLogManager.instance().error(this, "Can not open database with url " + currentURL, e);
+          OLogManager.instance().error(this, "Cannot open database with url " + currentURL, e);
         } catch (OOfflineNodeException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
@@ -1800,7 +1815,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             network = null;
           }
 
-          OLogManager.instance().error(this, "Can not open database with url " + currentURL, e);
+          OLogManager.instance().error(this, "Cannot open database with url " + currentURL, e);
         } catch (OSecurityException ex) {
           OLogManager.instance().debug(this, "Invalidate token for url=%s", ex, currentURL);
           tokens.remove(currentURL);
@@ -1811,7 +1826,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               engine.getConnectionManager().remove(network);
             } catch (Exception e) {
               // IGNORE ANY EXCEPTION
-              OLogManager.instance().debug(this, "Can not remove connection or database url=" + currentURL, e);
+              OLogManager.instance().debug(this, "Cannot remove connection or database url=" + currentURL, e);
             }
             network = null;
           }
@@ -1826,12 +1841,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               engine.getConnectionManager().remove(network);
             } catch (Exception ex) {
               // IGNORE ANY EXCEPTION
-              OLogManager.instance().debug(this, "Can not remove connection or database url=" + currentURL, e);
+              OLogManager.instance().debug(this, "Cannot remove connection or database url=" + currentURL, e);
             }
             network = null;
           }
 
-          OLogManager.instance().error(this, "Can not open database url=" + currentURL, e);
+          OLogManager.instance().error(this, "Cannot open database url=" + currentURL, e);
         }
       } while (engine.getConnectionManager().getAvailableConnections(currentURL) > 0);
 

@@ -141,7 +141,9 @@ public abstract class AbstractServerClusterTest {
         }
 
       for (ServerRun server : serverInstance) {
-        final ODocument cfg = server.getServerInstance().getDistributedManager().getClusterConfiguration();
+        final ODistributedServerManager mgr = server.getServerInstance().getDistributedManager();
+        Assert.assertNotNull(mgr);
+        final ODocument cfg = mgr.getClusterConfiguration();
         Assert.assertNotNull(cfg);
       }
 

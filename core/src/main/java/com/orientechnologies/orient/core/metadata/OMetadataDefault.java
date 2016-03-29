@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
+import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.io.IOException;
@@ -87,10 +88,6 @@ public class OMetadataDefault implements OMetadataInternal {
 
     try {
       init(true);
-
-      if (schemaClusterId == -1 || getDatabase().countClusterElements(CLUSTER_INTERNAL_NAME) == 0)
-        return;
-
     } finally {
       PROFILER.stopChrono(PROFILER.getDatabaseMetric(getDatabase().getName(), "metadata.load"), "Loading of database metadata",
           timer, "db.*.metadata.load");
@@ -202,10 +199,10 @@ public class OMetadataDefault implements OMetadataInternal {
           }
         }), database);
 
-    security = new OSecurityProxy(
-        database.getStorage().getResource(OSecurity.class.getSimpleName(), new Callable<OSecurityShared>() {
-          public OSecurityShared call() {
-            final OSecurityShared instance = new OSecurityShared();
+    security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
+        new Callable<OSecurity>() {
+          public OSecurity call() {
+            final OSecurity instance = OSecurityManager.instance().newSecurity();
             if (iLoad) {
               security = instance;
               instance.load();
@@ -213,6 +210,7 @@ public class OMetadataDefault implements OMetadataInternal {
             return instance;
           }
         }), database);
+
 
     commandCache = database.getStorage().getResource(OCommandCache.class.getSimpleName(), new Callable<OCommandCache>() {
       public OCommandCache call() {

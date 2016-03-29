@@ -1,0 +1,76 @@
+/*
+ *
+ *  *  Copyright 2016 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
+package com.orientechnologies.orient.core.security;
+
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OInvalidPasswordException;
+
+/**
+ * Provides a basic interface for a modular security system.
+ * 
+ * @author S. Colin Leister
+ * 
+ */
+public interface OSecuritySystem
+{
+	// Some external security implementations may permit falling back to a 
+	// default authentication mode if external authentication fails.
+	boolean isDefaultAllowed();
+	
+	// Returns the actual username if successful, null otherwise.
+	// Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the service ticket).
+	String authenticate(final String username, final String password);
+	
+	// Indicates if the default users should be created for a new OServer instance and for new databases.
+	boolean areDefaultUsersCreated();
+	
+	// Used for generating the appropriate HTTP authentication mechanism.  The chain of authenticators is used for this.
+	String getAuthenticationHeader(final String databaseName);
+
+	ODocument getConfig();
+
+	ODocument getComponentConfig(final String name);
+
+	// Walks through the list of Authenticators.
+	boolean isAuthorized(final String username, final String resource);
+	
+	boolean isEnabled();
+	
+	// Indicates if passwords should be stored when creating new users.
+	boolean arePasswordsStored();
+	
+	// Indicates if the primary security mechanism supports single sign-on.
+	boolean isSingleSignOnSupported();
+
+	void registerSecurityClass(final Class<?> cls);
+
+	void reload(final String cfgPath);
+
+	void reload(final ODocument jsonConfig);
+	
+	void reloadComponent(final String name, final ODocument jsonConfig);
+
+	void unregisterSecurityClass(final Class<?> cls);
+
+	// If a password validator is registered with the security system, it will be called to validate
+	// the specified password.  An OInvalidPasswordException is thrown if the password does not meet
+	// the password validator's requirements.
+	void validatePassword(final String password) throws OInvalidPasswordException;
+}

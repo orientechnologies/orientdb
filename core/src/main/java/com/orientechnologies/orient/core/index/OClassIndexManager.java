@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
@@ -44,7 +45,7 @@ import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPD
 
 /**
  * Handles indexing when records change.
- * 
+ *
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract implements OOrientStartupListener, OOrientShutdownListener {
@@ -83,7 +84,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
             if (dirtyFields.contains(field)) {
               origValues.add(iRecord.getOriginalValue(field));
             } else {
-              origValues.add(iRecord.<Object> field(field));
+              origValues.add(iRecord.<Object>field(field));
             }
         }
 
@@ -109,7 +110,10 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
             processIndexUpdateFieldAssignment(index, iRecord, origValue, newValue);
           } else {
-            if (dirtyFields.size() == 1) {
+            //in case of null values support and empty collection field we put null placeholder in
+            //place where collection item should be located so we can not use "fast path" to
+            //update index values
+            if (dirtyFields.size() == 1 && indexDefinition.isNullValuesIgnored()) {
               final Map<OCompositeKey, Integer> keysToAdd = new HashMap<OCompositeKey, Integer>();
               final Map<OCompositeKey, Integer> keysToRemove = new HashMap<OCompositeKey, Integer>();
 
@@ -228,7 +232,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
             if (dirtyFields.contains(field))
               origValues.add(iRecord.getOriginalValue(field));
             else
-              origValues.add(iRecord.<Object> field(field));
+              origValues.add(iRecord.<Object>field(field));
         }
 
         if (multiValueField != null) {

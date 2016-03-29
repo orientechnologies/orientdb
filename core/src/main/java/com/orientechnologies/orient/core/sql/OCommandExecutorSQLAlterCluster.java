@@ -86,6 +86,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
         throw new OCommandSQLParsingException("Expected <cluster-name>. Use " + getSyntax(), parserText, oldPos);
 
       clusterName = word.toString();
+      clusterName = decodeClassName(clusterName);
 
       final Pattern p = Pattern.compile("([0-9]*)");
       final Matcher m = p.matcher(clusterName);
@@ -107,6 +108,12 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       }
 
       value = parserText.substring(pos + 1).trim();
+
+      value = decodeClassName(value);
+
+      if(attribute == ATTRIBUTES.NAME){
+        value = value.replaceAll(" ", ""); //no spaces in cluster names
+      }
 
       if (value.length() == 0)
         throw new OCommandSQLParsingException(

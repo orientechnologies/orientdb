@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.Orient;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -198,7 +199,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     final OSecurityUser currentUser = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
     if (currentUser != null) {
       // CHECK IF CURRENT USER IS ENLISTED
-      if (!iAllowAll.contains(currentUser.getIdentity())) {
+      if (iAllowAll == null || (iAllowAll != null && !iAllowAll.contains(currentUser.getIdentity()))) {
         // CHECK AGAINST SPECIFIC _ALLOW OPERATION
         if (iAllowOperation != null && iAllowOperation.contains(currentUser.getIdentity()))
           return true;
@@ -206,7 +207,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
         // CHECK IF AT LEAST ONE OF THE USER'S ROLES IS ENLISTED
         for (OSecurityRole r : currentUser.getRoles()) {
           // CHECK AGAINST GENERIC _ALLOW
-          if (iAllowAll.contains(r.getIdentity()))
+          if (iAllowAll != null && iAllowAll.contains(r.getIdentity()))
             return true;
           // CHECK AGAINST SPECIFIC _ALLOW OPERATION
           if (iAllowOperation != null && iAllowOperation.contains(r.getIdentity()))
@@ -215,7 +216,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
           // inheritance
           OSecurityRole parentRole = r.getParentRole();
           while (parentRole != null) {
-            if (iAllowAll.contains(parentRole.getIdentity()))
+            if (iAllowAll != null && iAllowAll.contains(parentRole.getIdentity()))
               return true;
             if (iAllowOperation != null && iAllowOperation.contains(parentRole.getIdentity()))
               return true;
@@ -395,7 +396,10 @@ public class OSecurityShared implements OSecurity, OCloseable {
     readerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
     readerRole.save();
 
-    createUser("reader", "reader", new String[] { readerRole.getName() });
+    if(Orient.instance().getSecurity() == null || Orient.instance().getSecurity().areDefaultUsersCreated())
+    {
+      createUser("reader", "reader", new String[] { readerRole.getName() });
+    }
 
     final ORole writerRole = createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
     writerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
@@ -413,7 +417,10 @@ public class OSecurityShared implements OSecurity, OCloseable {
     writerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
     writerRole.save();
 
-    createUser("writer", "writer", new String[] { writerRole.getName() });
+    if(Orient.instance().getSecurity() == null || Orient.instance().getSecurity().areDefaultUsersCreated())
+    {
+	    createUser("writer", "writer", new String[] { writerRole.getName() });
+	 }
 
     return adminUser;
   }
@@ -443,8 +450,14 @@ public class OSecurityShared implements OSecurity, OCloseable {
     }
 
     OUser adminUser = getUser(OUser.ADMIN);
+
     if (adminUser == null)
-      adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
+    {
+	   if(Orient.instance().getSecurity() == null || Orient.instance().getSecurity().areDefaultUsersCreated())
+      {
+        adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
+      }
+    }
 
     // SINCE 1.2.0
     createOrUpdateORestrictedClass(database);
@@ -619,7 +632,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     version.incrementAndGet();
   }
 
-  private ODatabaseDocumentInternal getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

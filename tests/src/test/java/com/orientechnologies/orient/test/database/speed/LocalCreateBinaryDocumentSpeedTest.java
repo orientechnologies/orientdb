@@ -15,19 +15,18 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import org.testng.annotations.Test;
 
 @Test
 public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
@@ -64,8 +63,6 @@ public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
 
     database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
-    OStorage storage = database.getStorage();
-
   }
 
   @Override
@@ -81,7 +78,7 @@ public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
 
     OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = ((OAbstractPaginatedStorage) storage)
         .completeGatheringPerformanceStatisticForCurrentThread();
-    System.out.println(sessionStoragePerformanceStatistic.toDocument().toJSON(""));
+    System.out.println(sessionStoragePerformanceStatistic.toDocument().toJSON("prettyPrint"));
   }
 
   @Override
