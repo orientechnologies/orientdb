@@ -78,7 +78,7 @@
 		<dependency>
 			<groupId>com.cloudbees</groupId>
 			<artifactId>syslog-java-client</artifactId>
-			<version>1.0.9-SNAPSHOT</version>
+			<version>1.0.8</version>
 		</dependency>
 	</dependencies>
 </project>
