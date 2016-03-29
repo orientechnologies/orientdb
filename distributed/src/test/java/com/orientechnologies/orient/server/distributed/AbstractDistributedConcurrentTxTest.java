@@ -113,18 +113,18 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
       }
 
       System.out.println("\nWriter " + name + " END. count = " + count + " lockExceptions: " + lockExceptions);
-
-      final long totalLockExceptions = lockExceptions.get();
-      if (expectedConcurrentException)
-        Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions > 0);
-      else
-        Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions == 0);
-
       return null;
     }
   }
 
   protected void onAfterExecution() {
+
+    final long totalLockExceptions = lockExceptions.get();
+    if (expectedConcurrentException)
+      Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions > 0);
+    else
+      Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions == 0);
+
     factory.close();
   }
 

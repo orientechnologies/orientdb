@@ -41,7 +41,6 @@ public class LocalConcurrentTxNoAutoRetryTest extends AbstractDistributedConcurr
       init(SERVERS);
       prepare(false);
       execute();
-
     } finally {
       OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(10);
     }
