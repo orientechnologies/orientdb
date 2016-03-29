@@ -20,9 +20,6 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.OUncompletedCommit;
-import java.io.Closeable;
-import java.util.*;
-
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -44,10 +41,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.io.Closeable;
+import java.util.*;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
@@ -868,9 +863,10 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * in the same folder will be copied.
    *
    * @param path Path to backup folder.
+   * @return File name of the backup
    * @since 2.2
    */
-  void incrementalBackup(String path);
+  String incrementalBackup(String path);
 
   /**
    * Restores content of database stored using {@link #incrementalBackup(String)} method.

@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -43,6 +36,13 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
@@ -203,10 +203,10 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public void incrementalBackup(String backupDirectory) {
+  public String incrementalBackup(String backupDirectory) {
     pushSession();
     try {
-      delegate.incrementalBackup(backupDirectory);
+      return delegate.incrementalBackup(backupDirectory);
     } finally {
       popSession();
     }
