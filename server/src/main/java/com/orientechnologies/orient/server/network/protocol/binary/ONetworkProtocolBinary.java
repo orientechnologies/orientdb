@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
@@ -111,8 +112,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   @Override
   public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
       final OContextConfiguration iConfig) throws IOException {
-    // CREATE THE CLIENT CONNECTION
-    // connection = iServer.getClientConnectionManager().connect(this);
 
     super.config(iListener, iServer, iSocket, iConfig);
 
@@ -719,7 +718,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String user = channel.readString();
     final String passwd = channel.readString();
-    connection.setDatabase((ODatabaseDocumentTx) server.openDatabase(dbURL, user, passwd, connection.getData()));
+    try {
+      connection.setDatabase((ODatabaseDocumentTx) server.openDatabase(dbURL, user, passwd, connection.getData()));
+    } catch (OException e) {
+      server.getClientConnectionManager().disconnect(connection);
+      throw e;
+    }
+
     byte[] token = null;
 
     if (Boolean.TRUE.equals(connection.getTokenBased())) {
@@ -1172,8 +1177,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Close Database");
 
     if (connection != null) {
-      if (server.getClientConnectionManager().disconnect(connection.getId()) && Boolean.FALSE.equals(connection.getTokenBased()))
-        sendShutdown();
+      server.getClientConnectionManager().disconnect(connection);
     }
   }
 
