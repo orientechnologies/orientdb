@@ -44,6 +44,8 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       }
 
       final OrientVertex v1 = graphNoTxEurope.addVertex("class:Client");
+      log("Created vertex " + v1.getIdentity() + "...");
+
     } finally {
       graphNoTxEurope.shutdown();
     }
@@ -59,11 +61,14 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       graphNoTxEurope.shutdown();
     }
 
+    final String clusterName;
+
     graphNoTxEurope = localFactoryEurope.getNoTx();
     try {
       log("Adding vertex to europe node...");
 
       final OrientVertex v2 = graphNoTxEurope.addVertex("class:Client");
+      clusterName = graphNoTxEurope.getRawGraph().getClusterNameById(v2.getIdentity().getClusterId());
 
       log("Restarting USA server...");
 
@@ -82,7 +87,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       Assert.assertEquals(1, graphNoTxUsa.countVertices());
 
       log("Manually syncing cluster client of node USA...");
-      graphNoTxUsa.command(new OCommandSQL("sync cluster client")).execute();
+      graphNoTxUsa.command(new OCommandSQL("sync cluster " + clusterName)).execute();
 
       Assert.assertEquals(2, graphNoTxUsa.countVertices());
 

@@ -279,7 +279,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (!locked) {
       if (iRequestId.equals(oldReqId)) {
         // SAME ID, ALREADY LOCKED
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
             "Distributed transaction: %s re=locked record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
             iRequestId);
         return true;
@@ -288,10 +288,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     // if (ODistributedServerLog.isDebugEnabled())
     if (locked)
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
           "Distributed transaction: %s locked record %s in database '%s'", iRequestId, iRecord, databaseName);
     else
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
           "Distributed transaction: %s cannot lock record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
           oldReqId);
 
@@ -303,7 +303,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     final ODistributedRequestId owner = lockManager.remove(iRecord.getIdentity());
 
     // if (ODistributedServerLog.isDebugEnabled())
-    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+    ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
         "Distributed transaction: %s unlocked record %s in database '%s' (owner=%s)", requestId, iRecord, databaseName, owner);
   }
 
