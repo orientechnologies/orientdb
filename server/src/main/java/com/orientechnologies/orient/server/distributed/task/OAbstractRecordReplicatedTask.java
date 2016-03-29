@@ -104,7 +104,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     } finally {
       if (lockRecords)
         // UNLOCK THE SINGLE OPERATION. IN TX WAIT FOR THE 2-PHASE COMMIT/ROLLBACK/FIX MESSAGE
-        ddb.unlockRecord(rid);
+        ddb.unlockRecord(rid, requestId);
     }
   }
 

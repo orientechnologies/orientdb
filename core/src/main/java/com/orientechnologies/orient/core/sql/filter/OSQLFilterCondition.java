@@ -83,7 +83,7 @@ public class OSQLFilterCondition {
 
     Object l = evaluate(iCurrentRecord, iCurrentResult, left, iContext, binaryEvaluation);
 
-    if (operator != null && operator.canShortCircuit(l))
+    if (operator == null || operator.canShortCircuit(l))
       return l;
 
     if (right instanceof OSQLQuery<?>)
@@ -142,17 +142,6 @@ public class OSQLFilterCondition {
         l = convertedValues[0];
         r = convertedValues[1];
       }
-    }
-
-    if (operator == null) {
-      if (l == null)
-      // THE LEFT RETURNED NULL
-      {
-        return Boolean.FALSE;
-      }
-
-      // UNITARY OPERATOR: JUST RETURN LEFT RESULT
-      return l;
     }
 
     Object result;

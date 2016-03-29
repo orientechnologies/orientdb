@@ -63,7 +63,7 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   @Override
   public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentTx database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "%s transaction db=%s originalReqId=%s...", (success ? "committing" : fixTasks.isEmpty() ? "rolling back" : "fixing"),
         database.getName(), requestId, requestId);
 
@@ -96,25 +96,27 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
       }
 
     } else {
-      // FIX TRANSACTION CONTENT
-      ODistributedServerLog.info(this, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Distributed transaction: fixing transaction %s", requestId);
+      try {
+        // FIX TRANSACTION CONTENT
+        ODistributedServerLog.info(this, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Distributed transaction: fixing transaction %s (tasks:%d)", requestId, fixTasks.size());
 
-      for (ORemoteTask fixTask : fixTasks) {
-        try {
-          if (fixTask instanceof OAbstractRecordReplicatedTask)
-            ((OAbstractRecordReplicatedTask) fixTask).setLockRecords(false);
+        for (ORemoteTask fixTask : fixTasks) {
+          try {
+            if (fixTask instanceof OAbstractRecordReplicatedTask)
+              ((OAbstractRecordReplicatedTask) fixTask).setLockRecords(false);
 
-          fixTask.execute(requestId, iManager.getServerInstance(), iManager, database);
+            fixTask.execute(requestId, iManager.getServerInstance(), iManager, database);
 
-        } catch (Exception e) {
-          ODistributedServerLog.error(this, iManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "Error on fixing transaction %s task %s", e, requestId, fixTask);
+          } catch (Exception e) {
+            ODistributedServerLog.error(this, iManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                "Error on fixing transaction %s task %s", e, requestId, fixTask);
+          }
         }
+      } finally {
+        if (pRequest != null)
+          pRequest.fix();
       }
-
-      if (pRequest != null)
-        pRequest.fix();
     }
 
     return Boolean.TRUE;

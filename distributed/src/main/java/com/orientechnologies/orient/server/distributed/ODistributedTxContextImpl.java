@@ -91,6 +91,6 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
 
   protected void unlock() {
     for (ORID lockedRID : acquiredLocks)
-      db.unlockRecord(lockedRID);
+      db.unlockRecord(lockedRID, reqId);
   }
 }

@@ -558,12 +558,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             public Object call(OCallable<Void, ODistributedRequestId> unlockCallback) {
               final OStorageOperationResult<OPhysicalPosition> localResult;
 
-              final ODistributedDatabase ddb = acquireRecordLock(iRecordId);
+              final ODistributedRequestId requestId = acquireRecordLock(iRecordId);
               try {
                 localResult = wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
               } finally {
                 // RELEASE LOCK
-                ddb.unlockRecord(iRecordId);
+                localDistributedDatabase.unlockRecord(iRecordId, requestId);
               }
 
               // UPDATE RID WITH NEW POSITION
@@ -782,7 +782,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
               if (nodes.contains(localNodeName)) {
                 // EXECUTE ON LOCAL NODE FIRST
-                final ODistributedDatabase ddb = acquireRecordLock(iRecordId);
+                final ODistributedRequestId requestId = acquireRecordLock(iRecordId);
                 try {
                   // LOAD CURRENT RECORD
                   task.prepareUndoOperation();
@@ -802,7 +802,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   return null;
                 } finally {
                   // RELEASE LOCK
-                  ddb.unlockRecord(iRecordId);
+                  localDistributedDatabase.unlockRecord(iRecordId, requestId);
                 }
                 nodes.remove(localNodeName);
               } else
@@ -910,7 +910,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               final OStorageOperationResult<Boolean> localResult;
               if (nodes.contains(localNodeName)) {
                 // EXECUTE ON LOCAL NODE FIRST
-                final ODistributedDatabase ddb = acquireRecordLock(iRecordId);
+                final ODistributedRequestId requestId = acquireRecordLock(iRecordId);
                 try {
                   // LOAD CURRENT RECORD
                   task.prepareUndoOperation();
@@ -929,7 +929,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   return null;
                 } finally {
                   // RELEASE LOCK
-                  ddb.unlockRecord(iRecordId);
+                  localDistributedDatabase.unlockRecord(iRecordId, requestId);
                 }
                 nodes.remove(localNodeName);
               } else
@@ -1189,7 +1189,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return null;
   }
 
-  protected ODistributedDatabase acquireRecordLock(final ORecordId rid) {
+  protected ODistributedRequestId acquireRecordLock(final ORecordId rid) {
     // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED
     final ODistributedRequestId localReqId = new ODistributedRequestId(dManager.getLocalNodeId(),
         dManager.getNextMessageIdCounter());
@@ -1197,7 +1197,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     if (!(localDistributedDatabase.lockRecord(rid, localReqId)))
       throw new ODistributedRecordLockedException(rid);
 
-    return localDistributedDatabase;
+    return localReqId;
   }
 
   @Override
