@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.*;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -73,6 +74,7 @@ public class LocalPaginatedClusterTest {
 
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
     when(storage.getVariableParser()).thenReturn(variableParser);
+    when(storage.getPerformanceStatisticManager()).thenReturn(new OPerformanceStatisticManager(10000000));
 
     writeCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
         new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 1000000, null, 100,
@@ -91,7 +93,9 @@ public class LocalPaginatedClusterTest {
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
     when(storage.getMode()).thenReturn("rw");
 
+
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
+
 
     paginatedCluster = new OPaginatedCluster("paginatedClusterTest", storage);
     paginatedCluster.configure(storage, 5, "paginatedClusterTest", buildDirectory, -1);

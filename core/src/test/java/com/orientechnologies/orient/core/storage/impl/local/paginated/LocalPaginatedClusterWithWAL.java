@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTx
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -82,6 +84,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
     storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
+    when(storageConfiguration.getLocaleInstance()).thenReturn(Locale.US);
 
     storageDir = buildDirectory + "/localPaginatedClusterWithWALTestOne";
     when(storage.getStoragePath()).thenReturn(storageDir);
@@ -97,7 +100,9 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     if (!storageDirOneFile.exists())
       storageDirOneFile.mkdirs();
 
+    when(storage.getPerformanceStatisticManager()).thenReturn(new OPerformanceStatisticManager(10000000));
     writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, storage);
+
 
     writeCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
         new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 1000000, writeAheadLog, 100,
@@ -127,6 +132,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
     storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
     when(storageConfiguration.getContextConfiguration()).thenReturn(new OContextConfiguration());
+    when(storageConfiguration.getLocaleInstance()).thenReturn(Locale.US);
 
     testStorageDir = buildDirectory + "/localPaginatedClusterWithWALTestTwo";
     when(testStorage.getStoragePath()).thenReturn(testStorageDir);
@@ -143,6 +149,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     if (!storageDirTwoFile.exists())
       storageDirTwoFile.mkdirs();
 
+    when(testStorage.getPerformanceStatisticManager()).thenReturn(new OPerformanceStatisticManager(10000000));
     testWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
         new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 1000000, writeAheadLog, 100,
         1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, testStorage, false, 1);
@@ -425,7 +432,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
           if (!testWriteCache.isOpen(fileId))
             testReadCache.openFile(fileId, testWriteCache);
 
-          OCacheEntry cacheEntry = testReadCache.load(fileId, pageIndex, true, testWriteCache, 0);
+          OCacheEntry cacheEntry = testReadCache.load(fileId, pageIndex, true, testWriteCache, 1);
           if (cacheEntry == null) {
             do {
               if (cacheEntry != null)
