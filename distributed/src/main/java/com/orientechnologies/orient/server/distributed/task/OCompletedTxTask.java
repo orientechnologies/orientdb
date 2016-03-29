@@ -63,7 +63,7 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   @Override
   public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentTx database) throws Exception {
-    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "%s transaction db=%s originalReqId=%s...", (success ? "committing" : fixTasks.isEmpty() ? "rolling back" : "fixing"),
         database.getName(), requestId, requestId);
 

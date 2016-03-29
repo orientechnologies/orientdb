@@ -33,7 +33,7 @@ public class LocalConcurrentTxNoAutoRetryTest extends AbstractDistributedConcurr
   @Test
   public void test() throws Exception {
     expectedConcurrentException = true;
-    writerCount = 3;
+    writerCount = 5;
 
     OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(1);
     try {

@@ -72,7 +72,7 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   }
 
   public int rollback(final ODatabaseDocumentTx database) {
-    ODistributedServerLog.info(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+    ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
         "Distributed transaction: rolling back transaction %s (%d ops)", reqId, undoTasks.size());
 
     for (ORemoteTask task : undoTasks) {
