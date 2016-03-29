@@ -377,12 +377,11 @@ public class OServerAdmin {
     for (OStorage s : Orient.instance().getStorages()) {
       if (s.getType().equals(storage.getType()) && s.getName().equals(storage.getName())) {
         underlyingStorages.add(s.getUnderlying());
-        Orient.instance().unregisterStorage(s);
       }
     }
 
     for (OStorage s : underlyingStorages) {
-      Orient.instance().unregisterStorage(s);
+      s.close(true, true);
     }
 
     ODatabaseRecordThreadLocal.INSTANCE.remove();

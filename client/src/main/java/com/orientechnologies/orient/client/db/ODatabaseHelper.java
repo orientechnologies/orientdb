@@ -70,9 +70,11 @@ public class ODatabaseHelper {
   public static void dropDatabase(final ODatabase database, final String directory, String storageType) throws IOException {
     if (existsDatabase(database, storageType)) {
       if (database.getURL().startsWith("remote:")) {
-        new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(directory)).dropDatabase(storageType);
         database.activateOnCurrentThread();
         database.close();
+        OServerAdmin admin = new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(directory));
+        admin.dropDatabase(storageType);
+        admin.close();
       } else {
         if (database.isClosed())
           openDatabase(database);
@@ -85,15 +87,23 @@ public class ODatabaseHelper {
 
   public static boolean existsDatabase(final ODatabase database, String storageType) throws IOException {
     database.activateOnCurrentThread();
-    if (database.getURL().startsWith("remote"))
-      return new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).existsDatabase(storageType);
+    if (database.getURL().startsWith("remote")) {
+      OServerAdmin admin = new OServerAdmin(database.getURL()).connect("root", getServerRootPassword());
+      boolean exist = admin.existsDatabase(storageType);
+      admin.close();
+      return exist;
+    }
 
     return database.exists();
   }
 
   public static boolean existsDatabase(final String url) throws IOException {
-    if (url.startsWith("remote"))
-      return new OServerAdmin(url).connect("root", getServerRootPassword()).existsDatabase();
+    if (url.startsWith("remote")) {
+      OServerAdmin admin = new OServerAdmin(url).connect("root", getServerRootPassword());
+      boolean exist = admin.existsDatabase();
+      admin.close();
+      return exist;
+    }
     return new ODatabaseDocumentTx(url).exists();
   }
 
@@ -164,12 +174,12 @@ public class ODatabaseHelper {
         file = new File("../" + iDirectory + "/config/orientdb-server-config.xml");
     }
     if (!file.exists())
-      file = new File(OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME
-          + "}/config/orientdb-server-config.xml"));
+      file = new File(
+          OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}/config/orientdb-server-config.xml"));
     if (!file.exists())
       throw new OConfigurationException(
-          "Cannot load file orientdb-server-config.xml to execute remote tests. Current directory is "
-              + new File(".").getAbsolutePath());
+          "Cannot load file orientdb-server-config.xml to execute remote tests. Current directory is " + new File(".")
+              .getAbsolutePath());
     return file;
   }
 }
