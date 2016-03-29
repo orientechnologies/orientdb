@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityExternal;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
@@ -47,6 +48,7 @@ import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 import com.orientechnologies.orient.core.security.OSecurityFactory;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.OSecuritySystemException;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
@@ -99,6 +101,13 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 	private ODocument _ConfigDoc; // Holds the current JSON configuration.
 	private OServer _Server;
 	private OServerConfigurationManager _ServerConfig;
+	
+	private ODocument _SyslogDoc;
+	private ODocument _AuditingDoc;
+	private ODocument _ServerDoc;
+	private ODocument _AuthDoc;
+	private ODocument _PasswdValDoc;
+	private ODocument _LDAPImportDoc;
 	
 	protected OServer getServer() { return _Server; }
 
@@ -245,10 +254,93 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 	}
 	
 	// OSecuritySystem (via OServerSecurity)
-	public ODocument getConfig() { return _ConfigDoc; }
+	public ODocument getConfig()
+	{ 
+		ODocument jsonConfig = new ODocument();
+		
+		try
+		{
+			jsonConfig.field("enabled", _Enabled);
+			jsonConfig.field("debug", _Debug);
+			
+			if(_ServerDoc != null)
+			{
+				jsonConfig.field("server", _ServerDoc, OType.EMBEDDED);
+			}
+			
+			if(_AuthDoc != null)
+			{
+				jsonConfig.field("authentication", _AuthDoc, OType.EMBEDDED);
+			}
+			
+			if(_PasswdValDoc != null)
+			{
+				jsonConfig.field("passwordValidator", _PasswdValDoc, OType.EMBEDDED);
+			}
+
+			if(_LDAPImportDoc != null)
+			{
+				jsonConfig.field("ldapImporter", _LDAPImportDoc, OType.EMBEDDED);
+			}
+
+			if(_AuditingDoc != null)
+			{
+				jsonConfig.field("auditing", _AuditingDoc, OType.EMBEDDED);
+			}
+
+			if(_SyslogDoc != null)
+			{
+				jsonConfig.field("syslog", _SyslogDoc, OType.EMBEDDED);
+			}
+		}
+		catch(Exception ex)
+		{
+			OLogManager.instance().error(this, "ODefaultServerSecurity.getConfig() Exception: %s", ex);
+		}
+				
+		return jsonConfig;
+	}
 	
 	// OSecuritySystem (via OServerSecurity)
-	public ODocument getComponentConfig(final String name) {	return getSection(name); }
+//	public ODocument getComponentConfig(final String name) {	return getSection(name); }
+
+	public ODocument getComponentConfig(final String name)
+	{	
+		if(name != null)
+		{		
+			if(name.equalsIgnoreCase("auditing"))
+			{
+				return _AuditingDoc;
+			}
+			else
+			if(name.equalsIgnoreCase("authentication"))
+			{
+				return _AuthDoc;
+			}
+			else
+			if(name.equalsIgnoreCase("ldapImporter"))
+			{
+				return _LDAPImportDoc;
+			}
+			else
+			if(name.equalsIgnoreCase("passwordValidator"))
+			{
+				return _PasswdValDoc;
+			}
+			else
+			if(name.equalsIgnoreCase("server"))
+			{
+				return _ServerDoc;
+			}
+			else
+			if(name.equalsIgnoreCase("syslog"))
+			{
+				return _SyslogDoc;
+			}
+		}
+		
+		return null;
+	}
 
 	// OSecuritySystem (via OServerSecurity)
 	// This will first look for a user in the security.json "users" array and then check if a resource matches.
@@ -483,32 +575,38 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 		
 		if(name.equalsIgnoreCase("auditing"))
 		{
-			reloadAuditingService(jsonConfig);
+			_AuditingDoc = jsonConfig;
+			reloadAuditingService();
 		}
 		else
 		if(name.equalsIgnoreCase("authentication"))
 		{
-			reloadAuthMethods(jsonConfig);
+			_AuthDoc = jsonConfig;
+			reloadAuthMethods();
 		}
 		else
 		if(name.equalsIgnoreCase("ldapImporter"))
 		{
-			reloadImportLDAP(jsonConfig);
+			_LDAPImportDoc = jsonConfig;
+			reloadImportLDAP();
 		}
 		else
 		if(name.equalsIgnoreCase("passwordValidator"))
 		{
-			reloadPasswordValidator(jsonConfig);
+			_PasswdValDoc = jsonConfig;
+			reloadPasswordValidator();
 		}
 		else
 		if(name.equalsIgnoreCase("server"))
 		{
-			reloadServer(jsonConfig);
+			_ServerDoc = jsonConfig;
+			reloadServer();
 		}
 		else
 		if(name.equalsIgnoreCase("syslog"))
 		{
-			reloadSyslog(jsonConfig);
+			_SyslogDoc = jsonConfig;
+			reloadSyslog();
 		}
 	}
 	
@@ -632,7 +730,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 			if(isEnabled())
 			{
 				registerRESTCommands();
-						
+
 				OSecurityManager.instance().setSecurityFactory(this);
 			}
 		}
@@ -713,22 +811,28 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 		if(isEnabled())
 		{
 			// Loads the "syslog" configuration properties.
-			reloadSyslog(getSection("syslog"));
+			_SyslogDoc = getSection("syslog");
+			reloadSyslog();
 
 			// Loads the "auditing" configuration properties.
-			reloadAuditingService(getSection("auditing"));
+			_AuditingDoc = getSection("auditing");
+			reloadAuditingService();
 
 			// Loads the "server" configuration properties.
-			reloadServer(getSection("server"));
+			_ServerDoc = getSection("server");
+			reloadServer();
 			
 			// Loads the "authentication" configuration properties.
-			reloadAuthMethods(getSection("authentication"));
-			
+			_AuthDoc = getSection("authentication");
+			reloadAuthMethods();
+
 			// Loads the "passwordValidator" configuration properties.
-			reloadPasswordValidator(getSection("passwordValidator"));
+			_PasswdValDoc = getSection("passwordValidator");
+			reloadPasswordValidator();
 			
 			// Loads the "ldapImporter" configuration properties.
-			reloadImportLDAP(getSection("ldapImporter"));
+			_LDAPImportDoc = getSection("ldapImporter");
+			reloadImportLDAP();
 		}
 	}
 
@@ -877,23 +981,23 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 		}
 	}
 
-	private void reloadServer(final ODocument serverDoc)
+	private void reloadServer()
 	{
 		try
 		{
 			_CreateDefaultUsers = true;
 			_StorePasswords = true;
 			
-			if(serverDoc != null)
+			if(_ServerDoc != null)
 			{
-				if(serverDoc.containsField("createDefaultUsers"))
+				if(_ServerDoc.containsField("createDefaultUsers"))
 				{
-					_CreateDefaultUsers = serverDoc.field("createDefaultUsers");
+					_CreateDefaultUsers = _ServerDoc.field("createDefaultUsers");
 				}
 	
-				if(serverDoc.containsField("storePasswords"))
+				if(_ServerDoc.containsField("storePasswords"))
 				{
-					_StorePasswords = serverDoc.field("storePasswords");
+					_StorePasswords = _ServerDoc.field("storePasswords");
 				}				
 			}
 		}
@@ -903,20 +1007,20 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 		}
 	}
 
-	private void reloadAuthMethods(final ODocument authDoc)
+	private void reloadAuthMethods()
 	{
-		if(authDoc != null)
+		if(_AuthDoc != null)
 		{
-			if(authDoc.containsField("allowDefault"))
+			if(_AuthDoc.containsField("allowDefault"))
 			{
-				_AllowDefault = authDoc.field("allowDefault");
+				_AllowDefault = _AuthDoc.field("allowDefault");
 			}
 			
-			loadAuthenticators(authDoc);
+			loadAuthenticators(_AuthDoc);
 		}
 	}
 
-	private void reloadPasswordValidator(final ODocument pwValidDoc)
+	private void reloadPasswordValidator()
 	{
 		try
 		{
@@ -928,16 +1032,16 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 					_PasswordValidator = null;
 				}			
 				
-				if(pwValidDoc != null && isEnabled(pwValidDoc))
+				if(_PasswdValDoc != null && isEnabled(_PasswdValDoc))
 				{
-					Class<?> cls = getClass(pwValidDoc);
+					Class<?> cls = getClass(_PasswdValDoc);
 					
 					if(cls != null)
 					{
 		      		if(OPasswordValidator.class.isAssignableFrom(cls))
 		      		{
 	      				_PasswordValidator = (OPasswordValidator)cls.newInstance();	      				
-		      			_PasswordValidator.config(_Server, _ServerConfig, pwValidDoc);
+		      			_PasswordValidator.config(_Server, _ServerConfig, _PasswdValDoc);
 		      			_PasswordValidator.active();
 		      		}
 		      		else
@@ -958,7 +1062,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 		}
 	}
 
-	private void reloadImportLDAP(final ODocument importDoc)
+	private void reloadImportLDAP()
 	{
 		try
 		{
@@ -970,16 +1074,16 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 					_ImportLDAP = null;
 				}
 			
-				if(importDoc != null && isEnabled(importDoc))
+				if(_LDAPImportDoc != null && isEnabled(_LDAPImportDoc))
 				{
-					Class<?> cls = getClass(importDoc);
+					Class<?> cls = getClass(_LDAPImportDoc);
 					
 					if(cls != null)
 					{
 		      		if(OSecurityComponent.class.isAssignableFrom(cls))
 		      		{
 	      				_ImportLDAP = (OSecurityComponent)cls.newInstance();
-	      				_ImportLDAP.config(_Server, _ServerConfig, importDoc);
+	      				_ImportLDAP.config(_Server, _ServerConfig, _LDAPImportDoc);
 	      				_ImportLDAP.active();
 		      		}
 		      		else
@@ -1000,7 +1104,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 		}
 	}
 
-	private void reloadAuditingService(final ODocument auditingDoc)
+	private void reloadAuditingService()
 	{
 		try
 		{
@@ -1012,16 +1116,16 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 					_AuditingService = null;
 				}
 				
-				if(auditingDoc != null && isEnabled(auditingDoc))
+				if(_AuditingDoc != null && isEnabled(_AuditingDoc))
 				{
-					Class<?> cls = getClass(auditingDoc);
+					Class<?> cls = getClass(_AuditingDoc);
 					
 					if(cls != null)
 					{
 		      		if(OAuditingService.class.isAssignableFrom(cls))
 		      		{
 	      				_AuditingService = (OAuditingService)cls.newInstance();
-	      				_AuditingService.config(_Server, _ServerConfig, auditingDoc);
+	      				_AuditingService.config(_Server, _ServerConfig, _AuditingDoc);
 	      				_AuditingService.active();
 		      		}
 		      		else
@@ -1042,7 +1146,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 		}
 	}
 
-	private void reloadSyslog(final ODocument syslogDoc)
+	private void reloadSyslog()
 	{
 		try
 		{
@@ -1054,16 +1158,16 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 					_Syslog = null;
 				}
 				
-				if(syslogDoc != null && isEnabled(syslogDoc))
+				if(_SyslogDoc != null && isEnabled(_SyslogDoc))
 				{
-					Class<?> cls = getClass(syslogDoc);
+					Class<?> cls = getClass(_SyslogDoc);
 					
 					if(cls != null)
 					{
 		      		if(OSyslog.class.isAssignableFrom(cls))
 		      		{
 	      				_Syslog = (OSyslog)cls.newInstance();
-	      				_Syslog.config(_Server, _ServerConfig, syslogDoc);
+	      				_Syslog.config(_Server, _ServerConfig, _SyslogDoc);
 	      				_Syslog.active();
 		      		}
 		      		else
