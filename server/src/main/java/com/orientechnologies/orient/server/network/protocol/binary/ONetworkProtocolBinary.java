@@ -124,8 +124,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   @Override
   public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
       final OContextConfiguration iConfig) throws IOException {
-    // CREATE THE CLIENT CONNECTION
-    connection = iServer.getClientConnectionManager().connect(this);
 
     super.config(iListener, iServer, iSocket, iConfig);
 
@@ -782,8 +780,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String user = channel.readString();
     final String passwd = channel.readString();
 
-    connection.database = (ODatabaseDocumentTx) server.openDatabase(dbType, dbURL, user, passwd, connection.data);
-
+    try {
+      connection.database = (ODatabaseDocumentTx) server.openDatabase(dbType, dbURL, user, passwd, connection.data);
+    } catch (OException e) {
+      server.getClientConnectionManager().disconnect(connection);
+      throw e;
+    }
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
       sendErrorOrDropConnection(clientTxId, new OSecurityAccessException(connection.database.getName(),
           "User or password not valid for database: '" + connection.database.getName() + "'"));
@@ -1129,8 +1131,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         // OLD CLIENTS WAIT FOR A OK
         sendOk(clientTxId);
 
-      if (Boolean.FALSE.equals(connection.tokenBased) && server.getClientConnectionManager().disconnect(connection.id))
-        sendShutdown();
+      server.getClientConnectionManager().disconnect(connection.id);
     }
   }
 
