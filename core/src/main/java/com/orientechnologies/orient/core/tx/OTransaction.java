@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -53,6 +54,10 @@ public interface OTransaction {
   void commit();
 
   void commit(boolean force);
+
+  OUncompletedCommit<Void> initiateCommit();
+
+  OUncompletedCommit<Void> initiateCommit(boolean force);
 
   void rollback();
 

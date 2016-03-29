@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OSharedContainer;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -101,6 +102,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   // TX OPERATIONS
   List<ORecordOperation> commit(OTransaction iTx, Runnable callback);
+
+  OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction iTx, Runnable callback);
 
   // TX OPERATIONS
   void rollback(OTransaction iTx);

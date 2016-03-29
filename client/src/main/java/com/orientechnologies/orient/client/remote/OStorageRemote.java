@@ -27,6 +27,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
@@ -1351,6 +1352,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }, "Error on commit");
     return null;
+  }
+
+  @Override
+  public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction iTx, Runnable callback) {
+    throw new UnsupportedOperationException("Uncompleted commits are not supported by the remote storage.");
   }
 
   public void rollback(OTransaction iTx) {
