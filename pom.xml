@@ -39,6 +39,7 @@
 
 	<build>
 		<plugins>
+			<!-- Currently not needed, but leave for future uses.
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<configuration>
@@ -49,16 +50,14 @@
 				<executions>
 					<execution>
 						<id>make-assembly</id>
-						<!-- this is used for inheritance merges -->
 						<phase>package</phase>
-						<!-- bind to the packaging phase -->
 						<goals>
 							<goal>single</goal>
 						</goals>
 						<configuration></configuration>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 		</plugins>
 	</build>
 
@@ -74,11 +73,6 @@
 			<artifactId>orientdb-server</artifactId>
 			<version>${orientdb.version}</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.cloudbees</groupId>
-			<artifactId>syslog-java-client</artifactId>
-			<version>1.0.8</version>
 		</dependency>
 	</dependencies>
 </project>
