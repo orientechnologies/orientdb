@@ -1170,7 +1170,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected void configSet() throws IOException {
-    setDataCommandInfo("Get config");
+    setDataCommandInfo("Set config");
 
     checkServerAccess("server.config.set");
 
