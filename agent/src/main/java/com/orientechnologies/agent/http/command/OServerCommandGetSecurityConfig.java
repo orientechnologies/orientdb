@@ -37,16 +37,16 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 import com.orientechnologies.orient.server.security.OServerSecurity;
 
-public class OServerCommandPostSecurityReload extends OServerCommandAuthenticatedServerAbstract
+public class OServerCommandGetSecurityConfig extends OServerCommandAuthenticatedServerAbstract
 {
-	private static final String[] NAMES = { "POST|security/reload" };
+	private static final String[] NAMES = { "GET|security/config" };
 	
 	private OServerSecurity _ServerSecurity;
 	
 	@Override
 	public String[] getNames()	{ return NAMES; }
 
-	public OServerCommandPostSecurityReload(OServerSecurity serverSec)
+	public OServerCommandGetSecurityConfig(OServerSecurity serverSec)
 	{
 		super("*");
 		
@@ -62,63 +62,49 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 	@Override
 	public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception
 	{
-		if(iRequest.content == null)
-		{
-	   	WriteError(iResponse, "OServerCommandPostSecurityReload.execute()", "Request Content is null");
-	   	return false;
-		}
-
       if(_ServerSecurity == null)
       {
-			WriteError(iResponse, "OServerCommandPostSecurityReload.execute()", "ServerSecurity is null");
+			WriteError(iResponse, "OServerCommandGetSecurityConfig.execute()", "ServerSecurity is null");
       	return false;
       }
 
 		try
 		{
-	      // Convert the JSON content to an ODocument to make parsing it easier.
-	      final ODocument jsonParams = new ODocument().fromJSON(iRequest.content, "noMap");
-	      
-			// "configFile" and "config"/"module" are mutually exclusive properties.
-	      if(jsonParams.containsField("configFile"))
-	      {	
-				final String configName = OSystemVariableResolver.resolveSystemVariables((String)jsonParams.field("configFile"));
+			ODocument configDoc = null;
 			
-				OLogManager.instance().info(this, "OServerCommandPostSecurityReload.execute() configName = %s", configName);
-			
-				_ServerSecurity.reload(configName);
+			// If the content is null then we return the main security configuration.
+			if(iRequest.content == null)
+			{
+				configDoc = _ServerSecurity.getConfig();
 			}
 			else
-	      if(jsonParams.containsField("config"))
-	      {	
-	      	final String jsonConfig = jsonParams.field("config");
-	      	
-	      	final ODocument jsonDoc = new ODocument().fromJSON(jsonConfig, "noMap");
-	      	
+			{
+		      // Convert the JSON content to an ODocument to make parsing it easier.
+		      final ODocument jsonParams = new ODocument().fromJSON(iRequest.content, "noMap");
+		      
 				if(jsonParams.containsField("module"))
 				{
 					final String compName = jsonParams.field("module");
 					
-					_ServerSecurity.reloadComponent(compName, jsonDoc);
-				}
-				else
-				{
-					_ServerSecurity.reload(jsonDoc);
+					configDoc = _ServerSecurity.getComponentConfig(compName);
 				}
 			}
+	
+			if(configDoc != null)
+			{
+				final String json = configDoc.toJSON("alwaysFetchEmbedded");
+				
+				WriteJSON(iResponse, json);
+			}
 			else
-	      {
-				WriteError(iResponse, "OServerCommandPostSecurityReload.execute()", "/security/reload keyword is missing");
-	      	return false;
-	      }
+			{
+				WriteError(iResponse, "OServerCommandGetSecurityConfig.execute()", "Unable to retrieve configuration");
+			}
 		}
 		catch(Exception ex)
 		{
-			WriteError(iResponse, "OServerCommandPostSecurityReload.execute()", "Exception: " + ex.getMessage());
-			return false;
+			WriteError(iResponse, "OServerCommandGetSecurityConfig.execute()", "Exception: " + ex.getMessage());
 		}
-		
-		WriteJSON(iResponse, "Configuration loaded successfully");
 		
 		return false;
 	}
@@ -139,7 +125,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 		}
 		catch(Exception ex)
 		{
-			OLogManager.instance().error(this, "OServerCommandPostSecurityReload.WriteJSON() Exception: " + ex);
+			OLogManager.instance().error(this, "OServerCommandGetSecurityConfig.WriteJSON() Exception: " + ex);
 		}
 	}
 
@@ -151,7 +137,7 @@ public class OServerCommandPostSecurityReload extends OServerCommandAuthenticate
 		}
 		catch(Exception ex)
 		{
-			OLogManager.instance().error(this, "OServerCommandPostSecurityReload.WriteJSON() Exception: " + ex);
+			OLogManager.instance().error(this, "OServerCommandGetSecurityConfig.WriteJSON() Exception: " + ex);
 		}
 	}
 }

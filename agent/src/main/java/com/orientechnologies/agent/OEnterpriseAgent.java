@@ -230,6 +230,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.registerStatelessCommand(new OServerCommandGetNode());
     listener.registerStatelessCommand(new OServerCommandQueryCacheManager());
     listener.registerStatelessCommand(new OServerCommandAuditing(server.getSecurity()));
+    listener.registerStatelessCommand(new OServerCommandGetSecurityConfig(server.getSecurity()));
     listener.registerStatelessCommand(new OServerCommandPostSecurityReload(server.getSecurity()));
 
   }
@@ -245,6 +246,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
     listener.unregisterStatelessCommand(OServerCommandPostBackupDatabase.class);
     listener.unregisterStatelessCommand(OServerCommandGetDeployDb.class);
+    listener.unregisterStatelessCommand(OServerCommandGetSecurityConfig.class);
     listener.unregisterStatelessCommand(OServerCommandPostSecurityReload.class);
   }
 
