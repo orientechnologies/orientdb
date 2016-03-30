@@ -17,7 +17,8 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   protected AtomicBoolean used = new AtomicBoolean(false);
 
   /**
-   * Creates a factory that use default admin credentials.
+   * Creates a factory that use default admin credentials and pool with maximum amount of connections equal to
+   * amount of CPU cores.
    *
    * @param iURL to the database
    */
@@ -26,9 +27,20 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   }
 
   /**
+   * Creates a factory that use default admin credentials and pool with maximum amount of connections equal to
+   * amount of CPU cores if needed.
+   *
+   * @param iURL       to the database
+   * @param createPool flag which indicates whether pool should be created.
+   */
+  public OrientGraphFactory(final String iURL, boolean createPool) {
+    this(iURL, OrientBaseGraph.ADMIN, OrientBaseGraph.ADMIN, createPool);
+  }
+
+  /**
    * Creates a factory with given credentials and pool with maximum amount of connections equal to
    * amount of CPU cores.
-   *
+   * <p>
    * If you wish to change pool settings call com.tinkerpop.blueprints.impls.orient.OrientGraphFactory#setupPool(int, int) method.
    *
    * @param iURL      to the database
@@ -36,22 +48,36 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * @param iPassword of the user
    */
   public OrientGraphFactory(final String iURL, final String iUser, final String iPassword) {
+    this(iURL, iUser, iPassword, true);
+  }
+
+  /**
+   * Creates a factory with given credentials and pool with maximum amount of connections equal to
+   * amount of CPU cores if that is needed.
+   * <p>
+   * If you wish to change pool settings call com.tinkerpop.blueprints.impls.orient.OrientGraphFactory#setupPool(int, int) method.
+   *
+   * @param iURL       to the database
+   * @param iUser      name of the user
+   * @param iPassword  of the user
+   * @param createPool flag which indicates whether pool should be created.
+   */
+  public OrientGraphFactory(final String iURL, final String iUser, final String iPassword, boolean createPool) {
     url = iURL;
     user = iUser;
     password = iPassword;
-    pool = new OPartitionedDatabasePool(url, user, password, 64, Runtime.getRuntime().availableProcessors()).setAutoCreate(true);
+    if (createPool)
+      pool = new OPartitionedDatabasePool(url, user, password, 64, Runtime.getRuntime().availableProcessors()).setAutoCreate(true);
   }
 
   /**
    * Creates a factory with given credentials also you may pass pool which you already use in "document part" of your application.
    * It is mandatory to use the same pool for document and graph databases.
    *
-   *
    * @param iURL      to the database
    * @param iUser     name of the user
    * @param iPassword password of the user
    * @param pool      Pool which is used in "document part" of your application.
-   *
    */
   public OrientGraphFactory(final String iURL, final String iUser, final String iPassword, OPartitionedDatabasePool pool) {
     url = iURL;
