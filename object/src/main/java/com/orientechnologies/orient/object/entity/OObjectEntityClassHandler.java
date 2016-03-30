@@ -31,14 +31,24 @@ public class OObjectEntityClassHandler extends OEntityManagerClassHandler {
 
   @Override
   public void registerEntityClass(Class<?> iClass) {
-    if (!OObjectEntitySerializer.isToSerialize(iClass) && !iClass.isEnum())
-      registerEntityClass(iClass.getSimpleName(), iClass);
+    registerEntityClass(iClass, true);
   }
 
   @Override
-  public void registerEntityClass(String iClassName, Class<?> iClass) {
+  public synchronized void registerEntityClass(Class<?> iClass, boolean forceSchemaReload) {
+    if (!OObjectEntitySerializer.isToSerialize(iClass) && !iClass.isEnum())
+      registerEntityClass(iClass.getSimpleName(), iClass, forceSchemaReload);
+  }
+
+  @Override
+  public synchronized void registerEntityClass(String iClassName, Class<?> iClass) {
+    registerEntityClass(iClassName, iClass, true);
+  }
+
+  @Override
+  public synchronized void registerEntityClass(String iClassName, Class<?> iClass, boolean forceSchemaReload) {
     if (!OObjectEntitySerializer.isToSerialize(iClass) && !iClass.isEnum()) {
-      OObjectEntitySerializer.registerClass(iClass);
+      OObjectEntitySerializer.registerClass(iClass, forceSchemaReload);
       super.registerEntityClass(iClassName, iClass);
     }
   }
