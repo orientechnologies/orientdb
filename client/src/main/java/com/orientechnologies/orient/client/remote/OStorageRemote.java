@@ -226,6 +226,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
     } catch (Exception e) {
+      removeUser();
       if (e instanceof RuntimeException)
         // PASS THROUGH
         throw (RuntimeException) e;
