@@ -69,7 +69,9 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
 
   protected final String extension;
 
-  public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension) {
+  private volatile String lockName;
+
+  public ODurableComponent(OAbstractPaginatedStorage storage, String name, String extension, String lockName) {
     super(true);
 
     assert name != null;
@@ -81,6 +83,11 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
     this.performanceStatisticManager = storage.getPerformanceStatisticManager();
+    this.lockName = lockName;
+  }
+
+  public String getLockName() {
+    return lockName;
   }
 
   public String getName() {

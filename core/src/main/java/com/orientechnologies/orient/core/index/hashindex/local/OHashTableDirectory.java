@@ -49,8 +49,8 @@ public class OHashTableDirectory extends ODurableComponent {
 
   private final boolean durableInNonTxMode;
 
-  public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
-    super(storage, name, defaultExtension);
+  public OHashTableDirectory(String defaultExtension, String name, String lockName, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
+    super(storage, name, defaultExtension, lockName);
     this.durableInNonTxMode = durableInNonTxMode;
     this.firstEntryIndex = 0;
   }

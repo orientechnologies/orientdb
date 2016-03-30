@@ -98,7 +98,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
   public OSBTree(String name, String dataFileExtension, boolean durableInNonTxMode, String nullFileExtension,
       OAbstractPaginatedStorage storage) {
-    super(storage, name, dataFileExtension);
+    super(storage, name, dataFileExtension, name + dataFileExtension);
     acquireExclusiveLock();
     try {
       this.nullFileExtension = nullFileExtension;

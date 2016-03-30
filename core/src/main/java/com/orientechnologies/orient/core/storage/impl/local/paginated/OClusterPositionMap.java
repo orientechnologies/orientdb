@@ -41,8 +41,8 @@ public class OClusterPositionMap extends ODurableComponent {
 
   private long               fileId;
 
-  public OClusterPositionMap(OAbstractPaginatedStorage storage, String name) {
-    super(storage, name, DEF_EXTENSION);
+  public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, String lockName) {
+    super(storage, name, DEF_EXTENSION, lockName);
   }
 
   public void open() throws IOException {

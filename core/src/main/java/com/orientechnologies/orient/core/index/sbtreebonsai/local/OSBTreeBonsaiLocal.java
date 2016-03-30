@@ -20,18 +20,6 @@
 
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.exception.OException;
@@ -42,11 +30,16 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSBTreeBonsaiLocalException;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.*;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Tree-based dictionary algorithm. Similar to {@link OSBTree} but uses subpages of disk cache that is more efficient for small data
@@ -80,7 +73,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   private OBinarySerializer<V> valueSerializer;
 
   public OSBTreeBonsaiLocal(String name, String dataFileExtension, OAbstractPaginatedStorage storage) {
-    super(storage, name, dataFileExtension);
+    super(storage, name, dataFileExtension, name + dataFileExtension);
   }
 
   public void create(OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
@@ -484,8 +477,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         rootCacheEntry.acquireSharedLock();
         try {
           OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootCacheEntry,
-              this.rootBucketPointer.getPageOffset(), keySerializer, valueSerializer,
-              getChanges(atomicOperation, rootCacheEntry), this);
+              this.rootBucketPointer.getPageOffset(), keySerializer, valueSerializer, getChanges(atomicOperation, rootCacheEntry),
+              this);
           keySerializer = (OBinarySerializer<K>) storage.getComponentsFactory().binarySerializerFactory
               .getObjectSerializer(rootBucket.getKeySerializerId());
           valueSerializer = (OBinarySerializer<V>) storage.getComponentsFactory().binarySerializerFactory
@@ -1132,8 +1125,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           parentCacheEntry.acquireExclusiveLock();
           try {
             OSBTreeBonsaiBucket<K, V> parentBucket = new OSBTreeBonsaiBucket<K, V>(parentCacheEntry,
-                parentBucketPointer.getPageOffset(), keySerializer, valueSerializer,
-                getChanges(atomicOperation, parentCacheEntry), this);
+                parentBucketPointer.getPageOffset(), keySerializer, valueSerializer, getChanges(atomicOperation, parentCacheEntry),
+                this);
             OSBTreeBonsaiBucket.SBTreeEntry<K, V> parentEntry = new OSBTreeBonsaiBucket.SBTreeEntry<K, V>(bucketPointer,
                 rightBucketPointer, separationKey, null);
 
