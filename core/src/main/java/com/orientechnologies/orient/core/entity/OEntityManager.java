@@ -239,7 +239,7 @@ public class OEntityManager {
    * @param iClassHandler
    */
   public synchronized void setClassHandler(final OEntityManagerClassHandler iClassHandler) {
-    Iterator<Entry<String, Class<?>>> iterator = iClassHandler.getClassesEntrySet().iterator();
+    Iterator<Entry<String, Class<?>>> iterator = classHandler.getClassesEntrySet().iterator();
     while (iterator.hasNext()){
       Entry<String, Class<?>> entry = iterator.next();
       boolean forceSchemaReload = !iterator.hasNext();
