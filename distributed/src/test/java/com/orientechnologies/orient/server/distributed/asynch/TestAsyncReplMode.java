@@ -43,7 +43,7 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
 
           if (exceptionInThread != null)
             break;
-          sleep(500);
+//          sleep(500);
           OrientVertex vertex = graph.addVertex("vertextype3", (String) null);
           graph.commit();
           assertEquals(1, vertex.getRecord().getVersion());
@@ -76,12 +76,10 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
               assertNotNull(vertex.getProperty("num"));
               break;
             } catch (OConcurrentModificationException c) {
+              System.out.println("***********ROLLBACK***************");
               graph.rollback();
-              if (c.getRid().equals(parentV1.getId())) {
-                parentV1.reload();
-              } else {
-                vertex.reload();
-              }
+              parentV1.reload();
+              vertex.reload();
             }
           }
 
@@ -109,12 +107,10 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
               assertNotNull(vertex.getProperty("num"));
               break;
             } catch (OConcurrentModificationException c) {
+              System.out.println("***********ROLLBACK***************");
               graph.rollback();
-              if (c.getRid().equals(parentV2.getId())) {
-                parentV2.reload();
-              } else {
-                vertex.reload();
-              }
+              parentV2.reload();
+              vertex.reload();
             }
           }
         }
@@ -143,7 +139,7 @@ public class TestAsyncReplMode extends BareBoneBase2ClientTest {
           if (exceptionInThread != null)
             break;
           // Let's give it some time for asynchronous replication.
-          sleep(500);
+//          sleep(500);
           countPropValue++;
           if (parentV1 == null) {
             parentV1 = graph.getVertex(parentV1Id);
