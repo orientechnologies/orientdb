@@ -87,7 +87,7 @@ public class OIndexDefinitionFactory {
       final List<OType> types, List<OCollate> collates, String indexKind, String algorithm) {
     final OIndexFactory factory = OIndexes.getFactory(indexKind, algorithm);
     final String className = oClass.getName();
-    final OCompositeIndexDefinition compositeIndex = new OCompositeIndexDefinition(className, factory.getLastVersion());
+    final OCompositeIndexDefinition compositeIndex = new OCompositeIndexDefinition(className);
 
     for (int i = 0, fieldsToIndexSize = fieldsToIndex.size(); i < fieldsToIndexSize; i++) {
       OCollate collate = null;

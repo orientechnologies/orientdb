@@ -26,12 +26,14 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 import java.io.IOException;
@@ -44,7 +46,9 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class OServerNetworkListener extends Thread {
   private OServerSocketFactory              socketFactory;
@@ -208,20 +212,27 @@ public class OServerNetworkListener extends Thread {
 
           final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
 
-          int conns = server.getClientConnectionManager().getTotal();
-          if (conns >= max) {
+          int sessionConn = server.getClientConnectionManager().getTotal();
+          if (sessionConn >= max) {
             server.getClientConnectionManager().cleanExpiredConnections();
-            conns = server.getClientConnectionManager().getTotal();
-            if (conns >= max) {
-              // MAXIMUM OF CONNECTIONS EXCEEDED
-              OLogManager.instance().warn(this,
-                  "Reached maximum number of concurrent connections (max=%d, current=%d), reject incoming connection from %s", max,
-                  conns, socket.getRemoteSocketAddress());
-              socket.close();
+            sessionConn = server.getClientConnectionManager().getTotal();
+            if (sessionConn >= max) {
+              List<OClientConnection> sessions = server.getClientConnectionManager().getConnections();
+              Set<ONetworkProtocol>  conns = new HashSet<ONetworkProtocol>();
+              for (OClientConnection sess :sessions){
+                conns.add(sess.getProtocol());
+              }
+              if(conns.size() >= max) {
+                // MAXIMUM OF CONNECTIONS EXCEEDED
+                OLogManager.instance().warn(this,
+                    "Reached maximum number of concurrent connections (max=%d, current=%d), reject incoming connection from %s", max,
+                    sessionConn, socket.getRemoteSocketAddress());
+                socket.close();
 
-              // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
-              Thread.sleep(100);
-              continue;
+                // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
+                Thread.sleep(100);
+                continue;
+              }
             }
           }
 

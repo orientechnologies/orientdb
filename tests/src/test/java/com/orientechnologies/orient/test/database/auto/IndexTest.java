@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -1805,6 +1806,261 @@ public class IndexTest extends ObjectDBBaseTest {
       positions.add(doc.getIdentity().getClusterPosition());
     }
     return positions;
+  }
+
+  public void testMultikeyWithoutFieldAndNullSupport() {
+    //generates stubs for index
+    ODocument doc1 = new ODocument();
+    doc1.save();
+    ODocument doc2 = new ODocument();
+    doc2.save();
+    ODocument doc3 = new ODocument();
+    doc3.save();
+    ODocument doc4 = new ODocument();
+    doc4.save();
+
+    final ORID rid1 = doc1.getIdentity();
+    final ORID rid2 = doc2.getIdentity();
+    final ORID rid3 = doc3.getIdentity();
+    final ORID rid4 = doc4.getIdentity();
+
+    ODatabaseDocumentTx database = (ODatabaseDocumentTx) this.database.getUnderlying();
+
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass clazz = schema.createClass("TestMultikeyWithoutField");
+
+    clazz.createProperty("state", OType.BYTE);
+    clazz.createProperty("users", OType.LINKSET);
+    clazz.createProperty("time", OType.LONG);
+    clazz.createProperty("reg", OType.LONG);
+    clazz.createProperty("no", OType.INTEGER);
+
+    final ODocument mt = new ODocument().field("ignoreNullValues", false);
+    clazz.createIndex("MultikeyWithoutFieldIndex", INDEX_TYPE.UNIQUE.toString(), null, mt,
+        new String[] { "state", "users", "time", "reg", "no" });
+
+    ODocument document = new ODocument("TestMultikeyWithoutField");
+    document.field("state", (byte) 1);
+
+    Set<ORID> users = new HashSet<ORID>();
+    users.add(rid1);
+    users.add(rid2);
+
+    document.field("users", users);
+    document.field("time", 12L);
+    document.field("reg", 14L);
+    document.field("no", 12);
+
+    document.save();
+
+    OIndex index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+    Assert.assertEquals(index.getSize(), 2);
+
+    //we support first and last keys check only for embedded storage
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid1, 12L, 14L, 12));
+      Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+    }
+
+    final ORID rid = document.getIdentity();
+
+    database.close();
+    database.open("admin", "admin");
+
+    document = database.load(rid);
+
+    users = document.field("users");
+    users.remove(rid1);
+    document.save();
+
+    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+    Assert.assertEquals(index.getSize(), 1);
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+    }
+
+    database.close();
+    database.open("admin", "admin");
+
+    document = database.load(rid);
+
+    users = document.field("users");
+    users.remove(rid2);
+    Assert.assertTrue(users.isEmpty());
+    document.save();
+
+    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+
+    Assert.assertEquals(index.getSize(), 1);
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, null, 12L, 14L, 12));
+    }
+
+    database.close();
+    database.open("admin", "admin");
+
+    document = database.load(rid);
+    users = document.field("users");
+    users.add(rid3);
+    document.save();
+
+    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+
+    Assert.assertEquals(index.getSize(), 1);
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+    }
+
+    database.close();
+    database.open("admin", "admin");
+
+    users = document.field("users");
+    users.add(rid4);
+    document.save();
+
+    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+    Assert.assertEquals(index.getSize(), 2);
+
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+      Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid4, 12L, 14L, 12));
+    }
+
+    database.close();
+    database.open("admin", "admin");
+
+    document.removeField("users");
+    document.save();
+
+    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndex");
+    Assert.assertEquals(index.getSize(), 1);
+
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, null, 12L, 14L, 12));
+    }
+  }
+
+  public void testMultikeyWithoutFieldAndNoNullSupport() {
+    //generates stubs for index
+    ODocument doc1 = new ODocument();
+    doc1.save();
+    ODocument doc2 = new ODocument();
+    doc2.save();
+    ODocument doc3 = new ODocument();
+    doc3.save();
+    ODocument doc4 = new ODocument();
+    doc4.save();
+
+    final ORID rid1 = doc1.getIdentity();
+    final ORID rid2 = doc2.getIdentity();
+    final ORID rid3 = doc3.getIdentity();
+    final ORID rid4 = doc4.getIdentity();
+
+    ODatabaseDocumentTx database = (ODatabaseDocumentTx) this.database.getUnderlying();
+
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass clazz = schema.createClass("TestMultikeyWithoutFieldNoNullSupport");
+
+    clazz.createProperty("state", OType.BYTE);
+    clazz.createProperty("users", OType.LINKSET);
+    clazz.createProperty("time", OType.LONG);
+    clazz.createProperty("reg", OType.LONG);
+    clazz.createProperty("no", OType.INTEGER);
+
+    clazz.createIndex("MultikeyWithoutFieldIndexNoNullSupport", INDEX_TYPE.UNIQUE, "state", "users", "time", "reg", "no");
+
+    ODocument document = new ODocument("TestMultikeyWithoutFieldNoNullSupport");
+    document.field("state", (byte) 1);
+
+    Set<ORID> users = new HashSet<ORID>();
+    users.add(rid1);
+    users.add(rid2);
+
+    document.field("users", users);
+    document.field("time", 12L);
+    document.field("reg", 14L);
+    document.field("no", 12);
+
+    document.save();
+
+    OIndex index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    Assert.assertEquals(index.getSize(), 2);
+
+    //we support first and last keys check only for embedded storage
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid1, 12L, 14L, 12));
+      Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+    }
+
+    final ORID rid = document.getIdentity();
+
+    database.close();
+    database.open("admin", "admin");
+
+    document = database.load(rid);
+
+    users = document.field("users");
+    users.remove(rid1);
+    document.save();
+
+    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    Assert.assertEquals(index.getSize(), 1);
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid2, 12L, 14L, 12));
+    }
+
+    database.close();
+    database.open("admin", "admin");
+
+    document = database.load(rid);
+
+    users = document.field("users");
+    users.remove(rid2);
+    Assert.assertTrue(users.isEmpty());
+
+    document.save();
+
+    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    Assert.assertEquals(index.getSize(), 0);
+
+    database.close();
+    database.open("admin", "admin");
+
+    document = database.load(rid);
+    users = document.field("users");
+    users.add(rid3);
+    document.save();
+
+    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    Assert.assertEquals(index.getSize(), 1);
+
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+    }
+
+    database.close();
+    database.open("admin", "admin");
+
+    users = document.field("users");
+    users.add(rid4);
+    document.save();
+
+    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    Assert.assertEquals(index.getSize(), 2);
+
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+      Assert.assertEquals(index.getFirstKey(), new OCompositeKey((byte) 1, rid3, 12L, 14L, 12));
+      Assert.assertEquals(index.getLastKey(), new OCompositeKey((byte) 1, rid4, 12L, 14L, 12));
+    }
+
+    database.close();
+    database.open("admin", "admin");
+
+    document.removeField("users");
+    document.save();
+
+    index = database.getMetadata().getIndexManager().getIndex("MultikeyWithoutFieldIndexNoNullSupport");
+    Assert.assertEquals(index.getSize(), 0);
   }
 
   @Test

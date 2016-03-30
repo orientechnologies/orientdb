@@ -479,13 +479,13 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     final Set<OIndex<?>> indexes = indexManager.getClassIndexes(CLASS_NAME);
     final Set<OIndexDefinition> expectedIndexDefinitions = new HashSet<OIndexDefinition>();
 
-    final OCompositeIndexDefinition compositeIndexOne = new OCompositeIndexDefinition(CLASS_NAME, -1);
+    final OCompositeIndexDefinition compositeIndexOne = new OCompositeIndexDefinition(CLASS_NAME);
 
     compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
     compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
     expectedIndexDefinitions.add(compositeIndexOne);
 
-    final OCompositeIndexDefinition compositeIndexTwo = new OCompositeIndexDefinition(CLASS_NAME, -1);
+    final OCompositeIndexDefinition compositeIndexTwo = new OCompositeIndexDefinition(CLASS_NAME);
 
     compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
     compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
@@ -511,13 +511,13 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     final Set<OIndex<?>> indexes = indexManager.getClassIndexes("ClassforindeXMaNAgerTeST");
     final Set<OIndexDefinition> expectedIndexDefinitions = new HashSet<OIndexDefinition>();
 
-    final OCompositeIndexDefinition compositeIndexOne = new OCompositeIndexDefinition(CLASS_NAME, -1);
+    final OCompositeIndexDefinition compositeIndexOne = new OCompositeIndexDefinition(CLASS_NAME);
 
     compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
     compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
     expectedIndexDefinitions.add(compositeIndexOne);
 
-    final OCompositeIndexDefinition compositeIndexTwo = new OCompositeIndexDefinition(CLASS_NAME, -1);
+    final OCompositeIndexDefinition compositeIndexTwo = new OCompositeIndexDefinition(CLASS_NAME);
 
     compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
     compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));

@@ -57,15 +57,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
+
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
@@ -539,11 +535,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     context.updateMetric("recordReads", +1);
 
-    if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
-    // SKIP IT
-    {
+    if (record == null)
+      // SKIP IT
       return true;
-    }
+    if ((projections != null || expandTarget != null) && ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
+      //SKIP binary records in case of projection.
+      return true;
+
     context.updateMetric("documentReads", +1);
 
     if (localLockingStrategy == LOCKING_STRATEGY.SHARED_LOCK) {
@@ -2240,12 +2238,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             iteratorLimit = -1;
           } else {
             iteratorLimit += limit;
-            if (skip > 0) {
-              iteratorLimit += skip;
-            }
           }
 
           finalResult.setLimit(iteratorLimit);
+          finalResult.setSkip(skip);
         }
 
         for (OIdentifiable id : tempResult) {

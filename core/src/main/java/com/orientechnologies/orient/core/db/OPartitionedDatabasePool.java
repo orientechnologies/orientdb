@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
@@ -29,53 +30,40 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <p>
- * Lock free implementation of database pool which has good multicore scalability characteristics.
+ * Database pool which has good multicore scalability characteristics because of creation of several partitions for each logical
+ * thread group which drastically decrease thread contention when we acquire new connection to database.
  * </p>
- * <p>
- * <p>
- * Because pool is lock free it means that if connection pool exhausted it does not wait till free connections are released but
- * throws exception instead (this is going to be fixed in next versions, by using version of pool with 3 parameters, minimum pool
- * size, maximum pool size, maximum pool size under load, so pool will keep amount records from minimum to maxmimum value but under
- * high load it will be allowed to extend amount of connections which it keeps till maximum size under load value and then amount of
- * records in pool will be decreased).
- * </p>
- * <p>
- * <p>
- * But increase in consumption of JVM resources because of addition of new more database instance with the same url and the same
- * user is very small.
- * </p>
- * <p>
  * <p>
  * To acquire connection from the pool call {@link #acquire()} method but to release connection you just need to call
  * {@link com.orientechnologies.orient.core.db.document.ODatabaseDocument#close()} method.
  * </p>
- * <p>
  * <p>
  * In case of remote storage database pool will keep connections to the remote storage till you close pool. So in case of remote
  * storage you should close pool at the end of it's usage, it also may be closed on application shutdown but you should not rely on
  * this behaviour.
  * </p>
  * <p>
- * <p>
- * </p>
  * This pool has one noticeable difference from other pools. If you perform several subsequent acquire calls in the same thread the
  * <b>same</b> instance of database will be returned, but amount of calls to close method should match to amount of acquire calls to
  * release database back in the pool. It will allow you to use such feature as transaction propagation when you perform call of one
  * service from another one.
  * </p>
  * <p>
- * <p>
- * </p>
- * Given pool has only one parameter now, amount of maximum connections for single partition. When you start to use pool it will
- * automatically split by several partitions, each partition is independent from other which gives us very good multicore
- * scalability. Amount of partitions will be close to amount of cores but it is not mandatory and depends how much application is
+ * Given pool has two parameters now, amount of maximum connections for single partition and total amount of connections
+ * which may be hold by pool. When you start to use pool it will automatically split by several partitions, each partition is
+ * independent from other which gives us very good multicore scalability.
+ * Amount of partitions will be close to amount of cores but it is not mandatory and depends how much application is
  * loaded. Amount of connections which may be hold by single partition is defined by user but we suggest to use default parameters
  * if your application load is not extremely high.
+ * <p>
+ * If total amount of connections which allowed to be hold by this pool is reached thread will wait till free connection will be
+ * available. If total amount of connection is set to value 0 or less it means that there is no connection limit.
  * </p>
  *
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -88,7 +76,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   private final String url;
   private final String userName;
   private final String password;
-  private final int    maxSize;
+  private final int    maxPartitonSize;
 
   private volatile ThreadLocal<PoolData> poolData      = new ThreadPoolData();
   private final    AtomicBoolean         poolBusy      = new AtomicBoolean();
@@ -96,6 +84,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   private volatile PoolPartition[] partitions;
   private volatile boolean closed     = false;
   private          boolean autoCreate = false;
+  private final Semaphore connectionsCounter;
 
   private static final class PoolData {
     private final int                      hashCode;
@@ -180,6 +169,9 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
           p.queue.offer(db);
         }
 
+        if (connectionsCounter != null)
+          connectionsCounter.release();
+
         p.acquiredConnections.decrementAndGet();
       } else {
         super.close();
@@ -188,14 +180,19 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   }
 
   public OPartitionedDatabasePool(String url, String userName, String password) {
-    this(url, userName, password, 64);
+    this(url, userName, password, 64, -1);
   }
 
-  public OPartitionedDatabasePool(String url, String userName, String password, int maxSize) {
+  public OPartitionedDatabasePool(String url, String userName, String password, int maxPartitionSize, int maxPoolSize) {
     this.url = url;
     this.userName = userName;
     this.password = password;
-    this.maxSize = maxSize;
+    this.maxPartitonSize = maxPartitionSize;
+    if (maxPoolSize > 0) {
+      connectionsCounter = new Semaphore(maxPoolSize);
+    } else {
+      connectionsCounter = null;
+    }
 
     final PoolPartition[] pts = new PoolPartition[2];
 
@@ -224,8 +221,8 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     return userName;
   }
 
-  public int getMaxSize() {
-    return maxSize;
+  public int getMaxPartitonSize() {
+    return maxPartitonSize;
   }
 
   public int getAvailableConnections() {
@@ -275,71 +272,86 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
       return data.acquiredDatabase;
     }
 
-    while (true) {
-      final PoolPartition[] pts = partitions;
+    try {
+      if (connectionsCounter != null)
+        connectionsCounter.acquire();
+    } catch (InterruptedException ie) {
+      throw new OInterruptedException(ie);
+    }
 
-      final int index = (pts.length - 1) & data.hashCode;
+    boolean acquired = false;
+    try {
+      while (true) {
+        final PoolPartition[] pts = partitions;
 
-      PoolPartition partition = pts[index];
-      if (partition == null) {
-        if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
-          if (pts == partitions) {
-            partition = pts[index];
+        final int index = (pts.length - 1) & data.hashCode;
 
-            if (partition == null) {
-              partition = new PoolPartition();
-              initQueue(url, partition);
-              pts[index] = partition;
+        PoolPartition partition = pts[index];
+        if (partition == null) {
+          if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
+            if (pts == partitions) {
+              partition = pts[index];
+
+              if (partition == null) {
+                partition = new PoolPartition();
+                initQueue(url, partition);
+                pts[index] = partition;
+              }
             }
+
+            poolBusy.set(false);
           }
 
-          poolBusy.set(false);
-        }
+          continue;
+        } else {
+          DatabaseDocumentTxPolled db = partition.queue.poll();
+          if (db == null) {
+            if (pts.length < maxPartitions) {
+              if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
+                if (pts == partitions) {
+                  final PoolPartition[] newPartitions = new PoolPartition[partitions.length << 1];
+                  System.arraycopy(partitions, 0, newPartitions, 0, partitions.length);
 
-        continue;
-      } else {
-        DatabaseDocumentTxPolled db = partition.queue.poll();
-        if (db == null) {
-          if (pts.length < maxPartitions) {
-            if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
-              if (pts == partitions) {
-                final PoolPartition[] newPartitions = new PoolPartition[partitions.length << 1];
-                System.arraycopy(partitions, 0, newPartitions, 0, partitions.length);
+                  partitions = newPartitions;
+                }
 
-                partitions = newPartitions;
+                poolBusy.set(false);
               }
 
-              poolBusy.set(false);
+              continue;
+            } else {
+              if (partition.currentSize.get() >= maxPartitonSize)
+                throw new IllegalStateException("You have reached maximum pool size for given partition");
+
+              db = new DatabaseDocumentTxPolled(url);
+              openDatabase(db);
+              db.partition = partition;
+
+              data.acquireCount = 1;
+              data.acquiredDatabase = db;
+
+              partition.acquiredConnections.incrementAndGet();
+              partition.currentSize.incrementAndGet();
+
+              acquired = true;
+              return db;
             }
-
-            continue;
           } else {
-            if (partition.currentSize.get() >= maxSize)
-              throw new IllegalStateException("You have reached maximum pool size for given partition");
-
-            db = new DatabaseDocumentTxPolled(url);
             openDatabase(db);
             db.partition = partition;
+            partition.acquiredConnections.incrementAndGet();
 
             data.acquireCount = 1;
             data.acquiredDatabase = db;
 
-            partition.acquiredConnections.incrementAndGet();
-            partition.currentSize.incrementAndGet();
-
+            acquired = true;
             return db;
           }
-        } else {
-          openDatabase(db);
-          db.partition = partition;
-          partition.acquiredConnections.incrementAndGet();
-
-          data.acquireCount = 1;
-          data.acquiredDatabase = db;
-
-          return db;
         }
       }
+    } finally {
+      if (!acquired && connectionsCounter != null)
+        connectionsCounter.release();
     }
   }
 
@@ -396,7 +408,6 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         OStorage storage = db.getStorage();
         storage.close();
       }
-
     }
 
     partitions = null;

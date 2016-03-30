@@ -1201,6 +1201,14 @@ public class OCommandExecutorSQLSelectTest {
     results =db.query(new OSQLSynchQuery<ODocument>("select from OCommandExecutorSqlSelectTest_collateOnCollections where 'math' in categories"));
     assertEquals(results.size(), 1);
   }
+
+  public void testEvalLong() {
+    //http://www.prjhub.com/#/issues/6472
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT EVAL(\"86400000 * 26\") AS value"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.get(0).field("value"), 86400000l*26);
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

@@ -32,13 +32,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 8/11/14
  */
 public class ONewLockManager<T> {
-  private static final int               CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() * 64);
-  private static final int               MASK              = CONCURRENCY_LEVEL - 1;
+  private static final int MAXIMUM_CAPACITY = 1 << 30;
+
+  private final int mask;
 
   private final ReadWriteLock[]          locks;
   private final OReadersWriterSpinLock[] spinLocks;
 
-  private final boolean                  useSpinLock;
+  private final boolean useSpinLock;
 
   private static final class SpinLockWrapper implements Lock {
     private final boolean                readLock;
@@ -83,14 +84,18 @@ public class ONewLockManager<T> {
     }
   }
 
-  public ONewLockManager() {
-    this(false);
+  public ONewLockManager(int concurrencyLevel) {
+    this(false, concurrencyLevel);
   }
 
-  public ONewLockManager(boolean useSpinLock) {
+  public ONewLockManager(boolean useSpinLock, int concurrencyLevel) {
+
     this.useSpinLock = useSpinLock;
+    final int tableSize = tableSizeFor(concurrencyLevel << 4);
+    mask = tableSize - 1;
+
     if (useSpinLock) {
-      OReadersWriterSpinLock[] lcks = new OReadersWriterSpinLock[CONCURRENCY_LEVEL];
+      OReadersWriterSpinLock[] lcks = new OReadersWriterSpinLock[tableSize];
 
       for (int i = 0; i < lcks.length; i++)
         lcks[i] = new OReadersWriterSpinLock();
@@ -98,7 +103,7 @@ public class ONewLockManager<T> {
       spinLocks = lcks;
       locks = null;
     } else {
-      ReadWriteLock[] lcks = new ReadWriteLock[CONCURRENCY_LEVEL];
+      ReadWriteLock[] lcks = new ReadWriteLock[tableSize];
       for (int i = 0; i < lcks.length; i++)
         lcks[i] = new ReentrantReadWriteLock();
 
@@ -107,16 +112,12 @@ public class ONewLockManager<T> {
     }
   }
 
-  private static int closestInteger(int value) {
-    return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
-  }
-
   private static int longHashCode(long value) {
     return (int) (value ^ (value >>> 32));
   }
 
-  private static int index(int hashCode) {
-    return hashCode & MASK;
+  private int index(int hashCode) {
+    return hashCode & mask;
   }
 
   public Lock acquireExclusiveLock(long value) {
@@ -457,6 +458,20 @@ public class ONewLockManager<T> {
 
   public void releaseLock(Lock lock) {
     lock.unlock();
+  }
+
+  /**
+   * Returns a power of two table size for the given desired capacity.
+   * See Hackers Delight, sec 3.2
+   */
+  private static int tableSizeFor(int c) {
+    int n = c - 1;
+    n |= n >>> 1;
+    n |= n >>> 2;
+    n |= n >>> 4;
+    n |= n >>> 8;
+    n |= n >>> 16;
+    return (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;
   }
 
 }

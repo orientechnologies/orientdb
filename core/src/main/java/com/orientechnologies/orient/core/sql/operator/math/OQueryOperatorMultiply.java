@@ -19,10 +19,6 @@
   */
 package com.orientechnologies.orient.core.sql.operator.math;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Date;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -31,11 +27,13 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 
+import java.math.BigDecimal;
+import java.util.Date;
+
 /**
  * MULTIPLY "*" operator.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OQueryOperatorMultiply extends OQueryOperator {
 
@@ -57,33 +55,78 @@ public class OQueryOperatorMultiply extends OQueryOperator {
     if (iLeft instanceof Number && iRight instanceof Number) {
       final Number l = (Number) iLeft;
       final Number r = (Number) iRight;
-      if (l instanceof Integer)
-        return l.intValue() * r.intValue();
-      else if (l instanceof Long)
+      Class maxPrecisionClass = getMaxPrecisionClass(l, r);
+      if (Integer.class.equals(maxPrecisionClass))
+        return tryDownscaleToInt(l.longValue() * r.longValue());
+      else if (Long.class.equals(maxPrecisionClass))
         return l.longValue() * r.longValue();
-      else if (l instanceof Short)
+      else if (Short.class.equals(maxPrecisionClass))
         return l.shortValue() * r.shortValue();
-      else if (l instanceof Float)
+      else if (Float.class.equals(maxPrecisionClass))
         return l.floatValue() * r.floatValue();
-      else if (l instanceof Double)
+      else if (Double.class.equals(maxPrecisionClass))
         return l.doubleValue() * r.doubleValue();
-      else if (l instanceof BigDecimal) {
-        if (r instanceof BigDecimal)
-          return ((BigDecimal) l).multiply((BigDecimal) r);
-        else if (r instanceof Float)
-          return ((BigDecimal) l).multiply(new BigDecimal(r.floatValue()));
-        else if (r instanceof Double)
-          return ((BigDecimal) l).multiply(new BigDecimal(r.doubleValue()));
-        else if (r instanceof Long)
-          return ((BigDecimal) l).multiply(new BigDecimal(r.longValue()));
-        else if (r instanceof Integer)
-          return ((BigDecimal) l).multiply(new BigDecimal(r.intValue()));
-        else if (r instanceof Short)
-          return ((BigDecimal) l).multiply(new BigDecimal(r.shortValue()));
+      else if (BigDecimal.class.equals(maxPrecisionClass)) {
+        return (toBigDecimal(l)).multiply(toBigDecimal(r));
       }
     }
 
     return null;
+  }
+
+  public static BigDecimal toBigDecimal(Number number) {
+    if (number instanceof BigDecimal) {
+      return (BigDecimal) number;
+    }
+    if (number instanceof Double) {
+      return new BigDecimal(number.doubleValue());
+    }
+    if (number instanceof Float) {
+      return new BigDecimal(number.floatValue());
+    }
+    if (number instanceof Long) {
+      return new BigDecimal(number.longValue());
+    }
+    if (number instanceof Integer) {
+      return new BigDecimal(number.intValue());
+    }
+    if (number instanceof Short) {
+      return new BigDecimal(number.intValue());
+    }
+
+    return null;
+  }
+
+  public static Class getMaxPrecisionClass(Number l, Number r) {
+    Class<? extends Number> lClass = l.getClass();
+    Class<? extends Number> rClass = r.getClass();
+    if (lClass.equals(BigDecimal.class) || rClass.equals(BigDecimal.class)) {
+      return BigDecimal.class;
+    }
+    if (lClass.equals(Double.class) || rClass.equals(Double.class)) {
+      return Double.class;
+    }
+    if (lClass.equals(Float.class) || rClass.equals(Float.class)) {
+      return Float.class;
+    }
+    if (lClass.equals(Long.class) || rClass.equals(Long.class)) {
+      return Long.class;
+    }
+    if (lClass.equals(Integer.class) || rClass.equals(Integer.class)) {
+      return Integer.class;
+    }
+    if (lClass.equals(Short.class) || rClass.equals(Short.class)) {
+      return Short.class;
+    }
+
+    return null;
+  }
+
+  public static Object tryDownscaleToInt(long value) {
+    if (value < Integer.MAX_VALUE && value > Integer.MIN_VALUE) {
+      return (int) value;
+    }
+    return value;
   }
 
   @Override
