@@ -33,7 +33,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
   @Override
   protected void executeTest() throws Exception {
     final OrientGraphFactory localFactoryEurope = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-    final OrientGraphFactory localFactoryUsa = new OrientGraphFactory("plocal:target/server1/databases/" + getDatabaseName());
+    OrientGraphFactory localFactoryUsa = new OrientGraphFactory("plocal:target/server1/databases/" + getDatabaseName());
 
     OrientGraphNoTx graphNoTxEurope = localFactoryEurope.getNoTx();
     try {
@@ -58,7 +58,8 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       serverInstance.get(1).shutdownServer();
 
     } finally {
-      graphNoTxEurope.shutdown();
+      graphNoTxUsa.shutdown();
+      localFactoryUsa.close();
     }
 
     final String clusterName;
@@ -82,6 +83,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
     }
 
     // TEST SECOND VERTEX IS MISSING ON USA NODE
+    localFactoryUsa = new OrientGraphFactory("plocal:target/server1/databases/" + getDatabaseName());
     graphNoTxUsa = localFactoryUsa.getNoTx();
     try {
       Assert.assertEquals(1, graphNoTxUsa.countVertices());
@@ -92,7 +94,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       Assert.assertEquals(2, graphNoTxUsa.countVertices());
 
     } finally {
-      graphNoTxEurope.shutdown();
+      graphNoTxUsa.shutdown();
     }
 
     localFactoryEurope.close();
