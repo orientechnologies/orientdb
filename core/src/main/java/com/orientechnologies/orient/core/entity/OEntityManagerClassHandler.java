@@ -47,7 +47,15 @@ public class OEntityManagerClassHandler {
     entityClasses.put(iClass.getSimpleName(), iClass);
   }
 
+  public synchronized void registerEntityClass(final Class<?> iClass, boolean forceSchemaReload) {
+    entityClasses.put(iClass.getSimpleName(), iClass);
+  }
+
   public synchronized void registerEntityClass(final String iClassName, final Class<?> iClass) {
+    entityClasses.put(iClassName, iClass);
+  }
+
+  public synchronized void registerEntityClass(final String iClassName, final Class<?> iClass, boolean forceSchemaReload) {
     entityClasses.put(iClassName, iClass);
   }
 
