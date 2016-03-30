@@ -111,7 +111,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
                 banner("STARTING BACKUP SERVER " + (SERVERS - 1));
 
                 OrientGraphFactory factory = new OrientGraphFactory(
-                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
+                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName(), false);
                 OrientGraphNoTx g = factory.getNoTx();
 
                 backupInProgress = true;

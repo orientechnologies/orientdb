@@ -120,7 +120,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     OrientVertexType provider = graph.createVertexType("Provider", person);
     provider.createProperty("totalPurchased", OType.DECIMAL);
 
-    factory = new OrientGraphFactory(graph.getRawGraph().getURL(), "admin", "admin");
+    factory = new OrientGraphFactory(graph.getRawGraph().getURL(), "admin", "admin", false);
     factory.setStandardElementConstraints(false);
   }
 
