@@ -256,6 +256,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         reopenRemoteDatabase();
       }
     } catch (Exception e) {
+      removeUser();
       if (e instanceof RuntimeException)
         // PASS THROUGH
         throw (RuntimeException) e;

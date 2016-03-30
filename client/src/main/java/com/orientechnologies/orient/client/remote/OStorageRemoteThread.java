@@ -77,6 +77,9 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       delegate.open(iUserName, iUserPassword, iOptions);
+    } catch (RuntimeException e) {
+      Orient.instance().unregisterStorage(this);
+      throw e;
     } finally {
       popSession();
     }
