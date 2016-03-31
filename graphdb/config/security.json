@@ -1,48 +1,36 @@
 {
-	"enabled" : false,
-	"debug" : false,
-
-	"server" :
-	{
-		"createDefaultUsers" : true
+	"enabled": false,
+	"debug": false,
+	"server": {
+		"createDefaultUsers": true
 	},
-
-	"authentication" :
-	{
-		"allowDefault" : true,
-
-		"authenticators" :
-		[
-			{
-				"name"				: "Password",
-				"class"				: "com.orientechnologies.security.authenticator.ODefaultPasswordAuthenticator",
-				"enabled"			: true,
-				"users" 			:
-				[
-					{ "username" : "guest", "resources" : "server.listDatabases,server.dblist" }
-				]
+	"authentication": {
+		"allowDefault": true,
+		"authenticators": [{
+				"name": "Password",
+				"class": "com.orientechnologies.security.authenticator.ODefaultPasswordAuthenticator",
+				"enabled": true,
+				"users": [{
+					"username": "guest",
+					"resources": "server.listDatabases,server.dblist"
+				}]
 			},
-	
 			{
-				"name"				: "ServerConfig",
-				"class"				: "com.orientechnologies.security.authenticator.OServerConfigAuthenticator",
-				"enabled"			: true
+				"name": "ServerConfig",
+				"class": "com.orientechnologies.security.authenticator.OServerConfigAuthenticator",
+				"enabled": true
 			}
 		]
 	},
-
-	"auditing" :
-	{
-		"class"		: "com.orientechnologies.security.auditing.ODefaultAuditing",
-		"enabled"	: true
+	"auditing": {
+		"class": "com.orientechnologies.security.auditing.ODefaultAuditing",
+		"enabled": true
 	},
-
-	"syslog"	:
-	{
-		"class"		: "com.orientechnologies.security.syslog.ODefaultSyslog",
-		"enabled"	: true,
-		"hostname"	: "localhost",
-		"port"		: 514,
-		"appName"	: "OrientDB"
+	"syslog": {
+		"class": "com.orientechnologies.security.syslog.ODefaultSyslog",
+		"enabled": true,
+		"hostname": "localhost",
+		"port": 514,
+		"appName": "OrientDB"
 	}
 }
