@@ -19,16 +19,16 @@
  */
 package com.orientechnologies.security.syslog;
 
-import com.cloudbees.syslog.Facility;
-import com.cloudbees.syslog.MessageFormat;
-import com.cloudbees.syslog.Severity;
-import com.cloudbees.syslog.SyslogMessage;
-import com.cloudbees.syslog.sender.UdpSyslogMessageSender;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
-import com.orientechnologies.orient.server.security.OAuditingLog;
+import com.orientechnologies.orient.server.security.OSyslog;
+
+import com.cloudbees.syslog.*;
+import com.cloudbees.syslog.sender.*;
+
+import java.lang.StringBuilder;
 
 /**
  * Provides a default implementation for syslog access.
@@ -36,124 +36,150 @@ import com.orientechnologies.orient.server.security.OAuditingLog;
  * @author S. Colin Leister
  * 
  */
-public class ODefaultSyslog implements OAuditingLog {
-  private boolean                debug    = false;
-  private boolean                enabled  = false;
-  private String                 hostname = "localhost";
-  private int                    port     = 514;        // Default syslog UDP port.
-  private String                 appName  = "OrientDB";
+public class ODefaultSyslog implements OSyslog
+{
+	private boolean _Debug = false;
+	private boolean _Enabled = false;
+	private String _Hostname = "localhost";
+	private int _Port = 514; // Default syslog UDP port.
+	private String _AppName = "OrientDB";
 
-  private UdpSyslogMessageSender _MessageSender;
+	private UdpSyslogMessageSender _MessageSender;
+	
+	// OSecurityComponent
+	public void active()
+	{
+		try
+		{
+			if(isEnabled())
+			{
+				_MessageSender = new UdpSyslogMessageSender();
+//				_MessageSender.setDefaultMessageHostname("myhostname");
+//				_MessageSender.setDefaultAppName(_AppName);
+//				_MessageSender.setDefaultFacility(Facility.USER);
+//				_MessageSender.setDefaultSeverity(Severity.INFORMATIONAL);
+				_MessageSender.setSyslogServerHostname(_Hostname);
+				_MessageSender.setSyslogServerPort(_Port);
+				_MessageSender.setMessageFormat(MessageFormat.RFC_3164); // optional, default is RFC 3164
+			}
+		}
+		catch(Exception ex)
+		{
+			OLogManager.instance().error(this, "ODefaultSyslog.active() Exception: %s", ex.getMessage());
+		}
+	}
 
-  // OSecurityComponent
-  public void active() {
-    try {
-      if (isEnabled()) {
-        _MessageSender = new UdpSyslogMessageSender();
-        // _MessageSender.setDefaultMessageHostname("myhostname");
-        // _MessageSender.setDefaultAppName(_AppName);
-        // _MessageSender.setDefaultFacility(Facility.USER);
-        // _MessageSender.setDefaultSeverity(Severity.INFORMATIONAL);
-        _MessageSender.setSyslogServerHostname(hostname);
-        _MessageSender.setSyslogServerPort(port);
-        _MessageSender.setMessageFormat(MessageFormat.RFC_3164); // optional, default is RFC 3164
-      }
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultSyslog.active() Exception: %s", ex.getMessage());
-    }
-  }
+	// OSecurityComponent
+	public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig)
+	{
+		try
+		{
+			if(jsonConfig.containsField("enabled"))
+			{
+				_Enabled = jsonConfig.field("enabled");
+			}
 
-  // OSecurityComponent
-  public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig) {
-    try {
-      if (jsonConfig.containsField("enabled")) {
-        enabled = jsonConfig.field("enabled");
-      }
+			if(jsonConfig.containsField("debug"))
+			{
+				_Debug = jsonConfig.field("debug");
+			}
 
-      if (jsonConfig.containsField("debug")) {
-        debug = jsonConfig.field("debug");
-      }
+			if(jsonConfig.containsField("hostname"))
+			{
+				_Hostname = jsonConfig.field("hostname");
+			}
 
-      if (jsonConfig.containsField("hostname")) {
-        hostname = jsonConfig.field("hostname");
-      }
+			if(jsonConfig.containsField("port"))
+			{
+				_Port = jsonConfig.field("port");
+			}
 
-      if (jsonConfig.containsField("port")) {
-        port = jsonConfig.field("port");
-      }
+			if(jsonConfig.containsField("appName"))
+			{
+				_AppName = jsonConfig.field("appName");
+			}
+		}
+		catch(Exception ex)
+		{
+			OLogManager.instance().error(this, "ODefaultSyslog.config() Exception: %s", ex.getMessage());
+		}
+	}
 
-      if (jsonConfig.containsField("appName")) {
-        appName = jsonConfig.field("appName");
-      }
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultSyslog.config() Exception: %s", ex.getMessage());
-    }
-  }
+	// OSecurityComponent
+	public void dispose() { }
 
-  // OSecurityComponent
-  public void dispose() {
-  }
+	// OSecurityComponent
+	public boolean isEnabled()
+	{
+		return _Enabled;
+	}	
 
-  // OSecurityComponent
-  public boolean isEnabled() {
-    return enabled;
-  }
+	// OSyslog
+	public void log(final String operation, final String message)
+	{
+		log(operation, null, null, message);				
+	}
+	
+	// OSyslog
+	public void log(final String operation, final String username, final String message)
+	{
+		log(operation, null, username, message);		
+	}
+	
+	// OSyslog
+	public void log(final String operation, final String dbName, final String username, final String message)
+	{
+		try
+		{
+			if(_MessageSender != null)
+			{
+				SyslogMessage sysMsg = new SyslogMessage();
 
-  // OSyslog
-  public void log(final String operation, final String message) {
-    log(operation, null, null, message);
-  }
+				sysMsg.setFacility(Facility.USER);
+				sysMsg.setSeverity(Severity.INFORMATIONAL);
+				
+				sysMsg.setAppName(_AppName);
+	
+				// Sylog ignores these settings.
+//				if(operation != null) sysMsg.setMsgId(operation);
+//				if(dbName != null) sysMsg.setProcId(dbName);
 
-  // OSyslog
-  public void log(final String operation, final String username, final String message) {
-    log(operation, null, username, message);
-  }
-
-  // OSyslog
-  public void log(final String operation, final String dbName, final String username, final String message) {
-    try {
-      if (_MessageSender != null) {
-        SyslogMessage sysMsg = new SyslogMessage();
-
-        sysMsg.setFacility(Facility.USER);
-        sysMsg.setSeverity(Severity.INFORMATIONAL);
-
-        sysMsg.setAppName(appName);
-
-        // Sylog ignores these settings.
-        // if(operation != null) sysMsg.setMsgId(operation);
-        // if(dbName != null) sysMsg.setProcId(dbName);
-
-        StringBuilder sb = new StringBuilder();
-
-        if (operation != null) {
-          sb.append("[");
-          sb.append(operation);
-          sb.append("] ");
-        }
-
-        if (dbName != null) {
-          sb.append("Database: ");
-          sb.append(dbName);
-          sb.append(" ");
-        }
-
-        if (username != null) {
-          sb.append("Username: ");
-          sb.append(username);
-          sb.append(" ");
-        }
-
-        if (message != null) {
-          sb.append(message);
-        }
-
-        sysMsg.withMsg(sb.toString());
-
-        _MessageSender.sendMessage(sysMsg);
-      }
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "ODefaultSyslog.log() Exception: %s", ex.getMessage());
-    }
-  }
+				StringBuilder sb = new StringBuilder();
+				
+				if(operation != null)
+				{
+					sb.append("[");
+					sb.append(operation);
+					sb.append("] ");
+				}
+				
+				if(dbName != null)
+				{
+					sb.append("Database: ");
+					sb.append(dbName);
+					sb.append(" ");
+				}
+				
+				if(username != null)
+				{
+					sb.append("Username: ");
+					sb.append(username);
+					sb.append(" ");
+				}
+				
+				if(message != null)
+				{
+					sb.append(message);
+				}
+				
+				sysMsg.withMsg(sb.toString());
+				
+				_MessageSender.sendMessage(sysMsg);
+			}
+		}
+		catch(Exception ex)
+		{
+			OLogManager.instance().error(this, "ODefaultSyslog.log() Exception: %s", ex.getMessage());
+		}
+	}
 }
