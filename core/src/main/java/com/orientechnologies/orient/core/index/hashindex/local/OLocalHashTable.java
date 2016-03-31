@@ -114,7 +114,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   public OLocalHashTable(String name, String metadataConfigurationFileExtension, String treeStateFileExtension,
       String bucketFileExtension, String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode,
       OAbstractPaginatedStorage abstractPaginatedStorage) {
-    super(abstractPaginatedStorage, name, bucketFileExtension);
+    super(abstractPaginatedStorage, name, bucketFileExtension, name + bucketFileExtension);
 
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
@@ -149,7 +149,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
           this.nullKeyIsSupported = nullKeyIsSupported;
 
-          this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), durableInNonTxMode, storage);
+          this.directory = new OHashTableDirectory(treeStateFileExtension, getName(), getFullName(), durableInNonTxMode, storage);
 
           fileStateId = addFile(atomicOperation, getName() + metadataConfigurationFileExtension);
 
@@ -659,7 +659,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         final OCacheEntry hashStateEntry = loadPage(atomicOperation, fileStateId, 0, true);
         hashStateEntryIndex = hashStateEntry.getPageIndex();
 
-        directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
+        directory = new OHashTableDirectory(treeStateFileExtension, name, getFullName(), durableInNonTxMode, storage);
         directory.open();
 
         pinPage(atomicOperation, hashStateEntry);
@@ -710,7 +710,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
           deleteFile(atomicOperation, fileStateId);
         }
 
-        directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
+        directory = new OHashTableDirectory(treeStateFileExtension, name, getFullName(), durableInNonTxMode, storage);
         directory.deleteWithoutOpen();
 
         if (isFileExists(atomicOperation, name + nullBucketFileExtension)) {

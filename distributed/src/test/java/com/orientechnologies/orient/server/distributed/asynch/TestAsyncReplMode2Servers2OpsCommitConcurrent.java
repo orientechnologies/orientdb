@@ -65,6 +65,7 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
           } catch (ONeedRetryException e) {
             System.out.println(
                 iClient + " - caught conflict, reloading vertex. v=" + vertex1.getRecord().getVersion() + " retry: " + retry);
+            graph.rollback();
             vertex1.reload();
           }
         }

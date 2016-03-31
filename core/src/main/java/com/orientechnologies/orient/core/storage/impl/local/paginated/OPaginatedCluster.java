@@ -109,7 +109,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   public OPaginatedCluster(final String name, final OAbstractPaginatedStorage storage) {
-    super(storage, name, ".pcl");
+    super(storage, name, ".pcl", name + ".pcl");
 
     systemCluster = OMetadata.SYSTEM_CLUSTER.contains(name);
   }
@@ -1514,7 +1514,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
     this.id = config.getId();
 
-    clusterPositionMap = new OClusterPositionMap(storage, getName());
+    clusterPositionMap = new OClusterPositionMap(storage, getName(), getFullName());
   }
 
   private void setCompressionInternal(final String iCompressionMethod, final String iCompressionOptions) {

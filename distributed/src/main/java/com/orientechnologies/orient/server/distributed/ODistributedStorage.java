@@ -158,10 +158,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   operation.getCallback() != null ? EXECUTION_MODE.RESPONSE : EXECUTION_MODE.NO_RESPONSE,
                   operation.getLocalResult(), operation.getAfterRequestCallback());
 
-              reqId = dResponse.getRequestId();
+              if (dResponse!=null) {
+                reqId = dResponse.getRequestId();
 
-              if (operation.getCallback() != null)
-                operation.getCallback().call(new OPair<ODistributedRequestId, Object>(reqId, dResponse.getPayload()));
+                if (operation.getCallback() != null)
+                  operation.getCallback().call(new OPair<ODistributedRequestId, Object>(reqId, dResponse.getPayload()));
+              }
 
             } finally {
               // ASSURE IT'S CALLED ANYWAY

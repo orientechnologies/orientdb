@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -157,10 +156,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * @param trackNonTxOperations If this flag set to <code>true</code> then special record {@link ONonTxOperationPerformedWALRecord} will be added to
    *                             WAL in case of atomic operation is started outside of active storage transaction. During storage restore procedure
    *                             this record is monitored and if given record is present then rebuild of all indexes is performed.
-   * @param fullName             Name of component which is going participate in atomic operation.
+   * @param lockName             Name of lock (usually name of component) which is going participate in atomic operation.
    * @return Instance of active atomic operation.
    */
-  public OAtomicOperation startAtomicOperation(String fullName, boolean trackNonTxOperations) throws IOException {
+  public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
     if (unsafeMode.get() || writeAheadLog == null)
       return null;
 
@@ -168,8 +167,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (operation != null) {
       operation.incrementCounter();
 
-      if (fullName != null)
-        acquireExclusiveLockTillOperationComplete(operation, fullName);
+      if (lockName != null)
+        acquireExclusiveLockTillOperationComplete(operation, lockName);
 
       return operation;
     }
@@ -210,8 +209,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (trackNonTxOperations && storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
-    if (fullName != null)
-      acquireExclusiveLockTillOperationComplete(operation, fullName);
+    if (lockName != null)
+      acquireExclusiveLockTillOperationComplete(operation, lockName);
 
     return operation;
   }
@@ -449,10 +448,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (unsafeMode.get() || writeAheadLog == null)
       return;
 
-    assert durableComponent.getName() != null;
-    assert durableComponent.getFullName() != null;
+    assert durableComponent.getLockName() != null;
 
-    lockManager.acquireLock(durableComponent.getFullName(), OLockManager.LOCK.SHARED);
+    lockManager.acquireLock(durableComponent.getLockName(), OLockManager.LOCK.SHARED);
   }
 
   public void releaseReadLock(ODurableComponent durableComponent) {
@@ -460,9 +458,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       return;
 
     assert durableComponent.getName() != null;
-    assert durableComponent.getFullName() != null;
+    assert durableComponent.getLockName() != null;
 
-    lockManager.releaseLock(this, durableComponent.getFullName(), OLockManager.LOCK.SHARED);
+    lockManager.releaseLock(this, durableComponent.getLockName(), OLockManager.LOCK.SHARED);
   }
 
   public void registerMBean() {
@@ -568,7 +566,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   private class UncompletedCommit implements OUncompletedCommit<OAtomicOperation> {
-    private final OAtomicOperation operation;
+    private final OAtomicOperation         operation;
     private final OUncompletedCommit<Void> nestedCommit;
 
     public UncompletedCommit(OAtomicOperation operation, OUncompletedCommit<Void> nestedCommit) {
@@ -583,8 +581,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         writeAheadLog
             .logAtomicOperationEndRecord(operation.getOperationUnitId(), false, operation.getStartLSN(), operation.getMetadata());
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error while completing an uncompleted commit."), e);
       }
 
@@ -610,8 +607,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         writeAheadLog
             .logAtomicOperationEndRecord(operation.getOperationUnitId(), true, operation.getStartLSN(), operation.getMetadata());
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error while rollbacking an uncompleted commit."), e);
       }
 
