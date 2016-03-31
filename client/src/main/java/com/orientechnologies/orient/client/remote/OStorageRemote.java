@@ -238,14 +238,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public OModificationLock getModificationLock() {
-    return null;
-  }
-
   public void reload() {
 
     stateLock.acquireWriteLock();

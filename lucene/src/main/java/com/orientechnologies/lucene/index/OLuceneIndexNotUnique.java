@@ -56,23 +56,16 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
   public OIndexMultiValues put(Object key, OIdentifiable iSingleValue) {
     key = getCollatingValue(key);
 
-    if (modificationLock != null)
-      modificationLock.requestModificationLock();
+    acquireSharedLock();
     try {
-      acquireSharedLock();
-      try {
-        checkForKeyType(key);
-        Set<OIdentifiable> values = new HashSet<OIdentifiable>();
-        values.add(iSingleValue);
-        indexEngine.put(key, values);
-        return this;
+      checkForKeyType(key);
+      Set<OIdentifiable> values = new HashSet<OIdentifiable>();
+      values.add(iSingleValue);
+      indexEngine.put(key, values);
+      return this;
 
-      } finally {
-        releaseSharedLock();
-      }
     } finally {
-      if (modificationLock != null)
-        modificationLock.releaseModificationLock();
+      releaseSharedLock();
     }
   }
 
@@ -154,22 +147,17 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
   @Override
   public boolean remove(Object key, OIdentifiable value) {
     key = getCollatingValue(key);
-    modificationLock.requestModificationLock();
+    acquireExclusiveLock();
     try {
-      acquireExclusiveLock();
-      try {
 
-        if (indexEngine instanceof OLuceneIndexEngine) {
-          return ((OLuceneIndexEngine) indexEngine).remove(key, value);
-        } else {
-          return false;
-        }
-
-      } finally {
-        releaseExclusiveLock();
+      if (indexEngine instanceof OLuceneIndexEngine) {
+        return ((OLuceneIndexEngine) indexEngine).remove(key, value);
+      } else {
+        return false;
       }
+
     } finally {
-      modificationLock.releaseModificationLock();
+      releaseExclusiveLock();
     }
   }
 

@@ -411,43 +411,6 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    */
   void freeze(boolean throwException);
 
-  /**
-   * Flush cached cluster content to the disk.
-   * <p>
-   * After this call users can perform only select queries. All write-related commands will queued till {@link #releaseCluster(int)}
-   * command will be called.
-   * <p>
-   * Given command waits till all on going modifications in indexes or DB will be finished.
-   * <p>
-   * IMPORTANT: This command is not reentrant.
-   *
-   * @param iClusterId that must be released
-   */
-  void freezeCluster(int iClusterId);
-
-  /**
-   * Allows to execute write-related commands on the cluster
-   *
-   * @param iClusterId that must be released
-   */
-  void releaseCluster(int iClusterId);
-
-  /**
-   * Flush cached cluster content to the disk.
-   * <p>
-   * After this call users can perform only select queries. All write-related commands will queued till {@link #releaseCluster(int)}
-   * command will be called.
-   * <p>
-   * Given command waits till all on going modifications in indexes or DB will be finished.
-   * <p>
-   * IMPORTANT: This command is not reentrant.
-   *
-   * @param iClusterId     that must be released
-   * @param throwException If <code>true</code> {@link com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException}
-   *                       exception will be thrown in case of write command will be performed.
-   */
-  void freezeCluster(int iClusterId, boolean throwException);
-
   enum OPERATION_MODE {
     SYNCHRONOUS, ASYNCHRONOUS, ASYNCHRONOUS_NOANSWER
   }

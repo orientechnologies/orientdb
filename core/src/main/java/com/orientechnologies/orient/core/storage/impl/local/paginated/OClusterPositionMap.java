@@ -534,8 +534,6 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-
-
   @Override
   protected OAtomicOperation startAtomicOperation() throws IOException {
     return atomicOperationsManager.startAtomicOperation(this, !useWal);
