@@ -948,6 +948,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     StringBuilder cmd = null;
 
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
+    if (superClasses != null)
+      OClassImpl.checkParametersConflict(Arrays.asList(superClasses));
+
     acquireSchemaWriteLock();
     try {
 
@@ -1034,6 +1037,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     StringBuilder cmd = null;
 
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
+    if(superClasses != null)
+      OClassImpl.checkParametersConflict(Arrays.asList(superClasses));
     acquireSchemaWriteLock();
     try {
 
