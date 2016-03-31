@@ -50,27 +50,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SuppressWarnings("unchecked")
 public class OStorageRemoteThread implements OStorageProxy {
   private static AtomicInteger sessionSerialId = new AtomicInteger(-1);
-
+  private final OStorageRemoteSession session = new OStorageRemoteSession();
   private final OStorageRemote delegate;
-  private String               serverURL;
-  private int                  sessionId;
-  private Set<OChannelBinary>  connections     = new HashSet<OChannelBinary>();
-  private byte[]               token;
 
   public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
     delegate = iSharedStorage;
-    serverURL = null;
-    sessionId = sessionSerialId.decrementAndGet();
-  }
-
-  public OStorageRemoteThread(final OStorageRemote iSharedStorage, final int iSessionId) {
-    delegate = iSharedStorage;
-    serverURL = null;
-    sessionId = iSessionId;
-  }
-
-  public static int getNextConnectionId() {
-    return sessionSerialId.decrementAndGet();
+    session.sessionId = sessionSerialId.decrementAndGet();
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
@@ -134,13 +119,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     } finally {
       popSession();
     }
-  }
-
-  public void setSessionId(final String iServerURL, final int iSessionId, byte[] iToken) {
-    serverURL = iServerURL;
-    sessionId = iSessionId;
-    token = iToken;
-    delegate.setSessionId(serverURL, iSessionId, iToken);
   }
 
   public void reload() {
@@ -645,7 +623,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public boolean isClosed() {
-    return (sessionId < 0) || delegate.isClosed();
+    return (session.sessionId < 0) || delegate.isClosed();
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
@@ -744,14 +722,10 @@ public class OStorageRemoteThread implements OStorageProxy {
     return false;
   }
 
-  protected void pushSession() {
-    delegate.pushSessionId(serverURL, sessionId, token,connections);
+  public void pushSession() {
+    OStorageRemoteThreadLocal.INSTANCE.set(session);
   }
 
   protected void popSession() {
-    serverURL = delegate.getServerURL();
-    sessionId = delegate.getSessionId();
-    connections = delegate.getSessionConnections();
-    // delegate.clearSession();
   }
 }

@@ -40,9 +40,4 @@ public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession
     });
   }
 
-  @Override
-  protected OStorageRemoteSession initialValue() {
-    return new OStorageRemoteSession();
-  }
-
 }
