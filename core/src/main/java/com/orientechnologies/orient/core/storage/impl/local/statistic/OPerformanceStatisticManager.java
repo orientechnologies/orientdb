@@ -28,26 +28,37 @@ public class OPerformanceStatisticManager {
   }
 
   public void startThreadMonitoring() {
+    if (enabled)
+      throw new IllegalStateException("Monitoring is already started on system level and can not be started on thread level");
+
     enabledForCurrentThread.set(true);
+    statistics.put(Thread.currentThread(), new OSessionStoragePerformanceStatistic(intervalBetweenSnapshots, false));
   }
 
   public OSessionStoragePerformanceStatistic stopThreadMonitoring() {
     enabledForCurrentThread.set(false);
 
     final Thread currentThread = Thread.currentThread();
-    return statistics.get(currentThread);
+    return statistics.remove(currentThread);
   }
 
   public void startMonitoring() {
+    if (!statistics.isEmpty() && !enabled)
+      throw new IllegalStateException("Monitoring is already started on thread level and can not be started on system level");
+
     enabled = true;
   }
 
   public void stopMonitoring() {
     enabled = false;
+
+    statistics.clear();
   }
 
   public OSessionStoragePerformanceStatistic getSessionPerformanceStatistic() {
-    if (!enabled && !enabledForCurrentThread.get())
+    boolean en = enabled;
+
+    if (!en && !enabledForCurrentThread.get())
       return null;
 
     final Thread currentThread = Thread.currentThread();
@@ -57,12 +68,12 @@ public class OPerformanceStatisticManager {
       return performanceStatistic;
     }
 
-    performanceStatistic = new OSessionStoragePerformanceStatistic(intervalBetweenSnapshots);
+    performanceStatistic = new OSessionStoragePerformanceStatistic(intervalBetweenSnapshots, en);
+    statistics.put(currentThread, performanceStatistic);
 
-    final OSessionStoragePerformanceStatistic oldStatistic = statistics.putIfAbsent(currentThread, performanceStatistic);
-    if (oldStatistic != null) {
-      performanceStatistic = oldStatistic;
-    }
+
+    if (!enabled && !enabledForCurrentThread.get())
+      statistics.clear();
 
     return performanceStatistic;
   }
