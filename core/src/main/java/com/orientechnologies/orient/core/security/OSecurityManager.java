@@ -38,24 +38,24 @@ import java.util.Collections;
 import java.util.Map;
 
 public class OSecurityManager {
-  public static final String HASH_ALGORITHM        = "SHA-256";
-  public static final String HASH_ALGORITHM_PREFIX = "{" + HASH_ALGORITHM + "}";
+  public static final String            HASH_ALGORITHM                 = "SHA-256";
+  public static final String            HASH_ALGORITHM_PREFIX          = "{" + HASH_ALGORITHM + "}";
 
-  public static final String PBKDF2_ALGORITHM        = "PBKDF2WithHmacSHA1";
-  public static final String PBKDF2_ALGORITHM_PREFIX = "{" + PBKDF2_ALGORITHM + "}";
+  public static final String            PBKDF2_ALGORITHM               = "PBKDF2WithHmacSHA1";
+  public static final String            PBKDF2_ALGORITHM_PREFIX        = "{" + PBKDF2_ALGORITHM + "}";
 
-  public static final String PBKDF2_SHA256_ALGORITHM        = "PBKDF2WithHmacSHA256";
-  public static final String PBKDF2_SHA256_ALGORITHM_PREFIX = "{" + PBKDF2_SHA256_ALGORITHM + "}";
+  public static final String            PBKDF2_SHA256_ALGORITHM        = "PBKDF2WithHmacSHA256";
+  public static final String            PBKDF2_SHA256_ALGORITHM_PREFIX = "{" + PBKDF2_SHA256_ALGORITHM + "}";
 
-  public static final int SALT_SIZE = 24;
-  public static final int HASH_SIZE = 24;
+  public static final int               SALT_SIZE                      = 24;
+  public static final int               HASH_SIZE                      = 24;
 
-  private static final OSecurityManager instance = new OSecurityManager();
-  private volatile OSecurityFactory securityFactory = new OSecuritySharedFactory();
+  private static final OSecurityManager instance                       = new OSecurityManager();
+  private volatile OSecurityFactory     securityFactory                = new OSecuritySharedFactory();
 
-  private MessageDigest md;
+  private MessageDigest                 md;
 
-  private static Map<String, byte[]> SALT_CACHE = null;
+  private static Map<String, byte[]>    SALT_CACHE                     = null;
 
   static {
     final int cacheSize = OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_CACHE_SIZE.getValueAsInteger();
@@ -135,7 +135,7 @@ public class OSecurityManager {
       throw new IllegalArgumentException("Algorithm is null");
 
     final StringBuilder buffer = new StringBuilder(128);
-    
+
     final String algorithm = validateAlgorithm(iAlgorithm);
 
     if (iIncludeAlgorithm) {
@@ -192,16 +192,17 @@ public class OSecurityManager {
   }
 
   public boolean checkPasswordWithSalt(final String iPassword, final String iHash) {
-    return checkPasswordWithSalt(iPassword, iHash, OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString());
+    return checkPasswordWithSalt(iPassword, iHash,
+        OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString());
   }
 
   public boolean checkPasswordWithSalt(final String iPassword, final String iHash, final String algorithm) {
-  	
-    if(!isAlgorithmSupported(algorithm)) {
-    	OLogManager.instance().error(this, "The password hash algorithm is not supported: %s", algorithm);
-    	return false;
+
+    if (!isAlgorithmSupported(algorithm)) {
+      OLogManager.instance().error(this, "The password hash algorithm is not supported: %s", algorithm);
+      return false;
     }
-  	
+
     // SPLIT PARTS
     final String[] params = iHash.split(":");
     if (params.length != 3)
@@ -246,34 +247,31 @@ public class OSecurityManager {
     }
   }
 
-  // Returns true if the algorithm is supported by the current version of Java.
-  private static boolean isAlgorithmSupported(final String algorithm)
-  {
+  /**
+   * Returns true if the algorithm is supported by the current version of Java
+   */
+  private static boolean isAlgorithmSupported(final String algorithm) {
     // Java 7 specific checks.
-    if(Runtime.class.getPackage().getImplementationVersion().startsWith("1.7"))
-    {
+    if (Runtime.class.getPackage().getImplementationVersion().startsWith("1.7")) {
       // Java 7 does not support the PBKDF2_SHA256_ALGORITHM.
-    	if(algorithm.equals(PBKDF2_SHA256_ALGORITHM))
-   	{
-    	  return false;
+      if (algorithm.equals(PBKDF2_SHA256_ALGORITHM)) {
+        return false;
       }
     }
-    
+
     return true;
   }
 
-  private String validateAlgorithm(final String iAlgorithm)
-  {
-  	 String validAlgo = iAlgorithm;
-  	
-  	 if(!isAlgorithmSupported(iAlgorithm))
-    {    	  	
-      // Downgrade it to PBKDF2_ALGORITHM.
-   	validAlgo = PBKDF2_ALGORITHM;
+  private String validateAlgorithm(final String iAlgorithm) {
+    String validAlgo = iAlgorithm;
 
-      OLogManager.instance().debug(this, "The %s algorithm is not supported.  Downgrading to %s", iAlgorithm, validAlgo);
+    if (!isAlgorithmSupported(iAlgorithm)) {
+      // Downgrade it to PBKDF2_ALGORITHM.
+      validAlgo = PBKDF2_ALGORITHM;
+
+      OLogManager.instance().debug(this, "The %s algorithm is not supported, downgrading to %s", iAlgorithm, validAlgo);
     }
-    
+
     return validAlgo;
   }
 
@@ -300,43 +298,41 @@ public class OSecurityManager {
     return hex;
   }
 
-  public OCredentialInterceptor newCredentialInterceptor()
-  {
-  		OCredentialInterceptor ci = null;
-  		
-		try
-		{
-			String ciClass = OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.getValueAsString();
-		
-			if(ciClass != null)
-			{
-				Class<?> cls = Class.forName(ciClass); // Throws a ClassNotFoundException if not found.
-				
-				if(OCredentialInterceptor.class.isAssignableFrom(cls))
-				{
-					ci = (OCredentialInterceptor)cls.newInstance();
-				}
-			}
-		}
-		catch(Exception ex)
-		{
-			OLogManager.instance().debug(this, "newCredentialInterceptor() Exception creating CredentialInterceptor", ex);
-		}
+  public OCredentialInterceptor newCredentialInterceptor() {
+    OCredentialInterceptor ci = null;
 
-    	return ci;
+    try {
+      String ciClass = OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.getValueAsString();
+
+      if (ciClass != null) {
+        Class<?> cls = Class.forName(ciClass); // Throws a ClassNotFoundException if not found.
+
+        if (OCredentialInterceptor.class.isAssignableFrom(cls)) {
+          ci = (OCredentialInterceptor) cls.newInstance();
+        }
+      }
+    } catch (Exception ex) {
+      OLogManager.instance().debug(this, "newCredentialInterceptor() Exception creating CredentialInterceptor", ex);
+    }
+
+    return ci;
   }
 
-  public OSecurityFactory getSecurityFactory() { return securityFactory; }
-  public void setSecurityFactory(OSecurityFactory factory)
-  {
-  	 if(factory != null) securityFactory = factory;
-  	 else securityFactory = new OSecuritySharedFactory();
+  public OSecurityFactory getSecurityFactory() {
+    return securityFactory;
   }
-  
-  public OSecurity newSecurity()
-  {
-    if(securityFactory != null) return securityFactory.newSecurity();
-    
+
+  public void setSecurityFactory(OSecurityFactory factory) {
+    if (factory != null)
+      securityFactory = factory;
+    else
+      securityFactory = new OSecuritySharedFactory();
+  }
+
+  public OSecurity newSecurity() {
+    if (securityFactory != null)
+      return securityFactory.newSecurity();
+
     return null;
   }
 }

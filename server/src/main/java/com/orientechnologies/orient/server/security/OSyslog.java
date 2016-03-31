@@ -25,9 +25,10 @@ package com.orientechnologies.orient.server.security;
  * @author S. Colin Leister
  * 
  */
-public interface OSyslog extends OSecurityComponent
-{
-	void log(final String operation, final String message);
-	void log(final String operation, final String username, final String message);
-	void log(final String operation, final String dbName, final String username, final String message);
+public interface OSyslog {
+  void log(final String operation, final String message);
+
+  void log(final String operation, final String username, final String message);
+
+  void log(final String operation, final String dbName, final String username, final String message);
 }

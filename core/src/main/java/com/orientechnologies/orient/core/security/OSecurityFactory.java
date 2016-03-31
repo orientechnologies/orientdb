@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
  * @author S. Colin Leister
  * 
  */
-public interface OSecurityFactory
-{
-	OSecurity newSecurity();
+public interface OSecurityFactory {
+  OSecurity newSecurity();
 }
