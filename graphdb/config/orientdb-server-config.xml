@@ -62,13 +62,6 @@
             </parameters>
         </handler>
 
-        <handler class="com.orientechnologies.orient.server.plugin.livequery.OLiveQueryPlugin">
-            <!-- EXPERIMENTAL FEATURE, enable at your own risk -->
-            <parameters>
-                <parameter name="enabled" value="false"/>
-            </parameters>
-        </handler>
-
     </handlers>
     <network>
         <sockets>
