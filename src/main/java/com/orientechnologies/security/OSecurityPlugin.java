@@ -26,8 +26,8 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import com.orientechnologies.security.auditing.ODefaultAuditing;
-import com.orientechnologies.security.authenticator.ODefaultPasswordAuthenticator;
-import com.orientechnologies.security.authenticator.OServerConfigAuthenticator;
+import com.orientechnologies.orient.server.security.authenticator.ODefaultPasswordAuthenticator;
+import com.orientechnologies.orient.server.security.authenticator.OServerConfigAuthenticator;
 import com.orientechnologies.security.kerberos.OKerberosAuthenticator;
 import com.orientechnologies.security.ldap.OLDAPImporter;
 import com.orientechnologies.security.password.ODefaultPasswordValidator;
