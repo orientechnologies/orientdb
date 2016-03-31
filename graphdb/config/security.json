@@ -1,5 +1,5 @@
 {
-	"enabled": false,
+	"enabled": true,
 	"debug": false,
 	"server": {
 		"createDefaultUsers": true
@@ -8,7 +8,7 @@
 		"allowDefault": true,
 		"authenticators": [{
 				"name": "Password",
-				"class": "com.orientechnologies.security.authenticator.ODefaultPasswordAuthenticator",
+				"class": "com.orientechnologies.orient.server.security.authenticator.ODefaultPasswordAuthenticator",
 				"enabled": true,
 				"users": [{
 					"username": "guest",
@@ -17,18 +17,18 @@
 			},
 			{
 				"name": "ServerConfig",
-				"class": "com.orientechnologies.security.authenticator.OServerConfigAuthenticator",
+				"class": "com.orientechnologies.orient.server.security.authenticator.OServerConfigAuthenticator",
 				"enabled": true
 			}
 		]
 	},
 	"auditing": {
 		"class": "com.orientechnologies.security.auditing.ODefaultAuditing",
-		"enabled": true
+		"enabled": false
 	},
 	"syslog": {
 		"class": "com.orientechnologies.security.syslog.ODefaultSyslog",
-		"enabled": true,
+		"enabled": false,
 		"hostname": "localhost",
 		"port": 514,
 		"appName": "OrientDB"
