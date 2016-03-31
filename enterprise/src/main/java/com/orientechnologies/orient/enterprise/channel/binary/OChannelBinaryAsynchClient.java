@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.enterprise.channel.binary;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -266,7 +267,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-
+          throw  new OInterruptedException(e);
         } finally {
           if (readLock)
             releaseReadLock();
