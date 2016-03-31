@@ -27,34 +27,32 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
+import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-//import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.server.security.OAuditingService;
-import com.orientechnologies.orient.server.security.OSyslog;
 
 import java.io.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+//import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
  * Created by Enrico Risa on 10/04/15.
  */
 public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleListener, ODistributedLifecycleListener {
 
-  private boolean _Enabled = true;
-  private OServer _Server;
+  private boolean                    enabled                         = true;
+  private OServer                    server;
 
   private Map<String, OAuditingHook> hooks;
 
   protected static final String      DEFAULT_FILE_AUDITING_DB_CONFIG = "default-auditing-config.json";
   protected static final String      FILE_AUDITING_DB_CONFIG         = "auditing-config.json";
-//  private OServerPluginAbstract serverPlugin;
 
   public ODefaultAuditing() {
-//    this.serverPlugin = serverPlugin;
     hooks = new ConcurrentHashMap<String, OAuditingHook>(20);
   }
 
@@ -80,9 +78,9 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     } else {
       final InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(DEFAULT_FILE_AUDITING_DB_CONFIG);
 
-if(resourceAsStream == null)      
-	OLogManager.instance().error(this, "defaultHook() resourceAsStream is null");
-      
+      if (resourceAsStream == null)
+        OLogManager.instance().error(this, "defaultHook() resourceAsStream is null");
+
       content = getString(resourceAsStream);
       if (auditingFileConfig != null) {
         try {
@@ -99,7 +97,7 @@ if(resourceAsStream == null)
       }
     }
     final ODocument cfg = new ODocument().fromJSON(content, "noMap");
-    return new OAuditingHook(cfg, _Server.getSecurity().getSyslog());
+    return new OAuditingHook(cfg, server.getSecurity().getSyslog());
   }
 
   private String getContent(File auditingFileConfig) {
@@ -160,7 +158,7 @@ if(resourceAsStream == null)
 
     final OAuditingHook oAuditingHook = hooks.get(iDatabase.getName());
     if (oAuditingHook != null) {
-    	oAuditingHook.shutdown(false);
+      oAuditingHook.shutdown(false);
     }
 
     File f = getConfigFile(iDatabase.getName());
@@ -185,7 +183,7 @@ if(resourceAsStream == null)
     final OAuditingHook oAuditingHook = hooks.get(iDatabase.getName());
 
     if (oAuditingHook != null) {
-   	oAuditingHook.onCreateClass(iClass);
+      oAuditingHook.onCreateClass(iClass);
     }
   }
 
@@ -194,7 +192,7 @@ if(resourceAsStream == null)
     final OAuditingHook oAuditingHook = hooks.get(iDatabase.getName());
 
     if (oAuditingHook != null) {
-    	oAuditingHook.onDropClass(iClass);
+      oAuditingHook.onDropClass(iClass);
     }
   }
 
@@ -213,100 +211,82 @@ if(resourceAsStream == null)
 
   //////
   // ODistributedLifecycleListener
-  public boolean onNodeJoining(String iNode) { return true; }
-  
-  public void onNodeJoined(String iNode)
-  {
+  public boolean onNodeJoining(String iNode) {
+    return true;
+  }
+
+  public void onNodeJoined(String iNode) {
     log("node joined", String.format("Node %s joined the cluster", iNode));
   }
 
-  public void onNodeLeft(String iNode)
-  {
+  public void onNodeLeft(String iNode) {
     log("node left", String.format("Node %s left the cluster", iNode));
   }
 
-  public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus)
-  {
+  public void onDatabaseChangeStatus(String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
 
   }
-	
-	//////
-	// OAuditingService
-	public void changeConfig(final String iDatabaseName, final ODocument cfg) throws IOException
-	{
-		hooks.put(iDatabaseName, new OAuditingHook(cfg, _Server.getSecurity().getSyslog()));
-		updateConfigOnDisk(iDatabaseName, cfg);
-	}
 
-	public ODocument getConfig(final String iDatabaseName)
-	{
-		return hooks.get(iDatabaseName).getConfiguration();
-	}
+  //////
+  // OAuditingService
+  public void changeConfig(final String iDatabaseName, final ODocument cfg) throws IOException {
+    hooks.put(iDatabaseName, new OAuditingHook(cfg, server.getSecurity().getSyslog()));
+    updateConfigOnDisk(iDatabaseName, cfg);
+  }
 
+  public ODocument getConfig(final String iDatabaseName) {
+    return hooks.get(iDatabaseName).getConfiguration();
+  }
 
-	public void log(final String operation, final String message)
-	{
-		log(operation, null, null, message);
-	}
-	
-	public void log(final String operation, final String username, final String message)
-	{
-		log(operation, null, username, message);
-	}
-	
-	public void log(final String operation, final String dbName, final String username, final String message)
-	{
-		if(_Server.getSecurity().getSyslog() != null)
-		{
-			_Server.getSecurity().getSyslog().log(operation, dbName, username, message);
-		}		
-	}
+  public void log(final String operation, final String message) {
+    log(operation, null, null, message);
+  }
 
-	//////
-	// OAuditingService (OSecurityComponent)
+  public void log(final String operation, final String username, final String message) {
+    log(operation, null, username, message);
+  }
 
-	// Called once the Server is running.
-	public void active()
-	{
-		Orient.instance().addDbLifecycleListener(this);
-		
-		if(_Server.getDistributedManager() != null)
-		{
-			_Server.getDistributedManager().registerLifecycleListener(this);
-		}
-	}
-	
-	public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig)
-	{
-		_Server = oServer;
-		
-		try
-		{
-			if(jsonConfig.containsField("enabled"))
-			{
-				_Enabled = jsonConfig.field("enabled");
-			}
-		}
-		catch(Exception ex)
-		{
-			OLogManager.instance().error(this, "ODefaultAuditing.config() Exception: %s", ex.getMessage());
-		}
-	}
+  public void log(final String operation, final String dbName, final String username, final String message) {
+    if (server.getSecurity().getSyslog() != null) {
+      server.getSecurity().getSyslog().log(operation, dbName, username, message);
+    }
+  }
 
-	// Called on removal of the component.
-	public void dispose()
-	{
-		if(_Server.getDistributedManager() != null)
-		{
-			_Server.getDistributedManager().unregisterLifecycleListener(this);
-		}
-		
-		Orient.instance().removeDbLifecycleListener(this);
-	}	
+  //////
+  // OAuditingService (OSecurityComponent)
 
-	// OSecurityComponent
-	public boolean isEnabled()
-	{
-		return _Enabled;
-	}
+  // Called once the Server is running.
+  public void active() {
+    Orient.instance().addDbLifecycleListener(this);
+
+    if (server.getDistributedManager() != null) {
+      server.getDistributedManager().registerLifecycleListener(this);
+    }
+  }
+
+  public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig) {
+    server = oServer;
+
+    try {
+      if (jsonConfig.containsField("enabled")) {
+        enabled = jsonConfig.field("enabled");
+      }
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "ODefaultAuditing.config() Exception: %s", ex.getMessage());
+    }
+  }
+
+  // Called on removal of the component.
+  public void dispose() {
+    if (server.getDistributedManager() != null) {
+      server.getDistributedManager().unregisterLifecycleListener(this);
+    }
+
+    Orient.instance().removeDbLifecycleListener(this);
+  }
+
+  // OSecurityComponent
+  public boolean isEnabled() {
+    return enabled;
+  }
 }
