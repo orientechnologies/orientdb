@@ -20,11 +20,9 @@
 package com.orientechnologies.security;
 
 import com.orientechnologies.common.log.OLogManager;
-
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
 import com.orientechnologies.security.auditing.ODefaultAuditing;
 import com.orientechnologies.orient.server.security.authenticator.ODefaultPasswordAuthenticator;
 import com.orientechnologies.orient.server.security.authenticator.OServerConfigAuthenticator;
@@ -33,73 +31,61 @@ import com.orientechnologies.security.ldap.OLDAPImporter;
 import com.orientechnologies.security.password.ODefaultPasswordValidator;
 import com.orientechnologies.security.syslog.ODefaultSyslog;
 
-public class OSecurityPlugin extends OServerPluginAbstract
-{
-	private OServer _Server;
-	
-	@Override
-	public void config(OServer server, OServerParameterConfiguration[] iParams)
-	{
-		_Server = server;
-	}
-	
-	@Override
-	public String getName() { return "security-plugin"; }
-	
-	@Override
-	public void startup()
-	{
-      registerSecurityComponents();      
-	}
-	
-	@Override
-	public void shutdown()
-	{
-		unregisterSecurityComponents();
-	}
+public class OSecurityPlugin extends OServerPluginAbstract {
+  private OServer _Server;
 
-	// The OSecurityModule resides in the main application's class loader.  Its configuration file
-	// may reference components that are reside in pluggable modules.
-	// A security plugin should register its components so that OSecuritySystem has access to them.
-	private void registerSecurityComponents()
-	{
-		try
-		{
-			if(_Server.getSecurity() != null)
-			{
-	      	_Server.getSecurity().registerSecurityClass(ODefaultAuditing.class);
-				_Server.getSecurity().registerSecurityClass(ODefaultPasswordAuthenticator.class);
-	      	_Server.getSecurity().registerSecurityClass(ODefaultPasswordValidator.class);
-	      	_Server.getSecurity().registerSecurityClass(ODefaultSyslog.class);
-				_Server.getSecurity().registerSecurityClass(OKerberosAuthenticator.class);
-	      	_Server.getSecurity().registerSecurityClass(OLDAPImporter.class);
-				_Server.getSecurity().registerSecurityClass(OServerConfigAuthenticator.class);
-	      }
-		}
-		catch(Throwable th)
-		{
-			OLogManager.instance().error(this, "registerSecurityComponents() Throwable: " + th);
-		}
-	}	
+  @Override
+  public void config(OServer server, OServerParameterConfiguration[] iParams) {
+    _Server = server;
+  }
 
-	private void unregisterSecurityComponents()
-	{
-		try
-		{
-			if(_Server.getSecurity() != null)
-			{
-	      	_Server.getSecurity().unregisterSecurityClass(ODefaultAuditing.class);
-				_Server.getSecurity().unregisterSecurityClass(ODefaultPasswordAuthenticator.class);
-	      	_Server.getSecurity().unregisterSecurityClass(ODefaultPasswordValidator.class);
-	      	_Server.getSecurity().unregisterSecurityClass(ODefaultSyslog.class);
-				_Server.getSecurity().unregisterSecurityClass(OKerberosAuthenticator.class);
-	      	_Server.getSecurity().unregisterSecurityClass(OLDAPImporter.class);
-				_Server.getSecurity().unregisterSecurityClass(OServerConfigAuthenticator.class);
-	      }
-		}
-		catch(Throwable th)
-		{
-			OLogManager.instance().error(this, "unregisterSecurityComponents() Throwable: " + th);
-		}
-	}
+  @Override
+  public String getName() {
+    return "security-plugin";
+  }
+
+  @Override
+  public void startup() {
+    registerSecurityComponents();
+  }
+
+  @Override
+  public void shutdown() {
+    unregisterSecurityComponents();
+  }
+
+  // The OSecurityModule resides in the main application's class loader. Its configuration file
+  // may reference components that are reside in pluggable modules.
+  // A security plugin should register its components so that OSecuritySystem has access to them.
+  private void registerSecurityComponents() {
+    try {
+      if (_Server.getSecurity() != null) {
+        _Server.getSecurity().registerSecurityClass(ODefaultAuditing.class);
+        _Server.getSecurity().registerSecurityClass(ODefaultPasswordAuthenticator.class);
+        _Server.getSecurity().registerSecurityClass(ODefaultPasswordValidator.class);
+        _Server.getSecurity().registerSecurityClass(ODefaultSyslog.class);
+        _Server.getSecurity().registerSecurityClass(OKerberosAuthenticator.class);
+        _Server.getSecurity().registerSecurityClass(OLDAPImporter.class);
+        _Server.getSecurity().registerSecurityClass(OServerConfigAuthenticator.class);
+      }
+    } catch (Throwable th) {
+      OLogManager.instance().error(this, "registerSecurityComponents() Throwable: " + th);
+    }
+  }
+
+  private void unregisterSecurityComponents() {
+    try {
+      if (_Server.getSecurity() != null) {
+        _Server.getSecurity().unregisterSecurityClass(ODefaultAuditing.class);
+        _Server.getSecurity().unregisterSecurityClass(ODefaultPasswordAuthenticator.class);
+        _Server.getSecurity().unregisterSecurityClass(ODefaultPasswordValidator.class);
+        _Server.getSecurity().unregisterSecurityClass(ODefaultSyslog.class);
+        _Server.getSecurity().unregisterSecurityClass(OKerberosAuthenticator.class);
+        _Server.getSecurity().unregisterSecurityClass(OLDAPImporter.class);
+        _Server.getSecurity().unregisterSecurityClass(OServerConfigAuthenticator.class);
+      }
+    } catch (Throwable th) {
+      OLogManager.instance().error(this, "unregisterSecurityComponents() Throwable: " + th);
+    }
+  }
 }

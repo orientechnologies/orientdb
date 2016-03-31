@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.security.OSyslog;
+import com.orientechnologies.orient.server.security.OAuditingLog;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,8 +68,8 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   public static final byte                        CREATECLASS                = 5;
   public static final byte                        DROPCLASS                  = 6;
   private OAuditingClassConfig                    defaultConfig              = new OAuditingClassConfig();
-  private ODocument                               iConfiguration;
-  private OSyslog syslog;
+  private ODocument    iConfiguration;
+  private OAuditingLog syslog;
 
   private static class OAuditingCommandConfig {
     public String regex;
@@ -148,7 +148,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
     this(new ODocument().fromJSON(iConfiguration, "noMap"), null);
   }
 
-  public OAuditingHook(final String iConfiguration, final OSyslog syslog) {
+  public OAuditingHook(final String iConfiguration, final OAuditingLog syslog) {
     this(new ODocument().fromJSON(iConfiguration, "noMap"), syslog);
   }
 
@@ -156,7 +156,7 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   	 this(iConfiguration, null);
   }
   
-  public OAuditingHook(final ODocument iConfiguration, final OSyslog syslog) {
+  public OAuditingHook(final ODocument iConfiguration, final OAuditingLog syslog) {
     this.iConfiguration = iConfiguration;
     if (iConfiguration.containsField("auditClassName"))
       auditClassName = iConfiguration.field("auditClassName");

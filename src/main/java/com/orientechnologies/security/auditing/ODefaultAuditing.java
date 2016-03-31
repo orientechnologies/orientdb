@@ -33,7 +33,6 @@ import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 //import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.server.security.OAuditingService;
-import com.orientechnologies.orient.server.security.OSyslog;
 
 import java.io.*;
 import java.util.Map;
