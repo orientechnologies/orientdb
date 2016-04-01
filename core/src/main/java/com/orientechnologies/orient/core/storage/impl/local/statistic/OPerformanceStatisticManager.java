@@ -20,11 +20,17 @@
 package com.orientechnologies.orient.core.storage.impl.local.statistic;
 
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
+import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import javax.management.*;
+import java.lang.management.ManagementFactory;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -57,8 +63,15 @@ import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSe
  * </ol>
  * <p>
  * You may access performance data both after you stopped gathering statistic and during gathering of statistic.
+ * You may manipulate by manager directly from Java or from JMX from bean with name which consist of prefix {@link #MBEAN_PREFIX}
+ * and storage name.
  */
-public class OPerformanceStatisticManager {
+public class OPerformanceStatisticManager implements OPerformanceStatisticManagerMXBean {
+  /**
+   * Prefix of name of JMX bean.
+   */
+  public static final String MBEAN_PREFIX = "com.orientechnologies.orient.core.storage.impl.local.statistic:type=OPerformanceStatisticManagerMXBean";
+
   /**
    * Class consist of three key fields:
    * <p>
@@ -126,6 +139,11 @@ public class OPerformanceStatisticManager {
   private final Lock deadThreadsUpdateLock = new ReentrantLock();
 
   /**
+   * Indicates whether JMX bean for current object is already registered.
+   */
+  private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
+
+  /**
    * @param intervalBetweenSnapshots Interval between time series for each thread statistic.
    * @see OSessionStoragePerformanceStatistic
    */
@@ -170,6 +188,7 @@ public class OPerformanceStatisticManager {
    * <p>
    * After call of this method you can not start monitoring on thread level till call of {@link #stopMonitoring()} is performed.
    */
+  @Override
   public void startMonitoring() {
     switchLock.acquireWriteLock();
     try {
@@ -188,6 +207,7 @@ public class OPerformanceStatisticManager {
   /**
    * Stops monitoring of performance statistic for whole system.
    */
+  @Override
   public void stopMonitoring() {
     switchLock.acquireWriteLock();
     try {
@@ -215,9 +235,105 @@ public class OPerformanceStatisticManager {
   }
 
   /**
+   * Registers JMX bean for current manager.
+   *
+   * @param storageName Name of storage of given manager
+   * @param storageId   Id of storage of given manager
+   * @see OStorage#getName()
+   * @see OIdentifiableStorage#getId()
+   */
+  public void registerMBean(String storageName, int storageId) {
+    if (mbeanIsRegistered.compareAndSet(false, true)) {
+      try {
+        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        final ObjectName mbeanName = new ObjectName(getMBeanName(storageName, storageId));
+        if (!server.isRegistered(mbeanName)) {
+          server.registerMBean(this, mbeanName);
+        } else {
+          mbeanIsRegistered.set(false);
+          OLogManager.instance().warn(this,
+              "MBean with name %s has already registered. Probably your system was not shutdown correctly"
+                  + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
+        }
+
+      } catch (MalformedObjectNameException e) {
+        throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
+      } catch (InstanceAlreadyExistsException e) {
+        throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
+      } catch (MBeanRegistrationException e) {
+        throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
+      } catch (NotCompliantMBeanException e) {
+        throw OException.wrapException(new OStorageException("Error during registration of profiler MBean"), e);
+      }
+    }
+  }
+
+  private String getMBeanName(String storageName, int storageId) {
+    return MBEAN_PREFIX + ",name=" + ObjectName.quote(storageName) + ",id=" + storageId;
+  }
+
+  /**
+   * Deregisters JMX bean for current manager.
+   *
+   * @param storageName Name of storage of given manager
+   * @param storageId   Id of storage of given manager
+   * @see OStorage#getName()
+   * @see OIdentifiableStorage#getId()
+   */
+  public void unregisterMBean(String storageName, int storageId) {
+    if (mbeanIsRegistered.compareAndSet(true, false)) {
+      try {
+        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        final ObjectName mbeanName = new ObjectName(getMBeanName(storageName, storageId));
+        server.unregisterMBean(mbeanName);
+      } catch (MalformedObjectNameException e) {
+        throw OException.wrapException(new OStorageException("Error during unregistration of profiler MBean"), e);
+      } catch (InstanceNotFoundException e) {
+        throw OException.wrapException(new OStorageException("Error during unregistration of profiler MBean"), e);
+      } catch (MBeanRegistrationException e) {
+        throw OException.wrapException(new OStorageException("Error during unregistration of profiler MBean"), e);
+      }
+    }
+  }
+
+  /**
+   * @return Set of names of components for which performance statistic is gathered.
+   */
+  @Override
+  public Set<String> getComponentNames() {
+    switchLock.acquireReadLock();
+    try {
+      if (enabled) {
+        final Set<String> result = new HashSet<String>();
+
+        final ImmutableStatistic ds = deadThreadsStatistic;
+        if (ds != null) {
+          result.addAll(deadThreadsStatistic.countersByComponents.keySet());
+        }
+
+        for (final OSessionStoragePerformanceStatistic statistic : statistics.values()) {
+          final Map<String, PerformanceCountersHolder> countersHolderMap = new ConcurrentHashMap<String, PerformanceCountersHolder>();
+          statistic.pushComponentCounters(countersHolderMap);
+          result.addAll(countersHolderMap.keySet());
+        }
+
+        return result;
+      }
+
+      if (postMeasurementStatistic == null)
+        return Collections.emptySet();
+
+      return Collections.unmodifiableSet(postMeasurementStatistic.countersByComponents.keySet());
+    } finally {
+      switchLock.releaseReadLock();
+    }
+  }
+
+  /**
    * @return Instance of performance container which is used to gathering data about storage performance statistic or
    * <code>null</code> if none of both methods {@link #startMonitoring()} or {@link #startThreadMonitoring()} are called.
    */
+  @Override
   public OSessionStoragePerformanceStatistic getSessionPerformanceStatistic() {
     switchLock.acquireReadLock();
     try {
@@ -250,6 +366,7 @@ public class OPerformanceStatisticManager {
    * which is less than 0, which means that value cannot be calculated.
    */
 
+  @Override
   public long getAmountOfPagesPerOperation(String componentName) {
     switchLock.acquireReadLock();
     try {
@@ -277,6 +394,7 @@ public class OPerformanceStatisticManager {
   /**
    * @return Percent of cache hits or value which is less than 0, which means that value cannot be calculated.
    */
+  @Override
   public int getCacheHits() {
     switchLock.acquireReadLock();
     try {
@@ -304,6 +422,7 @@ public class OPerformanceStatisticManager {
    * @param componentName Name of component data of which should be returned. Name is case sensitive.
    * @return Percent of cache hits or value which is less than 0, which means that value cannot be calculated.
    */
+  @Override
   public int getCacheHits(String componentName) {
     switchLock.acquireReadLock();
     try {
@@ -331,6 +450,7 @@ public class OPerformanceStatisticManager {
    * @return Average time of commit of atomic operation in nanoseconds or value which is less than 0, which means that value cannot
    * be calculated.
    */
+  @Override
   public long getCommitTimeAvg() {
     switchLock.acquireReadLock();
     try {
@@ -354,6 +474,7 @@ public class OPerformanceStatisticManager {
    * @return Read speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
    * calculated.
    */
+  @Override
   public long getReadSpeedFromCacheInPages() {
     switchLock.acquireReadLock();
     try {
@@ -382,6 +503,7 @@ public class OPerformanceStatisticManager {
    * @return Read speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
    * calculated.
    */
+  @Override
   public long getReadSpeedFromCacheInPages(String componentName) {
     switchLock.acquireReadLock();
     try {
@@ -410,6 +532,7 @@ public class OPerformanceStatisticManager {
    * @return Read speed of data from file system in pages per second or value which is less than 0, which means that value cannot be
    * calculated.
    */
+  @Override
   public long getReadSpeedFromFileInPages() {
     switchLock.acquireReadLock();
     try {
@@ -438,6 +561,7 @@ public class OPerformanceStatisticManager {
    * @return Read speed of data from file system in pages per second or value which is less than 0, which means that value cannot be
    * calculated.
    */
+  @Override
   public long getReadSpeedFromFileInPages(String componentName) {
     switchLock.acquireReadLock();
     try {
@@ -465,6 +589,7 @@ public class OPerformanceStatisticManager {
    * @return Write speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
    * calculated.
    */
+  @Override
   public long getWriteSpeedInCacheInPages() {
     switchLock.acquireReadLock();
     try {
@@ -490,6 +615,7 @@ public class OPerformanceStatisticManager {
    * @return Write speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
    * calculated.
    */
+  @Override
   public long getWriteSpeedInCacheInPages(String componentName) {
     switchLock.acquireReadLock();
     try {
