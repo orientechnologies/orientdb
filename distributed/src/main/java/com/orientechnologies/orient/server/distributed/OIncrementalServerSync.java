@@ -45,6 +45,8 @@ import java.util.concurrent.Callable;
  */
 public class OIncrementalServerSync {
 
+  private static final byte[] EMPTY_CONTENT = new byte[0];
+
   /**
    * Deleted records are written in output stream first, then created/updated records. All records are sorted by record id.
    * <p>
@@ -100,12 +102,24 @@ public class OIncrementalServerSync {
 
                 final ORecord loadedRecord = rid.getRecord();
 
+                ORecord newRecord = null;
+
                 if (deleted) {
                   ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "DELTA <- deleting " + rid);
 
                   if (loadedRecord != null)
                     // DELETE IT
                     db.delete(rid);
+                  else {
+                    // CREATE AND DELETE RECORD IF NEEDED
+                    do {
+                      newRecord = Orient.instance().getRecordFactoryManager().newInstance(ODocument.RECORD_TYPE);
+                      ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), 0, EMPTY_CONTENT, true);
+                      newRecord.save();
+                      newRecord.delete();
+
+                    } while (newRecord.getIdentity().getClusterPosition() < clusterPos);
+                  }
 
                   totalDeleted++;
 
@@ -116,13 +130,10 @@ public class OIncrementalServerSync {
                   final byte[] recordContent = new byte[recordSize];
                   input.read(recordContent);
 
-                  ORecord newRecord = null;
-
                   if (loadedRecord == null) {
                     // CREATE
                     do {
                       newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
-
                       ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion - 1, recordContent,
                           true);
 
@@ -130,8 +141,8 @@ public class OIncrementalServerSync {
                         newRecord.save();
                       } catch (ORecordNotFoundException e) {
                         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-                            "DELTA <- error on saving record rid=%s type=%d size=%d v=%d content=%s", rid, recordType, recordSize, recordVersion,
-                            newRecord);
+                            "DELTA <- error on saving record rid=%s type=%d size=%d v=%d content=%s", rid, recordType, recordSize,
+                            recordVersion, newRecord);
                       }
 
                       if (newRecord.getIdentity().getClusterPosition() < clusterPos) {

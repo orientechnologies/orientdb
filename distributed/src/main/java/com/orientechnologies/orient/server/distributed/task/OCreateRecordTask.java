@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecordVersionHelper;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
@@ -92,8 +94,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public Object executeRecordTask(final ODistributedRequestId requestId, final OServer iServer,
       final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Creating record %s/%s v.%d...",
-        database.getName(), rid.toString(), version);
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "Creating record %s/%s v.%d reqId=%s...", database.getName(), rid.toString(), version, requestId);
 
     if (!rid.isPersistent())
       throw new ODistributedException("Record " + rid + " has not been saved on owner node first (temporary rid)");
@@ -101,13 +103,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     final OStorageOperationResult<ORawBuffer> loadedRecord = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().readRecord(rid,
         null, true, null);
 
-    if (loadedRecord.getResult() != null) {
-      // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
-      if (!Arrays.equals(loadedRecord.getResult().getBuffer(), content))
-        throw new ODistributedException("Record " + rid + " is already present with different content");
-
-      return new OPlaceholder(rid, loadedRecord.getResult().version);
-    }
+    if (loadedRecord.getResult() != null)
+      // ALREADY PRESENT
+      return new OPlaceholder(forceUpdate(requestId, iManager, database, loadedRecord));
 
     getRecord();
 
@@ -122,7 +120,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // DUPLICATED INDEX ON THE TARGET: CREATE AN EMPTY RECORD JUST TO MAINTAIN THE RID AND LET TO THE FIX OPERATION TO SORT OUT
       // WHAT HAPPENED
       ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "+-> duplicated record, assigned new rid %s/%s v.%d", database.getName(), rid.toString(), record.getVersion());
+          "+-> duplicated record %s (existent=%s), assigned new rid %s/%s v.%d reqId=%s", record, e.getRid(), database.getName(), rid.toString(),
+          record.getVersion(), requestId);
 
       record.clear();
       if (clusterId > -1)
@@ -136,15 +135,49 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     }
 
     final ORecordId newRid = (ORecordId) record.getIdentity();
-    if (!rid.equals(newRid))
+    if (!rid.equals(newRid)) {
+      ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "Record %s has been saved with the RID %s instead of the expected %s reqId=%s", record, newRid, rid, requestId);
+
       throw new ODistributedException(
           "Record " + rid + " has been saved with the different RID " + newRid + " on server " + iManager.getLocalNodeName());
+    }
 
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> assigned new rid %s/%s v.%d",
-        database.getName(), rid.toString(), record.getVersion());
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "+-> assigned new rid %s/%s v.%d reqId=%s", database.getName(), rid.toString(), record.getVersion(), requestId);
 
     // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
     return new OPlaceholder(record);
+  }
+
+  protected ORecord forceUpdate(final ODistributedRequestId requestId, final ODistributedServerManager iManager,
+      final ODatabaseDocumentTx database, final OStorageOperationResult<ORawBuffer> loadedRecord) {
+    // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
+    if (Arrays.equals(loadedRecord.getResult().getBuffer(), content))
+      // SAME CONTENT
+      return getRecord();
+
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "Overwriting content of record %s/%s v.%d reqId=%s previous content: %s (stored) vs %s (network)", database.getName(),
+        rid.toString(), version, requestId, loadedRecord.getResult(), getRecord());
+
+    // LOAD IT AS RECORD
+    final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager()
+        .newInstance(loadedRecord.getResult().recordType);
+    ORecordInternal.fill(loadedRecordInstance, rid, loadedRecord.getResult().version, loadedRecord.getResult().getBuffer(), false);
+
+    if (loadedRecord.getResult().recordType == ODocument.RECORD_TYPE) {
+      // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
+      final ODocument newDocument = (ODocument) getRecord();
+
+      ODocument loadedDocument = (ODocument) loadedRecordInstance;
+      loadedDocument.merge(newDocument, false, false).getVersion();
+      loadedDocument.setDirty();
+      ORecordInternal.setVersion(loadedDocument, ORecordVersionHelper.setRollbackMode(version));
+    } else
+      ORecordInternal.fill(loadedRecordInstance, rid, ORecordVersionHelper.setRollbackMode(version), content, true);
+
+    return loadedRecordInstance.save();
   }
 
   @Override
