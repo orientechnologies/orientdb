@@ -599,6 +599,10 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
         return countersHolder.getWriteSpeedInCacheInPages();
       } else {
         final ImmutableStatistic post = postMeasurementStatistic;
+
+        if (post == null)
+          return -1;
+
         return post.countersHolder.getWriteSpeedInCacheInPages();
       }
     } finally {
