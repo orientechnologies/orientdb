@@ -60,9 +60,8 @@ For more information visit the official website: http://www.orientdb.org.
 
 Remember OrientDB is an Open Source project released with the Apache v2 license,
 so it's always FREE for any purpose. If you're interested to Enterprise tools,
-professional support, training or consultancy contact: info@orientechnologies.com.
+professional support, training or consultancy contact: info@orientdb.com.
 
 Enjoy the Graphs,
-Orient Technologies
-The company behind OrientDB
-(www.orientechnologies.com)
+OrientDB
+(www.orientdb.com)

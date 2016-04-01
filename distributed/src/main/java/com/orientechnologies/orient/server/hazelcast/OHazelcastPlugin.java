@@ -1203,7 +1203,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return false;
   }
 
-  protected boolean requestDatabaseDelta(final ODistributedDatabaseImpl distrDatabase, final String databaseName) {
+  public boolean requestDatabaseDelta(final ODistributedDatabaseImpl distrDatabase, final String databaseName) {
     final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
     // GET ALL THE OTHER SERVERS

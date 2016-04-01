@@ -21,33 +21,33 @@ package com.orientechnologies.orient.server.security;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
-
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.security.OAuditingService;
-import com.orientechnologies.orient.server.security.OSecurityAuthenticator;
-import com.orientechnologies.orient.server.security.OSyslog;
 
 /**
- * Provides an interface for the server-specific security features.
- * Extends OSecuritySystem.
+ * Provides an interface for the server-specific security features. Extends OSecuritySystem.
  * 
  * @author S. Colin Leister
  * 
  */
-public interface OServerSecurity extends OSecuritySystem
-{
-	OAuditingService getAuditing();
-	
-	// Returns the authenticator based on name, if one exists.
-	OSecurityAuthenticator getAuthenticator(final String authName);
-	
-	// Returns the first authenticator in the list, which is the primary authenticator.
-	OSecurityAuthenticator getPrimaryAuthenticator();
-	
-	OSyslog getSyslog();
+public interface OServerSecurity extends OSecuritySystem {
+  OAuditingService getAuditing();
 
-	// Some authenticators support maintaining a list of users and associated resources (and sometimes passwords).
-	OServerUserConfiguration getUser(final String username);	
+  /**
+   * Returns the authenticator based on name, if one exists.
+   */
+  OSecurityAuthenticator getAuthenticator(final String authName);
 
-	ODatabase<?> openDatabase(final String dbName);	
+  /**
+   * Returns the first authenticator in the list, which is the primary authenticator.
+   */
+  OSecurityAuthenticator getPrimaryAuthenticator();
+
+  /**
+   * Some authenticators support maintaining a list of users and associated resources (and sometimes passwords).
+   */
+  OServerUserConfiguration getUser(final String username);
+
+  ODatabase<?> openDatabase(final String dbName);
+
+  OSyslog getSyslog();
 }
