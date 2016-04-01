@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.Serializable;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -44,13 +45,13 @@ import java.util.concurrent.ArrayBlockingQueue;
  */
 public class ODistributedWorker extends Thread {
 
-  protected final    ODistributedDatabaseImpl                distributed;
-  protected final    ODistributedServerManager               manager;
-  protected final    ODistributedMessageServiceImpl          msgService;
-  protected final    String                                  databaseName;
-  protected final    ArrayBlockingQueue<ODistributedRequest> localQueue;
-  protected volatile ODatabaseDocumentTx                     database;
-  protected volatile OUser                                   lastUser;
+  protected final ODistributedDatabaseImpl                distributed;
+  protected final ODistributedServerManager               manager;
+  protected final ODistributedMessageServiceImpl          msgService;
+  protected final String                                  databaseName;
+  protected final ArrayBlockingQueue<ODistributedRequest> localQueue;
+  protected volatile ODatabaseDocumentTx                  database;
+  protected volatile OUser                                lastUser;
   protected volatile boolean                              running = true;
   protected final int                                     id;
 
@@ -309,6 +310,13 @@ public class ODistributedWorker extends Thread {
           OLogManager.instance().info(this,
               "Node is not online yet (status=%s), blocking the command until it is online (retry=%d, queue=%d)",
               mgr.getNodeStatus(), retry + 1, localQueue.size());
+
+          if (localQueue.size() >= OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getValueAsInteger()) {
+            // QUEUE FULL, EMPTY THE QUEUE, IGNORE ALL THE NEXT MESSAGES UNTIL A DELTA SYNC IS EXECUTED
+            localQueue.clear();
+            ((OHazelcastPlugin) manager).requestDatabaseDelta(distributed, databaseName);
+          }
+
           try {
             Thread.sleep(2000);
           } catch (InterruptedException e) {
