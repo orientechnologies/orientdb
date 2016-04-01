@@ -457,7 +457,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     db.initialized = true;
     if (storage instanceof OStorageProxy) {
-      db.storage = ((OStorageProxy) storage).copy();
+      db.storage = ((OStorageProxy) storage).copy(this,db);
       ((OStorageProxy) db.storage).addUser();
     } else {
       db.storage = storage;

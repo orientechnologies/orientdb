@@ -17,8 +17,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
-import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
-import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
@@ -137,8 +135,6 @@ public class DbCreationTest extends ObjectDBBaseTest {
     database.open("admin", "admin");
     database.getStorage().getConfiguration().setLocaleLanguage(Locale.ENGLISH.getLanguage());
     database.getStorage().getConfiguration().setLocaleCountry(Locale.ENGLISH.getCountry());
-    if (database.getStorage() instanceof OStorageRemoteThread)
-      ((OStorageRemoteThread) database.getStorage()).pushSession();
     database.getStorage().getConfiguration().update();
     database.close();
   }

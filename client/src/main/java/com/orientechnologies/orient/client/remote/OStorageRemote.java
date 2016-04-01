@@ -92,7 +92,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private static final int           DEFAULT_SSL_PORT          = 2434;
   private static final String        ADDRESS_SEPARATOR         = ";";
   public static final  String        DRIVER_NAME               = "OrientDB Java";
-  private static         AtomicInteger sessionSerialId           = new AtomicInteger(-1);
+  private static       AtomicInteger sessionSerialId           = new AtomicInteger(-1);
+
   public enum CONNECTION_STRATEGY {
     STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST
   }
@@ -2455,11 +2456,24 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public OStorageRemote copy() {
+  public OStorageRemote copy(ODatabaseDocumentTx source, ODatabaseDocumentTx dest) {
+    ODatabaseDocumentInternal origin = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+
+    OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(source);
+    if (session != null) {
+      //TODO:may run a session reopen
+      OStorageRemoteSession newSession = new OStorageRemoteSession();
+      newSession.sessionId = sessionSerialId.decrementAndGet();
+      newSession.tokens.putAll(session.tokens);
+      ODatabaseDocumentTxInternal.setSessionMetadata(dest, newSession);
+    }
     try {
+      dest.activateOnCurrentThread();
       openRemoteDatabase();
     } catch (IOException e) {
       e.printStackTrace();
+    } finally {
+      ODatabaseRecordThreadLocal.INSTANCE.set(origin);
     }
     return this;
   }
