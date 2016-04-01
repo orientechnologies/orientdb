@@ -62,7 +62,12 @@ public class OServerAdmin {
     if (!iURL.contains("/"))
       iURL += "/";
 
-    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN, false);
+    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN, false){
+      @Override
+      protected OStorageRemoteSession getCurrentSession() {
+        return session;
+      }
+    };
   }
 
   /**
@@ -633,7 +638,6 @@ public class OServerAdmin {
 
   protected ODocument sendRequest(final byte iRequest, final ODocument iPayLoad, final String iActivity) {
     // Using here networkOperation because the original retry logic was lik networkOperation
-    OStorageRemoteThreadLocal.INSTANCE.set(session);
     return storage.networkOperation(new OStorageRemoteOperation<ODocument>() {
       @Override
       public ODocument execute(OChannelBinaryAsynchClient network) throws IOException {
@@ -673,7 +677,6 @@ public class OServerAdmin {
 
     OChannelBinaryAsynchClient network = null;
     try {
-      OStorageRemoteThreadLocal.INSTANCE.set(session);
       //TODO:replace this api with one that get connection for only the specified url.
       network = storage.getAvailableNetwork(getURL());
       return operation.execute(network);

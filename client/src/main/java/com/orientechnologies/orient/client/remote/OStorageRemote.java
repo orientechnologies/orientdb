@@ -35,9 +35,11 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -77,19 +79,20 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
-  public static final  String PARAM_CONNECTION_STRATEGY = "connectionStrategy";
-  public static final  String PARAM_DB_TYPE             = "dbtype";
-  private static final String DEFAULT_HOST              = "localhost";
-  private static final int    DEFAULT_PORT              = 2424;
-  private static final int    DEFAULT_SSL_PORT          = 2434;
-  private static final String ADDRESS_SEPARATOR         = ";";
-  public static final  String DRIVER_NAME               = "OrientDB Java";
-
+  public static final  String        PARAM_CONNECTION_STRATEGY = "connectionStrategy";
+  public static final  String        PARAM_DB_TYPE             = "dbtype";
+  private static final String        DEFAULT_HOST              = "localhost";
+  private static final int           DEFAULT_PORT              = 2424;
+  private static final int           DEFAULT_SSL_PORT          = 2434;
+  private static final String        ADDRESS_SEPARATOR         = ";";
+  public static final  String        DRIVER_NAME               = "OrientDB Java";
+  private static         AtomicInteger sessionSerialId           = new AtomicInteger(-1);
   public enum CONNECTION_STRATEGY {
     STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST
   }
@@ -339,7 +342,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         if (!checkForClose(iForce))
           return;
       } else {
-        return;
+        if(!iForce)
+          return;
       }
 
       status = STATUS.CLOSING;
@@ -730,7 +734,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               int result;
 
               try {
-                beginResponse(network,session);
+                beginResponse(network, session);
                 result = network.readVersion();
 
                 if (network.getSrvProtocolVersion() >= 20)
@@ -2164,7 +2168,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       // GET CURRENT THREAD INDEX
       OStorageRemoteSession currentSession = getCurrentSession();
-      int serverURLIndex = currentSession.serverURLIndex;
+      int serverURLIndex;
+      if (currentSession != null)
+        serverURLIndex = currentSession.serverURLIndex;
+      else
+        serverURLIndex = 0;
 
       if (iNextAvailable)
         serverURLIndex++;
@@ -2175,7 +2183,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       final String serverURL = serverURLs.get(serverURLIndex) + "/" + getName();
 
-      currentSession.serverURLIndex = serverURLIndex;
+      if(currentSession != null)
+        currentSession.serverURLIndex = serverURLIndex;
 
       return serverURL;
     }
@@ -2423,11 +2432,26 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   protected OStorageRemoteSession getCurrentSession() {
-    OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
-    if (instance != null) {
-      return instance.get();
+    ODatabaseDocumentTx db = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db == null)
+      return null;
+    OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(db);
+    if (session == null) {
+      session = new OStorageRemoteSession();
+      session.sessionId = sessionSerialId.decrementAndGet();
+      ODatabaseDocumentTxInternal.setSessionMetadata(db, session);
     }
-    return null;
+    return session;
+  }
+
+  @Override
+  public boolean isClosed() {
+    if (super.isClosed())
+      return true;
+    OStorageRemoteSession session = getCurrentSession();
+    if (session == null)
+      return false;
+    return session.sessionId < 0;
   }
 
   @Override
