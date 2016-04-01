@@ -206,14 +206,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return wrapped.getCollectionManagerClass();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public OModificationLock getModificationLock() {
-    return wrapped.getModificationLock();
-  }
-
   public Object command(final OCommandRequestText iCommand) {
 
     List<String> servers = (List<String>) iCommand.getContext().getVariable("servers");

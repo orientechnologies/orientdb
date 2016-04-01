@@ -49,45 +49,37 @@ public class OIndexUnique extends OIndexOneValue {
       keyLockManager.acquireExclusiveLock(key);
 
     try {
-      if (modificationLock != null)
-        modificationLock.requestModificationLock();
+      checkForKeyType(key);
+      acquireSharedLock();
       try {
-        checkForKeyType(key);
-        acquireSharedLock();
-        try {
-          final OIdentifiable value = indexEngine.get(key);
+        final OIdentifiable value = indexEngine.get(key);
 
-          if (value != null) {
-            // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-            if (!value.equals(iSingleValue)) {
-              final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
-              if (mergeSameKey != null && mergeSameKey)
-                // IGNORE IT, THE EXISTENT KEY HAS BEEN MERGED
-                ;
-              else
-                throw new ORecordDuplicatedException(String
-                    .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                        iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
-            } else
-              return this;
-          }
-
-          if (!iSingleValue.getIdentity().isPersistent())
-            ((ORecord) iSingleValue.getRecord()).save();
-
-          markStorageDirty();
-
-          indexEngine.put(key, iSingleValue.getIdentity());
-          return this;
-
-        } finally {
-          releaseSharedLock();
+        if (value != null) {
+          // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
+          if (!value.equals(iSingleValue)) {
+            final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
+            if (mergeSameKey != null && mergeSameKey)
+              // IGNORE IT, THE EXISTENT KEY HAS BEEN MERGED
+              ;
+            else
+              throw new ORecordDuplicatedException(String
+                  .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                      iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
+          } else
+            return this;
         }
-      } finally {
-        if (modificationLock != null)
-          modificationLock.releaseModificationLock();
-      }
 
+        if (!iSingleValue.getIdentity().isPersistent())
+          ((ORecord) iSingleValue.getRecord()).save();
+
+        markStorageDirty();
+
+        indexEngine.put(key, iSingleValue.getIdentity());
+        return this;
+
+      } finally {
+        releaseSharedLock();
+      }
     } finally {
       if (!txIsActive)
         keyLockManager.releaseExclusiveLock(key);

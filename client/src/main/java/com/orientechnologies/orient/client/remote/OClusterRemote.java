@@ -84,11 +84,6 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public OModificationLock getExternalModificationLock() {
-    throw new UnsupportedOperationException("getExternalModificationLock");
-  }
-
-  @Override
   public void close(boolean flush) throws IOException {
   }
 

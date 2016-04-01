@@ -122,46 +122,39 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     if (!txIsActive)
       keyLockManager.acquireExclusiveLock(key);
     try {
-      if (modificationLock != null)
-        modificationLock.requestModificationLock();
+      checkForKeyType(key);
+      acquireSharedLock();
+      startStorageAtomicOperation();
       try {
-        checkForKeyType(key);
-        acquireSharedLock();
-        startStorageAtomicOperation();
-        try {
-          Set<OIdentifiable> values = indexEngine.get(key);
+        Set<OIdentifiable> values = indexEngine.get(key);
 
-          if (values == null) {
-            if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-              boolean durable = false;
-              if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-                durable = true;
+        if (values == null) {
+          if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+            boolean durable = false;
+            if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+              durable = true;
 
-              values = new OIndexRIDContainer(getName(), durable);
-            } else {
-              values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
-              ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
-            }
+            values = new OIndexRIDContainer(getName(), durable);
+          } else {
+            values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
+            ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
           }
-
-          if (!iSingleValue.getIdentity().isValid())
-            ((ORecord) iSingleValue).save();
-
-          values.add(iSingleValue.getIdentity());
-          indexEngine.put(key, values);
-
-          commitStorageAtomicOperation();
-          return this;
-
-        } catch (RuntimeException e) {
-          rollbackStorageAtomicOperation();
-          throw new OIndexException("Error during insertion of key in index", e);
-        } finally {
-          releaseSharedLock();
         }
+
+        if (!iSingleValue.getIdentity().isValid())
+          ((ORecord) iSingleValue).save();
+
+        values.add(iSingleValue.getIdentity());
+        indexEngine.put(key, values);
+
+        commitStorageAtomicOperation();
+        return this;
+
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during insertion of key in index", e);
       } finally {
-        if (modificationLock != null)
-          modificationLock.releaseModificationLock();
+        releaseSharedLock();
       }
     } finally {
       if (!txIsActive)
@@ -180,44 +173,37 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       keyLockManager.acquireExclusiveLock(key);
 
     try {
-      if (modificationLock != null)
-        modificationLock.requestModificationLock();
+      acquireSharedLock();
+      startStorageAtomicOperation();
       try {
-        acquireSharedLock();
-        startStorageAtomicOperation();
-        try {
 
-          Set<OIdentifiable> values = indexEngine.get(key);
+        Set<OIdentifiable> values = indexEngine.get(key);
 
-          if (values == null) {
-            commitStorageAtomicOperation();
-            return false;
-          }
-
-          if (value == null) {
-            indexEngine.remove(key);
-          } else if (values.remove(value)) {
-            if (values.isEmpty())
-              indexEngine.remove(key);
-            else
-              indexEngine.put(key, values);
-
-            commitStorageAtomicOperation();
-            return true;
-          }
-
+        if (values == null) {
           commitStorageAtomicOperation();
           return false;
-
-        } catch (RuntimeException e) {
-          rollbackStorageAtomicOperation();
-          throw new OIndexException("Error during removal of entry by key", e);
-        } finally {
-          releaseSharedLock();
         }
+
+        if (value == null) {
+          indexEngine.remove(key);
+        } else if (values.remove(value)) {
+          if (values.isEmpty())
+            indexEngine.remove(key);
+          else
+            indexEngine.put(key, values);
+
+          commitStorageAtomicOperation();
+          return true;
+        }
+
+        commitStorageAtomicOperation();
+        return false;
+
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during removal of entry by key", e);
       } finally {
-        if (modificationLock != null)
-          modificationLock.releaseModificationLock();
+        releaseSharedLock();
       }
     } finally {
       if (!txIsActive)
