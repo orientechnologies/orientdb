@@ -26,6 +26,8 @@ import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Andrey Lomakin
  * @since 6/26/13
@@ -93,18 +95,18 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
     createSchema(testDocumentTx);
 
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 1; i++) {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
     System.out.println("Wait for 5 minutes");
-    TimeUnit.MINUTES.sleep(5);
+    TimeUnit.MINUTES.sleep(1);
 
     long lastTs = System.currentTimeMillis();
     process.destroy();
     process.waitFor();
 
-    System.out.println("Process was destroyed");
+    System.out.println("OrientDB server process was destroyed");
 
     for (Future future : futures) {
       try {
@@ -155,23 +157,32 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
       final ORecordId rid = new ORecordId(clusterId);
 
       for (OPhysicalPosition physicalPosition : physicalPositions) {
+
         rid.clusterPosition = physicalPosition.clusterPosition;
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+        baseDocumentTx.activateOnCurrentThread();
         ODocument baseDocument = baseDocumentTx.load(rid);
 
         testDocumentTx.activateOnCurrentThread();
         List<ODocument> testDocuments = testDocumentTx
             .query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = " + baseDocument.field("id")));
+
         if (testDocuments.size() == 0) {
-          if (((Long) baseDocument.field("timestamp")) < minTs)
+          if (((Long) baseDocument.field("timestamp")) < minTs) {
             minTs = baseDocument.field("timestamp");
+          }
         } else {
           ODocument testDocument = testDocuments.get(0);
-          Assert.assertEquals(testDocument.field("id"), baseDocument.field("id"));
-          Assert.assertEquals(testDocument.field("timestamp"), baseDocument.field("timestamp"));
-          Assert.assertEquals(testDocument.field("stringValue"), baseDocument.field("stringValue"));
-          Assert.assertEquals(testDocument.field("binaryValue"), baseDocument.field("binaryValue"));
+          System.out.println("testing id:: " + testDocument.field("id"));
+
+          assertThat(testDocument.field("id")).as("id:: %s", testDocument.field("id")).isEqualTo(baseDocument.field("id"));
+          assertThat(testDocument.field("timestamp")).as("documents:: %s - %s", testDocument, baseDocument)
+              .isEqualTo(baseDocument.field("timestamp"));
+          assertThat(testDocument.field("stringValue")).as("id:: %s", testDocument.field("id"))
+              .isEqualTo(baseDocument.field("stringValue"));
+          assertThat(testDocument.field("binaryValue")).as("id:: %s", testDocument.field("id"))
+              .isEqualTo(baseDocument.field("binaryValue"));
+
           recordsRestored++;
         }
 
