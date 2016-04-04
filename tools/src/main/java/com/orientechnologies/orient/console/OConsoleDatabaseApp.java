@@ -1894,16 +1894,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Compare two databases")
   public void compareDatabases(@ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
       @ConsoleParameter(name = "db2-url", description = "URL of the second database") final String iDb2URL,
-      @ConsoleParameter(name = "username", description = "User name", optional = true) final String iUserName,
-      @ConsoleParameter(name = "password", description = "User password", optional = true) final String iUserPassword,
+      @ConsoleParameter(name = "username", description = "User name", optional = false) final String iUserName,
+      @ConsoleParameter(name = "password", description = "User password", optional = false) final String iUserPassword,
       @ConsoleParameter(name = "detect-mapping-data", description = "Whether RID mapping data after DB import should be tried to found on the disk", optional = true) String autoDiscoveringMappingData)
           throws IOException {
     try {
-      final ODatabaseCompare compare;
-      if (iUserName == null)
-        compare = new ODatabaseCompare(iDb1URL, iDb2URL, this);
-      else
-        compare = new ODatabaseCompare(iDb1URL, iDb2URL, iUserName, iUserPassword, this);
+      final ODatabaseCompare compare = new ODatabaseCompare(iDb1URL, iDb2URL, iUserName, iUserPassword, this);
 
       compare.setAutoDetectExportImportMap(autoDiscoveringMappingData != null ? Boolean.valueOf(autoDiscoveringMappingData) : true);
       compare.setCompareIndexMetadata(true);
