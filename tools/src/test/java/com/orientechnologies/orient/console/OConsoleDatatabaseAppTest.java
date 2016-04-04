@@ -32,7 +32,6 @@ public class OConsoleDatatabaseAppTest {
     ORecord record = db.save(new ORecordBytes("blobContent".getBytes()), "blobTest");
     builder.setLength(0);
     app.select(" from " + record.getIdentity() +" limit -1 ");
-    System.out.println(builder.toString());
     assertTrue(builder.toString().contains("<binary>"));
 
   }
