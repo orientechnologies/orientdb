@@ -388,6 +388,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   @Override
   public OClass setSuperClasses(final List<? extends OClass> classes) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    if (classes != null) {
+      List<OClass> toCheck = new ArrayList<OClass>(classes);
+      toCheck.add(this);
+      checkParametersConflict(toCheck);
+    }
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
@@ -439,7 +444,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         newSuperClasses.add(cls);
       }
 
-      checkParametersConflict(newSuperClasses);
       List<OClassImpl> toAddList = new ArrayList<OClassImpl>(newSuperClasses);
       toAddList.removeAll(superClasses);
       List<OClassImpl> toRemoveList = new ArrayList<OClassImpl>(superClasses);
@@ -461,6 +465,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   @Override
   public OClass addSuperClass(final OClass superClass) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
+    checkParametersConflict(superClass);
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
@@ -2425,7 +2430,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    */
   private OClass addSubclass(final OClassImpl subclass) {
     checkRecursion(subclass);
-    checkParametersConflict(subclass);
 
     if (subclasses == null)
       subclasses = new ArrayList<OClass>();
@@ -2449,23 +2453,31 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private void checkParametersConflict(List<OClassImpl> classes) {
-    final Map<String, OProperty> commulative = new HashMap<String, OProperty>();
+  protected static void checkParametersConflict(List<OClass> classes) {
+    final Map<String, OProperty> comulative = new HashMap<String, OProperty>();
     final Map<String, OProperty> properties = new HashMap<String, OProperty>();
 
-    for (OClassImpl superClass : classes) {
-      superClass.propertiesMap(properties, false);
+    for (OClass superClass : classes) {
+      if (superClass == null)
+        continue;
+      OClassImpl impl;
+
+      if (superClass instanceof OClassAbstractDelegate)
+        impl = (OClassImpl) ((OClassAbstractDelegate) superClass).delegate;
+      else
+        impl = (OClassImpl) superClass;
+      impl.propertiesMap(properties, false);
       for (Map.Entry<String, OProperty> entry : properties.entrySet()) {
-        if (commulative.containsKey(entry.getKey())) {
+        if (comulative.containsKey(entry.getKey())) {
           final String property = entry.getKey();
-          final OProperty existingProperty = commulative.get(property);
+          final OProperty existingProperty = comulative.get(property);
           if (!existingProperty.getType().equals(entry.getValue().getType())) {
             throw new OSchemaException("Properties conflict detected: '" + existingProperty + "] vs [" + entry.getValue() + "]");
           }
         }
       }
 
-      commulative.putAll(properties);
+      comulative.putAll(properties);
       properties.clear();
     }
   }

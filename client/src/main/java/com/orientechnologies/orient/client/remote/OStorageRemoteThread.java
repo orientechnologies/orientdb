@@ -100,14 +100,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public OModificationLock getModificationLock() {
-    return null;
-  }
-
   @Override
   public boolean isDistributed() {
     return delegate.isDistributed();

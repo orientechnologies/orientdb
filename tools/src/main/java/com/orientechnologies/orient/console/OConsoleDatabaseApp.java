@@ -659,52 +659,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     releaseDatabase(storageType);
   }
 
-  @ConsoleCommand(description = "Freeze clusters and flush on the disk")
-  public void freezeCluster(
-      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to freeze") String iClusterName,
-      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
-    checkForDatabase();
-
-    final int clusterId = currentDatabase.getClusterIdByName(iClusterName);
-
-    if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
-      if (storageType == null)
-        storageType = "plocal";
-
-      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword)
-          .freezeCluster(clusterId, storageType);
-    } else {
-      // LOCAL CONNECTION
-      currentDatabase.freezeCluster(clusterId);
-    }
-
-    message("\n\nCluster '" + iClusterName + "' was frozen successfully");
-  }
-
-  @ConsoleCommand(description = "Release cluster after freeze")
-  public void releaseCluster(
-      @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to unfreeze") String iClusterName,
-      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
-    checkForDatabase();
-
-    final int clusterId = currentDatabase.getClusterIdByName(iClusterName);
-
-    if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
-      if (storageType == null)
-        storageType = "plocal";
-
-      new OServerAdmin(currentDatabase.getURL()).connect(currentDatabaseUserName, currentDatabaseUserPassword)
-          .releaseCluster(clusterId, storageType);
-    } else {
-      // LOCAL CONNECTION
-      currentDatabase.releaseCluster(clusterId);
-    }
-
-    message("\n\nCluster '" + iClusterName + "' was released successfully");
-  }
-
   @ConsoleCommand(description = "Display current record")
   public void current() {
     dumpRecordDetails();

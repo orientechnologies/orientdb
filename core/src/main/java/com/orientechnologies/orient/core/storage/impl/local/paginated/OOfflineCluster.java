@@ -81,11 +81,6 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public OModificationLock getExternalModificationLock() {
-    return externalModificationLock;
-  }
-
-  @Override
   public Object set(ATTRIBUTES attribute, Object value) throws IOException {
     if (attribute == null)
       throw new IllegalArgumentException("attribute is null");

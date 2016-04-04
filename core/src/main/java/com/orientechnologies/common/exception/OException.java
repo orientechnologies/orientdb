@@ -22,6 +22,11 @@ package com.orientechnologies.common.exception;
 
 public class OException extends RuntimeException {
 
+  public static OException wrapException(final OException exception, final Throwable cause) {
+    exception.initCause(cause);
+    return exception;
+  }
+
   private static final long serialVersionUID = 3882447822497861424L;
 
   public OException() {
