@@ -36,18 +36,18 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import java.util.*;
 
 public class OEmbeddedRidBag implements ORidBagDelegate {
-  private byte[]                                                        serializedContent = null;
+  private byte[] serializedContent = null;
 
-  private boolean                                                       contentWasChanged = false;
-  private boolean                                                       deserialized      = true;
+  private boolean contentWasChanged = false;
+  private boolean deserialized      = true;
 
-  private Object[]                                                      entries           = OCommonConst.EMPTY_OBJECT_ARRAY;
-  private int                                                           entriesLength     = 0;
+  private Object[] entries       = OCommonConst.EMPTY_OBJECT_ARRAY;
+  private int      entriesLength = 0;
 
-  private boolean                                                       convertToRecord   = true;
-  private int                                                           size              = 0;
+  private boolean convertToRecord = true;
+  private int     size            = 0;
 
-  private transient ORecord                                             owner;
+  private transient ORecord owner;
 
   private List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners;
 
@@ -57,9 +57,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   private final class EntriesIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {
     private final boolean convertToRecord;
-    private int           currentIndex = -1;
-    private int           nextIndex    = -1;
-    private boolean       currentRemoved;
+    private int currentIndex = -1;
+    private int nextIndex    = -1;
+    private boolean currentRemoved;
 
     private EntriesIterator(boolean convertToRecord) {
       reset();
@@ -68,6 +68,14 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
     @Override
     public boolean hasNext() {
+      //we may remove items in ridbag during iteration so we need to be sure that pointed item is not removed.
+      if (nextIndex > -1) {
+        if (entries[nextIndex] instanceof OIdentifiable)
+          return true;
+
+        nextIndex = nextIndex();
+      }
+
       return nextIndex > -1;
     }
 
@@ -79,13 +87,26 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       if (currentIndex == -1)
         throw new NoSuchElementException();
 
-      final OIdentifiable nextValue = (OIdentifiable) entries[currentIndex];
+      Object nextValue = entries[currentIndex];
+
+      //we may remove items in ridbag during iteration so we need to be sure that pointed item is not removed.
+      if (!(nextValue instanceof OIdentifiable)) {
+        nextIndex = nextIndex();
+
+        currentIndex = nextIndex;
+        if (currentIndex == -1)
+          throw new NoSuchElementException();
+
+        nextValue = entries[currentIndex];
+      }
+
       nextIndex = nextIndex();
 
+      final OIdentifiable identifiable = (OIdentifiable) nextValue;
       if (convertToRecord)
-        return nextValue.getRecord();
+        return identifiable.getRecord();
 
-      return nextValue;
+      return identifiable;
     }
 
     @Override
@@ -106,8 +127,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       if (OEmbeddedRidBag.this.owner != null)
         ORecordInternal.unTrack(OEmbeddedRidBag.this.owner, nextValue);
 
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null,
+              nextValue));
     }
 
     @Override
@@ -194,8 +216,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     size++;
     contentWasChanged = true;
 
-    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
-        identifiable, identifiable));
+    fireCollectionChangedEvent(
+        new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, identifiable,
+            identifiable));
   }
 
   public OEmbeddedRidBag copy() {
@@ -225,8 +248,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       if (this.owner != null)
         ORecordInternal.unTrack(this.owner, identifiable);
 
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
+      fireCollectionChangedEvent(
+          new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null,
+              identifiable));
     }
   }
 
@@ -316,7 +340,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     if (size < 10) {
       final StringBuilder sb = new StringBuilder(256);
       sb.append('[');
-      for (final Iterator<OIdentifiable> it = this.iterator(); it.hasNext();) {
+      for (final Iterator<OIdentifiable> it = this.iterator(); it.hasNext(); ) {
         try {
           OIdentifiable e = it.next();
           if (e != null) {
@@ -336,7 +360,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
-    if(changeListeners == null)
+    if (changeListeners == null)
       changeListeners = new LinkedList<OMultiValueChangeListener<OIdentifiable, OIdentifiable>>();
     changeListeners.add(changeListener);
   }
@@ -449,7 +473,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public List<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners() {
-    if(changeListeners == null)
+    if (changeListeners == null)
       return Collections.emptyList();
     return Collections.unmodifiableList(changeListeners);
   }

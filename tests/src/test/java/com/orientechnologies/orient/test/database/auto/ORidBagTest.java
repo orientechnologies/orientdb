@@ -67,6 +67,112 @@ import static org.testng.Assert.assertTrue;
     assertEmbedded(bag.isEmbedded());
   }
 
+  public void testAddRemoveInTheMiddleOfIteration() {
+    ORidBag bag = new ORidBag();
+    bag.setAutoConvertToRecord(false);
+
+    bag.add(new ORecordId("#77:2"));
+    bag.add(new ORecordId("#77:2"));
+    bag.add(new ORecordId("#77:3"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:5"));
+    bag.add(new ORecordId("#77:6"));
+
+    final List<OIdentifiable> initialRids = new ArrayList<OIdentifiable>();
+
+    initialRids.add(new ORecordId("#77:2"));
+    initialRids.add(new ORecordId("#77:2"));
+    initialRids.add(new ORecordId("#77:3"));
+    initialRids.add(new ORecordId("#77:4"));
+    initialRids.add(new ORecordId("#77:4"));
+    initialRids.add(new ORecordId("#77:4"));
+    initialRids.add(new ORecordId("#77:5"));
+    initialRids.add(new ORecordId("#77:6"));
+
+    int counter = 0;
+    Iterator<OIdentifiable> iterator = bag.iterator();
+
+    bag.remove(new ORecordId("#77:2"));
+    initialRids.remove(new ORecordId("#77:2"));
+
+    while (iterator.hasNext()) {
+      counter++;
+      if (counter == 1) {
+        bag.remove(new ORecordId("#77:1"));
+        initialRids.remove(new ORecordId("#77:1"));
+
+        bag.remove(new ORecordId("#77:2"));
+        initialRids.remove(new ORecordId("#77:2"));
+      }
+
+      if (counter == 3) {
+        bag.remove(new ORecordId("#77:4"));
+        initialRids.remove(new ORecordId("#77:4"));
+      }
+
+      if (counter == 5) {
+        bag.remove(new ORecordId("#77:6"));
+        initialRids.remove(new ORecordId("#77:6"));
+      }
+
+      initialRids.contains(iterator.next());
+    }
+
+    Assert.assertTrue(bag.contains(new ORecordId("#77:3")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:4")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:5")));
+
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:2")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:6")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:1")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:0")));
+
+    assertEmbedded(bag.isEmbedded());
+
+    final List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
+    rids.add(new ORecordId("#77:3"));
+    rids.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:5"));
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+
+    for (OIdentifiable identifiable : bag)
+      rids.add(identifiable);
+
+    ODocument doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    ORID rid = doc.getIdentity();
+
+    doc = database.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+    assertEmbedded(bag.isEmbedded());
+
+    Assert.assertTrue(bag.contains(new ORecordId("#77:3")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:4")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:5")));
+
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:2")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:6")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:1")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:0")));
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+
+  }
+
   public void testAddRemove() {
     ORidBag bag = new ORidBag();
     bag.setAutoConvertToRecord(false);
