@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -1001,7 +1000,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     } finally {
       stateLock.releaseReadLock();
-    }  }
+    }
+  }
 
   public Set<String> getClusterNames() {
     checkOpeness();
@@ -1322,8 +1322,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final long freezeId;
 
       if (throwException)
-        freezeId = atomicOperationsManager.freezeAtomicOperations(OModificationOperationProhibitedException.class,
-            "Modification requests are prohibited");
+        freezeId = atomicOperationsManager
+            .freezeAtomicOperations(OModificationOperationProhibitedException.class, "Modification requests are prohibited");
       else
         freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
 
@@ -1346,6 +1346,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.releaseReadLock();
     }
   }
+
   public void release() {
     try {
       lock();
@@ -1837,12 +1838,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           context.executeOperations(this);
         atomicOperationsManager.endAtomicOperation(false, null);
       } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, e);
+
         atomicOperationsManager.endAtomicOperation(true, e);
 
         if (e instanceof OOfflineClusterException)
           throw (OOfflineClusterException) e;
-
-        OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, e);
 
         try {
           if (ppos.clusterPosition != ORID.CLUSTER_POS_INVALID)
@@ -1912,9 +1913,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           context.executeOperations(this);
         atomicOperationsManager.endAtomicOperation(false, null);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
-
         OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
+
+        atomicOperationsManager.endAtomicOperation(true, e);
 
         final ORecordVersion recordVersion = OVersionFactory.instance().createUntrackedVersion();
         if (callback != null)
@@ -1969,8 +1970,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         cluster.deleteRecord(ppos.clusterPosition);
         atomicOperationsManager.endAtomicOperation(false, null);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
+
+        atomicOperationsManager.endAtomicOperation(true, e);
+
         return new OStorageOperationResult<Boolean>(false);
       }
 
@@ -2002,8 +2005,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         cluster.hideRecord(ppos.clusterPosition);
         atomicOperationsManager.endAtomicOperation(false, null);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
+
+        atomicOperationsManager.endAtomicOperation(true, e);
 
         return new OStorageOperationResult<Boolean>(false);
       }
