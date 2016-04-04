@@ -259,7 +259,7 @@ public enum OGlobalConfiguration {
       OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME),
 
   NON_TX_CHECK_MOVE_VERTEX("nonTX.check.move.vertex",
-      "Flag that can be set to false if the transcation check on MOVE VERTEX should be disabled", Boolean.class,
+      "Flag that can be set to false if the transaction check on MOVE VERTEX should be disabled", Boolean.class,
       true, true),
 
   // TRANSACTIONS
