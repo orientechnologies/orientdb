@@ -352,21 +352,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     underlying.release();
   }
 
-  @Override
-  public void freezeCluster(int iClusterId, boolean throwException) {
-    underlying.freezeCluster(iClusterId, throwException);
-  }
-
-  @Override
-  public void freezeCluster(int iClusterId) {
-    underlying.freezeCluster(iClusterId);
-  }
-
-  @Override
-  public void releaseCluster(int iClusterId) {
-    underlying.releaseCluster(iClusterId);
-  }
-
   protected void checkOpeness() {
     if (isClosed())
       throw new ODatabaseException("Database '" + getURL() + "' is closed");

@@ -251,11 +251,4 @@ public interface OStorage extends OBackupable, OSharedContainer {
   ORecordConflictStrategy getConflictStrategy();
 
   void setConflictStrategy(ORecordConflictStrategy iResolver);
-
-  /**
-   * Internal API.
-   *
-   * @return Modification lock is used to stop all data modification operations to put database at "safepoint like" state.
-   */
-  OModificationLock getModificationLock();
 }

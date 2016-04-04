@@ -1519,36 +1519,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return storage.getRecordMetadata(rid);
   }
 
-  @Override
-  public void freezeCluster(final int iClusterId) {
-    freezeCluster(iClusterId, false);
-  }
-
-  @Override
-  public void releaseCluster(final int iClusterId) {
-    checkIfActive();
-    final OLocalPaginatedStorage storage;
-    if (getStorage() instanceof OLocalPaginatedStorage)
-      storage = ((OLocalPaginatedStorage) getStorage());
-    else {
-      OLogManager.instance().error(this, "Only local paginated storage supports release of cluster");
-      return;
-    }
-
-    storage.release(iClusterId);
-  }
-
-  @Override
-  public void freezeCluster(final int iClusterId, final boolean throwException) {
-    checkIfActive();
-    if (getStorage() instanceof OLocalPaginatedStorage) {
-      final OLocalPaginatedStorage paginatedStorage = ((OLocalPaginatedStorage) getStorage());
-      paginatedStorage.freeze(throwException, iClusterId);
-    } else {
-      OLogManager.instance().error(this, "Only local paginated storage supports freeze of cluster");
-    }
-  }
-
   public OTransaction getTransaction() {
     checkIfActive();
     return currentTx;
@@ -1909,13 +1879,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new ODatabaseException(
           "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
 
-    final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
-
     record.setInternalStatus(ORecordElement.STATUS.MARSHALLING);
     try {
-      if (record instanceof ODocument)
-        acquireIndexModificationLock((ODocument) record, lockedIndexes);
-
       final boolean wasNew = forceCreate || rid.isNew();
 
       if (wasNew && rid.clusterId == -1 && (clusterName != null || storage.isAssigningClusterIds())) {
@@ -2049,7 +2014,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         throw new ODatabaseException("Error on saving record " + record.getIdentity(), t);
 
     } finally {
-      releaseIndexModificationLock(lockedIndexes);
       record.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
     return (RET) record;
@@ -2080,14 +2044,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
-    final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
-
     ORecordSerializationContext.pushContext();
     ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
     try {
-      if (record instanceof ODocument)
-        acquireIndexModificationLock((ODocument) record, lockedIndexes);
-
       try {
         // if cache is switched off record will be unreachable after delete.
         ORecord rec = record.getRecord();
@@ -2139,7 +2098,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         throw new ODatabaseException("Error on deleting record in cluster #" + record.getIdentity().getClusterId(), t);
       }
     } finally {
-      releaseIndexModificationLock(lockedIndexes);
       ORecordSerializationContext.pullContext();
       ((OMetadataInternal) getMetadata()).clearThreadLocalSchemaSnapshot();
     }
@@ -2273,18 +2231,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     final long startTime = Orient.instance().getProfiler().startChrono();
 
-    final Collection<? extends OIndex<?>> indexes = getMetadata().getIndexManager().getIndexes();
-    final List<OIndexAbstract<?>> indexesToLock = prepareIndexesToFreeze(indexes);
-
-    flushIndexes(indexesToLock);
-
     final OFreezableStorage storage = getFreezableStorage();
     if (storage != null) {
       storage.freeze(false);
     }
 
-    Orient.instance().getProfiler()
-        .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
+    Orient.instance().getProfiler().stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime,
+        "db.*.freeze");
   }
 
   /**
@@ -2306,8 +2259,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       storage.release();
     }
 
-    Orient.instance().getProfiler()
-        .stopChrono("db." + getName() + ".release", "Time to release the database", startTime, "db.*.release");
+    Orient.instance().getProfiler().stopChrono("db." + getName() + ".release", "Time to release the database", startTime,
+        "db.*.release");
   }
 
   /**
@@ -3081,42 +3034,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     ORecordSerializationContext.pushContext();
 
     return record.toStream();
-  }
-
-  private void releaseIndexModificationLock(final Set<OIndex<?>> lockedIndexes) {
-    if (metadata == null)
-      return;
-
-    final OIndexManager indexManager = metadata.getIndexManager();
-    if (indexManager == null)
-      return;
-
-    for (OIndex<?> index : lockedIndexes) {
-      index.getInternal().releaseModificationLock();
-    }
-  }
-
-  private void acquireIndexModificationLock(final ODocument doc, final Set<OIndex<?>> lockedIndexes) {
-    if (getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
-      final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);
-      if (cls != null) {
-        final Collection<OIndex<?>> indexes = cls.getIndexes();
-        if (indexes != null) {
-          final SortedSet<OIndex<?>> indexesToLock = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
-            public int compare(OIndex<?> indexOne, OIndex<?> indexTwo) {
-              return indexOne.getName().compareTo(indexTwo.getName());
-            }
-          });
-
-          indexesToLock.addAll(indexes);
-
-          for (final OIndex<?> index : indexesToLock) {
-            index.getInternal().acquireModificationLock();
-            lockedIndexes.add(index);
-          }
-        }
-      }
-    }
   }
 
   private void init() {

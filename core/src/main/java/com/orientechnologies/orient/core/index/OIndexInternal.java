@@ -93,18 +93,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
   public boolean hasRangeQuerySupport();
 
-
-  /**
-   * Is used to indicate that several index changes are going to be seen as single unit from users point of view. This command is
-   * used with conjunction of {@link com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage#freeze(boolean)} command.
-   */
-  public void acquireModificationLock();
-
-  /**
-   * Is used to indicate that several index changes are going to be seen as single unit from users point of view were completed.
-   */
-  public void releaseModificationLock();
-
   /**
    * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
    *

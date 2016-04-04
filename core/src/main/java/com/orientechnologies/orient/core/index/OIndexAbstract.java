@@ -67,7 +67,6 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientStartupListener, OOrientShutdownListener {
   protected static final String CONFIG_CLUSTERS = "clusters";
-  protected final OModificationLock modificationLock;
   protected final OIndexEngine<T>   indexEngine;
   private final   String            databaseName;
   protected       String            type;
@@ -109,8 +108,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       this.valueContainerAlgorithm = valueContainerAlgorithm;
 
       indexEngine.init();
-
-      modificationLock = storage.getModificationLock();
 
       Orient.instance().registerWeakOrientStartupListener(this);
       Orient.instance().registerWeakOrientShutdownListener(this);
@@ -389,9 +386,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
     final boolean intentInstalled = getDatabase().declareIntent(new OIntentMassiveInsert());
 
-    if (modificationLock != null)
-      modificationLock.requestModificationLock();
-
+    acquireExclusiveLock();
     try {
       markStorageDirty();
 
@@ -455,8 +450,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
           getDatabase().declareIntent(null);
       }
     } finally {
-      if (modificationLock != null)
-        modificationLock.releaseModificationLock();
+      releaseExclusiveLock();
     }
 
     return documentIndexed;
@@ -475,19 +469,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     if (!txIsActive)
       keyLockManager.acquireExclusiveLock(key);
     try {
-      if (modificationLock != null)
-        modificationLock.requestModificationLock();
+      acquireSharedLock();
       try {
-        acquireSharedLock();
-        try {
-          markStorageDirty();
-          return indexEngine.remove(key);
-        } finally {
-          releaseSharedLock();
-        }
+        markStorageDirty();
+        return indexEngine.remove(key);
       } finally {
-        if (modificationLock != null)
-          modificationLock.releaseModificationLock();
+        releaseSharedLock();
       }
     } finally {
       if (!txIsActive)
@@ -551,21 +538,13 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       keyLockManager.lockAllExclusive();
 
     try {
-      if (modificationLock != null)
-        modificationLock.requestModificationLock();
-
+      acquireSharedLock();
       try {
-        acquireSharedLock();
-        try {
-          markStorageDirty();
-          indexEngine.clear();
-          return this;
-        } finally {
-          releaseSharedLock();
-        }
+        markStorageDirty();
+        indexEngine.clear();
+        return this;
       } finally {
-        if (modificationLock != null)
-          modificationLock.releaseModificationLock();
+        releaseSharedLock();
       }
     } finally {
       if (!txIsActive)
@@ -574,48 +553,33 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   public OIndexInternal<T> delete() {
-    if (modificationLock != null)
-      modificationLock.requestModificationLock();
+    acquireExclusiveLock();
 
     try {
-      acquireExclusiveLock();
+      markStorageDirty();
+      indexEngine.delete();
 
-      try {
-        markStorageDirty();
-        indexEngine.delete();
+      // REMOVE THE INDEX ALSO FROM CLASS MAP
+      if (getDatabase().getMetadata() != null)
+        getDatabase().getMetadata().getIndexManager().removeClassPropertyIndex(this);
 
-        // REMOVE THE INDEX ALSO FROM CLASS MAP
-        if (getDatabase().getMetadata() != null)
-          getDatabase().getMetadata().getIndexManager().removeClassPropertyIndex(this);
+      removeValuesContainer();
 
-        removeValuesContainer();
+      return this;
 
-        return this;
-
-      } finally {
-        releaseExclusiveLock();
-      }
     } finally {
-      if (modificationLock != null)
-        modificationLock.releaseModificationLock();
+      releaseExclusiveLock();
     }
   }
 
   @Override
   public void deleteWithoutIndexLoad(String indexName) {
-    if (modificationLock != null)
-      modificationLock.requestModificationLock();
+    acquireExclusiveLock();
     try {
-      acquireExclusiveLock();
-      try {
-        markStorageDirty();
-        indexEngine.deleteWithoutLoad(indexName);
-      } finally {
-        releaseExclusiveLock();
-      }
+      markStorageDirty();
+      indexEngine.deleteWithoutLoad(indexName);
     } finally {
-      if (modificationLock != null)
-        modificationLock.releaseModificationLock();
+      releaseExclusiveLock();
     }
   }
 
@@ -846,21 +810,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   public OIndexDefinition getDefinition() {
     return indexDefinition;
-  }
-
-  public void acquireModificationLock() {
-    if (modificationLock != null)
-      modificationLock.requestModificationLock();
-  }
-
-  public void releaseModificationLock() {
-    try {
-      if (modificationLock != null)
-        modificationLock.releaseModificationLock();
-    } catch (IllegalMonitorStateException e) {
-      OLogManager.instance().error(this, "Error on releasing index lock against %s", e, getName());
-      throw e;
-    }
   }
 
   @Override

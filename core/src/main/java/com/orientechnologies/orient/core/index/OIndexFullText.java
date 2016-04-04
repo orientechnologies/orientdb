@@ -91,55 +91,47 @@ public class OIndexFullText extends OIndexMultiValues {
       keyLockManager.acquireExclusiveLock(key);
 
     try {
-      if (modificationLock != null)
-        modificationLock.requestModificationLock();
+      final Set<String> words = splitIntoWords(key.toString());
 
-      try {
-        final Set<String> words = splitIntoWords(key.toString());
+      // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
+      for (final String word : words) {
+        acquireSharedLock();
+        startStorageAtomicOperation();
+        try {
+          Set<OIdentifiable> refs;
 
-        // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
-        for (final String word : words) {
-          acquireSharedLock();
-          startStorageAtomicOperation();
-          try {
-            Set<OIdentifiable> refs;
+          // SEARCH FOR THE WORD
+          refs = indexEngine.get(word);
 
-            // SEARCH FOR THE WORD
-            refs = indexEngine.get(word);
+          if (refs == null) {
+            // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+            if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+              boolean durable = false;
+              if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+                durable = true;
 
-            if (refs == null) {
-              // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-              if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-                boolean durable = false;
-                if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-                  durable = true;
-
-                refs = new OIndexRIDContainer(getName(), durable);
-              } else {
-                refs = new OMVRBTreeRIDSet();
-                ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
-              }
+              refs = new OIndexRIDContainer(getName(), durable);
+            } else {
+              refs = new OMVRBTreeRIDSet();
+              ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
             }
-
-            // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-            refs.add(iSingleValue);
-
-            // SAVE THE INDEX ENTRY
-            indexEngine.put(word, refs);
-
-            commitStorageAtomicOperation();
-          } catch (RuntimeException e) {
-            rollbackStorageAtomicOperation();
-            throw new OIndexException("Error during put of key - value entry", e);
-          } finally {
-            releaseSharedLock();
           }
+
+          // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+          refs.add(iSingleValue);
+
+          // SAVE THE INDEX ENTRY
+          indexEngine.put(word, refs);
+
+          commitStorageAtomicOperation();
+        } catch (RuntimeException e) {
+          rollbackStorageAtomicOperation();
+          throw new OIndexException("Error during put of key - value entry", e);
+        } finally {
+          releaseSharedLock();
         }
-        return this;
-      } finally {
-        if (modificationLock != null)
-          modificationLock.releaseModificationLock();
       }
+      return this;
     } finally {
       if (!txIsActive)
         keyLockManager.releaseExclusiveLock(key);
@@ -164,42 +156,34 @@ public class OIndexFullText extends OIndexMultiValues {
     if (!txIsActive)
       keyLockManager.acquireExclusiveLock(key);
     try {
-      if (modificationLock != null)
-        modificationLock.requestModificationLock();
+      final Set<String> words = splitIntoWords(key.toString());
+      boolean removed = false;
 
-      try {
-        final Set<String> words = splitIntoWords(key.toString());
-        boolean removed = false;
+      for (final String word : words) {
+        acquireSharedLock();
+        startStorageAtomicOperation();
+        try {
 
-        for (final String word : words) {
-          acquireSharedLock();
-          startStorageAtomicOperation();
-          try {
-
-            final Set<OIdentifiable> recs = indexEngine.get(word);
-            if (recs != null && !recs.isEmpty()) {
-              if (recs.remove(value)) {
-                if (recs.isEmpty())
-                  indexEngine.remove(word);
-                else
-                  indexEngine.put(word, recs);
-                removed = true;
-              }
+          final Set<OIdentifiable> recs = indexEngine.get(word);
+          if (recs != null && !recs.isEmpty()) {
+            if (recs.remove(value)) {
+              if (recs.isEmpty())
+                indexEngine.remove(word);
+              else
+                indexEngine.put(word, recs);
+              removed = true;
             }
-            commitStorageAtomicOperation();
-          } catch (RuntimeException e) {
-            rollbackStorageAtomicOperation();
-            throw new OIndexException("Error during removal of entry by key and value", e);
-          } finally {
-            releaseSharedLock();
           }
+          commitStorageAtomicOperation();
+        } catch (RuntimeException e) {
+          rollbackStorageAtomicOperation();
+          throw new OIndexException("Error during removal of entry by key and value", e);
+        } finally {
+          releaseSharedLock();
         }
-
-        return removed;
-      } finally {
-        if (modificationLock != null)
-          modificationLock.releaseModificationLock();
       }
+
+      return removed;
     } finally {
       if (!txIsActive)
         keyLockManager.releaseExclusiveLock(key);

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableBoolean;
@@ -98,7 +99,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final String             PROFILER_DELETE_RECORD;
   private final    Map<String, OCluster>            clusterMap           = new HashMap<String, OCluster>();
   private volatile ThreadLocal<OStorageTransaction> transaction          = new ThreadLocal<OStorageTransaction>();
-  private final    OModificationLock                modificationLock     = new OModificationLock();
   private final    AtomicBoolean                    checkpointInProgress = new AtomicBoolean();
   protected volatile OWriteAheadLog          writeAheadLog;
   private            OStorageRecoverListener recoverListener;
@@ -229,14 +229,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void open(final OToken iToken, final Map<String, Object> iProperties) {
     open(iToken.getUserName(), "", iProperties);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public OModificationLock getModificationLock() {
-    return modificationLock;
   }
 
   public void create(final Map<String, Object> iProperties) {
@@ -410,7 +402,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkOpeness();
     stateLock.acquireReadLock();
     try {
-      dataLock.acquireExclusiveLock();
+      final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
       try {
         checkOpeness();
         final long start = System.currentTimeMillis();
@@ -424,7 +416,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         return pageErrors.length == 0;
       } finally {
-        dataLock.releaseExclusiveLock();
+        atomicOperationsManager.releaseAtomicOperations(lockId);
       }
     } finally {
       stateLock.releaseReadLock();
@@ -611,47 +603,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return writeCache;
   }
 
-  public void freeze(boolean throwException, int clusterId) {
-    checkOpeness();
-    stateLock.acquireReadLock();
-    try {
-      checkOpeness();
-
-      final OCluster cluster = getClusterById(clusterId);
-
-      final String name = cluster.getName();
-      if (OMetadataDefault.CLUSTER_INDEX_NAME.equals(name) || OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
-        throw new IllegalArgumentException("It is impossible to freeze and release index or manual index cluster!");
-      }
-
-      cluster.getExternalModificationLock().prohibitModifications(throwException);
-
-      try {
-        cluster.synch();
-      } catch (IOException e) {
-        throw new OStorageException("Error on synch cluster '" + name + "'", e);
-      }
-    } finally {
-      stateLock.releaseReadLock();
-    }
-  }
-
-  public void release(int clusterId) {
-    stateLock.acquireReadLock();
-    try {
-      final OCluster cluster = getClusterById(clusterId);
-
-      final String name = cluster.getName();
-      if (OMetadataDefault.CLUSTER_INDEX_NAME.equals(name) || OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
-        throw new IllegalArgumentException("It is impossible to freeze and release index or manualindex cluster!");
-      }
-
-      cluster.getExternalModificationLock().allowModifications();
-    } finally {
-      stateLock.releaseReadLock();
-    }
-  }
-
   public long count(final int iClusterId) {
     return count(iClusterId, false);
   }
@@ -764,28 +715,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
     try {
-      cluster.getExternalModificationLock().requestModificationLock();
+      dataLock.acquireSharedLock();
       try {
-        modificationLock.requestModificationLock();
-        try {
-          dataLock.acquireSharedLock();
-          try {
-            checkOpeness();
+        checkOpeness();
 
-            return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos);
-          } finally {
-            dataLock.releaseSharedLock();
-          }
-        } finally {
-          modificationLock.releaseModificationLock();
-        }
+        return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos);
       } finally {
-        cluster.getExternalModificationLock().releaseModificationLock();
-        Orient.instance().getProfiler()
-            .stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer, "db.*.createRecord");
+        dataLock.releaseSharedLock();
       }
     } finally {
       stateLock.releaseReadLock();
+      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer, "db.*.createRecord");
     }
   }
 
@@ -876,21 +816,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           final int clusterId = entry.getKey();
           final OCluster clusterSegment = getClusterById(clusterId);
 
-          clusterSegment.getExternalModificationLock().requestModificationLock();
-          try {
-
-            for (ORecordId rid : entry.getValue()) {
-
-              lockManager.acquireLock(rid, OLockManager.LOCK.SHARED);
-              try {
-                records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(clusterSegment, rid)));
-              } finally {
-                lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
-              }
+          for (ORecordId rid : entry.getValue()) {
+            lockManager.acquireLock(rid, OLockManager.LOCK.SHARED);
+            try {
+              records.add(new OPair<ORecordId, ORawBuffer>(rid, doReadRecord(clusterSegment, rid)));
+            } finally {
+              lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
             }
-
-          } finally {
-            clusterSegment.getExternalModificationLock().releaseModificationLock();
           }
         }
 
@@ -941,38 +873,27 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     }
 
+    final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
     try {
-      final long timer = Orient.instance().getProfiler().startChrono();
-      cluster.getExternalModificationLock().requestModificationLock();
+      // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
+      lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE);
       try {
-        modificationLock.requestModificationLock();
+        dataLock.acquireSharedLock();
         try {
-          // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
-          lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE);
-          try {
-            dataLock.acquireSharedLock();
-            try {
-              checkOpeness();
+          checkOpeness();
 
-              // UPDATE IT
-              return doUpdateRecord(rid, updateContent, content, version, recordType, callback, cluster);
-            } finally {
-              dataLock.releaseSharedLock();
-            }
-          } finally {
-            lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
-          }
+          // UPDATE IT
+          return doUpdateRecord(rid, updateContent, content, version, recordType, callback, cluster);
         } finally {
-          modificationLock.releaseModificationLock();
+          dataLock.releaseSharedLock();
         }
       } finally {
-        cluster.getExternalModificationLock().releaseModificationLock();
-        Orient.instance().getProfiler()
-            .stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
+        lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
       }
     } finally {
       stateLock.releaseReadLock();
+      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
     }
   }
 
@@ -1009,33 +930,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
     try {
-      cluster.getExternalModificationLock().requestModificationLock();
+      lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE);
       try {
-        modificationLock.requestModificationLock();
+        dataLock.acquireSharedLock();
         try {
-          lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE);
-          try {
-            dataLock.acquireSharedLock();
-            try {
-              checkOpeness();
+          checkOpeness();
 
-              return doDeleteRecord(rid, version, cluster);
-            } finally {
-              dataLock.releaseSharedLock();
-            }
-          } finally {
-            lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
-          }
+          return doDeleteRecord(rid, version, cluster);
         } finally {
-          modificationLock.releaseModificationLock();
+          dataLock.releaseSharedLock();
         }
       } finally {
-        cluster.getExternalModificationLock().releaseModificationLock();
-        Orient.instance().getProfiler()
-            .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
+        lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
       }
     } finally {
       stateLock.releaseReadLock();
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
     }
   }
 
@@ -1056,36 +967,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     }
 
+    final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
     try {
-      final long timer = Orient.instance().getProfiler().startChrono();
-      cluster.getExternalModificationLock().requestModificationLock();
+      lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE);
       try {
-        modificationLock.requestModificationLock();
+        dataLock.acquireSharedLock();
         try {
-          lockManager.acquireLock(rid, OLockManager.LOCK.EXCLUSIVE);
-          try {
-            dataLock.acquireSharedLock();
-            try {
-              checkOpeness();
+          checkOpeness();
 
-              return doHideMethod(rid, cluster);
-            } finally {
-              dataLock.releaseSharedLock();
-            }
-          } finally {
-            lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
-          }
+          return doHideMethod(rid, cluster);
         } finally {
-          modificationLock.releaseModificationLock();
+          dataLock.releaseSharedLock();
         }
       } finally {
-        cluster.getExternalModificationLock().releaseModificationLock();
-        Orient.instance().getProfiler()
-            .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
+        lockManager.releaseLock(this, rid, OLockManager.LOCK.EXCLUSIVE);
       }
     } finally {
       stateLock.releaseReadLock();
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
     }
   }
 
@@ -1094,19 +995,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireReadLock();
     try {
       if (iExclusiveLock) {
-        modificationLock.requestModificationLock();
-        try {
-          return super.callInLock(iCallable, true);
-        } finally {
-          modificationLock.releaseModificationLock();
-        }
+        return super.callInLock(iCallable, true);
       } else {
         return super.callInLock(iCallable, false);
       }
     } finally {
       stateLock.releaseReadLock();
-    }
-  }
+    }  }
 
   public Set<String> getClusterNames() {
     checkOpeness();
@@ -1161,62 +1056,57 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireReadLock();
     try {
       try {
-        modificationLock.requestModificationLock();
+        dataLock.acquireExclusiveLock();
         try {
-          dataLock.acquireExclusiveLock();
-          try {
 
-            checkOpeness();
+          checkOpeness();
 
-            if (writeAheadLog == null && clientTx.isUsingLog())
-              throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
+          if (writeAheadLog == null && clientTx.isUsingLog())
+            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
 
-            makeStorageDirty();
-            startStorageTx(clientTx);
+          makeStorageDirty();
+          startStorageTx(clientTx);
 
-            final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
+          final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
-            while (clientTx.getCurrentRecordEntries().iterator().hasNext()) {
-              for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries())
-                tmpEntries.add(txEntry);
+          while (clientTx.getCurrentRecordEntries().iterator().hasNext()) {
+            for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries())
+              tmpEntries.add(txEntry);
 
-              clientTx.clearRecordEntries();
+            clientTx.clearRecordEntries();
 
-              for (ORecordOperation txEntry : tmpEntries) {
-                if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
-                  final ORecord record = txEntry.getRecord();
-                  if (record instanceof ODocument)
-                    ((ODocument) record).validate();
-                }
+            for (ORecordOperation txEntry : tmpEntries) {
+              if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+                final ORecord record = txEntry.getRecord();
+                if (record instanceof ODocument)
+                  ((ODocument) record).validate();
               }
-              for (ORecordOperation txEntry : tmpEntries)
-                // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-                commitEntry(clientTx, txEntry);
-
             }
+            for (ORecordOperation txEntry : tmpEntries)
+              // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
+              commitEntry(clientTx, txEntry);
 
-            if (callback != null)
-              callback.run();
-
-            endStorageTx();
-
-            OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), true);
-
-          } catch (Exception e) {
-            // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
-            OLogManager.instance()
-                .debug(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e, clientTx.getId());
-            rollback(clientTx);
-            if (e instanceof OException)
-              throw ((OException) e);
-            else
-              throw new OStorageException("Error during transaction commit.", e);
-          } finally {
-            transaction.set(null);
-            dataLock.releaseExclusiveLock();
           }
+
+          if (callback != null)
+            callback.run();
+
+          endStorageTx();
+
+          OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), true);
+
+        } catch (Exception e) {
+          // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+          OLogManager.instance()
+              .debug(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e, clientTx.getId());
+          rollback(clientTx);
+          if (e instanceof OException)
+            throw ((OException) e);
+          else
+            throw new OStorageException("Error during transaction commit.", e);
         } finally {
-          modificationLock.releaseModificationLock();
+          transaction.set(null);
+          dataLock.releaseExclusiveLock();
         }
       } finally {
         if (databaseRecord != null)
@@ -1232,35 +1122,30 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkOpeness();
     stateLock.acquireReadLock();
     try {
-      modificationLock.requestModificationLock();
+      dataLock.acquireExclusiveLock();
       try {
-        dataLock.acquireExclusiveLock();
-        try {
-          checkOpeness();
+        checkOpeness();
 
-          if (transaction.get() == null)
-            return;
+        if (transaction.get() == null)
+          return;
 
-          if (writeAheadLog == null)
-            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
+        if (writeAheadLog == null)
+          throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
 
-          if (transaction.get().getClientTx().getId() != clientTx.getId())
-            throw new OStorageException(
-                "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
+        if (transaction.get().getClientTx().getId() != clientTx.getId())
+          throw new OStorageException(
+              "Passed in and active transaction are different transactions. Passed in transaction cannot be rolled back.");
 
-          makeStorageDirty();
-          rollbackStorageTx();
+        makeStorageDirty();
+        rollbackStorageTx();
 
-          OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
+        OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
 
-        } catch (IOException e) {
-          throw new OStorageException("Error during transaction rollback.", e);
-        } finally {
-          transaction.set(null);
-          dataLock.releaseExclusiveLock();
-        }
+      } catch (IOException e) {
+        throw new OStorageException("Error during transaction rollback.", e);
       } finally {
-        modificationLock.releaseModificationLock();
+        transaction.set(null);
+        dataLock.releaseExclusiveLock();
       }
     } finally {
       stateLock.releaseReadLock();
@@ -1278,33 +1163,27 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireReadLock();
     try {
       final long timer = Orient.instance().getProfiler().startChrono();
-      modificationLock.prohibitModifications();
+      final long lockId = atomicOperationsManager.freezeAtomicOperations(null, null);
       try {
-        dataLock.acquireSharedLock();
-        try {
-          checkOpeness();
+        checkOpeness();
 
-          if (writeAheadLog != null) {
-            makeFullCheckpoint();
-            return;
-          }
-
-          writeCache.flush();
-
-          if (configuration != null)
-            configuration.synch();
-
-          clearStorageDirty();
-        } catch (IOException e) {
-          throw new OStorageException("Error on synch storage '" + name + "'", e);
-
-        } finally {
-          dataLock.releaseSharedLock();
-
-          Orient.instance().getProfiler().stopChrono("db." + name + ".synch", "Synch a database", timer, "db.*.synch");
+        if (writeAheadLog != null) {
+          makeFullCheckpoint();
+          return;
         }
+
+        writeCache.flush();
+
+        if (configuration != null)
+          configuration.synch();
+
+        clearStorageDirty();
+      } catch (IOException e) {
+        throw new OStorageException("Error on synch storage '" + name + "'", e);
+
       } finally {
-        modificationLock.allowModifications();
+        atomicOperationsManager.releaseAtomicOperations(lockId);
+        Orient.instance().getProfiler().stopChrono("db." + name + ".synch", "Synch a database", timer, "db.*.synch");
       }
     } finally {
       stateLock.releaseReadLock();
@@ -1434,15 +1313,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return deleteRecord(recordId, recordVersion, iMode, callback).getResult();
   }
 
-  public void freeze(boolean throwException) {
+  public void freeze(final boolean throwException) {
     checkOpeness();
     stateLock.acquireReadLock();
     try {
       checkOpeness();
 
-      modificationLock.prohibitModifications(throwException);
-      synch();
+      final long freezeId;
 
+      if (throwException)
+        freezeId = atomicOperationsManager.freezeAtomicOperations(OModificationOperationProhibitedException.class,
+            "Modification requests are prohibited");
+      else
+        freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
+
+      synch();
       try {
         unlock();
 
@@ -1450,18 +1335,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           configuration.setSoftlyClosed(true);
 
       } catch (IOException e) {
-        modificationLock.allowModifications();
+        atomicOperationsManager.releaseAtomicOperations(freezeId);
         try {
           lock();
         } catch (IOException ignored) {
         }
-        throw new OStorageException("Error on freeze of storage '" + name + "'", e);
+        throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
       }
     } finally {
       stateLock.releaseReadLock();
     }
   }
-
   public void release() {
     try {
       lock();
@@ -1470,10 +1354,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         configuration.setSoftlyClosed(false);
 
     } catch (IOException e) {
-      throw new OStorageException("Error on release of storage '" + name + "'", e);
+      throw OException.wrapException(new OStorageException("Error on release of storage '" + name + "'"), e);
     }
 
-    modificationLock.allowModifications();
+    atomicOperationsManager.releaseAtomicOperations(-1);
   }
 
   public boolean wereDataRestoredAfterOpen() {
@@ -1813,35 +1697,28 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     }
 
+    final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
     try {
-      final long timer = Orient.instance().getProfiler().startChrono();
-      cluster.getExternalModificationLock().requestModificationLock();
+      lockManager.acquireLock(rid, OLockManager.LOCK.SHARED);
       try {
-        lockManager.acquireLock(rid, OLockManager.LOCK.SHARED);
+        ORawBuffer buff;
+        dataLock.acquireSharedLock();
         try {
-          ORawBuffer buff;
-          dataLock.acquireSharedLock();
-          try {
-            checkOpeness();
+          checkOpeness();
 
-            buff = doReadRecordIfNotLatest(cluster, rid, recordVersion);
-            return buff;
-          } finally {
-            dataLock.releaseSharedLock();
-          }
+          buff = doReadRecordIfNotLatest(cluster, rid, recordVersion);
+          return buff;
         } finally {
-          lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
+          dataLock.releaseSharedLock();
         }
       } finally {
-        cluster.getExternalModificationLock().releaseModificationLock();
-
-        Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
+        lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
       }
     } finally {
       stateLock.releaseReadLock();
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
     }
-
   }
 
   private ORawBuffer readRecord(final OCluster clusterSegment, final ORecordId rid) {
@@ -1862,33 +1739,27 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     }
 
+    final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
     try {
-      final long timer = Orient.instance().getProfiler().startChrono();
-      clusterSegment.getExternalModificationLock().requestModificationLock();
+      lockManager.acquireLock(rid, OLockManager.LOCK.SHARED);
       try {
-        lockManager.acquireLock(rid, OLockManager.LOCK.SHARED);
+        ORawBuffer buff;
+        dataLock.acquireSharedLock();
         try {
-          ORawBuffer buff;
-          dataLock.acquireSharedLock();
-          try {
-            checkOpeness();
+          checkOpeness();
 
-            buff = doReadRecord(clusterSegment, rid);
-            return buff;
-          } finally {
-            dataLock.releaseSharedLock();
-          }
+          buff = doReadRecord(clusterSegment, rid);
+          return buff;
         } finally {
-          lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
+          dataLock.releaseSharedLock();
         }
       } finally {
-        clusterSegment.getExternalModificationLock().releaseModificationLock();
-
-        Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
+        lockManager.releaseLock(this, rid, OLockManager.LOCK.SHARED);
       }
     } finally {
       stateLock.releaseReadLock();
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
     }
   }
 
