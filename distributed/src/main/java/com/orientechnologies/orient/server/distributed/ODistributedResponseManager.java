@@ -595,7 +595,13 @@ public class ODistributedResponseManager {
     }
 
     msg.append("Received: ");
-    msg.append(responses);
+    for (Map.Entry<String, Object> response : responses.entrySet()) {
+      msg.append("\n - ");
+      msg.append(response.getKey());
+      msg.append(": ");
+      msg.append(response.getValue());
+    }
+
     return msg.toString();
   }
 
