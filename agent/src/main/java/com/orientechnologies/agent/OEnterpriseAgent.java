@@ -29,13 +29,13 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
@@ -97,7 +97,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
           while (true) {
             ODistributedServerManager manager = OServerMain.server().getDistributedManager();
             if (manager == null) {
-
               if (retry == 5) {
                 break;
               }
@@ -119,6 +118,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
               map.put(EE + manager.getLocalNodeName(), TOKEN);
               break;
             }
+
           }
 
         }
@@ -159,16 +159,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
    */
   @Override
   public void onOpen(final ODatabaseInternal iDatabase) {
-    // if (iDatabase.getProperty(OAuditingLoggingThread.FROM_AUDITING) != null)
-    // // DON'T INSTALL HOOK ON THE DB OPEN INSIDE THE AUDITING THREAD
-    // return;
-    //
-    // final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
-    //
-    // // REGISTER AUDITING
-    // final ODocument auditingCfg = new ODocument();
-    // final OAuditingHook auditing = new OAuditingHook(auditingCfg);
-    // iDatabase.registerHook(auditing);
+
   }
 
   @Override
@@ -181,18 +172,12 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
    */
   @Override
   public void onClose(final ODatabaseInternal iDatabase) {
-    // final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks();
-    // for (ORecordHook h : hooks.keySet())
-    // if (h instanceof OAuditingHook)
-    // ((OAuditingHook) h).shutdown(true);
+
   }
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
-    /*
-     * final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks(); for (ORecordHook h : hooks.keySet()) if (h
-     * instanceof OAuditingHook) ((OAuditingHook) h).shutdown(false);
-     */
+
   }
 
   @Override
@@ -237,7 +222,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.registerStatelessCommand(new OServerCommandAuditing(server));
     listener.registerStatelessCommand(new OServerCommandGetSecurityConfig(server.getSecurity()));
     listener.registerStatelessCommand(new OServerCommandPostSecurityReload(server.getSecurity()));
-
+    listener.registerStatelessCommand(new OServerCommandBackupManager());
   }
 
   private void uninstallCommands() {
@@ -251,6 +236,12 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
     listener.unregisterStatelessCommand(OServerCommandPostBackupDatabase.class);
     listener.unregisterStatelessCommand(OServerCommandGetDeployDb.class);
+    listener.unregisterStatelessCommand(OServerCommandGetSQLProfiler.class);
+    listener.unregisterStatelessCommand(OServerCommandPluginManager.class);
+    listener.unregisterStatelessCommand(OServerCommandGetNode.class);
+    listener.unregisterStatelessCommand(OServerCommandQueryCacheManager.class);
+    listener.unregisterStatelessCommand(OServerCommandAuditing.class);
+    listener.unregisterStatelessCommand(OServerCommandBackupManager.class);
     listener.unregisterStatelessCommand(OServerCommandGetSecurityConfig.class);
     listener.unregisterStatelessCommand(OServerCommandPostSecurityReload.class);
   }

@@ -45,12 +45,12 @@ public class OServerCommandConfiguration extends OServerCommandDistributedScope 
 
     checkSyntax(iRequest.getUrl(), 1, "Syntax error: configuration/");
     if (iRequest.httpMethod.equals("GET")) {
-      return doGet(iRequest, iResponse);
+      return doGetRequest(iRequest, iResponse);
     }
     return false;
   }
 
-  protected boolean doGet(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+  protected boolean doGetRequest(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
 
     if (isLocalNode(iRequest)) {
       try {

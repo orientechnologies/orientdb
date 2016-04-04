@@ -102,7 +102,7 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
     final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
 
     if (f.exists()) {
-      // READ THE FILE
+      // READ THE FILEw
       try {
         final String configurationContent = OIOUtils.readFileAsString(f);
         configuration = new ODocument().fromJSON(configurationContent);

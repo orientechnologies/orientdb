@@ -28,7 +28,6 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
 
   }
 
-
   public void proxyRequest(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
     proxyRequest(iRequest, iResponse, null);
   }
@@ -67,4 +66,28 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
     return (ODatabaseDocumentTx) ((ODatabaseDocumentInternal) localDatabase).getDatabaseOwner();
   }
 
+  @Override
+  public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+
+    if ("GET".equalsIgnoreCase(iRequest.httpMethod)) {
+      doGet(iRequest, iResponse);
+    } else if ("POST".equalsIgnoreCase(iRequest.httpMethod)) {
+      doPost(iRequest, iResponse);
+    } else if ("PUT".equalsIgnoreCase(iRequest.httpMethod)) {
+      doPut(iRequest, iResponse);
+    }
+    return false;
+  }
+
+  protected void doGet(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+
+  }
+
+  protected void doPost(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+
+  }
+
+  protected void doPut(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+
+  }
 }
