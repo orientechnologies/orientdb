@@ -45,7 +45,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  */
 public class OServerAdmin {
   protected OStorageRemote        storage;
-  protected OStorageRemoteSession session      = new OStorageRemoteSession();
+  protected OStorageRemoteSession session      = new OStorageRemoteSession(-1);
   protected String                clientType   = OStorageRemote.DRIVER_NAME;
   protected boolean               collectStats = true;
 

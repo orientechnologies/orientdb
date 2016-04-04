@@ -86,7 +86,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public static final  String        PARAM_CONNECTION_STRATEGY = "connectionStrategy";
-  public static final  String        PARAM_DB_TYPE             = "dbtype";
   private static final String        DEFAULT_HOST              = "localhost";
   private static final int           DEFAULT_PORT              = 2424;
   private static final int           DEFAULT_SSL_PORT          = 2434;
@@ -112,8 +111,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private OCluster[] clusters = OCommonConst.EMPTY_CLUSTER_ARRAY;
   private          int                               defaultClusterId;
   private          OStorageRemoteAsynchEventListener asynchEventListener;
-  private volatile String                            connectionUserName;
-  private          String                            connectionUserPassword;
   private          Map<String, Object>               connectionOptions;
   private          OEngineRemote                     engine;
   private          String                            recordFormat;
@@ -157,7 +154,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         if (!network.getServerURL().equals(session.serverURL)
             || session.tokens.get(session.serverURL) == null && session.sessionId > 0) {
           // TODO: Remove this workaround in favor of a proper per server authentication.
-          setSessionId(network.getServerURL(), -1, null);
+          setSessionId(network.getServerURL(), session.uniqueClientSessionId, null);
           openRemoteDatabase(network);
           if (!network.tryLock())
             continue;
@@ -226,19 +223,19 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     addUser();
     try {
       OStorageRemoteSession session = getCurrentSession();
-      if (status == STATUS.CLOSED || !iUserName.equals(connectionUserName) || !iUserPassword.equals(connectionUserPassword)
+      if (status == STATUS.CLOSED || !iUserName.equals(session.connectionUserName) || !iUserPassword.equals(session.connectionUserPassword)
           || session.tokens.isEmpty()) {
 
         OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
 
         if (ci != null) {
           ci.intercept(getURL(), iUserName, iUserPassword);
-          connectionUserName = ci.getUsername();
-          connectionUserPassword = ci.getPassword();
+          session.connectionUserName = ci.getUsername();
+          session.connectionUserPassword = ci.getPassword();
         } else // Do Nothing
         {
-          connectionUserName = iUserName;
-          connectionUserPassword = iUserPassword;
+          session.connectionUserName = iUserName;
+          session.connectionUserPassword = iUserPassword;
         }
 
         parseOptions(iOptions);
@@ -343,7 +340,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         if (!checkForClose(iForce))
           return;
       } else {
-        if(!iForce)
+        if (!iForce)
           return;
       }
 
@@ -1656,7 +1653,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   @Override
   public String getUserName() {
-    return connectionUserName;
+    OStorageRemoteSession session = getCurrentSession();
+    if(session == null)
+      return null;
+    return session.connectionUserName;
   }
 
   /**
@@ -1876,10 +1876,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         // @SINCE 1.0rc8
         sendClientInfo(network, DRIVER_NAME, true, true);
-
+        OStorageRemoteSession session = getCurrentSession();
         network.writeString(name);
-        network.writeString(connectionUserName);
-        network.writeString(connectionUserPassword);
+        network.writeString(session.connectionUserName);
+        network.writeString(session.connectionUserPassword);
 
       } finally {
         endRequest(network);
@@ -2184,7 +2184,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       final String serverURL = serverURLs.get(serverURLIndex) + "/" + getName();
 
-      if(currentSession != null)
+      if (currentSession != null)
         currentSession.serverURLIndex = serverURLIndex;
 
       return serverURL;
@@ -2438,8 +2438,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       return null;
     OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(db);
     if (session == null) {
-      session = new OStorageRemoteSession();
-      session.sessionId = sessionSerialId.decrementAndGet();
+      session = new OStorageRemoteSession(sessionSerialId.decrementAndGet());
       ODatabaseDocumentTxInternal.setSessionMetadata(db, session);
     }
     return session;
@@ -2462,9 +2461,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(source);
     if (session != null) {
       //TODO:may run a session reopen
-      OStorageRemoteSession newSession = new OStorageRemoteSession();
-      newSession.sessionId = sessionSerialId.decrementAndGet();
+      OStorageRemoteSession newSession = new OStorageRemoteSession(sessionSerialId.decrementAndGet());
       newSession.tokens.putAll(session.tokens);
+      newSession.connectionUserName = session.connectionUserName;
+      newSession.connectionUserPassword = session.connectionUserPassword;
       ODatabaseDocumentTxInternal.setSessionMetadata(dest, newSession);
     }
     try {
