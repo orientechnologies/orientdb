@@ -186,19 +186,19 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   protected ORecord forceUpdate(final ODistributedRequestId requestId, final ODistributedServerManager iManager,
       final ODatabaseDocumentTx database, final OStorageOperationResult<ORawBuffer> loadedRecord) {
-    // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
-    if (Arrays.equals(loadedRecord.getResult().getBuffer(), content))
-      // SAME CONTENT
-      return getRecord();
-
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "Overwriting content of record %s/%s v.%d reqId=%s previous content: %s (stored) vs %s (network)", database.getName(),
-        rid.toString(), version, requestId, loadedRecord.getResult(), getRecord());
-
     // LOAD IT AS RECORD
     final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager()
         .newInstance(loadedRecord.getResult().recordType);
     ORecordInternal.fill(loadedRecordInstance, rid, loadedRecord.getResult().version, loadedRecord.getResult().getBuffer(), false);
+
+    // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
+    if (Arrays.equals(loadedRecord.getResult().getBuffer(), content))
+      // SAME CONTENT
+      return loadedRecordInstance;
+
+    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+        "Overwriting content of record %s/%s v.%d reqId=%s previous content: %s (stored) vs %s (network)", database.getName(),
+        rid.toString(), version, requestId, loadedRecord.getResult(), getRecord());
 
     if (loadedRecord.getResult().recordType == ODocument.RECORD_TYPE) {
       // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
@@ -282,7 +282,10 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public ODeleteRecordTask getUndoTask(ODistributedRequestId reqId) {
-    return new ODeleteRecordTask(rid, -1).setDelayed(false);
+    final ODeleteRecordTask task = new ODeleteRecordTask(rid, -1);
+    task.setDelayed(false);
+    task.setLockRecords(false);
+    return task;
   }
 
   @Override

@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
@@ -46,15 +47,15 @@ import java.util.Set;
  * Distributed create record task used for synchronization.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
-  protected ORecordId         rid;
-  protected int               version;
-  protected int               partitionKey = -1;
-  protected boolean           lockRecords  = true;
+  protected ORecordId          rid;
+  protected int                version;
+  protected int                partitionKey = -1;
+  protected boolean            lockRecords  = true;
+  protected OLogSequenceNumber lastLSN;
 
-  protected transient ORecord previousRecord;
+  protected transient ORecord  previousRecord;
 
   public OAbstractRecordReplicatedTask() {
   }
@@ -152,11 +153,24 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
       throw new ORecordNotFoundException(rid);
   }
 
+  public OLogSequenceNumber getLastLSN() {
+    return lastLSN;
+  }
+
+  public void setLastLSN(final OLogSequenceNumber lastLSN) {
+    this.lastLSN = lastLSN;
+  }
+
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeUTF(rid.toString());
     out.writeInt(version);
     out.writeInt(partitionKey);
+    if (lastLSN != null) {
+      out.writeBoolean(true);
+      lastLSN.writeExternal(out);
+    } else
+      out.writeBoolean(false);
   }
 
   @Override
@@ -164,6 +178,9 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     rid = new ORecordId(in.readUTF());
     version = in.readInt();
     partitionKey = in.readInt();
+    final boolean hasLastLSN = in.readBoolean();
+    if (hasLastLSN)
+      lastLSN = new OLogSequenceNumber(in);
   }
 
   public void setLockRecords(final boolean lockRecords) {

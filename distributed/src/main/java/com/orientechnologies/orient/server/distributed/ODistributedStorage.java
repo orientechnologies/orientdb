@@ -569,6 +569,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               final OPlaceholder localPlaceholder = new OPlaceholder(iRecordId, localResult.getResult().recordVersion);
 
               final OCreateRecordTask task = new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType);
+              task.setLastLSN(wrapped.getLSN());
 
               if (!nodes.isEmpty()) {
                 if (syncMode) {
@@ -774,9 +775,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   task.checkRecordExists();
 
                   localResult = (OStorageOperationResult<Integer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
-
                     @Override
                     public Object call() throws Exception {
+                      task.setLastLSN(wrapped.getLSN());
                       return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
                     }
                   });
@@ -898,6 +899,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
                     @Override
                     public Object call() throws Exception {
+                      task.setLastLSN(wrapped.getLSN());
                       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
                     }
                   });
@@ -964,7 +966,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   private Object executeRecordOperationInLock(final boolean iUnlockAtTheEnd, final ORecordId rid,
-      final OCallable<Object, OCallable<Void, ODistributedRequestId>> callback) throws InterruptedException {
+      final OCallable<Object, OCallable<Void, ODistributedRequestId>> callback) throws Exception {
 
     final AtomicBoolean acquiredClusterLock = new AtomicBoolean(false);
     final AtomicBoolean acquiredRecordLock = new AtomicBoolean(false);
@@ -991,7 +993,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       };
 
-      return callback.call(unlockCallback);
+      return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+        @Override
+        public Object call() throws Exception {
+          return callback.call(unlockCallback);
+        }
+      });
 
     } finally {
       if (iUnlockAtTheEnd) {
@@ -1600,7 +1607,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         databaseAlreadyDefined = true;
 
       try {
-
         undoTask.execute(reqId, dManager.getServerInstance(), dManager, database);
 
       } catch (Exception e) {

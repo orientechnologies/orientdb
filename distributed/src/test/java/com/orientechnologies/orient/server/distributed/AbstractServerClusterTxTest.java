@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 /**
@@ -54,8 +55,9 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
         try {
           final int id = baseCount + i;
 
-          int retry = 0;
+          final String uid = UUID.randomUUID().toString();
 
+          int retry;
           for (retry = 0; retry < maxRetries; retry++) {
             if ((i + 1) % printBlocksOf == 0)
               System.out.println("\nWriter " + database.getURL() + "(thread=" + threadId + ") managed " + (i + 1) + "/" + count
@@ -65,12 +67,12 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               database.begin();
 
             try {
-              ODocument person = createRecord(database, id);
+              ODocument person = createRecord(database, id, uid);
               updateRecord(database, person);
               checkRecord(database, person);
               deleteRecord(database, person);
               // checkRecordIsDeleted(database, person);
-              person = createRecord(database, id);
+              person = createRecord(database, id, uid);
               updateRecord(database, person);
               checkRecord(database, person);
 
