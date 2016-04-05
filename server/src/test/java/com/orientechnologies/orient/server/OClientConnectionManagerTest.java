@@ -26,10 +26,14 @@ public class OClientConnectionManagerTest {
   @Mock
   private OTokenHandler handler;
 
+  @Mock
+  private OServer server;
+
   @Before
   public void before() throws NoSuchAlgorithmException, InvalidKeyException, IOException {
     MockitoAnnotations.initMocks(this);
     Mockito.when(handler.parseBinaryToken(Mockito.any(byte[].class))).thenReturn(token);
+    Mockito.when(protocol.getServer()).thenReturn(server);
   }
 
   @Test
@@ -39,7 +43,7 @@ public class OClientConnectionManagerTest {
     assertNotNull(ret);
     OClientConnection ret1 = manager.getConnection(ret.getId(), protocol);
     assertSame(ret, ret1);
-    manager.disconnect(ret);
+    manager.disconnect(server, ret);
 
     OClientConnection ret2 = manager.getConnection(ret.getId(), protocol);
     assertNull(ret2);
@@ -61,13 +65,13 @@ public class OClientConnectionManagerTest {
     OClientConnection ret2 = manager.reConnect(protocol, atoken, token);
     assertNotSame(ret1, ret2);
     assertEquals(sess.getConnections().size(), 2);
-    manager.disconnect(ret);
+    manager.disconnect(server, ret);
 
     assertEquals(sess.getConnections().size(), 1);
     OClientConnection ret3 = manager.getConnection(ret.getId(), protocol);
     assertNull(ret3);
 
-    manager.disconnect(ret2);
+    manager.disconnect(server, ret2);
     assertEquals(sess.getConnections().size(), 0);
     OClientConnection ret4 = manager.getConnection(ret2.getId(), protocol);
     assertNull(ret4);
