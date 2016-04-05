@@ -412,15 +412,20 @@ public class OObjectEntitySerializer {
       registerClass(iClass);
   }
 
+  public static synchronized void registerClass(final Class<?> iClass) {
+    registerClass(iClass, true);
+  }
+
   /**
    * Registers the class informations that will be used in serialization, deserialization and lazy loading of it. If already
    * registered does nothing.
    *
    * @param iClass
    *          :- the Class<?> to register
+   * @param forceReload whether or not to force the reload of the schema before registering
    */
   @SuppressWarnings("unchecked")
-  public static synchronized void registerClass(final Class<?> iClass) {
+  public static synchronized void registerClass(final Class<?> iClass, boolean forceReload) {
     final OObjectEntitySerializedSchema serializedSchema = getCurrentSerializedSchema();
     if (serializedSchema == null)
       return;
@@ -438,7 +443,9 @@ public class OObjectEntitySerializer {
 
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
     final OSchema oSchema = db.getMetadata().getSchema();
-    oSchema.reload();
+    if (forceReload){
+      oSchema.reload();
+    }
 
     if (!oSchema.existsClass(iClass.getSimpleName())) {
       if (Modifier.isAbstract(iClass.getModifiers()))
@@ -655,7 +662,6 @@ public class OObjectEntitySerializer {
           reloadSchema = true;
         } else {
           oSuperClass = oSchema.getClass(currentClass.getSimpleName());
-          reloadSchema = true;
         }
 
         if (!currentOClass.getSuperClasses().contains(oSuperClass)) {
