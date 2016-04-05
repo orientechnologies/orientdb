@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
@@ -194,5 +195,43 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   public OCollate getCollate() {
     return collate;
+  }
+
+  /**
+   * get the collate of this expression, based on the fully evaluated field chain starting from the passed object.
+   * @param doc the root element (document?) of this field chain
+   * @return the collate, null if no collate is defined
+   */
+  public OCollate getCollate(Object doc) {
+    if (collate != null || operationsChain == null || !isFieldChain()) {
+      return collate;
+    }
+    if (!(doc instanceof OIdentifiable)) {
+      return null;
+    }
+    FieldChain chain = getFieldChain();
+    ODocument lastDoc = ((OIdentifiable) doc).getRecord();
+    for (int i = 0; i < chain.getItemCount() - 1; i++) {
+      if (lastDoc == null) {
+        return null;
+      }
+      Object nextDoc = lastDoc.field(chain.getItemName(i));
+      if (nextDoc == null || !(nextDoc instanceof OIdentifiable)) {
+        return null;
+      }
+      lastDoc = ((OIdentifiable) nextDoc).getRecord();
+    }
+    if (lastDoc == null) {
+      return null;
+    }
+    OClass schemaClass = lastDoc.getSchemaClass();
+    if (schemaClass == null) {
+      return null;
+    }
+    OProperty property = schemaClass.getProperty(chain.getItemName(chain.getItemCount() - 1));
+    if (property == null) {
+      return null;
+    }
+    return property.getCollate();
   }
 }
