@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import static java.sql.ResultSet.CONCUR_READ_ONLY;
 import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
@@ -134,5 +135,15 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     assertThat(rs.getString("stringKey")).isEqualTo("1");
     assertThat(rs.getInt("intKey")).isEqualTo(1);
     //
+  }
+
+  @Test(expected = SQLException.class)
+  public void shouldTrhowSqlExceptionOnError() throws SQLException {
+
+    String query = "select sequence('?').next()";
+    PreparedStatement stmt = conn.prepareStatement(query);
+    stmt.setString(1, "theSequence");
+    stmt.executeQuery();
+
   }
 }

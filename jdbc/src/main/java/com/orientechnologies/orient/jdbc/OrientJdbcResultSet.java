@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -38,15 +38,15 @@ import java.util.*;
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci--at--gmail.com)
  */
 public class OrientJdbcResultSet implements ResultSet {
-  private List<ODocument>     records  = null;
+  private List<ODocument> records = null;
   private OrientJdbcStatement statement;
-  private int                 cursor   = -1;
-  private int                 rowCount = 0;
-  private ODocument           document;
-  private String[]            fieldNames;
-  private int                 type;
-  private int                 concurrency;
-  private int                 holdability;
+  private int cursor   = -1;
+  private int rowCount = 0;
+  private ODocument document;
+  private String[]  fieldNames;
+  private int       type;
+  private int       concurrency;
+  private int       holdability;
 
   protected OrientJdbcResultSet(final OrientJdbcStatement iOrientJdbcStatement, final List<ODocument> iRecords, final int type,
       final int concurrency, int holdability) throws SQLException {
@@ -59,7 +59,7 @@ public class OrientJdbcResultSet implements ResultSet {
       fieldNames = document.fieldNames();
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(iOrientJdbcStatement.database);
+    activateDatabaseOnCurrentThread();
     if (type == TYPE_FORWARD_ONLY || type == TYPE_SCROLL_INSENSITIVE || type == TYPE_SCROLL_SENSITIVE)
       this.type = type;
     else
@@ -69,18 +69,20 @@ public class OrientJdbcResultSet implements ResultSet {
     if (concurrency == CONCUR_READ_ONLY || concurrency == CONCUR_UPDATABLE)
       this.concurrency = concurrency;
     else
-      throw new SQLException("Bad ResultSet Concurrency type: " + concurrency + " instead of one of the following values: "
-          + CONCUR_READ_ONLY + " or" + CONCUR_UPDATABLE);
+      throw new SQLException(
+          "Bad ResultSet Concurrency type: " + concurrency + " instead of one of the following values: " + CONCUR_READ_ONLY + " or"
+              + CONCUR_UPDATABLE);
 
     if (holdability == HOLD_CURSORS_OVER_COMMIT || holdability == CLOSE_CURSORS_AT_COMMIT)
       this.holdability = holdability;
     else
-      throw new SQLException("Bad ResultSet Holdability type: " + holdability + " instead of one of the following values: "
-          + HOLD_CURSORS_OVER_COMMIT + " or" + CLOSE_CURSORS_AT_COMMIT);
+      throw new SQLException(
+          "Bad ResultSet Holdability type: " + holdability + " instead of one of the following values: " + HOLD_CURSORS_OVER_COMMIT
+              + " or" + CLOSE_CURSORS_AT_COMMIT);
   }
 
-  private void setDatabaseOnThreadLocalInstance() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(statement.database);
+  private void activateDatabaseOnCurrentThread() {
+    statement.database.activateOnCurrentThread();
   }
 
   public void close() throws SQLException {
@@ -362,7 +364,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public Date getDate(final String columnLabel) throws SQLException {
     try {
-      setDatabaseOnThreadLocalInstance();
+      activateDatabaseOnCurrentThread();
 
       java.util.Date date = document.field(columnLabel, OType.DATETIME);
       return date != null ? new Date(date.getTime()) : null;
@@ -379,7 +381,7 @@ public class OrientJdbcResultSet implements ResultSet {
     if (cal == null)
       throw new SQLException();
     try {
-      setDatabaseOnThreadLocalInstance();
+      activateDatabaseOnCurrentThread();
 
       java.util.Date date = document.field(columnLabel, OType.DATETIME);
       if (date == null)
@@ -387,8 +389,8 @@ public class OrientJdbcResultSet implements ResultSet {
       cal.setTimeInMillis(date.getTime());
       return new Date(cal.getTimeInMillis());
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the date value (calendar) " + "at column '" + columnLabel
-          + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the date value (calendar) " + "at column '" + columnLabel + "'", e);
     }
   }
 
