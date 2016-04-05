@@ -34,7 +34,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-import com.orientechnologies.orient.server.network.protocol.binary.OBinaryNetworkProtocolAbstract;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 import java.io.IOException;
@@ -298,7 +297,7 @@ public class OClientConnectionManager {
   }
 
   private void removeConnectFromSession(OClientConnection connection) {
-    if (connection.getProtocol() instanceof OBinaryNetworkProtocolAbstract) {
+    if (connection.getProtocol() instanceof ONetworkProtocolBinary) {
       byte[] tokenBytes = connection.getTokenBytes();
       OHashToken hashToken = new OHashToken(tokenBytes);
       synchronized (sessions) {
