@@ -115,6 +115,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected OClusterOwnershipAssignmentStrategy                  clusterAssignmentStrategy         = new ODefaultClusterOwnershipAssignmentStrategy(
       this);
 
+  protected Map<String, Long>                                    lastLSNWriting                    = new HashMap<String, Long>();
+
   public OHazelcastPlugin() {
   }
 
@@ -508,8 +510,27 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final Serializable result = (Serializable) task.execute(req.getId(), serverInstance, this, database);
 
       if (result instanceof Throwable && !(result instanceof OException))
+        // EXCEPTION
         ODistributedServerLog.error(this, nodeName, getNodeNameById(req.getId().getNodeId()), DIRECTION.IN,
             "error on executing request %d (%s) on local node: ", (Throwable) result, req.getId(), req.getTask());
+      else {
+        // OK
+        final String sourceNodeName = task.getNodeSource();
+        Long last = lastLSNWriting.get(sourceNodeName);
+        if (last == null)
+          last = 0l;
+
+        if (task instanceof OAbstractRecordReplicatedTask && System.currentTimeMillis() - last > 2000) {
+          final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(req.getDatabaseName());
+          final OLogSequenceNumber lastLSN = ((OAbstractRecordReplicatedTask) task).getLastLSN();
+          ddb.getSyncConfiguration().setLSN(task.getNodeSource(), lastLSN);
+
+          ODistributedServerLog.debug(this, nodeName, task.getNodeSource(), DIRECTION.NONE, "Updating LSN table to the value %s",
+              lastLSN);
+
+          lastLSNWriting.put(sourceNodeName, System.currentTimeMillis());
+        }
+      }
 
       return result;
 
@@ -1859,7 +1880,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   protected ODatabaseDocumentTx installDatabaseOnLocalNode(final ODistributedDatabaseImpl distrDatabase, final String databaseName,
       final String dbPath, final String iNode, final String iDatabaseCompressedFile, final boolean delta) {
-    ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "installing database '%s' to: %s...", databaseName, dbPath);
+    ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "Installing database '%s' to: %s...", databaseName, dbPath);
 
     try {
       final File f = new File(iDatabaseCompressedFile);
@@ -1905,10 +1926,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       };
 
+      final Lock lock = getLock(databaseName + ".cfg");
+      lock.lock();
       try {
         if (delta) {
 
-          new OIncrementalServerSync().importDelta(serverInstance, db, in);
+          new OIncrementalServerSync().importDelta(serverInstance, db, in, iNode);
 
         } else {
 
@@ -1918,6 +1941,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       } finally {
         in.close();
+        lock.unlock();
       }
 
       db.close();

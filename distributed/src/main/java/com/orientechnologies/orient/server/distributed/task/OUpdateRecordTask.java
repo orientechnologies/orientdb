@@ -136,7 +136,9 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       return null;
 
     final int versionCopy = ORecordVersionHelper.setRollbackMode(previousRecord.getVersion());
-    return new OUpdateRecordTask(rid, previousRecord.toStream(), versionCopy, recordType);
+    final OUpdateRecordTask task = new OUpdateRecordTask(rid, previousRecord.toStream(), versionCopy, recordType);
+    task.setLockRecords(false);
+    return task;
   }
 
   @Override

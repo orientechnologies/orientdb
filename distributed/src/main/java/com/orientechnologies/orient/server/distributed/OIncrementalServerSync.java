@@ -63,7 +63,8 @@ public class OIncrementalServerSync {
    * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
    */
-  public void importDelta(final OServer serverInstance, final ODatabaseDocumentTx db, final FileInputStream in) throws IOException {
+  public void importDelta(final OServer serverInstance, final ODatabaseDocumentTx db, final FileInputStream in, final String iNode)
+      throws IOException {
     final String nodeName = serverInstance.getDistributedManager().getLocalNodeName();
 
     try {
@@ -81,7 +82,7 @@ public class OIncrementalServerSync {
           long totalHoles = 0;
           long totalSkipped = 0;
 
-          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+          ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN,
               "Started import of delta for database '" + db.getName() + "'");
 
           long lastLap = System.currentTimeMillis();
@@ -109,7 +110,7 @@ public class OIncrementalServerSync {
                 ORecord newRecord = null;
 
                 if (deleted) {
-                  ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "DELTA <- deleting %s", rid);
+                  ODistributedServerLog.debug(this, nodeName, iNode, DIRECTION.IN, "DELTA <- deleting %s", rid);
 
                   switch (recordStatus) {
                   case REMOVED:
@@ -161,7 +162,7 @@ public class OIncrementalServerSync {
                     // SAVE THE UPDATE RECORD
                     newRecord.save();
 
-                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
+                    ODistributedServerLog.debug(this, nodeName, iNode, DIRECTION.IN,
                         "DELTA <- updating rid=%s type=%d size=%d v=%d content=%s", rid, recordType, recordSize, recordVersion,
                         newRecord);
 
@@ -178,18 +179,20 @@ public class OIncrementalServerSync {
                       try {
                         newRecord.save();
                       } catch (ORecordNotFoundException e) {
-                        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+                        ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN,
                             "DELTA <- error on saving record (not found) rid=%s type=%d size=%d v=%d content=%s", rid, recordType,
                             recordSize, recordVersion, newRecord);
                       } catch (ORecordDuplicatedException e) {
-                        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+                        ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN,
                             "DELTA <- error on saving record (duplicated) rid=%s type=%d size=%d v=%d content=%s", rid, recordType,
                             recordSize, recordVersion, newRecord);
+                        throw OException.wrapException(
+                            new ODistributedDatabaseDeltaSyncException("Error on delta sync: found duplicated record " + rid), e);
                       }
 
                       if (newRecord.getIdentity().getClusterPosition() < clusterPos) {
                         // DELETE THE RECORD TO CREATE A HOLE
-                        ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "DELTA <- creating hole rid=%s",
+                        ODistributedServerLog.debug(this, nodeName, iNode, DIRECTION.IN, "DELTA <- creating hole rid=%s",
                             newRecord.getIdentity());
                         newRecord.delete();
                         totalHoles++;
@@ -197,7 +200,7 @@ public class OIncrementalServerSync {
 
                     } while (newRecord.getIdentity().getClusterPosition() < clusterPos);
 
-                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
+                    ODistributedServerLog.debug(this, nodeName, iNode, DIRECTION.IN,
                         "DELTA <- creating rid=%s type=%d size=%d v=%d content=%s", rid, recordType, recordSize, recordVersion,
                         newRecord);
 
@@ -214,7 +217,7 @@ public class OIncrementalServerSync {
                 final long now = System.currentTimeMillis();
                 if (now - lastLap > 2000) {
                   // DUMP STATS EVERY SECOND
-                  ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN,
+                  ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN,
                       "- %,d total entries: %,d created, %,d updated, %,d deleted, %,d holes, %,d skipped...", totalRecords,
                       totalCreated, totalUpdated, totalDeleted, totalHoles, totalSkipped);
                   lastLap = now;
@@ -228,7 +231,7 @@ public class OIncrementalServerSync {
             }
 
           } catch (Exception e) {
-            ODistributedServerLog.error(this, nodeName, null, DIRECTION.IN,
+            ODistributedServerLog.error(this, nodeName, iNode, DIRECTION.IN,
                 "Error on installing database delta '%s' on local server", e, db.getName());
             throw OException.wrapException(
                 new ODistributedException("Error on installing database delta '" + db.getName() + "' on local server"), e);
@@ -236,7 +239,7 @@ public class OIncrementalServerSync {
             // gzipInput.close();
           }
 
-          ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN,
+          ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN,
               "Installed database delta for '%s'. %d total entries: %d created, %d updated, %d deleted, %d holes, %,d skipped",
               db.getName(), totalRecords, totalCreated, totalUpdated, totalDeleted, totalHoles, totalSkipped);
 
@@ -246,11 +249,9 @@ public class OIncrementalServerSync {
 
       db.activateOnCurrentThread();
 
-      System.out.println("TOTAL PERSON: " + db.countClass("Person") );
-
     } catch (Exception e) {
       // FORCE FULL DATABASE SYNC
-      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE,
+      ODistributedServerLog.error(this, nodeName, iNode, DIRECTION.IN,
           "Error while applying changes of database delta sync on '%s': forcing full database sync...", e, db.getName());
       throw OException
           .wrapException(

@@ -44,34 +44,34 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     reqId = iRequestId;
   }
 
-  public void lock(final ORID rid) {
+  public synchronized void lock(final ORID rid) {
     if (!db.lockRecord(rid, reqId))
       throw new ODistributedRecordLockedException(rid);
 
     acquiredLocks.add(rid);
   }
 
-  public void addUndoTask(final ORemoteTask undoTask) {
-    undoTasks.add(undoTask);
-  }
-
   public ODistributedRequestId getReqId() {
     return reqId;
   }
 
-  public void commit() {
+  public synchronized void addUndoTask(final ORemoteTask undoTask) {
+    undoTasks.add(undoTask);
+  }
+
+  public synchronized void commit() {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
         "Distributed transaction: Committing transaction %s", reqId);
     unlock();
     undoTasks.clear();
   }
 
-  public void fix() {
+  public synchronized void fix() {
     unlock();
     undoTasks.clear();
   }
 
-  public int rollback(final ODatabaseDocumentTx database) {
+  public synchronized int rollback(final ODatabaseDocumentTx database) {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
         "Distributed transaction: rolling back transaction %s (%d ops)", reqId, undoTasks.size());
 

@@ -313,7 +313,7 @@ public class ODistributedWorker extends Thread {
 
           if (localQueue.size() >= OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getValueAsInteger()) {
             // QUEUE FULL, EMPTY THE QUEUE, IGNORE ALL THE NEXT MESSAGES UNTIL A DELTA SYNC IS EXECUTED
-            OLogManager.instance().warn(this,
+            ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
                 "Replication queue is full (retry=%d, queue=%d), scheduling a delta synchronization...", retry + 1,
                 localQueue.size());
 

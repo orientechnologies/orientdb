@@ -16,14 +16,6 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.*;
-
-import org.junit.Assert;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -39,6 +31,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import org.junit.Assert;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.*;
 
 /**
  * Insert records concurrently against the cluster
@@ -75,14 +74,15 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         try {
           final int id = baseCount + i;
 
-          int retry = 0;
+          final String uid = UUID.randomUUID().toString();
 
+          int retry;
           for (retry = 0; retry < maxRetries; retry++) {
             if (useTransactions)
               database.begin();
 
             try {
-              final ODocument person = createRecord(database, id);
+              final ODocument person = createRecord(database, id, uid);
 
               if (!useTransactions) {
                 updateRecord(database, id);
@@ -137,9 +137,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       return null;
     }
 
-    protected ODocument createRecord(ODatabaseDocumentTx database, int i) {
+    protected ODocument createRecord(ODatabaseDocumentTx database, int i, final String uid) {
       final String uniqueId = serverId + "-" + threadId + "-" + i;
-      ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
+      ODocument person = new ODocument("Person").fields("id", uid, "name", "Billy" + uniqueId, "surname",
           "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
       database.save(person);
 
