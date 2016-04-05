@@ -49,7 +49,7 @@ public class OObjectEntityClassHandler extends OEntityManagerClassHandler {
   public synchronized void registerEntityClass(String iClassName, Class<?> iClass, boolean forceSchemaReload) {
     if (!OObjectEntitySerializer.isToSerialize(iClass) && !iClass.isEnum()) {
       OObjectEntitySerializer.registerClass(iClass, forceSchemaReload);
-      super.registerEntityClass(iClassName, iClass);
+      super.registerEntityClass(iClassName, iClass, forceSchemaReload);
     }
   }
 
