@@ -137,4 +137,8 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract
 		
 		return false;		
 	}
+	
+	// Server configuration users are never case sensitive.
+	@Override
+	protected boolean isCaseSensitive() { return false; }
 }

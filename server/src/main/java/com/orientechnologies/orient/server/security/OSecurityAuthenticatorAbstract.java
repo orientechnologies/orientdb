@@ -38,12 +38,14 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
 	private String _Name = "";
 	private boolean _Debug = false;
 	private boolean _Enabled = true;
+	private boolean _CaseSensitive = true;
 	private OServer _Server;
 	private OServerConfigurationManager _ServerConfig;
 	
 	protected OServer getServer() { return _Server; }
 	protected OServerConfigurationManager getServerConfig() { return _ServerConfig; }
 	protected boolean isDebug() { return _Debug; }
+	protected boolean isCaseSensitive() { return _CaseSensitive; }
 	
 	// OSecurityComponent
 	public void active() { }
@@ -67,7 +69,12 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
 		if(jsonConfig.containsField("enabled"))
 		{
 			_Enabled = jsonConfig.field("enabled");
-		}		
+		}
+
+		if(jsonConfig.containsField("caseSensitive"))
+		{
+			_CaseSensitive = jsonConfig.field("caseSensitive");
+		}
 	}
 
 	// OSecurityComponent
@@ -98,16 +105,5 @@ public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthent
 
 	public boolean isAuthorized(final String username, final String resource) { return false; }
 
-/*
-	// Reloads the security authenticator, using the new configuration document.
-	public void reload(final ODocument jsonConfig)
-	{
-		dispose();
-		
-		config(_Server, _ServerConfig, jsonConfig);
-		
-		active();
-	}
-*/	
 	public boolean isSingleSignOnSupported() { return false; }
 }
