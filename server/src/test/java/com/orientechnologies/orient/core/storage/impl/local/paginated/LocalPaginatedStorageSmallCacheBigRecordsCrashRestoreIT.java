@@ -95,12 +95,12 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
     createSchema(testDocumentTx);
 
     List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 8; i++) {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
     System.out.println("Wait for 5 minutes");
-    TimeUnit.MINUTES.sleep(1);
+    TimeUnit.MINUTES.sleep(5);
 
     long lastTs = System.currentTimeMillis();
     process.destroy();
