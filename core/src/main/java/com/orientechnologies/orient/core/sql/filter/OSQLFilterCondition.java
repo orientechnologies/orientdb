@@ -86,7 +86,7 @@ public class OSQLFilterCondition {
     Object r = evaluate(iCurrentRecord, iCurrentResult, right, iContext);
 
     // no collate for regular expressions, otherwise quotes will result in no match
-    final OCollate collate = operator instanceof OQueryOperatorMatches ? null : getCollate();
+    final OCollate collate = operator instanceof OQueryOperatorMatches ? null : getCollate(iCurrentRecord);
 
     final Object[] convertedValues = checkForConversion(iCurrentRecord, l, r, collate);
     if (convertedValues != null) {
@@ -122,6 +122,15 @@ public class OSQLFilterCondition {
       return ((OSQLFilterItemField) left).getCollate();
     } else if (right instanceof OSQLFilterItemField) {
       return ((OSQLFilterItemField) right).getCollate();
+    }
+    return null;
+  }
+
+  public OCollate getCollate(OIdentifiable doc) {
+    if (left instanceof OSQLFilterItemField) {
+      return ((OSQLFilterItemField) left).getCollate(doc);
+    } else if (right instanceof OSQLFilterItemField) {
+      return ((OSQLFilterItemField) right).getCollate(doc);
     }
     return null;
   }

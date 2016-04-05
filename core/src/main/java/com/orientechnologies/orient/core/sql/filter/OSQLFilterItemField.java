@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
@@ -34,9 +36,8 @@ import java.util.Set;
 
 /**
  * Represent an object field as value in the query condition.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   protected Set<String> preLoadedFields;
@@ -69,7 +70,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
     /**
      * Field chain is considered as long chain if it contains more than one item.
-     * 
+     *
      * @return true if this chain is long and false in another case.
      */
     public boolean isLong() {
@@ -124,7 +125,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
    * Check whether or not this filter item is chain of fields (e.g. "field1.field2.field3"). Return true if filter item contains
    * only field projections operators, if field item contains any other projection operator the method returns false. When filter
    * item does not contains any chain operator, it is also field chain consist of one field.
-   * 
+   *
    * @return whether or not this filter item can be represented as chain of fields.
    */
   public boolean isFieldChain() {
@@ -143,10 +144,9 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   /**
    * Creates {@code FieldChain} in case when filter item can have such representation.
-   * 
+   *
    * @return {@code FieldChain} representation of this filter item.
-   * @throws IllegalStateException
-   *           if this filter item cannot be represented as {@code FieldChain}.
+   * @throws IllegalStateException if this filter item cannot be represented as {@code FieldChain}.
    */
   public FieldChain getFieldChain() {
     if (!isFieldChain()) {
@@ -162,5 +162,43 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   public OCollate getCollate() {
     return collate;
+  }
+
+  /**
+   * get the collate of this expression, based on the fully evaluated field chain starting from the passed object.
+   * @param doc the root element (document?) of this field chain
+   * @return the collate, null if no collate is defined
+   */
+  public OCollate getCollate(Object doc) {
+    if (collate != null || operationsChain == null || !isFieldChain()) {
+      return collate;
+    }
+    if (!(doc instanceof OIdentifiable)) {
+      return null;
+    }
+    FieldChain chain = getFieldChain();
+    ODocument lastDoc = ((OIdentifiable) doc).getRecord();
+    for (int i = 0; i < chain.getItemCount() - 1; i++) {
+      if (lastDoc == null) {
+        return null;
+      }
+      Object nextDoc = lastDoc.field(chain.getItemName(i));
+      if (nextDoc == null || !(nextDoc instanceof OIdentifiable)) {
+        return null;
+      }
+      lastDoc = ((OIdentifiable) nextDoc).getRecord();
+    }
+    if (lastDoc == null) {
+      return null;
+    }
+    OClass schemaClass = lastDoc.getSchemaClass();
+    if (schemaClass == null) {
+      return null;
+    }
+    OProperty property = schemaClass.getProperty(chain.getItemName(chain.getItemCount() - 1));
+    if (property == null) {
+      return null;
+    }
+    return property.getCollate();
   }
 }
