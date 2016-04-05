@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
@@ -228,9 +229,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           final ORemoteServerController remoteServer = manager.getRemoteServer(node);
           remoteServer.sendRequest(iRequest, node);
         } catch (Throwable e) {
-          ODistributedServerLog.error(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
-              "Error on sending distributed request %s. Active nodes: %s", e, iRequest,
-              manager.getAvailableNodeNames(databaseName));
+          if (!manager.isNodeAvailable(node))
+            // NODE IS NOT AVAILABLE
+            ODistributedServerLog.debug(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
+                "Error on sending distributed request %s. The target node is not available. Active nodes: %s", e, iRequest,
+                manager.getAvailableNodeNames(databaseName));
+          else
+            ODistributedServerLog.error(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
+                "Error on sending distributed request %s. Active nodes: %s", e, iRequest,
+                manager.getAvailableNodeNames(databaseName));
         }
       }
 
@@ -391,13 +398,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         lockManager.size());
   }
 
-  protected void checkForServerOnline(ODistributedRequest iRequest) throws ODistributedException {
+  protected void checkForServerOnline(final ODistributedRequest iRequest) throws ODistributedException {
     final ODistributedServerManager.NODE_STATUS srvStatus = manager.getNodeStatus();
     if (srvStatus == ODistributedServerManager.NODE_STATUS.OFFLINE
         || srvStatus == ODistributedServerManager.NODE_STATUS.SHUTTINGDOWN) {
       ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
           "Local server is not online (status='%s'). Request %s will be ignored", srvStatus, iRequest);
-      throw new ODistributedException(
+      throw new OOfflineNodeException(
           "Local server is not online (status='" + srvStatus + "'). Request " + iRequest + " will be ignored");
     }
   }

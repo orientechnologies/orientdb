@@ -23,11 +23,10 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.db.record.OPlaceholder;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -607,103 +606,29 @@ public class ODistributedResponseManager {
 
   protected void undoRequest() {
     // DETERMINE IF ANY CREATE FAILED TO RESTORE RIDS
-    if (!realignRecordClusters()) {
-      for (ODistributedResponse r : getReceivedResponses()) {
-        if (r.getPayload() instanceof Throwable)
-          // NO NEED TO UNDO AN OPERATION THAT RETURNED EXCEPTION
-          // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
-          continue;
+    for (ODistributedResponse r : getReceivedResponses()) {
+      if (r.getPayload() instanceof Throwable)
+        // NO NEED TO UNDO AN OPERATION THAT RETURNED EXCEPTION
+        // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
+        continue;
 
-        final ORemoteTask task = request.getTask();
-        if (task instanceof OAbstractReplicatedTask) {
-          final ORemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request.getId());
+      final ORemoteTask task = request.getTask();
+      if (task instanceof OAbstractReplicatedTask) {
+        final ORemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request.getId());
 
-          if (undoTask != null) {
-            final String targetNode = r.getExecutorNodeName();
-            if (!dManager.getLocalNodeName().equals(targetNode)) {
-              // REMOTE
-              ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
-                  "Sending undo message (%s) for request (%s) to server %s", undoTask, request, targetNode);
+        if (undoTask != null) {
+          final String targetNode = r.getExecutorNodeName();
+          if (!dManager.getLocalNodeName().equals(targetNode)) {
+            // REMOTE
+            ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
+                "Sending undo message (%s) for request (%s) to server %s", undoTask, request, targetNode);
 
-              dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(targetNode), undoTask,
-                  ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
-            }
+            dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(targetNode), undoTask,
+                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
           }
         }
       }
     }
-  }
-
-  private boolean realignRecordClusters() {
-    final Set<Integer> clusterIds = new HashSet<Integer>();
-
-    long minClusterPos = Long.MAX_VALUE;
-    long maxClusterPos = Long.MIN_VALUE;
-
-    for (ODistributedResponse r : getReceivedResponses()) {
-      final ORemoteTask task = request.getTask();
-      if (task instanceof OCreateRecordTask) {
-        final Object badResponse = r.getPayload();
-        if (badResponse instanceof Throwable)
-          // FOUND AN EXCEPTION
-          return false;
-
-        final OPlaceholder badResult = (OPlaceholder) badResponse;
-        clusterIds.add(badResult.getIdentity().getClusterId());
-
-        if (clusterIds.size() > 1)
-          // DIFFERENT CLUSTERS
-          return false;
-
-        final long clPos = ((OPlaceholder) badResponse).getIdentity().getClusterPosition();
-
-        // DEFINE THE RANGE
-        if (clPos < minClusterPos)
-          minClusterPos = clPos;
-        if (clPos > maxClusterPos)
-          maxClusterPos = clPos;
-      }
-    }
-
-    if (clusterIds.isEmpty())
-      // NO CREATE
-      return false;
-
-    if (minClusterPos == maxClusterPos)
-      // NO HOLE
-      return false;
-
-    // FOUND HOLE(S)
-    for (ODistributedResponse r : getReceivedResponses()) {
-      final ORemoteTask task = request.getTask();
-
-      final OPlaceholder origPh = (OPlaceholder) r.getPayload();
-
-      for (long i = minClusterPos; i <= maxClusterPos; ++i) {
-
-        if (i > origPh.getIdentity().getClusterPosition()) {
-          // CREATE THE RECORD FIRST AND THEN DELETE IT TO LEAVE THE HOLE AND ALIGN CLUSTER POS NUMERATION
-          ORecordInternal.setIdentity(((OCreateRecordTask) task).getRecord(),
-              ((OCreateRecordTask) task).getRecord().getIdentity().getClusterId(), -1);
-          dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), task,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
-        }
-
-        final OPlaceholder ph = new OPlaceholder(new ORecordId(origPh.getIdentity().getClusterId(), i), -1);
-
-        final ODeleteRecordTask undoTask = new ODeleteRecordTask(new ORecordId(ph.getIdentity()), ph.getVersion())
-            .setDelayed(false);
-        if (undoTask != null) {
-          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "sending undo message (%s) for request (%s) to server %s", undoTask, request, r.getExecutorNodeName());
-
-          dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), undoTask,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
-        }
-      }
-    }
-
-    return true;
   }
 
   protected boolean fixNodesInConflict(final List<ODistributedResponse> bestResponsesGroup, final int conflicts) {

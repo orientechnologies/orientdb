@@ -104,7 +104,7 @@ public class OTxTask extends OAbstractReplicatedTask {
 
           reqContext.lock(task.getRid());
 
-          task.prepareUndoOperation();
+          task.checkRecordExists();
 
           taskResult = task.execute(requestId, iServer, iManager, database);
 

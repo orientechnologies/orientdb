@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -55,11 +47,24 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/7/13
  */
 public class OPaginatedCluster extends ODurableComponent implements OCluster {
+
+  public enum RECORD_STATUS {
+    NOT_EXISTENT, PRESENT, ALLOCATED, recordStatus, REMOVED
+  }
+
   private static final boolean                  addRidMetadata           = OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
       .getValueAsBoolean();
 
@@ -1966,6 +1971,24 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     } finally {
       completeOperation();
     }
+  }
+
+  public RECORD_STATUS getRecordStatus(final long clusterPosition) throws IOException {
+    final byte status = clusterPositionMap.getStatus(clusterPosition);
+
+    switch (status) {
+    case OClusterPositionMapBucket.NOT_EXISTENT:
+      return RECORD_STATUS.NOT_EXISTENT;
+    case OClusterPositionMapBucket.ALLOCATED:
+      return RECORD_STATUS.ALLOCATED;
+    case OClusterPositionMapBucket.FILLED:
+      return RECORD_STATUS.PRESENT;
+    case OClusterPositionMapBucket.REMOVED:
+      return RECORD_STATUS.REMOVED;
+    }
+
+    // UNREACHABLE
+    return null;
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,7 +48,7 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
     useTransactions = false;
     count = 500;
     maxRetries = 10;
-    delayWriter = 100;
+    delayWriter = 0;
     init(SERVERS);
     prepare(false);
 
@@ -118,10 +119,26 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
 
                 banner("RESTARTING SERVER " + (SERVERS - 1));
 
-                ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager())
-                    .restartNode(server.server.getDistributedManager().getLocalNodeName());
+                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
+                    .acquire();
+                try {
+                  log("Total Person record: " + database.countClass("Person"));
+                  OClass person = database.getMetadata().getSchema().getClass("Person");
+                  for (int id : person.getClusterIds()) {
+                    log("- Total record cluster " + database.getClusterNameById(id) + ": " + database.countClusterElements(id));
+                  }
+                } finally {
+                  database.close();
+                }
 
-                Thread.sleep(5000);
+                final String nodeName = server.server.getDistributedManager().getLocalNodeName();
+                ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager()).restartNode(nodeName);
+
+                // WAIT UNTIL THE NODE IS UP & RUNNING
+                while (!(serverInstance.get(0).getServerInstance().getDistributedManager()).isNodeOnline(nodeName,
+                    getDatabaseName())) {
+                  Thread.sleep(1000);
+                }
 
                 return null;
               }

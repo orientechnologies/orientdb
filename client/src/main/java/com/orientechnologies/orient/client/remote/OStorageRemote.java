@@ -1770,11 +1770,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   protected String reopenRemoteDatabase() throws IOException {
-    OChannelBinaryAsynchClient network = null;
     String currentURL = getCurrentServerURL();
     do {
       do {
-        network = getAvailableNetwork(currentURL);
+        final OChannelBinaryAsynchClient network = getAvailableNetwork(currentURL);
         try {
           final byte[] curToken = tokens.get(network.getServerURL());
           if (curToken == null || curToken.length == 0) {
@@ -1809,7 +1808,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             engine.getConnectionManager().remove(network);
-            network = null;
           }
 
           OLogManager.instance().error(this, "Cannot open database with url " + currentURL, e);
@@ -1817,7 +1815,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             engine.getConnectionManager().remove(network);
-            network = null;
           }
 
           OLogManager.instance().error(this, "Cannot open database with url " + currentURL, e);
@@ -1833,13 +1830,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               // IGNORE ANY EXCEPTION
               OLogManager.instance().debug(this, "Cannot remove connection or database url=" + currentURL, e);
             }
-            network = null;
           }
         } catch (OException e) {
           // PROPAGATE ANY OTHER ORIENTDB EXCEPTION
           throw e;
 
         } catch (Exception e) {
+          OLogManager.instance().debug(this, "Cannot open database with url " + currentURL, e);
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             try {
@@ -1848,10 +1845,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               // IGNORE ANY EXCEPTION
               OLogManager.instance().debug(this, "Cannot remove connection or database url=" + currentURL, e);
             }
-            network = null;
           }
-
-          OLogManager.instance().error(this, "Cannot open database url=" + currentURL, e);
         }
       } while (engine.getConnectionManager().getAvailableConnections(currentURL) > 0);
 

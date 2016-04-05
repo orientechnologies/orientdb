@@ -29,9 +29,9 @@ import java.util.Set;
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public interface OClusterOwnershipRebalanceStrategy {
+public interface OClusterOwnershipAssignmentStrategy {
 
-  boolean rebalanceClusterOwnershipOfClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
-      final OClass iClass, final Set<String> availableNodes, final Set<String> clustersToReassign);
+  boolean assignClusterOwnershipOfClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg, final OClass iClass,
+      final Set<String> availableNodes, final Set<String> clustersToReassign, boolean rebalance);
 
 }

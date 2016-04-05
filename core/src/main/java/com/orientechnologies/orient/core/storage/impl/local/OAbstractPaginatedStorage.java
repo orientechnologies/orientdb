@@ -718,13 +718,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
    *
+<<<<<<< HEAD
    * @param lsn    LSN from which we should find changed records
    * @param stream Stream which will contain found records
+=======
+   * @param lsn
+   *          LSN from which we should find changed records
+   * @param stream
+   *          Stream which will contain found records
+   * @param excludedClusterIds
+   *          Array of cluster ids to exclude from the export
+>>>>>>> Distributed: fixed delta synchronisation problems
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
-  public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream) {
+  public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
+      final Set<String> excludedClusterIds) {
     if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
       throw new IllegalStateException(
           "Cannot find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
@@ -755,6 +765,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // start record is absent there is nothing that we can do
         OWALRecord walRecord = writeAheadLog.read(startLsn);
         if (walRecord == null) {
+          OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation", lsn);
           return null;
         }
 
@@ -769,7 +780,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             if (atomicUnitEndRecord.getAtomicOperationMetadata().containsKey(ORecordOperationMetadata.RID_METADATA_KEY)) {
               final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicUnitEndRecord
                   .getAtomicOperationMetadata().get(ORecordOperationMetadata.RID_METADATA_KEY);
-              sortedRids.addAll(recordOperationMetadata.getValue());
+              final Set<ORID> rids = recordOperationMetadata.getValue();
+              for (ORID rid : rids) {
+                if (!excludedClusterIds.contains(getPhysicalClusterNameById(rid.getClusterId())))
+                  sortedRids.add(rid);
+              }
             }
           }
 
@@ -779,7 +794,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         writeAheadLog.preventCutTill(null);
       }
 
-      OLogManager.instance().debug(this, "Exporting records after LSN=%s. Found %d records", lsn, sortedRids.size());
+      OLogManager.instance().info(this, "Exporting records after LSN=%s. Found %d records", lsn, sortedRids.size());
 
       // records may be deleted after we flag them as existing and as result rule of sorting of records
       // (deleted records go first will be broken), so we prohibit any modifications till we do not complete method execution
@@ -791,24 +806,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           dataOutputStream.writeLong(sortedRids.size());
 
           Iterator<ORID> ridIterator = sortedRids.iterator();
-          // while (ridIterator.hasNext()) {
-          // final ORID rid = ridIterator.next();
-          // final OCluster cluster = clusters.get(rid.getClusterId());
-          //
-          // // we do not need to load record only check it's presence
-          // if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
-          // dataOutputStream.writeInt(rid.getClusterId());
-          // dataOutputStream.writeLong(rid.getClusterPosition());
-          // dataOutputStream.write(1);
-          //
-          // OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
-          //
-          // // delete to avoid duplication
-          // ridIterator.remove();
-          // }
-          // }
-          //
-          // ridIterator = sortedRids.iterator();
+          while (ridIterator.hasNext()) {
+            final ORID rid = ridIterator.next();
+            final OCluster cluster = clusters.get(rid.getClusterId());
+
+            // we do not need to load record only check it's presence
+            if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
+              dataOutputStream.writeInt(rid.getClusterId());
+              dataOutputStream.writeLong(rid.getClusterPosition());
+              dataOutputStream.write(1);
+
+              OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
+
+              // delete to avoid duplication
+              ridIterator.remove();
+            }
+          }
+
+          ridIterator = sortedRids.iterator();
           while (ridIterator.hasNext()) {
             final ORID rid = ridIterator.next();
             final OCluster cluster = clusters.get(rid.getClusterId());
@@ -818,6 +833,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
             if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
               dataOutputStream.writeBoolean(true);
+              OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
             } else {
               final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition());
               assert rawBuffer != null;

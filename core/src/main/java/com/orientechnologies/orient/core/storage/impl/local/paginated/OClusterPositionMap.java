@@ -38,7 +38,6 @@ import java.util.Arrays;
  */
 public class OClusterPositionMap extends ODurableComponent {
   public static final String DEF_EXTENSION = ".cpm";
-
   private long               fileId;
 
   public OClusterPositionMap(OAbstractPaginatedStorage storage, String name, String lockName) {
@@ -611,6 +610,42 @@ public class OClusterPositionMap extends ODurableComponent {
           }
 
           return ORID.CLUSTER_POS_INVALID;
+        } finally {
+          releaseSharedLock();
+        }
+      } finally {
+        atomicOperationsManager.releaseReadLock(this);
+      }
+    } finally {
+      completeOperation();
+    }
+  }
+
+  public byte getStatus(final long clusterPosition) throws IOException {
+    startOperation();
+    try {
+      atomicOperationsManager.acquireReadLock(this);
+      try {
+        acquireSharedLock();
+        try {
+          final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+          final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
+
+          final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+
+          if (pageIndex >= getFilledUpTo(atomicOperation, fileId))
+            return OClusterPositionMapBucket.NOT_EXISTENT;
+
+          final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
+          try {
+            final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
+                getChanges(atomicOperation, cacheEntry));
+
+            return bucket.getStatus(index);
+
+          } finally {
+            releasePage(atomicOperation, cacheEntry);
+          }
         } finally {
           releaseSharedLock();
         }

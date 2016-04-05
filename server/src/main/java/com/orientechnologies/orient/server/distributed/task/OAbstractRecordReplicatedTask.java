@@ -131,18 +131,25 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     return cfg.hasCluster(localNode, clusterName);
   }
 
-  public void prepareUndoOperation() {
+  public ORecord prepareUndoOperation() {
     if (previousRecord == null) {
       // READ DIRECTLY FROM THE UNDERLYING STORAGE
       final OStorageOperationResult<ORawBuffer> loaded = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying()
           .readRecord(rid, null, true, null);
 
       if (loaded == null || loaded.getResult() == null)
-        throw new ORecordNotFoundException(rid);
+        return null;
 
       previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType);
       ORecordInternal.fill(previousRecord, rid, loaded.getResult().version, loaded.getResult().getBuffer(), false);
     }
+    return previousRecord;
+  }
+
+  public void checkRecordExists() {
+    prepareUndoOperation();
+    if (previousRecord == null)
+      throw new ORecordNotFoundException(rid);
   }
 
   @Override

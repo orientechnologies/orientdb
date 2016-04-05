@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
@@ -77,6 +79,7 @@ public class OIncrementalServerSync {
           long totalUpdated = 0;
           long totalDeleted = 0;
           long totalHoles = 0;
+          long totalSkipped = 0;
 
           ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
               "Started import of delta for database '" + db.getName() + "'");
@@ -100,25 +103,29 @@ public class OIncrementalServerSync {
 
                 totalRecords++;
 
-                final ORecord loadedRecord = rid.getRecord();
+                final OPaginatedCluster cluster = (OPaginatedCluster) db.getStorage().getUnderlying().getClusterById(rid.clusterId);
+                final OPaginatedCluster.RECORD_STATUS recordStatus = cluster.getRecordStatus(rid.clusterPosition);
 
                 ORecord newRecord = null;
 
                 if (deleted) {
-                  ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "DELTA <- deleting " + rid);
+                  ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE, "DELTA <- deleting %s", rid);
 
-                  if (loadedRecord != null)
+                  switch (recordStatus) {
+                  case REMOVED:
+                    // SKIP IT
+                    totalSkipped++;
+                    continue;
+
+                  case ALLOCATED:
+                  case PRESENT:
                     // DELETE IT
                     db.delete(rid);
-                  else {
-                    // CREATE AND DELETE RECORD IF NEEDED
-                    do {
-                      newRecord = Orient.instance().getRecordFactoryManager().newInstance(ODocument.RECORD_TYPE);
-                      ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), 0, EMPTY_CONTENT, true);
-                      newRecord.save();
-                      newRecord.delete();
+                    break;
 
-                    } while (newRecord.getIdentity().getClusterPosition() < clusterPos);
+                  case NOT_EXISTENT:
+                    totalSkipped++;
+                    break;
                   }
 
                   totalDeleted++;
@@ -130,8 +137,39 @@ public class OIncrementalServerSync {
                   final byte[] recordContent = new byte[recordSize];
                   input.read(recordContent);
 
-                  if (loadedRecord == null) {
-                    // CREATE
+                  switch (recordStatus) {
+                  case REMOVED:
+                    // SKIP IT
+                    totalSkipped++;
+                    continue;
+
+                  case ALLOCATED:
+                  case PRESENT:
+                    // UPDATE IT
+                    newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
+                    ORecordInternal.fill(newRecord, rid, ORecordVersionHelper.setRollbackMode(recordVersion), recordContent, true);
+
+                    final ORecord loadedRecord = rid.getRecord();
+                    if (loadedRecord instanceof ODocument) {
+                      // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
+                      ODocument loadedDocument = (ODocument) loadedRecord;
+                      loadedDocument.merge((ODocument) newRecord, false, false).getVersion();
+                      loadedDocument.setDirty();
+                      newRecord = loadedDocument;
+                    }
+
+                    // SAVE THE UPDATE RECORD
+                    newRecord.save();
+
+                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
+                        "DELTA <- updating rid=%s type=%d size=%d v=%d content=%s", rid, recordType, recordSize, recordVersion,
+                        newRecord);
+
+                    totalUpdated++;
+                    break;
+
+                  case NOT_EXISTENT:
+                    // CREATE AND DELETE RECORD IF NEEDED
                     do {
                       newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
                       ORecordInternal.fill(newRecord, new ORecordId(rid.getClusterId(), -1), recordVersion - 1, recordContent,
@@ -141,8 +179,12 @@ public class OIncrementalServerSync {
                         newRecord.save();
                       } catch (ORecordNotFoundException e) {
                         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-                            "DELTA <- error on saving record rid=%s type=%d size=%d v=%d content=%s", rid, recordType, recordSize,
-                            recordVersion, newRecord);
+                            "DELTA <- error on saving record (not found) rid=%s type=%d size=%d v=%d content=%s", rid, recordType,
+                            recordSize, recordVersion, newRecord);
+                      } catch (ORecordDuplicatedException e) {
+                        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+                            "DELTA <- error on saving record (duplicated) rid=%s type=%d size=%d v=%d content=%s", rid, recordType,
+                            recordSize, recordVersion, newRecord);
                       }
 
                       if (newRecord.getIdentity().getClusterPosition() < clusterPos) {
@@ -160,28 +202,7 @@ public class OIncrementalServerSync {
                         newRecord);
 
                     totalCreated++;
-
-                  } else {
-                    // UPDATE
-                    newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
-                    ORecordInternal.fill(newRecord, rid, ORecordVersionHelper.setRollbackMode(recordVersion), recordContent, true);
-
-                    if (loadedRecord instanceof ODocument) {
-                      // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
-                      ODocument loadedDocument = (ODocument) loadedRecord;
-                      loadedDocument.merge((ODocument) newRecord, false, false).getVersion();
-                      loadedDocument.setDirty();
-                      newRecord = loadedDocument;
-                    }
-
-                    // SAVE THE UPDATE RECORD
-                    newRecord.save();
-
-                    ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
-                        "DELTA <- updating rid=%s type=%d size=%d v=%d content=%s", rid, recordType, recordSize, recordVersion,
-                        newRecord);
-
-                    totalUpdated++;
+                    break;
                   }
 
                   if (!newRecord.getIdentity().equals(rid))
@@ -194,8 +215,8 @@ public class OIncrementalServerSync {
                 if (now - lastLap > 2000) {
                   // DUMP STATS EVERY SECOND
                   ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN,
-                      "- %,d total entries: %,d created, %,d updated, %,d deleted, %,d holes...", totalRecords, totalCreated,
-                      totalUpdated, totalDeleted, totalHoles);
+                      "- %,d total entries: %,d created, %,d updated, %,d deleted, %,d holes, %,d skipped...", totalRecords,
+                      totalCreated, totalUpdated, totalDeleted, totalHoles, totalSkipped);
                   lastLap = now;
                 }
               }
@@ -216,14 +237,16 @@ public class OIncrementalServerSync {
           }
 
           ODistributedServerLog.info(this, nodeName, null, DIRECTION.IN,
-              "Installed database delta for '%s'. %d total entries: %d created, %d updated, %d deleted, %d holes", db.getName(),
-              totalRecords, totalCreated, totalUpdated, totalDeleted, totalHoles);
+              "Installed database delta for '%s'. %d total entries: %d created, %d updated, %d deleted, %d holes, %,d skipped",
+              db.getName(), totalRecords, totalCreated, totalUpdated, totalDeleted, totalHoles, totalSkipped);
 
           return null;
         }
       });
 
       db.activateOnCurrentThread();
+
+      System.out.println("TOTAL PERSON: " + db.countClass("Person") );
 
     } catch (Exception e) {
       // FORCE FULL DATABASE SYNC

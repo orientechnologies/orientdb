@@ -89,7 +89,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%d",
         database.getName(), rid.toString(), version);
 
-    prepareUndoOperation();
+    checkRecordExists();
 
     ORecord loadedRecord = previousRecord.copy();
 

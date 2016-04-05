@@ -66,6 +66,9 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
         database.getName(), rid.toString(), version);
 
     prepareUndoOperation();
+    if (previousRecord == null)
+      // ALREADY DELETED
+      return true;
 
     final ORecord loadedRecord = previousRecord.copy();
     if (loadedRecord != null) {

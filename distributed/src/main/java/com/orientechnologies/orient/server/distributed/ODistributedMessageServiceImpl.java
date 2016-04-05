@@ -40,7 +40,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   protected final OHazelcastPlugin                                     manager;
   protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   protected final TimerTask                                            asynchMessageManager;
-  protected Map<String, ODistributedDatabaseImpl> databases = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  protected Map<String, ODistributedDatabaseImpl>                      databases               = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
   protected Thread                                                     responseThread;
   protected long[]                                                     responseTimeMetrics     = new long[10];
   protected int                                                        responseTimeMetricIndex = 0;
@@ -89,12 +89,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   public void handleUnreachableNode(final String nodeName) {
-    final Set<String> dbs = getDatabases();
-    if (dbs != null)
-      for (String dbName : dbs) {
-        getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
-      }
-
+    // WAKE UP ALL THE WAITING RESPONSES
     for (ODistributedResponseManager r : responsesByRequestIds.values())
       r.notifyWaiters();
   }
