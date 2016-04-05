@@ -53,8 +53,8 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+        System.getProperty("java.class.path"), "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     process = processBuilder.start();
@@ -64,10 +64,15 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
 
   @After
   public void tearDown() {
-    testDocumentTx.activateOnCurrentThread();
-    testDocumentTx.drop();
-    baseDocumentTx.activateOnCurrentThread();
-    baseDocumentTx.drop();
+    if (testDocumentTx != null) {
+      testDocumentTx.activateOnCurrentThread();
+      testDocumentTx.drop();
+    }
+
+    if (baseDocumentTx != null) {
+      baseDocumentTx.activateOnCurrentThread();
+      baseDocumentTx.drop();
+    }
 
     OFileUtils.deleteRecursively(buildDir);
     Assert.assertFalse(buildDir.exists());
@@ -173,7 +178,6 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
           }
         } else {
           ODocument testDocument = testDocuments.get(0);
-          System.out.println("testing id:: " + testDocument.field("id"));
 
           assertThat(testDocument.field("id")).as("id:: %s", testDocument.field("id")).isEqualTo(baseDocument.field("id"));
           assertThat(testDocument.field("timestamp")).as("documents:: %s - %s", testDocument, baseDocument)

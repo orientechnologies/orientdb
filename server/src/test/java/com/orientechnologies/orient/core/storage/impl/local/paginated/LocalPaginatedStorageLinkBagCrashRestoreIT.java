@@ -58,7 +58,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-classpath", System.getProperty("java.class.path"),
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-XX:MaxDirectMemorySize=512g", "-classpath", System.getProperty("java.class.path"),
         "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
@@ -220,8 +220,6 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
             - recordsRestored));
     long maxInterval = minTs == Long.MAX_VALUE ? 0 : lastTs - minTs;
     System.out.println("Lost records max interval (ms) : " + maxInterval);
-
-    assertThat(recordsTested - recordsRestored).isLessThan(120);
 
     assertThat(maxInterval).isLessThan(2000);
 
