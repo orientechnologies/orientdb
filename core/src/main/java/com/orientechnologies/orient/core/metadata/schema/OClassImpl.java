@@ -81,6 +81,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private int[]                              clusterIds;
   private List<OClassImpl>                   superClasses            = new ArrayList<OClassImpl>();
   private int[]                              polymorphicClusterIds;
+  private SortedSet<Integer>                 polymorphicClusterIdsSet = new TreeSet<Integer>();
   private List<OClass>                       subclasses;
   private float                              overSize                = 0f;
   private String                             shortName;
@@ -309,7 +310,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   @Override
   public boolean hasPolymorphicClusterId(final int clusterId) {
-    return Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0;
+    return polymorphicClusterIdsSet.contains(clusterId);
   }
 
   @Override
@@ -1010,6 +1011,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public int[] getPolymorphicClusterIds() {
     acquireSchemaReadLock();
     try {
+      if (polymorphicClusterIds.length != polymorphicClusterIdsSet.size()){
+        updatePolymorphicClusterIdsArray();
+      }
       return polymorphicClusterIds;
     } finally {
       releaseSchemaReadLock();
@@ -1017,8 +1021,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void setPolymorphicClusterIds(final int[] iClusterIds) {
-    polymorphicClusterIds = iClusterIds;
-    Arrays.sort(polymorphicClusterIds);
+    polymorphicClusterIdsSet = new TreeSet<Integer>();
+    for (int clusterid: iClusterIds){
+      polymorphicClusterIdsSet.add(clusterid);
+    }
+    updatePolymorphicClusterIdsArray();
   }
 
   public void renameProperty(final String iOldName, final String iNewName) {
@@ -1449,7 +1456,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     acquireSchemaReadLock();
     try {
       if (isPolymorphic)
-        return getDatabase().countClusterElements(readableClusters(getDatabase(), polymorphicClusterIds));
+        return getDatabase().countClusterElements(readableClusters(getDatabase(), getPolymorphicClusterIds()));
 
       return getDatabase().countClusterElements(readableClusters(getDatabase(), clusterIds));
     } finally {
@@ -1747,7 +1754,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
           extractFieldTypes(fields), null, type, algorithm);
 
-      return getDatabase().getMetadata().getIndexManager().createIndex(name, type, indexDefinition, polymorphicClusterIds,
+      return getDatabase().getMetadata().getIndexManager().createIndex(name, type, indexDefinition, getPolymorphicClusterIds(),
           progressListener, metadata, algorithm);
     } finally {
       releaseSchemaReadLock();
@@ -2205,17 +2212,26 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void addPolymorphicClusterId(int clusterId) {
-    if (Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0)
+    if (polymorphicClusterIdsSet.contains(clusterId)){
       return;
+    }
 
-    polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
-    polymorphicClusterIds[polymorphicClusterIds.length - 1] = clusterId;
-    Arrays.sort(polymorphicClusterIds);
+    polymorphicClusterIdsSet.add(clusterId);
+//    updatePolymorphicClusterIdsArray();
 
     addClusterIdToIndexes(clusterId);
 
     for (OClassImpl superClass : superClasses) {
       superClass.addPolymorphicClusterId(clusterId);
+    }
+  }
+
+  private void updatePolymorphicClusterIdsArray() {
+    polymorphicClusterIds = new int[polymorphicClusterIdsSet.size()];
+    int i = 0;
+    for (Integer clusterId: polymorphicClusterIdsSet){
+      polymorphicClusterIds[i] = clusterId;
+      i++;
     }
   }
 
@@ -2489,19 +2505,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void removePolymorphicClusterIds(final OClassImpl iBaseClass) {
-    for (final int clusterId : iBaseClass.polymorphicClusterIds)
+    for (final int clusterId : iBaseClass.getPolymorphicClusterIds())
       removePolymorphicClusterId(clusterId);
   }
 
   private void removePolymorphicClusterId(final int clusterId) {
-    final int index = Arrays.binarySearch(polymorphicClusterIds, clusterId);
-    if (index < 0)
+    if (!polymorphicClusterIdsSet.remove(clusterId)){
       return;
-
-    if (index < polymorphicClusterIds.length - 1)
-      System.arraycopy(polymorphicClusterIds, index + 1, polymorphicClusterIds, index, polymorphicClusterIds.length - (index + 1));
-
-    polymorphicClusterIds = Arrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length - 1);
+    }
+    updatePolymorphicClusterIdsArray();
 
     removeClusterFromIndexes(clusterId);
     for (OClassImpl superClass : superClasses) {
@@ -2539,7 +2551,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Add different cluster id to the "polymorphic cluster ids" array.
    */
   private void addPolymorphicClusterIds(final OClassImpl iBaseClass) {
-    for (int clusterId : iBaseClass.polymorphicClusterIds) {
+    for (int clusterId : iBaseClass.getPolymorphicClusterIds()) {
       addPolymorphicClusterId(clusterId);
     }
   }
