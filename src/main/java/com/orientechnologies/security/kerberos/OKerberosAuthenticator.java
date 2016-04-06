@@ -24,6 +24,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.kerberos.OKrb5ClientLoginModuleConfig;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -33,7 +34,7 @@ import com.orientechnologies.orient.server.security.OSecurityAuthenticatorAbstra
 import com.orientechnologies.orient.server.security.OSecurityAuthenticatorException;
 
 // Temporary, for Java 7 support.
-import sun.misc.BASE64Decoder;
+//import sun.misc.BASE64Decoder;
 
 import java.lang.StringBuilder;
 import java.lang.ThreadLocal;
@@ -157,12 +158,14 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract
 					}
 					else
 					{
-						// Temporary, for Java 7 support.
-						byte[] ticket = new BASE64Decoder().decodeBuffer(password);
+						byte[] ticket = OBase64Utils.decode(password.getBytes("UTF8"));
 						
-//							byte [] ticket = java.util.Base64.getDecoder().decode(password);
+						// Temporary, for Java 7 support.
+//						byte[] ticket = new BASE64Decoder().decodeBuffer(password);
+						
+//						byte [] ticket = java.util.Base64.getDecoder().decode(password);
 	
-//							principal = OKerberosLibrary.authenticate(_Service_Subject, _Service_Principal, username, ticket);
+//						principal = OKerberosLibrary.authenticate(_Service_Subject, _Service_Principal, username, ticket);
 
 						try
 						{
