@@ -17,10 +17,8 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -47,6 +45,7 @@ import static org.junit.Assert.assertTrue;
 
 public class UpdateConflictFixTaskScenarioTest extends AbstractScenarioTest {
 
+  @Ignore
   @Test
   public void test() throws Exception {
 
@@ -196,5 +195,9 @@ public class UpdateConflictFixTaskScenarioTest extends AbstractScenarioTest {
     }
   }
 
+  @Override
+  public String getDatabaseName() {
+    return "distributed-updconflict-fix";
+  }
 
 }

@@ -24,7 +24,11 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.*;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -32,9 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * It checks the consistency in the cluster with the following scenario:
@@ -50,6 +52,7 @@ import static org.junit.Assert.assertTrue;
 
 public class BasicShardingScenarioTest extends AbstractShardingScenarioTest {
 
+  @Ignore
   @Test
   public void test() throws Exception {
     init(SERVERS);
@@ -63,28 +66,28 @@ public class BasicShardingScenarioTest extends AbstractShardingScenarioTest {
 
     // changing flag "failureAvailableNodesLessQuorum" because in no-rpelica case
     OHazelcastPlugin manager1 = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-    ODistributedConfiguration databaseConfiguration = manager1.getDatabaseConfiguration("sharding");
+    ODistributedConfiguration databaseConfiguration = manager1.getDatabaseConfiguration(this.getDatabaseName());
     ODocument cfg = databaseConfiguration.serialize();
     cfg.field("failureAvailableNodesLessQuorum", false);
     cfg.field("autoDeploy", false);
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager1.updateCachedDatabaseConfiguration("sharding", cfg, true, true);
+    manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), cfg, true, true);
 
     OHazelcastPlugin manager2 = (OHazelcastPlugin) serverInstance.get(1).getServerInstance().getDistributedManager();
-    databaseConfiguration = manager2.getDatabaseConfiguration("sharding");
+    databaseConfiguration = manager2.getDatabaseConfiguration(this.getDatabaseName());
     cfg = databaseConfiguration.serialize();
     cfg.field("failureAvailableNodesLessQuorum", false);
     cfg.field("autoDeploy", false);
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager2.updateCachedDatabaseConfiguration("sharding", cfg, true, true);
+    manager2.updateCachedDatabaseConfiguration(this.getDatabaseName(), cfg, true, true);
 
     OHazelcastPlugin manager3 = (OHazelcastPlugin) serverInstance.get(2).getServerInstance().getDistributedManager();
-    databaseConfiguration = manager3.getDatabaseConfiguration("sharding");
+    databaseConfiguration = manager3.getDatabaseConfiguration(this.getDatabaseName());
     cfg = databaseConfiguration.serialize();
     cfg.field("failureAvailableNodesLessQuorum", false);
     cfg.field("autoDeploy", false);
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager3.updateCachedDatabaseConfiguration("sharding", cfg, true, true);
+    manager3.updateCachedDatabaseConfiguration(this.getDatabaseName(), cfg, true, true);
 
     OrientGraphFactory localFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
     OrientGraphNoTx graphNoTx = localFactory.getNoTx();
@@ -196,6 +199,11 @@ public class BasicShardingScenarioTest extends AbstractShardingScenarioTest {
 
     }
 
+  }
+
+  @Override
+  public String getDatabaseName() {
+    return "distributed-basic-sharding";
   }
 
 }

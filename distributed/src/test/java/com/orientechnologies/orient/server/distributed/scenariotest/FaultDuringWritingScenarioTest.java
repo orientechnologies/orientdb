@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public class FaultDuringWritingScenarioTest extends AbstractScenarioTest {
   volatile int     serverStarted    = 0;
   volatile boolean backupInProgress = false;
 
-
+  @Ignore
   @Test
   public void test() throws Exception {
 
@@ -177,5 +178,9 @@ public class FaultDuringWritingScenarioTest extends AbstractScenarioTest {
     Assert.assertFalse(backupInProgress);
   }
 
+  @Override
+  public String getDatabaseName() {
+    return "distributed-faultsimulation";
+  }
 
 }

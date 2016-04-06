@@ -70,4 +70,9 @@ public class BasicScenarioTest extends AbstractScenarioTest {
     super.checkWritesAboveCluster(serverInstance, executeWritesOnServers);
   }
 
+  @Override
+  public String getDatabaseName() {
+    return "distributed-basic";
+  }
+
 }

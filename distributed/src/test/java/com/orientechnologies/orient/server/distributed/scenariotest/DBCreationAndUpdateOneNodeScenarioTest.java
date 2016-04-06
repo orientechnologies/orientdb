@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -39,7 +38,6 @@ import static org.junit.Assert.*;
 
 public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest {
 
-  @Ignore
   @Test
   public void test() throws Exception {
     init(SERVERS);
@@ -51,9 +49,9 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
   @Override
   public void executeTest() throws Exception {
 
-    String url1 = "plocal:target/server0/databases/new-distributed-db";
-    String url2 = "plocal:target/server1/databases/new-distributed-db";
-    String url3 = "plocal:target/server2/databases/new-distributed-db";
+    String url1 = "plocal:target/server0/databases/distributed-dbcreation-update";
+    String url2 = "plocal:target/server1/databases/distributed-dbcreation-update";
+    String url3 = "plocal:target/server2/databases/distributed-dbcreation-update";
 
     // creating new database on server1
     ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(url1);
@@ -90,6 +88,11 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
 
     // check consistency
     checkWritesAboveCluster(serverInstance, executeWritesOnServers);
+  }
+
+  @Override
+  public String getDatabaseName() {
+    return "distributed-dbcreation-update";
   }
 
 }

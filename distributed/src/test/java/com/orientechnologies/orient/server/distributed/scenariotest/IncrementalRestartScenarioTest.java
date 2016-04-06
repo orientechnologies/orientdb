@@ -16,7 +16,6 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -77,7 +76,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
     try {
 
       TestQuorum2 tq2 = new TestQuorum2(serverInstance);     // Connection to dbServer3
-      TestQuorum1 tq3 = new TestQuorum1(serverInstance);       // Connection to dbServer1
+      TestQuorum1 tq1 = new TestQuorum1(serverInstance);       // Connection to dbServer1
       ExecutorService exec = Executors.newSingleThreadExecutor();
       Future currentFuture = null;
 
@@ -96,11 +95,11 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
 
       /*
-       * Test with quorum = 3
+       * Test with quorum = 1
        */
 
       try {
-        currentFuture = exec.submit(tq3);
+        currentFuture = exec.submit(tq1);
         currentFuture.get();
       } catch (Exception e) {
         e.printStackTrace();
@@ -144,12 +143,12 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
         // checking distributed configuration
         OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-        ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration("distributed-inserttxha");
+        ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
         ODocument cfg = databaseConfiguration.serialize();
         cfg.field("failureAvailableNodesLessQuorum", true);
         cfg.field("version", (Integer) cfg.field("version") + 1);
-        manager.updateCachedDatabaseConfiguration("distributed-inserttxha", cfg, true, true);
-        assertEquals(2, cfg.field("writeQuorum"));
+        manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
+        assertEquals("majority", cfg.field("writeQuorum"));
 
         // network fault on server2
         System.out.println("Network fault on server2.\n");
@@ -263,11 +262,11 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
         // checking distributed configuration
         OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-        ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration("distributed-inserttxha");
+        ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
         ODocument cfg = databaseConfiguration.serialize();
         cfg.field("writeQuorum", 1);
         cfg.field("version", (Integer) cfg.field("version") + 1);
-        manager.updateCachedDatabaseConfiguration("distributed-inserttxha", cfg, true, true);
+        manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
         assertEquals(1, cfg.field("writeQuorum"));
 
         // network fault on server2
@@ -343,6 +342,11 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
       return null;
     }
+  }
+
+  @Override
+  public String getDatabaseName() {
+    return "distributed-incremental-restart";
   }
 
 }

@@ -75,14 +75,14 @@ public class RIDHotAlignmentScenarioTest extends AbstractScenarioTest {
     ODocument cfg = null;
     ServerRun server = serverInstance.get(2);
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
-    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration("distributed-inserttxha");
+    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
     cfg = databaseConfiguration.serialize();
     cfg.field("writeQuorum", 1);
     cfg.field("failureAvailableNodesLessQuorum", true);
     cfg.field("autoDeploy", true);
     cfg.field("hotAlignment", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration("distributed-inserttxha", cfg, true, true);
+    manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
     System.out.println("\nConfiguration updated.");
 
     // creating class "Hero"
@@ -237,5 +237,10 @@ public class RIDHotAlignmentScenarioTest extends AbstractScenarioTest {
       assertTrue(result.size() + " records found with id = '" + uniqueId + "'!", false);
     ODatabaseRecordThreadLocal.INSTANCE.set(null);
     return result.get(0);
+  }
+
+  @Override
+  public String getDatabaseName() {
+    return "distributed-rid-hotalignment";
   }
 }

@@ -25,9 +25,7 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * It checks the consistency in the cluster with the following scenario:
@@ -74,13 +72,13 @@ public class ReadQuorumScenarioTest  extends AbstractScenarioTest {
     ODocument cfg = null;
     ServerRun server = serverInstance.get(2);
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
-    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration("distributed-inserttxha");
+    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
     cfg = databaseConfiguration.serialize();
     cfg.field("readQuorum", 2);
     cfg.field("failureAvailableNodesLessQuorum", true);
     cfg.field("autoDeploy", false);
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration("distributed-inserttxha", cfg, true, true);
+    manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
     System.out.println("\nConfiguration updated.");
 
     // inserting record r1 and checking consistency on all the servers
@@ -146,6 +144,11 @@ public class ReadQuorumScenarioTest  extends AbstractScenarioTest {
     assertEquals("Luke", retrievedRecord.field("firstName"));
     assertEquals("Skywalker", retrievedRecord.field("lastName"));
 
+  }
+
+  @Override
+  public String getDatabaseName() {
+    return "distributed-read-quorum";
   }
 
 }

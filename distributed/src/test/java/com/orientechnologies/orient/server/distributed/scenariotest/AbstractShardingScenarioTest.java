@@ -454,10 +454,10 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     }
   }
 
-  @Override
-  public String getDatabaseName() {
-    return "sharding";
-  }
+//  @Override
+//  public String getDatabaseName() {
+//    return "sharding";
+//  }
 
   @Override
   protected String getDistributedServerConfiguration(final ServerRun server) {

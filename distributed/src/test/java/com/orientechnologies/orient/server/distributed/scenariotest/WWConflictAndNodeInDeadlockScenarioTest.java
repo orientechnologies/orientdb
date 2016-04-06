@@ -96,12 +96,12 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
     ODocument cfg = null;
     ServerRun server = serverInstance.get(2);
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
-    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration("distributed-inserttxha");
+    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
     cfg = databaseConfiguration.serialize();
     cfg.field("writeQuorum", 1);
     cfg.field("failureAvailableNodesLessQuorum", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration("distributed-inserttxha", cfg, true, true);
+    manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
     System.out.println("\nConfiguration updated.");
 
     // deadlock on server3
@@ -199,7 +199,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
 
     if (serverStarted++ == (2)) {
 //      startQueueMonitorTask();
-//      startCountMonitorTask("Person");
+      startCountMonitorTask("Person");
 
       // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
       new Thread(new Runnable() {
@@ -266,6 +266,11 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
         }
       }).start();
     }
+  }
+
+  @Override
+  public String getDatabaseName() {
+    return "distributed-wwconflict-deadlock";
   }
 
 }

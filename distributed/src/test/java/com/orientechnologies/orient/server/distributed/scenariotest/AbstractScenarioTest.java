@@ -296,10 +296,27 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }
   }
 
-  @Override
-  public String getDatabaseName() {
-    return "distributed-inserttxha";
+  protected void startCountMonitorTask(final String iClassName) {
+    new Timer(true).schedule(new TimerTask() {
+      @Override
+      public void run() {
+        ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
+        db.open("admin", "admin");
+        try {
+          totalVertices.set(db.countClass(iClassName));
+        } catch (Exception e) {
+          e.printStackTrace();
+        } finally {
+          db.close();
+        }
+      }
+    }, 1000, 1000);
   }
+
+//  @Override
+//  public String getDatabaseName() {
+//    return "distributed-inserttxha";
+//  }
 
   @Override
   protected String getDistributedServerConfiguration(final ServerRun server) {

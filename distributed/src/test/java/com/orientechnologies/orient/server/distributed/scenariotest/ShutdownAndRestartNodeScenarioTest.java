@@ -16,7 +16,6 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -73,7 +72,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
     try {
 
       TestQuorum2 tq2 = new TestQuorum2(serverInstance);     // Connection to dbServer3
-      TestQuorum3 tq3 = new TestQuorum3(serverInstance);       // Connection to dbServer1
+      TestQuorum3 tq3 = new TestQuorum3(serverInstance);     // Connection to dbServer1
       ExecutorService exec = Executors.newSingleThreadExecutor();
       Future currentFuture = null;
 
@@ -234,12 +233,12 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         ODocument cfg = null;
         ServerRun server = serverInstance.get(0);
         OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
-        ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration("distributed-inserttxha");
+        ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
         cfg = databaseConfiguration.serialize();
         cfg.field("writeQuorum", 3);
         cfg.field("failureAvailableNodesLessQuorum", true);
         cfg.field("version", (Integer) cfg.field("version") + 1);
-        manager.updateCachedDatabaseConfiguration("distributed-inserttxha", cfg, true, true);
+        manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
 
         System.out.println("\nConfiguration updated.");
 
@@ -303,4 +302,8 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
     }
   }
 
+  @Override
+  public String getDatabaseName() {
+    return "distributed-node-restart";
+  }
 }
