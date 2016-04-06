@@ -128,6 +128,9 @@ public class OSQLHelper {
 
         Object key = OStringSerializerHelper.decode(parseValue(parts.get(0), iContext).toString());
         Object value = parseValue(parts.get(1), iContext);
+        if(VALUE_NOT_PARSED == value){
+          value = new OSQLPredicate(parts.get(1)).evaluate(iContext);
+        }
         if(value instanceof String){
           value = OStringSerializerHelper.decode(value.toString());
         }
