@@ -158,7 +158,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   operation.getCallback() != null ? EXECUTION_MODE.RESPONSE : EXECUTION_MODE.NO_RESPONSE,
                   operation.getLocalResult(), operation.getAfterRequestCallback());
 
-              if (dResponse!=null) {
+              if (dResponse != null) {
                 reqId = dResponse.getRequestId();
 
                 if (operation.getCallback() != null)
@@ -554,20 +554,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final boolean syncMode = executionModeSynch;
 
       // IN ANY CASE EXECUTE LOCALLY AND THEN DISTRIBUTE
-      return (OStorageOperationResult<OPhysicalPosition>) executeRecordOperationInLock(syncMode, clusterId,
+      return (OStorageOperationResult<OPhysicalPosition>) executeRecordOperationInLock(syncMode, iRecordId,
           new OCallable<Object, OCallable<Void, ODistributedRequestId>>() {
 
             @Override
             public Object call(OCallable<Void, ODistributedRequestId> unlockCallback) {
               final OStorageOperationResult<OPhysicalPosition> localResult;
 
-              final ODistributedRequestId requestId = acquireRecordLock(iRecordId);
-              try {
-                localResult = wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
-              } finally {
-                // RELEASE LOCK
-                localDistributedDatabase.unlockRecord(iRecordId, requestId);
-              }
+              localResult = wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
               // UPDATE RID WITH NEW POSITION
               iRecordId.clusterPosition = localResult.getResult().clusterPosition;
@@ -575,6 +569,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               final OPlaceholder localPlaceholder = new OPlaceholder(iRecordId, localResult.getResult().recordVersion);
 
               final OCreateRecordTask task = new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType);
+              task.setLastLSN(wrapped.getLSN());
 
               if (!nodes.isEmpty()) {
                 if (syncMode) {
@@ -611,18 +606,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             }
           });
 
-    } catch (
-
-    ONeedRetryException e)
-
-    {
+    } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
-    } catch (
-
-    Exception e)
-
-    {
+    } catch (Exception e) {
       handleDistributedException("Cannot route CREATE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
@@ -767,14 +754,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         });
       }
 
-      final int clusterId = iRecordId.clusterId;
-
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
       if (executionModeSynch == null)
         executionModeSynch = iMode == 0;
       final boolean syncMode = executionModeSynch;
 
-      return (OStorageOperationResult<Integer>) executeRecordOperationInLock(syncMode, clusterId,
+      return (OStorageOperationResult<Integer>) executeRecordOperationInLock(syncMode, iRecordId,
           new OCallable<Object, OCallable<Void, ODistributedRequestId>>() {
 
             @Override
@@ -785,15 +770,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
               if (nodes.contains(localNodeName)) {
                 // EXECUTE ON LOCAL NODE FIRST
-                final ODistributedRequestId requestId = acquireRecordLock(iRecordId);
                 try {
                   // LOAD CURRENT RECORD
-                  task.prepareUndoOperation();
+                  task.checkRecordExists();
 
                   localResult = (OStorageOperationResult<Integer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
-
                     @Override
                     public Object call() throws Exception {
+                      task.setLastLSN(wrapped.getLSN());
                       return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
                     }
                   });
@@ -803,9 +787,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
                   // UNREACHABLE
                   return null;
-                } finally {
-                  // RELEASE LOCK
-                  localDistributedDatabase.unlockRecord(iRecordId, requestId);
                 }
                 nodes.remove(localNodeName);
               } else
@@ -895,14 +876,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         });
       }
 
-      final int clusterId = iRecordId.clusterId;
-
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
       if (executionModeSynch == null)
         executionModeSynch = iMode == 0;
       final boolean syncMode = executionModeSynch;
 
-      return (OStorageOperationResult<Boolean>) executeRecordOperationInLock(syncMode, clusterId,
+      return (OStorageOperationResult<Boolean>) executeRecordOperationInLock(syncMode, iRecordId,
           new OCallable<Object, OCallable<Void, ODistributedRequestId>>() {
 
             @Override
@@ -913,14 +892,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               final OStorageOperationResult<Boolean> localResult;
               if (nodes.contains(localNodeName)) {
                 // EXECUTE ON LOCAL NODE FIRST
-                final ODistributedRequestId requestId = acquireRecordLock(iRecordId);
                 try {
                   // LOAD CURRENT RECORD
-                  task.prepareUndoOperation();
+                  task.checkRecordExists();
 
                   localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
                     @Override
                     public Object call() throws Exception {
+                      task.setLastLSN(wrapped.getLSN());
                       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
                     }
                   });
@@ -930,9 +909,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
                   // UNREACHABLE
                   return null;
-                } finally {
-                  // RELEASE LOCK
-                  localDistributedDatabase.unlockRecord(iRecordId, requestId);
                 }
                 nodes.remove(localNodeName);
               } else
@@ -977,9 +953,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             }
           });
 
-    } catch (
-
-    ONeedRetryException e) {
+    } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
@@ -991,35 +965,50 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   }
 
-  private Object executeRecordOperationInLock(final boolean iUnlockAtTheEnd, final int clusterId,
-      final OCallable<Object, OCallable<Void, ODistributedRequestId>> callback) throws InterruptedException {
+  private Object executeRecordOperationInLock(final boolean iUnlockAtTheEnd, final ORecordId rid,
+      final OCallable<Object, OCallable<Void, ODistributedRequestId>> callback) throws Exception {
+
+    final AtomicBoolean acquiredClusterLock = new AtomicBoolean(false);
+    final AtomicBoolean acquiredRecordLock = new AtomicBoolean(false);
+    ODistributedRequestId requestId = null;
+
+    final int partition = rid.clusterId % clusterLocks.length;
+
     messageManagementLock.readLock().lock();
     try {
-
-      final int partition = clusterId % clusterLocks.length;
       clusterLocks[partition].acquire();
-      final AtomicBoolean acquiredClusterLock = new AtomicBoolean(true);
 
-      try {
-        final OCallable<Void, ODistributedRequestId> unlockCallback = new OCallable<Void, ODistributedRequestId>() {
-          @Override
-          public Void call(final ODistributedRequestId req) {
-            // UNLOCK AS SOON AS THE REQUEST IS SENT
-            if (acquiredClusterLock.compareAndSet(true, false))
-              clusterLocks[partition].release();
-            return null;
-          }
-        };
+      acquiredClusterLock.set(true);
 
-        return callback.call(unlockCallback);
+      requestId = acquireRecordLock(rid);
+      acquiredRecordLock.set(true);
 
-      } finally {
-        if (iUnlockAtTheEnd)
+      final OCallable<Void, ODistributedRequestId> unlockCallback = new OCallable<Void, ODistributedRequestId>() {
+        @Override
+        public Void call(final ODistributedRequestId req) {
+          // UNLOCK AS SOON AS THE REQUEST IS SENT
           if (acquiredClusterLock.compareAndSet(true, false))
             clusterLocks[partition].release();
-      }
+          return null;
+        }
+      };
+
+      return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+        @Override
+        public Object call() throws Exception {
+          return callback.call(unlockCallback);
+        }
+      });
 
     } finally {
+      if (iUnlockAtTheEnd) {
+        if (acquiredClusterLock.compareAndSet(true, false))
+          clusterLocks[partition].release();
+
+        if (acquiredRecordLock.compareAndSet(true, false))
+          localDistributedDatabase.unlockRecord(rid, requestId);
+      }
+
       messageManagementLock.readLock().unlock();
     }
   }
@@ -1618,12 +1607,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         databaseAlreadyDefined = true;
 
       try {
-
         undoTask.execute(reqId, dManager.getServerInstance(), dManager, database);
 
       } catch (Exception e) {
         ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Error on undo operation on local node (req=%s)", reqId);
+            "Error on undo operation on local node (req=%s)", e, reqId);
 
       } finally {
         if (!databaseAlreadyDefined)

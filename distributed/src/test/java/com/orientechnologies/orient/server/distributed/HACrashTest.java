@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
 import org.junit.Test;
@@ -37,7 +38,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
     startupNodesInSequence = true;
     count = 500;
     maxRetries = 10;
-    delayWriter = 50;
+    delayWriter = 200;
     useTransactions = false;
     init(SERVERS);
     prepare(false);
@@ -64,7 +65,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
                 final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
                     .acquire();
                 try {
-                  return database.countClass("Person") > (count * SERVERS) * 1 / 4;
+                  return database.countClass("Person") > (count * SERVERS) * 1 / 3;
                 } finally {
                   database.close();
                 }
@@ -75,6 +76,11 @@ public class HACrashTest extends AbstractServerClusterTxTest {
               public Object call() throws Exception {
                 Assert.assertTrue("Insert was too fast", inserting);
                 banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
+
+                OLogManager.instance().flush();
+                System.out.flush();
+                System.err.flush();
+
                 serverInstance.get(SERVERS - 1).crashServer();
                 lastServerOn = false;
 

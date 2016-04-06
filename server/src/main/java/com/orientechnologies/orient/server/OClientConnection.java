@@ -65,7 +65,11 @@ public class OClientConnection {
     if (getDatabase() != null) {
       if (!getDatabase().isClosed()) {
         getDatabase().activateOnCurrentThread();
-        getDatabase().close();
+        try {
+          getDatabase().close();
+        } catch (Exception e) {
+          // IGNORE IT (ALREADY CLOSED?)
+        }
       }
 
       setDatabase(null);

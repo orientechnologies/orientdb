@@ -26,6 +26,8 @@ import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author Andrey Lomakin
  * @since 6/26/13
@@ -51,8 +53,8 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+        System.getProperty("java.class.path"), "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     process = processBuilder.start();
@@ -62,10 +64,15 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
 
   @After
   public void tearDown() {
-    testDocumentTx.activateOnCurrentThread();
-    testDocumentTx.drop();
-    baseDocumentTx.activateOnCurrentThread();
-    baseDocumentTx.drop();
+    if (testDocumentTx != null) {
+      testDocumentTx.activateOnCurrentThread();
+      testDocumentTx.drop();
+    }
+
+    if (baseDocumentTx != null) {
+      baseDocumentTx.activateOnCurrentThread();
+      baseDocumentTx.drop();
+    }
 
     OFileUtils.deleteRecursively(buildDir);
     Assert.assertFalse(buildDir.exists());
@@ -104,7 +111,7 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
     process.destroy();
     process.waitFor();
 
-    System.out.println("Process was destroyed");
+    System.out.println("OrientDB server process was destroyed");
 
     for (Future future : futures) {
       try {
@@ -155,23 +162,31 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
       final ORecordId rid = new ORecordId(clusterId);
 
       for (OPhysicalPosition physicalPosition : physicalPositions) {
+
         rid.clusterPosition = physicalPosition.clusterPosition;
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+        baseDocumentTx.activateOnCurrentThread();
         ODocument baseDocument = baseDocumentTx.load(rid);
 
         testDocumentTx.activateOnCurrentThread();
         List<ODocument> testDocuments = testDocumentTx
             .query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = " + baseDocument.field("id")));
+
         if (testDocuments.size() == 0) {
-          if (((Long) baseDocument.field("timestamp")) < minTs)
+          if (((Long) baseDocument.field("timestamp")) < minTs) {
             minTs = baseDocument.field("timestamp");
+          }
         } else {
           ODocument testDocument = testDocuments.get(0);
-          Assert.assertEquals(testDocument.field("id"), baseDocument.field("id"));
-          Assert.assertEquals(testDocument.field("timestamp"), baseDocument.field("timestamp"));
-          Assert.assertEquals(testDocument.field("stringValue"), baseDocument.field("stringValue"));
-          Assert.assertEquals(testDocument.field("binaryValue"), baseDocument.field("binaryValue"));
+
+          assertThat(testDocument.field("id")).as("id:: %s", testDocument.field("id")).isEqualTo(baseDocument.field("id"));
+          assertThat(testDocument.field("timestamp")).as("documents:: %s - %s", testDocument, baseDocument)
+              .isEqualTo(baseDocument.field("timestamp"));
+          assertThat(testDocument.field("stringValue")).as("id:: %s", testDocument.field("id"))
+              .isEqualTo(baseDocument.field("stringValue"));
+          assertThat(testDocument.field("binaryValue")).as("id:: %s", testDocument.field("id"))
+              .isEqualTo(baseDocument.field("binaryValue"));
+
           recordsRestored++;
         }
 
@@ -232,7 +247,11 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
         }
 
       } finally {
+        baseDB.activateOnCurrentThread();
+
         baseDB.close();
+        testDB.activateOnCurrentThread();
+
         testDB.close();
       }
     }

@@ -34,6 +34,8 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 
 import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -43,12 +45,13 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
-  public final static int      CHUNK_MAX_SIZE = 4194304;    // 4MB
-  public static final String   DEPLOYDB       = "deploydb.";
-  public static final int      FACTORYID      = 13;
+  public final static int      CHUNK_MAX_SIZE       = 4194304;              // 4MB
+  public static final String   DEPLOYDB             = "deploydb.";
+  public static final int      FACTORYID            = 13;
 
   protected OLogSequenceNumber startLSN;
   protected long               random;
+  protected Set<String>        excludedClusterNames = new HashSet<String>();
 
   public OSyncDatabaseDeltaTask() {
   }
@@ -77,6 +80,10 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
           "skip deploying database from the same node");
 
     return Boolean.FALSE;
+  }
+
+  public void excludeClusterName(final String name) {
+    excludedClusterNames.add(name);
   }
 
   protected Object deltaBackup(final ODistributedRequestId requestId, final ODistributedServerManager iManager,
@@ -128,14 +135,14 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       final AtomicReference<ODistributedDatabaseDeltaSyncException> exception = new AtomicReference<ODistributedDatabaseDeltaSyncException>();
 
       try {
-        endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream));
+        endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream, excludedClusterNames));
 
         if (endLSN.get() == null)
           // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
           exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
 
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "delta backup of database '%s' completed. range=%s-=%s...", databaseName, startLSN, endLSN);
+            "delta backup of database '%s' completed. range=%s-%s...", databaseName, startLSN, endLSN);
 
       } catch (Exception e) {
         // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
@@ -209,26 +216,23 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   public void writeExternal(final ObjectOutput out) throws IOException {
     startLSN.writeExternal(out);
     out.writeLong(random);
+    out.writeInt(excludedClusterNames.size());
+    for (String clName : excludedClusterNames) {
+      out.writeUTF(clName);
+    }
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     startLSN = new OLogSequenceNumber(in);
     random = in.readLong();
+    excludedClusterNames.clear();
+    final int total = in.readInt();
+    for (int i = 0; i < total; ++i) {
+      excludedClusterNames.add(in.readUTF());
+    }
   }
 
-  //
-  // public static void dumpClusters(OAbstractPaginatedStorage storage) {
-  // OLogManager.instance().flush();
-  // OLogManager.instance().info(storage, "*********** CLUSTERS DUMP *************");
-  // for (String cl : storage.getClusterNames()) {
-  // final int clId = storage.getClusterIdByName(cl);
-  // final long[] boundaries = storage.getClusterDataRange(clId);
-  // OLogManager.instance().info(storage, "- CLUSTER %5d - %30s: %d-%d", clId, cl, boundaries[0], boundaries[1]);
-  // }
-  // OLogManager.instance().info(storage, "***************************************");
-  // OLogManager.instance().flush();
-  // }
   @Override
   public int getFactoryId() {
     return FACTORYID;

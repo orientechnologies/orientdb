@@ -20,6 +20,16 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -81,16 +91,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -184,6 +184,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
       preOpenSteps();
+
+      try {
+        performanceStatisticManager.registerMBean(name, id);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "MBean for profiler cannot be registered.");
+      }
 
       initWalAndDiskCache();
 
@@ -345,6 +351,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getValue());
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
+      try {
+        performanceStatisticManager.registerMBean(name, id);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "MBean for profiler cannot be registered.");
+      }
 
       initWalAndDiskCache();
 
@@ -702,11 +713,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
    *          LSN from which we should find changed records
    * @param stream
    *          Stream which will contain found records
+   * @param excludedClusterIds
+   *          Array of cluster ids to exclude from the export
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    *         records: write ahead log is absent, record with start LSN was not found in WAL, etc.
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
-  public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream) {
+  public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
+      final Set<String> excludedClusterIds) {
     if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
       throw new IllegalStateException(
           "Cannot find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
@@ -737,6 +751,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         // start record is absent there is nothing that we can do
         OWALRecord walRecord = writeAheadLog.read(startLsn);
         if (walRecord == null) {
+          OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation", lsn);
           return null;
         }
 
@@ -751,7 +766,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             if (atomicUnitEndRecord.getAtomicOperationMetadata().containsKey(ORecordOperationMetadata.RID_METADATA_KEY)) {
               final ORecordOperationMetadata recordOperationMetadata = (ORecordOperationMetadata) atomicUnitEndRecord
                   .getAtomicOperationMetadata().get(ORecordOperationMetadata.RID_METADATA_KEY);
-              sortedRids.addAll(recordOperationMetadata.getValue());
+              final Set<ORID> rids = recordOperationMetadata.getValue();
+              for (ORID rid : rids) {
+                if (!excludedClusterIds.contains(getPhysicalClusterNameById(rid.getClusterId())))
+                  sortedRids.add(rid);
+              }
             }
           }
 
@@ -761,7 +780,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         writeAheadLog.preventCutTill(null);
       }
 
-      OLogManager.instance().debug(this, "Exporting records after LSN=%s. Found %d records", lsn, sortedRids.size());
+      OLogManager.instance().info(this, "Exporting records after LSN=%s. Found %d records", lsn, sortedRids.size());
 
       // records may be deleted after we flag them as existing and as result rule of sorting of records
       // (deleted records go first will be broken), so we prohibit any modifications till we do not complete method execution
@@ -773,24 +792,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           dataOutputStream.writeLong(sortedRids.size());
 
           Iterator<ORID> ridIterator = sortedRids.iterator();
-          // while (ridIterator.hasNext()) {
-          // final ORID rid = ridIterator.next();
-          // final OCluster cluster = clusters.get(rid.getClusterId());
-          //
-          // // we do not need to load record only check it's presence
-          // if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
-          // dataOutputStream.writeInt(rid.getClusterId());
-          // dataOutputStream.writeLong(rid.getClusterPosition());
-          // dataOutputStream.write(1);
-          //
-          // OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
-          //
-          // // delete to avoid duplication
-          // ridIterator.remove();
-          // }
-          // }
-          //
-          // ridIterator = sortedRids.iterator();
+          while (ridIterator.hasNext()) {
+            final ORID rid = ridIterator.next();
+            final OCluster cluster = clusters.get(rid.getClusterId());
+
+            // we do not need to load record only check it's presence
+            if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
+              dataOutputStream.writeInt(rid.getClusterId());
+              dataOutputStream.writeLong(rid.getClusterPosition());
+              dataOutputStream.write(1);
+
+              OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
+
+              // delete to avoid duplication
+              ridIterator.remove();
+            }
+          }
+
+          ridIterator = sortedRids.iterator();
           while (ridIterator.hasNext()) {
             final ORID rid = ridIterator.next();
             final OCluster cluster = clusters.get(rid.getClusterId());
@@ -800,6 +819,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
             if (cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition())) == null) {
               dataOutputStream.writeBoolean(true);
+              OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
             } else {
               final ORawBuffer rawBuffer = cluster.readRecord(rid.getClusterPosition());
               assert rawBuffer != null;
@@ -3229,6 +3249,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         writeAheadLog.close();
         if (onDelete)
           writeAheadLog.delete();
+      }
+
+      try {
+        performanceStatisticManager.unregisterMBean(name, id);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
       }
 
       postCloseSteps(onDelete);

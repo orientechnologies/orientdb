@@ -35,17 +35,18 @@ import java.io.IOException;
  * @since 10/7/13
  */
 public class OClusterPositionMapBucket extends ODurablePage {
-  private static final int  NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
-  private static final int  SIZE_OFFSET      = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int  POSITIONS_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
+  private static final int SIZE_OFFSET      = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int POSITIONS_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final byte REMOVED          = 1;
-  private static final byte FILLED           = 2;
-  private static final byte ALLOCATED        = 4;
+  public static final byte NOT_EXISTENT     = 0; // NEVER USED ON DISK
+  public static final byte REMOVED          = 1;
+  public static final byte FILLED           = 2;
+  public static final byte ALLOCATED        = 4;
 
-  public static final int   ENTRY_SIZE       = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
+  public static final int  ENTRY_SIZE       = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
 
-  public static final int   MAX_ENTRIES      = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
+  public static final int  MAX_ENTRIES      = (MAX_PAGE_SIZE_BYTES - POSITIONS_OFFSET) / ENTRY_SIZE;
 
   public OClusterPositionMapBucket(OCacheEntry cacheEntry, OWALChanges changes) {
     super(cacheEntry, changes);
@@ -148,7 +149,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     return new PositionEntry(pageIndex, pagePosition);
   }
 
-  private void updateEntry(int position, PositionEntry entry) throws IOException {
+  private void updateEntry(int position, final PositionEntry entry) throws IOException {
     position += OByteSerializer.BYTE_SIZE;
 
     setLongValue(position, entry.pageIndex);
@@ -157,13 +158,22 @@ public class OClusterPositionMapBucket extends ODurablePage {
     setIntValue(position, entry.recordPosition);
   }
 
-  public boolean exists(int index) {
+  public boolean exists(final int index) {
     int size = getIntValue(SIZE_OFFSET);
     if (index >= size)
       return false;
 
     final int position = entryPosition(index);
     return getByteValue(position) == FILLED;
+  }
+
+  public byte getStatus(final int index) {
+    int size = getIntValue(SIZE_OFFSET);
+    if (index >= size)
+      return NOT_EXISTENT;
+
+    final int position = entryPosition(index);
+    return getByteValue(position);
   }
 
   public static class PositionEntry {

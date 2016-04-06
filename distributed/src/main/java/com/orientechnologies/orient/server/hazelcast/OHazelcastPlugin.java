@@ -112,8 +112,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   // LOCAL MSG COUNTER
   protected AtomicLong                                           localMessageIdCounter             = new AtomicLong();
 
-  protected OClusterOwnershipRebalanceStrategy                   rebalanceStrategy                 = new ODefaultClusterOwnershipRebalanceStrategy(
+  protected OClusterOwnershipAssignmentStrategy                  clusterAssignmentStrategy         = new ODefaultClusterOwnershipAssignmentStrategy(
       this);
+
+  protected Map<String, Long>                                    lastLSNWriting                    = new HashMap<String, Long>();
 
   public OHazelcastPlugin() {
   }
@@ -508,8 +510,27 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final Serializable result = (Serializable) task.execute(req.getId(), serverInstance, this, database);
 
       if (result instanceof Throwable && !(result instanceof OException))
+        // EXCEPTION
         ODistributedServerLog.error(this, nodeName, getNodeNameById(req.getId().getNodeId()), DIRECTION.IN,
             "error on executing request %d (%s) on local node: ", (Throwable) result, req.getId(), req.getTask());
+      else {
+        // OK
+        final String sourceNodeName = task.getNodeSource();
+        Long last = lastLSNWriting.get(sourceNodeName);
+        if (last == null)
+          last = 0l;
+
+        if (task instanceof OAbstractRecordReplicatedTask && System.currentTimeMillis() - last > 2000) {
+          final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(req.getDatabaseName());
+          final OLogSequenceNumber lastLSN = ((OAbstractRecordReplicatedTask) task).getLastLSN();
+          ddb.getSyncConfiguration().setLSN(task.getNodeSource(), lastLSN);
+
+          ODistributedServerLog.debug(this, nodeName, task.getNodeSource(), DIRECTION.NONE, "Updating LSN table to the value %s",
+              lastLSN);
+
+          lastLSNWriting.put(sourceNodeName, System.currentTimeMillis());
+        }
+      }
 
       return result;
 
@@ -789,7 +810,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         // NOTIFY NODE LEFT
         for (ODistributedLifecycleListener l : listeners)
-          l.onNodeLeft(nodeLeftName);
+          try {
+            l.onNodeLeft(nodeLeftName);
+          } catch (Exception e) {
+            // IGNORE IT
+          }
 
         // UNLOCK ANY PENDING LOCKS
         if (messageService != null)
@@ -825,10 +850,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         activeNodes.remove(nodeLeftName);
 
-        // REMOVE NODE IN DB CFG
-        if (messageService != null)
-          messageService.handleUnreachableNode(nodeLeftName);
-
         ODistributedServerLog.warn(this, nodeLeftName, null, DIRECTION.NONE, "node removed id=%s name=%s", member, nodeLeftName);
 
         if (nodeLeftName.startsWith("ext:")) {
@@ -838,16 +859,39 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               "removed node id=%s name=%s has not being recognized. Remove the node manually (registeredNodes=%s)", member,
               nodeLeftName, registeredNodes);
         }
+
+        reassignOwnClusters(nodeLeftName);
+
+        // REMOVE NODE IN DB CFG
+        if (messageService != null)
+          messageService.handleUnreachableNode(nodeLeftName);
       }
 
-      for (String databaseName : getManagedDatabases()) {
+      serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
+    } catch (HazelcastInstanceNotActiveException e) {
+      OLogManager.instance().error(this, "Hazelcast is not running");
+    } catch (RetryableHazelcastException e) {
+      OLogManager.instance().error(this, "Hazelcast is not running");
+    }
+  }
+
+  protected void reassignOwnClusters(final String nodeLeftName) {
+    for (String databaseName : getManagedDatabases()) {
+      // REASSIGN CLUSTERS WITHOUT AN OWNER, AVOIDING TO REBALANCE EXISTENT
+      ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+
+      if (!isLocalNodeTheCoordinator(cfg))
+        continue;
+
+      // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
+      final Set<String> clustersWithNotAvailableOwner = cfg.getClustersOwnedByServer(nodeLeftName);
+
+      if (!clustersWithNotAvailableOwner.isEmpty()) {
+
         final ODatabaseDocumentTx database = (ODatabaseDocumentTx) serverInstance.openDatabase(databaseName, "internal", "internal",
             null, true);
-        ODistributedConfiguration cfg;
         try {
-          // ASSIGN CLUSTERS AT STARTUP
-          cfg = getDatabaseConfiguration(databaseName);
-          final boolean distribCfgDirty = rebalanceClusterOwnership(database, cfg);
+          final boolean distribCfgDirty = rebalanceClusterOwnership(database, cfg, clustersWithNotAvailableOwner, false);
           if (distribCfgDirty) {
             OLogManager.instance().info(this, "Distributed configuration modified");
             updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
@@ -857,12 +901,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       }
 
-      serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
-    } catch (HazelcastInstanceNotActiveException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
-    } catch (RetryableHazelcastException e) {
-      OLogManager.instance().error(this, "Hazelcast is not running");
+      // REMOVE THE NODE FROM DISTRIBUTED CFG
+      getMessageService().getDatabase(databaseName).removeNodeInConfiguration(nodeLeftName, false);
     }
+  }
+
+  private boolean isLocalNodeTheCoordinator(final ODistributedConfiguration cfg) {
+    final List<String> servers = cfg.getOriginalServers("*");
+    return !servers.isEmpty() && nodeName.equalsIgnoreCase(servers.get(0));
   }
 
   @Override
@@ -969,14 +1015,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
           ODistributedServerLog.info(this, nodeName, eventNodeName, DIRECTION.IN, "Updated configuration db=%s", databaseName);
 
-//          final ODatabaseDocumentTx database = (ODatabaseDocumentTx) serverInstance.openDatabase(databaseName, "internal",
-//              "internal", null, true);
-//          try {
-//
-//          } finally {
-//            database.close();
-//          }
-//
+          // final ODatabaseDocumentTx database = (ODatabaseDocumentTx) serverInstance.openDatabase(databaseName, "internal",
+          // "internal", null, true);
+          // try {
+          //
+          // } finally {
+          // database.close();
+          // }
+          //
           checkDatabaseEvent(iEvent, databaseName);
         }
       } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
@@ -1234,7 +1280,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     for (Map.Entry<String, OLogSequenceNumber> entry : selectedNodes.entrySet()) {
 
-      final OAbstractReplicatedTask deployTask = new OSyncDatabaseDeltaTask(entry.getValue());
+      final OSyncDatabaseDeltaTask deployTask = new OSyncDatabaseDeltaTask(entry.getValue());
+      for (String clName : cfg.getClusterNames()) {
+        if (!cfg.isReplicationActive(clName, nodeName))
+          deployTask.excludeClusterName(clName);
+      }
 
       final List<String> targetNodes = new ArrayList<String>(1);
       targetNodes.add(entry.getKey());
@@ -1515,7 +1565,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         // GET LAST VERSION IN LOCK
         final ODistributedConfiguration cfg = getDatabaseConfiguration(db.getName());
 
-        final boolean distribCfgDirty = rebalanceClusterOwnership(db, cfg);
+        final boolean distribCfgDirty = rebalanceClusterOwnership(db, cfg, new HashSet<String>(), true);
         if (distribCfgDirty) {
           OLogManager.instance().warn(this, "Distributed configuration modified");
           updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
@@ -1596,7 +1646,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
       final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
 
-      return rebalanceStrategy.rebalanceClusterOwnershipOfClass(iDatabase, cfg, iClass, availableNodes, new HashSet<String>());
+      return clusterAssignmentStrategy.assignClusterOwnershipOfClass(iDatabase, cfg, iClass, availableNodes, new HashSet<String>(),
+          true);
 
     } finally {
       lock.unlock();
@@ -1613,7 +1664,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     updateLastClusterChange();
   }
 
-  protected synchronized boolean rebalanceClusterOwnership(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg) {
+  protected synchronized boolean rebalanceClusterOwnership(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
+      Set<String> clustersWithNotAvailableOwner, final boolean rebalance) {
     final ODistributedConfiguration.ROLES role = cfg.getServerRole(nodeName);
     if (role != ODistributedConfiguration.ROLES.MASTER)
       // NO MASTER, DON'T CREATE LOCAL CLUSTERS
@@ -1622,7 +1674,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     if (iDatabase.isClosed())
       getServerInstance().openDatabase(iDatabase);
 
-    ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Rebalancing cluster ownership for database %s",
+    ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Reassigning cluster ownership for database %s",
         iDatabase.getName());
 
     // OVERWRITE CLUSTER SELECTION STRATEGY BY SUFFIX
@@ -1630,27 +1682,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
 
-    // MOVE ALL THE CLUSTERS WITH OWNER NOT AVAILABLE NODES TO AVAILABLE ONES
-    final Set<String> clustersWithNotAvailableOwner = new HashSet<String>();
-    for (String server : cfg.getAllConfiguredServers()) {
-      if (!availableNodes.contains(server)) {
-        final Set<String> ownedClusters = cfg.getClustersOwnedByServer(server);
-
-        // FILTER ALL THE CLUSTERS WITH A STATIC OWNER CFG
-        for (Iterator<String> it = ownedClusters.iterator(); it.hasNext();) {
-          final String cluster = it.next();
-          if (cfg.getConfiguredClusterOwner(cluster) != null)
-            it.remove();
-        }
-
-        clustersWithNotAvailableOwner.addAll(ownedClusters);
-      }
-    }
-
     final OSchema schema = ((ODatabaseInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
-    for (final OClass clazz : schema.getClasses())
-      if (rebalanceStrategy.rebalanceClusterOwnershipOfClass(iDatabase, cfg, clazz, availableNodes, clustersWithNotAvailableOwner))
+    for (final OClass clazz : schema.getClasses()) {
+      if (clusterAssignmentStrategy.assignClusterOwnershipOfClass(iDatabase, cfg, clazz, availableNodes,
+          clustersWithNotAvailableOwner, rebalance))
         distributedCfgDirty = true;
+
+      if (!rebalance && clustersWithNotAvailableOwner.isEmpty())
+        // NO MORE CLUSTER TO REASSIGN
+        break;
+    }
 
     return distributedCfgDirty;
   }
@@ -1794,7 +1835,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         try {
           // ASSIGN CLUSTERS AT STARTUP
           cfg = getDatabaseConfiguration(databaseName);
-          final boolean distribCfgDirty = rebalanceClusterOwnership(database, cfg);
+          final boolean distribCfgDirty = rebalanceClusterOwnership(database, cfg, new HashSet<String>(), true);
           if (distribCfgDirty) {
             OLogManager.instance().info(this, "Distributed configuration modified");
             updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
@@ -1839,7 +1880,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   protected ODatabaseDocumentTx installDatabaseOnLocalNode(final ODistributedDatabaseImpl distrDatabase, final String databaseName,
       final String dbPath, final String iNode, final String iDatabaseCompressedFile, final boolean delta) {
-    ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "installing database '%s' to: %s...", databaseName, dbPath);
+    ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "Installing database '%s' to: %s...", databaseName, dbPath);
 
     try {
       final File f = new File(iDatabaseCompressedFile);
@@ -1885,10 +1926,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       };
 
+      final Lock lock = getLock(databaseName + ".cfg");
+      lock.lock();
       try {
         if (delta) {
 
-          new OIncrementalServerSync().importDelta(serverInstance, db, in);
+          new OIncrementalServerSync().importDelta(serverInstance, db, in, iNode);
 
         } else {
 
@@ -1898,6 +1941,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         }
       } finally {
         in.close();
+        lock.unlock();
       }
 
       db.close();

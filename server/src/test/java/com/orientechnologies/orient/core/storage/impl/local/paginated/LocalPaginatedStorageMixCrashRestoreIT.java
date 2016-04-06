@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Andrey Lomakin
@@ -51,6 +52,8 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
   private ConcurrentHashMap<Integer, Long> deletedIds = new ConcurrentHashMap<Integer, Long>();
 
+  private final AtomicLong lastOperation = new AtomicLong();
+
   public void spawnServer() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageMixCrashRestore";
@@ -64,8 +67,8 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+        System.getProperty("java.class.path"), "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     process = processBuilder.start();
@@ -120,7 +123,6 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
     System.out.println("Wait for 5 minutes");
     TimeUnit.MINUTES.sleep(5);
 
-    long lastTs = System.currentTimeMillis();
     System.out.println("Wait for process to destroy");
 
     process.destroy();
@@ -147,7 +149,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
     testDocumentTx.open("admin", "admin");
 
     System.out.println("Start documents comparison.");
-    compareDocuments(lastTs);
+    compareDocuments(lastOperation.get());
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
@@ -331,18 +333,24 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
               actionType = 2;
           }
 
+          long ts = -1;
           switch (actionType) {
           case 0:
-            createRecord();
+            ts = createRecord();
             break;
           case 1:
-            updateRecord();
+            ts = updateRecord();
             break;
           case 2:
-            deleteRecord();
+            ts = deleteRecord();
             break;
           default:
             throw new IllegalStateException("Invalid action type " + actionType);
+          }
+
+          long currentTs = lastOperation.get();
+          while (currentTs < ts && !lastOperation.compareAndSet(currentTs, ts)) {
+            currentTs = lastOperation.get();
           }
         }
       } finally {
@@ -353,13 +361,15 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       }
     }
 
-    private void createRecord() {
+    private long createRecord() {
+      long ts = -1;
       final int idToCreate = idGen.getAndIncrement();
       idLockManager.acquireLock(idToCreate, OLockManager.LOCK.EXCLUSIVE);
       try {
         final ODocument document = new ODocument("TestClass");
         document.field("id", idToCreate);
-        document.field("timestamp", System.currentTimeMillis());
+        ts = System.currentTimeMillis();
+        document.field("timestamp", ts);
         document.field("stringValue", "sfe" + random.nextLong());
 
         saveDoc(document, baseDB, testDB);
@@ -368,9 +378,11 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       } finally {
         idLockManager.releaseLock(Thread.currentThread(), idToCreate, OLockManager.LOCK.EXCLUSIVE);
       }
+
+      return ts;
     }
 
-    private void deleteRecord() {
+    private long deleteRecord() {
       int closeId = random.nextInt(idGen.get());
 
       Integer idToDelete = addedIds.ceiling(closeId);
@@ -407,9 +419,11 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       deletedIds.put(idToDelete, ts);
 
       idLockManager.releaseLock(Thread.currentThread(), idToDelete, OLockManager.LOCK.EXCLUSIVE);
+
+      return ts;
     }
 
-    private void updateRecord() {
+    private long updateRecord() {
       int closeId = random.nextInt(idGen.get());
 
       Integer idToUpdate = addedIds.ceiling(closeId);
@@ -437,7 +451,9 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       Assert.assertTrue(!documentsToUpdate.isEmpty());
 
       final ODocument documentToUpdate = documentsToUpdate.get(0);
-      documentToUpdate.field("timestamp", System.currentTimeMillis());
+      long ts = System.currentTimeMillis();
+
+      documentToUpdate.field("timestamp", ts);
       documentToUpdate.field("stringValue", "vde" + random.nextLong());
 
       saveDoc(documentToUpdate, baseDB, testDB);
@@ -445,6 +461,8 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       updatedIds.add(idToUpdate);
 
       idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+
+      return ts;
     }
   }
 }

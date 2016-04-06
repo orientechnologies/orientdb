@@ -193,6 +193,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
             readCondition.signalAll();
             releaseReadLock();
             readLock = false;
+            close();
 
             throw e;
           } finally {
@@ -250,7 +251,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw  OException.wrapException(new OInterruptedException("Thread interrupted while waiting for request"),e);
+          throw OException.wrapException(new OInterruptedException("Thread interrupted while waiting for request"), e);
         } finally {
           if (readLock)
             releaseReadLock();

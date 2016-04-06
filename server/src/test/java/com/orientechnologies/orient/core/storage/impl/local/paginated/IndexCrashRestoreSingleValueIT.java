@@ -68,7 +68,7 @@ public class IndexCrashRestoreSingleValueIT {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath", System.getProperty("java.class.path"),
         "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
@@ -166,13 +166,11 @@ public class IndexCrashRestoreSingleValueIT {
     System.out.println(
         "Restored entries : " + restoredRecords + " out of : " + baseDocumentTx.getMetadata().getIndexManager().getIndex("mi")
             .getSize());
-    System.out.println("Lost records max interval : " + (minLostTs == Long.MAX_VALUE ? 0 : lastTs - minLostTs));
 
     long maxInterval = minLostTs == Long.MAX_VALUE ? 0 : lastTs - minLostTs;
     System.out.println("Lost records max interval (ms) : " + maxInterval);
 
     assertThat(maxInterval).isLessThan(2000);
-
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {

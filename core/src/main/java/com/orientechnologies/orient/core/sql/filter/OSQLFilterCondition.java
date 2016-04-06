@@ -100,7 +100,7 @@ public class OSQLFilterCondition {
           final BytesContainer bytes = new BytesContainer();
           ORecordSerializerBinary.INSTANCE.getCurrentSerializer().serializeValue(bytes, r, type, null);
           bytes.offset = 0;
-          final OCollate collate = r instanceof OSQLFilterItemField ? ((OSQLFilterItemField) r).getCollate() : null;
+          final OCollate collate = r instanceof OSQLFilterItemField ? ((OSQLFilterItemField) r).getCollate(iCurrentRecord) : null;
           r = new OBinaryField(null, type, bytes, collate);
           if (!(right instanceof OSQLFilterItem || right instanceof OSQLFilterCondition))
             // FIXED VALUE, REPLACE IT
@@ -118,7 +118,7 @@ public class OSQLFilterCondition {
           final BytesContainer bytes = new BytesContainer();
           ORecordSerializerBinary.INSTANCE.getCurrentSerializer().serializeValue(bytes, l, type, null);
           bytes.offset = 0;
-          final OCollate collate = l instanceof OSQLFilterItemField ? ((OSQLFilterItemField) l).getCollate() : null;
+          final OCollate collate = l instanceof OSQLFilterItemField ? ((OSQLFilterItemField) l).getCollate(iCurrentRecord) : null;
           l = new OBinaryField(null, type, bytes, collate);
           if (!(left instanceof OSQLFilterItem || left instanceof OSQLFilterCondition))
             // FIXED VALUE, REPLACE IT
@@ -129,14 +129,13 @@ public class OSQLFilterCondition {
         l = ((OBinaryField) l).copy();
     }
 
-
     if (binaryEvaluation)
       binaryEvaluation = l instanceof OBinaryField && r instanceof OBinaryField;
 
 
     if (!binaryEvaluation) {
       // no collate for regular expressions, otherwise quotes will result in no match
-      final OCollate collate = operator instanceof OQueryOperatorMatches ? null : getCollate();
+      final OCollate collate = operator instanceof OQueryOperatorMatches ? null : getCollate(iCurrentRecord);
       final Object[] convertedValues = checkForConversion(iCurrentRecord, l, r, collate);
       if (convertedValues != null) {
         l = convertedValues[0];
@@ -158,11 +157,21 @@ public class OSQLFilterCondition {
     return result;
   }
 
+  @Deprecated
   public OCollate getCollate() {
     if (left instanceof OSQLFilterItemField) {
       return ((OSQLFilterItemField) left).getCollate();
     } else if (right instanceof OSQLFilterItemField) {
       return ((OSQLFilterItemField) right).getCollate();
+    }
+    return null;
+  }
+
+  public OCollate getCollate(OIdentifiable doc) {
+    if (left instanceof OSQLFilterItemField) {
+      return ((OSQLFilterItemField) left).getCollate(doc);
+    } else if (right instanceof OSQLFilterItemField) {
+      return ((OSQLFilterItemField) right).getCollate(doc);
     }
     return null;
   }

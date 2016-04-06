@@ -545,26 +545,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
     private void recreateIndex(ODocument idx) {
       final OIndexInternal<?> index = createIndex(idx);
-
-      try {
-        index.delete();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)",
-            index.getName(), e);
-
-        // TRY DELETING ALL THE FILES RELATIVE TO THE INDEX
-        for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext();) {
-          try {
-            final OIndexFactory indexFactory = it.next();
-            final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, getDatabase().getStorage(), 0,
-                null);
-
-            engine.deleteWithoutLoad(index.getName());
-          } catch (Exception e2) {
-          }
-        }
-      }
-
       final OIndexMetadata indexMetadata = index.loadMetadata(idx);
       final OIndexDefinition indexDefinition = indexMetadata.getIndexDefinition();
 
@@ -573,15 +553,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           index.loadFromConfiguration(idx);
           index.delete();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)",
-              index.getName(), e);
+          OLogManager.instance()
+              .error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)", index.getName(),
+                  e);
 
           // TRY DELETING ALL THE FILES RELATIVE TO THE INDEX
-          for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext();) {
+          for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext(); ) {
             try {
               final OIndexFactory indexFactory = it.next();
-              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, getDatabase().getStorage(),
-                  0, null);
+              final OIndexEngine engine = indexFactory
+                  .createIndexEngine(null, index.getName(), false, getDatabase().getStorage(), 0, null);
 
               engine.deleteWithoutLoad(index.getName());
             } catch (Exception e2) {

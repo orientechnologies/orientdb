@@ -30,6 +30,10 @@ import com.orientechnologies.common.exception.OException;
 @SuppressWarnings("serial")
 public class OSecuritySystemException extends OException {
 
+  public OSecuritySystemException(OSecuritySystemException exception) {
+    super(exception);
+  }
+
   public OSecuritySystemException(final String message) {
     super(message);
   }

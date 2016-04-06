@@ -17,6 +17,8 @@
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.record.impl.OBlob;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,8 +28,6 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.orientechnologies.orient.core.record.impl.OBlob;
 
 import static java.util.Arrays.asList;
 
@@ -39,17 +39,17 @@ public class OrientBlob implements Blob {
 
   private final List<byte[]> binaryDataChunks;
 
-  private long               length;
+  private long length;
 
-  private byte[]             currentChunk;
+  private byte[] currentChunk;
 
-  private int                currentChunkIndex;
+  private int currentChunkIndex;
 
-  protected OrientBlob(OBlob binaryDataChunk) throws IllegalArgumentException, NullPointerException {
+  protected OrientBlob(OBlob binaryDataChunk) throws IllegalArgumentException {
     this(asList(binaryDataChunk));
   }
 
-  protected OrientBlob(List<OBlob> binaryDataChunks) throws IllegalArgumentException, NullPointerException {
+  protected OrientBlob(List<OBlob> binaryDataChunks) throws IllegalArgumentException {
     this.binaryDataChunks = new ArrayList<byte[]>(binaryDataChunks.size());
     for (OBlob binaryDataChunk : binaryDataChunks) {
       if (binaryDataChunk == null) {
@@ -90,8 +90,8 @@ public class OrientBlob implements Blob {
     if (pos < 1)
       throw new SQLException("The position of the first byte in the BLOB value to be " + "extracted cannot be less than 1");
     if (length < 0)
-      throw new SQLException("The number of the consecutive bytes in the BLOB value to "
-          + "be extracted cannot be a negative number");
+      throw new SQLException(
+          "The number of the consecutive bytes in the BLOB value to " + "be extracted cannot be a negative number");
 
     int relativeIndex = this.getRelativeIndex(pos);
 
@@ -119,7 +119,7 @@ public class OrientBlob implements Blob {
 
   /**
    * Calculates the index within a binary chunk corresponding to the given absolute position within this BLOB
-   * 
+   *
    * @param pos
    * @return
    */
@@ -227,7 +227,7 @@ public class OrientBlob implements Blob {
 
     private long bytesToBeRead;
 
-    private int  positionInTheCurrentChunk;
+    private int positionInTheCurrentChunk;
 
     public OrientBlobInputStream() {
       bytesToBeRead = OrientBlob.this.length;

@@ -44,10 +44,10 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
   @Test
   public void test() throws Exception {
     startupNodesInSequence = true;
-    useTransactions = false;
+    useTransactions = true;
     count = 500;
     maxRetries = 10;
-    delayWriter = 100;
+    delayWriter = 0;
     init(SERVERS);
     prepare(false);
 
@@ -105,7 +105,7 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
                 final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
                     .acquire();
                 try {
-                  return database.countClass("Person") > (count * SERVERS) * 1 / 3;
+                  return database.countClass("Person") > (count * SERVERS) * 1 / 4;
                 } finally {
                   database.close();
                 }
@@ -118,10 +118,26 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
 
                 banner("RESTARTING SERVER " + (SERVERS - 1));
 
-                ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager())
-                    .restartNode(server.server.getDistributedManager().getLocalNodeName());
+                final String nodeName = server.server.getDistributedManager().getLocalNodeName();
+                ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager()).restartNode(nodeName);
 
-                Thread.sleep(5000);
+                Thread.sleep(3000);
+
+                // WAIT UNTIL THE NODE IS UP & RUNNING
+                while (!(serverInstance.get(0).getServerInstance().getDistributedManager()).isNodeOnline(nodeName,
+                    getDatabaseName())) {
+                  Thread.sleep(1000);
+                }
+
+                // WAIT UNTIL THE END
+                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
+                    .acquire();
+                try {
+                  while (database.countClass("Person") < count * SERVERS)
+                    Thread.sleep(1000);
+                } finally {
+                  database.close();
+                }
 
                 return null;
               }

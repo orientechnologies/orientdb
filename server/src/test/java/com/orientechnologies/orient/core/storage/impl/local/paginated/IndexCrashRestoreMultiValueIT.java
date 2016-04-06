@@ -83,7 +83,7 @@ public class IndexCrashRestoreMultiValueIT {
 
     String javaExec = System.getProperty("java.home") + "/bin/java";
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath", System.getProperty("java.class.path"),
         "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
 
     processBuilder.inheritIO();

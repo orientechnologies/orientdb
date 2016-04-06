@@ -148,7 +148,6 @@ public abstract class AbstractServerClusterTest {
         Assert.assertNotNull(cfg);
       }
 
-      OLogManager.instance().flush();
       banner("Executing test...");
 
       try {

@@ -177,6 +177,23 @@ public class OCommandExecutorSQLSelectTest {
     initMaxLongNumber(db);
     initFilterAndOrderByTest(db);
     initComplexFilterInSquareBrackets(db);
+    initCollateOnLinked(db);
+  }
+
+  private void initCollateOnLinked(ODatabaseDocumentTx db) {
+    db.command(new OCommandSQL("CREATE CLASS CollateOnLinked")).execute();
+    db.command(new OCommandSQL("CREATE CLASS CollateOnLinked2")).execute();
+    db.command(new OCommandSQL("CREATE PROPERTY CollateOnLinked.name String")).execute();
+    db.command(new OCommandSQL("ALTER PROPERTY CollateOnLinked.name collate ci")).execute();
+
+    ODocument doc = new ODocument("CollateOnLinked");
+    doc.field("name", "foo");
+    doc.save();
+
+    ODocument doc2 = new ODocument("CollateOnLinked2");
+    doc2.field("linked", doc.getIdentity());
+    doc2.save();
+
   }
 
   private void initComplexFilterInSquareBrackets(ODatabaseDocumentTx db) {
@@ -1215,6 +1232,12 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.get(0).field("value"), 86400000l*26);
   }
 
+  public void testCollateOnLinked() {
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from CollateOnLinked2 where linked.name = 'foo' "));
+    assertEquals(results.size(), 1);
+    results =db.query(new OSQLSynchQuery<ODocument>("select from CollateOnLinked2 where linked.name = 'FOO' "));
+    assertEquals(results.size(), 1);
+  }
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;

@@ -71,16 +71,20 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
 						final String resources = userDoc.field("resources");
 						String password = userDoc.field("password");
 						
-						if(!_UsersMap.containsKey(user))
+						String checkName = user;
+						
+						if(!isCaseSensitive()) checkName = user.toLowerCase();
+						
+						if(!_UsersMap.containsKey(checkName))
 						{
 							if(password == null) password = "";
 							
 							OServerUserConfiguration userCfg = new OServerUserConfiguration(user, password, resources);
-							_UsersMap.put(user, userCfg);
+							_UsersMap.put(checkName, userCfg);
 						}
 						else
 						{
-							OLogManager.instance().error(this, "ODefaultPasswordAuthenticator.config() User: %s already exists", user);
+							OLogManager.instance().error(this, "ODefaultPasswordAuthenticator.config() User: %s already exists", checkName);
 						}
 					}
 				}
@@ -160,9 +164,16 @@ public class ODefaultPasswordAuthenticator extends OSecurityAuthenticatorAbstrac
 		
 		synchronized(_UsersMap)
 		{
-			if(_UsersMap.containsKey(username))
+			if(username != null)
 			{
-				userCfg = _UsersMap.get(username);
+				String checkName = username;
+				
+				if(!isCaseSensitive()) checkName = username.toLowerCase();
+				
+				if(_UsersMap.containsKey(checkName))
+				{
+					userCfg = _UsersMap.get(checkName);
+				}
 			}
 		}
 		
