@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.IOException;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
@@ -28,6 +25,9 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Running server instance.
@@ -110,7 +110,7 @@ public class ServerRun {
     OFileUtils.copyDirectory(new File(getDatabasePath(iDatabaseName)), new File(iDestinationDirectory));
   }
 
-  protected OServer startServer(final String iServerConfigFile) throws Exception {
+  public OServer startServer(final String iServerConfigFile) throws Exception {
     System.out.println("Starting server " + serverId + " from " + getServerHome() + "...");
 
     System.setProperty("ORIENTDB_HOME", getServerHome());
@@ -125,7 +125,7 @@ public class ServerRun {
     return server;
   }
 
-  protected void shutdownServer() {
+  public void shutdownServer() {
     if (server != null)
       server.shutdown();
 
@@ -154,7 +154,7 @@ public class ServerRun {
     return getServerHome(serverId);
   }
 
-  protected String getDatabasePath(final String iDatabaseName) {
+  public String getDatabasePath(final String iDatabaseName) {
     return getDatabasePath(serverId, iDatabaseName);
   }
 

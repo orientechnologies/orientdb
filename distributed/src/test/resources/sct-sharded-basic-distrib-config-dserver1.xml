@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<orient-server>
+    <handlers>
+        <handler
+                class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
+            <parameters>
+                <parameter value="europe" name="nodeName"/>
+                <parameter value="true" name="enabled"/>
+                <parameter value="src/test/resources/sharded-hazelcast.xml"
+                           name="configuration.hazelcast"/>
+                <parameter name="configuration.db.default"
+                           value="src/test/resources/sct-sharded-basic-distrib-config.json"/>
+            </parameters>
+        </handler>
+        <handler
+                class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
+            <parameters>
+                <parameter value="false" name="enabled"/>
+                <parameter value="4h" name="delay"/>
+                <parameter value="backup" name="target.directory"/>
+                <parameter value="${DBNAME}-${DATE:yyyyMMddHHmmss}.json"
+                           name="target.fileName"/>
+                <parameter value="" name="db.include"/>
+                <parameter value="" name="db.exclude"/>
+            </parameters>
+        </handler>
+        <handler
+                class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
+            <parameters>
+                <parameter value="false" name="enabled"/>
+            </parameters>
+        </handler>
+    </handlers>
+    <network>
+        <protocols>
+            <protocol
+                    implementation="com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary"
+                    name="binary"/>
+            <protocol
+                    implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb"
+                    name="http"/>
+        </protocols>
+        <listeners>
+            <listener protocol="binary" port-range="2424-2430"
+                      ip-address="0.0.0.0"/>
+            <listener protocol="http" port-range="2480-2490" ip-address="0.0.0.0">
+                <parameters>
+                    <!-- Connection's custom parameters. If not specified the global configuration
+                        will be taken -->
+                    <parameter name="network.http.charset" value="utf-8"/>
+                    <!-- Define additional HTTP headers to always send as response -->
+                    <!-- Allow cross-site scripting -->
+                    <!-- parameter name="network.http.additionalResponseHeaders" value="Access-Control-Allow-Origin:
+                        *;Access-Control-Allow-Credentials: true" / -->
+                </parameters>
+                <commands>
+                    <command
+                            implementation="com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent"
+                            pattern="GET|www GET|studio/ GET| GET|*.htm GET|*.html GET|*.xml GET|*.jpeg GET|*.jpg GET|*.png GET|*.gif GET|*.js GET|*.css GET|*.swf GET|*.ico GET|*.txt GET|*.otf GET|*.pjs GET|*.svg">
+                        <parameters>
+                            <entry
+                                    value="Cache-Control: no-cache, no-store, max-age=0, must-revalidate\r\nPragma: no-cache"
+                                    name="http.cache:*.htm *.html"/>
+                            <entry value="Cache-Control: max-age=120" name="http.cache:default"/>
+                        </parameters>
+                    </command>
+                </commands>
+            </listener>
+        </listeners>
+    </network>
+    <storages>
+    </storages>
+    <users>
+        <user resources="*" password="test" name="root"/>
+        <user resources="connect,server.listDatabases" password="guest"
+              name="guest"/>
+        <user resources="database.passthrough"
+              password="79498491C4D4F1360816D003E2004BC04606AA1C31B1A0E3BCF091A30EFDAB7D"
+              name="replicator"/>
+    </users>
+    <properties>
+        <!-- DATABASE POOL: size min/max -->
+        <entry name="db.pool.min" value="1"/>
+        <entry name="db.pool.max" value="20"/>
+
+        <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size> -->
+        <entry name="profiler.enabled" value="true"/>
+        <!-- <entry name="profiler.config" value="30,10,10" /> -->
+
+        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info,
+            warning -->
+        <entry name="log.console.level" value="info"/>
+        <entry name="log.file.level" value="fine"/>
+    </properties>
+</orient-server>

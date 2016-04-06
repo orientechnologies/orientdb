@@ -21,25 +21,26 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Assert;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
-  protected int             delayServerStartup     = 0;
-  protected int             delayServerAlign       = 0;
-  protected boolean         startupNodesInSequence = true;
-  protected String          rootDirectory          = "target/servers/";
+  protected int        delayServerStartup     = 0;
+  protected int        delayServerAlign       = 0;
+  protected boolean    startupNodesInSequence = true;
+  protected String     rootDirectory          = "target/servers/";
+  protected AtomicLong totalVertices          = new AtomicLong(0);
 
   protected List<ServerRun> serverInstance         = new ArrayList<ServerRun>();
 
@@ -289,5 +290,26 @@ public abstract class AbstractServerClusterTest {
         // IGNORE IT
       }
     }
+  }
+
+  protected String getDatabaseURL(ServerRun server) {
+    return null;
+  }
+
+  protected void startCountMonitorTask(final String iClassName) {
+    new Timer(true).schedule(new TimerTask() {
+      @Override
+      public void run() {
+        ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
+        db.open("admin", "admin");
+        try {
+          totalVertices.set(db.countClass(iClassName));
+        } catch (Exception e) {
+          e.printStackTrace();
+        } finally {
+          db.close();
+        }
+      }
+    }, 1000, 1000);
   }
 }
