@@ -130,6 +130,7 @@ public class OConsoleApplication {
             break;
         } catch (Exception e) {
           result = 1;
+          out.print("Error on reading console input: "+e.getMessage());
           OLogManager.instance().error(this, "Error on reading console input: %s", e, consoleInput);
         }
       }

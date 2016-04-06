@@ -19,19 +19,24 @@
  */
 package com.orientechnologies.common.directmemory;
 
+import java.lang.management.ManagementFactory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
+import javax.management.*;
 
 /**
  * Object of this class works at the same time as factory for <code>DirectByteBuffer</code> objects and pool for
@@ -43,7 +48,12 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  *
  * @see OGlobalConfiguration#MEMORY_CHUNK_SIZE
  */
-public class OByteBufferPool {
+public class OByteBufferPool implements OByteBufferPoolMXBean {
+  /**
+   * {@link OByteBufferPool}'s MBean name.
+   */
+  public static final String MBEAN_NAME = "com.orientechnologies.common.directmemory:type=OByteBufferPoolMXBean";
+
   private static final OByteBufferPool INSTANCE;
 
   static {
@@ -99,6 +109,16 @@ public class OByteBufferPool {
    * Pool of pages which are already allocated but not used any more.
    */
   private final ConcurrentLinkedQueue<ByteBuffer>  pool                   = new ConcurrentLinkedQueue<ByteBuffer>();
+
+  /**
+   * Tracks the number of the overflow buffer allocations.
+   */
+  private final AtomicLong                         overflowBufferCount    = new AtomicLong();
+
+  /**
+   * Tracks the status of the MBean registration.
+   */
+  private final AtomicBoolean                      mbeanIsRegistered      = new AtomicBoolean();
 
   /**
    * Pool returned by this method is used in all components of storage. Memory used by this pool is preallocated by chunks with size
@@ -315,6 +335,7 @@ public class OByteBufferPool {
     }
 
     // this should not happen if amount of pages is needed for storage is calculated correctly
+    overflowBufferCount.incrementAndGet();
     return ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder());
   }
 
@@ -326,6 +347,124 @@ public class OByteBufferPool {
    */
   public void release(ByteBuffer buffer) {
     pool.offer(buffer);
+  }
+
+  @Override
+  public int getBufferSize() {
+    return pageSize;
+  }
+
+  @Override
+  public long getAllocatedBufferCount() {
+    return Math.min(nextAllocationPosition.get(), getMaxBufferCount());
+  }
+
+  @Override
+  public long getOverflowBufferCount() {
+    return overflowBufferCount.get();
+  }
+
+  @Override
+  public long getMaxBufferCount() {
+    return preallocatedPages;
+  }
+
+  @Override
+  public int getBuffersInThePool() {
+    return getSize();
+  }
+
+  @Override
+  public long getAllocatedMemory() {
+    long memory = getOverflowBufferCount();
+
+    final long allocatedAreas = (getAllocatedBufferCount() + maxPagesPerSingleArea - 1) / maxPagesPerSingleArea;
+    if (allocatedAreas < preallocatedAreas.length())
+      memory += allocatedAreas * maxPagesPerSingleArea;
+    else {
+      final long lastAreaPages = preallocatedPages - (allocatedAreas - 1) * maxPagesPerSingleArea;
+      memory += (allocatedAreas - 1) * maxPagesPerSingleArea + lastAreaPages;
+    }
+
+    return memory * pageSize;
+  }
+
+  @Override
+  public long getAllocatedMemoryInMB() {
+    return getAllocatedMemory() / (1024 * 1024);
+  }
+
+  @Override
+  public double getAllocatedMemoryInGB() {
+    return Math.ceil((getAllocatedMemory() * 100) / (1024.0 * 1024 * 1024)) / 100;
+  }
+
+  @Override
+  public long getMaxMemory() {
+    return getMaxBufferCount() * pageSize;
+  }
+
+  @Override
+  public long getMaxMemoryInMB() {
+    return getMaxMemory() / (1024 * 1024);
+  }
+
+  @Override
+  public double getMaxMemoryInGB() {
+    return Math.ceil((getMaxMemory() * 100) / (1024.0 * 1024 * 1024)) / 100;
+  }
+
+  /**
+   * Registers the MBean for this byte buffer pool.
+   *
+   * @see OByteBufferPoolMXBean
+   */
+  public void registerMBean() {
+    if (mbeanIsRegistered.compareAndSet(false, true)) {
+      try {
+        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
+
+        if (!server.isRegistered(mbeanName)) {
+          server.registerMBean(this, mbeanName);
+        } else {
+          mbeanIsRegistered.set(false);
+          OLogManager.instance().warn(this,
+              "MBean with name %s has already registered. Probably your system was not shutdown correctly"
+                  + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
+        }
+
+      } catch (MalformedObjectNameException e) {
+        throw OException.wrapException(new OSystemException("Error during registration of byte buffer pool MBean"), e);
+      } catch (InstanceAlreadyExistsException e) {
+        throw OException.wrapException(new OSystemException("Error during registration of byte buffer pool MBean"), e);
+      } catch (MBeanRegistrationException e) {
+        throw OException.wrapException(new OSystemException("Error during registration of byte buffer pool MBean"), e);
+      } catch (NotCompliantMBeanException e) {
+        throw OException.wrapException(new OSystemException("Error during registration of byte buffer pool MBean"), e);
+      }
+    }
+  }
+
+  /**
+   * Unregisters the MBean for this byte buffer pool.
+   *
+   * @see OByteBufferPoolMXBean
+   */
+  public void unregisterMBean() {
+    if (mbeanIsRegistered.compareAndSet(true, false)) {
+      try {
+        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
+        final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
+        server.unregisterMBean(mbeanName);
+      } catch (MalformedObjectNameException e) {
+        throw OException.wrapException(new OSystemException("Error during unregistration of byte buffer pool MBean"), e);
+      } catch (InstanceNotFoundException e) {
+        throw OException.wrapException(new OSystemException("Error during unregistration of byte buffer pool MBean"), e);
+      } catch (MBeanRegistrationException e) {
+        throw OException.wrapException(new OSystemException("Error during unregistration of byte buffer pool MBean"), e);
+      }
+    }
   }
 
   private static final class BufferHolder {
