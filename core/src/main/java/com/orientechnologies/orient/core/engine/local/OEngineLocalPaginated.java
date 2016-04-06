@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.engine.local;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -52,6 +53,12 @@ public class OEngineLocalPaginated extends OEngineAbstract {
       readCache.registerMBean();
     } catch (Exception e) {
       OLogManager.instance().error(this, "MBean for read cache cannot be registered", e);
+    }
+
+    try {
+      OByteBufferPool.instance().registerMBean();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "MBean for byte buffer pool cannot be registered", e);
     }
   }
 
@@ -103,5 +110,10 @@ public class OEngineLocalPaginated extends OEngineAbstract {
       OLogManager.instance().error(this, "MBean for read cache cannot be unregistered", e);
     }
 
+    try {
+      OByteBufferPool.instance().unregisterMBean();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "MBean for byte buffer pool cannot be unregistered", e);
+    }
   }
 }
