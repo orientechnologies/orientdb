@@ -78,9 +78,7 @@ public class RIDHotAlignmentScenarioTest extends AbstractScenarioTest {
     ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
     cfg = databaseConfiguration.serialize();
     cfg.field("writeQuorum", 1);
-    cfg.field("failureAvailableNodesLessQuorum", true);
     cfg.field("autoDeploy", true);
-    cfg.field("hotAlignment", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);
     manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
     System.out.println("\nConfiguration updated.");

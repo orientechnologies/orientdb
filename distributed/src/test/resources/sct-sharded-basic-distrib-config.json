@@ -1,14 +1,10 @@
 {
   "autoDeploy": true,
-  "hotAlignment": false,
   "readQuorum": 1,
-  "writeQuorum": 2,
-  "failureAvailableNodesLessQuorum": true,
+  "writeQuorum": "majority",
   "readYourWrites": true,
   "clusters": {
     "internal": {
-    },
-    "index": {
     },
     "client_usa": {
       "servers" : [ "usa" ]

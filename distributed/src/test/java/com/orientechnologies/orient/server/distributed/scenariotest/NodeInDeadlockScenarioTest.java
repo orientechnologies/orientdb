@@ -135,7 +135,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
                                 .acquire();
                             try {
                               long recordCount = database.countClass("Person");
-                              boolean condition = recordCount > (count * writerCount) * 1 / 3;
+                              boolean condition = recordCount > (count * writerCount * SERVERS) * 1 / 3;
                               return condition;
                             } finally {
                               database.close();
@@ -165,7 +165,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
                         public Object call() throws Exception {
 
                           // SIMULATE LONG BACKUP UP TO 2/3 OF RECORDS
-                          while (totalVertices.get() < (count * SERVERS) * 2 / 3) {
+                          while (totalVertices.get() < (count * writerCount * SERVERS) * 2 / 3) {
                             Thread.sleep(1000);
                           }
 

@@ -75,7 +75,6 @@ public class ReadQuorumScenarioTest  extends AbstractScenarioTest {
     ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
     cfg = databaseConfiguration.serialize();
     cfg.field("readQuorum", 2);
-    cfg.field("failureAvailableNodesLessQuorum", true);
     cfg.field("autoDeploy", false);
     cfg.field("version", (Integer) cfg.field("version") + 1);
     manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);

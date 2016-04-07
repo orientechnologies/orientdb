@@ -145,7 +145,6 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
         ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
         ODocument cfg = databaseConfiguration.serialize();
-        cfg.field("failureAvailableNodesLessQuorum", true);
         cfg.field("version", (Integer) cfg.field("version") + 1);
         manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
         assertEquals("majority", cfg.field("writeQuorum"));

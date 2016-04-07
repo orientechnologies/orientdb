@@ -236,7 +236,6 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
         cfg = databaseConfiguration.serialize();
         cfg.field("writeQuorum", 3);
-        cfg.field("failureAvailableNodesLessQuorum", true);
         cfg.field("version", (Integer) cfg.field("version") + 1);
         manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
 

@@ -25,7 +25,6 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -33,7 +32,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Timer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -49,21 +47,26 @@ import static org.junit.Assert.assertTrue;
  * - record r1 inserted on server1
  * - record r1 (version x) is present in full replica on all the servers
  * - client c1 (connected to server1) updates r1 with the value v1, meanwhile client c2 (connected to server2) updates r1 with value v2
+ *    - each server updates locally its version of r1 (writeQuorum=1)
+ *    - when server1 and server2 receive the update message for r1 from the other server they ignore the message because, if the 2 versions are equal, each server maintains its own record.
+ *    - no exception is thrown
  * - end of deadlock on server3
+ *    - server3 accept and perform only one update between the two update messages
+ *    - no exception is thrown
  * - check consistency on the nodes:
- *      - r1 has the same value on all the servers
+ *      - r1 on server1 has the values set by the client c1
+ *      - r1 on server2 has the values set by the client c2
+ *      - r1 on server3 has the values set by the client c1 or the values set by the client c2, but not the old one
  *      - r1 has version x+1 on all the servers
  */
 
 public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTaskScenarioTest {
 
-  protected  Timer   timer            = new Timer(true);
   volatile int     serverStarted    = 0;
   volatile boolean backupInProgress = false;
   private volatile boolean server3inDeadlock = false;
 
 
-  @Ignore
   @Test
   public void test() throws Exception {
 
@@ -99,7 +102,6 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
     ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
     cfg = databaseConfiguration.serialize();
     cfg.field("writeQuorum", 1);
-    cfg.field("failureAvailableNodesLessQuorum", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);
     manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
     System.out.println("\nConfiguration updated.");
@@ -109,7 +111,8 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
     Thread.sleep(200);  // waiting for deadlock
 
     // inserting record r1 and checking consistency on server1 and server2
-    System.out.print("Inserting record r1 and checking consistency...");
+    System.out.print("Inserting record r1 and on server1 and checking consistency on both server1 and server2...");
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
     ODocument r1onServer1 = new ODocument("Person").fields("id", "R001", "firstName", "Han", "lastName", "Solo");
     r1onServer1.save();
     Thread.sleep(200);
@@ -139,18 +142,24 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
       for (Future f : futures) {
         f.get();
       }
-      assertTrue("Concurrent update NOT detected!", false);
+      assertTrue("Concurrent update correctly managed!", true);
     } catch (Exception e) {
       e.printStackTrace();
-      assertTrue(true);
-      System.out.println("Concurrent update detected!");
+      assertTrue(false);
+      System.out.println("Exception was thrown!");
     }
     // wait for propagation
     Thread.sleep(500);
 
-    // end of deadlock on server3
-    this.server3inDeadlock = false;
-    Thread.sleep(1000);  // waiting for sync of server3
+    // end of deadlock on server3 and sync
+    try {
+      this.server3inDeadlock = false;
+      Thread.sleep(500);  // waiting for sync of server3
+    } catch (Exception e) {
+      e.printStackTrace();
+      assertTrue(false);
+      System.out.println("Exception was thrown!");
+    }
 
     // check consistency
     r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
@@ -164,32 +173,40 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
     r1onServer3.reload();
 
-    if( (r1onServer1.field("firstName").equals("Luke") && r1onServer1.field("lastName").equals("Skywalker")) ||
-        r1onServer1.field("firstName").equals("Darth") && r1onServer1.field("lastName").equals("Vader")) {
-      assertTrue("The record has been updated by a client!", true);
+    // r1 on server1 has the values set by the client c1
+    if(r1onServer1.field("firstName").equals("Luke") && r1onServer1.field("lastName").equals("Skywalker")) {
+      assertTrue("The record on server1 has been updated by the client c1 without exceptions!", true);
     }
     else {
-      assertTrue("The record has not been updated by any client!", false);
+      assertTrue("The record on server1 has not been updated by any client!", false);
     }
 
-    System.out.printf("Checking consistency among servers...");
-    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
-    assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
-    assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
-    assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
+    // r1 on server2 has the values set by the client c2
+    if(r1onServer2.field("firstName").equals("Darth") && r1onServer2.field("lastName").equals("Vader")) {
+      assertTrue("The record on server1 has been updated by the client c2 without exceptions!", true);
+    }
+    else {
+      assertTrue("The record on server2 has not been updated by any client!", false);
+    }
 
-    assertEquals(r1onServer2.field("@version"), r1onServer3.field("@version"));
-    assertEquals(r1onServer2.field("id"), r1onServer3.field("id"));
-    assertEquals(r1onServer2.field("firstName"), r1onServer3.field("firstName"));
-    assertEquals(r1onServer2.field("lastName"), r1onServer3.field("lastName"));
-    System.out.println("The records are consistent in the cluster.");
+    // r1 on server3 has the values set by the client c1 or the values set by the client c2, but not the old one
+    if( (r1onServer3.field("firstName").equals("Luke") && r1onServer3.field("lastName").equals("Skywalker")) ||
+        r1onServer3.field("firstName").equals("Darth") && r1onServer3.field("lastName").equals("Vader")) {
+      assertTrue("The record on server3 has been updated by a client without exceptions!", true);
+    }
+    else {
+      assertTrue("The record on server3 has not been updated by any client!", false);
+    }
 
-    // final version of the record r1
-    System.out.print("Checking versioning...");
+    // r1 has version x+1 on all the servers
+    System.out.printf("Checking version consistency among servers...");
+
     int finalVersion = r1onServer1.field("@version");
-
     assertEquals(finalVersion, initialVersion +1);
-    System.out.println("\tDone.");
+
+    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
+    assertEquals(r1onServer2.field("@version"), r1onServer3.field("@version"));
+    System.out.println("Done.");
 
   }
 

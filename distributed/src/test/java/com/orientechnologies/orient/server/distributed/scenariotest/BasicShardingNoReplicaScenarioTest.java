@@ -28,7 +28,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -50,9 +49,9 @@ import static org.junit.Assert.*;
  * - check consistency no-replica
  */
 
-public class BasicShardingScenarioTest extends AbstractShardingScenarioTest {
+public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenarioTest {
 
-  @Ignore
+  //  @Ignore
   @Test
   public void test() throws Exception {
     init(SERVERS);
@@ -68,7 +67,6 @@ public class BasicShardingScenarioTest extends AbstractShardingScenarioTest {
     OHazelcastPlugin manager1 = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
     ODistributedConfiguration databaseConfiguration = manager1.getDatabaseConfiguration(this.getDatabaseName());
     ODocument cfg = databaseConfiguration.serialize();
-    cfg.field("failureAvailableNodesLessQuorum", false);
     cfg.field("autoDeploy", false);
     cfg.field("version", (Integer) cfg.field("version") + 1);
     manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), cfg, true, true);
@@ -76,7 +74,6 @@ public class BasicShardingScenarioTest extends AbstractShardingScenarioTest {
     OHazelcastPlugin manager2 = (OHazelcastPlugin) serverInstance.get(1).getServerInstance().getDistributedManager();
     databaseConfiguration = manager2.getDatabaseConfiguration(this.getDatabaseName());
     cfg = databaseConfiguration.serialize();
-    cfg.field("failureAvailableNodesLessQuorum", false);
     cfg.field("autoDeploy", false);
     cfg.field("version", (Integer) cfg.field("version") + 1);
     manager2.updateCachedDatabaseConfiguration(this.getDatabaseName(), cfg, true, true);
@@ -84,15 +81,22 @@ public class BasicShardingScenarioTest extends AbstractShardingScenarioTest {
     OHazelcastPlugin manager3 = (OHazelcastPlugin) serverInstance.get(2).getServerInstance().getDistributedManager();
     databaseConfiguration = manager3.getDatabaseConfiguration(this.getDatabaseName());
     cfg = databaseConfiguration.serialize();
-    cfg.field("failureAvailableNodesLessQuorum", false);
     cfg.field("autoDeploy", false);
     cfg.field("version", (Integer) cfg.field("version") + 1);
     manager3.updateCachedDatabaseConfiguration(this.getDatabaseName(), cfg, true, true);
 
     OrientGraphFactory localFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-    OrientGraphNoTx graphNoTx = localFactory.getNoTx();
+    OrientGraphNoTx graphNoTx = null;
 
     try {
+
+      graphNoTx = localFactory.getNoTx();
+
+      // removing "person" and "cusomer" classes
+//      graphNoTx.dropVertexType("Provider");
+//      graphNoTx.dropVertexType("Customer");
+//      graphNoTx.dropVertexType("Person");
+
       final OrientVertexType clientType = graphNoTx.createVertexType("Client");
       final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name", OType.STRING);
       prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
@@ -190,6 +194,7 @@ public class BasicShardingScenarioTest extends AbstractShardingScenarioTest {
 
     } catch (Exception e) {
       e.printStackTrace();
+      assertTrue(false);
     } finally {
       if(!graphNoTx.getRawGraph().isClosed()) {
         ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx.getRawGraph());
