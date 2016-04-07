@@ -900,9 +900,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           database.close();
         }
       }
-
-      // REMOVE THE NODE FROM DISTRIBUTED CFG
-      getMessageService().getDatabase(databaseName).removeNodeInConfiguration(nodeLeftName, false);
     }
   }
 
@@ -1806,21 +1803,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
             cfg.getServerRole(nodeName), databaseName);
 
-        boolean publishCfg = !getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName);
-
-        if (activeNodes.size() == 1 && !cfg.isHotAlignment()) {
-          // REMOVE DEAD NODES
-          final Set<String> cfgServers = cfg.getAllConfiguredServers();
-          for (String cfgServer : cfgServers) {
-            if (!isNodeAvailable(cfgServer, databaseName)) {
-              ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-                  "Removing offline server '%s' for database '%s' in distributed configuration", cfgServer, databaseName);
-              cfg.removeNodeInServerList(cfgServer, true);
-              publishCfg = true;
-            }
-          }
-        }
-
+        final boolean publishCfg = !getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName);
         if (publishCfg) {
           // PUBLISH CFG FIRST TIME
           ODocument cfgDoc = cfg.serialize();

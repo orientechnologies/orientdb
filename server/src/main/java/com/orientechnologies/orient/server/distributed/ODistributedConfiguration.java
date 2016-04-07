@@ -69,20 +69,6 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns true if hot alignment is supported.
-   *
-   * @return
-   */
-  public boolean isHotAlignment() {
-    synchronized (configuration) {
-      final Boolean value = configuration.field("hotAlignment");
-      if (value != null)
-        return value;
-      return true;
-    }
-  }
-
-  /**
    * Returns the read quorum.
    *
    * @param iClusterName
@@ -651,12 +637,8 @@ public class ODistributedConfiguration {
     return cluster;
   }
 
-  public List<String> removeNodeInServerList(final String iNode, final boolean iForce) {
+  public List<String> removeNodeInServerList(final String iNode) {
     synchronized (configuration) {
-      if (!iForce && isHotAlignment())
-        // DO NOTHING
-        return null;
-
       final List<String> changedPartitions = new ArrayList<String>();
 
       for (String clusterName : getClusterNames()) {

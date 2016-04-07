@@ -513,23 +513,21 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  public void removeNodeInConfiguration(final String iNode, final boolean iForce) {
+  public void removeNodeInConfiguration(final String iNode) {
     final Lock lock = manager.getLock(databaseName + ".cfg");
     lock.lock();
     try {
       // GET LAST VERSION IN LOCK
       final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
-      if (!cfg.isHotAlignment()) {
-        final List<String> foundPartition = cfg.removeNodeInServerList(iNode, iForce);
-        if (foundPartition != null) {
-          ODistributedServerLog.info(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "removing node '%s' in partitions: db=%s %s", iNode, databaseName, foundPartition);
-        }
-
-        // CHANGED: RE-DEPLOY IT
-        manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+      final List<String> foundPartition = cfg.removeNodeInServerList(iNode);
+      if (foundPartition != null) {
+        ODistributedServerLog.info(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "removing node '%s' in partitions: db=%s %s", iNode, databaseName, foundPartition);
       }
+
+      // CHANGED: RE-DEPLOY IT
+      manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
 
     } catch (Exception e) {
       ODistributedServerLog.debug(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
