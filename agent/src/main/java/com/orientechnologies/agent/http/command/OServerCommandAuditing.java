@@ -17,7 +17,6 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -33,7 +32,7 @@ import java.util.List;
 
 public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private static final String[] NAMES = { "GET|auditing/*", "POST|auditing/*" };
-  private OServerSecurity security;
+  private OServerSecurity       security;
 
   public OServerCommandAuditing(OServerSecurity security) {
     super("server.profiler");
@@ -153,8 +152,8 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     iRequest.databaseName = db;
     getProfiledDatabaseInstance(iRequest);
 
-    if(security.getAuditing() != null)
-    	security.getAuditing().changeConfig(db, config);
+    if (security.getAuditing() != null)
+      security.getAuditing().changeConfig(db, config);
 
     iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
   }
@@ -164,9 +163,11 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     getProfiledDatabaseInstance(iRequest);
 
     ODocument config = null;
-
-    if(security.getAuditing() != null)
-    	config = security.getAuditing().getConfig(db);
+    if (security.getAuditing() != null) {
+      config = security.getAuditing().getConfig(db);
+    } else {
+      config = new ODocument();
+    }
 
     iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
 
