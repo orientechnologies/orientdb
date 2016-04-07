@@ -36,6 +36,9 @@ import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -414,7 +417,10 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   @Override
   public OSyslog getSyslog() {
     if (sysLog == null) {
-      sysLog = (OSyslog) server.getPluginManager().getPluginByName("syslog");
+      OServerPluginInfo syslogPlugin = server.getPluginManager().getPluginByName("syslog");
+      if (syslogPlugin != null) {
+        sysLog = (OSyslog) syslogPlugin.getInstance();
+      }
     }
     return sysLog;
   }
@@ -599,6 +605,8 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
       loadComponents();
 
       if (isEnabled()) {
+        registerRESTCommands();
+
         OSecurityManager.instance().setSecurityFactory(this);
       }
     } else {
@@ -611,6 +619,8 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     OSecurityManager.instance().setSecurityFactory(null); // Set to default.
 
     if (enabled) {
+      unregisterRESTCommands();
+
       synchronized (importLDAPSynch) {
         if (importLDAP != null) {
           importLDAP.dispose();
@@ -906,5 +916,36 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
    ***/
   public OSecurity newSecurity() {
     return new OSecurityExternal();
+  }
+
+  private void registerRESTCommands() {
+    try {
+      final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+
+      if (listener != null) {
+        // Register the REST API Command.
+        // listener.registerStatelessCommand(new OServerCommandPostSecurityReload(this));
+      } else {
+        OLogManager.instance().error(this,
+            "ODefaultServerSecurity.registerRESTCommands() unable to retrieve Network Protocol listener.");
+      }
+    } catch (Throwable th) {
+      OLogManager.instance().error(this, "ODefaultServerSecurity.registerRESTCommands() Throwable: " + th.getMessage());
+    }
+  }
+
+  private void unregisterRESTCommands() {
+    try {
+      final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+
+      if (listener != null) {
+        // listener.unregisterStatelessCommand(OServerCommandPostSecurityReload.class);
+      } else {
+        OLogManager.instance().error(this,
+            "ODefaultServerSecurity.unregisterRESTCommands() unable to retrieve Network Protocol listener.");
+      }
+    } catch (Throwable th) {
+      OLogManager.instance().error(this, "ODefaultServerSecurity.unregisterRESTCommands() Throwable: " + th.getMessage());
+    }
   }
 }
