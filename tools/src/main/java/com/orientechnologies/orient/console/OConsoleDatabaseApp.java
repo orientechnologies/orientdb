@@ -2242,6 +2242,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (fieldValue instanceof OIdentifiable) {
       final ORID id = ((OIdentifiable) fieldValue).getIdentity();
 
+      if (id.getClusterId() == 0 && id.getClusterPosition() == 0)
+        return true;
+
       if (id.isValid())
         if (id.isPersistent()) {
           final ORecord connected = ((OIdentifiable) fieldValue).getRecord();
