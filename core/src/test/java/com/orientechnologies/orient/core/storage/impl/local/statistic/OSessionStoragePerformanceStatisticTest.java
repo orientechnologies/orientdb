@@ -558,7 +558,7 @@ public class OSessionStoragePerformanceStatisticTest {
     Assert.assertEquals(counters.getReadSpeedFromCacheInPages(), 8000000);
     Assert.assertEquals(counters.getReadSpeedFromFileInPages(), 15000000);
     Assert.assertEquals(counters.getWriteSpeedInCacheInPages(), 5000000);
-    Assert.assertEquals(counters.getCommitTimeAvg(), 150);
+    Assert.assertEquals(counters.getCommitTime(), 150);
   }
 
   public void testCleanOnSnapshot() {
@@ -712,6 +712,6 @@ public class OSessionStoragePerformanceStatisticTest {
     performanceCountersHolder = new OSessionStoragePerformanceStatistic.PerformanceCountersHolder();
     statistic.pushSystemCounters(performanceCountersHolder);
 
-    Assert.assertEquals(performanceCountersHolder.getCommitTimeAvg(), 200);
+    Assert.assertEquals(performanceCountersHolder.getCommitTime(), 200);
   }
 }
