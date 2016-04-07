@@ -39,8 +39,8 @@ import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTest {
 
-  protected final static int SERVERS = 3;
-  protected List<ServerRun> executeWritesOnServers = new LinkedList<ServerRun>();
+  protected final static int SERVERS                = 3;
+  protected List<ServerRun>  executeWritesOnServers = new LinkedList<ServerRun>();
 
   protected ODocument loadRecord(ODatabaseDocumentTx database, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
@@ -55,14 +55,14 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     return result.get(0);
   }
 
+  /*
+   * It executes multiple writes using different concurrent writers (as specified by the value writerCount) on all the servers
+   * present in the collection passed as parameter. Each write performs a document insert and some update and check operations on
+   * it.
+   */
 
-    /*
-     * It executes multiple writes using different concurrent writers (as specified by the value writerCount)
-     * on all the servers present in the collection passed as parameter.
-     * Each write performs a document insert and some update and check operations on it.
-     */
-
-  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType) throws InterruptedException, ExecutionException {
+  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType)
+      throws InterruptedException, ExecutionException {
 
     ODatabaseDocumentTx database = poolFactory.get(getPlocalDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
 
@@ -87,10 +87,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       if (server.isActive()) {
         for (int j = 0; j < writerCount; j++) {
           Callable writer = null;
-          if(storageType.equals("plocal")) {
+          if (storageType.equals("plocal")) {
             writer = createWriter(serverId, threadId++, getPlocalDatabaseURL(server));
-          }
-          else if(storageType.equals("remote")) {
+          } else if (storageType.equals("remote")) {
             writer = createWriter(serverId, threadId++, getRemoteDatabaseURL(server));
           }
           writerWorkers.add(writer);
@@ -140,29 +139,33 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       }
     }
 
+    onBeforeChecks();
+
     checkInsertedEntries();
     checkIndexedEntries();
   }
 
+  protected void onBeforeChecks() {
+  }
 
   // checks the consistency in the cluster after the writes in a simple distributed scenario
   protected void checkWritesAboveCluster(List<ServerRun> checkConsistencyOnServers, List<ServerRun> writerServer) {
 
     String checkOnServer = "";
-    for(ServerRun server: checkConsistencyOnServers) {
+    for (ServerRun server : checkConsistencyOnServers) {
       checkOnServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
     }
-    checkOnServer = checkOnServer.substring(0,checkOnServer.length()-1);
+    checkOnServer = checkOnServer.substring(0, checkOnServer.length() - 1);
 
     String writtenServer = "";
-    for(ServerRun server: writerServer) {
+    for (ServerRun server : writerServer) {
       writtenServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
     }
-    writtenServer = writtenServer.substring(0,writtenServer.length()-1);
+    writtenServer = writtenServer.substring(0, writtenServer.length() - 1);
 
     List<ODatabaseDocumentTx> dbs = new LinkedList<ODatabaseDocumentTx>();
 
-    for(ServerRun server: checkConsistencyOnServers) {
+    for (ServerRun server : checkConsistencyOnServers) {
       dbs.add(poolFactory.get(getPlocalDatabaseURL(server), "admin", "admin").acquire());
     }
 
@@ -172,61 +175,62 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     int lastThread = 0;
     int serverIndex = 0;
 
-    for(ServerRun server: writerServer) {
-      serverIndex2thresholdThread.put(serverIndex, lastThread+5);
+    for (ServerRun server : writerServer) {
+      serverIndex2thresholdThread.put(serverIndex, lastThread + 5);
       serverIndex++;
       lastThread += 5;
     }
 
     serverIndex = 0;
 
-    for(ServerRun server: writerServer) {
+    for (ServerRun server : writerServer) {
       serverIndex2serverName.put(serverIndex, server.getServerInstance().getDistributedManager().getLocalNodeName());
       serverIndex++;
     }
 
     List<ODocument> docsToCompare = new LinkedList<ODocument>();
 
-    super.banner("Checking consistency among servers...\nChecking on servers {" + checkOnServer + "} that all the records written on {" + writtenServer + "} are consistent.");
+    super.banner("Checking consistency among servers...\nChecking on servers {" + checkOnServer
+        + "} that all the records written on {" + writtenServer + "} are consistent.");
 
     try {
 
       int index = 0;
       String serverName = null;
 
-      for(int serverId: serverIndex2thresholdThread.keySet()) {
+      for (int serverId : serverIndex2thresholdThread.keySet()) {
 
         serverName = serverIndex2serverName.get(serverId);
         System.out.println("Checking records originally inserted on server " + serverName + "...");
 
         // checking records inserted on server0
         int i;
-        if(serverId == 0)
+        if (serverId == 0)
           i = 0;
         else
-          i = serverIndex2thresholdThread.get(serverId-1);
+          i = serverIndex2thresholdThread.get(serverId - 1);
 
         while (i < serverIndex2thresholdThread.get(serverId)) {
           for (int j = 0; j < 100; j++) {
 
             // load records to compare
-            for(ODatabaseDocumentTx db: dbs) {
+            for (ODatabaseDocumentTx db : dbs) {
               docsToCompare.add(loadRecord(db, serverId, i, j + baseCount));
             }
 
             // checking that record is present on each server db
-            for(ODocument doc: docsToCompare) {
+            for (ODocument doc : docsToCompare) {
               assertTrue(doc != null);
             }
 
             // checking that all the records have the same version and values (each record is equal to the next one)
             int k = 0;
-            while(k <= docsToCompare.size() -2) {
-              assertEquals(docsToCompare.get(k).field("@version"), docsToCompare.get(k+1).field("@version"));
-              assertEquals(docsToCompare.get(k).field("name"), docsToCompare.get(k+1).field("name"));
-              assertEquals(docsToCompare.get(k).field("surname"), docsToCompare.get(k+1).field("surname"));
-              assertEquals(docsToCompare.get(k).field("birthday"), docsToCompare.get(k+1).field("birthday"));
-              assertEquals(docsToCompare.get(k).field("children"), docsToCompare.get(k+1).field("children"));
+            while (k <= docsToCompare.size() - 2) {
+              assertEquals(docsToCompare.get(k).field("@version"), docsToCompare.get(k + 1).field("@version"));
+              assertEquals(docsToCompare.get(k).field("name"), docsToCompare.get(k + 1).field("name"));
+              assertEquals(docsToCompare.get(k).field("surname"), docsToCompare.get(k + 1).field("surname"));
+              assertEquals(docsToCompare.get(k).field("birthday"), docsToCompare.get(k + 1).field("birthday"));
+              assertEquals(docsToCompare.get(k).field("children"), docsToCompare.get(k + 1).field("children"));
               k++;
             }
             docsToCompare.clear();
@@ -238,11 +242,11 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         index++;
       }
 
-    } catch(Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
     } finally {
 
-      for(ODatabaseDocumentTx db: dbs) {
+      for (ODatabaseDocumentTx db : dbs) {
         ODatabaseRecordThreadLocal.INSTANCE.set(db);
         db.close();
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
@@ -273,14 +277,14 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected String getRemoteDatabaseURL(final ServerRun server) {
-    return "remote:localhost/" + this.getDatabaseName();
+    return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
   }
 
   protected String getDatabaseURL(final ServerRun server, String storageType) {
 
-    if(storageType.equals("plocal"))
+    if (storageType.equals("plocal"))
       return this.getPlocalDatabaseURL(server);
-    else if(storageType.equals("remote"))
+    else if (storageType.equals("remote"))
       return this.getRemoteDatabaseURL(server);
     return null;
   }
@@ -289,9 +293,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     OServer server = serverRun.getServerInstance();
 
-    if(faultName.equals("shutdown"))
+    if (faultName.equals("shutdown"))
       serverRun.shutdownServer();
-    else if(faultName.equals("net-fault")) {
+    else if (faultName.equals("net-fault")) {
       serverRun.crashServer();
     }
   }
@@ -313,16 +317,15 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }, 1000, 1000);
   }
 
-//  @Override
-//  public String getDatabaseName() {
-//    return "distributed-inserttxha";
-//  }
+  // @Override
+  // public String getDatabaseName() {
+  // return "distributed-inserttxha";
+  // }
 
   @Override
   protected String getDistributedServerConfiguration(final ServerRun server) {
     return "orientdb-dserver-config-" + server.getServerId() + ".xml";
   }
-
 
   private void printStats(final String databaseUrl) {
     final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();

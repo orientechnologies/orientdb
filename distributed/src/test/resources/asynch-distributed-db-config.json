@@ -1,6 +1,5 @@
 {
     "autoDeploy": true,
-    "hotAlignment": false,
     "executionMode": "asynchronous",
     "readQuorum": 1,
     "writeQuorum": "majority",
