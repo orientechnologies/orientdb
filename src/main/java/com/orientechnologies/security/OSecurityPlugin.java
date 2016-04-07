@@ -27,7 +27,6 @@ import com.orientechnologies.security.auditing.ODefaultAuditing;
 import com.orientechnologies.security.kerberos.OKerberosAuthenticator;
 import com.orientechnologies.security.ldap.OLDAPImporter;
 import com.orientechnologies.security.password.ODefaultPasswordValidator;
-import com.orientechnologies.security.syslog.ODefaultSyslog;
 
 public class OSecurityPlugin extends OServerPluginAbstract {
   private OServer server;
@@ -60,7 +59,6 @@ public class OSecurityPlugin extends OServerPluginAbstract {
       if (server.getSecurity() != null) {
         server.getSecurity().registerSecurityClass(ODefaultAuditing.class);
         server.getSecurity().registerSecurityClass(ODefaultPasswordValidator.class);
-        server.getSecurity().registerSecurityClass(ODefaultSyslog.class);
         server.getSecurity().registerSecurityClass(OKerberosAuthenticator.class);
         server.getSecurity().registerSecurityClass(OLDAPImporter.class);
       }
@@ -74,7 +72,6 @@ public class OSecurityPlugin extends OServerPluginAbstract {
       if (server.getSecurity() != null) {
         server.getSecurity().unregisterSecurityClass(ODefaultAuditing.class);
         server.getSecurity().unregisterSecurityClass(ODefaultPasswordValidator.class);
-        server.getSecurity().unregisterSecurityClass(ODefaultSyslog.class);
         server.getSecurity().unregisterSecurityClass(OKerberosAuthenticator.class);
         server.getSecurity().unregisterSecurityClass(OLDAPImporter.class);
       }
