@@ -363,7 +363,7 @@ public class OSessionStoragePerformanceStatistic {
    * be calculated.
    */
   public long getCommitTimeAvg() {
-    return performanceCountersHolder.getCommitTimeAvg();
+    return performanceCountersHolder.getCommitTime();
   }
 
   /**
@@ -798,7 +798,7 @@ public class OSessionStoragePerformanceStatistic {
     /**
      * @return Average time is spent on commit of single atomic operation.
      */
-    public long getCommitTimeAvg() {
+    public long getCommitTime() {
       if (commitCount == 0)
         return -1;
 
@@ -895,6 +895,7 @@ public class OSessionStoragePerformanceStatistic {
       document.field("amountOfPagesReadFromFile", getAmountOfPagesReadFromFile(), OType.LONG);
       document.field("cacheHits", getCacheHits(), OType.INTEGER);
       document.field("amountOfPagesPerOperation", getAmountOfPagesPerOperation(), OType.LONG);
+      document.field("commitTime", getCommitTime(), OType.LONG);
 
       return document;
     }

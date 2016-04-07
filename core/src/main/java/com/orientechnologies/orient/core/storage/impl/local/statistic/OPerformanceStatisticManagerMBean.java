@@ -1,3 +1,19 @@
+/*
+ *  *  Copyright 2016 OrientDB LTD (info(at)orientdb.com)
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at  http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  *  For more information: http://orientdb.com
+ *
+ */
+
 package com.orientechnologies.orient.core.storage.impl.local.statistic;
 
 import javax.management.*;
@@ -76,46 +92,66 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
               " with null attribute name");
     }
 
-    final String[] parameters = attribute.split("\\Q" + COMPONENT_SEPARATOR + "\\E");
-    if (parameters.length > 2) {
-      throw new RuntimeOperationsException(new IllegalArgumentException("Invalid attribute name"),
-          "Class " + getClass().getSimpleName() +
-              " does not contain attributes with name " + attribute);
+    final int separatorIndex = attribute.indexOf(COMPONENT_SEPARATOR);
+
+    final String attributeName;
+    final String componentName;
+
+    if (separatorIndex == 0) {
+      throw new RuntimeOperationsException(new IllegalArgumentException("Empty attribute"),
+          "Performance attribute name is not specified before " + COMPONENT_SEPARATOR + " for attribute " + attribute);
+    }
+
+    if (separatorIndex == attribute.length() - 1) {
+      throw new RuntimeOperationsException(new IllegalArgumentException("Empty component"),
+          "Component name is not specified after " + COMPONENT_SEPARATOR + " for attribute " + attribute);
+    }
+
+    if (separatorIndex > -1) {
+      attributeName = attribute.substring(0, separatorIndex);
+      componentName = attribute.substring(separatorIndex + 1);
+    } else {
+      attributeName = attribute;
+      componentName = null;
     }
 
     //if attribute name does not include component name it is system wide not component wide attribute
-    if (parameters[0].equals(CACHE_HITS)) {
-      if (parameters.length == 1)
+    if (attributeName.equals(CACHE_HITS)) {
+      if (componentName == null)
         return manager.getCacheHits();
       else {
-        return manager.getCacheHits(parameters[1]);
+        return manager.getCacheHits(componentName);
       }
-    } else if (parameters[0].equals(COMMIT_TIME)) {
-      return manager.getCommitTimeAvg();
-    } else if (parameters[0].equals(READ_SPEED_FROM_CACHE)) {
-      if (parameters.length == 1)
+    } else if (attributeName.equals(COMMIT_TIME)) {
+      if (componentName == null)
+        return manager.getCommitTime();
+      else
+        throw new RuntimeOperationsException(new IllegalArgumentException("Components are not supported"),
+            COMMIT_TIME + " attribute is not supported on component level");
+    } else if (attributeName.equals(READ_SPEED_FROM_CACHE)) {
+      if (componentName == null)
         return manager.getReadSpeedFromCacheInPages();
       else
-        return manager.getReadSpeedFromCacheInPages(parameters[1]);
-    } else if (parameters[0].equals(READ_SPEED_FROM_FILE)) {
-      if (parameters.length == 1)
+        return manager.getReadSpeedFromCacheInPages(componentName);
+    } else if (attributeName.equals(READ_SPEED_FROM_FILE)) {
+      if (componentName == null)
         return manager.getReadSpeedFromFileInPages();
       else
-        return manager.getReadSpeedFromFileInPages(parameters[1]);
-    } else if (parameters[0].equals(WRITE_SPEED_IN_CACHE)) {
-      if (parameters.length == 1)
+        return manager.getReadSpeedFromFileInPages(componentName);
+    } else if (attributeName.equals(WRITE_SPEED_IN_CACHE)) {
+      if (componentName == null)
         return manager.getWriteSpeedInCacheInPages();
       else
-        return manager.getWriteSpeedInCacheInPages(parameters[1]);
-    } else if (parameters[0].equals(PAGES_PER_OPERATION)) {
-      if (parameters.length == 1)
+        return manager.getWriteSpeedInCacheInPages(componentName);
+    } else if (attributeName.equals(PAGES_PER_OPERATION)) {
+      if (componentName == null)
         throw new RuntimeOperationsException(new IllegalArgumentException("Unknown attribute"),
             "Amount of pages per operation is measured only on component level");
 
-      return manager.getAmountOfPagesPerOperation(parameters[1]);
+      return manager.getAmountOfPagesPerOperation(componentName);
     }
 
-    throw (new AttributeNotFoundException("Cannot find " + attribute + " attribute in " + getClass().getSimpleName()));
+    throw new AttributeNotFoundException("Cannot find " + attribute + " attribute in " + getClass().getSimpleName());
   }
 
   @Override
@@ -143,7 +179,7 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
     // build the result attribute list
     for (String attribute : attributes) {
       try {
-        Object value = getAttribute((String) attribute);
+        Object value = getAttribute(attribute);
         resultList.add(new Attribute(attribute, value));
       } catch (Exception e) {
         // print debug info but continue processing list

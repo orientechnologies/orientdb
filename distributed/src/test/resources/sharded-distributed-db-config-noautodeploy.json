@@ -1,6 +1,5 @@
 {
     "autoDeploy": false,
-    "hotAlignment": true,
     "readQuorum": 1,
     "writeQuorum": "majority",
     "readYourWrites": true,

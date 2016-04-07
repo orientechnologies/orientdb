@@ -437,19 +437,19 @@ public class OPerformanceStatisticManager {
    * @return Average time of commit of atomic operation in nanoseconds or value which is less than 0, which means that value cannot
    * be calculated.
    */
-  public long getCommitTimeAvg() {
+  public long getCommitTime() {
     switchLock.acquireReadLock();
     try {
       if (enabled) {
         final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
         fetchSystemCounters(countersHolder);
-        return countersHolder.getCommitTimeAvg();
+        return countersHolder.getCommitTime();
       } else {
         final ImmutableStatistic post = postMeasurementStatistic;
         if (post == null)
           return -1;
 
-        return post.countersHolder.getCommitTimeAvg();
+        return post.countersHolder.getCommitTime();
       }
     } finally {
       switchLock.releaseReadLock();

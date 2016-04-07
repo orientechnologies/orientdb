@@ -139,8 +139,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     protected ODocument createRecord(ODatabaseDocumentTx database, int i, final String uid) {
       final String uniqueId = serverId + "-" + threadId + "-" + i;
-      ODocument person = new ODocument("Person").fields("id", uid, "name", "Billy" + uniqueId, "surname",
-          "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
+      ODocument person = new ODocument("Person").fields("id", uid, "name", "Billy" + uniqueId, "surname", "Mayes" + uniqueId,
+          "birthday", new Date(), "children", uniqueId);
       database.save(person);
 
       if (!useTransactions)
@@ -307,10 +307,15 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       }
     }
 
+    onBeforeChecks();
+
     Thread.sleep(2000);
 
     checkInsertedEntries();
     checkIndexedEntries();
+  }
+
+  protected void onBeforeChecks() {
   }
 
   protected Callable<Void> createReader(String databaseURL) {

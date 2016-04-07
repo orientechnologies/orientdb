@@ -125,6 +125,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
     this.performanceStatisticManager = storage.getPerformanceStatisticManager();
+
+    performanceStatisticManager.registerComponent("atomic operation");
   }
 
   /**
