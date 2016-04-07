@@ -19,13 +19,12 @@
  */
 package com.orientechnologies.orient.server.security;
 
-import javax.security.auth.Subject;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.security.OSecurityComponent;
+
+import javax.security.auth.Subject;
 
 /**
  * Provides an abstract implementation of OSecurityAuthenticator.
@@ -33,77 +32,97 @@ import com.orientechnologies.orient.server.security.OSecurityComponent;
  * @author S. Colin Leister
  * 
  */
-public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthenticator
-{
-	private String _Name = "";
-	private boolean _Debug = false;
-	private boolean _Enabled = true;
-	private boolean _CaseSensitive = true;
-	private OServer _Server;
-	private OServerConfigurationManager _ServerConfig;
-	
-	protected OServer getServer() { return _Server; }
-	protected OServerConfigurationManager getServerConfig() { return _ServerConfig; }
-	protected boolean isDebug() { return _Debug; }
-	protected boolean isCaseSensitive() { return _CaseSensitive; }
-	
-	// OSecurityComponent
-	public void active() { }
-	
-	// OSecurityComponent
-	public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig)
-	{
-		_Server = oServer;
-		_ServerConfig = serverCfg;
-		
-		if(jsonConfig.containsField("name"))
-		{
-			_Name = jsonConfig.field("name");
-		}
-		
-		if(jsonConfig.containsField("debug"))
-		{
-			_Debug = jsonConfig.field("debug");
-		}		
+public abstract class OSecurityAuthenticatorAbstract implements OSecurityAuthenticator {
+  private String                      name          = "";
+  private boolean                     debug         = false;
+  private boolean                     enabled       = true;
+  private boolean                     caseSensitive = true;
+  private OServer                     server;
+  private OServerConfigurationManager serverConfig;
 
-		if(jsonConfig.containsField("enabled"))
-		{
-			_Enabled = jsonConfig.field("enabled");
-		}
+  protected OServer getServer() {
+    return server;
+  }
 
-		if(jsonConfig.containsField("caseSensitive"))
-		{
-			_CaseSensitive = jsonConfig.field("caseSensitive");
-		}
-	}
+  protected OServerConfigurationManager getServerConfig() {
+    return serverConfig;
+  }
 
-	// OSecurityComponent
-	public void dispose() { }
+  protected boolean isDebug() {
+    return debug;
+  }
 
-	// OSecurityComponent
-	public boolean isEnabled() { return _Enabled; }
-	
-	// OSecurityAuthenticator
-	// databaseName may be null.
-	public String getAuthenticationHeader(String databaseName)
-	{
-		String header;
-		
-		// Default to Basic.
-		if(databaseName != null) header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + databaseName + "\"";
-		else header = "WWW-Authenticate: Basic realm=\"OrientDB Server\"";
-		
-		return header;
-	}
-	
-	public Subject getClientSubject() { return null; }
-	
-	// Returns the name of this OSecurityAuthenticator.
-	public String getName() { return _Name; }
-	
-	public OServerUserConfiguration getUser(final String username) { return null; }
+  protected boolean isCaseSensitive() {
+    return caseSensitive;
+  }
 
-	public boolean isAuthorized(final String username, final String resource) { return false; }
+  // OSecurityComponent
+  public void active() {
+  }
 
-	public boolean isSingleSignOnSupported() { return false; }
+  // OSecurityComponent
+  public void config(final OServer oServer, final OServerConfigurationManager serverCfg, final ODocument jsonConfig) {
+    server = oServer;
+    serverConfig = serverCfg;
+
+    if (jsonConfig.containsField("name")) {
+      name = jsonConfig.field("name");
+    }
+
+    if (jsonConfig.containsField("debug")) {
+      debug = jsonConfig.field("debug");
+    }
+
+    if (jsonConfig.containsField("enabled")) {
+      enabled = jsonConfig.field("enabled");
+    }
+
+    if (jsonConfig.containsField("caseSensitive")) {
+      caseSensitive = jsonConfig.field("caseSensitive");
+    }
+  }
+
+  // OSecurityComponent
+  public void dispose() {
+  }
+
+  // OSecurityComponent
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  // OSecurityAuthenticator
+  // databaseName may be null.
+  public String getAuthenticationHeader(String databaseName) {
+    String header;
+
+    // Default to Basic.
+    if (databaseName != null)
+      header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + databaseName + "\"";
+    else
+      header = "WWW-Authenticate: Basic realm=\"OrientDB Server\"";
+
+    return header;
+  }
+
+  public Subject getClientSubject() {
+    return null;
+  }
+
+  // Returns the name of this OSecurityAuthenticator.
+  public String getName() {
+    return name;
+  }
+
+  public OServerUserConfiguration getUser(final String username) {
+    return null;
+  }
+
+  public boolean isAuthorized(final String username, final String resource) {
+    return false;
+  }
+
+  public boolean isSingleSignOnSupported() {
+    return false;
+  }
 }
