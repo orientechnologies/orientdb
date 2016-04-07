@@ -23,7 +23,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Container for performance statistic gathered after call of
@@ -346,6 +349,13 @@ public class OSessionStoragePerformanceStatistic {
       return cHolder.getAmountOfPagesWrittenInCache();
 
     return -1;
+  }
+
+  /**
+   * @return Latest snapshot is taken by container
+   */
+  public PerformanceSnapshot getSnapshot() {
+    return snapshot;
   }
 
   /**
@@ -893,9 +903,9 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Snapshot of all performance data of current container.
    */
-  private final static class PerformanceSnapshot {
-    private final PerformanceCountersHolder              performanceCountersHolder;
-    private final Map<String, PerformanceCountersHolder> countersByComponent;
+  public final static class PerformanceSnapshot {
+    public final PerformanceCountersHolder              performanceCountersHolder;
+    public final Map<String, PerformanceCountersHolder> countersByComponent;
 
     PerformanceSnapshot(PerformanceCountersHolder performanceCountersHolder,
         Map<String, PerformanceCountersHolder> countersByComponent) {

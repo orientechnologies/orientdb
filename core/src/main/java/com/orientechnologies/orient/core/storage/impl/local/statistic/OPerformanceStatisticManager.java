@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local.statistic;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -30,11 +31,13 @@ import javax.management.*;
 import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic.PerformanceCountersHolder;
+import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic.PerformanceSnapshot;
 
 /**
  * Aggregator of performance statistic for whole storage.
@@ -65,8 +68,11 @@ import static com.orientechnologies.orient.core.storage.impl.local.statistic.OSe
  * You may access performance data both after you stopped gathering statistic and during gathering of statistic.
  * You may manipulate by manager directly from Java or from JMX from bean with name which consist of prefix {@link #MBEAN_PREFIX}
  * and storage name.
+ * <p>
+ * If {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent} participates in
+ * performance monitoring it has to register itself using method {@link #registerComponent(String)}
  */
-public class OPerformanceStatisticManager implements OPerformanceStatisticManagerMXBean {
+public class OPerformanceStatisticManager {
   /**
    * Prefix of name of JMX bean.
    */
@@ -144,6 +150,11 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
   private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
 
   /**
+   * List of all components which registered itself as participating in performance monitoring.
+   */
+  private final List<String> componentNames = new CopyOnWriteArrayList<String>();
+
+  /**
    * @param intervalBetweenSnapshots Interval between time series for each thread statistic.
    * @see OSessionStoragePerformanceStatistic
    */
@@ -188,7 +199,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
    * <p>
    * After call of this method you can not start monitoring on thread level till call of {@link #stopMonitoring()} is performed.
    */
-  @Override
   public void startMonitoring() {
     switchLock.acquireWriteLock();
     try {
@@ -207,7 +217,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
   /**
    * Stops monitoring of performance statistic for whole system.
    */
-  @Override
   public void stopMonitoring() {
     switchLock.acquireWriteLock();
     try {
@@ -248,7 +257,7 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(getMBeanName(storageName, storageId));
         if (!server.isRegistered(mbeanName)) {
-          server.registerMBean(this, mbeanName);
+          server.registerMBean(new OPerformanceStatisticManagerMBean(this), mbeanName);
         } else {
           mbeanIsRegistered.set(false);
           OLogManager.instance().warn(this,
@@ -297,43 +306,25 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
   }
 
   /**
+   * Registers component as such one which participates in performance monitoring.
+   *
+   * @param component Component which participates in performance monitoring.
+   */
+  public void registerComponent(String component) {
+    componentNames.add(component);
+  }
+
+  /**
    * @return Set of names of components for which performance statistic is gathered.
    */
-  @Override
   public Set<String> getComponentNames() {
-    switchLock.acquireReadLock();
-    try {
-      if (enabled) {
-        final Set<String> result = new HashSet<String>();
-
-        final ImmutableStatistic ds = deadThreadsStatistic;
-        if (ds != null) {
-          result.addAll(deadThreadsStatistic.countersByComponents.keySet());
-        }
-
-        for (final OSessionStoragePerformanceStatistic statistic : statistics.values()) {
-          final Map<String, PerformanceCountersHolder> countersHolderMap = new ConcurrentHashMap<String, PerformanceCountersHolder>();
-          statistic.pushComponentCounters(countersHolderMap);
-          result.addAll(countersHolderMap.keySet());
-        }
-
-        return result;
-      }
-
-      if (postMeasurementStatistic == null)
-        return Collections.emptySet();
-
-      return Collections.unmodifiableSet(postMeasurementStatistic.countersByComponents.keySet());
-    } finally {
-      switchLock.releaseReadLock();
-    }
+    return new HashSet<String>(componentNames);
   }
 
   /**
    * @return Instance of performance container which is used to gathering data about storage performance statistic or
    * <code>null</code> if none of both methods {@link #startMonitoring()} or {@link #startThreadMonitoring()} are called.
    */
-  @Override
   public OSessionStoragePerformanceStatistic getSessionPerformanceStatistic() {
     switchLock.acquireReadLock();
     try {
@@ -365,8 +356,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
    * @return Average amount of pages which were read from cache for component with given name during single data operation or value
    * which is less than 0, which means that value cannot be calculated.
    */
-
-  @Override
   public long getAmountOfPagesPerOperation(String componentName) {
     switchLock.acquireReadLock();
     try {
@@ -394,7 +383,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
   /**
    * @return Percent of cache hits or value which is less than 0, which means that value cannot be calculated.
    */
-  @Override
   public int getCacheHits() {
     switchLock.acquireReadLock();
     try {
@@ -422,7 +410,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
    * @param componentName Name of component data of which should be returned. Name is case sensitive.
    * @return Percent of cache hits or value which is less than 0, which means that value cannot be calculated.
    */
-  @Override
   public int getCacheHits(String componentName) {
     switchLock.acquireReadLock();
     try {
@@ -450,7 +437,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
    * @return Average time of commit of atomic operation in nanoseconds or value which is less than 0, which means that value cannot
    * be calculated.
    */
-  @Override
   public long getCommitTimeAvg() {
     switchLock.acquireReadLock();
     try {
@@ -474,7 +460,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
    * @return Read speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
    * calculated.
    */
-  @Override
   public long getReadSpeedFromCacheInPages() {
     switchLock.acquireReadLock();
     try {
@@ -503,7 +488,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
    * @return Read speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
    * calculated.
    */
-  @Override
   public long getReadSpeedFromCacheInPages(String componentName) {
     switchLock.acquireReadLock();
     try {
@@ -532,7 +516,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
    * @return Read speed of data from file system in pages per second or value which is less than 0, which means that value cannot be
    * calculated.
    */
-  @Override
   public long getReadSpeedFromFileInPages() {
     switchLock.acquireReadLock();
     try {
@@ -561,7 +544,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
    * @return Read speed of data from file system in pages per second or value which is less than 0, which means that value cannot be
    * calculated.
    */
-  @Override
   public long getReadSpeedFromFileInPages(String componentName) {
     switchLock.acquireReadLock();
     try {
@@ -589,7 +571,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
    * @return Write speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
    * calculated.
    */
-  @Override
   public long getWriteSpeedInCacheInPages() {
     switchLock.acquireReadLock();
     try {
@@ -619,7 +600,6 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
    * @return Write speed of data in pages per second on cache level or value which is less than 0, which means that value cannot be
    * calculated.
    */
-  @Override
   public long getWriteSpeedInCacheInPages(String componentName) {
     switchLock.acquireReadLock();
     try {
@@ -654,15 +634,27 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
     //all dead threads will be removed and statistics from them will be
     //later accumulated in #deadThreadsStatistic field, then result statistic from this field
     //will be aggregated to countersHolder
-    final ArrayList<Thread> threadsToRemove = new ArrayList<Thread>();
+
+    //To decrease inter thread communication delay we fetch snapshots first
+    //and only after that we aggregate data from immutable snapshots
+    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<ORawPair<Thread, PerformanceSnapshot>>(
+        statistics.size());
+
+    final Collection<Thread> threadsToRemove = new ArrayList<Thread>();
     for (Map.Entry<Thread, OSessionStoragePerformanceStatistic> entry : statistics.entrySet()) {
       final Thread thread = entry.getKey();
+      final OSessionStoragePerformanceStatistic statistic = entry.getValue();
+      snapshots.add(new ORawPair<Thread, PerformanceSnapshot>(thread, statistic.getSnapshot()));
+    }
 
-      if (!thread.isAlive()) {
-        threadsToRemove.add(thread);
+    for (ORawPair<Thread, PerformanceSnapshot> pair : snapshots) {
+      final Thread thread = pair.getFirst();
+
+      if (thread.isAlive()) {
+        final PerformanceSnapshot snapshot = pair.getSecond();
+        snapshot.performanceCountersHolder.pushData(countersHolder);
       } else {
-        final OSessionStoragePerformanceStatistic performanceStatistic = entry.getValue();
-        performanceStatistic.pushSystemCounters(countersHolder);
+        threadsToRemove.add(thread);
       }
     }
 
@@ -690,15 +682,27 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
     //later accumulated in #deadThreadsStatistic field, then result statistic from this field
     //will be aggregated to componentCountersHolder
 
-    final ArrayList<Thread> threadsToRemove = new ArrayList<Thread>();
+    //To decrease inter thread communication delay we fetch snapshots first
+    //and only after that we aggregate data from immutable snapshots
+    final Collection<ORawPair<Thread, PerformanceSnapshot>> snapshots = new ArrayList<ORawPair<Thread, PerformanceSnapshot>>(
+        statistics.size());
+
+    final List<Thread> threadsToRemove = new ArrayList<Thread>();
     for (Map.Entry<Thread, OSessionStoragePerformanceStatistic> entry : statistics.entrySet()) {
       final Thread thread = entry.getKey();
+      final OSessionStoragePerformanceStatistic statistic = entry.getValue();
+      snapshots.add(new ORawPair<Thread, PerformanceSnapshot>(thread, statistic.getSnapshot()));
+    }
 
-      if (!thread.isAlive()) {
-        threadsToRemove.add(thread);
+    for (ORawPair<Thread, PerformanceSnapshot> pair : snapshots) {
+      final Thread thread = pair.getFirst();
+      if (thread.isAlive()) {
+        final PerformanceSnapshot snapshot = pair.getSecond();
+        final PerformanceCountersHolder holder = snapshot.countersByComponent.get(componentName);
+        if (holder != null)
+          holder.pushData(componentCountersHolder);
       } else {
-        final OSessionStoragePerformanceStatistic performanceStatistic = entry.getValue();
-        performanceStatistic.pushComponentCounters(componentName, componentCountersHolder);
+        threadsToRemove.add(thread);
       }
     }
 
@@ -720,7 +724,7 @@ public class OPerformanceStatisticManager implements OPerformanceStatisticManage
    *
    * @param threadsToRemove Dead threads statistic of which should be moved to {@link #deadThreadsStatistic} field.
    */
-  private void updateDeadThreadsStatistic(ArrayList<Thread> threadsToRemove) {
+  private void updateDeadThreadsStatistic(Collection<Thread> threadsToRemove) {
     deadThreadsUpdateLock.lock();
     try {
       //we accumulate all statistic in intermediate fields and only then put

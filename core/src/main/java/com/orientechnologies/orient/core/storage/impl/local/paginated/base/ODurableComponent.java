@@ -84,6 +84,8 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     this.writeCache = storage.getWriteCache();
     this.performanceStatisticManager = storage.getPerformanceStatisticManager();
     this.lockName = lockName;
+
+    performanceStatisticManager.registerComponent(fullName);
   }
 
   public String getLockName() {
