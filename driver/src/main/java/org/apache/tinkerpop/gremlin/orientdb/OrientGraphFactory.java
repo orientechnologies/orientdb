@@ -1,7 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
@@ -148,8 +147,14 @@ public final class OrientGraphFactory {
      * Setting up the factory to use database pool instead of creation a new
      * instance of database connection each time.
      */
+    @Deprecated
     public OrientGraphFactory setupPool(final int max) {
         pool = new OPartitionedReCreatableDatabasePool(url, user, password, max, true);
+        return this;
+    }
+
+    public OrientGraphFactory setupPool(final int maxPartitionSize, final int max) {
+        pool = new OPartitionedReCreatableDatabasePool(url, user, password, maxPartitionSize, max, true);
         return this;
     }
 
