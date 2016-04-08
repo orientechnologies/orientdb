@@ -499,20 +499,23 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    * Executes the request on local node. In case of error returns the Exception itself
    */
   @Override
-  public Serializable executeOnLocalNode(final ODistributedRequest req, final ODatabaseDocumentTx database) {
+  public Serializable executeOnLocalNode(final ODistributedRequestId reqId, final ORemoteTask task,
+      final ODatabaseDocumentTx database) {
     if (database != null && !(database.getStorage() instanceof ODistributedStorage))
       throw new ODistributedException("Distributed storage was not installed for database '" + database.getName()
           + "'. Implementation found: " + database.getStorage().getClass().getName());
 
-    final ORemoteTask task = req.getTask();
+    final OScenarioThreadLocal.RUN_MODE precRunMode = OScenarioThreadLocal.INSTANCE.get();
+    if (precRunMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
+      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
 
     try {
-      final Serializable result = (Serializable) task.execute(req.getId(), serverInstance, this, database);
+      final Serializable result = (Serializable) task.execute(reqId, serverInstance, this, database);
 
       if (result instanceof Throwable && !(result instanceof OException))
         // EXCEPTION
-        ODistributedServerLog.error(this, nodeName, getNodeNameById(req.getId().getNodeId()), DIRECTION.IN,
-            "error on executing request %d (%s) on local node: ", (Throwable) result, req.getId(), req.getTask());
+        ODistributedServerLog.error(this, nodeName, getNodeNameById(reqId.getNodeId()), DIRECTION.IN,
+            "error on executing request %d (%s) on local node: ", (Throwable) result, reqId, task);
       else {
         // OK
         final String sourceNodeName = task.getNodeSource();
@@ -521,9 +524,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           last = 0l;
 
         if (task instanceof OAbstractRecordReplicatedTask && System.currentTimeMillis() - last > 2000) {
-          final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(req.getDatabaseName());
+          final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(database.getName());
           final OLogSequenceNumber lastLSN = ((OAbstractRecordReplicatedTask) task).getLastLSN();
-          ddb.getSyncConfiguration().setLSN(task.getNodeSource(), lastLSN);
+          if (lastLSN != null)
+            ddb.getSyncConfiguration().setLSN(task.getNodeSource(), lastLSN);
 
           ODistributedServerLog.debug(this, nodeName, task.getNodeSource(), DIRECTION.NONE, "Updating LSN table to the value %s",
               lastLSN);
@@ -536,10 +540,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     } catch (Throwable e) {
       if (!(e instanceof OException))
-        ODistributedServerLog.error(this, nodeName, getNodeNameById(req.getId().getNodeId()), DIRECTION.IN,
-            "error on executing distributed request %s on local node: %s", e, req.getId(), req.getTask());
+        ODistributedServerLog.error(this, nodeName, getNodeNameById(reqId.getNodeId()), DIRECTION.IN,
+            "error on executing distributed request %s on local node: %s", e, reqId, task);
 
       return e;
+    } finally {
+      if (precRunMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
+        OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
     }
   }
 
@@ -893,7 +900,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         try {
           final boolean distribCfgDirty = rebalanceClusterOwnership(database, cfg, clustersWithNotAvailableOwner, false);
           if (distribCfgDirty) {
-            OLogManager.instance().info(this, "Distributed configuration modified");
+            ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Distributed configuration modified");
             updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
           }
         } finally {
@@ -1196,14 +1203,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return getHazelcastInstance().getMap("orientdb");
   }
 
-  public boolean installDatabase(boolean iStartup, final String databaseName, final ODocument config) {
+  public boolean installDatabase(final boolean iStartup, final String databaseName, final ODocument config) {
     final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
     ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
         cfg.getServerRole(nodeName), databaseName);
 
-    final Boolean hotAlignment = config.field("hotAlignment");
-    final boolean backupDatabase = iStartup && hotAlignment != null && !hotAlignment;
+    final boolean backupDatabase = iStartup;
 
     final Set<String> configuredDatabases = serverInstance.getAvailableStorageNames().keySet();
     if (configuredDatabases.contains(databaseName)) {
@@ -1564,7 +1570,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
         final boolean distribCfgDirty = rebalanceClusterOwnership(db, cfg, new HashSet<String>(), true);
         if (distribCfgDirty) {
-          OLogManager.instance().warn(this, "Distributed configuration modified");
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Distributed configuration modified");
           updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
         }
 
@@ -1820,7 +1826,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           cfg = getDatabaseConfiguration(databaseName);
           final boolean distribCfgDirty = rebalanceClusterOwnership(database, cfg, new HashSet<String>(), true);
           if (distribCfgDirty) {
-            OLogManager.instance().info(this, "Distributed configuration modified");
+            ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Distributed configuration modified");
             updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
           }
         } finally {

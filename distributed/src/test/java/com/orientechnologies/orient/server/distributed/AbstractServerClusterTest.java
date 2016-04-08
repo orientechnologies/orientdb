@@ -17,10 +17,13 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.instance.GroupProperties;
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -37,11 +40,11 @@ import java.util.concurrent.atomic.AtomicLong;
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
  */
 public abstract class AbstractServerClusterTest {
-  protected int        delayServerStartup     = 0;
-  protected int        delayServerAlign       = 0;
-  protected boolean    startupNodesInSequence = true;
-  protected String     rootDirectory          = "target/servers/";
-  protected AtomicLong totalVertices          = new AtomicLong(0);
+  protected int             delayServerStartup     = 0;
+  protected int             delayServerAlign       = 0;
+  protected boolean         startupNodesInSequence = true;
+  protected String          rootDirectory          = "target/servers/";
+  protected AtomicLong      totalVertices          = new AtomicLong(0);
 
   protected List<ServerRun> serverInstance         = new ArrayList<ServerRun>();
 
@@ -277,12 +280,92 @@ public abstract class AbstractServerClusterTest {
     return "orientdb-dserver-config-" + server.getServerId() + ".xml";
   }
 
-  protected void executeWhen(Callable<Boolean> condition, Callable action) throws Exception {
+  protected void executeWhen(final Callable<Boolean> condition, final Callable action) throws Exception {
     while (true) {
       if (condition.call()) {
         action.call();
         break;
       }
+
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+  }
+
+  protected void executeWhen(int serverId, OCallable<Boolean, ODatabaseDocumentTx> condition,
+      OCallable<Boolean, ODatabaseDocumentTx> action) throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
+    try {
+      executeWhen(db, condition, action);
+    } finally {
+      if (!db.isClosed()) {
+        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        db.close();
+        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      }
+    }
+  }
+
+  protected void executeWhen(final ODatabaseDocumentTx db, OCallable<Boolean, ODatabaseDocumentTx> condition,
+      OCallable<Boolean, ODatabaseDocumentTx> action) {
+    while (true) {
+      db.activateOnCurrentThread();
+      if (condition.call(db)) {
+        action.call(db);
+        break;
+      }
+
+      try {
+        Thread.sleep(200);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+  }
+
+  protected void waitFor(final int serverId, OCallable<Boolean, ODatabaseDocumentTx> condition, final long timeout) {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
+    try {
+
+      final long startTime = System.currentTimeMillis();
+
+      while (true) {
+        if (condition.call(db)) {
+          break;
+        }
+
+        if (timeout > 0 && System.currentTimeMillis() - startTime > timeout)
+          break;
+
+        try {
+          Thread.sleep(200);
+        } catch (InterruptedException e) {
+          // IGNORE IT
+        }
+      }
+
+    } finally {
+      if (!db.isClosed()) {
+        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        db.close();
+        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      }
+    }
+  }
+
+  protected void waitFor(final long timeout, final Callable<Boolean> condition) throws Exception {
+    final long startTime = System.currentTimeMillis();
+
+    while (true) {
+      if (condition.call()) {
+        break;
+      }
+
+      if (timeout > 0 && System.currentTimeMillis() - startTime > timeout)
+        throw new OTimeoutException("Timeout waiting for test condition");
 
       try {
         Thread.sleep(200);

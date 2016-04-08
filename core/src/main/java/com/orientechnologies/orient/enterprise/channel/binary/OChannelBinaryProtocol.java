@@ -51,11 +51,11 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_DATACLUSTER_DROP                  = 11;
   public static final byte  REQUEST_DATACLUSTER_COUNT                 = 12;
   public static final byte  REQUEST_DATACLUSTER_DATARANGE             = 13;
-  public static final byte  REQUEST_DATACLUSTER_COPY                  = 14;
+  public static final byte  REQUEST_DATACLUSTER_COPY                  = 14;                 // NOT USED ANYMORE
   public static final byte  REQUEST_DATACLUSTER_LH_CLUSTER_IS_USED    = 16;                 // since 1.2.0
 
-  public static final byte  REQUEST_DATASEGMENT_ADD                   = 20;
-  public static final byte  REQUEST_DATASEGMENT_DROP                  = 21;
+  public static final byte  REQUEST_DATASEGMENT_ADD                   = 20;                 // NOT USED ANYMORE
+  public static final byte  REQUEST_DATASEGMENT_DROP                  = 21;                 // NOT USED ANYMORE
 
   public static final byte  REQUEST_INCREMENTAL_BACKUP                = 27;                 // since 2.2
   public static final byte  REQUEST_INCREMENTAL_RESTORE               = 28;                 // since 2.2
@@ -65,7 +65,7 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_RECORD_CREATE                     = 31;
   public static final byte  REQUEST_RECORD_UPDATE                     = 32;
   public static final byte  REQUEST_RECORD_DELETE                     = 33;
-  public static final byte  REQUEST_RECORD_COPY                       = 34;
+  public static final byte  REQUEST_RECORD_COPY                       = 34;                 // NOT USED ANYMORE
   public static final byte  REQUEST_POSITIONS_HIGHER                  = 36;                 // since 1.3.0
   public static final byte  REQUEST_POSITIONS_LOWER                   = 37;                 // since 1.3.0
   public static final byte  REQUEST_RECORD_CLEAN_OUT                  = 38;                 // since 1.3.0
@@ -94,7 +94,7 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_DB_COPY                           = 90;                 // SINCE 1.0rc8
   public static final byte  REQUEST_REPLICATION                       = 91;                 // SINCE 1.0
   public static final byte  REQUEST_CLUSTER                           = 92;                 // SINCE 1.0
-  public static final byte  REQUEST_DB_TRANSFER                       = 93;                 // SINCE 1.0.2
+  public static final byte  REQUEST_DB_TRANSFER                       = 93;                 // NOT USED ANYMORE
 
   // Lock + sync
   public static final byte  REQUEST_DB_FREEZE                         = 94;                 // SINCE 1.1.0
