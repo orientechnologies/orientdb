@@ -121,7 +121,7 @@ public abstract class BaseTest<T extends ODatabase> {
   public void beforeMethod() throws Exception {
     if (!autoManageDatabase)
       return;
-
+    database.activateOnCurrentThread();
     if (database.isClosed())
       ODatabaseHelper.openDatabase(database);
   }

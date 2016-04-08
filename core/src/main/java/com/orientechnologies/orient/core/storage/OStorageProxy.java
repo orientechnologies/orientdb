@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.storage;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+
 /**
  * Tagged interface for proxy storage implementation
  * 
@@ -34,5 +36,5 @@ public interface OStorageProxy extends OStorage {
 
   int removeUser();
 
-  OStorageProxy copy();
+  OStorageProxy copy(ODatabaseDocumentTx source, ODatabaseDocumentTx db);
 }
