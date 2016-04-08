@@ -1,17 +1,13 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -77,6 +73,7 @@ public final class OrientGraph implements Graph {
     public static String CONFIG_OPEN = "orient-open";
     public static String CONFIG_TRANSACTIONAL = "orient-transactional";
     public static String CONFIG_POOL_SIZE = "orient-max-poolsize";
+    public static String CONFIG_MAX_PARTITION_SIZE = "orient-max-partitionsize";
     public static String CONFIG_LABEL_AS_CLASSNAME = "orient-label-as-classname";
 
     protected boolean connectionFailed;
@@ -90,7 +87,10 @@ public final class OrientGraph implements Graph {
     public static OrientGraph open(final Configuration config) {
         OrientGraphFactory factory = new OrientGraphFactory(config);
         if (config.containsKey(CONFIG_POOL_SIZE))
-            factory.setupPool(config.getInt(CONFIG_POOL_SIZE));
+            if (config.containsKey(CONFIG_MAX_PARTITION_SIZE))
+            factory.setupPool(config.getInt(CONFIG_MAX_PARTITION_SIZE), config.getInt(CONFIG_POOL_SIZE));
+        else
+                factory.setupPool(config.getInt(CONFIG_POOL_SIZE));
 
         return factory.getNoTx();
     }
