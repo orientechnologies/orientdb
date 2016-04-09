@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -73,9 +74,11 @@ public class ServerRun {
   }
 
   public void crashServer() {
-    server.getClientConnectionManager().killAllChannels();
-    if (server != null)
+    if (server != null) {
+      server.getClientConnectionManager().killAllChannels();
+      ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
       server.shutdown();
+    }
   }
 
   protected OrientBaseGraph createDatabase(final String iName) {
@@ -126,8 +129,10 @@ public class ServerRun {
   }
 
   public void shutdownServer() {
-    if (server != null)
+    if (server != null) {
+      ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
       server.shutdown();
+    }
 
     closeStorages();
   }

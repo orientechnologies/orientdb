@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.instance.GroupProperties;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
@@ -176,8 +177,10 @@ public abstract class AbstractServerClusterTest {
 
       onTestEnded();
 
-      banner("Shutdown HZ...");
-      Hazelcast.shutdownAll();
+      banner("Terminate HZ...");
+      for (HazelcastInstance in : Hazelcast.getAllHazelcastInstances()) {
+        in.getLifecycleService().terminate();
+      }
 
       banner("Clean server directories...");
       deleteServers();
@@ -326,7 +329,7 @@ public abstract class AbstractServerClusterTest {
     }
   }
 
-  protected void waitFor(final int serverId, OCallable<Boolean, ODatabaseDocumentTx> condition, final long timeout) {
+  protected void waitFor(final int serverId, final OCallable<Boolean, ODatabaseDocumentTx> condition, final long timeout) {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
     try {
 
@@ -341,7 +344,7 @@ public abstract class AbstractServerClusterTest {
           break;
 
         try {
-          Thread.sleep(200);
+          Thread.sleep(1000);
         } catch (InterruptedException e) {
           // IGNORE IT
         }
