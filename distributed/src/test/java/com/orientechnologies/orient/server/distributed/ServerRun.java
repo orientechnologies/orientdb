@@ -130,7 +130,10 @@ public class ServerRun {
 
   public void shutdownServer() {
     if (server != null) {
-      ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
+      try {
+        ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
+      } catch (Exception e) {
+      }
       server.shutdown();
     }
 

@@ -307,21 +307,25 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     setNodeStatus(NODE_STATUS.SHUTTINGDOWN);
 
-    final Set<String> databases = new HashSet<String>();
+    try {
+      final Set<String> databases = new HashSet<String>();
 
-    for (Map.Entry<String, Object> entry : getConfigurationMap().entrySet()) {
-      if (entry.getKey().toString().startsWith(CONFIG_DBSTATUS_PREFIX)) {
+      for (Map.Entry<String, Object> entry : getConfigurationMap().entrySet()) {
+        if (entry.getKey().toString().startsWith(CONFIG_DBSTATUS_PREFIX)) {
 
-        final String nodeDb = entry.getKey().toString().substring(CONFIG_DBSTATUS_PREFIX.length());
+          final String nodeDb = entry.getKey().toString().substring(CONFIG_DBSTATUS_PREFIX.length());
 
-        if (nodeDb.startsWith(nodeName))
-          databases.add(entry.getKey());
+          if (nodeDb.startsWith(nodeName))
+            databases.add(entry.getKey());
+        }
       }
-    }
 
-    // PUT DATABASES OFFLINE
-    for (String k : databases)
-      getConfigurationMap().put(k, DB_STATUS.OFFLINE);
+      // PUT DATABASES OFFLINE
+      for (String k : databases)
+        getConfigurationMap().put(k, DB_STATUS.OFFLINE);
+    } catch (HazelcastInstanceNotActiveException e) {
+      // HZ IS ALREADY DOWN, IGNORE IT
+    }
 
     // CLOSE ALL CONNECTIONS TO THE SERVERS
     for (ORemoteServerController server : remoteServers.values())
@@ -337,7 +341,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     activeNodes.clear();
 
     if (membershipListenerRegistration != null) {
-      hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
+      try {
+        hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
+      } catch (HazelcastInstanceNotActiveException e) {
+        // HZ IS ALREADY DOWN, IGNORE IT
+      }
     }
 
     if (hazelcastInstance != null)
