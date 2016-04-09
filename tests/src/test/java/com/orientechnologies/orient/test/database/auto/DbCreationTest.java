@@ -293,7 +293,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
     // TRY UNIX PATH
     try {
       ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:/db");
-      database.open("admin", "admin");
+      db.open("admin", "admin");
       Assert.fail("Security breach: database with path /db was created");
     } catch (Exception e) {
     }
@@ -301,7 +301,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
     // TRY WINDOWS PATH
     try {
       ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:C:/db");
-      database.open("admin", "admin");
+      db.open("admin", "admin");
       Assert.fail("Security breach: database with path c:/db was created");
     } catch (Exception e) {
     }

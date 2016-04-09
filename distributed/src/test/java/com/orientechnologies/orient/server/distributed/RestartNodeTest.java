@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
@@ -23,7 +24,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -45,7 +45,7 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
   public void test() throws Exception {
     startupNodesInSequence = true;
     useTransactions = true;
-    count = 500;
+    count = 600;
     maxRetries = 10;
     delayWriter = 0;
     init(SERVERS);
@@ -98,45 +98,27 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
         public void run() {
           try {
             // CRASH LAST SERVER try {
-            executeWhen(new Callable<Boolean>() {
+            executeWhen(0, new OCallable<Boolean, ODatabaseDocumentTx>() {
               // CONDITION
               @Override
-              public Boolean call() throws Exception {
-                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
-                    .acquire();
-                try {
-                  return database.countClass("Person") > (count * SERVERS) * 1 / 4;
-                } finally {
-                  database.close();
-                }
+              public Boolean call(ODatabaseDocumentTx database) {
+                return database.countClass("Person") > (count * writerCount * (SERVERS-1) * 1 / 5);
               }
             }, // ACTION
-                new Callable() {
+                new OCallable<Boolean, ODatabaseDocumentTx>() {
               @Override
-              public Object call() throws Exception {
+              public Boolean call(final ODatabaseDocumentTx database) {
                 Assert.assertTrue("Insert was too fast", inserting);
 
                 banner("RESTARTING SERVER " + (SERVERS - 1));
 
-                final String nodeName = server.server.getDistributedManager().getLocalNodeName();
-                ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager()).restartNode(nodeName);
+                delayWriter = 10;
 
-                Thread.sleep(3000);
-
-                // WAIT UNTIL THE NODE IS UP & RUNNING
-                while (!(serverInstance.get(0).getServerInstance().getDistributedManager()).isNodeOnline(nodeName,
-                    getDatabaseName())) {
-                  Thread.sleep(1000);
-                }
-
-                // WAIT UNTIL THE END
-                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
-                    .acquire();
                 try {
-                  while (database.countClass("Person") < count * SERVERS)
-                    Thread.sleep(1000);
-                } finally {
-                  database.close();
+                  final String nodeName = server.server.getDistributedManager().getLocalNodeName();
+                  ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager()).restartNode(nodeName);
+                } catch (Exception e) {
+                  e.printStackTrace();
                 }
 
                 return null;
@@ -151,6 +133,21 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
 
       }).start();
     }
+  }
+
+  @Override
+  protected void onBeforeChecks() throws InterruptedException {
+    // // WAIT UNTIL THE END
+    waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
+      @Override
+      public Boolean call(ODatabaseDocumentTx db) {
+        final boolean ok = db.countClass("Person") >= count * writerCount * (SERVERS - 1) + baseCount;
+        if (!ok)
+          System.out.println("FOUND " + db.countClass("Person") + " people instead of expected "
+              + (count * writerCount * (SERVERS - 1) + baseCount));
+        return ok;
+      }
+    }, 10000);
   }
 
   @Override

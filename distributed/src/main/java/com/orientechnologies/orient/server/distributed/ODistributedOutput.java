@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -37,7 +38,7 @@ import java.util.Set;
  */
 public class ODistributedOutput {
 
-  public static String formatClusterTable(final ODistributedConfiguration cfg, final int availableNodes) {
+  public static String formatClusterTable(final ODistributedServerManager manager, final String databaseName, final ODistributedConfiguration cfg, final int availableNodes) {
     final StringBuilder buffer = new StringBuilder();
 
     buffer.append("\n\nLEGEND: X = Owner, o = Copy");
@@ -62,6 +63,7 @@ public class ODistributedOutput {
     final List<String> defaultServers = cfg.getOriginalServers(ODistributedConfiguration.ALL_WILDCARD);
 
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
+    final Set<String> allServers = new HashSet<String>();
 
     for (String cluster : cfg.getClusterNames()) {
       final int wQ = cfg.getWriteQuorum(cluster, availableNodes);
@@ -87,10 +89,17 @@ public class ODistributedOutput {
           if (server.equalsIgnoreCase("<NEW_NODE>"))
             continue;
 
+          allServers.add(server);
+
           row.field(server, OAnsiCode.format(server.equals(owner) ? "X" : "o"));
           table.setColumnAlignment(server, OTableFormatter.ALIGNMENT.CENTER);
         }
     }
+
+    for( String server : allServers ){
+      table.setColumnNote(server, manager.getDatabaseStatus(server, databaseName).toString());
+    }
+
     table.writeRecords(rows, -1);
 
     buffer.append("\n");

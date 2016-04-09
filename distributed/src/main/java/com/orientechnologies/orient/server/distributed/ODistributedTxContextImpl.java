@@ -77,7 +77,8 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
 
     for (ORemoteTask task : undoTasks) {
       try {
-        task.execute(reqId, db.getManager().getServerInstance(), db.getManager(), database);
+
+        db.getManager().executeOnLocalNode(reqId, task, database);
 
       } catch (Exception e) {
         ODistributedServerLog.error(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,

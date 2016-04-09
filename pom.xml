@@ -219,14 +219,10 @@
                 </plugin>
 
 
-
                 <plugin>
-
-
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>${surefire.version}</version>
-
                 </plugin>
 
                 <plugin>
@@ -268,7 +264,6 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>2.10.3</version>
                     <configuration>
-                        <additionalparam>-Xdoclint:none</additionalparam>
                         <maxmemory>2G</maxmemory>
                     </configuration>
                 </plugin>
@@ -601,6 +596,15 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>java8</id>
+            <activation>
+                <jdk>1.8</jdk>
+            </activation>
+            <properties>
+                <additionalparam>-Xdoclint:none</additionalparam>
+            </properties>
+        </profile>
 
         <profile>
             <id>release-sign-artifacts</id>
@@ -699,6 +703,8 @@
                                 </goals>
                                 <configuration>
                                     <quiet>true</quiet>
+                                    <maxmemory>2G</maxmemory>
+
                                     <archive>
                                         <manifest>
                                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
@@ -716,6 +722,8 @@
                             </execution>
                         </executions>
                     </plugin>
+
+
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>

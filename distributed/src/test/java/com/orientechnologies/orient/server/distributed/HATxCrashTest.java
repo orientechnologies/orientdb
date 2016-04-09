@@ -99,6 +99,7 @@ public class HATxCrashTest extends AbstractServerClusterTxTest {
                     try {
                       serverInstance.get(SERVERS - 1)
                           .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+                      delayWriter = 10;
                       lastServerOn = true;
                     } catch (Exception e) {
                       e.printStackTrace();

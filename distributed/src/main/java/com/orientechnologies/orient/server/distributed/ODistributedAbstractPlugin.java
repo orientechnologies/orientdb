@@ -265,7 +265,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       cachedDatabaseConfiguration.put(iDatabaseName, cfg);
 
       // PRINT THE NEW CONFIGURATION
-      final String cfgOutput = ODistributedOutput.formatClusterTable(new ODistributedConfiguration(cfg),
+      final String cfgOutput = ODistributedOutput.formatClusterTable(this, iDatabaseName, new ODistributedConfiguration(cfg),
           getAvailableNodes(iDatabaseName));
 
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
