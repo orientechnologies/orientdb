@@ -67,7 +67,7 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
       assertEquals(0, result.size());
     } catch (Exception e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
 
     ODatabaseRecordThreadLocal.INSTANCE.set(null);
@@ -78,7 +78,7 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
       assertEquals(0, result.size());
     } catch (Exception e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
 
     // executing writes on server1

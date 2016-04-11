@@ -122,7 +122,7 @@ public class ReadQuorumScenarioTest  extends AbstractScenarioTest {
       System.out.println(retrievedRecord.getRecord().toString());
     } catch (Exception e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
 
     // restarting server3

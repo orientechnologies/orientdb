@@ -33,6 +33,7 @@ import java.util.concurrent.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * It represents an abstract scenario test.
@@ -258,9 +259,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
     List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Person where id = '" + uniqueId + "'"));
     if (result.size() == 0)
-      assertTrue("No record found with id = '" + uniqueId + "'!", false);
+      fail("No record found with id = '" + uniqueId + "'!");
     else if (result.size() > 1)
-      assertTrue(result.size() + " records found with id = '" + uniqueId + "'!", false);
+      fail(result.size() + " records found with id = '" + uniqueId + "'!");
     ODatabaseRecordThreadLocal.INSTANCE.set(null);
     return result.get(0);
   }

@@ -90,7 +90,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         currentFuture.get();
       } catch (Exception e) {
         e.printStackTrace();
-        assertTrue(false);
+        fail();
       }
 
 
@@ -103,7 +103,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         currentFuture.get();
       } catch (Exception e) {
         e.printStackTrace();
-        assertTrue(false);
+        fail();
       }
 
     } catch (Exception e) {
@@ -165,7 +165,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
           new ODocument("Person").fields("name", "Jay", "surname", "Miner").save();
           new ODocument("Person").fields("name", "Luke", "surname", "Skywalker").save();
           new ODocument("Person").fields("name", "Yoda", "surname", "Nothing").save();
-          assertTrue("Record inserted with server1 running and writeQuorum=2", false);
+          fail("Record inserted with server1 running and writeQuorum=2");
         } catch (Exception e) {
           e.printStackTrace();
           assertTrue(true);
@@ -214,7 +214,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
       } catch (Exception e) {
         e.printStackTrace();
-        assertTrue(e.getMessage(), false);
+        fail(e.getMessage());
       } finally {
         if(dbServer1 != null) {
           ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
@@ -286,7 +286,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
           new ODocument("Person").fields("name", "Yoda", "surname", "Nothing").save();
         } catch (Exception e) {
           e.printStackTrace();
-          assertTrue("Record not inserted even though writeQuorum=1.", false);
+          fail("Record not inserted even though writeQuorum=1.");
         }
 
         // check that records were inserted
@@ -330,7 +330,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
       } catch (Exception e) {
         e.printStackTrace();
-        assertTrue(e.getMessage(), false);
+        fail(e.getMessage());
       } finally {
         if(dbServer1 != null) {
           ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);

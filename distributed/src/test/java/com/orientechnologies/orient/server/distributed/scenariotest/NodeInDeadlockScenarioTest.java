@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * It checks the consistency in the cluster with the following scenario:
@@ -99,7 +99,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
 
     } catch (Exception e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     } finally {
 
       if (!dbServer3.isClosed()) {
@@ -184,7 +184,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
 
           } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Error on execution flow");
+            fail("Error on execution flow");
           }
         }
       }).start();

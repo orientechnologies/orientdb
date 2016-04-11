@@ -108,7 +108,7 @@ public class FaultDuringWritingScenarioTest extends AbstractScenarioTest {
 
     } catch(Exception e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     } finally {
 
       if(!dbServer3.isClosed()) {

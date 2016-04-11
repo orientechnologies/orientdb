@@ -36,9 +36,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * It represents an abstract scenario test with sharding on the cluster.
@@ -61,9 +59,9 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       }
 
       if (result.size() == 0)
-        junit.framework.Assert.assertTrue("No record found with name = '" + uniqueId + "'!", false);
+        fail("No record found with name = '" + uniqueId + "'!");
       else if (result.size() > 1)
-        junit.framework.Assert.assertTrue(result.size() + " records found with name = '" + uniqueId + "'!", false);
+        fail(result.size() + " records found with name = '" + uniqueId + "'!");
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -126,7 +124,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     }
 
     writerExecutors.shutdown();
-    junit.framework.Assert.assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
+    assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
 
     System.out.println("All writer threads have finished.");
 

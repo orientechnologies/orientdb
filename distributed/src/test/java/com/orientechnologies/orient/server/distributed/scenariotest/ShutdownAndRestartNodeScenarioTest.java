@@ -86,7 +86,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         currentFuture.get();
       } catch (Exception e) {
         e.printStackTrace();
-        assertTrue(false);
+        fail();
       }
 
 
@@ -99,7 +99,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         currentFuture.get();
       } catch (Exception e) {
         e.printStackTrace();
-        assertTrue(false);
+        fail();
       }
 
     } catch (Exception e) {
@@ -152,7 +152,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
           assertEquals(1, ((Number) result.get(0).field("count")).intValue());
         } catch (Exception e) {
           e.printStackTrace();
-          assertTrue(e.getMessage(), false);
+          fail(e.getMessage());
         }
 
         // writes on server1 and server2
@@ -175,7 +175,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
 
       } catch (Exception e) {
         e.printStackTrace();
-        assertTrue(e.getMessage(), false);
+        fail(e.getMessage());
       } finally {
         if(dbServer3 != null) {
           ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
@@ -251,7 +251,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
         try {
           new ODocument("Person").fields("id", "L-001", "name", "John", "surname", "Black").save();
-          assertTrue("Error: record inserted with 2 server running and writeWuorum=3.", false);
+          fail("Error: record inserted with 2 server running and writeWuorum=3.");
         } catch (Exception e) {
           e.printStackTrace();
           assertTrue("Record not inserted because there are 2 server running and writeWuorum=3.", true);
@@ -288,7 +288,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
 
       } catch (Exception e) {
         e.printStackTrace();
-        assertTrue(e.getMessage(), false);
+        fail(e.getMessage());
       } finally {
         if(dbServer1 != null) {
           ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);

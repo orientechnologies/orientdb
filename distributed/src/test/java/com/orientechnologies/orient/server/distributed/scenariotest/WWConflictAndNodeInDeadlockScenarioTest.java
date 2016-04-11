@@ -39,6 +39,7 @@ import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * It checks the consistency in the cluster with the following scenario:
@@ -149,7 +150,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
       assertTrue("Concurrent update correctly managed!", true);
     } catch (Exception e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail("Concurrent update NOT correctly managed!");
       System.out.println("Exception was thrown!");
     }
     // wait for propagation
@@ -161,8 +162,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
       Thread.sleep(500);  // waiting for sync of server3
     } catch (Exception e) {
       e.printStackTrace();
-      assertTrue(false);
-      System.out.println("Exception was thrown!");
+      fail("Exception was thrown!");
     }
 
     // check consistency
@@ -212,7 +212,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
       assertTrue("Condition for the records' values satisfied", true);
     }
     else {
-      assertTrue("Condition for the records' values NOT satisfied", false);
+      fail("Condition for the records' values NOT satisfied");
     }
 
     // r1 on server3 has the values set by the client c1 or the values set by the client c2, but not the old one
@@ -221,7 +221,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
       assertTrue("The record on server3 has been updated by a client without exceptions!", true);
     }
     else {
-      assertTrue("The record on server3 has not been updated by any client!", false);
+      fail("The record on server3 has not been updated by any client!");
     }
 
     // r1 has version x+1 on all the servers
@@ -304,7 +304,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
 
           } catch (Exception e) {
             e.printStackTrace();
-            Assert.fail("Error on execution flow");
+            fail("Error on execution flow");
           }
         }
       }).start();
