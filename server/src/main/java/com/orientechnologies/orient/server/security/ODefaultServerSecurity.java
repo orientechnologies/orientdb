@@ -106,6 +106,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     serverConfig = serverCfg;
 
     oServer.registerLifecycleListener(this);
+    OSecurityManager.instance().setSecurityFactory(this);
   }
 
   private Class<?> getClass(final ODocument jsonConfig) {
@@ -596,7 +597,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     if (ssf != null)
       configFile = ssf;
 
-    configDoc = loadConfig(configFile);
+    configDoc = loadConfig(configFile);   
   }
 
   // OServerLifecycleListener Interface
@@ -606,8 +607,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
       if (isEnabled()) {
         registerRESTCommands();
-
-        OSecurityManager.instance().setSecurityFactory(this);
       }
     } else {
       OLogManager.instance().error(this, "ODefaultServerSecurity.onAfterActivate() Configuration document is empty");
@@ -616,8 +615,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   // OServerLifecycleListener Interface
   public void onBeforeDeactivate() {
-    OSecurityManager.instance().setSecurityFactory(null); // Set to default.
-
     if (enabled) {
       unregisterRESTCommands();
 
