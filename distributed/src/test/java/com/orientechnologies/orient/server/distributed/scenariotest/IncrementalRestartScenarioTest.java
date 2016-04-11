@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
  * It checks the consistency in the cluster with the following scenario:
  * - 3 server  (quorum=2)
  * - network fault on server2 and server3
- * - 5 threads for each running server write 100 records: writes on server2 and server3 are redirected on server1, writes on server1 don't succeed
+ * - 5 threads for each running server write 100 records: writes on server2 and server3 are redirected on server1, writes on server1 don't succeed (due to the quorum)
  * - restart server2
  * - 5 threads for each running server write 100 records: writes server3 are redirected on server1 or server2, writes on server1 and server2 succeed
  * - check consistency
