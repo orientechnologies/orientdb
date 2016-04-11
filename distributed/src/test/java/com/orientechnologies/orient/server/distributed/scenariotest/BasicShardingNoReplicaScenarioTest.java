@@ -39,15 +39,10 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 server (europe, usa, asia)
- * - 3 shards, one for each server (client_europe, client_usa, client_asia)
- * - writes on each node (5 threads for each running server write 100 records)
- * - check consistency no-replica
- * - shutdown server3
- * - check consistency no-replica (can retry only records in shard1 and shard2)
- * - restart server3
- * - check consistency no-replica
+ * It checks the consistency in the cluster with the following scenario: - 3 server (europe, usa, asia) - 3 shards, one for each
+ * server (client_europe, client_usa, client_asia) - writes on each node (5 threads for each running server write 100 records) -
+ * check consistency no-replica - shutdown server3 - check consistency no-replica (can retry only records in shard1 and shard2) -
+ * restart server3 - check consistency no-replica
  */
 
 public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenarioTest {
@@ -94,9 +89,9 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       graphNoTx = localFactory.getNoTx();
 
       // removing "person" and "cusomer" classes
-//      graphNoTx.dropVertexType("Provider");
-//      graphNoTx.dropVertexType("Customer");
-//      graphNoTx.dropVertexType("Person");
+      // graphNoTx.dropVertexType("Provider");
+      // graphNoTx.dropVertexType("Customer");
+      // graphNoTx.dropVertexType("Person");
 
       final OrientVertexType clientType = graphNoTx.createVertexType("Client");
       final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name", OType.STRING);
@@ -115,8 +110,8 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       int[] clusterIds = clientType.getClusterIds();
       int defaultId = clientType.getDefaultClusterId();
 
-      Map<Integer, String> id2clusterName = new HashMap<Integer,String>();
-      for(int i=0; i<clusterIds.length; i++) {
+      Map<Integer, String> id2clusterName = new HashMap<Integer, String>();
+      for (int i = 0; i < clusterIds.length; i++) {
         id2clusterName.put(clusterIds[i], graphNoTx.getRawGraph().getClusterNameById(clusterIds[i]));
       }
 
@@ -129,14 +124,14 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       graphNoTx.getRawGraph().close();
 
       // writes on the three clusters
-      executeMultipleWritesOnShards(executeWritesOnServers,"plocal");
+      executeMultipleWritesOnShards(executeWritesOnServers, "plocal");
 
       // check consistency (no-replica)
       checkWritesWithShardinNoReplica(serverInstance, executeWritesOnServers);
 
       // network fault on server3
       System.out.println("Network fault on server3.\n");
-      simulateServerFault(serverInstance.get(2),"net-fault");
+      simulateServerFault(serverInstance.get(2), "net-fault");
       assertFalse(serverInstance.get(2).isActive());
 
       Thread.sleep(500);
@@ -197,7 +192,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       e.printStackTrace();
       assertTrue(false);
     } finally {
-      if(!graphNoTx.getRawGraph().isClosed()) {
+      if (!graphNoTx.getRawGraph().isClosed()) {
         ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx.getRawGraph());
         graphNoTx.getRawGraph().close();
         ODatabaseRecordThreadLocal.INSTANCE.set(null);

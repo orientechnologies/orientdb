@@ -71,7 +71,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               updateRecord(database, person);
               checkRecord(database, person);
               deleteRecord(database, person);
-              // checkRecordIsDeleted(database, person);
+              checkRecordIsDeleted(database, person);
               person = createRecord(database, id, uid);
               updateRecord(database, person);
               checkRecord(database, person);

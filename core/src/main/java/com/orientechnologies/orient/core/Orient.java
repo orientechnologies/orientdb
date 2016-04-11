@@ -510,28 +510,22 @@ public class Orient extends OListenerManger<OOrientListener> {
       } else
         dbPath = iURL;
 
-      final String dbName = registerDatabaseByPath ? dbPath : OIOUtils.getRelativePathIfAny(dbPath, null);
+      final String dbName = registerDatabaseByPath ? dbPath : engine.getNameFromPath(dbPath);
 
       OStorage storage;
-      if (engine.isShared()) {
-        // SEARCH IF ALREADY USED
-        storage = storages.get(dbName);
-        if (storage == null) {
-          // NOT FOUND: CREATE IT
+      // SEARCH IF ALREADY USED
+      storage = storages.get(dbName);
+      if (storage == null) {
+        // NOT FOUND: CREATE IT
 
-          do {
-            storage = engine.createStorage(dbPath, parameters);
-          } while ((storage instanceof OIdentifiableStorage)
-              && storageIds.putIfAbsent(((OIdentifiableStorage) storage).getId(), Boolean.TRUE) != null);
+        do {
+          storage = engine.createStorage(dbPath, parameters);
+        } while ((storage instanceof OIdentifiableStorage)
+            && storageIds.putIfAbsent(((OIdentifiableStorage) storage).getId(), Boolean.TRUE) != null);
 
-          final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
-          if (oldStorage != null)
-            storage = oldStorage;
-        }
-      } else {
-        // REGISTER IT WITH A SERIAL NAME TO AVOID BEING REUSED
-        storage = engine.createStorage(dbPath, parameters);
-        storages.put(dbName + "__" + serialId.incrementAndGet(), storage);
+        final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
+        if (oldStorage != null)
+          storage = oldStorage;
       }
 
       for (OOrientListener l : browseListeners())

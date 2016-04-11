@@ -30,8 +30,6 @@ public interface OEngine {
 
   void removeStorage(OStorage iStorage);
 
-  boolean isShared();
-
   void shutdown();
 
   /**
@@ -40,4 +38,6 @@ public interface OEngine {
    * this method.
    */
   void startup();
+
+  String getNameFromPath(String dbPath);
 }

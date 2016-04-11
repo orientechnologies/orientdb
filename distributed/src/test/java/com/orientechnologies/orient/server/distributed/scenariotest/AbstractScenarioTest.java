@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -143,9 +144,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     checkInsertedEntries();
     checkIndexedEntries();
-  }
-
-  protected void onBeforeChecks() {
   }
 
   // checks the consistency in the cluster after the writes in a simple distributed scenario
@@ -355,4 +353,28 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   }
 
+  protected void waitFor(final int serverId, OCallable<Boolean, ODatabaseDocumentTx> condition) {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
+    try {
+
+      while (true) {
+        if (condition.call(db)) {
+          break;
+        }
+
+        try {
+          Thread.sleep(200);
+        } catch (InterruptedException e) {
+          // IGNORE IT
+        }
+      }
+
+    } finally {
+      if (!db.isClosed()) {
+        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        db.close();
+        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      }
+    }
+  }
 }

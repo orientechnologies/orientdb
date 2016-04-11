@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import org.junit.Assert;
@@ -103,7 +104,7 @@ public class StopNodeTest extends AbstractServerClusterTxTest {
                 final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
                     .acquire();
                 try {
-                  return database.countClass("Person") > (count * SERVERS) * 1 / 3;
+                  return database.countClass("Person") > (count * writerCount * SERVERS) * 1 / 3;
                 } finally {
                   database.close();
                 }
@@ -118,8 +119,6 @@ public class StopNodeTest extends AbstractServerClusterTxTest {
 
                 ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager())
                     .stopNode(server.server.getDistributedManager().getLocalNodeName());
-
-                Thread.sleep(5000);
 
                 return null;
               }
@@ -136,10 +135,20 @@ public class StopNodeTest extends AbstractServerClusterTxTest {
   }
 
   @Override
+  protected void onBeforeChecks() throws InterruptedException {
+    waitFor(10000, new OCallable<Boolean, Void>() {
+      @Override
+      public Boolean call(Void nothing) {
+        return nodeLefts.get() > 0;
+      }
+    });
+  }
+
+  @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
     Assert.assertEquals("Node was not down", 0, nodeReJoined.size());
-    Assert.assertEquals("Found no node has been restarted", 1, nodeLefts.get());
+    Assert.assertEquals("Found no node has been stopped", 1, nodeLefts.get());
   }
 
   protected String getDatabaseURL(final ServerRun server) {

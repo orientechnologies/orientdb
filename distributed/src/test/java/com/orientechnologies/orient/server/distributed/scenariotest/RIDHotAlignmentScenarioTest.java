@@ -69,8 +69,8 @@ public class RIDHotAlignmentScenarioTest extends AbstractScenarioTest {
 
     banner("Test with quorum = 1");
 
-    // changing configuration: writeQuorum=1, autoDeploy=false, hotAlignment=true
-    System.out.print("\nChanging configuration (writeQuorum=1, autoDeploy=false, hotAlignment=true)...");
+    // changing configuration: writeQuorum=1, autoDeploy=false
+    System.out.print("\nChanging configuration (writeQuorum=1, autoDeploy=false)...");
 
     ODocument cfg = null;
     ServerRun server = serverInstance.get(2);

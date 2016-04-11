@@ -42,12 +42,6 @@ public interface OByteBufferPoolMXBean {
   long getAllocatedBufferCount();
 
   /**
-   * @return the maximum number of the allocated buffers of the associated {@link OByteBufferPool},
-   * this does not takes into account the overflow buffers.
-   */
-  long getMaxBufferCount();
-
-  /**
    * @return the number of the allocated overflow buffers of the associated {@link OByteBufferPool}.
    */
   long getOverflowBufferCount();
@@ -70,21 +64,4 @@ public interface OByteBufferPoolMXBean {
    */
   double getAllocatedMemoryInGB();
 
-  /**
-   * @return the maximum memory allocation size in bytes of the the associated {@link OByteBufferPool},
-   * this does not takes into account the overflow buffers.
-   */
-  long getMaxMemory();
-
-  /**
-   * @return the maximum memory allocation size in megabytes of the the associated {@link OByteBufferPool},
-   * this does not takes into account the overflow buffers.
-   */
-  long getMaxMemoryInMB();
-
-  /**
-   * @return the maximum memory allocation size in gigabytes of the the associated {@link OByteBufferPool},
-   * this does not takes into account the overflow buffers.
-   */
-  double getMaxMemoryInGB();
 }

@@ -34,10 +34,4 @@ public interface OWOWCacheMXBean {
   long getExclusiveWriteCacheSizeInMB();
 
   double getExclusiveWriteCacheSizeInGB();
-
-  Date getLastFuzzyCheckpointDate();
-
-  long getLastAmountOfFlushedPages();
-
-  long getDurationOfLastFlush();
 }

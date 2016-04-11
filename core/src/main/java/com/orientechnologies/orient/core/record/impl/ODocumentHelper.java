@@ -88,7 +88,7 @@ public class ODocumentHelper {
   public static final String ATTRIBUTE_RAW     = "@raw";
 
   public static interface ODbRelatedCall<T> {
-    public T call();
+    T call(ODatabaseDocumentInternal database);
   }
 
   public static interface RIDMapper {
@@ -989,7 +989,7 @@ public class ODocumentHelper {
 
     if (iMyDb != null)
       makeDbCall(iMyDb, new ODbRelatedCall<Object>() {
-        public Object call() {
+        public Object call(ODatabaseDocumentInternal database) {
           if (iCurrent.getInternalStatus() == STATUS.NOT_LOADED)
             iCurrent.reload();
           return null;
@@ -998,7 +998,7 @@ public class ODocumentHelper {
 
     if (iOtherDb != null)
       makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
-        public Object call() {
+        public Object call(ODatabaseDocumentInternal database) {
           if (iOther.getInternalStatus() == STATUS.NOT_LOADED)
             iOther.reload();
           return null;
@@ -1007,7 +1007,7 @@ public class ODocumentHelper {
 
     if (iMyDb != null)
       makeDbCall(iMyDb, new ODbRelatedCall<Object>() {
-        public Object call() {
+        public Object call(ODatabaseDocumentInternal database) {
           iCurrent.checkForFields();
           return null;
         }
@@ -1017,7 +1017,7 @@ public class ODocumentHelper {
 
     if (iOtherDb != null)
       makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
-        public Object call() {
+        public Object call(ODatabaseDocumentInternal database) {
           iOther.checkForFields();
           return null;
         }
@@ -1095,29 +1095,29 @@ public class ODocumentHelper {
     try {
       final Iterator<Entry<Object, Object>> myEntryIterator = makeDbCall(iMyDb,
           new ODbRelatedCall<Iterator<Entry<Object, Object>>>() {
-            public Iterator<Entry<Object, Object>> call() {
+            public Iterator<Entry<Object, Object>> call(ODatabaseDocumentInternal database) {
               return myMap.entrySet().iterator();
             }
           });
 
       while (makeDbCall(iMyDb, new ODbRelatedCall<Boolean>() {
-        public Boolean call() {
+        public Boolean call(ODatabaseDocumentInternal database) {
           return myEntryIterator.hasNext();
         }
       })) {
         final Entry<Object, Object> myEntry = makeDbCall(iMyDb, new ODbRelatedCall<Entry<Object, Object>>() {
-          public Entry<Object, Object> call() {
+          public Entry<Object, Object> call(ODatabaseDocumentInternal database) {
             return myEntryIterator.next();
           }
         });
         final Object myKey = makeDbCall(iMyDb, new ODbRelatedCall<Object>() {
-          public Object call() {
+          public Object call(ODatabaseDocumentInternal database) {
             return myEntry.getKey();
           }
         });
 
         if (makeDbCall(iOtherDb, new ODbRelatedCall<Boolean>() {
-          public Boolean call() {
+          public Boolean call(ODatabaseDocumentInternal database) {
             return !otherMap.containsKey(myKey);
           }
         }))
@@ -1125,24 +1125,24 @@ public class ODocumentHelper {
 
         if (myEntry.getValue() instanceof ODocument) {
           if (!hasSameContentOf(makeDbCall(iMyDb, new ODbRelatedCall<ODocument>() {
-            public ODocument call() {
+            public ODocument call(ODatabaseDocumentInternal database) {
               return (ODocument) myEntry.getValue();
             }
           }), iMyDb, makeDbCall(iOtherDb, new ODbRelatedCall<ODocument>() {
-            public ODocument call() {
+            public ODocument call(ODatabaseDocumentInternal database) {
               return (ODocument) otherMap.get(myEntry.getKey());
             }
           }), iOtherDb, ridMapper))
             return false;
         } else {
           final Object myValue = makeDbCall(iMyDb, new ODbRelatedCall<Object>() {
-            public Object call() {
+            public Object call(ODatabaseDocumentInternal database) {
               return myEntry.getValue();
             }
           });
 
           final Object otherValue = makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
-            public Object call() {
+            public Object call(ODatabaseDocumentInternal database) {
               return otherMap.get(myEntry.getKey());
             }
           });
@@ -1184,30 +1184,30 @@ public class ODocumentHelper {
 
     try {
       final Iterator<?> myIterator = makeDbCall(iMyDb, new ODbRelatedCall<Iterator<?>>() {
-        public Iterator<?> call() {
+        public Iterator<?> call(ODatabaseDocumentInternal database) {
           return myCollection.iterator();
         }
       });
 
       final Iterator<?> otherIterator = makeDbCall(iOtherDb, new ODbRelatedCall<Iterator<?>>() {
-        public Iterator<?> call() {
+        public Iterator<?> call(ODatabaseDocumentInternal database) {
           return otherCollection.iterator();
         }
       });
 
       while (makeDbCall(iMyDb, new ODbRelatedCall<Boolean>() {
-        public Boolean call() {
+        public Boolean call(ODatabaseDocumentInternal database) {
           return myIterator.hasNext();
         }
       })) {
         final Object myNextVal = makeDbCall(iMyDb, new ODbRelatedCall<Object>() {
-          public Object call() {
+          public Object call(ODatabaseDocumentInternal database) {
             return myIterator.next();
           }
         });
 
         final Object otherNextVal = makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
-          public Object call() {
+          public Object call(ODatabaseDocumentInternal database) {
             return otherIterator.next();
           }
         });
@@ -1231,13 +1231,13 @@ public class ODocumentHelper {
     final Set<?> otherSet = otherFieldValue;
 
     final int mySize = makeDbCall(iMyDb, new ODbRelatedCall<Integer>() {
-      public Integer call() {
+      public Integer call(ODatabaseDocumentInternal database) {
         return mySet.size();
       }
     });
 
     final int otherSize = makeDbCall(iOtherDb, new ODbRelatedCall<Integer>() {
-      public Integer call() {
+      public Integer call(ODatabaseDocumentInternal database) {
         return otherSet.size();
       }
     });
@@ -1260,37 +1260,37 @@ public class ODocumentHelper {
 
     try {
       final Iterator<?> myIterator = makeDbCall(iMyDb, new ODbRelatedCall<Iterator<?>>() {
-        public Iterator<?> call() {
+        public Iterator<?> call(ODatabaseDocumentInternal database) {
           return mySet.iterator();
         }
       });
 
       while (makeDbCall(iMyDb, new ODbRelatedCall<Boolean>() {
-        public Boolean call() {
+        public Boolean call(ODatabaseDocumentInternal database) {
           return myIterator.hasNext();
         }
       })) {
 
         final Iterator<?> otherIterator = makeDbCall(iOtherDb, new ODbRelatedCall<Iterator<?>>() {
-          public Iterator<?> call() {
+          public Iterator<?> call(ODatabaseDocumentInternal database) {
             return otherSet.iterator();
           }
         });
 
         final Object myNextVal = makeDbCall(iMyDb, new ODbRelatedCall<Object>() {
-          public Object call() {
+          public Object call(ODatabaseDocumentInternal database) {
             return myIterator.next();
           }
         });
 
         boolean found = false;
         while (!found && makeDbCall(iOtherDb, new ODbRelatedCall<Boolean>() {
-          public Boolean call() {
+          public Boolean call(ODatabaseDocumentInternal database) {
             return otherIterator.hasNext();
           }
         })) {
           final Object otherNextVal = makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
-            public Object call() {
+            public Object call(ODatabaseDocumentInternal database) {
               return otherIterator.next();
             }
           });
@@ -1317,13 +1317,13 @@ public class ODocumentHelper {
     final ORidBag otherBag = otherFieldValue;
 
     final int mySize = makeDbCall(iMyDb, new ODbRelatedCall<Integer>() {
-      public Integer call() {
+      public Integer call(ODatabaseDocumentInternal database) {
         return myBag.size();
       }
     });
 
     final int otherSize = makeDbCall(iOtherDb, new ODbRelatedCall<Integer>() {
-      public Integer call() {
+      public Integer call(ODatabaseDocumentInternal database) {
         return otherBag.size();
       }
     });
@@ -1342,7 +1342,7 @@ public class ODocumentHelper {
 
     final ORidBag otherBagCopy = makeDbCall(iOtherDb, new ODbRelatedCall<ORidBag>() {
       @Override
-      public ORidBag call() {
+      public ORidBag call(ODatabaseDocumentInternal database) {
         final ORidBag otherRidBag = new ORidBag();
         otherRidBag.setAutoConvertToRecord(false);
 
@@ -1355,19 +1355,19 @@ public class ODocumentHelper {
 
     try {
       final Iterator<OIdentifiable> myIterator = makeDbCall(iMyDb, new ODbRelatedCall<Iterator<OIdentifiable>>() {
-        public Iterator<OIdentifiable> call() {
+        public Iterator<OIdentifiable> call(ODatabaseDocumentInternal database) {
           return myBag.iterator();
         }
       });
 
       while (makeDbCall(iMyDb, new ODbRelatedCall<Boolean>() {
-        public Boolean call() {
+        public Boolean call(ODatabaseDocumentInternal database) {
           return myIterator.hasNext();
         }
       })) {
         final OIdentifiable myIdentifiable = makeDbCall(iMyDb, new ODbRelatedCall<OIdentifiable>() {
           @Override
-          public OIdentifiable call() {
+          public OIdentifiable call(ODatabaseDocumentInternal database) {
             return myIterator.next();
           }
         });
@@ -1384,7 +1384,7 @@ public class ODocumentHelper {
 
         makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
           @Override
-          public Object call() {
+          public Object call(ODatabaseDocumentInternal database) {
             otherBagCopy.remove(otherRid);
             return null;
           }
@@ -1394,7 +1394,7 @@ public class ODocumentHelper {
 
       return makeDbCall(iOtherDb, new ODbRelatedCall<Boolean>() {
         @Override
-        public Boolean call() {
+        public Boolean call(ODatabaseDocumentInternal database) {
           return otherBagCopy.isEmpty();
         }
       });
@@ -1497,6 +1497,6 @@ public class ODocumentHelper {
 
   public static <T> T makeDbCall(final ODatabaseDocumentInternal databaseRecord, final ODbRelatedCall<T> function) {
     databaseRecord.activateOnCurrentThread();
-    return function.call();
+    return function.call(databaseRecord);
   }
 }

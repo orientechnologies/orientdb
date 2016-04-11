@@ -30,7 +30,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
-import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
@@ -76,6 +76,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPageDebug;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -1327,7 +1328,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       final OStorage stg = currentDatabase.getStorage();
 
-      if (stg instanceof OStorageRemoteThread) {
+      if (stg instanceof OStorageRemote) {
         listServers();
       }
 
@@ -1893,16 +1894,12 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Compare two databases")
   public void compareDatabases(@ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
       @ConsoleParameter(name = "db2-url", description = "URL of the second database") final String iDb2URL,
-      @ConsoleParameter(name = "username", description = "User name", optional = true) final String iUserName,
-      @ConsoleParameter(name = "password", description = "User password", optional = true) final String iUserPassword,
+      @ConsoleParameter(name = "username", description = "User name", optional = false) final String iUserName,
+      @ConsoleParameter(name = "password", description = "User password", optional = false) final String iUserPassword,
       @ConsoleParameter(name = "detect-mapping-data", description = "Whether RID mapping data after DB import should be tried to found on the disk", optional = true) String autoDiscoveringMappingData)
           throws IOException {
     try {
-      final ODatabaseCompare compare;
-      if (iUserName == null)
-        compare = new ODatabaseCompare(iDb1URL, iDb2URL, this);
-      else
-        compare = new ODatabaseCompare(iDb1URL, iDb2URL, iUserName, iUserPassword, this);
+      final ODatabaseCompare compare = new ODatabaseCompare(iDb1URL, iDb2URL, iUserName, iUserPassword, this);
 
       compare.setAutoDetectExportImportMap(autoDiscoveringMappingData != null ? Boolean.valueOf(autoDiscoveringMappingData) : true);
       compare.setCompareIndexMetadata(true);
@@ -2352,7 +2349,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
    * Should be used only by console commands
    */
   protected void checkForRemoteServer() {
-    if (serverAdmin == null && (currentDatabase == null || !(currentDatabase.getStorage() instanceof OStorageRemoteThread)
+    if (serverAdmin == null && (currentDatabase == null || !(currentDatabase.getStorage() instanceof OStorageProxy)
         || currentDatabase.isClosed()))
       throw new OSystemException(
           "Remote server is not connected. Use 'connect remote:<host>[:<port>][/<database-name>]' to connect");
@@ -2467,8 +2464,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
 
     final OStorage stg = currentDatabase.getStorage();
-    if (stg instanceof OStorageRemoteThread) {
-      final ODocument distributedCfg = ((OStorageRemoteThread) stg).getClusterConfiguration();
+    if (stg instanceof OStorageRemote) {
+      final ODocument distributedCfg = ((OStorageRemote) stg).getClusterConfiguration();
       if (distributedCfg != null && !distributedCfg.isEmpty()) {
         message("\n\nDISTRIBUTED CONFIGURATION:\n" + distributedCfg.toJSON("prettyPrint"));
       } else if (iForce)
@@ -2479,8 +2476,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected ODocument getDistributedConfiguration() {
     if (currentDatabase != null) {
       final OStorage stg = currentDatabase.getStorage();
-      if (stg instanceof OStorageRemoteThread)
-        return ((OStorageRemoteThread) stg).getClusterConfiguration();
+      if (stg instanceof OStorageRemote)
+        return ((OStorageRemote) stg).getClusterConfiguration();
     }
     return null;
   }

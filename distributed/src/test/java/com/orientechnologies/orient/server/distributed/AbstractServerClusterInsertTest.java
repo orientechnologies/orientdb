@@ -309,13 +309,16 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     onBeforeChecks();
 
-    Thread.sleep(2000);
-
     checkInsertedEntries();
     checkIndexedEntries();
   }
 
-  protected void onBeforeChecks() {
+  protected void onBeforeChecks() throws InterruptedException {
+    try {
+      Thread.sleep(2000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 
   protected Callable<Void> createReader(String databaseURL) {

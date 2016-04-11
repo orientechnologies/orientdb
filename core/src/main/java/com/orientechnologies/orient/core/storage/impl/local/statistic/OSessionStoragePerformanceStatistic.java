@@ -113,6 +113,8 @@ public class OSessionStoragePerformanceStatistic {
    */
   private Map<String, PerformanceCountersHolder> countersByComponent = new HashMap<String, PerformanceCountersHolder>();
 
+  private WritCacheCountersHolder writCacheCountersHolder;
+
   /**
    * @param intervalBetweenSnapshots Minimum interval between two snapshots taken by container.
    * @param cleanOnSnapshot          Whether all data should be cleared after snapshot is taken.
@@ -558,6 +560,60 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
+   * Starts timer which counts how much time was spent on operation of flush pages in write cache.
+   */
+  public void startWriteCacheFlushTimer() {
+    timeStamps.push(nanoTimer.getNano());
+  }
+
+  /**
+   * Stops and records results of timer which counts how much time was spent on operation of flush pages in write cache.
+   *
+   * @param exclusive Indicates whether pages which are owned only by write cache were flushed too.
+   * @param pagesFlushed Amount of pages were flushed during this operation.
+   */
+  public void stopWriteCacheFlushTimer(boolean exclusive, int pagesFlushed) {
+    //lazy initialization to prevent memory consumption
+    if (writCacheCountersHolder == null)
+      writCacheCountersHolder = new WritCacheCountersHolder();
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    writCacheCountersHolder.flushOperationsCount++;
+    if (exclusive)
+      writCacheCountersHolder.exclusiveFlushOperationsCount++;
+
+    writCacheCountersHolder.amountOfPagesFlushed += pagesFlushed;
+    writCacheCountersHolder.flushOperationsTime += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  /**
+   * Starts timer which counts how much time was spent on fuzzy checkpoint operation.
+   */
+  public void startFuzzyCheckpointTimer() {
+    timeStamps.push(nanoTimer.getNano());
+  }
+
+  /**
+   * Stops and records results of timer which counts how much time was spent on fuzzy checkpoint operation.
+   */
+  public void stopFuzzyCheckpointTimer() {
+    if (writCacheCountersHolder == null)
+      writCacheCountersHolder = new WritCacheCountersHolder();
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    writCacheCountersHolder.fuzzyCheckpointCount++;
+    writCacheCountersHolder.fuzzyCheckpointTime += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  /**
    * Starts timer which counts how much time was spent on read of page from disk cache.
    */
   public void startPageReadFromCacheTimer() {
@@ -700,10 +756,100 @@ public class OSessionStoragePerformanceStatistic {
     }
   }
 
+  public static class WritCacheCountersHolder implements CountersHolder<WritCacheCountersHolder> {
+    /**
+     * Count flush operation.
+     */
+    private long flushOperationsCount;
+
+    /**
+     * Count of flush operations caused by the case that exclusive write cache memory was exhausted.
+     */
+    private long exclusiveFlushOperationsCount;
+
+    /**
+     * Sum of pages flushed in each write cache flush operation.
+     */
+    private long amountOfPagesFlushed;
+
+    /**
+     * Total time spent on all flush operations.
+     */
+    private long flushOperationsTime;
+
+    /**
+     * Count of all fuzzy checkpoints
+     */
+    private long fuzzyCheckpointCount;
+
+    /**
+     * Time is spent in all fuzzy checkpoints
+     */
+    private long fuzzyCheckpointTime;
+
+    @Override
+    public void clean() {
+      flushOperationsCount = 0;
+      exclusiveFlushOperationsCount = 0;
+      amountOfPagesFlushed = 0;
+      flushOperationsTime = 0;
+      fuzzyCheckpointCount = 0;
+      fuzzyCheckpointTime = 0;
+    }
+
+    @Override
+    public void pushData(WritCacheCountersHolder holder) {
+      holder.flushOperationsCount += flushOperationsCount;
+      holder.exclusiveFlushOperationsCount += exclusiveFlushOperationsCount;
+      holder.amountOfPagesFlushed += amountOfPagesFlushed;
+      holder.flushOperationsTime += flushOperationsTime;
+      holder.fuzzyCheckpointCount += fuzzyCheckpointCount;
+      holder.fuzzyCheckpointTime += fuzzyCheckpointTime;
+    }
+
+    public long getFlushOperationsCount() {
+      return flushOperationsCount;
+    }
+
+    public long getExclusiveFlushOperationsCount() {
+      return exclusiveFlushOperationsCount;
+    }
+
+    public long getPagesPerFlush() {
+      return amountOfPagesFlushed / flushOperationsCount;
+    }
+
+    public long getFlushOperationsTime() {
+      return flushOperationsTime / flushOperationsCount;
+    }
+
+    public long getFuzzyCheckpointCount() {
+      return fuzzyCheckpointCount;
+    }
+
+    public long getFuzzyCheckpointTime() {
+      return fuzzyCheckpointTime / fuzzyCheckpointCount;
+    }
+
+    @Override
+    public ODocument toDocument() {
+      final ODocument document = new ODocument();
+
+      document.field("flushOperationsCount", getFlushOperationsCount(), OType.LONG);
+      document.field("exclusiveFlushOperationsCount", getExclusiveFlushOperationsCount(), OType.LONG);
+      document.field("pagesPerFlush", getPagesPerFlush(), OType.LONG);
+      document.field("flushOperationsTime", getFlushOperationsTime(), OType.LONG);
+      document.field("fuzzyCheckpointCount", getFuzzyCheckpointCount(), OType.LONG);
+      document.field("fuzzyCheckpointTime", getFuzzyCheckpointTime(), OType.LONG);
+
+      return document;
+    }
+  }
+
   /**
    * Container for all performance counters which are shared between durable components and whole system.
    */
-  public static final class PerformanceCountersHolder {
+  public static final class PerformanceCountersHolder implements CountersHolder<PerformanceCountersHolder> {
     /**
      * Amount of times when atomic operation commit was performed.
      */
@@ -762,7 +908,7 @@ public class OSessionStoragePerformanceStatistic {
     /**
      * Clears all performance data.
      */
-    private void clean() {
+    public void clean() {
       commitCount = 0;
       commitTime = 0;
       operationsCount = 0;
@@ -925,6 +1071,14 @@ public class OSessionStoragePerformanceStatistic {
       this.countersByComponent = counters;
     }
 
+  }
+
+  public interface CountersHolder<T extends CountersHolder> {
+    void clean();
+
+    void pushData(T holder);
+
+    ODocument toDocument();
   }
 
 }

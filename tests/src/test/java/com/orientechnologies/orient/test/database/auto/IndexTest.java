@@ -16,8 +16,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.DatabaseAbstractTest;
-import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -96,8 +94,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final OProperty nickProperty = database.getMetadata().getSchema().getClass("Profile").getProperty("nick");
     Assert.assertEquals(nickProperty.getIndexes().iterator().next().getType(), OClass.INDEX_TYPE.UNIQUE.toString());
 
-    final boolean localStorage = !(database.getStorage() instanceof OStorageRemote || database
-        .getStorage() instanceof OStorageRemoteThread);
+    final boolean localStorage = !(database.getStorage() instanceof OStorageProxy);
 
     boolean oldRecording = true;
     long indexQueries = 0L;
@@ -275,7 +272,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMajorSelect() {
-    if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
+    if (database.getStorage() instanceof OStorageProxy ) {
       return;
     }
 
@@ -310,7 +307,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMajorEqualsSelect() {
-    if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
+    if (database.getStorage() instanceof OStorageProxy ) {
       return;
     }
 
@@ -346,7 +343,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMinorSelect() {
-    if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
+    if (database.getStorage() instanceof OStorageProxy ) {
       return;
     }
 
@@ -381,7 +378,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInMinorEqualsSelect() {
-    if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
+    if (database.getStorage() instanceof OStorageProxy ) {
       return;
     }
 
@@ -416,7 +413,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexBetweenSelect() {
-    if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
+    if (database.getStorage() instanceof OStorageProxy ) {
       return;
     }
 
@@ -451,7 +448,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInComplexSelectOne() {
-    if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
+    if (database.getStorage() instanceof OStorageProxy ) {
       return;
     }
 
@@ -488,7 +485,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test(dependsOnMethods = "populateIndexDocuments")
   public void testIndexInComplexSelectTwo() {
-    if (database.getStorage() instanceof OStorageRemote || database.getStorage() instanceof OStorageRemoteThread) {
+    if (database.getStorage() instanceof OStorageProxy ) {
       return;
     }
 
@@ -567,8 +564,7 @@ public class IndexTest extends ObjectDBBaseTest {
     final OProperty nickProperty = database.getMetadata().getSchema().getClass("Profile").getProperty("nick");
     Assert.assertEquals(nickProperty.getIndexes().iterator().next().getType(), OClass.INDEX_TYPE.NOTUNIQUE.toString());
 
-    final boolean localStorage = !(database.getStorage() instanceof OStorageRemote || database
-        .getStorage() instanceof OStorageRemoteThread);
+    final boolean localStorage = !(database.getStorage() instanceof OStorageProxy);
 
     boolean oldRecording = true;
     long indexQueries = 0L;
