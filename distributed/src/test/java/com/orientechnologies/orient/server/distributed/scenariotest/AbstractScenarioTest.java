@@ -292,7 +292,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     OServer server = serverRun.getServerInstance();
 
     if (faultName.equals("shutdown"))
-      serverRun.shutdownServer();
+      serverRun.terminateServer();
     else if (faultName.equals("net-fault")) {
       serverRun.crashServer();
     }

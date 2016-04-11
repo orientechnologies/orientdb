@@ -131,6 +131,18 @@ public class ServerRun {
   public void shutdownServer() {
     if (server != null) {
       try {
+        ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().shutdown();
+      } catch (Exception e) {
+      }
+      server.shutdown();
+    }
+
+    closeStorages();
+  }
+
+  public void terminateServer() {
+    if (server != null) {
+      try {
         ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
       } catch (Exception e) {
       }
