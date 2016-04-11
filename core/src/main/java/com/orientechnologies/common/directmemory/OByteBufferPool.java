@@ -32,6 +32,7 @@ import java.nio.ByteOrder;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -207,67 +208,108 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     }
 
     if (maxPagesPerSingleArea > 1) {
+
       final long currentAllocationPosition = nextAllocationPosition.getAndIncrement();
       final int position = (int) (currentAllocationPosition & (maxPagesPerSingleArea - 1));
+      final int bufferIndex = (int) (currentAllocationPosition / maxPagesPerSingleArea);
 
-      // we cannot free chunk of allocated memory so we set place holder first
-      // if operation successful we allocate part of direct memory.
-      BufferHolder bfh = lastPreallocatedArea.get();
-      if (bfh == null) {
-        bfh = new BufferHolder();
-
-        if (lastPreallocatedArea.compareAndSet(null, bfh)) {
-          final int allocationSize = maxPagesPerSingleArea * pageSize;
-
-          try {
-            bfh.buffer = ByteBuffer.allocateDirect(allocationSize).order(ByteOrder.nativeOrder());
-          } finally {
-            bfh.latch.countDown();
-          }
-        } else {
+      BufferHolder bfh = null;
+      try {
+        while (true) {
+          // we cannot free chunk of allocated memory so we set place holder first
+          // if operation successful we allocate part of direct memory.
           bfh = lastPreallocatedArea.get();
-          try {
+          assert bfh == null || bfh.index <= bufferIndex;
+
+          if (bfh == null) {
+            bfh = new BufferHolder(bufferIndex);
+
+            if (lastPreallocatedArea.compareAndSet(null, bfh)) {
+              allocateBuffer(bfh);
+            } else {
+              continue;
+            }
+          } else if (bfh.buffer == null) {
             // if place holder is not null it means that byte buffer is allocated but not set yet in other thread
             // so we wait till buffer instance will be shared by other thread
-            if (bfh.buffer == null) {
+            try {
               bfh.latch.await();
+            } catch (InterruptedException e) {
+              throw OException.wrapException(new OInterruptedException("Wait of new preallocated memory area was interrupted"), e);
             }
-          } catch (InterruptedException e) {
-            throw OException.wrapException(new OInterruptedException("Wait of new preallocated memory area was interrupted"), e);
           }
+
+          if (bfh.index < bufferIndex) {
+            //we have to request page only from buffer with calculated index otherwise we may use memory already allocated
+            //to other page
+
+            final int requestedPages = bfh.requested.get();
+            //wait till all pending memory requests which use this buffer will be fulfilled
+            if (requestedPages < maxPagesPerSingleArea) {
+              try {
+                bfh.filled.await();
+              } catch (InterruptedException e) {
+                throw OException
+                    .wrapException(new OInterruptedException("Wait of new preallocated memory area was interrupted"), e);
+              }
+            }
+
+            final BufferHolder nbfh = new BufferHolder(bufferIndex);
+            if (lastPreallocatedArea.compareAndSet(bfh, nbfh)) {
+              bfh = nbfh;
+              allocateBuffer(bfh);
+            } else {
+              assert nbfh.index == bufferIndex;
+              continue;
+            }
+          }
+
+          final int rawPosition = position * pageSize;
+          // duplicate buffer to have thread local version of buffer position.
+          final ByteBuffer db = bfh.buffer.duplicate();
+
+          db.position(rawPosition);
+          db.limit(rawPosition + pageSize);
+
+          ByteBuffer slice = db.slice();
+          slice.order(ByteOrder.nativeOrder());
+
+          if (clear) {
+            slice.position(0);
+            slice.put(zeroPage.duplicate());
+          }
+
+          slice.position(0);
+          return slice;
         }
-      } else if (bfh.buffer == null) {
-        // if place holder is not null it means that byte buffer is allocated but not set yet in other thread
-        // so we wait till buffer instance will be shared by other thread
-        try {
-          bfh.latch.await();
-        } catch (InterruptedException e) {
-          throw OException.wrapException(new OInterruptedException("Wait of new preallocated memory area was interrupted"), e);
+      } finally {
+        //we put this in final block to be sure that indication about processed memory request was for sure reflected
+        //in buffer holder counter which contains amount of memory blocks already processed by given buffer
+        if (bfh != null) {
+          final int completedRequests = bfh.requested.incrementAndGet();
+          if (completedRequests == maxPagesPerSingleArea)
+            bfh.filled.countDown();
         }
       }
-
-      final int rawPosition = position * pageSize;
-      // duplicate buffer to have thread local version of buffer position.
-      final ByteBuffer db = bfh.buffer.duplicate();
-
-      db.position(rawPosition);
-      db.limit(rawPosition + pageSize);
-
-      ByteBuffer slice = db.slice();
-      slice.order(ByteOrder.nativeOrder());
-
-      if (clear) {
-        slice.position(0);
-        slice.put(zeroPage.duplicate());
-      }
-
-      slice.position(0);
-      return slice;
     }
 
     // this should not happen if amount of pages is needed for storage is calculated correctly
     overflowBufferCount.incrementAndGet();
     return ByteBuffer.allocateDirect(pageSize).order(ByteOrder.nativeOrder());
+  }
+
+  /**
+   * Allocates direct byte buffer for buffer holder and notifies other threads that it can be used.
+   *
+   * @param bfh Buffer holder for direct memory buffer to be allocated.
+   */
+  private void allocateBuffer(BufferHolder bfh) {
+    final int allocationSize = maxPagesPerSingleArea * pageSize;
+    try {
+      bfh.buffer = ByteBuffer.allocateDirect(allocationSize).order(ByteOrder.nativeOrder());
+    } finally {
+      bfh.latch.countDown();
+    }
   }
 
   /**
@@ -375,5 +417,44 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private static final class BufferHolder {
     private volatile ByteBuffer buffer;
     private final CountDownLatch latch = new CountDownLatch(1);
+
+    /**
+     * Latch which is triggered when there is no any unused space in this buffer.
+     */
+    private final CountDownLatch filled = new CountDownLatch(1);
+
+    /**
+     * Amount of pages which were requested from this buffer.
+     * But not buffer size or index of last page in buffer.
+     * <p>
+     * This parameter is used to be sure that if we are going to allocate new buffer
+     * this buffer is served all page requests
+     */
+    private final AtomicInteger requested = new AtomicInteger();
+
+    /**
+     * Logical index of buffer.
+     * <p>
+     * Each buffer may contain only limited number of pages . Amount of pages is specified in
+     * {@link #maxPagesPerSingleArea} parameter.
+     * <p>
+     * Current field is allocation number of this buffer.
+     * Let say we requested 5-th page but buffer may contain only 4 pages.
+     * So first buffer will be created with index 0 and buffer which is needed for 5-th page will be created
+     * with index 1.
+     * <p>
+     * In general index of buffer is result of dividing of page index on number of pages which may be contained by
+     * buffer without reminder.
+     * <p>
+     * This index is used to check that buffer which is currently used to serve memory requests is one which should be used
+     * for page with given index.
+     */
+
+    private final int index;
+
+    public BufferHolder(int index) {
+      this.index = index;
+    }
+
   }
 }

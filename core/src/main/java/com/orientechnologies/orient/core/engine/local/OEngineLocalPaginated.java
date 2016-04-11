@@ -56,7 +56,8 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     }
 
     try {
-      OByteBufferPool.instance().registerMBean();
+      if (OByteBufferPool.instance() != null)
+        OByteBufferPool.instance().registerMBean();
     } catch (Exception e) {
       OLogManager.instance().error(this, "MBean for byte buffer pool cannot be registered", e);
     }
