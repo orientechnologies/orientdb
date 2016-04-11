@@ -133,7 +133,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private boolean initialized = false;
   private OTransaction currentTx;
   private boolean keepStorageOpen = false;
-  protected Object sessionMetadata;
+  protected ODatabaseSessionMetadata sessionMetadata;
 
   /**
    * Creates a new connection to the database.
