@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Tests the behavior of hooks in distributed configuration.
  */
 public class DistributedLifecycleListenerTest extends AbstractServerClusterTest implements ODistributedLifecycleListener {
-  private final static int SERVERS = 2;
+  private final static int                                               SERVERS        = 2;
 
   private final AtomicLong                                               beforeNodeJoin = new AtomicLong();
   private final AtomicLong                                               afterNodeJoin  = new AtomicLong();
@@ -69,6 +69,7 @@ public class DistributedLifecycleListenerTest extends AbstractServerClusterTest 
   @Test
   public void test() throws Exception {
     this.startupNodesInSequence = true;
+    this.terminateAtShutdown = false;
     init(SERVERS);
     prepare(false);
     execute();

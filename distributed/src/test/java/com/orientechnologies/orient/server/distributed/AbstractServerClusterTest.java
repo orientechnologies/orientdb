@@ -44,6 +44,8 @@ public abstract class AbstractServerClusterTest {
   protected int             delayServerStartup     = 0;
   protected int             delayServerAlign       = 0;
   protected boolean         startupNodesInSequence = true;
+  protected boolean         terminateAtShutdown    = true;
+
   protected String          rootDirectory          = "target/servers/";
   protected AtomicLong      totalVertices          = new AtomicLong(0);
 
@@ -172,14 +174,22 @@ public abstract class AbstractServerClusterTest {
       banner("Shutting down nodes...");
       for (ServerRun server : serverInstance) {
         System.out.println("Shutting down node " + server.getServerId() + "...");
-        server.shutdownServer();
+        if (terminateAtShutdown)
+          server.terminateServer();
+        else
+          server.shutdownServer();
       }
 
       onTestEnded();
 
       banner("Terminate HZ...");
       for (HazelcastInstance in : Hazelcast.getAllHazelcastInstances()) {
-        in.getLifecycleService().terminate();
+        if (terminateAtShutdown)
+          // TERMINATE (HARD SHUTDOWN)
+          in.getLifecycleService().terminate();
+        else
+          // SOFT SHUTDOWN
+          in.shutdown();
       }
 
       banner("Clean server directories...");

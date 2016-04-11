@@ -304,6 +304,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
           final Set<String> nodes = dbCfg.getServers(involvedClusters);
+          dManager.getAvailableNodes(nodes, getName());
 
           if (iCommand instanceof ODistributedCommand)
             nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
@@ -493,6 +494,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       checkNodeIsMaster(localNodeName, dbCfg);
 
       final List<String> nodes = dbCfg.getServers(clusterName, null);
+      dManager.getAvailableNodes(nodes, getName());
 
       if (nodes.isEmpty()) {
         // DON'T REPLICATE OR DISTRIBUTE
@@ -525,6 +527,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
           nodes.clear();
           nodes.addAll(dbCfg.getServers(newClusterName, null));
+          dManager.getAvailableNodes(nodes, getName());
           masterNode = nodes.get(0);
         }
 
@@ -629,7 +632,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
       final List<String> nodes = dbCfg.getServers(clusterName, null);
-
       final int availableNodes = dManager.getAvailableNodes(nodes, getName());
 
       // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
@@ -678,7 +680,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
       final List<String> nodes = dbCfg.getServers(clusterName, null);
-
       final int availableNodes = dManager.getAvailableNodes(nodes, getName());
 
       // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
@@ -743,6 +744,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       checkNodeIsMaster(localNodeName, dbCfg);
 
       final List<String> nodes = dbCfg.getServers(clusterName, null);
+      dManager.getAvailableNodes(nodes, getName());
 
       if (nodes.isEmpty()) {
         // DON'T REPLICATE OR DISTRIBUTE
@@ -865,6 +867,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       checkNodeIsMaster(localNodeName, dbCfg);
 
       final List<String> nodes = dbCfg.getServers(clusterName, null);
+      dManager.getAvailableNodes(nodes, getName());
 
       if (nodes.isEmpty()) {
         // DON'T REPLICATE OR DISTRIBUTE
