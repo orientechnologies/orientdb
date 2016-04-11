@@ -27,9 +27,10 @@ import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal;
+import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 
@@ -130,9 +131,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       if (c == null)
         c = excClass.getConstructor(String.class);
 
-    } catch (Exception e) {
-      // UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW AN IO EXCEPTION
-      rootException = OException.wrapException(new OIOException(iMessage), iPrevious);
+    }  catch (Exception e) {
+      // UNABLE TO REPRODUCE THE SAME SERVER-SIDE EXCEPTION: THROW AN SYSTEM EXCEPTION
+      rootException = OException.wrapException(new OSystemException(iMessage), iPrevious);
     }
 
     if (c != null)
@@ -457,7 +458,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
               + (throwable != null ? throwable.getClass().getName() : "null"));
   }
 
-  public void beginRequest(byte iCommand, OStorageRemoteThreadLocal.OStorageRemoteSession session, byte[] token)
+  public void beginRequest(byte iCommand, OStorageRemoteSession session, byte[] token)
       throws IOException {
     writeByte(iCommand);
     writeInt(session.sessionId);

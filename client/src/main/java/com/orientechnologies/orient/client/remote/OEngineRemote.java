@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -35,25 +34,16 @@ import java.util.Map;
  * @author Luca Garulli
  */
 public class OEngineRemote extends OEngineAbstract {
-  public static final String                         NAME           = "remote";
-  public static final String                         PREFIX         = NAME + ":";
-  protected static final Map<String, OStorageRemote> sharedStorages = new HashMap<String, OStorageRemote>();
-  protected volatile ORemoteConnectionManager        connectionManager;
+  public static final String NAME   = "remote";
+  public static final String PREFIX = NAME + ":";
+  protected volatile ORemoteConnectionManager connectionManager;
 
   public OEngineRemote() {
   }
 
   public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
     try {
-      synchronized (sharedStorages) {
-        OStorageRemote sharedStorage = sharedStorages.get(iURL);
-        if (sharedStorage == null) {
-          sharedStorage = new OStorageRemote(null, iURL, "rw");
-          sharedStorages.put(iURL, sharedStorage);
-        }
-
-        return new OStorageRemoteThread(sharedStorage);
-      }
+      return new OStorageRemote(null, iURL, "rw");
     } catch (Exception e) {
       final String message = "Error on opening database: " + iURL;
       OLogManager.instance().error(this, message, e);
@@ -74,13 +64,11 @@ public class OEngineRemote extends OEngineAbstract {
   public void shutdown() {
     super.shutdown();
     connectionManager.close();
-    synchronized (sharedStorages) {
-      for (Map.Entry<String, OStorageRemote> entry : sharedStorages.entrySet()) {
-        entry.getValue().close(true, false);
-      }
+  }
 
-      sharedStorages.clear();
-    }
+  @Override
+  public String getNameFromPath(String dbPath) {
+    return dbPath;
   }
 
   public ORemoteConnectionManager getConnectionManager() {
@@ -91,7 +79,4 @@ public class OEngineRemote extends OEngineAbstract {
     return NAME;
   }
 
-  public boolean isShared() {
-    return false;
-  }
 }

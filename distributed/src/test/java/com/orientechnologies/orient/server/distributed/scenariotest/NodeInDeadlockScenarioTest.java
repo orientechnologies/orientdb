@@ -16,6 +16,7 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -110,33 +111,6 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
   }
 
   @Override
-  protected void onBeforeChecks() {
-
-    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(2))).open("admin", "admin");
-    try {
-      log("WAITING FOR 3rd NODE TO FINISH. COUNT=" + dbServer3.countClass("Person"));
-
-      // SIMULATE LONG BACKUP UP TO 2/3 OF RECORDS
-      while (dbServer3.countClass("Person") < count * writerCount * (SERVERS - 1)) {
-        log("WAITING FOR 3rd NODE TO FINISH. COUNT=" + dbServer3.countClass("Person"));
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-    } finally {
-      log("WAITING FOR 3rd NODE TO FINISH. COUNT=" + dbServer3.countClass("Person"));
-
-      if (!dbServer3.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
-        dbServer3.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
-      }
-    }
-  }
-
-  @Override
   protected void onServerStarted(ServerRun server) {
     super.onServerStarted(server);
 
@@ -158,7 +132,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
                     .acquire();
                 try {
                   long recordCount = database.countClass("Person");
-                  boolean condition = recordCount > (count * writerCount * (SERVERS - 1)) * 1 / 3;
+                  boolean condition = recordCount > (count * writerCount * (SERVERS - 1) + baseCount) * 1 / 3;
                   return condition;
                 } finally {
                   database.close();
@@ -187,10 +161,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
                     @Override
                     public Object call() throws Exception {
 
-                      // SIMULATE LONG BACKUP UP TO 2/3 OF RECORDS
-                      while (totalVertices.get() < (count * writerCount * (SERVERS - 1)) * 2 / 3) {
-                        Thread.sleep(1000);
-                      }
+                      Thread.sleep(5000);
 
                       return null;
                     }
@@ -218,6 +189,21 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
         }
       }).start();
     }
+  }
+
+  @Override
+  protected void onBeforeChecks() throws InterruptedException {
+    // // WAIT UNTIL THE END
+    waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
+      @Override
+      public Boolean call(ODatabaseDocumentTx db) {
+        final boolean ok = db.countClass("Person") >= count * writerCount * (SERVERS - 1) + baseCount;
+        if (!ok)
+          System.out.println("FOUND " + db.countClass("Person") + " people instead of expected "
+              + (count * writerCount * (SERVERS - 1) + baseCount));
+        return ok;
+      }
+    }, 10000);
   }
 
   @Override

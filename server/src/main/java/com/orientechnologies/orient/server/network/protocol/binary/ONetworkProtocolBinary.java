@@ -873,7 +873,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         throw new ODistributedException("Database configuration not found for database '" + req.getDatabaseName() + "'");
       ddb.processRequest(req);
     } else
-      manager.executeOnLocalNode(req, null);
+      manager.executeOnLocalNode(req.getId(), req.getTask(), null);
   }
 
   private void executeDistributedResponse() throws IOException {

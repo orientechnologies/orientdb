@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.engine.local;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
@@ -92,12 +93,13 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     return NAME;
   }
 
-  public boolean isShared() {
-    return true;
-  }
-
   public O2QCache getReadCache() {
     return readCache;
+  }
+
+  @Override
+  public String getNameFromPath(String dbPath) {
+    return OIOUtils.getRelativePathIfAny(dbPath, null);
   }
 
   @Override

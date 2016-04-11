@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -114,7 +115,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     switch (recordStatus) {
     case REMOVED:
       // SKIP IT
-      return null;
+      throw new ORecordNotFoundException(rid);
 
     case ALLOCATED:
     case PRESENT:

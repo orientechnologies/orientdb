@@ -46,6 +46,7 @@ public class OTableFormatter {
 
   protected OPair<String, Boolean>        columnSorting        = null;
   protected final Map<String, ALIGNMENT>  columnAlignment      = new HashMap<String, ALIGNMENT>();
+  protected final Map<String, String>     columnNotes          = new HashMap<String, String>();
   protected final Set<String>             columnHidden         = new HashSet<String>();
   protected final Set<String>             prefixedColumns      = new LinkedHashSet<String>(
       Arrays.asList(new String[] { "#", "@RID", "@CLASS" }));
@@ -125,6 +126,10 @@ public class OTableFormatter {
 
   public void setColumnAlignment(final String column, final ALIGNMENT alignment) {
     columnAlignment.put(column, alignment);
+  }
+
+  public void setColumnNote(final String columnName, final String note) {
+    columnNotes.put(columnName, note);
   }
 
   public int getMaxWidthSize() {
@@ -311,13 +316,17 @@ public class OTableFormatter {
   }
 
   private void printHeader(final Map<String, Integer> iColumns) {
-    final StringBuilder buffer = new StringBuilder("\n");
+    final StringBuilder columnRow = new StringBuilder("\n");
+    final StringBuilder noteRow = new StringBuilder(columnNotes.isEmpty() ? "" : "\n");
 
     printHeaderLine(iColumns);
     int i = 0;
 
-    if (leftBorder)
-      buffer.append('|');
+    if (leftBorder) {
+      columnRow.append('|');
+      if (!columnNotes.isEmpty())
+        noteRow.append('|');
+    }
 
     for (Entry<String, Integer> column : iColumns.entrySet()) {
       String colName = column.getKey();
@@ -325,18 +334,36 @@ public class OTableFormatter {
       if (columnHidden.contains(colName))
         continue;
 
-      if (i++ > 0)
-        buffer.append('|');
+      if (i++ > 0) {
+        columnRow.append('|');
+        if (!columnNotes.isEmpty())
+          noteRow.append('|');
+      }
 
       if (colName.length() > column.getValue())
         colName = colName.substring(0, column.getValue());
-      buffer.append(String.format("%-" + column.getValue() + "s", colName));
+      columnRow.append(String.format("%-" + column.getValue() + "s", colName));
+
+      if (!columnNotes.isEmpty()) {
+        String note = columnNotes.get(column.getKey());
+        if (note == null)
+          note = "";
+
+        if (note.length() > column.getValue())
+          note = note.substring(0, column.getValue());
+        noteRow.append(String.format("%-" + column.getValue() + "s", note));
+      }
     }
 
-    if (rightBorder)
-      buffer.append('|');
+    if (rightBorder) {
+      columnRow.append('|');
+      if (!columnNotes.isEmpty())
+        noteRow.append('|');
+    }
 
-    out.onMessage(buffer.toString());
+    out.onMessage(columnRow.toString());
+    if (!columnNotes.isEmpty())
+      out.onMessage(noteRow.toString());
 
     printHeaderLine(iColumns);
   }
