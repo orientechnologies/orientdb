@@ -154,7 +154,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
       } catch (Exception e) {
         e.printStackTrace();
-        assertTrue(false);
+        fail();
       }
 
       // restarting server3
@@ -181,7 +181,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
       } catch (Exception e) {
         e.printStackTrace();
-        assertTrue(false);
+        fail();
       }
 
       // check consistency (no-replica)
@@ -190,7 +190,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
     } catch (Exception e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     } finally {
       if (!graphNoTx.getRawGraph().isClosed()) {
         ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx.getRawGraph());

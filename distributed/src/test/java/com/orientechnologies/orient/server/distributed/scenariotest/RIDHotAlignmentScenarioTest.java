@@ -117,7 +117,7 @@ public class RIDHotAlignmentScenarioTest extends AbstractScenarioTest {
       rid1 = firstInsert.getRecord().getIdentity();
     } catch (Exception e) {
       e.printStackTrace();
-      assertTrue(false);
+      fail();
     }
 
     // the record was inserted on server3
@@ -137,7 +137,7 @@ public class RIDHotAlignmentScenarioTest extends AbstractScenarioTest {
     try {
       serverInstance.get(2).startServer(getDistributedServerConfiguration(server));
     } catch (Exception e) {
-      assertTrue(false);
+      fail();
     }
 
     Thread.sleep(1000);
@@ -230,9 +230,9 @@ public class RIDHotAlignmentScenarioTest extends AbstractScenarioTest {
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
     List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Hero where id = '" + uniqueId + "'"));
     if (result.size() == 0)
-      assertTrue("No record found with id = '" + uniqueId + "'!", false);
+      fail("No record found with id = '" + uniqueId + "'!");
     else if (result.size() > 1)
-      assertTrue(result.size() + " records found with id = '" + uniqueId + "'!", false);
+      fail(result.size() + " records found with id = '" + uniqueId + "'!");
     ODatabaseRecordThreadLocal.INSTANCE.set(null);
     return result.get(0);
   }

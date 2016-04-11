@@ -31,6 +31,7 @@ import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * It checks the consistency in the cluster with the following scenario:
@@ -109,7 +110,7 @@ public class UpdateConflictFixTaskScenarioTest extends AbstractScenarioTest {
       for (Future f : futures) {
         f.get();
       }
-      assertTrue("Concurrent update NOT detected!", false);
+      fail("Concurrent update NOT detected!");
     } catch (Exception e) {
       e.printStackTrace();
       assertTrue(true);
