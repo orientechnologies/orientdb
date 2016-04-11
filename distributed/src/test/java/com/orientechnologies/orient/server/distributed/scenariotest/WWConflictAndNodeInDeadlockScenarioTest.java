@@ -54,13 +54,16 @@ import static org.junit.Assert.assertTrue;
  *    - server3 accept and perform only one update between the two update messages
  *    - no exception is thrown
  * - check consistency on the nodes:
- *      - r1 on server1 has the values set by the client c1
- *      - r1 on server2 has the values set by the client c2
+ *      - CASE 1
+ *              - r1 on server1 has the values set by the client c1
+ *              - r1 on server2 has the values set by the client c2
+ *      - CASE 2
+ *              - r1 and r2 have the same value (when the remote update message arrives on the current server before of the local update message, e.g. due to delay in the stack)
  *      - r1 on server3 has the values set by the client c1 or the values set by the client c2, but not the old one
  *      - r1 has version x+1 on all the servers
  */
 
-public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTaskScenarioTest {
+public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTest {
 
   volatile int     serverStarted    = 0;
   volatile boolean backupInProgress = false;
@@ -116,6 +119,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
     ODocument r1onServer1 = new ODocument("Person").fields("id", "R001", "firstName", "Han", "lastName", "Solo");
     r1onServer1.save();
     Thread.sleep(200);
+    r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
     ODocument r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
 
     assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
@@ -131,8 +135,8 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
     // creating and executing two clients c1 and c2 (updating r1)
     System.out.print("Building client c1 and client c2...");
     List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
-    clients.add(new ClientWriter(getDatabaseURL(serverInstance.get(0)), "R001", "Luke", "Skywalker"));
-    clients.add(new ClientWriter(getDatabaseURL(serverInstance.get(1)), "R001", "Darth", "Vader"));
+    clients.add(new RecordWriter(getDatabaseURL(serverInstance.get(0)), r1onServer1, "Luke", "Skywalker"));
+    clients.add(new RecordWriter(getDatabaseURL(serverInstance.get(1)), r1onServer2, "Darth", "Vader"));
     System.out.println("\tDone.");
     ExecutorService executor = Executors.newCachedThreadPool();
     System.out.println("Concurrent update:");
@@ -173,20 +177,42 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
     r1onServer3.reload();
 
+  /**
+   * Checking records' values
+   * - CASE 1
+   *         - r1 on server1 has the values set by the client c1
+   *         - r1 on server2 has the values set by the client c2
+   * - CASE 2
+   *         - r1 and r2 have the same value (case: the "remote-update-message" arrives on the current server before of the "local-update-message", e.g. due to delay in the stack)
+   **/
+
+    boolean case11 = false;
+    boolean case12 = false;
+    boolean case2 = false;
+
     // r1 on server1 has the values set by the client c1
     if(r1onServer1.field("firstName").equals("Luke") && r1onServer1.field("lastName").equals("Skywalker")) {
-      assertTrue("The record on server1 has been updated by the client c1 without exceptions!", true);
-    }
-    else {
-      assertTrue("The record on server1 has not been updated by any client!", false);
+      case11 = true;
+      System.out.println("The record on server1 has been updated by the client c1 without exceptions!");
     }
 
     // r1 on server2 has the values set by the client c2
     if(r1onServer2.field("firstName").equals("Darth") && r1onServer2.field("lastName").equals("Vader")) {
-      assertTrue("The record on server1 has been updated by the client c2 without exceptions!", true);
+      case12 = true;
+      System.out.println("The record on server1 has been updated by the client c2 without exceptions!");
+    }
+
+    // r1 and r2 have the same value (when the remote update message arrives on the current server before of the local update message, e.g. due to delay in the stack)
+    if(r1onServer1.field("firstName").equals(r1onServer2.field("firstName")) && r1onServer1.field("lastName").equals(r1onServer2.field("lastName"))) {
+      case2 = true;
+      System.out.println("The record on server1 has been updated by the client c2 without exceptions!");
+    }
+
+    if( (case11 && case12) || case2 ) {
+      assertTrue("Condition for the records' values satisfied", true);
     }
     else {
-      assertTrue("The record on server2 has not been updated by any client!", false);
+      assertTrue("Condition for the records' values NOT satisfied", false);
     }
 
     // r1 on server3 has the values set by the client c1 or the values set by the client c2, but not the old one
@@ -215,7 +241,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
     super.onServerStarted(server);
 
     if (serverStarted++ == (2)) {
-//      startQueueMonitorTask();
+      //      startQueueMonitorTask();
       startCountMonitorTask("Person");
 
       // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
@@ -289,5 +315,41 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends UpdateConflictFixTa
   public String getDatabaseName() {
     return "distributed-wwconflict-deadlock";
   }
+
+
+  /*
+   * A task representing a client that updates the value of the record with a specific id.
+   */
+
+  protected class RecordWriter implements Callable<Void> {
+
+    private String dbServerUrl;
+    private ODocument recordToUpdate;
+    private String firstName;
+    private String lastName;
+
+    protected RecordWriter(String dbServerUrl, ODocument recordToUpdate, String firstName, String lastName) {
+      this.dbServerUrl = dbServerUrl;
+      this.recordToUpdate = recordToUpdate;
+      this.firstName = firstName;
+      this.lastName = lastName;
+    }
+
+    @Override
+    public Void call() throws Exception {
+
+      // open server1 db
+      ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
+
+      // updating the record
+      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+      this.recordToUpdate.field("firstName",this.firstName);
+      this.recordToUpdate.field("lastName",this.lastName);
+      this.recordToUpdate.save();
+
+      return null;
+    }
+  }
+
 
 }
