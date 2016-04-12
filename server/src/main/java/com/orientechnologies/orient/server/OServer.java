@@ -107,7 +107,6 @@ public class OServer {
   private       OClientConnectionManager clientConnectionManager;
   private       ClassLoader              extensionClassLoader;
   private       OTokenHandler            tokenHandler;
-  private Map<String, OServerUserConfiguration> temporaryUsers = new ConcurrentHashMap<String, OServerUserConfiguration>();
 
   public OServer()
       throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
@@ -725,9 +724,6 @@ public class OServer {
         userCfg = serverCfg.getUser(iUserName);
     }
 
-    if (userCfg == null)
-      userCfg = temporaryUsers.get(iUserName);
-
     return userCfg;
   }
 
@@ -815,7 +811,7 @@ public class OServer {
   }
 
   public void addTemporaryUser(final String iName, final String iPassword, final String iPermissions) {
-    temporaryUsers.put(iName, new OServerUserConfiguration(iName, iPassword, iPermissions));
+  	 serverCfg.setEphemeralUser(iName, iPassword, iPermissions);
   }
 
   public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {
