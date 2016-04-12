@@ -479,7 +479,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final Collection<String> iTargetNodes, final ORemoteTask iTask, final EXECUTION_MODE iExecutionMode, final Object localResult,
       final OCallable<Void, ODistributedRequestId> iAfterSentCallback) {
 
-    final ODistributedRequest req = new ODistributedRequest(nodeId, iDatabaseName, iTask, iExecutionMode);
+    final ODistributedRequest req = new ODistributedRequest(nodeId, getNextMessageIdCounter(), iDatabaseName, iTask,
+        iExecutionMode);
 
     final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (currentDatabase != null && currentDatabase.getUser() != null)
@@ -523,7 +524,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (result instanceof Throwable && !(result instanceof OException))
         // EXCEPTION
         ODistributedServerLog.error(this, nodeName, getNodeNameById(reqId.getNodeId()), DIRECTION.IN,
-            "error on executing request %d (%s) on local node: ", (Throwable) result, reqId, task);
+            "Error on executing request %d (%s) on local node: ", (Throwable) result, reqId, task);
       else {
         // OK
         final String sourceNodeName = task.getNodeSource();
@@ -1985,7 +1986,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void stopNode(final String iNode) throws IOException {
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of stopping node '%s'...", iNode);
 
-    final ODistributedRequest request = new ODistributedRequest(nodeId, null, new OStopNodeTask(), EXECUTION_MODE.NO_RESPONSE);
+    final ODistributedRequest request = new ODistributedRequest(nodeId, getNextMessageIdCounter(), null, new OStopNodeTask(),
+        EXECUTION_MODE.NO_RESPONSE);
 
     getRemoteServer(iNode).sendRequest(request, iNode);
   }
@@ -1993,7 +1995,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void restartNode(final String iNode) throws IOException {
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of restarting node '%s'...", iNode);
 
-    final ODistributedRequest request = new ODistributedRequest(nodeId, null, new ORestartNodeTask(), EXECUTION_MODE.NO_RESPONSE);
+    final ODistributedRequest request = new ODistributedRequest(nodeId, getNextMessageIdCounter(), null, new ORestartNodeTask(),
+        EXECUTION_MODE.NO_RESPONSE);
 
     getRemoteServer(iNode).sendRequest(request, iNode);
   }

@@ -90,14 +90,15 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
               throw e;
             }
 
-            Thread.sleep(1 + new Random().nextInt(10));
+            Thread.sleep(10 + new Random().nextInt(300));
 
             localVertex.reload();
 
             OLogManager.instance().info(this, "Retry with reloaded vertex v=%d", localVertex.getRecord().getVersion());
           }
 
-          Assert.assertTrue("Unable to complete the transaction, even after " + retry + " retries", success);
+          Assert.assertTrue("Unable to complete the transaction (last=" + i + "/" + count + "), even after " + retry + " retries",
+              success);
 
         } catch (InterruptedException e) {
           System.out.println("Writer received interrupt (db=" + databaseUrl);

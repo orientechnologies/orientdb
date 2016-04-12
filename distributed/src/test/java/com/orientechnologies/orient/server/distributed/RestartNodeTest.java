@@ -44,7 +44,7 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
   @Test
   public void test() throws Exception {
     startupNodesInSequence = true;
-    useTransactions = true;
+    useTransactions = false;
     count = 600;
     maxRetries = 10;
     delayWriter = 0;

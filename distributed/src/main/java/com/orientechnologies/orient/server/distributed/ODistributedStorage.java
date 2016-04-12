@@ -93,6 +93,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   private final ReentrantReadWriteLock                               messageManagementLock = new ReentrantReadWriteLock();
   // ARRAY OF LOCKS FOR CONCURRENT OPERATIONS ON CLUSTERS
   private final Semaphore[]                                          clusterLocks;
+  private ODistributedStorageEventListener                           eventListener;
 
   public ODistributedStorage(final OServer iServer, final OAbstractPaginatedStorage wrapped) {
     this.serverInstance = iServer;
@@ -1008,8 +1009,18 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         if (acquiredClusterLock.compareAndSet(true, false))
           clusterLocks[partition].release();
 
-        if (acquiredRecordLock.compareAndSet(true, false))
+        if (acquiredRecordLock.compareAndSet(true, false)) {
           localDistributedDatabase.unlockRecord(rid, requestId);
+          if (eventListener != null) {
+            try {
+              eventListener.onAfterRecordUnlock(rid);
+            } catch (Throwable t) {
+              // IGNORE IT
+              ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                  "Caught exception during ODistributedStorageEventListener.onAfterRecordUnlock", t);
+            }
+          }
+        }
       }
 
       messageManagementLock.readLock().unlock();
@@ -1197,6 +1208,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     if (!(localDistributedDatabase.lockRecord(rid, localReqId)))
       throw new ODistributedRecordLockedException(rid);
 
+    if (eventListener != null) {
+      try {
+        eventListener.onAfterRecordLock(rid);
+      } catch (Throwable t) {
+        // IGNORE IT
+        ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Caught exception during ODistributedStorageEventListener.onAfterRecordLock", t);
+      }
+    }
+
     return localReqId;
   }
 
@@ -1379,6 +1400,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   public STATUS getStatus() {
     return wrapped.getStatus();
+  }
+
+  public ODistributedStorageEventListener getEventListener() {
+    return eventListener;
+  }
+
+  public void setEventListener(final ODistributedStorageEventListener eventListener) {
+    this.eventListener = eventListener;
   }
 
   @Override
@@ -1614,7 +1643,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       } catch (Exception e) {
         ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Error on undo operation on local node (req=%s)", e, reqId);
+            "Error on undo operation on local node req=(%s)", e, reqId);
 
       } finally {
         if (!databaseAlreadyDefined)

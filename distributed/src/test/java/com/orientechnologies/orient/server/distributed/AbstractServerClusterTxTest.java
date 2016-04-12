@@ -94,22 +94,23 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               break;
 
             } catch (InterruptedException e) {
+              // STOP IT
               System.out.println("Writer received interrupt (db=" + database.getURL());
               Thread.currentThread().interrupt();
               break;
             } catch (ORecordNotFoundException e) {
-              // IGNORE IT
+              // IGNORE IT AND RETRY
               System.out
                   .println("ORecordNotFoundException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
               // e.printStackTrace();
             } catch (ORecordDuplicatedException e) {
-              // IGNORE IT
+              // IGNORE IT AND RETRY
               System.out.println(
                   "ORecordDuplicatedException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
               // e.printStackTrace();
             } catch (OTransactionException e) {
               if (e.getCause() instanceof ORecordDuplicatedException)
-                // IGNORE IT
+                // IGNORE IT AND RETRY
                 ;
               else
                 throw e;
@@ -120,7 +121,6 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               if (retry >= maxRetries)
                 e.printStackTrace();
 
-              break;
             } catch (ODistributedException e) {
               System.out
                   .println("ODistributedException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
@@ -128,10 +128,12 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
                 database.rollback();
                 throw e;
               }
+
+              // RETRY
             } catch (Throwable e) {
               System.out.println(e.getClass() + " Exception caught on writer thread " + threadId + " (db=" + database.getURL());
               e.printStackTrace();
-              // return null;
+              break;
             }
           }
         } finally {

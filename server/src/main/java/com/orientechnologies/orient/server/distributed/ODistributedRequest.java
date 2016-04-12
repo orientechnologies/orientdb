@@ -19,13 +19,13 @@
       */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
  *
@@ -50,9 +50,9 @@ public class ODistributedRequest implements Externalizable {
   public ODistributedRequest() {
   }
 
-  public ODistributedRequest(final int senderNodeId, final String databaseName, final ORemoteTask payload,
+  public ODistributedRequest(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload,
       EXECUTION_MODE iExecutionMode) {
-    this.id = new ODistributedRequestId(senderNodeId, -1);
+    this.id = new ODistributedRequestId(senderNodeId, msgSequence);
     this.databaseName = databaseName;
     this.senderThreadId = Thread.currentThread().getId();
     this.task = payload;

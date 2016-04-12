@@ -117,9 +117,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           final CountDownLatch emptyQueues = new CountDownLatch(workerThreads.size());
 
           for (ODistributedWorker w : workerThreads) {
-            final ODistributedRequest req = new ODistributedRequest(-1, databaseName, new OSynchronizedTaskWrapper(emptyQueues),
-                ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
-            req.setId(new ODistributedRequestId(request.getId().getNodeId(), -1l));
+            final ODistributedRequest req = new ODistributedRequest(request.getId().getNodeId(), -1, databaseName,
+                new OSynchronizedTaskWrapper(emptyQueues), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
             w.processRequest(req);
           }
 
@@ -206,8 +205,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           expectedSynchronousResponses, quorum, waitLocalNode,
           iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses),
           iRequest.getTask().getTotalTimeout(availableNodes), groupByResponse);
-
-      iRequest.setId(new ODistributedRequestId(manager.getLocalNodeId(), manager.getNextMessageIdCounter()));
 
       if (localResult != null)
         // COLLECT LOCAL RESULT
@@ -478,7 +475,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (elapsed > currentResponseMgr.getSynchTimeout()) {
 
         ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
-            "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=%s", elapsed,
+            "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=(%s)", elapsed,
             currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(), iRequest);
       }
     }

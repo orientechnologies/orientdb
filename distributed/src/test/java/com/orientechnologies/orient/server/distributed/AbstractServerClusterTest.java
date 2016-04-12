@@ -340,32 +340,38 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void waitFor(final int serverId, final OCallable<Boolean, ODatabaseDocumentTx> condition, final long timeout) {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
     try {
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
+      try {
 
-      final long startTime = System.currentTimeMillis();
+        final long startTime = System.currentTimeMillis();
 
-      while (true) {
-        if (condition.call(db)) {
-          break;
+        while (true) {
+          if (condition.call(db)) {
+            break;
+          }
+
+          if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
+            OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+            break;
+          }
+
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException e) {
+            // IGNORE IT
+          }
         }
 
-        if (timeout > 0 && System.currentTimeMillis() - startTime > timeout)
-          break;
-
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          // IGNORE IT
+      } finally {
+        if (!db.isClosed()) {
+          ODatabaseRecordThreadLocal.INSTANCE.set(db);
+          db.close();
+          ODatabaseRecordThreadLocal.INSTANCE.set(null);
         }
       }
-
-    } finally {
-      if (!db.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
-        db.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
-      }
+    } catch (Exception e) {
+      // INGORE IT
     }
   }
 

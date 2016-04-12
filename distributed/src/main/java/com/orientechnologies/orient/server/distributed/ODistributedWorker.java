@@ -175,7 +175,7 @@ public class ODistributedWorker extends Thread {
     if (ODistributedServerLog.isDebugEnabled()) {
       final String senderNodeName = manager.getNodeNameById(req.getId().getNodeId());
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.IN,
-          "Processing request=%s sourceNode=%s", req, senderNodeName);
+          "Processing request=(%s) sourceNode=%s", req, senderNodeName);
     }
 
     return req;
@@ -267,11 +267,10 @@ public class ODistributedWorker extends Thread {
   }
 
   private void sendResponseBack(final ODistributedRequest iRequest, Serializable responsePayload) {
-    sendResponseBack(this, manager, iRequest, responsePayload);
-  }
+    if (iRequest.getId().getMessageId() < 0)
+      // INTERNAL MSG
+      return;
 
-  public static void sendResponseBack(final Object iContext, final ODistributedServerManager manager,
-      final ODistributedRequest iRequest, Serializable responsePayload) {
     final String senderNodeName = manager.getNodeNameById(iRequest.getId().getNodeId());
 
     final ODistributedResponse response = new ODistributedResponse(iRequest.getId(), manager.getLocalNodeName(), senderNodeName,
@@ -281,13 +280,13 @@ public class ODistributedWorker extends Thread {
       // GET THE SENDER'S RESPONSE QUEUE
       final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
 
-      ODistributedServerLog.debug(iContext, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Sending response %s back", response);
 
       remoteSenderServer.sendResponse(response, senderNodeName);
 
     } catch (Exception e) {
-      ODistributedServerLog.debug(iContext, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Error on sending response %s back", response);
     }
   }

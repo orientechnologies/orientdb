@@ -93,79 +93,80 @@ public class ODistributedTransactionManager {
 
             @Override
             public Object call(final OCallable<Void, ODistributedRequestId> unlockCallback) {
+              ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),
+                  dManager.getNextMessageIdCounter());
               try {
-                final ODistributedRequestId requestId = acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay);
 
-                try {
-                  final List<ORecordOperation> uResult = (List<ORecordOperation>) ODistributedAbstractPlugin
-                      .runInDistributedMode(new Callable() {
-                    @Override
-                    public Object call() throws Exception {
-                      return storage.commit(iTx, callback);
-                    }
-                  });
+                acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay, requestId);
 
-                  // After commit force the clean of dirty managers due to possible copy and miss clean.
-                  for (ORecordOperation ent : iTx.getAllRecordEntries()) {
-                    ORecordInternal.getDirtyManager(ent.getRecord()).clear();
+                final List<ORecordOperation> uResult = (List<ORecordOperation>) ODistributedAbstractPlugin
+                    .runInDistributedMode(new Callable() {
+                  @Override
+                  public Object call() throws Exception {
+                    return storage.commit(iTx, callback);
                   }
+                });
 
-                  final Set<String> involvedClusters = getInvolvedClusters(uResult);
-                  final Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
-                  if (nodes.isEmpty())
-                    // NO FURTHER NODES TO INVOLVE
-                    return null;
-
-                  updateUndoTaskWithCreatedRecords(uResult, undoTasks);
-
-                  final OTxTaskResult localResult = createLocalTxResult(uResult);
-
-                  final OTxTask txTask = createTxTask(uResult);
-                  txTask.setUndoTasks(undoTasks);
-
-                  OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
-
-                  if (finalExecutionModeSynch) {
-                    // SYNCHRONOUS, AUTO-RETRY IN CASE RECORDS ARE LOCKED
-                    ODistributedResponse lastResult = null;
-                    for (int retry = 1; retry <= maxAutoRetry; ++retry) {
-                      // SYNCHRONOUS CALL: REPLICATE IT
-                      lastResult = dManager.sendRequest(storage.getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE,
-                          localResult, unlockCallback);
-                      if (!processCommitResult(localNodeName, iTx, txTask, involvedClusters, uResult, nodes, autoRetryDelay,
-                          lastResult.getRequestId(), lastResult)) {
-                        // RETRY
-                        continue;
-                      }
-
-                      // OK, DISTRIBUTED COMMIT SUCCEED
-                      return null;
-                    }
-
-                    // ONLY CASE: ODistributedRecordLockedException MORE THAN AUTO-RETRY
-                    ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                        "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
-
-                    // ROLLBACK TX
-                    sendTxCompleted(localNodeName, involvedClusters, nodes, lastResult.getRequestId(), false);
-
-                    throw (ODistributedRecordLockedException) lastResult.getPayload();
-
-                  } else
-                    // ASYNC, MANAGE REPLICATION CALLBACK
-                    executeAsyncTx(nodes, localResult, unlockCallback, involvedClusters, txTask, localNodeName);
-
-                } finally {
-                  // UNLOCK ALL THE RECORDS
-                  for (ORecordOperation op : iTx.getAllRecordEntries()) {
-                    localDistributedDatabase.unlockRecord(op.record, requestId);
-                  }
+                // After commit force the clean of dirty managers due to possible copy and miss clean.
+                for (ORecordOperation ent : iTx.getAllRecordEntries()) {
+                  ORecordInternal.getDirtyManager(ent.getRecord()).clear();
                 }
+
+                final Set<String> involvedClusters = getInvolvedClusters(uResult);
+                final Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
+                if (nodes.isEmpty())
+                  // NO FURTHER NODES TO INVOLVE
+                  return null;
+
+                updateUndoTaskWithCreatedRecords(uResult, undoTasks);
+
+                final OTxTaskResult localResult = createLocalTxResult(uResult);
+
+                final OTxTask txTask = createTxTask(uResult);
+                txTask.setUndoTasks(undoTasks);
+
+                OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
+
+                if (finalExecutionModeSynch) {
+                  // SYNCHRONOUS, AUTO-RETRY IN CASE RECORDS ARE LOCKED
+                  ODistributedResponse lastResult = null;
+                  for (int retry = 1; retry <= maxAutoRetry; ++retry) {
+                    // SYNCHRONOUS CALL: REPLICATE IT
+                    lastResult = dManager.sendRequest(storage.getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE,
+                        localResult, unlockCallback);
+                    if (!processCommitResult(localNodeName, iTx, txTask, involvedClusters, uResult, nodes, autoRetryDelay,
+                        lastResult.getRequestId(), lastResult)) {
+                      // RETRY
+                      continue;
+                    }
+
+                    // OK, DISTRIBUTED COMMIT SUCCEED
+                    return null;
+                  }
+
+                  // ONLY CASE: ODistributedRecordLockedException MORE THAN AUTO-RETRY
+                  ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                      "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
+
+                  // ROLLBACK TX
+                  sendTxCompleted(localNodeName, involvedClusters, nodes, lastResult.getRequestId(), false);
+
+                  throw (ODistributedRecordLockedException) lastResult.getPayload();
+
+                } else
+                  // ASYNC, MANAGE REPLICATION CALLBACK
+                  executeAsyncTx(nodes, localResult, unlockCallback, involvedClusters, txTask, localNodeName);
+
               } catch (RuntimeException e) {
                 throw e;
               } catch (Exception e) {
                 OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
                 // UNREACHABLE
+              } finally {
+                // UNLOCK ALL THE RECORDS
+                for (ORecordOperation op : iTx.getAllRecordEntries()) {
+                  localDistributedDatabase.unlockRecord(op.record, requestId);
+                }
               }
               return null;
             }
@@ -351,12 +352,9 @@ public class ODistributedTransactionManager {
     }
   }
 
-  protected ODistributedRequestId acquireMultipleRecordLocks(final OTransaction iTx, final int maxAutoRetry,
-      final int autoRetryDelay) throws InterruptedException {
+  protected void acquireMultipleRecordLocks(final OTransaction iTx, final int maxAutoRetry, final int autoRetryDelay,
+      final ODistributedRequestId localReqId) throws InterruptedException {
     // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED
-    final ODistributedRequestId localReqId = new ODistributedRequestId(dManager.getLocalNodeId(),
-        dManager.getNextMessageIdCounter());
-
     for (ORecordOperation op : iTx.getAllRecordEntries()) {
       boolean recordLocked = false;
       for (int retry = 1; retry <= maxAutoRetry; ++retry) {
@@ -372,7 +370,6 @@ public class ODistributedTransactionManager {
       if (!recordLocked)
         throw new ODistributedRecordLockedException(op.record.getIdentity());
     }
-    return localReqId;
   }
 
   /**
