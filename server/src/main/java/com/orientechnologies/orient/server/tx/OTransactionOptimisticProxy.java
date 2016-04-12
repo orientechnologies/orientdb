@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.tx;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -42,6 +41,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 import java.io.IOException;
@@ -56,15 +56,16 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final int                         clientTxId;
   private final OChannelBinary              channel;
   private final short                       protocolVersion;
-  private ONetworkProtocolBinary            oNetworkProtocolBinary;
+  private final ONetworkProtocolBinary      oNetworkProtocolBinary;
+  private final OClientConnection           connection;
 
-  public OTransactionOptimisticProxy(final ODatabaseDocumentTx iDatabase, final OChannelBinary iChannel, short protocolVersion,
-      ONetworkProtocolBinary oNetworkProtocolBinary) throws IOException {
-    super(iDatabase);
-    channel = iChannel;
-    clientTxId = iChannel.readInt();
-    this.protocolVersion = protocolVersion;
-    this.oNetworkProtocolBinary = oNetworkProtocolBinary;
+  public OTransactionOptimisticProxy(OClientConnection connection, ONetworkProtocolBinary protocolBinary) throws IOException {
+    super(connection.getDatabase());
+    channel = protocolBinary.getChannel();
+    clientTxId = channel.readInt();
+    this.protocolVersion = connection.getData().protocolVersion;
+    this.oNetworkProtocolBinary = protocolBinary;
+    this.connection = connection;
   }
 
   @Override
@@ -131,7 +132,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       if (database != null)
         dbSerializerName = database.getSerializer().toString();
 
-      String name = oNetworkProtocolBinary.getRecordSerializerName();
+      String name = oNetworkProtocolBinary.getRecordSerializerName(connection);
       for (Map.Entry<ORecord, byte[]> entry : lazyDeserialize.entrySet()) {
         ORecord record = entry.getKey();
         final boolean contentChanged = ORecordInternal.isContentChanged(record);
