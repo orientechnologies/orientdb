@@ -75,7 +75,7 @@
                 </property>
             </activation>
             <properties>
-                <skipTests>false</skipTests>
+                <skipTests>true</skipTests>
             </properties>
         </profile>
         <profile>
@@ -87,7 +87,7 @@
                 </property>
             </activation>
             <properties>
-                <skipTests>false</skipTests>
+                <skipTests>true</skipTests>
             </properties>
         </profile>
     </profiles>
