@@ -1225,7 +1225,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iTypeName
    *          Vertex class name
    */
-  public final OrientVertexType getVertexType(final String iTypeName) {
+  public OrientVertexType getVertexType(final String iTypeName) {
     makeActive();
 
     final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iTypeName);
@@ -1344,7 +1344,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iTypeName
    *          Vertex class name
    */
-  public final void dropVertexType(final String iTypeName) {
+  public void dropVertexType(final String iTypeName) {
     makeActive();
 
     executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
@@ -1371,7 +1371,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iTypeName
    *          Edge class name
    */
-  public final OrientEdgeType getEdgeType(final String iTypeName) {
+  public OrientEdgeType getEdgeType(final String iTypeName) {
     makeActive();
 
     final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iTypeName);
@@ -1491,7 +1491,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iTypeName
    *          Edge class name
    */
-  public final void dropEdgeType(final String iTypeName) {
+  public void dropEdgeType(final String iTypeName) {
     makeActive();
 
     executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
