@@ -41,9 +41,9 @@ import java.util.Set;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener {
 
+  public static final String LUCENE_ALGORITHM = "LUCENE";
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
-  public static final String       LUCENE_ALGORITHM = "LUCENE";
 
   static {
     final Set<String> types = new HashSet<String>();
@@ -143,12 +143,17 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       String valueContainerAlgorithm, ODocument metadata) {
     final OStorage storage = database.getStorage().getUnderlying();
 
+    if (metadata == null)
+      metadata = new ODocument();
+
     if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneFullTextIndexManager(), indexType), valueContainerAlgorithm, metadata, storage);
+      return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM,
+          new OLuceneIndexEngine<Set<OIdentifiable>>(new OLuceneFullTextIndexManager(), indexType), valueContainerAlgorithm,
+          metadata, storage);
     } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
-      return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneSpatialIndexManager(OShapeFactoryImpl.INSTANCE), indexType), valueContainerAlgorithm, metadata, storage);
+      return new OLuceneSpatialIndex(name, indexType, LUCENE_ALGORITHM,
+          new OLuceneIndexEngine<Set<OIdentifiable>>(new OLuceneSpatialIndexManager(OShapeFactoryImpl.INSTANCE), indexType),
+          valueContainerAlgorithm, metadata, storage);
     }
     throw new OConfigurationException("Unsupported type : " + indexType);
   }

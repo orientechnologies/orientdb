@@ -33,14 +33,14 @@ import java.io.IOException;
 
 public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
 
-  private final String                  indexType;
-  protected OLuceneIndexManagerAbstract lucene;
-  protected OIndex                      indexManaged;
-  private ODocument                     indexMetadata;
+  private final String                      indexType;
+  protected     OLuceneIndexManagerAbstract lucene;
+  protected     OIndex                      indexManaged;
+  private       ODocument                   indexMetadata;
 
   public OLuceneIndexEngine(OLuceneIndexManagerAbstract delegate, String indexType) {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
-        .getValueAsInteger(), true);
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
+        OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
 
     this.lucene = delegate;
     this.indexType = indexType;
@@ -144,7 +144,8 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer) {
     return lucene.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
   }
 
