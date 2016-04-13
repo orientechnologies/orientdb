@@ -336,4 +336,13 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
     return query != null && !getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.REPLICATE
         : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
+
+  /**
+   * setLimit() for DELETE VERTEX is ignored. Please use LIMIT keyword in the SQL statement
+   */
+  public <RET extends OCommandExecutor> RET setLimit(final int iLimit) {
+    //do nothing
+    return (RET) this;
+  }
+
 }
