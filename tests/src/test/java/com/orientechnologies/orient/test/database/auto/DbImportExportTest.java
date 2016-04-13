@@ -36,7 +36,7 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   public static final String NEW_DB_PATH      = "target/test-import";
   public static final String NEW_DB_URL       = "target/test-import";
 
-  private String testPath;
+  private String             testPath;
 
   @Parameters(value = { "url", "testPath" })
   public DbImportExportTest(@Optional String url, String testPath) {
@@ -85,6 +85,14 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
 
   @Test(dependsOnMethods = "testDbImport")
   public void testCompareDatabases() throws IOException {
+    if ("remote".equals(getStorageType()) || url.startsWith("remote:")) {
+      String env = getTestEnv();
+      if (env == null || env.equals("dev"))
+        return;
+
+      // EXECUTES ONLY IF NOT REMOTE ON CI/RELEASE TEST ENV
+    }
+
     String urlPrefix = getStorageType() + ":";
 
     final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportTest.NEW_DB_URL,
