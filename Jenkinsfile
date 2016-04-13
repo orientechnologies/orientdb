@@ -32,7 +32,7 @@ parallel(
         }
 )
 
-stage 'Build docker container wit OrientDB inside'
+stage 'Build docker container'
 node("master") {
     sh "rm -rf *"
 
@@ -42,7 +42,7 @@ node("master") {
     unstash 'orientdb-tgz'
     sh "cp target/orientdb-community-*.tar.gz source/distribution/docker/"
 
-    def odb = docker.build("orientdb/orientdb-develop:" + env.BUILD_ID, "source/distribution/docker")
+    docker.build("orientdb/orientdb-develop:latest" , "source/distribution/docker")
 
 }
 
