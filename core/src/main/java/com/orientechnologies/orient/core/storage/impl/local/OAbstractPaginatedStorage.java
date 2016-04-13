@@ -2119,6 +2119,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         checkOpeness();
 
+        for (OIndexEngine indexEngine : indexEngines)
+          try {
+            if (indexEngine != null)
+              indexEngine.flush();
+          } catch (Throwable t) {
+            OLogManager.instance()
+                .error(this, "Error while flushing index via index engine of class %s.", t, indexEngine.getClass().getSimpleName());
+          }
+
         if (writeAheadLog != null) {
           makeFullCheckpoint();
           return;
