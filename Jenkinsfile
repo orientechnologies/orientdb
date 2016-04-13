@@ -71,7 +71,7 @@ parallel(
                     }
                 }
             }
-        }
+        },
         distributed: {
             timeout(time: 60, unit: 'MINUTES') {
                 node("openjdk-8-slave") {
