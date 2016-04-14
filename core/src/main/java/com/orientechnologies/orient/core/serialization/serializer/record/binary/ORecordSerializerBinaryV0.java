@@ -988,7 +988,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
   }
 
-  public long convertDayToTimezone(TimeZone from, TimeZone to, long time) {
+  private long convertDayToTimezone(TimeZone from, TimeZone to, long time) {
     Calendar fromCalendar = Calendar.getInstance(from);
     fromCalendar.setTimeInMillis(time);
     Calendar toCalendar = Calendar.getInstance(to);

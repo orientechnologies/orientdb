@@ -23,14 +23,8 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
@@ -326,8 +320,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       break;
     case DATE:
       long savedTime = OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY;
-      int offset = ODateHelper.getDatabaseTimeZone().getOffset(savedTime);
-      value = new Date(savedTime - offset);
+      savedTime = convertDayToTimezone(TimeZone.getTimeZone("GMT"), ODateHelper.getDatabaseTimeZone(), savedTime);
+      value = new Date(savedTime);
       break;
     case EMBEDDED:
       value = new ODocument();
@@ -541,8 +535,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         dateValue = (Long) value;
       } else
         dateValue = ((Date) value).getTime();
-      int offset = ODateHelper.getDatabaseTimeZone().getOffset(dateValue);
-      pointer = OVarIntSerializer.write(bytes, (dateValue + offset) / MILLISEC_PER_DAY);
+      dateValue = convertDayToTimezone(ODateHelper.getDatabaseTimeZone(), TimeZone.getTimeZone("GMT"), dateValue);
+      pointer = OVarIntSerializer.write(bytes, dateValue / MILLISEC_PER_DAY);
       break;
     case EMBEDDED:
       pointer = bytes.offset;
@@ -825,5 +819,22 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     // TODO: check if integrate the binary disc binary comparator here
     throw new UnsupportedOperationException("network serializer doesn't support comparators");
   }
+
+  private long convertDayToTimezone(TimeZone from, TimeZone to, long time) {
+    Calendar fromCalendar = Calendar.getInstance(from);
+    fromCalendar.setTimeInMillis(time);
+    Calendar toCalendar = Calendar.getInstance(to);
+    toCalendar.setTimeInMillis(0);
+    toCalendar.set(Calendar.ERA, fromCalendar.get(Calendar.ERA));
+    toCalendar.set(Calendar.YEAR, fromCalendar.get(Calendar.YEAR));
+    toCalendar.set(Calendar.MONTH, fromCalendar.get(Calendar.MONTH));
+    toCalendar.set(Calendar.DAY_OF_MONTH, fromCalendar.get(Calendar.DAY_OF_MONTH));
+    toCalendar.set(Calendar.HOUR, 0);
+    toCalendar.set(Calendar.MINUTE, 0);
+    toCalendar.set(Calendar.SECOND, 0);
+    toCalendar.set(Calendar.MILLISECOND, 0);
+    return toCalendar.getTimeInMillis();
+  }
+
 
 }
