@@ -38,15 +38,14 @@ public interface OSecuritySystem
 	// Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the service ticket).
 	String authenticate(final String username, final String password);
 	
-	// Indicates if the default users should be created for a new OServer instance and for new databases.
-	boolean areDefaultUsersCreated();
-	
 	// Used for generating the appropriate HTTP authentication mechanism.  The chain of authenticators is used for this.
 	String getAuthenticationHeader(final String databaseName);
 
 	ODocument getConfig();
 
 	ODocument getComponentConfig(final String name);
+
+	String getSystemDbName();
 
 	// Walks through the list of Authenticators.
 	boolean isAuthorized(final String username, final String resource);

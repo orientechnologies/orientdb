@@ -23,7 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
-
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -69,10 +69,6 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor
 		
 		String actualSPN = spn;
 		
-System.out.println("\n===== OKerberosCredentialInterceptor url = " + url);
-System.out.println("\n===== OKerberosCredentialInterceptor principal = " + principal);
-System.out.println("\n===== OKerberosCredentialInterceptor spn = " + spn);
-
 		// spn should be the SPN of the service.
 		if(spn == null || spn.isEmpty())
 		{
@@ -86,8 +82,6 @@ System.out.println("\n===== OKerberosCredentialInterceptor spn = " + spn);
 			
 				String host = remoteURL.getHost();
 
-				System.out.println("\n===== OKerberosCredentialInterceptor host = " + host);
-			
 				actualSPN = "OrientDB/" + host;
 			}
 			catch(MalformedURLException mue)
@@ -127,8 +121,6 @@ System.out.println("\n===== OKerberosCredentialInterceptor spn = " + spn);
 		}
 		catch(LoginException lie)
 		{
-			System.out.println("OKerberosCredentialInterceptor.intercept() LoginException: " + lie);
-			
 			OLogManager.instance().debug(this, "intercept() LoginException", lie);
 			
 			throw new OSecurityException("OKerberosCredentialInterceptor Client Validation Exception!");
@@ -151,8 +143,6 @@ System.out.println("\n===== OKerberosCredentialInterceptor spn = " + spn);
 		{
 			OLogManager.instance().debug(this, "intercept() LogoutException", loe);
 		}			
-
-		if(_ServiceTicket == null) System.out.println("OKerberosCredentialInterceptor.intercept() Cannot obtain the service ticket for: " + actualSPN);
 
 		if(_ServiceTicket == null) throw new OSecurityException("OKerberosCredentialInterceptor Cannot obtain the service ticket!");
 	}
@@ -192,8 +182,6 @@ System.out.println("\n===== OKerberosCredentialInterceptor spn = " + spn);
 				
 				if(useNativeJgss)
 				{
-					System.out.println("OKerberosCredentialInterceptor.getServiceTicket() Using Native JGSS");
-					
 					OLogManager.instance().info(this, "getServiceTicket() Using Native JGSS");
 					
 					try
@@ -208,8 +196,6 @@ System.out.println("\n===== OKerberosCredentialInterceptor spn = " + spn);
 					catch(GSSException gssEx)
 					{
 						OLogManager.instance().error(this, "getServiceTicket() Use Native JGSS GSSException", gssEx);
-						
-						System.out.println("OKerberosCredentialInterceptor.getServiceTicket() Use Native JGSS GSSException: " + gssEx);
 					}
 				}
 				
@@ -229,8 +215,6 @@ System.out.println("\n===== OKerberosCredentialInterceptor spn = " + spn);
 							}
 							catch(Exception inner)
 							{
-								System.out.println("OKerberosCredentialInterceptor.getServiceTicket() doAs() Exception: " + inner);
-								
 								OLogManager.instance().debug(this, "getServiceTicket() doAs() Exception", inner);
 							}
 							
@@ -238,12 +222,11 @@ System.out.println("\n===== OKerberosCredentialInterceptor spn = " + spn);
 						}
 					});
 				
-				System.out.println("OKerberosCredentialInterceptor.getServiceTicket() serviceTicket = " + serviceTicket);
-				
-				System.out.println("OKerberosCredentialInterceptor.getServiceTicket() calling sun.misc.BASE64Encoder().encode()");
+
+				if(serviceTicket != null) return OBase64Utils.encodeBytes(serviceTicket);
 
 				// Temporary, for Java 7 support.
-				if(serviceTicket != null) return new sun.misc.BASE64Encoder().encode(serviceTicket);
+//				if(serviceTicket != null) return new sun.misc.BASE64Encoder().encode(serviceTicket);
 				
 //				if(serviceTicket != null) return java.util.Base64.getEncoder().encodeToString(serviceTicket);
 				
@@ -256,8 +239,6 @@ System.out.println("\n===== OKerberosCredentialInterceptor spn = " + spn);
 		}
 		catch(Exception ex)
 		{
-			System.out.println("OKerberosCredentialInterceptor.getServiceTicket() Exception: " + ex);
-
 			OLogManager.instance().error(this, "getServiceTicket() Exception", ex);
 		}
 		

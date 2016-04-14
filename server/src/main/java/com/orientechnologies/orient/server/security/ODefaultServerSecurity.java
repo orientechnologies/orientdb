@@ -23,6 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityExternal;
@@ -44,6 +45,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 //import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostSecurityReload;
@@ -56,12 +58,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 
 public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycleListener, OServerSecurity {
+  private String                              SYSTEM_DB_NAME         = "OSystem";
+
   private boolean                             enabled                = false;                                    // Defaults to not
                                                                                                                  // enabled at
                                                                                                                  // first.
   private boolean                             debug                  = false;
 
-  private boolean                             createDefaultUsers     = true;
   private boolean                             storePasswords         = true;
 
   // OServerSecurity (via OSecurityAuthenticator)
@@ -107,6 +110,10 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
     oServer.registerLifecycleListener(this);
     OSecurityManager.instance().setSecurityFactory(this);
+
+    // Checks to see if the OrientDB System Database exists and creates it if not.
+    // Make sure this happens after setSecurityFactory() is called.
+//    checkSystemDatabase();
   }
 
   private Class<?> getClass(final ODocument jsonConfig) {
@@ -172,15 +179,6 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   protected OServer getServer() {
     return server;
-  }
-
-  // OSecuritySystem (via OServerSecurity)
-  // Indicates if OServer should create default users if none exist.
-  public boolean areDefaultUsersCreated() {
-    if (isEnabled())
-      return createDefaultUsers;
-    else
-      return true; // If the security system is disabled return the original system default.
   }
 
   // OSecuritySystem (via OServerSecurity)
@@ -273,6 +271,9 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
     return null;
   }
+
+  // OSecuritySystem
+  public String getSystemDbName() { return SYSTEM_DB_NAME; }
 
   // OSecuritySystem (via OServerSecurity)
   // This will first look for a user in the security.json "users" array and then check if a resource matches.
@@ -792,12 +793,11 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   private void reloadServer() {
     try {
-      createDefaultUsers = true;
       storePasswords = true;
 
       if (serverDoc != null) {
         if (serverDoc.containsField("createDefaultUsers")) {
-          createDefaultUsers = serverDoc.field("createDefaultUsers");
+        	 OGlobalConfiguration.CREATE_DEFAULT_USERS.setValue(serverDoc.field("createDefaultUsers"));
         }
 
         if (serverDoc.containsField("storePasswords")) {
@@ -944,5 +944,27 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     } catch (Throwable th) {
       OLogManager.instance().error(this, "ODefaultServerSecurity.unregisterRESTCommands() Throwable: " + th.getMessage());
     }
+  }
+
+  private void checkSystemDatabase() {
+  	 try {
+      final String path = "plocal:" + server.getDatabaseDirectory() + getSystemDbName();
+
+      ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx(path);
+      
+      if(!sysDB.exists()) {
+        OLogManager.instance().info(this, "Creating the System Database");
+        
+        Map<OGlobalConfiguration, Object> settings = new ConcurrentHashMap<OGlobalConfiguration, Object>();
+        settings.put(OGlobalConfiguration.CREATE_DEFAULT_USERS, false);
+        
+        sysDB.create(settings);
+        sysDB.close();
+      }
+    
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "checkSystemDatabase() Exception: %s", ex.getMessage());
+    }
+    
   }
 }
