@@ -870,7 +870,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     manager.getMessageService().dispatchResponseToThread(response);
   }
 
-  protected void sendError(OClientConnection connection, final int iClientTxId, final Throwable t) throws IOException {
+  protected void sendError(final OClientConnection connection, final int iClientTxId, final Throwable t) throws IOException {
     channel.acquireWriteLock();
     try {
 
@@ -884,7 +884,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
         // TODO: Check if the token is expiring and if it is send a new token
 
-        if (connection.getToken() != null) {
+        if (connection != null && connection.getToken() != null) {
           byte[] renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
           channel.writeBytes(renewedToken);
         } else

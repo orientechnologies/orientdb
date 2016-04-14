@@ -1189,7 +1189,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         });
       } else
         // EXECUTE DISTRIBUTED TX
-        return txManager.commit((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get(), iTx, callback);
+        return txManager.commit((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get(), iTx, callback, eventListener);
 
     } catch (OValidationException e) {
       throw e;

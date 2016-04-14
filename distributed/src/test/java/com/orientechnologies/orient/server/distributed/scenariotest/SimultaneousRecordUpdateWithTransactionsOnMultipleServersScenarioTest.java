@@ -16,13 +16,13 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedStorageEventListener;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -58,7 +58,6 @@ public class SimultaneousRecordUpdateWithTransactionsOnMultipleServersScenarioTe
                                                 }
                                               };
 
-  @Ignore
   @Test
   public void test() throws Exception {
     maxRetries = 10;
@@ -127,7 +126,7 @@ public class SimultaneousRecordUpdateWithTransactionsOnMultipleServersScenarioTe
     @Override
     public void onAfterRecordLock(ORecordId rid) {
       try {
-        System.out.println(String.format("Waiting for %dms with locked record [%s]", DOCUMENT_WRITE_TIMEOUT, rid.toString()));
+        OLogManager.instance().error(this, "Waiting for %dms with locked record [%s]", DOCUMENT_WRITE_TIMEOUT, rid.toString());
         Thread.sleep(DOCUMENT_WRITE_TIMEOUT);
       } catch (InterruptedException e) {
 

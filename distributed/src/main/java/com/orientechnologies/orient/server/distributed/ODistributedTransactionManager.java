@@ -70,7 +70,8 @@ public class ODistributedTransactionManager {
     this.localDistributedDatabase = iDDatabase;
   }
 
-  public List<ORecordOperation> commit(final ODatabaseDocumentTx database, final OTransaction iTx, final Runnable callback) {
+  public List<ORecordOperation> commit(final ODatabaseDocumentTx database, final OTransaction iTx, final Runnable callback,
+      final ODistributedStorageEventListener eventListener) {
     final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
 
     final String localNodeName = dManager.getLocalNodeName();
@@ -102,7 +103,7 @@ public class ODistributedTransactionManager {
                   dManager.getNextMessageIdCounter());
               try {
 
-                acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay, requestId);
+                acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay, requestId, eventListener);
 
                 final List<ORecordOperation> uResult = (List<ORecordOperation>) ODistributedAbstractPlugin
                     .runInDistributedMode(new Callable() {
@@ -361,13 +362,23 @@ public class ODistributedTransactionManager {
   }
 
   protected void acquireMultipleRecordLocks(final OTransaction iTx, final int maxAutoRetry, final int autoRetryDelay,
-      final ODistributedRequestId localReqId) throws InterruptedException {
+      final ODistributedRequestId localReqId, final ODistributedStorageEventListener eventListener) throws InterruptedException {
     // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED
     for (ORecordOperation op : iTx.getAllRecordEntries()) {
       boolean recordLocked = false;
       for (int retry = 1; retry <= maxAutoRetry; ++retry) {
         if (localDistributedDatabase.lockRecord(op.record, localReqId)) {
           recordLocked = true;
+
+          if (eventListener != null) {
+            try {
+              eventListener.onAfterRecordLock((ORecordId) op.record.getIdentity());
+            } catch (Throwable t) {
+              // IGNORE IT
+              ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                  "Caught exception during ODistributedStorageEventListener.onAfterRecordLock", t);
+            }
+          }
           break;
         }
 
