@@ -35,17 +35,27 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
 
   @Override
   protected void onAfterExecution() throws Exception {
-    for (ServerRun s : serverInstance) {
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s));
-      db.open("admin", "admin");
+    int s = 0;
+    do {
+      for (ServerRun server : serverInstance) {
+        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
+        db.open("admin", "admin");
 
-      banner("DROPPING DATABASE ON SERVER " + s.getServerId());
-      db.drop();
+        banner("DROPPING DATABASE ON SERVER " + server.getServerId());
+        db.drop();
+      }
 
-      banner("RE-CREATING DATABASE ON SERVER " + s.getServerId());
+      ServerRun server = serverInstance.get(s);
 
+      banner("RE-CREATING DATABASE ON SERVER " + server.getServerId());
+
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
       db.create();
-    }
+      db.close();
+
+      Thread.sleep(5000);
+
+    } while (++s < serverInstance.size());
   }
 
   protected String getDatabaseURL(final ServerRun server) {

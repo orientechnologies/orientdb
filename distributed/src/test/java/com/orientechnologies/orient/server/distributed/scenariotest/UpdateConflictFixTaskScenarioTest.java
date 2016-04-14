@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -45,6 +46,15 @@ import static org.junit.Assert.fail;
  */
 
 public class UpdateConflictFixTaskScenarioTest extends AbstractScenarioTest {
+
+  private HashMap<String, String> lukeFields = new HashMap<String, String>() {{
+    put("firstName", "Luke");
+    put("lastName", "Skywalker");
+  }};
+  private HashMap<String, String> darthFields = new HashMap<String, String>() {{
+    put("firstName", "Darth");
+    put("lastName", "Vader");
+  }};
 
   @Ignore
   @Test
@@ -99,8 +109,8 @@ public class UpdateConflictFixTaskScenarioTest extends AbstractScenarioTest {
     // creating and executing two clients c1 and c2 (updating r1)
     System.out.print("Building client c1 and client c2...");
     List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
-    clients.add(new ClientWriter(getDatabaseURL(serverInstance.get(0)), "R001", "Luke", "Skywalker"));
-    clients.add(new ClientWriter(getDatabaseURL(serverInstance.get(1)), "R001", "Darth", "Vader"));
+    clients.add(new RecordUpdater(getDatabaseURL(serverInstance.get(0)), "R001", lukeFields, false));
+    clients.add(new RecordUpdater(getDatabaseURL(serverInstance.get(1)), "R001", darthFields, false));
     System.out.println("\tDone.");
     ExecutorService executor = Executors.newCachedThreadPool();
     System.out.println("Concurrent update:");
@@ -160,41 +170,41 @@ public class UpdateConflictFixTaskScenarioTest extends AbstractScenarioTest {
 
   }
 
-
-  /*
-   * A task representing a client that updates the value of the record with a specific id.
-   */
-
-  protected class ClientWriter implements Callable<Void> {
-
-    private String dbServerUrl;
-    private String id;
-    private String firstName;
-    private String lastName;
-
-    protected ClientWriter(String dbServerUrl, String id, String firstName, String lastName) {
-      this.dbServerUrl = dbServerUrl;
-      this.id = id;
-      this.firstName = firstName;
-      this.lastName = lastName;
-    }
-
-    @Override
-    public Void call() throws Exception {
-
-      // open server1 db
-      ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
-
-      // retrieving and updating the record
-      ODocument r1 = retrieveRecord(dbServerUrl, this.id);
-      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
-      r1.field("firstName",this.firstName);
-      r1.field("lastName",this.lastName);
-      r1.save();
-
-      return null;
-    }
-  }
+//
+//  /*
+//   * A task representing a client that updates the value of the record with a specific id.
+//   */
+//
+//  protected class ClientWriter implements Callable<Void> {
+//
+//    private String dbServerUrl;
+//    private String id;
+//    private String firstName;
+//    private String lastName;
+//
+//    protected ClientWriter(String dbServerUrl, String id, String firstName, String lastName) {
+//      this.dbServerUrl = dbServerUrl;
+//      this.id = id;
+//      this.firstName = firstName;
+//      this.lastName = lastName;
+//    }
+//
+//    @Override
+//    public Void call() throws Exception {
+//
+//      // open server1 db
+//      ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
+//
+//      // retrieving and updating the record
+//      ODocument r1 = retrieveRecord(dbServerUrl, this.id);
+//      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+//      r1.field("firstName",this.firstName);
+//      r1.field("lastName",this.lastName);
+//      r1.save();
+//
+//      return null;
+//    }
+//  }
 
   @Override
   public String getDatabaseName() {

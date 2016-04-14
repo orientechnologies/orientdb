@@ -23,11 +23,14 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -36,6 +39,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -106,6 +111,9 @@ public class ODistributedTransactionManager {
                     return storage.commit(iTx, callback);
                   }
                 });
+
+                // REMOVE THE TX OBJECT FROM DATABASE TO AVOID UND OPERATIONS ARE "LOST IN TRANSACTION"
+                database.setDefaultTransactionMode();
 
                 // After commit force the clean of dirty managers due to possible copy and miss clean.
                 for (ORecordOperation ent : iTx.getAllRecordEntries()) {
@@ -391,20 +399,24 @@ public class ODistributedTransactionManager {
         // CREATE UNDO TASK LATER ONCE THE RID HAS BEEN ASSIGNED
         break;
 
-      case ORecordOperation.UPDATED: {
+      case ORecordOperation.UPDATED:
+      case ORecordOperation.DELETED:
         // CREATE UNDO TASK WITH THE PREVIOUS RECORD CONTENT/VERSION
-        final ORecord currentRecord = record.getIdentity().getRecord();
-        if (currentRecord != null)
-          undoTask = new OUpdateRecordTask(currentRecord, ORecordVersionHelper.clearRollbackMode(currentRecord.getVersion()));
-        break;
-      }
+        final ORecordId rid = (ORecordId) record.getIdentity();
+        final OStorageOperationResult<ORawBuffer> loaded = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying()
+            .readRecord(rid, null, true, null);
 
-      case ORecordOperation.DELETED: {
-        final ORecord currentRecord = record.getIdentity().getRecord();
-        if (currentRecord != null)
-          undoTask = new OResurrectRecordTask(currentRecord, ORecordVersionHelper.clearRollbackMode(currentRecord.getVersion()));
+        if (loaded == null || loaded.getResult() == null)
+          throw new ORecordNotFoundException(rid);
+
+        final ORecord previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType);
+        ORecordInternal.fill(previousRecord, rid, loaded.getResult().version, loaded.getResult().getBuffer(), false);
+
+        if (op.type == ORecordOperation.UPDATED)
+          undoTask = new OUpdateRecordTask(previousRecord, ORecordVersionHelper.clearRollbackMode(previousRecord.getVersion()));
+        else
+          undoTask = new OResurrectRecordTask(previousRecord, ORecordVersionHelper.clearRollbackMode(previousRecord.getVersion()));
         break;
-      }
 
       default:
         continue;
@@ -414,6 +426,7 @@ public class ODistributedTransactionManager {
         undoTasks.add(undoTask);
     }
     return undoTasks;
+
   }
 
   protected boolean processCommitResult(final String localNodeName, final OTransaction iTx, final OTxTask txTask,

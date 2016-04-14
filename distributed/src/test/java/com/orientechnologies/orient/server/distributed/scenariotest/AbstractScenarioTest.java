@@ -33,7 +33,6 @@ import java.util.concurrent.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * It represents an abstract scenario test.
@@ -41,8 +40,13 @@ import static org.junit.Assert.fail;
 
 public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTest {
 
-  protected final static int SERVERS                = 3;
-  protected List<ServerRun>  executeWritesOnServers = new LinkedList<ServerRun>();
+  protected final static int             SERVERS                = 3;
+  protected              List<ServerRun> executeWritesOnServers = new LinkedList<ServerRun>();
+  protected final static ODocument       MISSING_DOCUMENT       = new ODocument();
+
+  // FIXME: these should be parameters read from configuration file (or, if missing, defaulted to some values)
+  private final   long PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT = 5000;
+  protected final long DOCUMENT_WRITE_TIMEOUT                = 5000;
 
   protected ODocument loadRecord(ODatabaseDocumentTx database, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
@@ -189,8 +193,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     List<ODocument> docsToCompare = new LinkedList<ODocument>();
 
-    super.banner("Checking consistency among servers...\nChecking on servers {" + checkOnServer
-        + "} that all the records written on {" + writtenServer + "} are consistent.");
+    super.banner(
+        "Checking consistency among servers...\nChecking on servers {" + checkOnServer + "} that all the records written on {"
+            + writtenServer + "} are consistent.");
 
     try {
 
@@ -254,16 +259,79 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   }
 
-  protected ODocument retrieveRecord(String dbUrl, String uniqueId) {
+  protected void waitForInsertedRecordPropagation(final String recordId) {
+
+    waitFor(PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT, new OCallable<Boolean, Void>() {
+
+      @Override
+      public Boolean call(Void iArgument) {
+
+        for (ServerRun server : serverInstance) {
+          if (retrieveRecordOrReturnMissing(getDatabaseURL(server), recordId) == MISSING_DOCUMENT) {
+            return false;
+          }
+        }
+        return true;
+      }
+    });
+
+  }
+
+  protected void waitForUpdatedRecordPropagation(final String recordId, final String fieldName, final String expectedFieldValue) {
+
+    waitFor(PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT, new OCallable<Boolean, Void>() {
+
+      @Override
+      public Boolean call(Void iArgument) {
+
+        if (fieldName == null)
+          return false;
+
+        for (ServerRun server : serverInstance) {
+
+          ODocument document = retrieveRecordOrReturnMissing(getDatabaseURL(server), recordId);
+          if (document == MISSING_DOCUMENT) {
+            return false;
+          }
+
+          if (document.field(fieldName) != null && !document.field(fieldName).equals(expectedFieldValue)
+              || document.field(fieldName) == null && expectedFieldValue != null)
+            return false;
+
+          System.out.println("Waiting for updated document propagation..");
+        }
+        return true;
+      }
+    });
+
+  }
+
+  private ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {
     ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
-    List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Person where id = '" + uniqueId + "'"));
-    if (result.size() == 0)
-      fail("No record found with id = '" + uniqueId + "'!");
-    else if (result.size() > 1)
-      fail(result.size() + " records found with id = '" + uniqueId + "'!");
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
-    return result.get(0);
+    try {
+      List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Person where id = '" + uniqueId + "'"));
+      if (result.size() == 0) {
+        if (returnsMissingDocument) {
+          return MISSING_DOCUMENT;
+        }
+        assertTrue("No record found with id = '" + uniqueId + "'!", false);
+      } else if (result.size() > 1)
+        assertTrue(result.size() + " records found with id = '" + uniqueId + "'!", false);
+
+      return (ODocument) result.get(0).reload();
+    }
+    finally {
+      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    }
+  }
+
+  protected ODocument retrieveRecordOrReturnMissing(String dbUrl, String uniqueId) {
+    return retrieveRecord(dbUrl, uniqueId, true);
+  }
+
+  protected ODocument retrieveRecord(String dbUrl, String uniqueId) {
+    return retrieveRecord(dbUrl, uniqueId, false);
   }
 
   @Override
@@ -378,4 +446,62 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       }
     }
   }
+
+  public void executeFutures(Collection<Future<Void>> futures) {
+    try {
+      for (Future f : futures) {
+        f.get();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  /*
+ * A simple client that updates a record
+ */
+  protected class RecordUpdater implements Callable<Void> {
+
+    private String              dbServerUrl;
+    private ODocument           recordToUpdate;
+    private Map<String, String> fields;
+    private boolean             useTransaction;
+
+    protected RecordUpdater(String dbServerUrl, ODocument recordToUpdate, Map<String, String> fields, boolean useTransaction) {
+      this.dbServerUrl = dbServerUrl;
+      this.recordToUpdate = recordToUpdate;
+      this.fields = fields;
+      this.useTransaction = useTransaction;
+    }
+
+    protected RecordUpdater(String dbServerUrl, String rid, Map<String, String> fields, boolean useTransaction) {
+      this.dbServerUrl = dbServerUrl;
+      this.useTransaction = useTransaction;
+      this.recordToUpdate = retrieveRecord(dbServerUrl, rid);
+      this.fields = fields;
+    }
+
+    @Override
+    public Void call() throws Exception {
+
+      ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
+
+      if (useTransaction) {
+        dbServer.begin();
+      }
+
+      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+      for (String fieldName : fields.keySet()) {
+        this.recordToUpdate.field(fieldName, fields.get(fieldName));
+      }
+      this.recordToUpdate.save();
+
+      if (useTransaction) {
+        dbServer.commit();
+      }
+
+      return null;
+    }
+  }
+
 }

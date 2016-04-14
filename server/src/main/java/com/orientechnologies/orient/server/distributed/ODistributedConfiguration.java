@@ -637,7 +637,7 @@ public class ODistributedConfiguration {
     return cluster;
   }
 
-  public List<String> removeNodeInServerList(final String iNode) {
+  public List<String> removeServer(final String iNode) {
     synchronized (configuration) {
       final List<String> changedPartitions = new ArrayList<String>();
 
@@ -648,6 +648,48 @@ public class ODistributedConfiguration {
             if (node.equals(iNode)) {
               // FOUND: REMOVE IT
               nodes.remove(node);
+              changedPartitions.add(clusterName);
+              break;
+            }
+          }
+        }
+      }
+
+      if (!changedPartitions.isEmpty()) {
+        incrementVersion();
+        return changedPartitions;
+      }
+    }
+    return null;
+  }
+
+  public List<String> setServerOffline(final String iNode, final String newServerCoordinator) {
+    final List<String> changedPartitions = new ArrayList<String>();
+
+    final String[] clusters = getClusterNames();
+    for (String clusterName : clusters) {
+      final List<String> nodes = getOriginalServers(clusterName);
+      synchronized (configuration) {
+        if (nodes != null && nodes.size() > 1) {
+          for (String node : nodes) {
+            if (node.equals(iNode)) {
+              // FOUND: PUT THE NODE AT THE END (BEFORE ANY TAG <NEW_NODE>)
+              nodes.remove(node);
+
+              final boolean newNodeRemoved = nodes.remove(NEW_NODE_TAG);
+
+              nodes.add(node);
+
+              if (newNodeRemoved)
+                // REINSERT NEW NODE TAG AT THE END
+                nodes.add(NEW_NODE_TAG);
+
+              if (newServerCoordinator != null) {
+                // ASSURE THE NEW COORDINATOR IS THE FIRST IN THE LIST
+                if (nodes.remove(newServerCoordinator))
+                  nodes.add(0, newServerCoordinator);
+              }
+
               changedPartitions.add(clusterName);
               break;
             }

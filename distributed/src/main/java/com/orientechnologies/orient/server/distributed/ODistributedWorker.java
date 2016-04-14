@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.Serializable;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -115,6 +114,8 @@ public class ODistributedWorker extends Thread {
   }
 
   public void initDatabaseInstance() {
+    // OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+
     if (database == null) {
       // OPEN IT
       database = distributed.getDatabaseInstance();
@@ -218,7 +219,7 @@ public class ODistributedWorker extends Thread {
             origin = null;
 
         } catch (Throwable ex) {
-          OLogManager.instance().error(this, "Failed on user switching " + ex.getMessage());
+          OLogManager.instance().error(this, "Failed on user switching database. " + ex.getMessage());
         }
       }
 
@@ -305,11 +306,7 @@ public class ODistributedWorker extends Thread {
           if (localQueue.size() >= OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getValueAsInteger()) {
             // QUEUE FULL, EMPTY THE QUEUE, IGNORE ALL THE NEXT MESSAGES UNTIL A DELTA SYNC IS EXECUTED
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-                "Replication queue is full (retry=%d, queue=%d), scheduling a delta synchronization...", retry + 1,
-                localQueue.size());
-
-            localQueue.clear();
-            ((OHazelcastPlugin) manager).requestDatabaseDelta(distributed, databaseName);
+                "Replication queue is full (retry=%d, queue=%d), replication could be delayed", retry + 1, localQueue.size());
           }
 
           try {

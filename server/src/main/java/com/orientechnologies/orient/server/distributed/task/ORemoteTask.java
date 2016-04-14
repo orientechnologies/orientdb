@@ -60,5 +60,7 @@ public interface ORemoteTask extends Externalizable {
 
   boolean isIdempotent();
 
+  boolean isNodeOnlineRequired();
+
   int getFactoryId();
 }

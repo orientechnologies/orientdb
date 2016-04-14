@@ -20,20 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
-import java.io.*;
-import java.lang.management.ManagementFactory;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
-import javax.management.*;
-
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -976,6 +962,9 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     if (!OGlobalConfiguration.STORAGE_KEEP_DISK_CACHE_STATE.getValueAsBoolean()) {
       return;
     }
+
+    if( writeCache == null)
+      return;
 
     cacheLock.acquireWriteLock();
     try {

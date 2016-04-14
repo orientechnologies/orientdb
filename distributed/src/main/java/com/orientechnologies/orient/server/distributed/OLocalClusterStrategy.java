@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -117,8 +116,9 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
         buffer.append(cfg.getServers(c, null));
       }
 
-      OLogManager.instance().warn(this, "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s",
-          cls.getName(), clusterNames, buffer.toString());
+      ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s", cls.getName(), clusterNames,
+          buffer.toString());
 
       throw new ODatabaseException(
           "Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName + "'. ClusterStrategy=" + getName());

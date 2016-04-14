@@ -1141,11 +1141,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   @Override
   public void close(final boolean iForce, final boolean onDelete) {
     if (onDelete && wrapped instanceof OLocalPaginatedStorage) {
-      // REMOVE distributed-config.json FILE to allow removal of directory
+      // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
       final File dCfg = new File(
           ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + getDistributedManager().FILE_DISTRIBUTED_DB_CONFIG);
       if (dCfg.exists())
         dCfg.delete();
+
+      final File dCfg2 = new File(
+          ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
+      if (dCfg2.exists())
+        dCfg2.delete();
     }
 
     wrapped.close(iForce, onDelete);
@@ -1201,6 +1206,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   protected ODistributedRequestId acquireRecordLock(final ORecordId rid) {
+    if( !rid.isPersistent())
+      return null;
+
     // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED
     final ODistributedRequestId localReqId = new ODistributedRequestId(dManager.getLocalNodeId(),
         dManager.getNextMessageIdCounter());
@@ -1626,29 +1634,35 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   void executeUndoOnLocalServer(final ODistributedRequestId reqId, final OAbstractReplicatedTask task) {
     final ORemoteTask undoTask = task.getUndoTask(reqId);
     if (undoTask != null) {
-      ODatabaseDocumentTx database = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      final boolean databaseAlreadyDefined;
+      OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+        @Override
+        public Object call() throws Exception {
+          ODatabaseDocumentTx database = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          final boolean databaseAlreadyDefined;
 
-      if (database == null) {
-        databaseAlreadyDefined = false;
+          if (database == null) {
+            databaseAlreadyDefined = false;
 
-        database = new ODatabaseDocumentTx(getURL());
-        database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-        database.open("system", "system");
-      } else
-        databaseAlreadyDefined = true;
+            database = new ODatabaseDocumentTx(getURL());
+            database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
+            database.open("system", "system");
+          } else
+            databaseAlreadyDefined = true;
 
-      try {
-        undoTask.execute(reqId, dManager.getServerInstance(), dManager, database);
+          try {
+            undoTask.execute(reqId, dManager.getServerInstance(), dManager, database);
 
-      } catch (Exception e) {
-        ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Error on undo operation on local node req=(%s)", e, reqId);
+          } catch (Exception e) {
+            ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                "Error on undo operation on local node req=(%s)", e, reqId);
 
-      } finally {
-        if (!databaseAlreadyDefined)
-          database.close();
-      }
+          } finally {
+            if (!databaseAlreadyDefined)
+              database.close();
+          }
+          return null;
+        }
+      });
     }
   }
 }

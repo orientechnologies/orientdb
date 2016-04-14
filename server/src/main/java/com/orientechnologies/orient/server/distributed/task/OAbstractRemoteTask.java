@@ -96,4 +96,9 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   public boolean isIdempotent() {
     return false;
   }
+
+  @Override
+  public boolean isNodeOnlineRequired() {
+    return true;
+  }
 }

@@ -79,7 +79,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
           iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
           iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "Deploying database %s...",
               databaseName);
 
           OLogSequenceNumber endLSN = null;
@@ -93,7 +93,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
             final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
 
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
+                "Creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
                 backupFile.getAbsolutePath());
 
             if (backupFile.exists())
@@ -127,7 +127,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                   }, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
 
                   ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                      "backup of database '%s' completed. lastOperationId=%s...", databaseName, requestId);
+                      "Backup of database '%s' completed. lastOperationId=%s...", databaseName, requestId);
 
                 } catch (IOException e) {
                   OLogManager.instance().error(this, "Cannot execute backup of database '%s' for deploy database", e, databaseName);
@@ -151,7 +151,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
           } else {
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
+                "Reusing last backup of database '%s' in directory: %s...", databaseName, backupFile.getAbsolutePath());
           }
 
           final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, endLSN, false);
@@ -169,15 +169,15 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
           lock.unlock();
 
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-              "deploy database task completed");
+              "Deploy database task completed");
         }
 
       } else
         ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-            "skip deploying database %s because another node is doing it", databaseName);
+            "Skip deploying database %s because another node is doing it", databaseName);
     } else
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-          "skip deploying database from the same node");
+          "Skip deploying database from the same node");
 
     return Boolean.FALSE;
   }
@@ -225,6 +225,11 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
       iText = iText.substring(1);
 
     OLogManager.instance().info(this, iText);
+  }
+
+  @Override
+  public boolean isNodeOnlineRequired() {
+    return false;
   }
 
   @Override

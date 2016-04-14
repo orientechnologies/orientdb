@@ -52,21 +52,22 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
+  public static final String                                                    DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
+
   private static final String                                                   NODE_LOCK_PREFIX               = "orientdb.reqlock.";
-  private static final String                                                   DISTRIBUTED_SYNC_JSON_FILENAME = "/distributed-sync.json";
   protected final ODistributedAbstractPlugin                                    manager;
   protected final ODistributedMessageServiceImpl                                msgService;
   protected final String                                                        databaseName;
   protected final Lock                                                          requestLock;
   protected ODistributedSyncConfiguration                                       syncConfiguration;
-  protected AtomicBoolean                                                       status                         = new AtomicBoolean(
-      false);
   protected ConcurrentHashMap<ORID, ODistributedRequestId>                      lockManager                    = new ConcurrentHashMap<ORID, ODistributedRequestId>(
       256);
   protected ConcurrentHashMap<ODistributedRequestId, ODistributedTxContextImpl> activeTxContexts               = new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContextImpl>(
       64);
   protected final List<ODistributedWorker>                                      workerThreads                  = new ArrayList<ODistributedWorker>();
   protected volatile ReadWriteLock                                              processLock                    = new ReentrantReadWriteLock();
+  protected AtomicBoolean                                                       status                         = new AtomicBoolean(
+      false);
 
   public ODistributedDatabaseImpl(final OHazelcastPlugin manager, final ODistributedMessageServiceImpl msgService,
       final String iDatabaseName) {
@@ -86,7 +87,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       workerThreads.add(workerThread);
       workerThread.start();
     }
-
     checkLocalNodeInConfiguration();
   }
 
@@ -185,14 +185,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
-      final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
+      final ORemoteTask task = iRequest.getTask();
 
-      int expectedSynchronousResponses = localResult != null ? availableNodes + 1 : availableNodes;
+      final boolean checkNodesAreOnline = task.isNodeOnlineRequired();
 
-      final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, expectedSynchronousResponses);
+      final int availableNodes = checkNodesAreOnline ? manager.getAvailableNodes(iNodes, databaseName) : iNodes.size();
+
+      final int expectedSynchronousResponses = localResult != null ? availableNodes + 1 : availableNodes;
+
+      final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, expectedSynchronousResponses, checkNodesAreOnline);
 
       final boolean groupByResponse;
-      if (iRequest.getTask().getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION) {
+      if (task.getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION) {
         groupByResponse = false;
       } else {
         groupByResponse = true;
@@ -202,9 +206,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       // CREATE THE RESPONSE MANAGER
       final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, iNodes,
-          expectedSynchronousResponses, quorum, waitLocalNode,
-          iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses),
-          iRequest.getTask().getTotalTimeout(availableNodes), groupByResponse);
+          expectedSynchronousResponses, quorum, waitLocalNode, task.getSynchronousTimeout(expectedSynchronousResponses),
+          task.getTotalTimeout(availableNodes), groupByResponse);
 
       if (localResult != null)
         // COLLECT LOCAL RESULT
@@ -276,7 +279,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public boolean lockRecord(final OIdentifiable iRecord, final ODistributedRequestId iRequestId) {
-    final ODistributedRequestId oldReqId = lockManager.putIfAbsent(iRecord.getIdentity(), iRequestId);
+    final ORID rid = iRecord.getIdentity();
+    if (!rid.isPersistent())
+      // TEMPORARY RECORD
+      return true;
+
+    final ODistributedRequestId oldReqId = lockManager.putIfAbsent(rid, iRequestId);
 
     final boolean locked = oldReqId == null;
 
@@ -304,6 +312,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void unlockRecord(final OIdentifiable iRecord, final ODistributedRequestId requestId) {
+    if (requestId == null)
+      return;
+
     final ODistributedRequestId owner = lockManager.remove(iRecord.getIdentity());
 
     // if (ODistributedServerLog.isDebugEnabled())
@@ -333,7 +344,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public ODistributedSyncConfiguration getSyncConfiguration() {
     if (syncConfiguration == null) {
-      final String path = manager.getServerInstance().getDatabaseDirectory() + databaseName + DISTRIBUTED_SYNC_JSON_FILENAME;
+      final String path = manager.getServerInstance().getDatabaseDirectory() + databaseName + "/" + DISTRIBUTED_SYNC_JSON_FILENAME;
       final File cfgFile = new File(path);
       try {
         syncConfiguration = new ODistributedSyncConfiguration(cfgFile);
@@ -426,7 +437,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected int calculateQuorum(final ODistributedRequest iRequest, final Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int availableNodes) {
+      final ODistributedConfiguration cfg, final int availableNodes, final boolean checkNodesAreOnline) {
 
     final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();
 
@@ -454,7 +465,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (quorum < 0)
       quorum = 0;
 
-    if (quorum > availableNodes)
+    if (checkNodesAreOnline && quorum > availableNodes)
       throw new ODistributedException(
           "Quorum (" + quorum + ") cannot be reached because it is major than available nodes (" + availableNodes + ")");
 
@@ -483,10 +494,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return currentResponseMgr.getFinalResponse();
   }
 
-  protected String getLocalNodeName() {
-    return manager.getLocalNodeName();
-  }
-
   protected void checkLocalNodeInConfiguration() {
     final Lock lock = manager.getLock(databaseName + ".cfg");
     lock.lock();
@@ -510,28 +517,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  public void removeNodeInConfiguration(final String iNode) {
-    final Lock lock = manager.getLock(databaseName + ".cfg");
-    lock.lock();
-    try {
-      // GET LAST VERSION IN LOCK
-      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
-
-      final List<String> foundPartition = cfg.removeNodeInServerList(iNode);
-      if (foundPartition != null) {
-        ODistributedServerLog.info(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "removing node '%s' in partitions: db=%s %s", iNode, databaseName, foundPartition);
-      }
-
-      // CHANGED: RE-DEPLOY IT
-      manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
-
-    } catch (Exception e) {
-      ODistributedServerLog.debug(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "unable to remove node or change mastership for '%s' in distributed configuration, db=%s", e, iNode, databaseName);
-
-    } finally {
-      lock.unlock();
-    }
+  protected String getLocalNodeName() {
+    return manager.getLocalNodeName();
   }
 }

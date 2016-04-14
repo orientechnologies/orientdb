@@ -142,7 +142,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
           exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
 
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "delta backup of database '%s' completed. range=%s-%s...", databaseName, startLSN, endLSN);
+            "Delta backup of database '%s' completed. range=%s-%s...", databaseName, startLSN, endLSN);
 
       } catch (Exception e) {
         // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
@@ -234,8 +234,12 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   @Override
+  public boolean isNodeOnlineRequired() {
+    return false;
+  }
+
+  @Override
   public int getFactoryId() {
     return FACTORYID;
   }
-
 }

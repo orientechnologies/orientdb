@@ -138,7 +138,7 @@ public class DistributedIndexes extends AbstractServerClusterTest {
       }
 
     } catch (Exception e) {
-      Assert.fail();
+      Assert.fail(e.toString());
     }
   }
 }
