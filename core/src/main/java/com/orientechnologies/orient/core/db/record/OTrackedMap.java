@@ -61,6 +61,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
   @Override
   public T put(final Object key, final T value) {
+    if (key == null)
+      throw new IllegalArgumentException("null key not supported by embedded map");
     boolean containsKey = containsKey(key);
 
     T oldValue = super.put(key, value);
