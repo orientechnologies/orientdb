@@ -15,7 +15,7 @@ parallel(
                 unstash 'source'
 
                 def mvnHome = tool 'mvn'
-                sh "${mvnHome}/bin/mvn  -B  clean package  -Dmaven.test.failure.ignore=true"
+                sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean install  -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
                 step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
 
                 dir('distribution') {
@@ -29,7 +29,7 @@ parallel(
                 unstash 'source'
                 def mvnHome = tool 'mvn'
 
-                sh "${mvnHome}/bin/mvn -B clean compile  -Dmaven.test.failure.ignore=true"
+                sh "${mvnHome}/bin/mvn --batch-mode -V -U clean compile  -Dmaven.test.failure.ignore=true"
             }
         }
 )
@@ -76,7 +76,7 @@ parallel(
                     sh "rm -rf *"
                     unstash 'source'
                     def mvnHome = tool 'mvn'
-                    sh "${mvnHome}/bin/mvn  -B -Dmaven.test.failure.ignore=true  -Dstorage.diskCache.bufferSize=4096 -Dorientdb.test.env=ci clean install"
+                    sh "${mvnHome}/bin/mvn  - --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  -Dstorage.diskCache.bufferSize=4096 -Dorientdb.test.env=ci clean package -Dsurefire.useFile=false"
                     step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
                 }
             }
@@ -88,7 +88,7 @@ parallel(
                     unstash 'source'
                     def mvnHome = tool 'mvn'
                     dir('server') {
-                        sh "${mvnHome}/bin/mvn  -B -Dmaven.test.failure.ignore=true  clean test-compile failsafe:integration-test"
+                        sh "${mvnHome}/bin/mvn   --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean test-compile failsafe:integration-test -Dsurefire.useFile=false"
                         step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
                     }
                 }
@@ -101,7 +101,7 @@ parallel(
                     unstash 'source'
                     def mvnHome = tool 'mvn'
                     dir('distributed') {
-                        sh "${mvnHome}/bin/mvn  -B -Dmaven.test.failure.ignore=true  clean install "
+                        sh "${mvnHome}/bin/mvn  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean package  -Dsurefire.useFile=false"
                         step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
                     }
                 }
