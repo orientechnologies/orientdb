@@ -59,20 +59,14 @@ import com.orientechnologies.orient.core.util.ODateHelper;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
-  private static final String    CHARSET_UTF_8    = "UTF-8";
-  private static final ORecordId NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
-  protected static final long    MILLISEC_PER_DAY = 86400000;
+  private static final   String    CHARSET_UTF_8    = "UTF-8";
+  private static final   ORecordId NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
+  protected static final long      MILLISEC_PER_DAY = 86400000;
 
   private final OBinaryComparatorV0 comparator = new OBinaryComparatorV0();
 
@@ -428,8 +422,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     case DATE:
       long savedTime = OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY;
-      int offset = ODateHelper.getDatabaseTimeZone().getOffset(savedTime);
-      value = new Date(savedTime - offset);
+      savedTime = convertDayToTimezone(TimeZone.getTimeZone("GMT"), ODateHelper.getDatabaseTimeZone(), savedTime);
+      value = new Date(savedTime);
       break;
     case EMBEDDED:
       value = new ODocument();
@@ -718,8 +712,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         dateValue = ((Number) value).longValue();
       } else
         dateValue = ((Date) value).getTime();
-      int offset = ODateHelper.getDatabaseTimeZone().getOffset(dateValue);
-      pointer = OVarIntSerializer.write(bytes, (dateValue + offset) / MILLISEC_PER_DAY);
+      dateValue = convertDayToTimezone(ODateHelper.getDatabaseTimeZone(), TimeZone.getTimeZone("GMT"), dateValue);
+      pointer = OVarIntSerializer.write(bytes, dateValue / MILLISEC_PER_DAY);
       break;
     case EMBEDDED:
       pointer = bytes.offset;
@@ -788,8 +782,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   private int writeLinkMap(final BytesContainer bytes, final Map<Object, OIdentifiable> map) {
-    final boolean disabledAutoConversion = map instanceof ORecordLazyMultiValue
-        && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
+    final boolean disabledAutoConversion =
+        map instanceof ORecordLazyMultiValue && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
 
     if (disabledAutoConversion)
       // AVOID TO FETCH RECORD
@@ -863,8 +857,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       if (real != null)
         link = real;
     }
-    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get()
-        .getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link " + link.getIdentity();
+    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) :
+        "Impossible to serialize invalid link " + link.getIdentity();
     final int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition());
     return pos;
@@ -873,8 +867,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   private int writeLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> value) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
 
-    final boolean disabledAutoConversion = value instanceof ORecordLazyMultiValue
-        && ((ORecordLazyMultiValue) value).isAutoConvertToRecord();
+    final boolean disabledAutoConversion =
+        value instanceof ORecordLazyMultiValue && ((ORecordLazyMultiValue) value).isAutoConvertToRecord();
 
     if (disabledAutoConversion)
       // AVOID TO FETCH RECORD
@@ -993,4 +987,21 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       throw OException.wrapException(new OSerializationException("Error on string decoding"), e);
     }
   }
+
+  public long convertDayToTimezone(TimeZone from, TimeZone to, long time) {
+    Calendar fromCalendar = Calendar.getInstance(from);
+    fromCalendar.setTimeInMillis(time);
+    Calendar toCalendar = Calendar.getInstance(to);
+    toCalendar.setTimeInMillis(0);
+    toCalendar.set(Calendar.ERA, fromCalendar.get(Calendar.ERA));
+    toCalendar.set(Calendar.YEAR, fromCalendar.get(Calendar.YEAR));
+    toCalendar.set(Calendar.MONTH, fromCalendar.get(Calendar.MONTH));
+    toCalendar.set(Calendar.DAY_OF_MONTH, fromCalendar.get(Calendar.DAY_OF_MONTH));
+    toCalendar.set(Calendar.HOUR, 0);
+    toCalendar.set(Calendar.MINUTE, 0);
+    toCalendar.set(Calendar.SECOND, 0);
+    toCalendar.set(Calendar.MILLISECOND, 0);
+    return toCalendar.getTimeInMillis();
+  }
+
 }
