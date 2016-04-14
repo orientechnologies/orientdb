@@ -1,9 +1,11 @@
+#!groovy
 stage 'Source checkout'
 node("openjdk-8-slave") {
 
     checkout scm
     stash name: 'source', excludes: 'target/', includes: '**'
 }
+
 
 stage 'Compile on Java7 and run tests on Java8'
 parallel(
@@ -42,9 +44,27 @@ node("master") {
     unstash 'orientdb-tgz'
     sh "cp target/orientdb-community-*.tar.gz source/distribution/docker/"
 
-    docker.build("orientdb/orientdb-develop:latest" , "source/distribution/docker")
+    docker.build("orientdb/orientdb-" + $env.BRANCH_NAME + ":latest", "source/distribution/docker")
 
 }
+
+stage("Run JsClient integration tests")
+node("master") {
+
+    def odbImg = docker.image("orientdb/orientdb-" + $env.BRANCH_NAME + ":latest")
+
+    def jsBuildImg = docker.image("orientdb/jenkins-slave-node-0.10:20160112")
+
+    odbImg.withRun("-e ORIENTDB_ROOT_PASSWORD=root") { odb ->
+        jsBuildImg.inside("-v /home/orient/.npm:/home/jenkins/.npm:rw -v /home/orient/node_modules:/home/jenkins/node_modules:rw --link=${odb.id}:odb -e ORIENTDB_HOST=odb -e ORIENTDB_BIN_PORT=2424 -e ORIENTDB_HTTP_PORT=2480") {
+            git url: 'https://github.com/orientechnologies/orientjs.git', branch: $env.BRANCH_NAME
+            sh "npm install"
+            sh "npm test"
+        }
+    }
+
+}
+
 
 stage 'Run CI profile, crash tests and distributed tests on java8'
 parallel(
@@ -87,9 +107,4 @@ parallel(
         }
 )
 
-stage("Run JsClient test")
-node("node-0.10-slave") {
-    git url: 'https://github.com/orientechnologies/orientjs.git', branch: '2.2.x'
-    sh "npm install"
-    sh "npm test"
-}
+
