@@ -1,9 +1,8 @@
 {
   "autoDeploy": true,
-  "hotAlignment": false,
-  "executionMode": "undefined",
   "readQuorum": 1,
   "writeQuorum": "majority",
+  "executionMode": "undefined",
   "readYourWrites": true,
   "servers": {
     "*": "master"
