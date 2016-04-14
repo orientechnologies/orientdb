@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
@@ -56,8 +57,16 @@ public class ODateConversionTestCase {
     assertNotNull(fields);
     assertEquals(fields.length, 1);
     assertEquals(fields[0], "date");
-    // It is correct that is 1 am because this date does not exist at midnight.
-    assertEquals(document.field("date"), extr.field("date"));
+
+    Date old = document.field("date");
+    Date newDate = extr.field("date");
+    Calendar cal = Calendar.getInstance();
+    cal.setTime(old);
+    Calendar cal1 = Calendar.getInstance();
+    cal1.setTime(old);
+    assertEquals(cal.get(Calendar.YEAR), cal1.get(Calendar.YEAR));
+    assertEquals(cal.get(Calendar.MONTH), cal1.get(Calendar.MONTH));
+    assertEquals(cal.get(Calendar.DAY_OF_MONTH), cal1.get(Calendar.DAY_OF_MONTH));
 
   }
 
