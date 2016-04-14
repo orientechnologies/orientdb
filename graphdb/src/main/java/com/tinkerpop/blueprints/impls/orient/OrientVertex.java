@@ -37,22 +37,12 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * OrientDB Vertex implementation of TinkerPop Blueprints standard.
@@ -64,7 +54,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
   public static final String CONNECTION_OUT_PREFIX = OrientBaseGraph.CONNECTION_OUT + "_";
   public static final String CONNECTION_IN_PREFIX  = OrientBaseGraph.CONNECTION_IN + "_";
 
-  private static final long serialVersionUID = 1L;
+  private static final long  serialVersionUID      = 1L;
 
   /**
    * (Internal) Called by serialization.
@@ -558,9 +548,6 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (oldRecord == null)
       graph.throwRecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
 
-    if (!graph.getRawGraph().getTransaction().isActive())
-      throw new IllegalStateException("Move vertex requires an active transaction to be executed in safe manner");
-
     // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
     oldRecord.delete();
 
@@ -1028,24 +1015,23 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       // DEFAULT CLASS, TREAT IT AS NO CLASS/LABEL
       iClassNames = null;
 
-
     final List<String> result = new ArrayList<String>();
 
     if (settings.isUseVertexFieldsForEdgeLabels()) {
       if (iClassNames == null)
-        // FALL BACK TO LOAD ALL FIELD NAMES
+      // FALL BACK TO LOAD ALL FIELD NAMES
       {
         return null;
       }
       OSchemaProxy schema = getGraph().getRawGraph().getMetadata().getSchema();
 
       Set<String> allClassNames = new HashSet<String>();
-      for(String className:iClassNames){
+      for (String className : iClassNames) {
         allClassNames.add(className);
         OClass clazz = schema.getClass(className);
-        if(clazz!=null){
+        if (clazz != null) {
           Collection<OClass> subClasses = clazz.getAllSubclasses();
-          for(OClass subClass:subClasses){
+          for (OClass subClass : subClasses) {
             allClassNames.add(subClass.getName());
           }
         }
