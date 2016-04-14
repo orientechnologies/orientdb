@@ -21,19 +21,11 @@ package com.orientechnologies.orient.core.record.impl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -64,11 +56,9 @@ public class ODateConversionTestCase {
     assertNotNull(fields);
     assertEquals(fields.length, 1);
     assertEquals(fields[0], "date");
-    //It is correct that is 1 am because this date does not exist at midnight.
+    // It is correct that is 1 am because this date does not exist at midnight.
     assertEquals(document.field("date"), extr.field("date"));
 
   }
 
 }
-
-
