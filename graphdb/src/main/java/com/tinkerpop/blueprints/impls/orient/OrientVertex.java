@@ -546,9 +546,6 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (oldRecord == null)
       graph.throwRecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
 
-    if (OGlobalConfiguration.NON_TX_RECORD_UPDATE_SYNCH.getValueAsBoolean() && !graph.getRawGraph().getTransaction().isActive())
-      throw new IllegalStateException("Move vertex requires an active transaction to be executed in safe manner");
-
     // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
     oldRecord.delete();
 

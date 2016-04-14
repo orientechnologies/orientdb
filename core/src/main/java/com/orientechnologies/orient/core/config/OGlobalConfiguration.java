@@ -258,10 +258,6 @@ public enum OGlobalConfiguration {
       "List of clusters to sync immediately after update separated by commas. Can be useful for manual index", String.class,
       OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME),
 
-  NON_TX_CHECK_MOVE_VERTEX("nonTX.check.move.vertex",
-      "Flag that can be set to false if the transaction check on MOVE VERTEX should be disabled", Boolean.class,
-      true, true),
-
   // TRANSACTIONS
 
   TX_TRACK_ATOMIC_OPERATIONS("tx.trackAtomicOperations",
