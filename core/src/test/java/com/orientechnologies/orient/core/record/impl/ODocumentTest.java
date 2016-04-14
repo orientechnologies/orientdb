@@ -314,6 +314,13 @@ public class ODocumentTest {
   }
 
 
-
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testFailNullMapKey() {
+    ODocument doc = new ODocument();
+    Map<String, String> map = new HashMap<String, String>();
+    map.put(null, "dd");
+    doc.field("testMap", map);
+    doc.convertAllMultiValuesToTrackedVersions();
+  }
 
 }
