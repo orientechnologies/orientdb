@@ -79,9 +79,12 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
 
   public OChannel(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     super(true);
-    socket = iSocket;
     socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
+
+    socket = iSocket;
     socket.setTcpNoDelay(true);
+    socket.setSendBufferSize(socketBufferSize);
+    socket.setReceiveBufferSize(socketBufferSize);
     //THIS TIMEOUT IS CORRECT BUT CREATE SOME PROBLEM ON REMOTE, NEED CHECK BEFORE BE ENABLED
     //timeout = iConfig.getValueAsLong(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
   }
