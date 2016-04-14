@@ -161,11 +161,6 @@
             <class name="com.orientechnologies.orient.test.database.auto.RecordReloadTest"/>
         </classes>
     </test>
-    <test name="DbTools">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.auto.DbImportExportTest"/>
-        </classes>
-    </test>
     <test name="End">
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.DbClosedTest"/>

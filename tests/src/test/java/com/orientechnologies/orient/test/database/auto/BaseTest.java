@@ -1,15 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -18,6 +8,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import org.testng.annotations.*;
+
+import java.io.IOException;
 
 @Test
 public abstract class BaseTest<T extends ODatabase> {
@@ -141,6 +134,10 @@ public abstract class BaseTest<T extends ODatabase> {
 
   protected void createDatabase() throws IOException {
     ODatabaseHelper.createDatabase(database, database.getURL());
+  }
+
+  protected String getTestEnv(){
+    return System.getProperty("orientdb.test.env");
   }
 
   protected final String getStorageType() {

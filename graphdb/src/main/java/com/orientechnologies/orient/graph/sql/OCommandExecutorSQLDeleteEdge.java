@@ -20,10 +20,7 @@
 package com.orientechnologies.orient.graph.sql;
 
 import com.orientechnologies.common.types.OModifiableBoolean;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -99,6 +96,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
       String originalTemp = null;
 
       int limit = -1;
+
       if (temp != null && !parserIsEnded())
         originalTemp = parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
 
@@ -395,4 +393,13 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
     return query != null && !getDatabase().getTransaction().isActive() ? DISTRIBUTED_EXECUTION_MODE.REPLICATE
         : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
+
+  /**
+   * setLimit() for DELETE EDGE is ignored. Please use LIMIT keyword in the SQL statement
+   */
+  public <RET extends OCommandExecutor> RET setLimit(final int iLimit) {
+    //do nothing
+    return (RET) this;
+  }
 }
+
