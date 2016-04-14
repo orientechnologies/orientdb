@@ -1,9 +1,11 @@
+#!groovy
 stage 'Source checkout'
 node("openjdk-8-slave") {
 
     checkout scm
     stash name: 'source', excludes: 'target/', includes: '**'
 }
+
 
 stage 'Compile on Java7 and run tests on Java8'
 parallel(
@@ -13,7 +15,7 @@ parallel(
                 unstash 'source'
 
                 def mvnHome = tool 'mvn'
-                sh "${mvnHome}/bin/mvn  -B  clean package  -Dmaven.test.failure.ignore=true"
+                sh "${mvnHome}/bin/mvn  --batch-mode -V -U  clean install  -Dmaven.test.failure.ignore=true -Dsurefire.useFile=false"
                 step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
 
                 dir('distribution') {
@@ -27,7 +29,7 @@ parallel(
                 unstash 'source'
                 def mvnHome = tool 'mvn'
 
-                sh "${mvnHome}/bin/mvn -B clean compile  -Dmaven.test.failure.ignore=true"
+                sh "${mvnHome}/bin/mvn --batch-mode -V -U clean compile  -Dmaven.test.failure.ignore=true"
             }
         }
 )
@@ -42,9 +44,28 @@ node("master") {
     unstash 'orientdb-tgz'
     sh "cp target/orientdb-community-*.tar.gz source/distribution/docker/"
 
-    docker.build("orientdb/orientdb-develop:latest" , "source/distribution/docker")
+    docker.build("orientdb/orientdb-${env.BRANCH_NAME}:latest", "source/distribution/docker")
 
 }
+
+stage("Run JsClient integration tests")
+node("master") {
+
+    def odbImg = docker.image("orientdb/orientdb-${env.BRANCH_NAME}:latest")
+
+    def jsBuildImg = docker.image("orientdb/jenkins-slave-node-0.10:20160112")
+
+
+    odbImg.withRun("-e ORIENTDB_ROOT_PASSWORD=root") { odb ->
+        jsBuildImg.inside("-v /home/orient/.npm:/home/jenkins/.npm:rw -v /home/orient/node_modules:/home/jenkins/node_modules:rw --link=${odb.id}:odb -e ORIENTDB_HOST=odb -e ORIENTDB_BIN_PORT=2424 -e ORIENTDB_HTTP_PORT=2480") {
+            git url: 'https://github.com/orientechnologies/orientjs.git', branch:"${env.BRANCH_NAME}"
+            sh "npm install"
+            sh "npm test"
+        }
+    }
+
+}
+
 
 stage 'Run CI profile, crash tests and distributed tests on java8'
 parallel(
@@ -54,7 +75,7 @@ parallel(
                     sh "rm -rf *"
                     unstash 'source'
                     def mvnHome = tool 'mvn'
-                    sh "${mvnHome}/bin/mvn  -B -Dmaven.test.failure.ignore=true  -Dstorage.diskCache.bufferSize=4096 -Dorientdb.test.env=ci clean install"
+                    sh "${mvnHome}/bin/mvn  - --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  -Dstorage.diskCache.bufferSize=4096 -Dorientdb.test.env=ci clean package -Dsurefire.useFile=false"
                     step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
                 }
             }
@@ -66,7 +87,7 @@ parallel(
                     unstash 'source'
                     def mvnHome = tool 'mvn'
                     dir('server') {
-                        sh "${mvnHome}/bin/mvn  -B -Dmaven.test.failure.ignore=true  clean test-compile failsafe:integration-test"
+                        sh "${mvnHome}/bin/mvn   --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean test-compile failsafe:integration-test -Dsurefire.useFile=false"
                         step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
                     }
                 }
@@ -79,7 +100,7 @@ parallel(
                     unstash 'source'
                     def mvnHome = tool 'mvn'
                     dir('distributed') {
-                        sh "${mvnHome}/bin/mvn  -B -Dmaven.test.failure.ignore=true  clean install "
+                        sh "${mvnHome}/bin/mvn  --batch-mode -V -U -e -Dmaven.test.failure.ignore=true  clean package  -Dsurefire.useFile=false"
                         step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
                     }
                 }
@@ -87,9 +108,4 @@ parallel(
         }
 )
 
-stage("Run JsClient test")
-node("node-0.10-slave") {
-    git url: 'https://github.com/orientechnologies/orientjs.git', branch: '2.2.x'
-    sh "npm install"
-    sh "npm test"
-}
+
