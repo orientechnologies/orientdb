@@ -122,12 +122,20 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ORemoteTask getFixTask(final ODistributedRequest iRequest, ORemoteTask iOriginalTask, final Object iBadResponse,
       final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
-    if (!(iGoodResponse instanceof ORecord))
-      return null;
 
-    final ORecord goodRecord = (ORecord) iGoodResponse;
-    final int versionCopy = ORecordVersionHelper.setRollbackMode(goodRecord.getVersion());
-    return new OUpdateRecordTask(rid, goodRecord.toStream(), versionCopy, recordType);
+    if (iGoodResponse instanceof Integer) {
+      // JUST VERSION
+      final int versionCopy = ORecordVersionHelper.setRollbackMode((Integer) iGoodResponse);
+      return new OUpdateRecordTask(rid, content, versionCopy, recordType);
+
+    } else if (iGoodResponse instanceof ORecord) {
+      // RECORD
+      final ORecord goodRecord = (ORecord) iGoodResponse;
+      final int versionCopy = ORecordVersionHelper.setRollbackMode(goodRecord.getVersion());
+      return new OUpdateRecordTask(rid, goodRecord.toStream(), versionCopy, recordType);
+    }
+
+    return null;
   }
 
   @Override

@@ -529,18 +529,9 @@ public class ODistributedResponseManager {
     final int bestResponsesGroupIndex = getBestResponsesGroup();
     final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
 
-    // final Object payload = bestResponsesGroup.get(0).getPayload();
-    // if (payload instanceof RuntimeException)
-    // // PROPAGATE RUNTIME EXCEPTION
-    // throw (RuntimeException) payload;
-    // else if (payload instanceof Throwable)
-    // // WRAP EXCEPTION
-    // throw OException.wrapException(new ODistributedException("Error on executing distributed request"), (Throwable) payload);
-
     final int maxCoherentResponses = bestResponsesGroup.size();
     final int conflicts = getExpectedResponses() - (maxCoherentResponses);
 
-    boolean requireUndo = false;
     if (isMinimumQuorumReached()) {
       // QUORUM SATISFIED
       if (responseGroups.size() == 1)
@@ -557,7 +548,7 @@ public class ODistributedResponseManager {
 
     // QUORUM HASN'T BEEN REACHED
     ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-        "detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request (%s)",
+        "Detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request (%s)",
         conflicts, quorum, request);
 
     if (ODistributedServerLog.isDebugEnabled())
@@ -633,14 +624,14 @@ public class ODistributedResponseManager {
 
   protected boolean fixNodesInConflict(final List<ODistributedResponse> bestResponsesGroup, final int conflicts) {
     // NO FIFTY/FIFTY CASE: FIX THE CONFLICTED NODES BY OVERWRITING THE RECORD WITH THE WINNER'S RESULT
-    ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-        "detected %d conflicts, but the quorum (%d) has been reached. Fixing remote records. Request (%s)", conflicts, quorum,
-        request);
-
     final ODistributedResponse goodResponse = bestResponsesGroup.get(0);
 
     if (goodResponse.getPayload() instanceof Throwable)
       return false;
+
+    ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+        "Detected %d conflicts, but the quorum (%d) has been reached. Fixing remote records. Request (%s)", conflicts, quorum,
+        request);
 
     for (List<ODistributedResponse> responseGroup : responseGroups) {
       if (responseGroup != bestResponsesGroup) {
@@ -654,7 +645,7 @@ public class ODistributedResponseManager {
             return false;
 
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.OUT,
-              "sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
+              "Sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
           dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), fixTask,
               ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
@@ -692,7 +683,7 @@ public class ODistributedResponseManager {
         details.append(", B=").append(bResponse);
 
         ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-            "detected possible split brain network where 2 groups of servers A%s and B%s have different contents. Cannot decide who is the winner even if the quorum (%d) has been reached. Request (%s) responses:%s",
+            "Detected possible split brain network where 2 groups of servers A%s and B%s have different contents. Cannot decide who is the winner even if the quorum (%d) has been reached. Request (%s) responses:%s",
             a, b, quorum, request, details);
 
         // DON'T FIX RECORDS BECAUSE THERE ISN'T A CLEAR WINNER

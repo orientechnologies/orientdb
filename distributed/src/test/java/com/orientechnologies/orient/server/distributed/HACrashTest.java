@@ -37,7 +37,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
     startupNodesInSequence = true;
     count = 500;
     maxRetries = 10;
-    delayWriter = 200;
+    delayWriter = 0;
     useTransactions = false;
     init(SERVERS);
     prepare(false);

@@ -158,6 +158,7 @@ public class ODistributedTransactionManager {
                       "Distributed transaction retries exceed maximum auto-retries (%d)", maxAutoRetry);
 
                   // ROLLBACK TX
+                  storage.executeUndoOnLocalServer(requestId, txTask);
                   sendTxCompleted(localNodeName, involvedClusters, nodes, lastResult.getRequestId(), false);
 
                   throw (ODistributedRecordLockedException) lastResult.getPayload();
@@ -357,7 +358,7 @@ public class ODistributedTransactionManager {
     if (!(completedResult instanceof Boolean) || !((Boolean) completedResult).booleanValue()) {
       // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
       ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-          "distributed transaction complete error: %s", completedResult);
+          "Distributed transaction complete error: %s", completedResult);
     }
   }
 
