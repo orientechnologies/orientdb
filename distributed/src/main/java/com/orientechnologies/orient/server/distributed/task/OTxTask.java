@@ -52,7 +52,7 @@ public class OTxTask extends OAbstractReplicatedTask {
 
   private List<OAbstractRecordReplicatedTask> tasks             = new ArrayList<OAbstractRecordReplicatedTask>();
 
-  private transient List<OAbstractRemoteTask> undoTasks;
+  private transient List<OAbstractRemoteTask> localUndoTasks    = new ArrayList<OAbstractRemoteTask>();
   private transient OTxTaskResult             result;
 
   public OTxTask() {
@@ -191,7 +191,7 @@ public class OTxTask extends OAbstractReplicatedTask {
   public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
     final OCompletedTxTask fixTask = new OCompletedTxTask(reqId, false);
 
-    for (ORemoteTask undoTask : undoTasks)
+    for (ORemoteTask undoTask : localUndoTasks)
       fixTask.addFixTask(undoTask);
 
     return fixTask;
@@ -249,7 +249,7 @@ public class OTxTask extends OAbstractReplicatedTask {
     }
   }
 
-  public void setUndoTasks(final List<OAbstractRemoteTask> undoTasks) {
-    this.undoTasks = undoTasks;
+  public void setLocalUndoTasks(final List<OAbstractRemoteTask> undoTasks) {
+    this.localUndoTasks = undoTasks;
   }
 }

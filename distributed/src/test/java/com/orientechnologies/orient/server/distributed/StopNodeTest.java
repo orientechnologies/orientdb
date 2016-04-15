@@ -141,7 +141,7 @@ public class StopNodeTest extends AbstractServerClusterTxTest {
       public Boolean call(Void nothing) {
         return nodeLefts.get() > 0;
       }
-    });
+    }, "Nodes left are " + nodeLefts.get());
   }
 
   @Override

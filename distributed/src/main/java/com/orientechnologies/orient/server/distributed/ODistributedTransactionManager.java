@@ -132,7 +132,7 @@ public class ODistributedTransactionManager {
                 final OTxTaskResult localResult = createLocalTxResult(uResult);
 
                 final OTxTask txTask = createTxTask(uResult);
-                txTask.setUndoTasks(undoTasks);
+                txTask.setLocalUndoTasks(undoTasks);
 
                 OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
 

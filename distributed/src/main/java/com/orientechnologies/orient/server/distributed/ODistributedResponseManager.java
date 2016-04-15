@@ -652,7 +652,7 @@ public class ODistributedResponseManager {
         }
       }
     }
-    return false;
+    return true;
   }
 
   protected boolean checkNoWinnerCase(final List<ODistributedResponse> bestResponsesGroup) {

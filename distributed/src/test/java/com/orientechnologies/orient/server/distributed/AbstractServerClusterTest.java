@@ -375,16 +375,17 @@ public abstract class AbstractServerClusterTest {
     }
   }
 
-  protected void waitFor(final long timeout, final OCallable<Boolean, Void> condition) {
+  protected void waitFor(final long timeout, final OCallable<Boolean, Void> condition, final String message) {
     final long startTime = System.currentTimeMillis();
 
     while (true) {
       if (condition.call(null)) {
+        // SUCCEED
         break;
       }
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout)
-        throw new OTimeoutException("Timeout waiting for test condition");
+        throw new OTimeoutException("Timeout waiting for test condition: " + message);
 
       try {
         Thread.sleep(1000);

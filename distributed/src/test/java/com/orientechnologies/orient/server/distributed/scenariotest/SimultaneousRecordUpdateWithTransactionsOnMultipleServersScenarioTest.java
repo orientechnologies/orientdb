@@ -16,13 +16,10 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedStorage;
-import com.orientechnologies.orient.server.distributed.ODistributedStorageEventListener;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -44,19 +41,19 @@ import static org.junit.Assert.assertEquals;
 
 public class SimultaneousRecordUpdateWithTransactionsOnMultipleServersScenarioTest extends AbstractScenarioTest {
 
-  private final String            RECORD_ID   = "R001";
-  private HashMap<String, String> lukeFields  = new HashMap<String, String>() {
-                                                {
-                                                  put("firstName", "Luke");
-                                                  put("lastName", "Skywalker");
-                                                }
-                                              };
-  private HashMap<String, String> darthFields = new HashMap<String, String>() {
-                                                {
-                                                  put("firstName", "Darth");
-                                                  put("lastName", "Vader");
-                                                }
-                                              };
+  private final String                  RECORD_ID   = "R001";
+  private       HashMap<String, Object> lukeFields  = new HashMap<String, Object>() {
+    {
+      put("firstName", "Luke");
+      put("lastName", "Skywalker");
+    }
+  };
+  private       HashMap<String, Object> darthFields = new HashMap<String, Object>() {
+    {
+      put("firstName", "Darth");
+      put("lastName", "Vader");
+    }
+  };
 
   @Test
   public void test() throws Exception {
@@ -120,21 +117,21 @@ public class SimultaneousRecordUpdateWithTransactionsOnMultipleServersScenarioTe
   public String getDatabaseName() {
     return "distributed-simultaneous-update";
   }
-
-  class AfterRecordLockDelayer implements ODistributedStorageEventListener {
-
-    @Override
-    public void onAfterRecordLock(ORecordId rid) {
-      try {
-        OLogManager.instance().error(this, "Waiting for %dms with locked record [%s]", DOCUMENT_WRITE_TIMEOUT, rid.toString());
-        Thread.sleep(DOCUMENT_WRITE_TIMEOUT);
-      } catch (InterruptedException e) {
-
-      }
-    }
-
-    @Override
-    public void onAfterRecordUnlock(ORecordId rid) {
-    }
-  }
+//
+//  class AfterRecordLockDelayer implements ODistributedStorageEventListener {
+//
+//    @Override
+//    public void onAfterRecordLock(ORecordId rid) {
+//      try {
+//        OLogManager.instance().error(this, "Waiting for %dms with locked record [%s]", DOCUMENT_WRITE_TIMEOUT, rid.toString());
+//        Thread.sleep(DOCUMENT_WRITE_TIMEOUT);
+//      } catch (InterruptedException e) {
+//
+//      }
+//    }
+//
+//    @Override
+//    public void onAfterRecordUnlock(ORecordId rid) {
+//    }
+//  }
 }

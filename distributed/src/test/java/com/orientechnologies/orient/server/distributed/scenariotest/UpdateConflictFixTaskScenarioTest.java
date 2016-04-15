@@ -47,11 +47,11 @@ import static org.junit.Assert.fail;
 
 public class UpdateConflictFixTaskScenarioTest extends AbstractScenarioTest {
 
-  private HashMap<String, String> lukeFields = new HashMap<String, String>() {{
+  private HashMap<String, Object> lukeFields = new HashMap<String, Object>() {{
     put("firstName", "Luke");
     put("lastName", "Skywalker");
   }};
-  private HashMap<String, String> darthFields = new HashMap<String, String>() {{
+  private HashMap<String, Object> darthFields = new HashMap<String, Object>() {{
     put("firstName", "Darth");
     put("lastName", "Vader");
   }};
