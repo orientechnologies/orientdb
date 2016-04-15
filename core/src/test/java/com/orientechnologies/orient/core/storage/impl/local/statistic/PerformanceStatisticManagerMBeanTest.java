@@ -25,7 +25,7 @@ public class PerformanceStatisticManagerMBeanTest {
     assertOperation(operations, "stopMonitoring");
 
     final MBeanAttributeInfo[] attributes = mBeanInfo.getAttributes();
-    Assert.assertEquals(attributes.length, 15);
+    Assert.assertEquals(attributes.length, 19);
 
     assertAttribute(attributes, "cacheHits", int.class);
     assertAttribute(attributes, "cacheHits_com1", int.class);
@@ -44,6 +44,12 @@ public class PerformanceStatisticManagerMBeanTest {
     assertAttribute(attributes, "writeSpeedInCache", long.class);
     assertAttribute(attributes, "writeSpeedInCache_com1", long.class);
     assertAttribute(attributes, "writeSpeedInCache_com2", long.class);
+
+    assertAttribute(attributes, "writeCachePagesPerFlush", long.class);
+    assertAttribute(attributes, "writeCacheFlushOperationTime", long.class);
+    assertAttribute(attributes, "writeCacheFuzzyCheckpointTime", long.class);
+
+    assertAttribute(attributes, "fullCheckpointTime", long.class);
 
     Assert.assertEquals(mBeanInfo.getConstructors().length, 0);
     Assert.assertEquals(mBeanInfo.getNotifications().length, 0);

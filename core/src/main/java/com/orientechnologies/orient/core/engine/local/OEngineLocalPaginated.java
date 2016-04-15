@@ -51,12 +51,6 @@ public class OEngineLocalPaginated extends OEngineAbstract {
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
         OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger());
     try {
-      readCache.registerMBean();
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for read cache cannot be registered", e);
-    }
-
-    try {
       if (OByteBufferPool.instance() != null)
         OByteBufferPool.instance().registerMBean();
     } catch (Exception e) {
@@ -107,11 +101,6 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     super.shutdown();
 
     readCache.clear();
-    try {
-      readCache.unregisterMBean();
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for read cache cannot be unregistered", e);
-    }
 
     try {
       OByteBufferPool.instance().unregisterMBean();

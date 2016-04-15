@@ -21,7 +21,7 @@ public class OSessionStoragePerformanceStatisticTest {
           public long getNano() {
             return counter += increment.getValue();
           }
-        }, false);
+        }, -1);
 
     Assert.assertEquals(sessionStoragePerformanceStatistic.getAmountOfPagesReadFromCache(), 0);
 
@@ -110,7 +110,7 @@ public class OSessionStoragePerformanceStatisticTest {
           public long getNano() {
             return counter += increment.getValue();
           }
-        }, false);
+        }, -1);
 
     Assert.assertEquals(sessionStoragePerformanceStatistic.getAmountOfPagesReadFromFile(), 0);
     Assert.assertEquals(sessionStoragePerformanceStatistic.getReadSpeedFromFileInPages(), -1);
@@ -182,7 +182,7 @@ public class OSessionStoragePerformanceStatisticTest {
           public long getNano() {
             return counter += increment.getValue();
           }
-        }, false);
+        }, -1);
 
     Assert.assertEquals(sessionStoragePerformanceStatistic.getAmountOfPagesWrittenInCache(), 0);
     Assert.assertEquals(sessionStoragePerformanceStatistic.getWriteSpeedInCacheInPages(), -1);
@@ -251,9 +251,9 @@ public class OSessionStoragePerformanceStatisticTest {
           public long getNano() {
             return counter += 100;
           }
-        }, false);
+        }, -1);
 
-    Assert.assertEquals(sessionStoragePerformanceStatistic.getCommitTimeAvg(), -1);
+    Assert.assertEquals(sessionStoragePerformanceStatistic.getCommitTime(), -1);
 
     sessionStoragePerformanceStatistic.startPageReadFromCacheTimer();
 
@@ -264,11 +264,11 @@ public class OSessionStoragePerformanceStatisticTest {
 
     sessionStoragePerformanceStatistic.stopPageReadFromCacheTimer();
 
-    Assert.assertEquals(sessionStoragePerformanceStatistic.getCommitTimeAvg(), 100);
+    Assert.assertEquals(sessionStoragePerformanceStatistic.getCommitTime(), 100);
 
     final ODocument doc = sessionStoragePerformanceStatistic.toDocument();
 
-    Assert.assertEquals(doc.field("commitTimeAvg"), 100L);
+    Assert.assertEquals(doc.field("commitTime"), 100L);
   }
 
   public void testCacheHit() {
@@ -280,7 +280,7 @@ public class OSessionStoragePerformanceStatisticTest {
           public long getNano() {
             return counter += 100;
           }
-        }, false);
+        }, -1);
 
     Assert.assertEquals(sessionStoragePerformanceStatistic.getCacheHits(), -1);
 
@@ -331,7 +331,7 @@ public class OSessionStoragePerformanceStatisticTest {
             counterOne.increment(100);
             return counterOne.getValue();
           }
-        }, false);
+        }, -1);
 
     OSessionStoragePerformanceStatistic.PerformanceCountersHolder performanceCountersHolder = new OSessionStoragePerformanceStatistic.PerformanceCountersHolder();
     final Map<String, OSessionStoragePerformanceStatistic.PerformanceCountersHolder> counters = new HashMap<String, OSessionStoragePerformanceStatistic.PerformanceCountersHolder>();
@@ -374,7 +374,7 @@ public class OSessionStoragePerformanceStatisticTest {
           public long getNano() {
             return counter += 100;
           }
-        }, false);
+        }, -1);
 
     sessionStoragePerformanceStatisticTwo.startComponentOperation("c3po");
     sessionStoragePerformanceStatisticTwo.incrementPageAccessOnCacheLevel(true);
@@ -490,7 +490,7 @@ public class OSessionStoragePerformanceStatisticTest {
             counterOne.increment(100);
             return counterOne.getValue();
           }
-        }, false);
+        }, -1);
 
     final OSessionStoragePerformanceStatistic.PerformanceCountersHolder counters = new OSessionStoragePerformanceStatistic.PerformanceCountersHolder();
     sessionStoragePerformanceStatisticOne.pushSystemCounters(counters);
@@ -530,7 +530,7 @@ public class OSessionStoragePerformanceStatisticTest {
           public long getNano() {
             return counter += 100;
           }
-        }, false);
+        }, -1);
 
     sessionStoragePerformanceStatisticTwo.incrementPageAccessOnCacheLevel(true);
 
@@ -562,7 +562,7 @@ public class OSessionStoragePerformanceStatisticTest {
   }
 
   public void testCleanOnSnapshot() {
-    final OModifiableInteger counter = new OModifiableInteger();
+    final OModifiableInteger counter = new OModifiableInteger(-100);
 
     OSessionStoragePerformanceStatistic statistic = new OSessionStoragePerformanceStatistic(200,
         new OSessionStoragePerformanceStatistic.NanoTimer() {
@@ -572,9 +572,10 @@ public class OSessionStoragePerformanceStatisticTest {
             counter.increment(100);
             return counter.getValue();
           }
-        }, true);
+        }, 200);
 
     OSessionStoragePerformanceStatistic.PerformanceCountersHolder performanceCountersHolder = new OSessionStoragePerformanceStatistic.PerformanceCountersHolder();
+
 
     statistic.startComponentOperation("c3po");
     statistic.incrementPageAccessOnCacheLevel(false);//100

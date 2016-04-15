@@ -52,7 +52,7 @@ import java.util.concurrent.locks.Lock;
  * @author Andrey Lomakin
  * @since 7/24/13
  */
-public class O2QCache implements OReadCache, O2QCacheMXBean {
+public class O2QCache implements OReadCache {
   /**
    * Maximum percent of pinned pages which may be contained in this cache.
    */
@@ -117,9 +117,6 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages                         = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
 
   private final AtomicBoolean                          coldPagesRemovalInProgress          = new AtomicBoolean();
-
-  private final AtomicBoolean                          mbeanIsRegistered                   = new AtomicBoolean();
-  public static final String                           MBEAN_NAME                          = "com.orientechnologies.orient.core.storage.cache.local:type=O2QCacheMXBean";
 
   /**
    * @param readCacheMaxMemory
@@ -1072,64 +1069,6 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
     }
   }
 
-  public void registerMBean() {
-    if (mbeanIsRegistered.compareAndSet(false, true)) {
-      try {
-        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
-
-        if (!server.isRegistered(mbeanName)) {
-          server.registerMBean(this, mbeanName);
-        } else {
-          mbeanIsRegistered.set(false);
-          OLogManager.instance().warn(this,
-              "MBean with name %s has already registered. Probably your system was not shutdown correctly"
-                  + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
-        }
-
-      } catch (MalformedObjectNameException e) {
-        throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
-      } catch (InstanceAlreadyExistsException e) {
-        throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
-      } catch (MBeanRegistrationException e) {
-        throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
-      } catch (NotCompliantMBeanException e) {
-        throw OException.wrapException(new OReadCacheException("Error during registration of read cache MBean"), e);
-      }
-    }
-  }
-
-  public void unregisterMBean() {
-    if (mbeanIsRegistered.compareAndSet(true, false)) {
-      try {
-        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        final ObjectName mbeanName = new ObjectName(MBEAN_NAME);
-        server.unregisterMBean(mbeanName);
-      } catch (MalformedObjectNameException e) {
-        throw OException.wrapException(new OReadCacheException("Error during unregistration of read cache MBean"), e);
-      } catch (InstanceNotFoundException e) {
-        throw OException.wrapException(new OReadCacheException("Error during unregistration of read cache MBean"), e);
-      } catch (MBeanRegistrationException e) {
-        throw OException.wrapException(new OReadCacheException("Error during unregistration of read cache MBean"), e);
-      }
-    }
-  }
-
-  @Override
-  public int getA1InSize() {
-    return a1in.size();
-  }
-
-  @Override
-  public int getA1OutSize() {
-    return a1out.size();
-  }
-
-  @Override
-  public int getAmSize() {
-    return am.size();
-  }
-
   private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
     OCacheEntry cacheEntry = am.get(fileId, pageIndex);
 
@@ -1533,16 +1472,6 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
   @Override
   public long getUsedMemory() {
     return ((long) (am.size() + a1in.size())) * pageSize;
-  }
-
-  @Override
-  public long getUsedMemoryInMB() {
-    return getUsedMemory() / (1024 * 1024);
-  }
-
-  @Override
-  public double getUsedMemoryInGB() {
-    return Math.ceil((getUsedMemory() * 100) / (1024.0 * 1024 * 1024)) / 100;
   }
 
   private OCacheEntry remove(long fileId, long pageIndex) {

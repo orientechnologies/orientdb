@@ -44,8 +44,7 @@ import java.util.Map;
  * data gathered on separate component or on system level if null is passed as method name. If data from component with passed in
  * name is absent then -1 is returned.
  * <p>
- * At the moment all performance data are gathered both for durable components and whole system with exception of
- * {@link #getCommitTimeAvg()}.
+ * Some data are gathered only on system level for example write ahead log performance data or commit time {@link #getCommitTime()}.
  * <p>
  * This container may be used both for gathering information in single thread and in mutlithreading environment.
  * Container itself is not thread safe, but it supports snapshoting of data.
@@ -54,7 +53,7 @@ import java.util.Map;
  * and makes data snapshot if needed, data snapshot can be used by aggregator which merges statistics from all
  * containers together. Only last snapshot is hold by container.
  * <p>
- * Also container support time series functionality by clearing of previous statics every time when snapshot is done.
+ * Also container supports time series functionality by clearing of previous statics after provided time interval.
  *
  * @author Andrey Lomakin
  * @see OPerformanceStatisticManager
@@ -94,14 +93,21 @@ public class OSessionStoragePerformanceStatistic {
   private final long intervalBetweenSnapshots;
 
   /**
-   * Indicates whether all gathered statistic should be cleared before snapshot is taken
+   * Interval between two time series in nanoseconds.
+   * When this interval is passed, new attempt to make data snapshot will clear performance statistic.
+   * <code>-1</code> means that performance data will not be cleared.
    */
-  private final boolean cleanOnSnapshot;
+  private final long cleanUpInterval;
 
   /**
-   * Time stamp of last snapshot is taken by container.
+   * Time stamp in nanoseconds when last snapshot is taken by container.
    */
   private long lastSnapshotTimestamp = -1;
+
+  /**
+   * Time stamp in nanoseconds when data was cleaned up last time.
+   */
+  private long lastCleanUpTimeStamp = -1;
 
   /**
    * Snapshot of all data measured during session.
@@ -113,31 +119,52 @@ public class OSessionStoragePerformanceStatistic {
    */
   private Map<String, PerformanceCountersHolder> countersByComponent = new HashMap<String, PerformanceCountersHolder>();
 
+  /**
+   * Performance statistic gathered from write cache.
+   * It is lazy initialized to decrease memory consumption.
+   */
   private WritCacheCountersHolder writCacheCountersHolder;
 
   /**
-   * @param intervalBetweenSnapshots Minimum interval between two snapshots taken by container.
-   * @param cleanOnSnapshot          Whether all data should be cleared after snapshot is taken.
+   * Storage performance characteristics.
+   * It is lazy initialized to decrease memory consumption.
    */
-  public OSessionStoragePerformanceStatistic(long intervalBetweenSnapshots, boolean cleanOnSnapshot) {
+  private StorageCountersHolder storageCountersHolder;
+
+  /**
+   * Write ahead log performance characteristics.
+   * It is lazy initialized to decrease memory consumption.
+   */
+  private WALCountersHolder walCountersHolder;
+
+  /**
+   * @param intervalBetweenSnapshots Minimum interval between two snapshots taken by container.
+   * @param cleanUpInterval          Minimum interval between two time series, in other words container clears all statistic
+   *                                 during next try of making snapshot after this interval is over.
+   *                                 <code>-1</code> means that data will not be cleared.
+   */
+  public OSessionStoragePerformanceStatistic(long intervalBetweenSnapshots, long cleanUpInterval) {
     this(intervalBetweenSnapshots, new NanoTimer() {
       @Override
       public long getNano() {
         return System.nanoTime();
       }
-    }, cleanOnSnapshot);
+    }, cleanUpInterval);
   }
 
   /**
    * @param nanoTimer                Service to get current value of PC nano time.
    * @param intervalBetweenSnapshots Minimum interval between two snapshots taken by container.
-   * @param cleanOnSnapshot          Whether all data should be cleared after snapshot is taken.
+   * @param cleanUpInterval          Minimum interval between two time series, in other words container clears all statistic
+   *                                 during next try of making snapshot after this interval is over.
+   *                                 <code>-1</code> means that data will not be cleared.
    */
-  public OSessionStoragePerformanceStatistic(long intervalBetweenSnapshots, NanoTimer nanoTimer, boolean cleanOnSnapshot) {
+  public OSessionStoragePerformanceStatistic(long intervalBetweenSnapshots, NanoTimer nanoTimer, long cleanUpInterval) {
     this.nanoTimer = nanoTimer;
     this.intervalBetweenSnapshots = intervalBetweenSnapshots;
     this.performanceCountersHolder = new PerformanceCountersHolder();
-    this.cleanOnSnapshot = cleanOnSnapshot;
+    this.cleanUpInterval = cleanUpInterval;
+    this.lastCleanUpTimeStamp = nanoTimer.getNano();
   }
 
   /**
@@ -364,7 +391,7 @@ public class OSessionStoragePerformanceStatistic {
    * @return Average time of commit of atomic operation in nanoseconds or value which is less than 0, which means that value cannot
    * be calculated.
    */
-  public long getCommitTimeAvg() {
+  public long getCommitTime() {
     return performanceCountersHolder.getCommitTime();
   }
 
@@ -438,6 +465,72 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
+   * Takes write cache performance data from last snapshot and aggregates them with data passed inside method as parameter.
+   * Result of aggregation of performance data is returned inside of passed in performance data and as result of this method call.
+   *
+   * @param holder Performance data for write cache may be <code>null</code>
+   * @return Result of aggregation of performance data
+   */
+  public WritCacheCountersHolder pushWriteCacheCounters(WritCacheCountersHolder holder) {
+    if (snapshot == null)
+      return holder;
+
+    if (snapshot.writCacheCountersHolder == null)
+      return holder;
+
+    if (holder == null)
+      holder = new WritCacheCountersHolder();
+
+    snapshot.writCacheCountersHolder.pushData(holder);
+
+    return holder;
+  }
+
+  /**
+   * Takes storage performance data from last snapshot and aggregates them with data passed inside method as parameter.
+   * Result of aggregation of performance data is returned inside of passed in performance data and as result of this method call.
+   *
+   * @param holder Performance data for storage may be <code>null</code>
+   * @return Result of aggregation of performance data
+   */
+  public StorageCountersHolder pushStorageCounters(StorageCountersHolder holder) {
+    if (snapshot == null)
+      return holder;
+
+    if (snapshot.storageCountersHolder == null)
+      return holder;
+
+    if (holder == null)
+      holder = new StorageCountersHolder();
+
+    snapshot.storageCountersHolder.pushData(holder);
+
+    return holder;
+  }
+
+  /**
+   * Takes write ahead log data from last snapshot and aggregates them with data passed inside method as parameter.
+   * Result of aggregation of performance data is returned inside of passed in performance data and as result of this method call.
+   *
+   * @param holder Performance data for write ahead log may be <code>null</code>
+   * @return Result of aggregation of performance data
+   */
+  public WALCountersHolder pushWALCounters(WALCountersHolder holder) {
+    if (snapshot == null)
+      return holder;
+
+    if (snapshot.walCountersHolder == null)
+      return holder;
+
+    if (holder == null)
+      holder = new WALCountersHolder();
+
+    snapshot.walCountersHolder.pushData(holder);
+
+    return holder;
+  }
+
+  /**
    * Takes performance data for whole system from last snapshot and aggregates them with data passed inside method as parameter.
    * Result of aggregation of performance data is returned inside of passed in performance data.
    *
@@ -475,6 +568,8 @@ public class OSessionStoragePerformanceStatistic {
    * All data related to separate components are stored in field <code>dataByComponent</code> map which has type
    * {@link OType#EMBEDDEDMAP} where key of map entry is name of component, and value is document which contains the same fields as
    * high level document but with values for single component not whole system.
+   * <p>
+   * Write ahead log performance data are stored inside of <code>walData</code> field.
    *
    * @return Performance characteristics of storage gathered after call of
    * {@link OAbstractPaginatedStorage#startGatheringPerformanceStatisticForCurrentThread()}
@@ -482,7 +577,7 @@ public class OSessionStoragePerformanceStatistic {
   public ODocument toDocument() {
     final ODocument document = performanceCountersHolder.toDocument();
 
-    document.field("commitTimeAvg", getCommitTimeAvg(), OType.LONG);
+    document.field("commitTime", getCommitTime(), OType.LONG);
 
     final Map<String, ODocument> countersMap = new HashMap<String, ODocument>();
     for (Map.Entry<String, PerformanceCountersHolder> entry : countersByComponent.entrySet()) {
@@ -490,6 +585,11 @@ public class OSessionStoragePerformanceStatistic {
     }
 
     document.field("dataByComponent", countersMap, OType.EMBEDDEDMAP);
+
+    if (walCountersHolder != null) {
+      final ODocument wal = walCountersHolder.toDocument();
+      document.field("walData", wal, OType.EMBEDDED);
+    }
 
     return document;
   }
@@ -526,7 +626,7 @@ public class OSessionStoragePerformanceStatistic {
    * Starts timer which counts how much time was spent on read of page from file system.
    */
   public void startPageReadFromFileTimer() {
-    timeStamps.push(nanoTimer.getNano());
+    pushTimer();
   }
 
   /**
@@ -563,16 +663,15 @@ public class OSessionStoragePerformanceStatistic {
    * Starts timer which counts how much time was spent on operation of flush pages in write cache.
    */
   public void startWriteCacheFlushTimer() {
-    timeStamps.push(nanoTimer.getNano());
+    pushTimer();
   }
 
   /**
    * Stops and records results of timer which counts how much time was spent on operation of flush pages in write cache.
    *
-   * @param exclusive Indicates whether pages which are owned only by write cache were flushed too.
    * @param pagesFlushed Amount of pages were flushed during this operation.
    */
-  public void stopWriteCacheFlushTimer(boolean exclusive, int pagesFlushed) {
+  public void stopWriteCacheFlushTimer(int pagesFlushed) {
     //lazy initialization to prevent memory consumption
     if (writCacheCountersHolder == null)
       writCacheCountersHolder = new WritCacheCountersHolder();
@@ -581,8 +680,6 @@ public class OSessionStoragePerformanceStatistic {
     final long timeDiff = (endTs - timeStamps.pop());
 
     writCacheCountersHolder.flushOperationsCount++;
-    if (exclusive)
-      writCacheCountersHolder.exclusiveFlushOperationsCount++;
 
     writCacheCountersHolder.amountOfPagesFlushed += pagesFlushed;
     writCacheCountersHolder.flushOperationsTime += timeDiff;
@@ -594,7 +691,7 @@ public class OSessionStoragePerformanceStatistic {
    * Starts timer which counts how much time was spent on fuzzy checkpoint operation.
    */
   public void startFuzzyCheckpointTimer() {
-    timeStamps.push(nanoTimer.getNano());
+    pushTimer();
   }
 
   /**
@@ -617,6 +714,14 @@ public class OSessionStoragePerformanceStatistic {
    * Starts timer which counts how much time was spent on read of page from disk cache.
    */
   public void startPageReadFromCacheTimer() {
+    pushTimer();
+  }
+
+  /**
+   * General method which is used ba all stopXXXTimer methods to delegate their
+   * functionality.
+   */
+  private void pushTimer() {
     timeStamps.push(nanoTimer.getNano());
   }
 
@@ -649,10 +754,33 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
+   * Starts timer which records how much time is spent on full checkpoint
+   */
+  public void startFullCheckpointTimer() {
+    pushTimer();
+  }
+
+  /**
+   * Stops and records results of timer which counts how much time was spent on full checkpoint operation.
+   */
+  public void stopFullCheckpointTimer() {
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    if (storageCountersHolder == null)
+      storageCountersHolder = new StorageCountersHolder();
+
+    storageCountersHolder.fullCheckpointOperationsCount++;
+    storageCountersHolder.fullCheckpointOperationsTime += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  /**
    * Starts timer which counts how much time was spent on write of page to disk cache.
    */
   public void startPageWriteInCacheTimer() {
-    timeStamps.push(nanoTimer.getNano());
+    pushTimer();
   }
 
   /**
@@ -687,7 +815,7 @@ public class OSessionStoragePerformanceStatistic {
    * Starts timer which counts how much time was spent on atomic operation commit.
    */
   public void startCommitTimer() {
-    timeStamps.push(nanoTimer.getNano());
+    pushTimer();
   }
 
   /**
@@ -704,10 +832,67 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * Makes snapshot of data if time for next snapshot is passed.
-   * Also clear all data if related flag is specified during construction of object.
+   * Starts timer which counts how much time was spent on logging of single write ahead log record
+   */
+  public void startWALLogRecordTimer() {
+    pushTimer();
+  }
+
+  /**
+   * Stops and records results of timer which counts how much time was spent on logging of single write ahead log record.
    *
-   * @param currentTime Time of last measurement or -1 if time is unknown
+   * @param isStartRecord Indicates whether we logged "start atomic operation" record
+   * @param isStopRecord  Indicates whether we logged "stop atomic operation" record
+   */
+  public void stopWALRecordTimer(boolean isStartRecord, boolean isStopRecord) {
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    if (walCountersHolder == null)
+      walCountersHolder = new WALCountersHolder();
+
+    walCountersHolder.logRecordCount++;
+    walCountersHolder.logRecordTime += timeDiff;
+
+    if (isStartRecord) {
+      walCountersHolder.startRecordCount++;
+      walCountersHolder.startRecordTime += timeDiff;
+    } else if (isStopRecord) {
+      walCountersHolder.stopRecordCount++;
+      walCountersHolder.stopRecordTime += timeDiff;
+    }
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  /**
+   * Starts timer which counts how much time was spent on flushing of data from write ahead log cache.
+   */
+  public void startWALFlushTimer() {
+    pushTimer();
+  }
+
+  /**
+   * Stops timer and records how much time was spent on flushing of data from write ahead log cache.
+   */
+  public void stopWALFlushTimer() {
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    if (walCountersHolder == null)
+      walCountersHolder = new WALCountersHolder();
+
+    walCountersHolder.flushCount++;
+    walCountersHolder.flushTime += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  /**
+   * Makes snapshot of data if time for next snapshot is passed.
+   * Also clear all data if {@link #cleanUpInterval} interval is over.
+   *
+   * @param currentTime Time of last measurement in nanoseconds or -1 if time is unknown
    */
   private void makeSnapshotIfNeeded(long currentTime) {
     if (currentTime < 0) {
@@ -718,15 +903,29 @@ public class OSessionStoragePerformanceStatistic {
       lastSnapshotTimestamp = 0;
 
     if (lastSnapshotTimestamp < 0 || currentTime - lastSnapshotTimestamp >= intervalBetweenSnapshots) {
-      snapshot = new PerformanceSnapshot(performanceCountersHolder, countersByComponent);
+      snapshot = new PerformanceSnapshot(performanceCountersHolder, countersByComponent, writCacheCountersHolder,
+          storageCountersHolder, walCountersHolder);
       lastSnapshotTimestamp = currentTime;
+    }
 
-      if (cleanOnSnapshot) {
+    if (cleanUpInterval > 0) {
+      if (currentTime - lastCleanUpTimeStamp >= cleanUpInterval) {
         performanceCountersHolder.clean();
 
         for (PerformanceCountersHolder pch : countersByComponent.values()) {
           pch.clean();
         }
+
+        if (writCacheCountersHolder != null)
+          writCacheCountersHolder.clean();
+
+        if (storageCountersHolder != null)
+          storageCountersHolder.clean();
+
+        if (writCacheCountersHolder != null)
+          walCountersHolder.clean();
+
+        lastCleanUpTimeStamp = currentTime;
       }
     }
   }
@@ -743,7 +942,7 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
-   * Holds information about system component, name and count of operations in progress at current moment.
+   * Contains information about system component, name and count of operations in progress at current moment.
    */
   private static final class Component {
     private final String name;
@@ -756,16 +955,173 @@ public class OSessionStoragePerformanceStatistic {
     }
   }
 
+  /**
+   * Contains data about write ahead log performance
+   */
+  public static class WALCountersHolder implements CountersHolder<WALCountersHolder> {
+    /**
+     * Amount of times WAL record was logged
+     */
+    private long logRecordCount;
+
+    /**
+     * Total time which was spent on logging of WAL records
+     */
+    private long logRecordTime;
+
+    /**
+     * Amount of times WAL "start atomic operation" record was logged
+     */
+    private long startRecordCount;
+
+    /**
+     * Total time which was spent on logging of "start atomic operation" records
+     */
+    private long startRecordTime;
+
+    /**
+     * Amount of times "stop atomic operation" record was logged
+     */
+    private long stopRecordCount;
+
+    /**
+     * Total time which was spent on logging of "stop atomic operation" records
+     */
+    private long stopRecordTime;
+
+    /**
+     * Amount of times WAL cache flush was called
+     */
+    private long flushCount;
+
+    /**
+     * Total time which was spent on flush of WAL cache
+     */
+    private long flushTime;
+
+    @Override
+    public void clean() {
+      logRecordCount = 0;
+      logRecordTime = 0;
+      flushCount = 0;
+      flushTime = 0;
+    }
+
+    @Override
+    public void pushData(WALCountersHolder holder) {
+      holder.logRecordCount += logRecordCount;
+      holder.logRecordTime += logRecordTime;
+      holder.flushCount += flushCount;
+      holder.flushTime += flushTime;
+    }
+
+    /**
+     * @return Average time which is spent on logging of single record or <code>-1</code> if value is undefined.
+     */
+    public long getLogTime() {
+      if (logRecordCount == 0)
+        return -1;
+
+      return logRecordTime / logRecordCount;
+    }
+
+    /**
+     * @return Average time which is spent on logging of  "stop atomic operation" record or <code>-1</code>
+     * if value is undefined.
+     */
+    public long getStopAOTime() {
+      if (stopRecordCount == 0)
+        return -1;
+
+      return stopRecordTime / stopRecordCount;
+    }
+
+    /**
+     * @return Average time which is spent on logging of "start atomic operation" record or <code>-1</code> if value is
+     * undefined.
+     */
+    public long getStartAOTime() {
+      if (startRecordCount == 0)
+        return -1;
+
+      return startRecordTime / startRecordCount;
+    }
+
+    /**
+     * @return Average time which is spent on flush of WAL cache or <code>-1</code> if value is undefined.
+     */
+    public long getFlushTime() {
+      if (flushCount == 0)
+        return -1;
+
+      return flushTime / flushCount;
+    }
+
+    @Override
+    public ODocument toDocument() {
+      ODocument document = new ODocument();
+
+      document.field("logTime", getLogTime());
+      document.field("startAOTime", getStartAOTime());
+      document.field("stopAOTime", getStopAOTime());
+
+      return document;
+    }
+  }
+
+  /**
+   * Contains data about storage performance
+   */
+  public static class StorageCountersHolder implements CountersHolder<StorageCountersHolder> {
+    /**
+     * Amount of times full checkpoint operation was performed.
+     */
+    private long fullCheckpointOperationsCount;
+
+    /**
+     * Total amount of time spent on full checkpoint operation.
+     */
+    private long fullCheckpointOperationsTime;
+
+    @Override
+    public void clean() {
+      fullCheckpointOperationsCount = 0;
+      fullCheckpointOperationsTime = 0;
+    }
+
+    @Override
+    public void pushData(StorageCountersHolder holder) {
+      holder.fullCheckpointOperationsCount += fullCheckpointOperationsCount;
+      holder.fullCheckpointOperationsTime += fullCheckpointOperationsTime;
+    }
+
+    @Override
+    public ODocument toDocument() {
+      final ODocument document = new ODocument();
+      document.field("fullCheckpointTime", getFullCheckpointTime(), OType.LONG);
+
+      return document;
+    }
+
+    /**
+     * @return Average time which is spent on full checkpoint operation, or <code>-1</code> if value is undefined
+     */
+    public long getFullCheckpointTime() {
+      if (fullCheckpointOperationsCount == 0)
+        return -1;
+
+      return fullCheckpointOperationsTime / fullCheckpointOperationsCount;
+    }
+  }
+
+  /**
+   * Contains write cache performance characteristics
+   */
   public static class WritCacheCountersHolder implements CountersHolder<WritCacheCountersHolder> {
     /**
      * Count flush operation.
      */
     private long flushOperationsCount;
-
-    /**
-     * Count of flush operations caused by the case that exclusive write cache memory was exhausted.
-     */
-    private long exclusiveFlushOperationsCount;
 
     /**
      * Sum of pages flushed in each write cache flush operation.
@@ -790,7 +1146,6 @@ public class OSessionStoragePerformanceStatistic {
     @Override
     public void clean() {
       flushOperationsCount = 0;
-      exclusiveFlushOperationsCount = 0;
       amountOfPagesFlushed = 0;
       flushOperationsTime = 0;
       fuzzyCheckpointCount = 0;
@@ -800,34 +1155,42 @@ public class OSessionStoragePerformanceStatistic {
     @Override
     public void pushData(WritCacheCountersHolder holder) {
       holder.flushOperationsCount += flushOperationsCount;
-      holder.exclusiveFlushOperationsCount += exclusiveFlushOperationsCount;
       holder.amountOfPagesFlushed += amountOfPagesFlushed;
       holder.flushOperationsTime += flushOperationsTime;
       holder.fuzzyCheckpointCount += fuzzyCheckpointCount;
       holder.fuzzyCheckpointTime += fuzzyCheckpointTime;
     }
 
-    public long getFlushOperationsCount() {
-      return flushOperationsCount;
-    }
-
-    public long getExclusiveFlushOperationsCount() {
-      return exclusiveFlushOperationsCount;
-    }
-
+    /**
+     * @return Average amount of pages which are flushed during "page flush" operation of write cache or <code>-1</code> if value is
+     * undefined
+     */
     public long getPagesPerFlush() {
+      if (flushOperationsCount == 0)
+        return -1;
+
       return amountOfPagesFlushed / flushOperationsCount;
     }
 
+    /**
+     * @return Average amount of time which is spent on each "page flush" operation of write cache or <code>-1</code> if
+     * value is undefined.
+     */
     public long getFlushOperationsTime() {
+      if (flushOperationsCount == 0)
+        return -1;
+
       return flushOperationsTime / flushOperationsCount;
     }
 
-    public long getFuzzyCheckpointCount() {
-      return fuzzyCheckpointCount;
-    }
-
+    /**
+     * @return Average amount of time which is spent on "fuzzy checkpoint" operation or <code>-1</code> if
+     * value if undefined.
+     */
     public long getFuzzyCheckpointTime() {
+      if (fuzzyCheckpointCount == 0)
+        return -1;
+
       return fuzzyCheckpointTime / fuzzyCheckpointCount;
     }
 
@@ -835,11 +1198,8 @@ public class OSessionStoragePerformanceStatistic {
     public ODocument toDocument() {
       final ODocument document = new ODocument();
 
-      document.field("flushOperationsCount", getFlushOperationsCount(), OType.LONG);
-      document.field("exclusiveFlushOperationsCount", getExclusiveFlushOperationsCount(), OType.LONG);
       document.field("pagesPerFlush", getPagesPerFlush(), OType.LONG);
       document.field("flushOperationsTime", getFlushOperationsTime(), OType.LONG);
-      document.field("fuzzyCheckpointCount", getFuzzyCheckpointCount(), OType.LONG);
       document.field("fuzzyCheckpointTime", getFuzzyCheckpointTime(), OType.LONG);
 
       return document;
@@ -1051,11 +1411,20 @@ public class OSessionStoragePerformanceStatistic {
    * Snapshot of all performance data of current container.
    */
   public final static class PerformanceSnapshot {
-    public final PerformanceCountersHolder              performanceCountersHolder;
+    public final PerformanceCountersHolder performanceCountersHolder;
+    public final WritCacheCountersHolder   writCacheCountersHolder;
+    public final StorageCountersHolder     storageCountersHolder;
+    public final WALCountersHolder         walCountersHolder;
+
     public final Map<String, PerformanceCountersHolder> countersByComponent;
 
+    /**
+     * Makes snapshot of performance data and stores them in final fields.
+     */
     PerformanceSnapshot(PerformanceCountersHolder performanceCountersHolder,
-        Map<String, PerformanceCountersHolder> countersByComponent) {
+        Map<String, PerformanceCountersHolder> countersByComponent, WritCacheCountersHolder writCacheCountersHolder,
+        StorageCountersHolder storageCountersHolder, WALCountersHolder walCountersHolder) {
+
       this.performanceCountersHolder = new PerformanceCountersHolder();
       performanceCountersHolder.pushData(this.performanceCountersHolder);
 
@@ -1069,15 +1438,57 @@ public class OSessionStoragePerformanceStatistic {
       }
 
       this.countersByComponent = counters;
+
+      if (writCacheCountersHolder != null) {
+        final WritCacheCountersHolder wh = new WritCacheCountersHolder();
+        writCacheCountersHolder.pushData(wh);
+        this.writCacheCountersHolder = wh;
+      } else {
+        this.writCacheCountersHolder = null;
+      }
+
+      if (storageCountersHolder != null) {
+        final StorageCountersHolder sch = new StorageCountersHolder();
+        storageCountersHolder.pushData(sch);
+        this.storageCountersHolder = sch;
+      } else {
+        this.storageCountersHolder = null;
+      }
+
+      if (walCountersHolder != null) {
+        final WALCountersHolder wch = new WALCountersHolder();
+        walCountersHolder.pushData(wch);
+        this.walCountersHolder = wch;
+      } else {
+        this.walCountersHolder = null;
+      }
     }
 
   }
 
+  /**
+   * Common interface which should implement all classes which contain system/component performance data.
+   *
+   * @param <T> Real component class
+   */
   public interface CountersHolder<T extends CountersHolder> {
+    /**
+     * Resets all performance characteristics to default values.
+     */
     void clean();
 
+    /**
+     * Accumulates data in current and passed in containers and push data back to passed in container.
+     *
+     * @param holder
+     */
     void pushData(T holder);
 
+    /**
+     * Serializes performance data as values of fields of returned document.
+     *
+     * @return Document filled with performance data
+     */
     ODocument toDocument();
   }
 

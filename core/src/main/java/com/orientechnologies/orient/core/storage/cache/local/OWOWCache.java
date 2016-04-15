@@ -51,17 +51,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
-import javax.management.*;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.management.ManagementFactory;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.CRC32;
@@ -70,7 +67,7 @@ import java.util.zip.CRC32;
  * @author Andrey Lomakin
  * @since 7/23/13
  */
-public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCachePointer.WritersListener, OWOWCacheMXBean {
+public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCachePointer.WritersListener {
   // we add 8 bytes before and after cache pages to prevent word tearing in mt case.
 
   private final int MAX_PAGES_PER_FLUSH;
@@ -96,6 +93,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final ConcurrentSkipListSet<PageKey>            exclusiveWritePages     = new ConcurrentSkipListSet<PageKey>();
   private final ODistributedCounter                       writeCacheSize          = new ODistributedCounter();
   private final ODistributedCounter                       exclusiveWriteCacheSize = new ODistributedCounter();
+  private final ODistributedCounter                       cacheOverflowCount      = new ODistributedCounter();
 
   private final OBinarySerializer<String>            stringSerializer;
   private final ConcurrentMap<Integer, OFileClassic> files;
@@ -130,9 +128,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final OPerformanceStatisticManager performanceStatisticManager;
 
   private final OByteBufferPool bufferPool;
-
-  private final       AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
-  public static final String        MBEAN_NAME        = "com.orientechnologies.orient.core.storage.cache.local:type=OWOWCacheMXBean";
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, OByteBufferPool bufferPool, long groupTTL, OWriteAheadLog writeAheadLog,
       long pageFlushInterval, long writeCacheMaxSize, long cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize,
@@ -573,6 +568,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
 
       if (exclusiveWriteCacheSize.get() > writeCacheMaxSize) {
+        cacheOverflowCount.increment();
         future = commitExecutor.submit(new PeriodicFlushTask());
       }
 
@@ -1030,80 +1026,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return id;
   }
 
-  public void registerMBean() {
-    if (mbeanIsRegistered.compareAndSet(false, true)) {
-      try {
-        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        final ObjectName mbeanName = new ObjectName(getMBeanName());
-        if (!server.isRegistered(mbeanName)) {
-          server.registerMBean(this, mbeanName);
-        } else {
-          mbeanIsRegistered.set(false);
-          OLogManager.instance().warn(this,
-              "MBean with name %s has already registered. Probably your system was not shutdown correctly"
-                  + " or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
-        }
-
-      } catch (MalformedObjectNameException e) {
-        throw OException.wrapException(new OStorageException("Error during registration of write cache MBean"), e);
-      } catch (InstanceAlreadyExistsException e) {
-        throw OException.wrapException(new OStorageException("Error during registration of write cache MBean"), e);
-      } catch (MBeanRegistrationException e) {
-        throw OException.wrapException(new OStorageException("Error during registration of write cache MBean"), e);
-      } catch (NotCompliantMBeanException e) {
-        throw OException.wrapException(new OStorageException("Error during registration of write cache MBean"), e);
-      }
-    }
+  public long getCacheOverflowCount() {
+    return cacheOverflowCount.get();
   }
 
-  private String getMBeanName() {
-    return MBEAN_NAME + ",name=" + ObjectName.quote(storageLocal.getName()) + ",id=" + storageLocal.getId();
-  }
-
-  public void unregisterMBean() {
-    if (mbeanIsRegistered.compareAndSet(true, false)) {
-      try {
-        final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
-        final ObjectName mbeanName = new ObjectName(getMBeanName());
-        server.unregisterMBean(mbeanName);
-      } catch (MalformedObjectNameException e) {
-        throw OException.wrapException(new OStorageException("Error during unregistration of write cache MBean"), e);
-      } catch (InstanceNotFoundException e) {
-        throw OException.wrapException(new OStorageException("Error during unregistration of write cache MBean"), e);
-      } catch (MBeanRegistrationException e) {
-        throw OException.wrapException(new OStorageException("Error during unregistration of write cache MBean"), e);
-      }
-    }
-  }
-
-  @Override
   public long getWriteCacheSize() {
     return writeCacheSize.get();
   }
 
-  @Override
-  public long getWriteCacheSizeInMB() {
-    return getWriteCacheSize() / (1024 * 1024);
-  }
-
-  @Override
-  public double getWriteCacheSizeInGB() {
-    return Math.ceil((getWriteCacheSize() * 100.0) / (1024 * 1204 * 1024)) / 100;
-  }
-
-  @Override
   public long getExclusiveWriteCacheSize() {
     return exclusiveWriteCacheSize.get();
-  }
-
-  @Override
-  public long getExclusiveWriteCacheSizeInMB() {
-    return getExclusiveWriteCacheSize() / (1024 * 1024);
-  }
-
-  @Override
-  public double getExclusiveWriteCacheSizeInGB() {
-    return Math.ceil((getExclusiveWriteCacheSize() * 100.0) / (1024 * 1024 * 1024)) / 100;
   }
 
   private void openFile(final OFileClassic fileClassic) throws IOException {
@@ -1511,7 +1443,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         OLogManager.instance().error(this, "Exception during data flush", e);
       } finally {
         if (statistic != null)
-          statistic.stopWriteCacheFlushTimer(iterateByWritePagesFirst, flushedPages);
+          statistic.stopWriteCacheFlushTimer(flushedPages);
       }
     }
 

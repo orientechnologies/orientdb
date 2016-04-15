@@ -482,6 +482,9 @@ public enum OGlobalConfiguration {
   STORAGE_PROFILER_SNAPSHOT_INTERVAL("storageProfiler.intervalBetweenSnapshots",
       "Interval between snapshots of profiler state in milliseconds", Integer.class, 100),
 
+  STORAGE_PROFILER_CLEANUP_INTERVAL("storageProfiler.cleanUpInterval",
+      "Interval between time series in milliseconds", Integer.class, 5000),
+
   // LOG
   LOG_CONSOLE_LEVEL("log.console.level", "Console logging level.", String.class, "info", new OConfigurationChangeCallback() {
     public void change(final Object iCurrentValue, final Object iNewValue) {
