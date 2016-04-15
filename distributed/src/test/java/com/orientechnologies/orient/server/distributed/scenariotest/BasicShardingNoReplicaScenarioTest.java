@@ -28,6 +28,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.LinkedList;
@@ -44,6 +45,7 @@ import static org.junit.Assert.*;
 
 public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenarioTest {
 
+  @Ignore
   @Test
   public void test() throws Exception {
     init(SERVERS);

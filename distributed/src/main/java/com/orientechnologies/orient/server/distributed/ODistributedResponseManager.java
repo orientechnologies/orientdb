@@ -46,10 +46,11 @@ public class ODistributedResponseManager {
   private final ODistributedServerManager        dManager;
   private final ODistributedRequest              request;
   private final long                             sentOn;
+  private final Set<String>                      nodesConcurInQuorum;
   private final HashMap<String, Object>          responses                        = new HashMap<String, Object>();
   private final boolean                          groupResponsesByResult;
   private final List<List<ODistributedResponse>> responseGroups                   = new ArrayList<List<ODistributedResponse>>();
-  private final int                              expectedSynchronousResponses;
+  private final int                              totalExpectedResponses;
   private final long                             synchTimeout;
   private final long                             totalTimeout;
   private final Lock                             synchronousResponsesLock         = new ReentrantLock();
@@ -60,17 +61,19 @@ public class ODistributedResponseManager {
   private volatile boolean                       receivedCurrentNode;
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
-      final Collection<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
-      final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout, final boolean iGroupResponsesByResult) {
+      final Collection<String> expectedResponses, final Set<String> iNodesConcurInQuorum, final int iTotalExpectedResponses,
+      final int iQuorum, final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout,
+      final boolean iGroupResponsesByResult) {
     this.dManager = iManager;
     this.request = iRequest;
     this.sentOn = System.currentTimeMillis();
-    this.expectedSynchronousResponses = iExpectedSynchronousResponses;
+    this.totalExpectedResponses = iTotalExpectedResponses;
     this.quorum = iQuorum;
     this.waitForLocalNode = iWaitForLocalNode;
     this.synchTimeout = iSynchTimeout;
     this.totalTimeout = iTotalTimeout;
     this.groupResponsesByResult = iGroupResponsesByResult;
+    this.nodesConcurInQuorum = iNodesConcurInQuorum;
 
     for (String node : expectedResponses)
       responses.put(node, NO_RESPONSE);
@@ -117,8 +120,8 @@ public class ODistributedResponseManager {
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, senderNode, executorNode, DIRECTION.IN,
-            "received response '%s' for request (%s) (receivedCurrentNode=%s receivedResponses=%d expectedSynchronousResponses=%d quorum=%d)",
-            response, request, receivedCurrentNode, receivedResponses, expectedSynchronousResponses, quorum);
+            "Received response '%s' for request (%s) (receivedCurrentNode=%s receivedResponses=%d totalExpectedResponses=%d quorum=%d)",
+            response, request, receivedCurrentNode, receivedResponses, totalExpectedResponses, quorum);
 
       if (groupResponsesByResult) {
         // PUT THE RESPONSE IN THE RIGHT RESPONSE GROUP
@@ -219,10 +222,6 @@ public class ODistributedResponseManager {
     return merged;
   }
 
-  public int getExpectedSynchronousResponses() {
-    return expectedSynchronousResponses;
-  }
-
   public int getQuorum() {
     return quorum;
   }
@@ -240,12 +239,12 @@ public class ODistributedResponseManager {
     try {
 
       long currentTimeout = synchTimeout;
-      while (currentTimeout > 0 && !isMinimumQuorumReached() && receivedResponses < expectedSynchronousResponses) {
+      while (currentTimeout > 0 && receivedResponses < totalExpectedResponses && !isMinimumQuorumReached()) {
 
         // WAIT FOR THE RESPONSES
         synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS);
 
-        if (isMinimumQuorumReached() || receivedResponses >= expectedSynchronousResponses)
+        if (isMinimumQuorumReached() || receivedResponses >= totalExpectedResponses)
           // OK
           return true;
 
@@ -313,7 +312,7 @@ public class ODistributedResponseManager {
         }
       }
 
-      return isMinimumQuorumReached() || receivedResponses >= expectedSynchronousResponses;
+      return isMinimumQuorumReached() || receivedResponses >= totalExpectedResponses;
 
     } finally {
       synchronousResponsesLock.unlock();
@@ -489,19 +488,40 @@ public class ODistributedResponseManager {
   }
 
   protected boolean isMinimumQuorumReached() {
-    if (isWaitForLocalNode() && !isReceivedCurrentNode()) {
+    if (isWaitForLocalNode() && !isReceivedCurrentNode())
       return false;
-    }
 
     if (quorum == 0)
       return true;
 
-    if (!groupResponsesByResult)
-      return receivedResponses >= quorum;
+    if (groupResponsesByResult) {
+      for (List<ODistributedResponse> group : responseGroups)
+        if (group.size() >= quorum) {
+          int responsesForQuorum = 0;
+          for (ODistributedResponse r : group) {
+            if (nodesConcurInQuorum.contains(r.getExecutorNodeName()))
+              if (++responsesForQuorum >= quorum)
+                // QUORUM REACHED
+                break;
+          }
 
-    for (List<ODistributedResponse> group : responseGroups)
-      if (group.size() >= quorum)
-        return true;
+          return responsesForQuorum >= quorum;
+        }
+    } else {
+      if (receivedResponses >= quorum) {
+        int responsesForQuorum = 0;
+        for (Map.Entry<String, Object> response : responses.entrySet()) {
+          if (response.getValue() != NO_RESPONSE && nodesConcurInQuorum.contains(response.getKey()))
+            if (++responsesForQuorum >= quorum)
+              // QUORUM REACHED
+              break;
+        }
+
+        return responsesForQuorum >= quorum;
+      }
+
+      return receivedResponses >= quorum;
+    }
 
     return false;
   }

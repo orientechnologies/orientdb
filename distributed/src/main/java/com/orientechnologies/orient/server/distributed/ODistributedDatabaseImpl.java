@@ -191,9 +191,32 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       final int availableNodes = checkNodesAreOnline ? manager.getAvailableNodes(iNodes, databaseName) : iNodes.size();
 
-      final int expectedSynchronousResponses = localResult != null ? availableNodes + 1 : availableNodes;
+      final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
+      if (iRequest.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE) {
+        // ONLY MASTER NODES CONCUR TO THE MINIMUM QUORUM
+        for (String node : iNodes) {
+          if (cfg.getServerRole(node) == ODistributedConfiguration.ROLES.MASTER)
+            nodesConcurToTheQuorum.add(node);
+        }
 
-      final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, expectedSynchronousResponses, checkNodesAreOnline);
+        if (localResult != null && cfg.getServerRole(getLocalNodeName()) == ODistributedConfiguration.ROLES.MASTER)
+          // INCLUDE LOCAL NODE TOO
+          nodesConcurToTheQuorum.add(getLocalNodeName());
+
+      } else {
+
+        // ALL NODES CONCUR TO THE MINIMUM QUORUM
+        nodesConcurToTheQuorum.addAll(iNodes);
+
+        if (localResult != null)
+          // INCLUDE LOCAL NODE TOO
+          nodesConcurToTheQuorum.add(getLocalNodeName());
+      }
+
+      final int expectedResponses = localResult != null ? availableNodes + 1 : availableNodes;
+
+      final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, expectedResponses, nodesConcurToTheQuorum.size(),
+          checkNodesAreOnline);
 
       final boolean groupByResponse;
       if (task.getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION) {
@@ -206,7 +229,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       // CREATE THE RESPONSE MANAGER
       final ODistributedResponseManager currentResponseMgr = new ODistributedResponseManager(manager, iRequest, iNodes,
-          expectedSynchronousResponses, quorum, waitLocalNode, task.getSynchronousTimeout(expectedSynchronousResponses),
+          nodesConcurToTheQuorum, expectedResponses, quorum, waitLocalNode, task.getSynchronousTimeout(expectedResponses),
           task.getTotalTimeout(availableNodes), groupByResponse);
 
       if (localResult != null)
@@ -439,7 +462,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected int calculateQuorum(final ODistributedRequest iRequest, final Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int availableNodes, final boolean checkNodesAreOnline) {
+      final ODistributedConfiguration cfg, final int allAvailableNodes, final int masterAvailableNodes,
+      final boolean checkNodesAreOnline) {
 
     final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();
 
@@ -452,13 +476,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       // IGNORE IT
       break;
     case READ:
-      quorum = cfg.getReadQuorum(clusterName, availableNodes);
+      quorum = cfg.getReadQuorum(clusterName, allAvailableNodes);
       break;
     case WRITE:
-      quorum = cfg.getWriteQuorum(clusterName, availableNodes);
+      quorum = cfg.getWriteQuorum(clusterName, masterAvailableNodes);
       break;
     case ALL:
-      quorum = availableNodes;
+      quorum = allAvailableNodes;
       break;
     }
 
@@ -467,9 +491,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (quorum < 0)
       quorum = 0;
 
-    if (checkNodesAreOnline && quorum > availableNodes)
+    if (checkNodesAreOnline && quorum > allAvailableNodes)
       throw new ODistributedException(
-          "Quorum (" + quorum + ") cannot be reached because it is major than available nodes (" + availableNodes + ")");
+          "Quorum (" + quorum + ") cannot be reached because it is major than available nodes (" + allAvailableNodes + ")");
 
     return quorum;
   }
