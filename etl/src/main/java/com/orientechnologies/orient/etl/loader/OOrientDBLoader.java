@@ -25,10 +25,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLPipeline;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -41,6 +38,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.INFO;
 import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.DOCUMENT;
 
 /**
@@ -229,7 +227,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     } else {
       // GRAPH
       final OrientBaseGraph graphDatabase = pipeline.getGraphDatabase();
-      cls = graphDatabase.getRawGraph().getMetadata().getSchema().getClass(iClassName);
+      OSchemaProxy schema = graphDatabase.getRawGraph().getMetadata().getSchema();
+      cls = schema.getClass(iClassName);
+
       if (cls == null) {
 
         if (iSuperClass != null) {
@@ -251,6 +251,13 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           cls = graphDatabase.createVertexType(iClassName);
           log(DEBUG, "- OrientDBLoader: created vertex class '%s'", iClassName);
         }
+      }
+    }
+
+    if (clusterName != null) {
+      int clusterIdByName = pipeline.getDocumentDatabase().getClusterIdByName(clusterName);
+      if (clusterIdByName == -1) {
+        cls.addCluster(clusterName);
       }
     }
     return cls;
@@ -356,13 +363,13 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     case DOCUMENT:
       final ODatabaseDocumentTx documentDatabase = new ODatabaseDocumentTx(dbURL);
       if (documentDatabase.exists() && dbAutoDropIfExists) {
-        log(OETLProcessor.LOG_LEVELS.INFO, "Dropping existent database '%s'...", dbURL);
+        log(INFO, "Dropping existent database '%s'...", dbURL);
         documentDatabase.open(dbUser, dbPassword);
         documentDatabase.drop();
       }
 
       if (documentDatabase.exists()) {
-        log(DEBUG, "Opening database '%s'...", dbURL);
+        log(INFO, "Opening database '%s'...", dbURL);
         documentDatabase.open(dbUser, dbPassword);
       } else if (dbAutoCreate) {
         documentDatabase.create();
@@ -375,7 +382,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     case GRAPH:
       final OrientGraphFactory factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
       if (dbAutoDropIfExists && factory.exists()) {
-        log(OETLProcessor.LOG_LEVELS.INFO, "Dropping existent database '%s'...", dbURL);
+        log(INFO, "Dropping existent database '%s'...", dbURL);
         factory.drop();
       }
 
@@ -395,119 +402,137 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     synchronized (this) {
       ODatabaseDocumentTx documentDatabase = null;
       OrientBaseGraph graphDatabase = null;
-      switch (dbType) {
-      case DOCUMENT:
-        documentDatabase = new ODatabaseDocumentTx(dbURL);
-        documentDatabase.open(dbUser, dbPassword);
-        break;
+      //      switch (dbType) {
+      //      case DOCUMENT:
+      //        documentDatabase = new ODatabaseDocumentTx(dbURL);
+      //        documentDatabase.open(dbUser, dbPassword);
+      //
+      //        break;
+      //
+      //      case GRAPH:
+      //        final OrientGraphFactory factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
+      //
+      //        graphDatabase = tx ? factory.getTx() : factory.getNoTx();
+      //
+      //        graphDatabase.setUseLightweightEdges(useLightweightEdges);
+      //        graphDatabase.setStandardElementConstraints(standardElementConstraints);
+      //
+      //        documentDatabase = graphDatabase.getRawGraph();
+      //        break;
+      //      }
 
-      case GRAPH:
-        final OrientGraphFactory factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
+      final OrientGraphFactory factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
 
-        graphDatabase = tx ? factory.getTx() : factory.getNoTx();
+      graphDatabase = tx ? factory.getTx() : factory.getNoTx();
 
-        graphDatabase.setUseLightweightEdges(useLightweightEdges);
-        graphDatabase.setStandardElementConstraints(standardElementConstraints);
+      graphDatabase.setUseLightweightEdges(useLightweightEdges);
+      graphDatabase.setStandardElementConstraints(standardElementConstraints);
 
-        documentDatabase = graphDatabase.getRawGraph();
-        break;
-      }
+      documentDatabase = graphDatabase.getRawGraph();
+
       pipeline.setDocumentDatabase(documentDatabase);
       pipeline.setGraphDatabase(graphDatabase);
 
-      if (classes != null) {
-        for (ODocument cls : classes) {
-          schemaClass = getOrCreateClass(pipeline, (String) cls.field("name"), (String) cls.field("extends"));
+      createSchema(pipeline, documentDatabase);
 
-          Integer clusters = cls.field("clusters");
-          if (clusters != null)
-            OClassImpl.addClusters(schemaClass, clusters);
+      documentDatabase.getMetadata().getSchema().reload();
 
-          log(DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
-        }
-      }
-      if (className != null) {
-        schemaClass = getOrCreateClass(pipeline, className, null);
-        log(DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
-      }
-      if (indexes != null) {
-        for (ODocument idx : indexes) {
-          OIndex index;
-
-          final ODocument metadata = (ODocument) resolve(idx.field("metadata"));
-          log(DEBUG, "%s: found metadata field '%s'", getName(), metadata);
-
-          String idxName = (String) resolve(idx.field("name"));
-          if (idxName != null) {
-            index = documentDatabase.getMetadata().getIndexManager().getIndex(idxName);
-            if (index != null)
-              // ALREADY EXISTS
-              continue;
-          }
-
-          final String idxClass = (String) resolve(idx.field("class"));
-          if (idxClass == null)
-            throw new OConfigurationException("Index 'class' missed in OrientDB Loader");
-
-          final OClass cls = getOrCreateClass(pipeline, idxClass, null);
-          final String idxType = idx.field("type");
-          if (idxType == null)
-            throw new OConfigurationException("Index 'type' missed in OrientDB Loader for index '" + idxName + "'");
-
-          final List<String> idxFields = idx.field("fields");
-          if (idxFields == null)
-            throw new OConfigurationException("Index 'fields' missed in OrientDB Loader");
-
-          String[] fields = new String[idxFields.size()];
-          for (int f = 0; f < fields.length; ++f) {
-            final String fieldName = idxFields.get(f);
-
-            final String[] fieldNameParts = fieldName.split(":");
-
-            if (!cls.existsProperty(fieldNameParts[0])) {
-              // CREATE PROPERTY AUTOMATICALLY
-
-              if (fieldNameParts.length < 2)
-                throw new OConfigurationException("Index field type missed in OrientDB Loader for field '" + fieldName + "'");
-
-              final String fieldType = fieldNameParts[1].toUpperCase();
-              final OType type = OType.valueOf(fieldType);
-
-              cls.createProperty(fieldNameParts[0], type);
-              log(DEBUG, "- OrientDBLoader: created property '%s.%s' of type: %s", idxClass, fieldNameParts[0], fieldNameParts[1]);
-            }
-
-            fields[f] = fieldNameParts[0];
-          }
-
-          if (idxName == null) {
-            // CREATE INDEX NAME
-            idxName = idxClass + ".";
-            for (int i = 0; i < fields.length; ++i) {
-              if (i > 0)
-                idxName += '_';
-              idxName += fields[i];
-            }
-          }
-
-          index = documentDatabase.getMetadata().getIndexManager().getIndex(idxName);
-          if (index != null)
-            // ALREADY EXISTS
-            continue;
-
-          index = cls.createIndex(idxName, idxType, null, metadata, fields);
-          log(DEBUG, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType,
-              idxClass, idxFields);
-        }
-      }
       documentDatabase.declareIntent(new OIntentMassiveInsert());
     }
 
   }
 
+  private void createSchema(OETLPipeline pipeline, ODatabaseDocumentTx documentDatabase) {
+    if (classes != null) {
+      for (ODocument cls : classes) {
+        schemaClass = getOrCreateClass(pipeline, (String) cls.field("name"), (String) cls.field("extends"));
+
+        Integer clusters = cls.field("clusters");
+        if (clusters != null)
+          OClassImpl.addClusters(schemaClass, clusters);
+
+        log(DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
+      }
+    }
+    if (className != null) {
+      schemaClass = getOrCreateClass(pipeline, className, null);
+      log(DEBUG, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
+    }
+    if (indexes != null) {
+      for (ODocument idx : indexes) {
+        OIndex index;
+
+        final ODocument metadata = (ODocument) resolve(idx.field("metadata"));
+        log(DEBUG, "%s: found metadata field '%s'", getName(), metadata);
+
+        String idxName = (String) resolve(idx.field("name"));
+        if (idxName != null) {
+          index = documentDatabase.getMetadata().getIndexManager().getIndex(idxName);
+          if (index != null)
+            // ALREADY EXISTS
+            continue;
+        }
+
+        final String idxClass = (String) resolve(idx.field("class"));
+        if (idxClass == null)
+          throw new OConfigurationException("Index 'class' missed in OrientDB Loader");
+
+        final OClass cls = getOrCreateClass(pipeline, idxClass, null);
+        final String idxType = idx.field("type");
+        if (idxType == null)
+          throw new OConfigurationException("Index 'type' missed in OrientDB Loader for index '" + idxName + "'");
+
+        final List<String> idxFields = idx.field("fields");
+        if (idxFields == null)
+          throw new OConfigurationException("Index 'fields' missed in OrientDB Loader");
+
+        String[] fields = new String[idxFields.size()];
+        for (int f = 0; f < fields.length; ++f) {
+          final String fieldName = idxFields.get(f);
+
+          final String[] fieldNameParts = fieldName.split(":");
+
+          if (!cls.existsProperty(fieldNameParts[0])) {
+            // CREATE PROPERTY AUTOMATICALLY
+
+            if (fieldNameParts.length < 2)
+              throw new OConfigurationException("Index field type missed in OrientDB Loader for field '" + fieldName + "'");
+
+            final String fieldType = fieldNameParts[1].toUpperCase();
+            final OType type = OType.valueOf(fieldType);
+
+            cls.createProperty(fieldNameParts[0], type);
+            log(DEBUG, "- OrientDBLoader: created property '%s.%s' of type: %s", idxClass, fieldNameParts[0], fieldNameParts[1]);
+          }
+
+          fields[f] = fieldNameParts[0];
+        }
+
+        if (idxName == null) {
+          // CREATE INDEX NAME
+          idxName = idxClass + ".";
+          for (int i = 0; i < fields.length; ++i) {
+            if (i > 0)
+              idxName += '_';
+            idxName += fields[i];
+          }
+        }
+
+        index = documentDatabase.getMetadata().getIndexManager().getIndex(idxName);
+        if (index != null)
+          // ALREADY EXISTS
+          continue;
+
+        index = cls.createIndex(idxName, idxType, null, metadata, fields);
+        log(DEBUG, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType, idxClass,
+            idxFields);
+      }
+    }
+  }
+
   @Override
   public void endLoader(OETLPipeline pipeline) {
-    log(OETLProcessor.LOG_LEVELS.INFO, "committing");
+    log(INFO, "committing");
     if (dbType == DOCUMENT)
       pipeline.getDocumentDatabase().commit();
     else
