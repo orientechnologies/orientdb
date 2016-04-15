@@ -44,7 +44,6 @@ import static org.junit.Assert.*;
 
 public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
-
   protected OrientVertex loadVertex(OrientBaseGraph graph, String shardName, int serverId, int threadId, int i) {
 
     List<OrientVertex> result = null;
@@ -67,27 +66,24 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       e.printStackTrace();
     }
 
-    if(result.size() == 0)
+    if (result.size() == 0)
       return null;
 
     return result.get(0);
   }
 
+  /*
+   * It executes multiple writes using different concurrent writers (as specified by the value writerCount) on all the servers
+   * present in the collection passed as parameter in a specific cluster-shards. Each write performs a vertex insert and some update
+   * and check operations on it. Vertex name: <shardName>-s<serverId>-t<threadId>-<recordId>
+   */
 
-
-    /*
-     * It executes multiple writes using different concurrent writers (as specified by the value writerCount)
-     * on all the servers present in the collection passed as parameter in a specific cluster-shards.
-     * Each write performs a vertex insert and some update and check operations on it.
-     * Vertex name: <shardName>-s<serverId>-t<threadId>-<recordId>
-     */
-
-  protected void executeMultipleWritesOnShards(List<ServerRun> executeOnServers, String storageType) throws InterruptedException, ExecutionException {
+  protected void executeMultipleWritesOnShards(List<ServerRun> executeOnServers, String storageType)
+      throws InterruptedException, ExecutionException {
 
     System.out.println("Creating Writers threads...");
 
     final ExecutorService writerExecutors = Executors.newCachedThreadPool();
-    final ExecutorService readerExecutors = Executors.newCachedThreadPool();
 
     runningWriters = new CountDownLatch(executeOnServers.size() * writerCount);
 
@@ -100,10 +96,9 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
         shardName += server.getServerInstance().getDistributedManager().getLocalNodeName();
         for (int j = 0; j < writerCount; j++) {
           Callable writer = null;
-          if(storageType.equals("plocal")) {
+          if (storageType.equals("plocal")) {
             writer = new ShardWriter(serverId, shardName, threadId++, getPlocalDatabaseURL(server));
-          }
-          else if(storageType.equals("remote")) {
+          } else if (storageType.equals("remote")) {
             writer = new ShardWriter(serverId, shardName, threadId++, getPlocalDatabaseURL(server));
           }
           writerWorkers.add(writer);
@@ -163,60 +158,59 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     }
 
     // checking indexes
-    //        serverId = 0;
-    //        for (ServerRun server : serverInstance) {
-    //            if (server.isActive()) {
-    //                graphFactory = new OrientGraphFactory("plocal:target/server" + serverId + "/databases/" + getDatabaseName());
-    //                graph = graphFactory.getNoTx();
-    //                try {
-    //                    final long indexSize = graph.getRawGraph().getMetadata().getIndexManager().getIndex("Client.name").getSize();
+    // serverId = 0;
+    // for (ServerRun server : serverInstance) {
+    // if (server.isActive()) {
+    // graphFactory = new OrientGraphFactory("plocal:target/server" + serverId + "/databases/" + getDatabaseName());
+    // graph = graphFactory.getNoTx();
+    // try {
+    // final long indexSize = graph.getRawGraph().getMetadata().getIndexManager().getIndex("Client.name").getSize();
     //
-    //                    if (indexSize != count) {
-    //                        // ERROR: DUMP ALL THE RECORDS
-    //                        List<ODocument> result = graph.command(new OCommandSQL("select from index:Client.name")).execute();
-    //                        int i = 0;
-    //                        for (ODocument d : result) {
-    //                            System.out.println((i++) + ": " + ((OIdentifiable) d.field("rid")).getRecord());
-    //                        }
-    //                    }
+    // if (indexSize != count) {
+    // // ERROR: DUMP ALL THE RECORDS
+    // List<ODocument> result = graph.command(new OCommandSQL("select from index:Client.name")).execute();
+    // int i = 0;
+    // for (ODocument d : result) {
+    // System.out.println((i++) + ": " + ((OIdentifiable) d.field("rid")).getRecord());
+    // }
+    // }
     //
-    //                    junit.framework.Assert.assertEquals(count, indexSize);
+    // junit.framework.Assert.assertEquals(count, indexSize);
     //
-    //                    System.out.println("From metadata: indexes " + indexSize + " items");
+    // System.out.println("From metadata: indexes " + indexSize + " items");
     //
-    //                    List<ODocument> result = graph.command(new OCommandSQL("select count(*) from index:Client.name")).execute();
-    //                    junit.framework.Assert.assertEquals(count, ((Long) result.get(0).field("count")).longValue());
+    // List<ODocument> result = graph.command(new OCommandSQL("select count(*) from index:Client.name")).execute();
+    // junit.framework.Assert.assertEquals(count, ((Long) result.get(0).field("count")).longValue());
     //
-    //                    System.out.println("From sql: indexes " + indexSize + " items");
-    //                } finally {
-    //                    graph.getRawGraph().close();
-    //                }
-    //            }
-    //            serverId++;
-    //        }
+    // System.out.println("From sql: indexes " + indexSize + " items");
+    // } finally {
+    // graph.getRawGraph().close();
+    // }
+    // }
+    // serverId++;
+    // }
   }
-
 
   // checks the consistency in the cluster after the writes in a no-replica sharding scenario
   protected void checkWritesWithShardinNoReplica(List<ServerRun> checkConsistencyOnServers, List<ServerRun> writerServer) {
 
     String checkOnServer = "";
-    for(ServerRun server: checkConsistencyOnServers) {
+    for (ServerRun server : checkConsistencyOnServers) {
       checkOnServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
     }
-    checkOnServer = checkOnServer.substring(0,checkOnServer.length()-1);
+    checkOnServer = checkOnServer.substring(0, checkOnServer.length() - 1);
 
     String writtenServer = "";
-    for(ServerRun server: writerServer) {
+    for (ServerRun server : writerServer) {
       writtenServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
     }
-    writtenServer = writtenServer.substring(0,writtenServer.length()-1);
+    writtenServer = writtenServer.substring(0, writtenServer.length() - 1);
 
     List<OrientBaseGraph> dbs = new LinkedList<OrientBaseGraph>();
 
     OrientGraphFactory localFactory = null;
 
-    for(ServerRun server: checkConsistencyOnServers) {
+    for (ServerRun server : checkConsistencyOnServers) {
       localFactory = new OrientGraphFactory(getPlocalDatabaseURL(server));
       dbs.add(localFactory.getNoTx());
     }
@@ -227,29 +221,30 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     int lastThread = 0;
     int serverIndex = 0;
 
-    for(ServerRun server: writerServer) {
-      serverIndex2thresholdThread.put(serverIndex, lastThread+5);
+    for (ServerRun server : writerServer) {
+      serverIndex2thresholdThread.put(serverIndex, lastThread + 5);
       serverIndex++;
       lastThread += 5;
     }
 
     serverIndex = 0;
 
-    for(ServerRun server: writerServer) {
+    for (ServerRun server : writerServer) {
       serverIndex2serverName.put(serverIndex, server.getServerInstance().getDistributedManager().getLocalNodeName());
       serverIndex++;
     }
 
     List<OrientVertex> verticesToCheck = new LinkedList<OrientVertex>();
 
-    super.banner("Checking consistency among servers...\nChecking on servers {" + checkOnServer + "} that all the vertices written on {" + writtenServer + "} are consistent.");
+    super.banner("Checking consistency among servers...\nChecking on servers {" + checkOnServer
+        + "} that all the vertices written on {" + writtenServer + "} are consistent.");
 
     try {
 
       int index = 0;
       String serverName = null;
 
-      for(int serverId: serverIndex2thresholdThread.keySet()) {
+      for (int serverId : serverIndex2thresholdThread.keySet()) {
 
         serverName = serverIndex2serverName.get(serverId);
         System.out.println("Checking records originally inserted on server " + serverName + "...");
@@ -258,33 +253,33 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
         // checking records inserted on server0
         int i;
-        if(serverId == 0)
+        if (serverId == 0)
           i = 0;
         else
-          i = serverIndex2thresholdThread.get(serverId-1);
+          i = serverIndex2thresholdThread.get(serverId - 1);
 
         while (i < serverIndex2thresholdThread.get(serverId)) {
           for (int j = 0; j < 100; j++) {
 
             // load records to compare
-            for(OrientBaseGraph db: dbs) {
+            for (OrientBaseGraph db : dbs) {
               verticesToCheck.add(loadVertex(db, clusterName, serverId, i, j + baseCount));
             }
 
             // checking that record is present on each server db
             OrientVertex currentVertex = null;
-            int k=0;
-            while(k < verticesToCheck.size()) {
+            int k = 0;
+            while (k < verticesToCheck.size()) {
               assertTrue(verticesToCheck.get(k) != null);
               k++;
             }
 
             // checking that all the records have the same version and values (each record is equal to the next one)
             k = 0;
-            while(k <= verticesToCheck.size() -2) {
-              assertEquals(verticesToCheck.get(k).getProperty("@version"),verticesToCheck.get(k+1).getProperty("@version"));
-              assertEquals(verticesToCheck.get(k).getProperty("name"), verticesToCheck.get(k+1).getProperty("name"));
-              assertEquals(verticesToCheck.get(k).getProperty("updated"), verticesToCheck.get(k+1).getProperty("updated"));
+            while (k <= verticesToCheck.size() - 2) {
+              assertEquals(verticesToCheck.get(k).getProperty("@version"), verticesToCheck.get(k + 1).getProperty("@version"));
+              assertEquals(verticesToCheck.get(k).getProperty("name"), verticesToCheck.get(k + 1).getProperty("name"));
+              assertEquals(verticesToCheck.get(k).getProperty("updated"), verticesToCheck.get(k + 1).getProperty("updated"));
               k++;
             }
             verticesToCheck.clear();
@@ -292,15 +287,16 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
           i++;
         }
 
-        System.out.println("All records originally inserted on server " + serverName + " in the cluster " + clusterName + " available in the shard.");
+        System.out.println("All records originally inserted on server " + serverName + " in the cluster " + clusterName
+            + " available in the shard.");
         index++;
       }
 
-    } catch(Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
     } finally {
 
-      for(OrientBaseGraph db: dbs) {
+      for (OrientBaseGraph db : dbs) {
         ODatabaseRecordThreadLocal.INSTANCE.set(db.getRawGraph());
         db.getRawGraph().close();
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
@@ -308,10 +304,9 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     }
   }
 
-
-    /*
-     * A Callable task that inserts many vertices as indicated by the count variable on the specified server and cluster (shard).
-     */
+  /*
+   * A Callable task that inserts many vertices as indicated by the count variable on the specified server and cluster (shard).
+   */
 
   protected class ShardWriter implements Callable<Void> {
     protected final String databaseUrl;
@@ -332,7 +327,8 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       try {
 
         String name = Integer.toString(threadId);
-        OrientGraphFactory graphFactory = new OrientGraphFactory("plocal:target/server" + serverId + "/databases/" + getDatabaseName());
+        OrientGraphFactory graphFactory = new OrientGraphFactory(
+            "plocal:target/server" + serverId + "/databases/" + getDatabaseName());
         OrientBaseGraph graph = graphFactory.getNoTx();
 
         for (int i = 0; i < count; i++) {
@@ -349,10 +345,11 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
                 updateVertex(graph, id);
                 checkVertex(graph, id);
-                //                            checkIndex(graph, (String) client.getProperty("name"), client.getIdentity());
+                // checkIndex(graph, (String) client.getProperty("name"), client.getIdentity());
 
                 if ((i + 1) % 100 == 0)
-                  System.out.println("\nWriter " + graph.getRawGraph().getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+                  System.out.println(
+                      "\nWriter " + graph.getRawGraph().getURL() + " managed " + (i + 1) + "/" + count + " records so far");
 
                 if (delayWriter > 0)
                   Thread.sleep(delayWriter);
@@ -392,7 +389,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
         graph.getRawGraph().close();
 
         System.out.println("\nWriter " + name + " END");
-      }catch (Exception e) {
+      } catch (Exception e) {
         e.printStackTrace();
       }
       return null;
@@ -421,7 +418,8 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
     protected void checkIndex(OrientBaseGraph graph, final String key, final ORID rid) {
 
-      List<ODocument> result = graph.getRawGraph().query(new OSQLSynchQuery<OIdentifiable>("select from `index:Client.name` where key = ?"));
+      List<ODocument> result = graph.getRawGraph()
+          .query(new OSQLSynchQuery<OIdentifiable>("select from `index:Client.name` where key = ?"));
 
       assertNotNull(result);
       assertEquals(result.size(), 1);
@@ -452,10 +450,10 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     }
   }
 
-//  @Override
-//  public String getDatabaseName() {
-//    return "sharding";
-//  }
+  // @Override
+  // public String getDatabaseName() {
+  // return "sharding";
+  // }
 
   @Override
   protected String getDistributedServerConfiguration(final ServerRun server) {

@@ -33,10 +33,12 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Checks for consistency on the cluster with these steps: - 3 server (quorum=2) - record1 is inserted on server1 - record1 (version
- * 1) is propagated to the other two servers - introduce a delay after record locking for server 1 and server 3 - the three clients
- * at the same time (more or less) update - each on a different server - the same record with different values
- * <p/>
+ * Checks for consistency on the cluster with these steps:
+ * - 3 server (quorum=2)
+ * - record1 is inserted on server1
+ * - record1 (version 1) is propagated to the other two servers
+ * - introduce a delay after record locking for all servers (different for each one)
+ * - the three clients at the same time update the same record on different servers
  *
  */
 
@@ -113,7 +115,7 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioTe
     int actualVersion = record1Server1.getVersion();
     System.out.println("Actual version: " + actualVersion);
 
-    // sets a delay for operations on distributed storage of server1 and server 3
+    // sets a delay for operations on distributed storage of all servers
     ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer(DOCUMENT_WRITE_TIMEOUT));
     ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer(DOCUMENT_WRITE_TIMEOUT / 4));
     ((ODistributedStorage) dbServer3.getStorage()).setEventListener(new AfterRecordLockDelayer(DOCUMENT_WRITE_TIMEOUT / 2));
@@ -126,25 +128,19 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioTe
     List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
     executeFutures(futures);
 
-    Thread.sleep(DOCUMENT_WRITE_TIMEOUT + 2000);
+    // checks that record on server3 is the one which wins over the others
+    waitForUpdatedRecordPropagation(RECORD_ID, "firstName", "Leia");
 
     record1Server1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), RECORD_ID);
     record1Server2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
     record1Server3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), RECORD_ID);
 
-    System.out.println("record1: " + record1Server1);
-    System.out.println("record2: " + record1Server2);
-    System.out.println("record3: " + record1Server2);
-
-    // checks that record on server3 is the one who wins over the others
-    waitForUpdatedRecordPropagation(RECORD_ID, "firstName", "Leia");
-
     int finalVersionServer1 = record1Server1.getVersion();
     int finalVersionServer2 = record1Server2.getVersion();
     int finalVersionServer3 = record1Server3.getVersion();
-    assertEquals(finalVersionServer1, actualVersion + 1);
-    assertEquals(finalVersionServer2, actualVersion + 1);
-    assertEquals(finalVersionServer3, actualVersion + 1);
+    assertEquals(actualVersion + 1, finalVersionServer1);
+    assertEquals(actualVersion + 1, finalVersionServer2);
+    assertEquals(actualVersion + 1, finalVersionServer3);
   }
 
   @Override

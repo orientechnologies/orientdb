@@ -74,7 +74,7 @@ public class LocalPaginatedClusterTest {
 
     OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
     when(storage.getVariableParser()).thenReturn(variableParser);
-    when(storage.getPerformanceStatisticManager()).thenReturn(new OPerformanceStatisticManager(10000000));
+    when(storage.getPerformanceStatisticManager()).thenReturn(new OPerformanceStatisticManager(storage, 10000000, 10000000));
 
     writeCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
         new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 1000000, null, 100,

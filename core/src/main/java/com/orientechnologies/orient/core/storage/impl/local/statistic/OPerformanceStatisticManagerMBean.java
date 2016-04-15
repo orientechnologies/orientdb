@@ -76,6 +76,26 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
   public static final String STOP_MONITORING = "stopMonitoring";
 
   /**
+   * Name of "writeCachePagesPerFlush" performance attribute
+   */
+  public static final String WRITE_CACHE_PAGES_PER_FLUSH = "writeCachePagesPerFlush";
+
+  /**
+   * Name of "writeCacheFlushOperationsTime" performance attribute
+   */
+  public static final String WRITE_CACHE_FLUSH_OPERATION_TIME = "writeCacheFlushOperationTime";
+
+  /**
+   * Name of "writeCacheFuzzyCheckpointTime" performance attribute
+   */
+  public static final String WRITE_CACHE_FUZZY_CHECKPOINT_TIME = "writeCacheFuzzyCheckpointTime";
+
+  /**
+   * Name of "fullCheckpointTime" performance attribute
+   */
+  public static final String FULL_CHECKPOINT_TIME = "fullCheckpointTime";
+
+  /**
    * Reference to related performance manager
    */
   private final OPerformanceStatisticManager manager;
@@ -126,8 +146,7 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
       if (componentName == null)
         return manager.getCommitTime();
       else
-        throw new RuntimeOperationsException(new IllegalArgumentException("Components are not supported"),
-            COMMIT_TIME + " attribute is not supported on component level");
+        return throwComponentsAreNotSupported(COMMIT_TIME);
     } else if (attributeName.equals(READ_SPEED_FROM_CACHE)) {
       if (componentName == null)
         return manager.getReadSpeedFromCacheInPages();
@@ -149,9 +168,34 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
             "Amount of pages per operation is measured only on component level");
 
       return manager.getAmountOfPagesPerOperation(componentName);
+    } else if (attributeName.equals(WRITE_CACHE_PAGES_PER_FLUSH)) {
+      if (componentName == null)
+        return manager.getWriteCachePagesPerFlush();
+      else
+        throwComponentsAreNotSupported(WRITE_CACHE_PAGES_PER_FLUSH);
+    } else if (attributeName.equals(WRITE_CACHE_FLUSH_OPERATION_TIME)) {
+      if (componentName == null)
+        return manager.getWriteCacheFlushOperationsTime();
+      else
+        throwComponentsAreNotSupported(WRITE_CACHE_FLUSH_OPERATION_TIME);
+    } else if (attributeName.equals(WRITE_CACHE_FUZZY_CHECKPOINT_TIME)) {
+      if (componentName == null)
+        return manager.getWriteCacheFuzzyCheckpointTime();
+      else
+        throwComponentsAreNotSupported(WRITE_CACHE_FUZZY_CHECKPOINT_TIME);
+    } else if (attributeName.equals(FULL_CHECKPOINT_TIME)) {
+      if (componentName == null)
+        return manager.getFullCheckpointTime();
+      else
+        throwComponentsAreNotSupported(FULL_CHECKPOINT_TIME);
     }
 
     throw new AttributeNotFoundException("Cannot find " + attribute + " attribute in " + getClass().getSimpleName());
+  }
+
+  private Object throwComponentsAreNotSupported(String attributeName) {
+    throw new RuntimeOperationsException(new IllegalArgumentException("Components are not supported"),
+        attributeName + " attribute is not supported on component level");
   }
 
   @Override
@@ -248,6 +292,12 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
     populateReadSpeedFromFile(performanceAttributes, components);
     populateWriteSpeedInCache(performanceAttributes, components);
     populatePagesPerOperation(performanceAttributes, components);
+
+    populateWriteCachePagesPerFlush(performanceAttributes);
+    populateWriteCacheFlushOperationsTime(performanceAttributes);
+    populateWriteCacheFuzzyCheckpointTime(performanceAttributes);
+
+    populateFullCheckpointTime(performanceAttributes);
   }
 
   private void populateWriteSpeedInCache(List<MBeanAttributeInfo> performanceAttributes, Collection<String> components) {
@@ -314,5 +364,33 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
           "Average amount of pages per operation for component " + component, true, false, false);
       performanceAttributes.add(componentCacheHits);
     }
+  }
+
+  private void populateWriteCachePagesPerFlush(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo pagesPerFlush = new ModelMBeanAttributeInfo(WRITE_CACHE_PAGES_PER_FLUSH, long.class.getName(),
+        "Amount of pages are flushed inside of write cache flush operation", true, false, false);
+
+    performanceAttributes.add(pagesPerFlush);
+  }
+
+  private void populateWriteCacheFlushOperationsTime(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo flushOperationsTime = new ModelMBeanAttributeInfo(WRITE_CACHE_FLUSH_OPERATION_TIME,
+        long.class.getName(), "Time which is spent on each flush operation", true, false, false);
+
+    performanceAttributes.add(flushOperationsTime);
+  }
+
+  private void populateWriteCacheFuzzyCheckpointTime(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo fuzzyCheckpointTime = new ModelMBeanAttributeInfo(WRITE_CACHE_FUZZY_CHECKPOINT_TIME,
+        long.class.getName(), "Time which is spent on each fuzzy checkpoint", true, false, false);
+
+    performanceAttributes.add(fuzzyCheckpointTime);
+  }
+
+  private void populateFullCheckpointTime(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo fullCheckpointTime = new ModelMBeanAttributeInfo(FULL_CHECKPOINT_TIME, long.class.getName(),
+        "Time which is spent on each full checkpoint", true, false, false);
+
+    performanceAttributes.add(fullCheckpointTime);
   }
 }
