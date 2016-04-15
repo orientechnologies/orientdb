@@ -25,13 +25,13 @@ import java.io.*;
 import java.util.zip.GZIPInputStream;
 
 public class ODistributedDatabaseChunk implements Externalizable {
-  public long               lastOperationId;
   public String             filePath;
   public long               offset;
   public byte[]             buffer;
   public OLogSequenceNumber lsn;
   public boolean            gzipCompressed;
   public boolean            last;
+  public byte[]             schema;
 
   public ODistributedDatabaseChunk() {
   }
@@ -104,18 +104,34 @@ public class ODistributedDatabaseChunk implements Externalizable {
       lsn.writeExternal(out);
     out.writeBoolean(gzipCompressed);
     out.writeBoolean(last);
+    if (schema != null && schema.length > 0) {
+      out.writeInt(schema.length);
+      out.write(schema);
+    } else
+      out.writeInt(0);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     filePath = in.readUTF();
     offset = in.readLong();
-    final int size = in.readInt();
+    int size = in.readInt();
     buffer = new byte[size];
     in.readFully(buffer);
     final boolean lsnNotNull = in.readBoolean();
     lsn = lsnNotNull ? new OLogSequenceNumber(in) : null;
     gzipCompressed = in.readBoolean();
     last = in.readBoolean();
+
+    size = in.readInt();
+    if (size > 0) {
+      schema = new byte[size];
+      in.read(schema);
+    } else
+      schema = null;
+  }
+
+  public void setSchema(final byte[] schema) {
+    this.schema = schema;
   }
 }

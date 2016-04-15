@@ -44,10 +44,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -1523,7 +1525,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
    * Returns the clusters where sync is required.
    */
   protected Set<String> installDatabaseFromNetwork(final String dbPath, final String databaseName,
-      final ODistributedDatabaseImpl distrDatabase, final String iNode, final ODistributedDatabaseChunk value,
+      final ODistributedDatabaseImpl distrDatabase, final String iNode, final ODistributedDatabaseChunk firstChunk,
       final boolean delta) {
 
     final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
@@ -1557,12 +1559,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         public void run() {
           try {
             Thread.currentThread().setName("OrientDB installDatabase node=" + nodeName + " db=" + databaseName);
-            ODistributedDatabaseChunk chunk = value;
+            ODistributedDatabaseChunk chunk = firstChunk;
 
             lsn.set(chunk.lsn);
 
             final OutputStream fOut = new FileOutputStream(fileName, false);
-
             try {
 
               long fileSize = writeDatabaseChunk(1, chunk, fOut);
@@ -1607,6 +1608,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
               ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Database copied correctly, size=%s",
                   OFileUtils.getSizeAsString(fileSize));
+
             } finally {
               try {
                 fOut.flush();
@@ -1633,6 +1635,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     if (db != null) {
       db.activateOnCurrentThread();
+
+      // REWRITE THE SCHEMA
+      if( firstChunk.schema != null ){
+        final ORecord schemaRecord = new ORecordId(db.getStorage().getConfiguration().schemaRecordId).getRecord();
+        schemaRecord.fromStream(firstChunk.schema);
+        schemaRecord.save();
+      }
+
       db.close();
       final OStorage stg = Orient.instance().getStorage(databaseName);
       if (stg != null)
@@ -2020,8 +2030,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         in.close();
         lock.unlock();
       }
-
-      db.close();
 
       ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Installed database '%s'", databaseName);
 
