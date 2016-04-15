@@ -582,7 +582,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (record == null)
         // SKIP IT
         return true;
-      if ((projections != null || expandTarget != null) && ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
+      if (ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE && checkSkipBlob())
         //SKIP binary records in case of projection.
         return true;
 
@@ -622,6 +622,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return true;
+  }
+
+  private boolean checkSkipBlob() {
+    if (expandTarget != null)
+      return true;
+    if (projections != null) {
+      if(projections.size() > 1){
+        return true;
+      }
+      if(projections.containsKey("@rid"))
+        return false;
+    }
+    return false;
   }
 
   /**

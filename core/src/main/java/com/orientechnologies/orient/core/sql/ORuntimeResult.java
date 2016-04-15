@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
@@ -70,7 +71,18 @@ public class ORuntimeResult {
   @SuppressWarnings("unchecked")
   public static ODocument applyRecord(final ODocument iValue, final Map<String, Object> iProjections, final OCommandContext iContext, final OIdentifiable iRecord) {
     // APPLY PROJECTIONS
-    final ODocument inputDocument = (ODocument) (iRecord != null ? iRecord.getRecord() : null);
+
+    ORecord record = (iRecord != null ? iRecord.getRecord() : null);
+    //MANAGE SPECIFIC CASES FOR RECORD BYTES
+    if (ORecordBytes.RECORD_TYPE == ORecordInternal.getRecordType(record)) {
+      for (Entry<String, Object> projection : iProjections.entrySet()) {
+        if ("rid".equalsIgnoreCase(projection.getKey())) {
+          iValue.field(projection.getKey(), record.getIdentity());
+        }
+      }
+      return iValue;
+    }
+    final ODocument inputDocument = (ODocument) record;
 
     if (iProjections.isEmpty())
       // SELECT * CASE
