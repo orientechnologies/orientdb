@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -396,10 +397,11 @@ public class OSecurityShared implements OSecurity, OCloseable {
     readerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
     readerRole.save();
 
-    if(Orient.instance().getSecurity() == null || Orient.instance().getSecurity().areDefaultUsersCreated())
-    {
+    // This will return the global value if a local storage context configuration value does not exist.
+    boolean createDefUsers = getDatabase().getStorage().getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
+
+    if(createDefUsers)
       createUser("reader", "reader", new String[] { readerRole.getName() });
-    }
 
     final ORole writerRole = createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
     writerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
@@ -417,10 +419,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
     writerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
     writerRole.save();
 
-    if(Orient.instance().getSecurity() == null || Orient.instance().getSecurity().areDefaultUsersCreated())
-    {
-	    createUser("writer", "writer", new String[] { writerRole.getName() });
-	 }
+    if(createDefUsers)
+	   createUser("writer", "writer", new String[] { writerRole.getName() });
 
     return adminUser;
   }
@@ -451,10 +451,11 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
     OUser adminUser = getUser(OUser.ADMIN);
 
-    if (adminUser == null)
-    {
-	   if(Orient.instance().getSecurity() == null || Orient.instance().getSecurity().areDefaultUsersCreated())
-      {
+    if (adminUser == null) {
+      // This will return the global value if a local storage context configuration value does not exist.
+      boolean createDefUsers = getDatabase().getStorage().getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
+
+      if(createDefUsers) {
         adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
       }
     }

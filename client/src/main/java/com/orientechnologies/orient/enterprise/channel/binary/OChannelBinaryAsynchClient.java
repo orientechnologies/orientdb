@@ -24,13 +24,11 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 
@@ -73,11 +71,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         serverURL += "/" + iDatabaseName;
       socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
-      socket.setPerformancePreferences(0, 2, 1);
-
-      socket.setKeepAlive(true);
-      socket.setSendBufferSize(socketBufferSize);
-      socket.setReceiveBufferSize(socketBufferSize);
       try {
         socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
         setReadResponseTimeout();

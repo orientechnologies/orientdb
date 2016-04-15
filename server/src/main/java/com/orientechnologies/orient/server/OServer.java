@@ -971,7 +971,8 @@ public class OServer {
     }
 
     configuration.isAfterFirstTime = true;
-    if (serverSecurity == null || serverSecurity.areDefaultUsersCreated())
+
+    if(OGlobalConfiguration.CREATE_DEFAULT_USERS.getValueAsBoolean())
       createDefaultServerUsers();
   }
 

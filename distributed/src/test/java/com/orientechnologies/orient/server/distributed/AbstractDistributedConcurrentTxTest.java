@@ -83,14 +83,14 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
               OLogManager.instance().info(this, "increment lockExceptions %d", lockExceptions.get());
 
             } catch (ONeedRetryException e) {
-              OLogManager.instance().info(this, "Concurrent Exceptions %s", e);
+              OLogManager.instance().info(this, "Concurrent Exceptions %s", e, e);
 
             } catch (Exception e) {
               graph.rollback();
               throw e;
             }
 
-            Thread.sleep(10 + new Random().nextInt(300));
+            Thread.sleep(10 + new Random().nextInt(500));
 
             localVertex.reload();
 

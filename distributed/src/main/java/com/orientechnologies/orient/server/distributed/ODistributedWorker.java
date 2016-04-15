@@ -39,7 +39,6 @@ import java.util.concurrent.ArrayBlockingQueue;
  * each others.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class ODistributedWorker extends Thread {
 
@@ -48,10 +47,13 @@ public class ODistributedWorker extends Thread {
   protected final ODistributedMessageServiceImpl          msgService;
   protected final String                                  databaseName;
   protected final ArrayBlockingQueue<ODistributedRequest> localQueue;
+  protected final int                                     id;
+
   protected volatile ODatabaseDocumentTx                  database;
   protected volatile OUser                                lastUser;
-  protected volatile boolean                              running = true;
-  protected final int                                     id;
+  protected volatile boolean                              running              = true;
+
+  private static final long                               MAX_SHUTDOWN_TIMEOUT = 5000l;
 
   public ODistributedWorker(final ODistributedDatabaseImpl iDistributed, final String iDatabaseName, final int i) {
     id = i;
@@ -139,7 +141,7 @@ public class ODistributedWorker extends Thread {
     try {
       if (pendingMsgs > 0)
         try {
-          join();
+          join(MAX_SHUTDOWN_TIMEOUT);
         } catch (Exception e) {
           ODistributedServerLog.debug(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
               "Interrupted shutdown of distributed worker thread");

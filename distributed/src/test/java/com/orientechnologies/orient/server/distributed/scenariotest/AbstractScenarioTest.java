@@ -16,16 +16,19 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterInsertTest;
+import com.orientechnologies.orient.server.distributed.ODistributedStorageEventListener;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 
 import java.util.*;
@@ -40,13 +43,13 @@ import static org.junit.Assert.assertTrue;
 
 public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTest {
 
-  protected final static int             SERVERS                = 3;
-  protected              List<ServerRun> executeWritesOnServers = new LinkedList<ServerRun>();
-  protected final static ODocument       MISSING_DOCUMENT       = new ODocument();
+  protected final static int       SERVERS                               = 3;
+  protected List<ServerRun>        executeWritesOnServers                = new LinkedList<ServerRun>();
+  protected final static ODocument MISSING_DOCUMENT                      = new ODocument();
 
   // FIXME: these should be parameters read from configuration file (or, if missing, defaulted to some values)
-  private final   long PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT = 5000;
-  protected final long DOCUMENT_WRITE_TIMEOUT                = 5000;
+  private final long               PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT = 15000;
+  protected final long             DOCUMENT_WRITE_TIMEOUT                = 5000;
 
   protected ODocument loadRecord(ODatabaseDocumentTx database, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
@@ -193,9 +196,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     List<ODocument> docsToCompare = new LinkedList<ODocument>();
 
-    super.banner(
-        "Checking consistency among servers...\nChecking on servers {" + checkOnServer + "} that all the records written on {"
-            + writtenServer + "} are consistent.");
+    super.banner("Checking consistency among servers...\nChecking on servers {" + checkOnServer
+        + "} that all the records written on {" + writtenServer + "} are consistent.");
 
     try {
 
@@ -273,7 +275,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         }
         return true;
       }
-    });
+    }, "Record " + recordId);
 
   }
 
@@ -298,12 +300,12 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
               || document.field(fieldName) == null && expectedFieldValue != null)
             return false;
 
-          System.out.println("Waiting for updated document propagation..");
+          OLogManager.instance().info(this, "Waiting for updated document propagation on record %s (%s=%s)...", recordId, fieldName,
+              expectedFieldValue);
         }
         return true;
       }
-    });
-
+    }, String.format("Expected value %s for field %s on record %s", expectedFieldValue, fieldName, recordId));
   }
 
   private ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {
@@ -320,8 +322,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         assertTrue(result.size() + " records found with id = '" + uniqueId + "'!", false);
 
       return (ODocument) result.get(0).reload();
-    }
-    finally {
+    } finally {
       ODatabaseRecordThreadLocal.INSTANCE.set(null);
     }
   }
@@ -458,23 +459,23 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   /*
- * A simple client that updates a record
- */
+   * A simple client that updates a record
+   */
   protected class RecordUpdater implements Callable<Void> {
 
     private String              dbServerUrl;
     private ODocument           recordToUpdate;
-    private Map<String, String> fields;
+    private Map<String, Object> fields;
     private boolean             useTransaction;
 
-    protected RecordUpdater(String dbServerUrl, ODocument recordToUpdate, Map<String, String> fields, boolean useTransaction) {
+    protected RecordUpdater(String dbServerUrl, ODocument recordToUpdate, Map<String, Object> fields, boolean useTransaction) {
       this.dbServerUrl = dbServerUrl;
       this.recordToUpdate = recordToUpdate;
       this.fields = fields;
       this.useTransaction = useTransaction;
     }
 
-    protected RecordUpdater(String dbServerUrl, String rid, Map<String, String> fields, boolean useTransaction) {
+    protected RecordUpdater(String dbServerUrl, String rid, Map<String, Object> fields, boolean useTransaction) {
       this.dbServerUrl = dbServerUrl;
       this.useTransaction = useTransaction;
       this.recordToUpdate = retrieveRecord(dbServerUrl, rid);
@@ -501,6 +502,37 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       }
 
       return null;
+    }
+  }
+
+  class AfterRecordLockDelayer implements ODistributedStorageEventListener {
+
+    private long delay;
+
+    public AfterRecordLockDelayer(long delay) {
+      this.delay = delay;
+      OLogManager.instance().info(this, ("Delayer created with " + delay + "ms of delay"));
+    }
+
+    public AfterRecordLockDelayer() {
+      this(DOCUMENT_WRITE_TIMEOUT);
+    }
+
+    @Override
+    public void onAfterRecordLock(ORecordId rid) {
+      try {
+        OLogManager.instance().info(this, "Waiting %s for %dms with locked record [%s]", Thread.currentThread().getId(), delay,
+            rid.toString());
+        Thread.sleep(delay);
+        OLogManager.instance().info(this, "Finished %s waiting for %dms with locked record [%s]", Thread.currentThread().getId(),
+            delay, rid.toString());
+      } catch (InterruptedException e) {
+
+      }
+    }
+
+    @Override
+    public void onAfterRecordUnlock(ORecordId rid) {
     }
   }
 

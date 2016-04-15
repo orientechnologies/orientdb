@@ -334,6 +334,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public ODistributedTxContext popTxContext(final ODistributedRequestId requestId) {
+    ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+        "Distributed transaction: pop request %s for database %s", requestId, databaseName);
     return activeTxContexts.remove(requestId);
   }
 

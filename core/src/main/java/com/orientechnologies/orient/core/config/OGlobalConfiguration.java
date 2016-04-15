@@ -709,7 +709,7 @@ public enum OGlobalConfiguration {
    * @Since 2.2
    */
   @OApi(maturity = OApi.MATURITY.NEW)
-  CREATE_DEFAULT_USERS("security.createDefaultUsers", "Indicates where default database users should be created", Boolean.class, false),
+  CREATE_DEFAULT_USERS("security.createDefaultUsers", "Indicates whether default database users should be created", Boolean.class, true),
 
   /**
    * @Since 2.2

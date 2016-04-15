@@ -56,11 +56,6 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
         serverURL += "/" + iDatabaseName;
       socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
-      socket.setPerformancePreferences(0, 2, 1);
-
-      socket.setKeepAlive(true);
-      socket.setSendBufferSize(socketBufferSize);
-      socket.setReceiveBufferSize(socketBufferSize);
       try {
         if (remoteHost.contains(":")) {
           // IPV6
