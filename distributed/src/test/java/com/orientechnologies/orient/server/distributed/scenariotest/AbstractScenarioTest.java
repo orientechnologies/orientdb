@@ -305,8 +305,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         }
         return true;
       }
-    }, String.format("expected %s=%s", recordId, fieldName, expectedFieldValue));
-
+    }, String.format("Expected value %s for field %s on record %s", expectedFieldValue, fieldName, recordId));
   }
 
   private ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {
@@ -512,7 +511,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     public AfterRecordLockDelayer(long delay) {
       this.delay = delay;
-      System.err.println("Delayer created with " + delay + "ms of delay");
+      OLogManager.instance().info(this, ("Delayer created with " + delay + "ms of delay"));
     }
 
     public AfterRecordLockDelayer() {
@@ -525,7 +524,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         OLogManager.instance().info(this, "Waiting %s for %dms with locked record [%s]", Thread.currentThread().getId(), delay,
             rid.toString());
         Thread.sleep(delay);
-        OLogManager.instance().info(this, "Finished %s Waiting for %dms with locked record [%s]", Thread.currentThread().getId(),
+        OLogManager.instance().info(this, "Finished %s waiting for %dms with locked record [%s]", Thread.currentThread().getId(),
             delay, rid.toString());
       } catch (InterruptedException e) {
 

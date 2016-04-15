@@ -32,14 +32,17 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Checks for consistency on the cluster with these steps: - 2 server (quorum=1) - record1 is inserted on server1 - record1 (version
- * x) is present in full replica on all the servers - client c1 begins a tx on server1, wait some time and updates record1 - client
- * c2 in the meanwhile updates record1 on server2 with value value2
+ * Checks for consistency on the cluster with these steps:
+ * - 2 server (quorum=1)
+ * - record1 is inserted on server1
+ * - record1 (version 1) is present in full replica on all the servers
+ * - client c1 begins a tx on server1, wait some time and updates record1
+ * - client c2 in the meanwhile updates record1 on server2 with value value2
  * <p/>
  * Checks that c2 did not update record1 on server2 because record1 is locked by client1
  */
 
-public class SimultaneousRecordUpdateWithTransactionsOnMultipleServersScenarioTest extends AbstractScenarioTest {
+public class TwoClientsRecordUpdateWithTransactionsOnMultipleServersScenarioTest extends AbstractScenarioTest {
 
   private final String                  RECORD_ID   = "R001";
   private       HashMap<String, Object> lukeFields  = new HashMap<String, Object>() {
@@ -79,14 +82,13 @@ public class SimultaneousRecordUpdateWithTransactionsOnMultipleServersScenarioTe
 
     // retrieves record1 from server2 and checks they're equal
     ODocument record1Server2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
-    assertEquals(record1Server2.field("@version"), record1Server1.field("@version"));
+    assertEquals(record1Server2.getVersion(), record1Server1.getVersion());
     assertEquals(record1Server2.field("id"), record1Server1.field("id"));
     assertEquals(record1Server2.field("firstName"), record1Server1.field("firstName"));
     assertEquals(record1Server2.field("lastName"), record1Server1.field("lastName"));
 
-    // gets the actual version of the record1
-    int actualVersion = record1Server1.field("@version");
-    System.out.println("Actual version: " + actualVersion);
+    // gets the actual version of record1
+    int actualVersion = record1Server1.getVersion();
 
     // sets a delay for operations on distributed storage of server1
     ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer());
@@ -98,14 +100,11 @@ public class SimultaneousRecordUpdateWithTransactionsOnMultipleServersScenarioTe
     List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
     executeFutures(futures);
 
-    record1Server1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), RECORD_ID);
-    record1Server2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
-
-    System.out.println("record1: " + record1Server1);
-    System.out.println("record2: " + record1Server2);
-
     // checks that record on server2 is discarded in favour of record present on server1
     waitForUpdatedRecordPropagation(RECORD_ID, "firstName", "Luke");
+
+    record1Server1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), RECORD_ID);
+    record1Server2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
 
     int finalVersionServer1 = record1Server1.field("@version");
     int finalVersionServer2 = record1Server2.field("@version");
@@ -117,21 +116,4 @@ public class SimultaneousRecordUpdateWithTransactionsOnMultipleServersScenarioTe
   public String getDatabaseName() {
     return "distributed-simultaneous-update";
   }
-//
-//  class AfterRecordLockDelayer implements ODistributedStorageEventListener {
-//
-//    @Override
-//    public void onAfterRecordLock(ORecordId rid) {
-//      try {
-//        OLogManager.instance().error(this, "Waiting for %dms with locked record [%s]", DOCUMENT_WRITE_TIMEOUT, rid.toString());
-//        Thread.sleep(DOCUMENT_WRITE_TIMEOUT);
-//      } catch (InterruptedException e) {
-//
-//      }
-//    }
-//
-//    @Override
-//    public void onAfterRecordUnlock(ORecordId rid) {
-//    }
-//  }
 }
