@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.*;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.exception.OException;
@@ -58,6 +55,9 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -1184,7 +1184,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     className = className.toLowerCase();
 
     final ODatabaseDocumentInternal database = getDatabase();
-    final OStorage storage = database.getStorage();
 
     int[] clusterIds;
 
@@ -1210,12 +1209,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       firstDynamicCluster = 1;
     }
 
-    if (minimumClusters > firstDynamicCluster) {
-      for (int i = firstDynamicCluster; i < minimumClusters; ++i) {
-        clusterIds[i] = database.getClusterIdByName(className + "_" + i);
-        if (clusterIds[i] == -1)
-          clusterIds[i] = database.addCluster(className + "_" + i);
-      }
+    for (int i = 1; i < minimumClusters; ++i) {
+      final int suffix = i + firstDynamicCluster;
+      clusterIds[i] = database.getClusterIdByName(className + "_" + suffix);
+      if (clusterIds[i] == -1)
+        clusterIds[i] = database.addCluster(className + "_" + suffix);
     }
 
     return clusterIds;

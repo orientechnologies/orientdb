@@ -28,13 +28,10 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -47,7 +44,6 @@ import static org.junit.Assert.*;
 
 public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenarioTest {
 
-  @Ignore
   @Test
   public void test() throws Exception {
     init(SERVERS);
@@ -59,67 +55,37 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
   @Override
   public void executeTest() throws Exception {
 
-    // changing flag "failureAvailableNodesLessQuorum" because in no-rpelica case
     OHazelcastPlugin manager1 = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
+
     ODistributedConfiguration databaseConfiguration = manager1.getDatabaseConfiguration(this.getDatabaseName());
     ODocument cfg = databaseConfiguration.serialize();
     cfg.field("autoDeploy", false);
     cfg.field("version", (Integer) cfg.field("version") + 1);
+
     manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), cfg, true, true);
-
-    OHazelcastPlugin manager2 = (OHazelcastPlugin) serverInstance.get(1).getServerInstance().getDistributedManager();
-    databaseConfiguration = manager2.getDatabaseConfiguration(this.getDatabaseName());
-    cfg = databaseConfiguration.serialize();
-    cfg.field("autoDeploy", false);
-    cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager2.updateCachedDatabaseConfiguration(this.getDatabaseName(), cfg, true, true);
-
-    OHazelcastPlugin manager3 = (OHazelcastPlugin) serverInstance.get(2).getServerInstance().getDistributedManager();
-    databaseConfiguration = manager3.getDatabaseConfiguration(this.getDatabaseName());
-    cfg = databaseConfiguration.serialize();
-    cfg.field("autoDeploy", false);
-    cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager3.updateCachedDatabaseConfiguration(this.getDatabaseName(), cfg, true, true);
 
     OrientGraphFactory localFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
     OrientGraphNoTx graphNoTx = null;
-
     try {
-
       graphNoTx = localFactory.getNoTx();
 
-      // removing "person" and "cusomer" classes
-      // graphNoTx.dropVertexType("Provider");
-      // graphNoTx.dropVertexType("Customer");
-      // graphNoTx.dropVertexType("Person");
+      final OrientVertexType clientType = graphNoTx.createVertexType("Client", 1);
 
-      final OrientVertexType clientType = graphNoTx.createVertexType("Client");
+      ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
+      for (int i = 0; i < serverInstance.size(); ++i) {
+        final String serverName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
+        clientType.addCluster("client_" + serverName);
+
+        dCfg.setServerOwner("client_" + serverName, serverName);
+      }
+      manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), dCfg.serialize(), true, true);
+
       final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name", OType.STRING);
       prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
       assertTrue(graphNoTx.getRawGraph().getMetadata().getIndexManager().existsIndex("Client.name"));
 
-      for (int i = 0; i < serverInstance.size(); ++i) {
-        final String serverName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
-        clientType.addCluster("client_" + serverName);
-      }
-
       Thread.sleep(500);
-
-      // checking clusters
-      int[] clusterIds = clientType.getClusterIds();
-      int defaultId = clientType.getDefaultClusterId();
-
-      Map<Integer, String> id2clusterName = new HashMap<Integer, String>();
-      for (int i = 0; i < clusterIds.length; i++) {
-        id2clusterName.put(clusterIds[i], graphNoTx.getRawGraph().getClusterNameById(clusterIds[i]));
-      }
-
-      assertEquals(4, id2clusterName.size());
-      assertEquals("client", id2clusterName.get(clusterIds[0]));
-      assertEquals("client_usa", id2clusterName.get(clusterIds[1]));
-      assertEquals("client_europe", id2clusterName.get(clusterIds[2]));
-      assertEquals("client_asia", id2clusterName.get(clusterIds[3]));
 
       graphNoTx.getRawGraph().close();
 
@@ -181,7 +147,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
       } catch (Exception e) {
         e.printStackTrace();
-        fail();
+        fail(e.toString());
       }
 
       // check consistency (no-replica)
@@ -190,7 +156,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
     } catch (Exception e) {
       e.printStackTrace();
-      fail();
+      fail(e.toString());
     } finally {
       if (!graphNoTx.getRawGraph().isClosed()) {
         ODatabaseRecordThreadLocal.INSTANCE.set(graphNoTx.getRawGraph());

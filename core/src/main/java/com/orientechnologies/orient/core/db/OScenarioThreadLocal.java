@@ -19,11 +19,11 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
+
+import java.util.concurrent.Callable;
 
 /**
  * Thread local to know when the request comes from distributed requester avoiding loops.
@@ -57,7 +57,7 @@ public class OScenarioThreadLocal extends ThreadLocal<RUN_MODE> {
     set(RUN_MODE.DEFAULT);
   }
 
-  public static Object executeAsDistributed(final Callable<Object> iCallback) {
+  public static Object executeAsDistributed(final Callable<? extends Object> iCallback) {
     final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
     if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
       // ASSURE SCHEMA CHANGES ARE NEVER PROPAGATED ON CLUSTER
