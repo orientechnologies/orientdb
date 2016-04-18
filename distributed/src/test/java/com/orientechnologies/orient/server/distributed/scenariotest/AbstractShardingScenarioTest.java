@@ -148,10 +148,15 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
         graphFactory = new OrientGraphFactory("plocal:target/server" + serverId + "/databases/" + getDatabaseName());
         graph = graphFactory.getNoTx();
         try {
-          String sqlCommand = "select count(*) from cluster:client_" + server.getServerInstance().getDistributedManager().getLocalNodeName();
-          OResultSet<ODocument> result = new OCommandSQL(sqlCommand).execute();
-          final int total = ((Number) result.get(0).field("count")).intValue();
-          assertEquals(500, total);
+          String sqlCommand = "select from cluster:client_" + server.getServerInstance().getDistributedManager().getLocalNodeName();
+          List<ODocument> result = new OCommandSQL(sqlCommand).execute();
+          int total = result.size();
+          assertEquals(count * writerCount, total);
+
+          sqlCommand = "select count(*) from cluster:client_" + server.getServerInstance().getDistributedManager().getLocalNodeName();
+          result = new OCommandSQL(sqlCommand).execute();
+          total = ((Number) result.get(0).field("count")).intValue();
+          assertEquals(count * writerCount, total);
         } catch (Exception e) {
           e.printStackTrace();
         } finally {
