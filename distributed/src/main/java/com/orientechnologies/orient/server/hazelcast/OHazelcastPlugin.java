@@ -23,6 +23,7 @@ import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.*;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
@@ -672,6 +673,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         if (isNodeOnline(nodeName, iDatabase.getName()))
           installDbClustersLocalStrategy(iDatabase);
       }
+    } catch (HazelcastInstanceNotActiveException e) {
+      throw new OOfflineNodeException("Hazelcast instance is not available");
+
     } finally {
       // RESTORE ORIGINAL DATABASE INSTANCE IN TL
       ODatabaseRecordThreadLocal.INSTANCE.set(currDb);
