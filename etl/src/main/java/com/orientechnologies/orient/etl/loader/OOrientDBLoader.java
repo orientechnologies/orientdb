@@ -253,6 +253,13 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         }
       }
     }
+
+    if (clusterName != null) {
+      int clusterIdByName = pipeline.getDocumentDatabase().getClusterIdByName(clusterName);
+      if (clusterIdByName == -1) {
+        cls.addCluster(clusterName);
+      }
+    }
     return cls;
   }
 
