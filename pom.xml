@@ -427,7 +427,47 @@
                     <revisionOnScmFailure>??????</revisionOnScmFailure>
                 </configuration>
             </plugin>
-
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>3.0.1</version>
+		<dependencies><dependency><groupId>org.codehaus.plexus</groupId><artifactId>plexus-archiver</artifactId><version>3.1.1</version></dependency></dependencies>
+                <configuration>
+                    <!-- | dummy entry to stop bundle plugin from picking 
+                        up jar config and reporting | WARNING: Duplicate name in Manifest | See http://markmail.org/message/mpkl24wk3jrjhhjg -->
+                    <archive>
+                        <forced>true</forced>
+                    </archive>
+                    <excludeDependencies>true</excludeDependencies>
+                    <manifestLocation>${project.build.directory}/osgi</manifestLocation>
+                    <instructions>
+                        <!-- | stops the "uses" clauses being added to "Export-Package" 
+                            manifest entry -->
+                        <_nouses>true</_nouses>
+                        <!-- | Stop the JAVA_1_n_HOME variables from being 
+                            treated as headers by Bnd -->
+                        <_removeheaders>JAVA_1_3_HOME,JAVA_1_4_HOME,JAVA_1_5_HOME,JAVA_1_6_HOME,JAVA_1_7_HOME,
+                            Bnd-LastModified,Built-By,Private-Package,Tool,Created-By,Build-Jdk,Include-Resource,
+                            Ignore-Package,Private-Package,Bundle-DocURL
+                        </_removeheaders>
+                        <Fragment-Host>${osgi.fragment.host}</Fragment-Host>
+                        <Export-Package>${osgi.export}</Export-Package>
+                        <Private-Package>${osgi.private}</Private-Package>
+                        <Import-Package>${project.groupId}.*;provide:=true,${osgi.import}</Import-Package>
+                        <DynamicImport-Package>${osgi.dynamicImport}</DynamicImport-Package>
+                        <Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
+                    </instructions>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>bundle-manifest</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
