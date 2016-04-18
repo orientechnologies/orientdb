@@ -119,7 +119,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private   STATUS                   status;
   private   OIntent                  currentIntent;
   private   ODatabaseInternal<?>     databaseOwner;
-  private   OSBTreeCollectionManager sbTreeCollectionManager;
   private   OMetadataDefault         metadata;
   private   OImmutableUser           user;
   private   byte                     recordType;
@@ -357,7 +356,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       status = STATUS.OPEN;
 
       componentsFactory = getStorage().getComponentsFactory();
-      sbTreeCollectionManager = getStorage().getSBtreeCollectionManager();
+
       localCache.startup();
 
       getStorage().getConfiguration().setRecordSerializer(getSerializer().toString());
@@ -2765,7 +2764,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   public OSBTreeCollectionManager getSbTreeCollectionManager() {
-    return sbTreeCollectionManager;
+    return getStorage().getSBtreeCollectionManager();
   }
 
   @Override
@@ -2909,7 +2908,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
 
     componentsFactory = getStorage().getComponentsFactory();
-    sbTreeCollectionManager = getStorage().getSBtreeCollectionManager();
 
     localCache.startup();
 
