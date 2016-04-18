@@ -262,6 +262,14 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected void waitForInsertedRecordPropagation(final String recordId) {
+      waitForRecordPropagation(recordId, true);
+  }
+
+  protected void waitForDeletedRecordPropagation(final String recordId) {
+      waitForRecordPropagation(recordId, false);
+  }
+
+  protected void waitForRecordPropagation(final String recordId, final boolean hasToBePresent) {
 
     waitFor(PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT, new OCallable<Boolean, Void>() {
 
@@ -269,13 +277,13 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       public Boolean call(Void iArgument) {
 
         for (ServerRun server : serverInstance) {
-          if (retrieveRecordOrReturnMissing(getDatabaseURL(server), recordId) == MISSING_DOCUMENT) {
+          if ((retrieveRecordOrReturnMissing(getDatabaseURL(server), recordId) == MISSING_DOCUMENT) == hasToBePresent) {
             return false;
           }
         }
         return true;
       }
-    }, "Record " + recordId);
+    }, String.format("Waiting for %s propagation of record %s", hasToBePresent ? "insert" : "delete", recordId));
 
   }
 
@@ -504,6 +512,49 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       return null;
     }
   }
+
+  /*
+   * A simple client that deletes a record
+   */
+  protected class RecordDeleter implements Callable<Void> {
+
+    private String              dbServerUrl;
+    private ODocument recordToDelete;
+    private boolean             useTransaction;
+
+    protected RecordDeleter(String dbServerUrl, ODocument recordToDelete, boolean useTransaction) {
+      this.dbServerUrl = dbServerUrl;
+      this.recordToDelete = recordToDelete;
+      this.useTransaction = useTransaction;
+    }
+
+    protected RecordDeleter(String dbServerUrl, String rid, boolean useTransaction) {
+      this.dbServerUrl = dbServerUrl;
+      this.useTransaction = useTransaction;
+      this.recordToDelete = retrieveRecord(dbServerUrl, rid);
+    }
+
+    @Override
+    public Void call() throws Exception {
+
+      ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
+
+      if (useTransaction) {
+        dbServer.begin();
+      }
+
+      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+      this.recordToDelete.delete();
+      this.recordToDelete.save();
+
+      if (useTransaction) {
+        dbServer.commit();
+      }
+
+      return null;
+    }
+  }
+
 
   class AfterRecordLockDelayer implements ODistributedStorageEventListener {
 
