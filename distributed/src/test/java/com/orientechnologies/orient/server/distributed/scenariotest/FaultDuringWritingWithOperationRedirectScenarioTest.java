@@ -46,7 +46,7 @@ import static org.junit.Assert.*;
  *      - all records on each server are consistent in the cluster
  */
 
-public class FaultDuringWritingScenarioTest extends AbstractScenarioTest {
+public class FaultDuringWritingWithOperationRedirectScenarioTest extends AbstractScenarioTest {
 
   protected Timer timer             = new Timer(true);
   volatile boolean inserting        = true;
@@ -95,7 +95,7 @@ public class FaultDuringWritingScenarioTest extends AbstractScenarioTest {
       f.get(); // waiting for task ending
 
       // waiting for changes propagation
-      Thread.sleep(1000);
+      waitForMultipleInsertsInClassPropagation(500L, "Person", 5000L);
 
       // preliminar check
       ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
@@ -180,7 +180,7 @@ public class FaultDuringWritingScenarioTest extends AbstractScenarioTest {
 
   @Override
   public String getDatabaseName() {
-    return "distributed-faultsimulation";
+    return "distributed-fault-simulation";
   }
 
 }

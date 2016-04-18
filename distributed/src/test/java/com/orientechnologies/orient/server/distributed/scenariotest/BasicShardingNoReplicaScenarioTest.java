@@ -37,10 +37,15 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 /**
- * It checks the consistency in the cluster with the following scenario: - 3 server (europe, usa, asia) - 3 shards, one for each
- * server (client_europe, client_usa, client_asia) - writes on each node (5 threads for each running server write 100 records) -
- * check consistency no-replica - shutdown server3 - check consistency no-replica (can retry only records in shard1 and shard2) -
- * restart server3 - check consistency no-replica
+ * It checks the consistency in the cluster with the following scenario:
+ * - 3 server (europe, usa, asia)
+ * - 3 shards, one for each server (client_europe, client_usa, client_asia)
+ * - writes on each node (5 threads for each running server write 100 records)
+ * - check consistency no-replica
+ * - shutdown server3
+ * - check consistency no-replica (can retry only records in shard1 and shard2)
+ * - restart server3
+ * - check consistency no-replica
  */
 
 public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenarioTest {

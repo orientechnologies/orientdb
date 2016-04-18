@@ -42,7 +42,7 @@ import static org.junit.Assert.fail;
 
 public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
 
-//  @Ignore
+
   @Test
   public void test() throws Exception {
 
@@ -95,8 +95,8 @@ public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
       fail();
     }
 
-    // wait for sync
-    Thread.sleep(1000);
+    // waiting for propagation
+    waitForMultipleInsertsInClassPropagation(1000L, "Person", 5000L);
 
     // check consistency
     super.checkWritesAboveCluster(serverInstance, executeWritesOnServers);
@@ -118,6 +118,6 @@ public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
 
   @Override
   public String getDatabaseName() {
-    return "distributed-rid-hotalignment";
+    return "distributed-isolated-node-rejoin";
   }
 }

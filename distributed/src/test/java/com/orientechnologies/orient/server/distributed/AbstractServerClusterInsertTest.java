@@ -66,6 +66,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     @Override
     public Void call() throws Exception {
+      int j = 0;
       String name = Integer.toString(threadId);
 
       for (int i = 0; i < count; i++) {
@@ -122,7 +123,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
                 throw e;
               }
             } catch (Throwable e) {
-              System.out.println("Writer received exception (db=" + database.getURL());
+              System.out.println("Writer received exception (db=" + database.getURL() + ")");
               e.printStackTrace();
               return null;
             }
@@ -131,6 +132,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
           runningWriters.countDown();
           database.close();
         }
+        j++;
       }
 
       System.out.println("\nWriter " + name + " END");

@@ -132,8 +132,12 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     graph = graphFactory.getNoTx();
     try {
       OResultSet<ODocument> clients = new OCommandSQL("select from Client").execute();
-      final int total = clients.size();
-      junit.framework.Assert.assertEquals(expected, total);
+      int total = clients.size();
+      assertEquals(expected, total);
+
+      List<ODocument> result = new OCommandSQL("select count(*) from Client").execute();
+      total = ((Number) result.get(0).field("count")).intValue();
+      assertEquals(expected, total);
     } finally {
       graph.getRawGraph().close();
     }
@@ -144,10 +148,10 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
         graphFactory = new OrientGraphFactory("plocal:target/server" + serverId + "/databases/" + getDatabaseName());
         graph = graphFactory.getNoTx();
         try {
-          String sqlCommand = "select from cluster:client_" + server.getServerInstance().getDistributedManager().getLocalNodeName();
-          OResultSet<ODocument> clients = new OCommandSQL(sqlCommand).execute();
-          final int total = clients.size();
-          junit.framework.Assert.assertEquals(500, total);
+          String sqlCommand = "select count(*) from cluster:client_" + server.getServerInstance().getDistributedManager().getLocalNodeName();
+          OResultSet<ODocument> result = new OCommandSQL(sqlCommand).execute();
+          final int total = ((Number) result.get(0).field("count")).intValue();
+          assertEquals(500, total);
         } catch (Exception e) {
           e.printStackTrace();
         } finally {

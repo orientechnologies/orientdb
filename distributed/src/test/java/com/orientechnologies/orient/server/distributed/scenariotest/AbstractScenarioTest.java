@@ -129,7 +129,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }
 
     writerExecutors.shutdown();
-    junit.framework.Assert.assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
+    assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
 
     System.out.println("All writer threads have finished, shutting down readers");
 
@@ -138,7 +138,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }
 
     readerExecutors.shutdown();
-    junit.framework.Assert.assertTrue(readerExecutors.awaitTermination(1, TimeUnit.MINUTES));
+    assertTrue(readerExecutors.awaitTermination(1, TimeUnit.MINUTES));
 
     System.out.println("All threads have finished, shutting down server instances");
 
@@ -261,6 +261,25 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   }
 
+  // waiting for all the records' inserts in the cluster are propagated in the cluster inside a specific timebox passed as timeout parameter
+  protected void waitForMultipleInsertsInClassPropagation(final long expectedCount, final String className, final long timeout) {
+
+    waitFor(timeout, new OCallable<Boolean, Void>() {
+
+      @Override
+      public Boolean call(Void iArgument) {
+
+        for (ServerRun server : serverInstance) {
+          if (selectCountInClass(getDatabaseURL(server), className) != expectedCount) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, String.format("Expected %s records in class %s", expectedCount, className));
+
+  }
+
   protected void waitForInsertedRecordPropagation(final String recordId) {
 
     waitFor(PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT, new OCallable<Boolean, Void>() {
@@ -325,6 +344,22 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     } finally {
       ODatabaseRecordThreadLocal.INSTANCE.set(null);
     }
+  }
+
+  private long selectCountInClass(String dbUrl, String className) {
+    ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
+    long numberOfRecords = 0L;
+    try {
+      List<ODocument> result = dbServer.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from " + className));
+      numberOfRecords = ((Number) result.get(0).field("count")).longValue();
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    }
+
+    return numberOfRecords;
   }
 
   protected ODocument retrieveRecordOrReturnMissing(String dbUrl, String uniqueId) {
