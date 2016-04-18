@@ -31,7 +31,6 @@ public class ODistributedDatabaseChunk implements Externalizable {
   public OLogSequenceNumber lsn;
   public boolean            gzipCompressed;
   public boolean            last;
-  public byte[]             schema;
 
   public ODistributedDatabaseChunk() {
   }
@@ -104,11 +103,6 @@ public class ODistributedDatabaseChunk implements Externalizable {
       lsn.writeExternal(out);
     out.writeBoolean(gzipCompressed);
     out.writeBoolean(last);
-    if (schema != null && schema.length > 0) {
-      out.writeInt(schema.length);
-      out.write(schema);
-    } else
-      out.writeInt(0);
   }
 
   @Override
@@ -122,16 +116,5 @@ public class ODistributedDatabaseChunk implements Externalizable {
     lsn = lsnNotNull ? new OLogSequenceNumber(in) : null;
     gzipCompressed = in.readBoolean();
     last = in.readBoolean();
-
-    size = in.readInt();
-    if (size > 0) {
-      schema = new byte[size];
-      in.read(schema);
-    } else
-      schema = null;
-  }
-
-  public void setSchema(final byte[] schema) {
-    this.schema = schema;
   }
 }

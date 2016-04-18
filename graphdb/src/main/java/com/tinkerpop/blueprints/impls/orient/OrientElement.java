@@ -272,10 +272,17 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return (T) rawElement.getIdentity().toString();
 
     final Object fieldValue = getRecord().field(key);
-    if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof OBlob))
-      // CONVERT IT TO VERTEX/EDGE
-      return (T) graph.getElement(fieldValue);
-    else if (!(fieldValue instanceof Map) && OMultiValue.isMultiValue(fieldValue)
+    if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof OBlob)) {
+      ODocument record = ((OIdentifiable) fieldValue).getRecord();
+      if(record!=null){
+        final OClass schemaClass = record.getSchemaClass();
+        if(schemaClass!=null && (schemaClass.isVertexType() || schemaClass.isEdgeType())){
+          // CONVERT IT TO VERTEX/EDGE
+          return (T) graph.getElement(fieldValue);
+        }
+      }
+      return (T) fieldValue;
+    } else if (!(fieldValue instanceof Map) && OMultiValue.isMultiValue(fieldValue)
         && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
       final OIdentifiable firstValue = (OIdentifiable) OMultiValue.getFirstValue(fieldValue);
 

@@ -19,7 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -960,6 +962,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
+    } catch (HazelcastInstanceNotActiveException e) {
+      throw new OOfflineNodeException("Hazelcast instance is not available");
     } catch (Exception e) {
 
       handleDistributedException("Cannot route DELETE_RECORD operation for %s to the distributed node", e, iRecordId);
@@ -1206,7 +1210,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   protected ODistributedRequestId acquireRecordLock(final ORecordId rid) {
-    if( !rid.isPersistent())
+    if (!rid.isPersistent())
       return null;
 
     // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED

@@ -41,22 +41,22 @@ public class OTableFormatter {
     LEFT, CENTER, RIGHT
   }
 
-  protected final static String           MORE                 = "...";
-  protected final static SimpleDateFormat DEF_DATEFORMAT       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+  protected final static String                    MORE                 = "...";
+  protected final static SimpleDateFormat          DEF_DATEFORMAT       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-  protected OPair<String, Boolean>        columnSorting        = null;
-  protected final Map<String, ALIGNMENT>  columnAlignment      = new HashMap<String, ALIGNMENT>();
-  protected final Map<String, String>     columnNotes          = new HashMap<String, String>();
-  protected final Set<String>             columnHidden         = new HashSet<String>();
-  protected final Set<String>             prefixedColumns      = new LinkedHashSet<String>(
+  protected OPair<String, Boolean>                 columnSorting        = null;
+  protected final Map<String, ALIGNMENT>           columnAlignment      = new HashMap<String, ALIGNMENT>();
+  protected final Map<String, Map<String, String>> columnMetadata       = new HashMap<String, Map<String, String>>();
+  protected final Set<String>                      columnHidden         = new HashSet<String>();
+  protected final Set<String>                      prefixedColumns      = new LinkedHashSet<String>(
       Arrays.asList(new String[] { "#", "@RID", "@CLASS" }));
-  protected final OTableOutput            out;
-  protected int                           maxMultiValueEntries = 10;
-  protected int                           minColumnSize        = 4;
-  protected int                           maxWidthSize         = 150;
-  protected String                        nullValue            = "";
-  private boolean                         leftBorder           = true;
-  private boolean                         rightBorder          = true;
+  protected final OTableOutput                     out;
+  protected int                                    maxMultiValueEntries = 10;
+  protected int                                    minColumnSize        = 4;
+  protected int                                    maxWidthSize         = 150;
+  protected String                                 nullValue            = "";
+  private boolean                                  leftBorder           = true;
+  private boolean                                  rightBorder          = true;
 
   public interface OTableOutput {
     void onMessage(String text, Object... args);
@@ -128,8 +128,13 @@ public class OTableFormatter {
     columnAlignment.put(column, alignment);
   }
 
-  public void setColumnNote(final String columnName, final String note) {
-    columnNotes.put(columnName, note);
+  public void setColumnMetadata(final String columnName, final String metadataName, final String metadataValue) {
+    Map<String, String> metadata = columnMetadata.get(columnName);
+    if (metadata == null) {
+      metadata = new LinkedHashMap<String, String>();
+      columnMetadata.put(columnName, metadata);
+    }
+    metadata.put(metadataName, metadataValue);
   }
 
   public int getMaxWidthSize() {
@@ -186,32 +191,7 @@ public class OTableFormatter {
           }
         }
 
-        if (valueAsString == null)
-          valueAsString = nullValue;
-
-        final ALIGNMENT alignment = columnAlignment.get(columnName);
-        if (alignment != null) {
-          switch (alignment) {
-          case LEFT:
-            break;
-          case CENTER: {
-            final int room = columnWidth - valueAsString.length();
-            if (room > 1) {
-              for (int k = 0; k < room / 2; ++k)
-                valueAsString = " " + valueAsString;
-            }
-            break;
-          }
-          case RIGHT: {
-            final int room = columnWidth - valueAsString.length();
-            if (room > 1) {
-              for (int k = 0; k < room; ++k)
-                valueAsString = " " + valueAsString;
-            }
-            break;
-          }
-          }
-        }
+        valueAsString = formatCell(columnName, columnWidth, valueAsString);
 
         vargs.add(valueAsString);
       }
@@ -224,6 +204,36 @@ public class OTableFormatter {
     } catch (Throwable t) {
       out.onMessage("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record due to: " + t);
     }
+  }
+
+  protected String formatCell(final String columnName, final int columnWidth, String valueAsString) {
+    if (valueAsString == null)
+      valueAsString = nullValue;
+
+    final ALIGNMENT alignment = columnAlignment.get(columnName);
+    if (alignment != null) {
+      switch (alignment) {
+      case LEFT:
+        break;
+      case CENTER: {
+        final int room = columnWidth - valueAsString.length();
+        if (room > 1) {
+          for (int k = 0; k < room / 2; ++k)
+            valueAsString = " " + valueAsString;
+        }
+        break;
+      }
+      case RIGHT: {
+        final int room = columnWidth - valueAsString.length();
+        if (room > 1) {
+          for (int k = 0; k < room; ++k)
+            valueAsString = " " + valueAsString;
+        }
+        break;
+      }
+      }
+    }
+    return valueAsString;
   }
 
   private Object getFieldValue(final int iIndex, final OIdentifiable iRecord, final String iColumnName) {
@@ -317,15 +327,35 @@ public class OTableFormatter {
 
   private void printHeader(final Map<String, Integer> iColumns) {
     final StringBuilder columnRow = new StringBuilder("\n");
-    final StringBuilder noteRow = new StringBuilder(columnNotes.isEmpty() ? "" : "\n");
+    final Map<String, StringBuilder> metadataRows = new HashMap<String, StringBuilder>();
+
+    // INIT METADATA
+    final LinkedHashSet<String> allMetadataNames = new LinkedHashSet<String>();
+    final Set<String> metadataColumns = new HashSet<String>();
+
+    for (Entry<String, Map<String, String>> entry : columnMetadata.entrySet()) {
+      metadataColumns.add(entry.getKey());
+
+      for (Entry<String, String> entry2 : entry.getValue().entrySet()) {
+        allMetadataNames.add(entry2.getKey());
+
+        StringBuilder metadataRow = metadataRows.get(entry2.getKey());
+        if (metadataRow == null) {
+          metadataRow = new StringBuilder("\n");
+          metadataRows.put(entry2.getKey(), metadataRow);
+        }
+      }
+    }
 
     printHeaderLine(iColumns);
     int i = 0;
 
     if (leftBorder) {
       columnRow.append('|');
-      if (!columnNotes.isEmpty())
-        noteRow.append('|');
+      if (!metadataRows.isEmpty()) {
+        for (StringBuilder buffer : metadataRows.values())
+          buffer.append('|');
+      }
     }
 
     for (Entry<String, Integer> column : iColumns.entrySet()) {
@@ -334,36 +364,52 @@ public class OTableFormatter {
       if (columnHidden.contains(colName))
         continue;
 
-      if (i++ > 0) {
+      if (i > 0) {
         columnRow.append('|');
-        if (!columnNotes.isEmpty())
-          noteRow.append('|');
+        if (!metadataRows.isEmpty()) {
+          for (StringBuilder buffer : metadataRows.values())
+            buffer.append('|');
+        }
       }
 
       if (colName.length() > column.getValue())
         colName = colName.substring(0, column.getValue());
-      columnRow.append(String.format("%-" + column.getValue() + "s", colName));
+      columnRow.append(String.format("%-" + column.getValue() + "s", formatCell(colName, column.getValue(), colName)));
 
-      if (!columnNotes.isEmpty()) {
-        String note = columnNotes.get(column.getKey());
-        if (note == null)
-          note = "";
+      if (!metadataRows.isEmpty()) {
+        // METADATA VALUE
+        for (String metadataName : allMetadataNames) {
+          final StringBuilder buffer = metadataRows.get(metadataName);
+          final Map<String, String> metadataColumn = columnMetadata.get(column.getKey());
+          String metadataValue = metadataColumn != null ? metadataColumn.get(metadataName) : null;
+          if (metadataValue == null)
+            metadataValue = "";
 
-        if (note.length() > column.getValue())
-          note = note.substring(0, column.getValue());
-        noteRow.append(String.format("%-" + column.getValue() + "s", note));
+          if (metadataValue.length() > column.getValue())
+            metadataValue = metadataValue.substring(0, column.getValue());
+          buffer.append(String.format("%-" + column.getValue() + "s", formatCell(colName, column.getValue(), metadataValue)));
+        }
       }
+
+      ++i;
     }
 
     if (rightBorder) {
       columnRow.append('|');
-      if (!columnNotes.isEmpty())
-        noteRow.append('|');
+      if (!metadataRows.isEmpty()) {
+        for (StringBuilder buffer : metadataRows.values())
+          buffer.append('|');
+      }
+    }
+
+    if (!metadataRows.isEmpty()) {
+      // PRINT METADATA IF ANY
+      for (StringBuilder buffer : metadataRows.values())
+        out.onMessage(buffer.toString());
+      printHeaderLine(iColumns);
     }
 
     out.onMessage(columnRow.toString());
-    if (!columnNotes.isEmpty())
-      out.onMessage(noteRow.toString());
 
     printHeaderLine(iColumns);
   }
@@ -517,6 +563,17 @@ public class OTableFormatter {
       newColumnSize = fieldName.length();
     else
       newColumnSize = Math.max(origSize, fieldName.length());
+
+    final Map<String, String> metadata = columnMetadata.get(fieldName);
+    if (metadata != null) {
+      // UPDATE WIDTH WITH METADATA VALUES
+      for (String v : metadata.values()) {
+        if (v != null) {
+          if (v.length() > newColumnSize)
+            newColumnSize = v.length();
+        }
+      }
+    }
 
     final Object fieldValue = getFieldValue(iIndex, iRecord, fieldName);
 

@@ -41,26 +41,26 @@ import java.util.*;
  * @since 12/3/13
  */
 public class OAtomicOperation {
-  private final int                                      storageId;
-  private final OLogSequenceNumber                       startLSN;
-  private final OOperationUnitId                         operationUnitId;
+  private final int                storageId;
+  private final OLogSequenceNumber startLSN;
+  private final OOperationUnitId   operationUnitId;
 
-  private int                                            startCounter;
-  private boolean                                        rollback;
-  private Exception                                      rollbackException;
+  private int       startCounter;
+  private boolean   rollback;
+  private Exception rollbackException;
 
-  private Set<String>                                    lockedObjects        = new HashSet<String>();
-  private Map<Long, FileChanges>                         fileChanges          = new HashMap<Long, FileChanges>();
-  private Map<String, Long>                              newFileNamesId       = new HashMap<String, Long>();
-  private Set<Long>                                      deletedFiles         = new HashSet<Long>();
-  private Map<String, Long>                              deletedFileNameIdMap = new HashMap<String, Long>();
+  private Set<String>            lockedObjects        = new HashSet<String>();
+  private Map<Long, FileChanges> fileChanges          = new HashMap<Long, FileChanges>();
+  private Map<String, Long>      newFileNamesId       = new HashMap<String, Long>();
+  private Set<Long>              deletedFiles         = new HashSet<Long>();
+  private Map<String, Long>      deletedFileNameIdMap = new HashMap<String, Long>();
 
   private OReadCache  readCache;
   private OWriteCache writeCache;
 
   private final OPerformanceStatisticManager performanceStatisticManager;
 
-  private final Map<String, OAtomicOperationMetadata<?>> metadata             = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
+  private final Map<String, OAtomicOperationMetadata<?>> metadata = new LinkedHashMap<String, OAtomicOperationMetadata<?>>();
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId, OReadCache readCache,
       OWriteCache writeCache, int storageId, OPerformanceStatisticManager performanceStatisticManager) {
@@ -128,8 +128,7 @@ public class OAtomicOperation {
    * Add metadata with given key inside of atomic operation. If metadata with the same key insist inside of atomic operation it will
    * be overwritten.
    *
-   * @param metadata
-   *          Metadata to add.
+   * @param metadata Metadata to add.
    * @see OAtomicOperationMetadata
    */
   public void addMetadata(OAtomicOperationMetadata<?> metadata) {
@@ -137,8 +136,7 @@ public class OAtomicOperation {
   }
 
   /**
-   * @param key
-   *          Key of metadata which is looking for.
+   * @param key Key of metadata which is looking for.
    * @return Metadata by associated key or <code>null</code> if such metadata is absent.
    */
   public OAtomicOperationMetadata<?> getMetadata(String key) {
@@ -444,7 +442,7 @@ public class OAtomicOperation {
   }
 
   public OUncompletedCommit<Void> initiateCommit(OWriteAheadLog writeAheadLog) throws IOException {
-      return new UncompletedCommit(writeAheadLog);
+    return new UncompletedCommit(writeAheadLog);
   }
 
   void incrementCounter() {
@@ -614,10 +612,9 @@ public class OAtomicOperation {
 
               if (filePageChanges.pinPage)
                 readCache.pinPage(cacheEntry);
-
-              readCache.release(cacheEntry, writeCache);
             } finally {
               cacheEntry.releaseExclusiveLock();
+              readCache.release(cacheEntry, writeCache);
             }
           }
         }
