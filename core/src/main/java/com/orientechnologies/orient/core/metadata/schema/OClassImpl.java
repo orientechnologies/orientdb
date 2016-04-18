@@ -1958,6 +1958,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return db != null ? db.getMetadata().getIndexManager().getClassAutoShardingIndex(name) : null;
   }
 
+  @Override
+  public boolean isEdgeType() {
+    return isSubClassOf(EDGE_CLASS_NAME);
+  }
+
+  @Override
+  public boolean isVertexType() {
+    return isSubClassOf(VERTEX_CLASS_NAME);
+  }
+
   public void onPostIndexManagement() {
     final OIndex<?> autoShardingIndex = getAutoShardingIndex();
     if (autoShardingIndex != null) {

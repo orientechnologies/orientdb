@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
  */
 public class OrientEdgeType extends OrientElementType {
   // Keeping the name in Immutable class because i cannot do the other way around
-  public static final String CLASS_NAME = OImmutableClass.EDGE_CLASS_NAME;
+  public static final String CLASS_NAME = OClass.EDGE_CLASS_NAME;
 
   public OrientEdgeType(final OrientBaseGraph graph, final OClass delegate) {
     super(graph, delegate);
@@ -54,6 +54,14 @@ public class OrientEdgeType extends OrientElementType {
   public OrientEdgeType addCluster(final String iClusterName) {
     delegate.addCluster(iClusterName);
     return this;
+  }
+
+  @Override public boolean isEdgeType() {
+    return true;
+  }
+
+  @Override public boolean isVertexType() {
+    return false;
   }
 
   @Override

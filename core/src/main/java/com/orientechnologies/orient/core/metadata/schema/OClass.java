@@ -36,6 +36,11 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public interface OClass extends Comparable<OClass> {
+
+  public static final String              EDGE_CLASS_NAME   = "E";
+  public static final String              VERTEX_CLASS_NAME = "V";
+
+
   enum ATTRIBUTES {
     NAME, SHORTNAME, SUPERCLASS, SUPERCLASSES, OVERSIZE, STRICTMODE, ADDCLUSTER, REMOVECLUSTER, CUSTOM, ABSTRACT, CLUSTERSELECTION, DESCRIPTION, ENCRYPTION
   }
@@ -54,6 +59,8 @@ public interface OClass extends Comparable<OClass> {
       return automaticIndexable;
     }
   }
+
+
 
   boolean isAbstract();
 
@@ -443,6 +450,17 @@ public interface OClass extends Comparable<OClass> {
    * Returns the auto sharding index configured for the class if any.
    */
   OIndex<?> getAutoShardingIndex();
+
+  /**
+   * @return true if this class represents a subclass of an edge class (E)
+   */
+  boolean isEdgeType();
+
+  /**
+   * @return true if this class represents a subclass of a vertex class (V)
+   */
+  boolean isVertexType();
+
 
   String getCustom(String iName);
 

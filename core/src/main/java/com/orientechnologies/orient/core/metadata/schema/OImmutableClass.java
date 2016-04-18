@@ -19,9 +19,6 @@
   */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -36,13 +33,26 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OScheduler;
 
+import java.io.IOException;
+import java.util.*;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/21/14
  */
 public class OImmutableClass implements OClass {
-  public static final String              EDGE_CLASS_NAME   = "E";
-  public static final String              VERTEX_CLASS_NAME = "V";
+  /**
+   * use OClass.EDGE_CLASS_NAME instead
+   */
+  @Deprecated
+  public static final String              EDGE_CLASS_NAME   = OClass.EDGE_CLASS_NAME;
+  /**
+   * use OClass.EDGE_CLASS_NAME instead
+   */
+  @Deprecated
+  public static final String              VERTEX_CLASS_NAME = OClass.VERTEX_CLASS_NAME;
+
+
   private boolean                         inited            = false;
   private final boolean                   isAbstract;
   private final boolean                   strictMode;
@@ -134,8 +144,8 @@ public class OImmutableClass implements OClass {
       this.allProperties = Collections.unmodifiableCollection(allProperties);
       this.allPropertiesMap = Collections.unmodifiableMap(allPropsMap);
       this.restricted = isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME);
-      this.isVertexType = isSubClassOf(VERTEX_CLASS_NAME);
-      this.isEdgeType = isSubClassOf(EDGE_CLASS_NAME);
+      this.isVertexType = isSubClassOf(OClass.VERTEX_CLASS_NAME);
+      this.isEdgeType = isSubClassOf(OClass.EDGE_CLASS_NAME);
       this.triggered = isSubClassOf(OClassTrigger.CLASSNAME);
       this.function = isSubClassOf(OFunctionTrigger.CLASSNAME);
       this.scheduler = isSubClassOf(OScheduler.CLASSNAME);
