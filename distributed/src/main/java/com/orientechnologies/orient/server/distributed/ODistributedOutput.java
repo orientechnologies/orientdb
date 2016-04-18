@@ -38,7 +38,8 @@ import java.util.Set;
  */
 public class ODistributedOutput {
 
-  public static String formatClusterTable(final ODistributedServerManager manager, final String databaseName, final ODistributedConfiguration cfg, final int availableNodes) {
+  public static String formatClusterTable(final ODistributedServerManager manager, final String databaseName,
+      final ODistributedConfiguration cfg, final int availableNodes) {
     final StringBuilder buffer = new StringBuilder();
 
     buffer.append("\n\nLEGEND: X = Owner, o = Copy");
@@ -96,8 +97,9 @@ public class ODistributedOutput {
         }
     }
 
-    for( String server : allServers ){
-      table.setColumnNote(server, manager.getDatabaseStatus(server, databaseName).toString());
+    for (String server : allServers) {
+      table.setColumnMetadata(server, "ROLE", cfg.getServerRole(server).toString());
+      table.setColumnMetadata(server, "STATUS", manager.getDatabaseStatus(server, databaseName).toString());
     }
 
     table.writeRecords(rows, -1);
