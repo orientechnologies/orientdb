@@ -1859,6 +1859,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       do {
         try {
           clearToken();
+          setSessionId(null, -1, null);
           network = getAvailableNetwork(currentURL);
           try {
             network.writeByte(OChannelBinaryProtocol.REQUEST_DB_OPEN);
