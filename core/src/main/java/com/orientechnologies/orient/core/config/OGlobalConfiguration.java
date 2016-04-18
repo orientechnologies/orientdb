@@ -19,18 +19,6 @@
 */
 package com.orientechnologies.orient.core.config;
 
-import java.io.PrintStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.lang.management.PlatformManagedObject;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -42,6 +30,18 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
+
+import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.PlatformManagedObject;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -522,8 +522,7 @@ public enum OGlobalConfiguration {
       Integer.class, 500),
 
   // QUERY
-      QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met.", Boolean.class,
-          Runtime.getRuntime().availableProcessors() > 2),
+  QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met.", Boolean.class, false),
 
   QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords",
       "Minimum number of records to activate parallel query automatically.", Long.class, 300000),
