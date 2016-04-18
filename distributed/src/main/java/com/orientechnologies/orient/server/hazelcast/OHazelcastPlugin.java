@@ -45,12 +45,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -1639,14 +1637,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     if (db != null) {
       db.activateOnCurrentThread();
-
-      // REWRITE THE SCHEMA
-      if( firstChunk.schema != null ){
-        final ORecord schemaRecord = new ORecordId(db.getStorage().getConfiguration().schemaRecordId).getRecord();
-        schemaRecord.fromStream(firstChunk.schema);
-        schemaRecord.save();
-      }
-
       db.close();
       final OStorage stg = Orient.instance().getStorage(databaseName);
       if (stg != null)
