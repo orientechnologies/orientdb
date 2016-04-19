@@ -145,9 +145,10 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
         ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
         ODocument cfg = databaseConfiguration.serialize();
+        cfg.field("writeQuorum", 2);
         cfg.field("version", (Integer) cfg.field("version") + 1);
         manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
-        assertEquals("majority", cfg.field("writeQuorum"));
+        assertEquals(2, cfg.field("writeQuorum"));
 
         // network fault on server2
         System.out.println("Network fault on server2.\n");
@@ -313,7 +314,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         // restarting server3
         try {
           serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(2)));
-          System.out.println("Server 2 restarted.");
+          System.out.println("Server 3 restarted.");
           assertTrue(serverInstance.get(2).isActive());
         } catch (Exception e) {
           e.printStackTrace();
