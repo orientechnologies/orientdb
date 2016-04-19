@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -49,6 +50,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -395,6 +397,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
           last.next = node;
         }
 
+        node.linkLatch.countDown();
+
         break;
       }
     }
@@ -408,6 +412,13 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       if (tail == null)
         return null;
 
+      //head is null but tail is not null we are in the middle of addition of item in the list
+      if (head == null) {
+        //let other thread to make it's work
+        Thread.yield();
+        continue;
+      }
+
       if (head == tail) {
         return new WaitingListNode(head.item);
       }
@@ -415,8 +426,12 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       if (waitingHead.compareAndSet(head, tail)) {
         WaitingListNode node = head;
 
+        node.waitTillAllLinksWillBeCreated();
+
         while (node.next != tail) {
           node = node.next;
+
+          node.waitTillAllLinksWillBeCreated();
         }
 
         node.next = new WaitingListNode(tail.item);
@@ -485,11 +500,24 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   private static final class WaitingListNode {
-    private final    Thread          item;
+    private final Thread item;
+    /**
+     * Latch which indicates that all links are created between add and existing list elements.
+     */
+    private final CountDownLatch linkLatch = new CountDownLatch(1);
+
     private volatile WaitingListNode next;
 
     public WaitingListNode(Thread item) {
       this.item = item;
+    }
+
+    public void waitTillAllLinksWillBeCreated() {
+      try {
+        linkLatch.await();
+      } catch (InterruptedException e) {
+        throw new OInterruptedException(e);
+      }
     }
   }
 
