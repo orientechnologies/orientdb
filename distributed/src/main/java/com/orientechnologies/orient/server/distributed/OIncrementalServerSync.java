@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
@@ -38,6 +39,8 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedDatabase
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -184,10 +187,28 @@ public class OIncrementalServerSync {
                             recordSize, recordVersion, newRecord);
                       } catch (ORecordDuplicatedException e) {
                         ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN,
-                            "DELTA <- error on saving record (duplicated) rid=%s type=%d size=%d v=%d content=%s", rid, recordType,
-                            recordSize, recordVersion, newRecord);
-                        throw OException.wrapException(
-                            new ODistributedDatabaseDeltaSyncException("Error on delta sync: found duplicated record " + rid), e);
+                            "DELTA <- error on saving record (duplicated %s) rid=%s type=%d size=%d v=%d content=%s", e.getRid(),
+                            rid, recordType, recordSize, recordVersion, newRecord);
+                        // throw OException.wrapException(
+                        // new ODistributedDatabaseDeltaSyncException("Error on delta sync: found duplicated record " + rid), e);
+
+                        final ORecord duplicatedRecord = db.load(e.getRid(), null, true);
+                        if (duplicatedRecord == null) {
+                          // RECORD REMOVED: THE INDEX IS DIRTY, FIX THE DIRTY INDEX
+                          final ODocument doc = (ODocument) newRecord;
+                          final OIndex<?> index = db.getMetadata().getIndexManager().getIndex(e.getIndexName());
+                          final List<String> fields = index.getDefinition().getFields();
+                          final List<Object> values = new ArrayList<Object>(fields.size());
+                          for (String f : fields) {
+                            values.add(doc.field(f));
+                          }
+                          final Object keyValue = index.getDefinition().createValue(values);
+                          index.remove(keyValue, e.getRid());
+
+                          // RESAVE THE RECORD
+                          newRecord.save();
+                        } else
+                          break;
                       }
 
                       if (newRecord.getIdentity().getClusterPosition() < clusterPos) {
@@ -208,7 +229,7 @@ public class OIncrementalServerSync {
                     break;
                   }
 
-                  if (!newRecord.getIdentity().equals(rid))
+                  if (newRecord.getIdentity().isPersistent() && !newRecord.getIdentity().equals(rid))
                     throw new ODistributedDatabaseDeltaSyncException(
                         "Error on synchronization of records, rids are different: saved " + newRecord.getIdentity()
                             + ", but it should be " + rid);

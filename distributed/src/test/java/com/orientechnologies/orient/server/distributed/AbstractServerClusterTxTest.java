@@ -133,7 +133,6 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
             } catch (Throwable e) {
               System.out.println(e.getClass() + " Exception caught on writer thread " + threadId + " (db=" + database.getURL());
               e.printStackTrace();
-              break;
             }
           }
         } finally {
