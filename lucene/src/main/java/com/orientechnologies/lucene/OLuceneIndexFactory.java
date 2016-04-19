@@ -24,16 +24,15 @@ import com.orientechnologies.lucene.manager.OLuceneSpatialIndexManager;
 import com.orientechnologies.lucene.shape.OShapeFactoryImpl;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -45,7 +44,7 @@ import java.util.Set;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener, OOrientListener, OFullCheckpointListener {
 
-  public static final String       LUCENE_ALGORITHM = "LUCENE";
+  public static final String LUCENE_ALGORITHM = "LUCENE";
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
 
@@ -179,6 +178,7 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   public void onStorageRegistered(OStorage storage) {
 
     if (storage instanceof OAbstractPaginatedStorage) {
+      ((OAbstractPaginatedStorage) storage).removeFullCheckpointListener(this);
       ((OAbstractPaginatedStorage) storage).addFullCheckpointListener(this);
     }
   }
@@ -193,7 +193,12 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   @Override
   public void fullCheckpointMade(OAbstractPaginatedStorage storage) {
 
-    ODatabaseInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    boolean opened = false;
+    if (db == null) {
+      db = openDatabase(storage.getURL());
+      opened = true;
+    }
     try {
 
       if (!db.isClosed()) {
@@ -205,6 +210,17 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       }
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Error on flushing Lucene indexes", e);
+    } finally {
+      if (opened) {
+        db.close();
+      }
     }
+  }
+
+  private ODatabaseInternal openDatabase(String url) {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
+    db.open("admin", "aaa");
+    return db;
   }
 }
