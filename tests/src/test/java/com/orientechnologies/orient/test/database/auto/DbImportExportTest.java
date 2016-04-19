@@ -36,12 +36,15 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   public static final String NEW_DB_PATH      = "target/test-import";
   public static final String NEW_DB_URL       = "target/test-import";
 
-  private String             testPath;
+  private String testPath;
+  private String exportFilePath;
 
   @Parameters(value = { "url", "testPath" })
   public DbImportExportTest(@Optional String url, String testPath) {
     super(url);
     this.testPath = testPath;
+
+    exportFilePath = System.getProperty("exportFilePath", EXPORT_FILE_PATH);
   }
 
   @Test
@@ -49,7 +52,7 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
-    ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + EXPORT_FILE_PATH, this);
+    ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
     export.exportDatabase();
     export.close();
 
@@ -68,7 +71,7 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
     database.create();
 
-    ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
+    ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + exportFilePath, this);
 
     // UNREGISTER ALL THE HOOKS
     for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks().keySet())) {
