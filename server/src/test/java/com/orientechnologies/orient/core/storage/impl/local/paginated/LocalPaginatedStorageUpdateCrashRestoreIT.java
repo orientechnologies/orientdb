@@ -295,7 +295,10 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
           }
         }
       } finally {
+        baseDB.activateOnCurrentThread();
         baseDB.close();
+
+        testDB.activateOnCurrentThread();
         testDB.close();
       }
     }

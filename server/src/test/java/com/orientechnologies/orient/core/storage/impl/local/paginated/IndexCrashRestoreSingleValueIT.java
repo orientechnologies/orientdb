@@ -228,7 +228,10 @@ public class IndexCrashRestoreSingleValueIT {
               .execute();
         }
       } finally {
+        baseDB.activateOnCurrentThread();
         baseDB.close();
+
+        testDB.activateOnCurrentThread();
         testDB.close();
       }
     }

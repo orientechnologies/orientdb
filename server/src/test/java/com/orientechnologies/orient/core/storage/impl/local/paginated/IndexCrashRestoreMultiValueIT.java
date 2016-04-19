@@ -275,11 +275,13 @@ public class IndexCrashRestoreMultiValueIT {
         throw e;
       } finally {
         try {
+          baseDB.activateOnCurrentThread();
           baseDB.close();
         } catch (Exception e) {
         }
 
         try {
+          testDB.activateOnCurrentThread();
           testDB.close();
         } catch (Exception e) {
         }
