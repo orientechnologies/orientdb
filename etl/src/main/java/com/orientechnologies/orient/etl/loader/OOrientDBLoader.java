@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.INFO;
 import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.DOCUMENT;
 
 /**
@@ -53,25 +54,26 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected List<ODocument> indexes;
   protected OClass          schemaClass;
   protected String          dbURL;
-  protected String          dbUser                     = "admin";
-  protected String          dbPassword                 = "admin";
-  protected boolean         dbAutoCreate               = true;
-  protected boolean         dbAutoDropIfExists         = false;
-  protected boolean         dbAutoCreateProperties     = false;
-  protected boolean         useLightweightEdges        = false;
-  protected boolean         standardElementConstraints = true;
-  protected boolean         tx                         = false;
+  protected String     dbUser                     = "admin";
+  protected String     dbPassword                 = "admin";
+  protected boolean    dbAutoCreate               = true;
+  protected boolean    dbAutoDropIfExists         = false;
+  protected boolean    dbAutoCreateProperties     = false;
+  protected boolean    useLightweightEdges        = false;
+  protected boolean    standardElementConstraints = true;
+  protected boolean    tx                         = false;
   protected int        batchCommitSize            = 0;
-  protected AtomicLong      batchCounter               = new AtomicLong(0);
-  protected DB_TYPE         dbType                     = DOCUMENT;
-  protected boolean         wal                        = true;
-  protected boolean         txUseLog                   = false;
+  protected AtomicLong batchCounter               = new AtomicLong(0);
+  protected DB_TYPE    dbType                     = DOCUMENT;
+  protected boolean    wal                        = true;
+  protected boolean    txUseLog                   = false;
 
   public OOrientDBLoader() {
   }
 
   @Override
   public void load(OETLPipeline pipeline, final Object input, OCommandContext context) {
+
     if (input == null)
       return;
 
@@ -88,29 +90,26 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     }
 
     if (input instanceof OrientVertex) {
-      // VERTEX
       final OrientVertex v = (OrientVertex) input;
 
-      if (clusterName != null)
-        // SAVE INTO THE CUSTOM CLUSTER
+      if (clusterName != null) {
         v.save(clusterName);
-      else
-        // SAVE INTO THE DEFAULT CLUSTER
+      } else {
         v.save();
+      }
 
     } else if (input instanceof ODocument) {
-      // DOCUMENT
       final ODocument doc = (ODocument) input;
 
-      if (className != null)
+      if (className != null) {
         doc.setClassName(className);
+      }
 
-      if (clusterName != null)
-        // SAVE INTO THE CUSTOM CLUSTER
+      if (clusterName != null) {
         doc.save(clusterName);
-      else
-        // SAVE INTO THE DEFAULT CLUSTER
+      } else {
         doc.save();
+      }
     }
 
     progress.incrementAndGet();
@@ -163,8 +162,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         final OrientElement element = (OrientElement) input;
 
         final OClass cls;
-        final String clsName = className != null ? className
-            : (element instanceof OrientVertex ? element.getLabel() : element.getLabel());
+        final String clsName =
+            className != null ? className : (element instanceof OrientVertex ? element.getLabel() : element.getLabel());
         if (clsName != null)
           cls = getOrCreateClass(pipeline, clsName, element.getBaseClassName());
         else
@@ -258,6 +257,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       int clusterIdByName = pipeline.getDocumentDatabase().getClusterIdByName(clusterName);
       if (clusterIdByName == -1) {
         cls.addCluster(clusterName);
+        log(INFO, " - OrientDBLoader: created cluster '%s' ", clusterName);
       }
     }
     return cls;
@@ -323,23 +323,23 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     if (iConfiguration.containsField("dbType"))
       dbType = DB_TYPE.valueOf(iConfiguration.field("dbType").toString().toUpperCase());
     if (iConfiguration.containsField("tx"))
-      tx = iConfiguration.<Boolean> field("tx");
+      tx = iConfiguration.<Boolean>field("tx");
     if (iConfiguration.containsField("wal"))
-      wal = iConfiguration.<Boolean> field("wal");
+      wal = iConfiguration.<Boolean>field("wal");
     if (iConfiguration.containsField("txUseLog"))
-      txUseLog = iConfiguration.<Boolean> field("txUseLog");
+      txUseLog = iConfiguration.<Boolean>field("txUseLog");
     if (iConfiguration.containsField("batchCommit"))
       batchCommitSize = iConfiguration.<Integer>field("batchCommit");
     if (iConfiguration.containsField("dbAutoCreate"))
-      dbAutoCreate = iConfiguration.<Boolean> field("dbAutoCreate");
+      dbAutoCreate = iConfiguration.<Boolean>field("dbAutoCreate");
     if (iConfiguration.containsField("dbAutoDropIfExists"))
-      dbAutoDropIfExists = iConfiguration.<Boolean> field("dbAutoDropIfExists");
+      dbAutoDropIfExists = iConfiguration.<Boolean>field("dbAutoDropIfExists");
     if (iConfiguration.containsField("dbAutoCreateProperties"))
-      dbAutoCreateProperties = iConfiguration.<Boolean> field("dbAutoCreateProperties");
+      dbAutoCreateProperties = iConfiguration.<Boolean>field("dbAutoCreateProperties");
     if (iConfiguration.containsField("useLightweightEdges"))
-      useLightweightEdges = iConfiguration.<Boolean> field("useLightweightEdges");
+      useLightweightEdges = iConfiguration.<Boolean>field("useLightweightEdges");
     if (iConfiguration.containsField("standardElementConstraints"))
-      standardElementConstraints = iConfiguration.<Boolean> field("standardElementConstraints");
+      standardElementConstraints = iConfiguration.<Boolean>field("standardElementConstraints");
 
     clusterName = iConfiguration.field("cluster");
     className = iConfiguration.field("class");

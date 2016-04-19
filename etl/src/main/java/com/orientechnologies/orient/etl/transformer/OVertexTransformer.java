@@ -27,7 +27,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 public class OVertexTransformer extends OAbstractTransformer {
-  private String  vertexClass;
+  private String vertexClass;
   private boolean skipDuplicates = false;
 
   @Override
@@ -70,7 +70,12 @@ public class OVertexTransformer extends OAbstractTransformer {
 
     if (vertexClass != null && !vertexClass.equals(v.getRecord().getClassName()))
       try {
+//        v.save("myCluster");
         v.setProperty("@class", vertexClass);
+
+
+//        v.getRecord().field("@class", vertexClass);
+
       } catch (ORecordDuplicatedException e) {
         if (skipDuplicates) {
           return null;
