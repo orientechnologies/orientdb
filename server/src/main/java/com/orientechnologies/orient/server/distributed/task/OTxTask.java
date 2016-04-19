@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -50,6 +43,14 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Distributed transaction task.
@@ -148,6 +149,10 @@ public class OTxTask extends OAbstractReplicatedTask {
           }
         }
       } catch (Exception t) {
+        // EXCEPTION: ASSURE ALL LOCKS ARE FREED
+        for (ORID r : result.locks)
+          ddb.unlockRecord(r);
+
         // RESET ANY ASSIGNED CLUSTER ID
         for (OAbstractRecordReplicatedTask task : tasks) {
           if (task instanceof OCreateRecordTask) {
@@ -155,10 +160,6 @@ public class OTxTask extends OAbstractReplicatedTask {
             createRT.resetRecord();
           }
         }
-
-        // EXCEPTION: ASSURE ALL LOCKS ARE FREED
-        for (ORID r : result.locks)
-          ddb.unlockRecord(r);
 
         // RETHROW IT
         throw t;
@@ -188,6 +189,20 @@ public class OTxTask extends OAbstractReplicatedTask {
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
     return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
+  }
+
+  public Set<ORID> getRidsToLock() {
+    final Set<ORID> locks = new HashSet<ORID>();
+
+    for (OAbstractRecordReplicatedTask task : tasks) {
+      if (task instanceof OCreateRecordTask) {
+      } else {
+        // UPDATE & DELETE: TRY EARLY LOCKING RECORD
+        locks.add(task.getRid());
+      }
+    }
+
+    return locks;
   }
 
   @Override

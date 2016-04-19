@@ -150,6 +150,14 @@ public class OIndexChangesWrapper implements OIndexCursor {
     return next;
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void remove() {
+    delegate.remove();
+  }
+
   protected void throwRebuildException() {
     throw new OIndexIsRebuildingException("Index " + source.getName() + " is rebuilding at the moment and can not be used");
   }

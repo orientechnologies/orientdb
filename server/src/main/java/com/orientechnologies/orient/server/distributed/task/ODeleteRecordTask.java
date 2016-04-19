@@ -27,12 +27,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -69,8 +65,8 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
 
     // TRY LOCKING RECORD
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
-    if (!inTx) {
-      if (lockRecord && !ddb.lockRecord(rid, nodeSource))
+    if (!inTx && lockRecord) {
+      if (!ddb.lockRecord(rid, nodeSource))
         throw new ODistributedRecordLockedException(rid);
     }
 
@@ -88,7 +84,7 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
           record.delete();
       }
     } finally {
-      if (!inTx)
+      if (!inTx && lockRecord)
         ddb.unlockRecord(rid);
     }
 

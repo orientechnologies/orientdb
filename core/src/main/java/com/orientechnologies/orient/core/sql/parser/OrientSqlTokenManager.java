@@ -472,7 +472,7 @@ private int jjMoveNfa_0(int startState, int curPos)
                      jjCheckNAddStates(14, 16);
                   break;
                case 18:
-                  if ((0x8400000000L & l) != 0L)
+                  if ((0x808400000000L & l) != 0L)
                      jjCheckNAddStates(14, 16);
                   break;
                case 19:
@@ -878,7 +878,7 @@ private int jjMoveNfa_0(int startState, int curPos)
                      kind = 91;
                   break;
                case 608:
-                  if ((0x8400000000L & l) != 0L)
+                  if ((0x808400000000L & l) != 0L)
                      jjCheckNAdd(606);
                   break;
                case 609:
@@ -902,7 +902,7 @@ private int jjMoveNfa_0(int startState, int curPos)
                      jjCheckNAddStates(72, 74);
                   break;
                case 615:
-                  if ((0x8400000000L & l) != 0L)
+                  if ((0x808400000000L & l) != 0L)
                      jjCheckNAddStates(72, 74);
                   break;
                case 616:

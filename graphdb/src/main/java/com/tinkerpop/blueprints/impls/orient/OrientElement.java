@@ -45,6 +45,7 @@ import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 
+import javax.ws.rs.HEAD;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -272,10 +273,17 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return (T) rawElement.getIdentity().toString();
 
     final Object fieldValue = getRecord().field(key);
-    if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof ORecordBytes))
-      // CONVERT IT TO VERTEX/EDGE
-      return (T) graph.getElement(fieldValue);
-    else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
+    if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof ORecordBytes)) {
+      ODocument record = ((OIdentifiable) fieldValue).getRecord();
+      if(record!=null){
+        final OClass schemaClass = record.getSchemaClass();
+        if(schemaClass!=null && (schemaClass.isSubClassOf("V") || schemaClass.isSubClassOf("E"))){
+          // CONVERT IT TO VERTEX/EDGE
+          return (T) graph.getElement(fieldValue);
+        }
+      }
+      return (T) fieldValue;
+    } else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
       final OIdentifiable firstValue = (OIdentifiable) OMultiValue.getFirstValue(fieldValue);
 
       if (firstValue instanceof ODocument) {

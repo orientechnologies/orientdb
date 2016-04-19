@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -76,6 +75,7 @@ import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.*;
+import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -117,6 +117,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       .getValueAsBoolean();
   private volatile OLowDiskSpaceInformation lowDiskSpace                               = null;
   private volatile boolean                  checkpointRequest                          = false;
+
+  private final List<WeakReference<OFullCheckpointListener>> fullCheckpointListeners = new ArrayList<WeakReference<OFullCheckpointListener>>();
 
   private final int id;
 
@@ -1001,7 +1003,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     } finally {
       stateLock.releaseReadLock();
-    }  }
+    }
+  }
 
   public Set<String> getClusterNames() {
     checkOpeness();
@@ -1322,8 +1325,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final long freezeId;
 
       if (throwException)
-        freezeId = atomicOperationsManager.freezeAtomicOperations(OModificationOperationProhibitedException.class,
-            "Modification requests are prohibited");
+        freezeId = atomicOperationsManager
+            .freezeAtomicOperations(OModificationOperationProhibitedException.class, "Modification requests are prohibited");
       else
         freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
 
@@ -1346,6 +1349,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.releaseReadLock();
     }
   }
+
   public void release() {
     try {
       lock();
@@ -1627,8 +1631,56 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       writeAheadLog.cutTill(lastLSN);
 
       clearStorageDirty();
+
+      notifyFullCheckpointListeners();
     } catch (IOException ioe) {
       throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
+    }
+  }
+
+  /**
+   * Adds the giving listener to the list of the full checkpoint listeners of this storage.
+   *
+   * @param listener the listener to add.
+   */
+  public void addFullCheckpointListener(OFullCheckpointListener listener) {
+    synchronized (fullCheckpointListeners) {
+      fullCheckpointListeners.add(new WeakReference<OFullCheckpointListener>(listener));
+    }
+  }
+
+  /**
+   * Removes the giving listener from the list of the full checkpoint listeners of this storage.
+   *
+   * @param listener the listener to remove.
+   */
+  public void removeFullCheckpointListener(OFullCheckpointListener listener) {
+    synchronized (fullCheckpointListeners) {
+      for (Iterator<WeakReference<OFullCheckpointListener>> i = fullCheckpointListeners.iterator(); i.hasNext();) {
+        final OFullCheckpointListener storedListener = i.next().get();
+        if (storedListener == null || storedListener.equals(listener))
+          i.remove();
+      }
+    }
+  }
+
+  private void notifyFullCheckpointListeners() {
+    synchronized (fullCheckpointListeners) {
+      for (Iterator<WeakReference<OFullCheckpointListener>> i = fullCheckpointListeners.iterator(); i.hasNext();) {
+        final OFullCheckpointListener listener = i.next().get();
+
+        if (listener == null) {
+          i.remove();
+          continue;
+        }
+
+        try {
+          listener.fullCheckpointMade(this);
+        } catch (Throwable t) {
+          OLogManager.instance()
+              .error(this, "Error while invoking full checkpoint listener of class %s.", t, listener.getClass().getSimpleName());
+        }
+      }
     }
   }
 
@@ -1837,12 +1889,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           context.executeOperations(this);
         atomicOperationsManager.endAtomicOperation(false, null);
       } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, e);
+
         atomicOperationsManager.endAtomicOperation(true, e);
 
         if (e instanceof OOfflineClusterException)
           throw (OOfflineClusterException) e;
-
-        OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, e);
 
         try {
           if (ppos.clusterPosition != ORID.CLUSTER_POS_INVALID)
@@ -1912,9 +1964,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           context.executeOperations(this);
         atomicOperationsManager.endAtomicOperation(false, null);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
-
         OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
+
+        atomicOperationsManager.endAtomicOperation(true, e);
 
         final ORecordVersion recordVersion = OVersionFactory.instance().createUntrackedVersion();
         if (callback != null)
@@ -1969,8 +2021,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         cluster.deleteRecord(ppos.clusterPosition);
         atomicOperationsManager.endAtomicOperation(false, null);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
+
+        atomicOperationsManager.endAtomicOperation(true, e);
+
         return new OStorageOperationResult<Boolean>(false);
       }
 
@@ -2002,8 +2056,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         cluster.hideRecord(ppos.clusterPosition);
         atomicOperationsManager.endAtomicOperation(false, null);
       } catch (Exception e) {
-        atomicOperationsManager.endAtomicOperation(true, e);
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
+
+        atomicOperationsManager.endAtomicOperation(true, e);
 
         return new OStorageOperationResult<Boolean>(false);
       }

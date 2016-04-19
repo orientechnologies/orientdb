@@ -139,4 +139,14 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     assertThat(rs.getInt("intKey"), Matchers.is(1));
     //
   }
+
+  @Test(expected = SQLException.class)
+  public void shouldTrhowSqlExceptionOnError() throws SQLException {
+
+    String query = "select sequence('?').next()";
+    PreparedStatement stmt = conn.prepareStatement(query);
+    stmt.setString(1, "theSequence");
+    stmt.executeQuery();
+
+  }
 }

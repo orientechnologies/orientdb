@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
@@ -57,15 +58,15 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
-public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V>,
-    OOrientListener {
+public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal
+    implements OIndexEngine<V>, OOrientListener {
 
-  public static final String               RID              = "RID";
-  public static final String               KEY              = "KEY";
-  public static final String               STORED           = "_STORED";
-  public static final Version              LUCENE_VERSION   = Version.LUCENE_47;
+  public static final String  RID            = "RID";
+  public static final String  KEY            = "KEY";
+  public static final String  STORED         = "_STORED";
+  public static final Version LUCENE_VERSION = Version.LUCENE_47;
 
-  public static final String               OLUCENE_BASE_DIR = "luceneIndexes";
+  public static final String OLUCENE_BASE_DIR = "luceneIndexes";
 
   protected SearcherManager                searcherManager;
   protected OIndexDefinition               index;
@@ -77,14 +78,14 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   protected ControlledRealTimeReopenThread nrt;
   protected ODocument                      metadata;
   protected Version                        version;
-  private OIndex                           managedIndex;
-  private boolean                          rebuilding;
-  private long                             reopenToken;
-  protected Map<String, Boolean>           collectionFields = new HashMap<String, Boolean>();
+  protected Map<String, Boolean> collectionFields = new HashMap<String, Boolean>();
+  private OIndex  managedIndex;
+  private boolean rebuilding;
+  private long    reopenToken;
 
   public OLuceneIndexManagerAbstract() {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
-        .getValueAsInteger(), true);
+    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
+        OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
     Orient.instance().registerListener(this);
   }
 
@@ -117,8 +118,9 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     try {
       reopenToken = mgrWriter.deleteDocuments(query);
       if (!mgrWriter.getIndexWriter().hasDeletions()) {
-        OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index",
-            new OIndexException("Error deleting document"), query);
+        OLogManager.instance()
+            .error(this, "Error on deleting document by query '%s' to Lucene index", new OIndexException("Error deleting document"),
+                query);
       }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index", e, query);
@@ -294,21 +296,24 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public Analyzer getAnalyzer(final ODocument metadata) {
     Analyzer analyzer = null;
-    if (metadata != null && metadata.field("analyzer") != null) {
-      final String analyzerString = metadata.field("analyzer");
-      if (analyzerString != null) {
+    if (metadata.containsField("analyzer")) {
+      final String analyzerFQN = metadata.field("analyzer");
+      if (metadata.containsField("analyzer_stopwords")) {
+        Collection<String> stopwords = metadata.field("analyzer_stopwords");
+        return buildAnalyzer(analyzerFQN, stopwords);
+      } else {
         try {
 
-          final Class classAnalyzer = Class.forName(analyzerString);
+          final Class classAnalyzer = Class.forName(analyzerFQN);
           final Constructor constructor = classAnalyzer.getConstructor(Version.class);
 
           analyzer = (Analyzer) constructor.newInstance(getLuceneVersion(metadata));
         } catch (ClassNotFoundException e) {
-          throw new OIndexException("Analyzer: " + analyzerString + " not found", e);
+          throw new OIndexException("Analyzer: " + analyzerFQN + " not found", e);
         } catch (NoSuchMethodException e) {
           Class classAnalyzer = null;
           try {
-            classAnalyzer = Class.forName(analyzerString);
+            classAnalyzer = Class.forName(analyzerFQN);
             analyzer = (Analyzer) classAnalyzer.newInstance();
 
           } catch (Throwable e1) {
@@ -323,6 +328,26 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
       analyzer = new StandardAnalyzer(getLuceneVersion(metadata));
     }
     return analyzer;
+  }
+
+  private Analyzer buildAnalyzer(String analyzerFQN, Collection<String> stopwords) {
+
+    try {
+
+      final Class classAnalyzer = Class.forName(analyzerFQN);
+      final Constructor constructor = classAnalyzer.getDeclaredConstructor(Version.class, CharArraySet.class);
+
+      return (Analyzer) constructor.newInstance(LUCENE_VERSION, new CharArraySet(LUCENE_VERSION, stopwords, true));
+    } catch (ClassNotFoundException e) {
+      new OIndexException("Analyzer: " + analyzerFQN + " not found", e);
+    } catch (NoSuchMethodException e) {
+      new OIndexException("Couldn't instantiate analyzer:  public constructor  not found", e);
+
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on getting analyzer for Lucene index", e);
+    }
+
+    return new StandardAnalyzer(LUCENE_VERSION);
   }
 
   public Version getLuceneVersion(ODocument metadata) {
@@ -513,7 +538,6 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public void onStorageUnregistered(OStorage storage) {
 
   }
-
 
   public abstract Document buildDocument(Object key, OIdentifiable value);
 

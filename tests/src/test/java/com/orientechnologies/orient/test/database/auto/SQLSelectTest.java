@@ -1747,4 +1747,21 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
 
+  public void testSizeOfLink() {
+    OSchemaProxy schema = database.getMetadata().getSchema();
+    OClass v = schema.getClass("V");
+    final OClass cls = schema.createClass("TestSizeOfLink", v);
+
+    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '1'")).execute();
+    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '2'")).execute();
+    database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '3'")).execute();
+
+    database.command(new OCommandSQL("CREATE EDGE E FROM (SELECT FROM TestSizeOfLink WHERE name = '1') to (SELECT FROM TestSizeOfLink WHERE name <> '1')")).execute();
+
+    List<OIdentifiable> result = database.query(
+        new OSQLSynchQuery<OIdentifiable>(" select from (select from TestSizeOfLink where name = '1') where out()[name=2].size() > 0"));
+    Assert.assertEquals(result.size(), 1);
+  }
+
+
 }

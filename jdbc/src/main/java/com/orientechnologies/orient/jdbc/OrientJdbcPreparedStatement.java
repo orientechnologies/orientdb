@@ -1,22 +1,23 @@
 /**
  * Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  *
  * For more information: http://www.orientechnologies.com
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.query.OQuery;
@@ -71,7 +72,10 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
         query = new OSQLSynchQuery<ODocument>(sql);
         documents = database.query((OQuery<? extends Object>) query, params.values().toArray());
       } catch (OQueryParsingException e) {
-        throw new SQLSyntaxErrorException("Error on parsing the query", e);
+        throw new SQLSyntaxErrorException("Error while parsing query", e);
+      } catch (OException e) {
+        throw new SQLException("Error while executing query", e);
+
       }
     }
 
@@ -85,8 +89,13 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   @Override
-  public <RET> RET executeCommand(OCommandRequest query) {
+  protected <RET> RET executeCommand(OCommandRequest query) throws SQLException {
+
+    try {
     return database.command(query).execute(params.values().toArray());
+    } catch (OException e) {
+      throw new SQLException("Error while executing command", e);
+    }
   }
 
   public void setNull(int parameterIndex, int sqlType) throws SQLException {

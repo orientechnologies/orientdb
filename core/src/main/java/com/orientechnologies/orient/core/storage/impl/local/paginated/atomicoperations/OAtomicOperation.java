@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
  * Note: all atomic operations methods are designed in context that all operations on single files will be wrapped in shared lock.
  *
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -46,19 +45,19 @@ public class OAtomicOperation {
   private final OLogSequenceNumber startLSN;
   private final OOperationUnitId   operationUnitId;
 
-  private int                      startCounter;
-  private boolean                  rollback;
-  private Exception                rollbackException;
+  private int       startCounter;
+  private boolean   rollback;
+  private Exception rollbackException;
 
-  private Set<String>              lockedObjects        = new HashSet<String>();
-  private Map<Long, FileChanges>   fileChanges          = new HashMap<Long, FileChanges>();
-  private Map<String, Long>        newFileNamesId       = new HashMap<String, Long>();
-  private Set<Long>                deletedFiles         = new HashSet<Long>();
-  private Map<String, Long>        deletedFileNameIdMap = new HashMap<String, Long>();
-  private OReadCache               readCache;
-  private OWriteCache              writeCache;
+  private Set<String>            lockedObjects        = new HashSet<String>();
+  private Map<Long, FileChanges> fileChanges          = new HashMap<Long, FileChanges>();
+  private Map<String, Long>      newFileNamesId       = new HashMap<String, Long>();
+  private Set<Long>              deletedFiles         = new HashSet<Long>();
+  private Map<String, Long>      deletedFileNameIdMap = new HashMap<String, Long>();
+  private OReadCache  readCache;
+  private OWriteCache writeCache;
 
-  private final boolean            rollbackOnlyMode;
+  private final boolean rollbackOnlyMode;
 
   public OAtomicOperation(OLogSequenceNumber startLSN, OOperationUnitId operationUnitId, OReadCache readCache,
       OWriteCache writeCache, int storageId, boolean rollbackOnlyMode) {
@@ -100,8 +99,8 @@ public class OAtomicOperation {
 
     if (changesContainer.isNew) {
       if (pageIndex <= changesContainer.maxNewPageIndex)
-        return new OCacheEntry(fileId, pageIndex, new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1),
-            fileId, pageIndex), false);
+        return new OCacheEntry(fileId, pageIndex,
+            new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1), fileId, pageIndex), false);
       else
         return null;
     } else {
@@ -114,8 +113,8 @@ public class OAtomicOperation {
         }
 
         if (pageChangesContainer.isNew)
-          return new OCacheEntry(fileId, pageIndex, new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1),
-              fileId, pageIndex), false);
+          return new OCacheEntry(fileId, pageIndex,
+              new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1), fileId, pageIndex), false);
         else
           return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache);
       }
@@ -157,8 +156,8 @@ public class OAtomicOperation {
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
     changesContainer.maxNewPageIndex = filledUpTo;
 
-    return new OCacheEntry(fileId, filledUpTo, new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1),
-        fileId, filledUpTo), false);
+    return new OCacheEntry(fileId, filledUpTo,
+        new OCachePointer((ODirectMemoryPointer) null, new OLogSequenceNumber(-1, -1), fileId, filledUpTo), false);
   }
 
   public void releasePage(OCacheEntry cacheEntry) {
@@ -344,8 +343,8 @@ public class OAtomicOperation {
           final long pageIndex = filePageChangesEntry.getKey();
           final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
 
-          filePageChanges.lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId,
-              filePageChanges.changesTree, startLSN));
+          filePageChanges.lsn = writeAheadLog
+              .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changesTree, startLSN));
         }
       }
     }
@@ -388,10 +387,9 @@ public class OAtomicOperation {
 
           if (filePageChanges.pinPage)
             readCache.pinPage(cacheEntry);
-
-          readCache.release(cacheEntry, writeCache);
         } finally {
           cacheEntry.releaseExclusiveLock();
+          readCache.release(cacheEntry, writeCache);
         }
       }
     }

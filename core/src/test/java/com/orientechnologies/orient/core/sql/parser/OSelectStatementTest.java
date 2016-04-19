@@ -641,6 +641,14 @@ public class OSelectStatementTest {
     checkRightSyntax("SELECT FROM Def fetchplan *:2 [*]in_*:-2");
   }
 
+  @Test
+  public void testJsonQuoting(){
+    //issue #5911
+    checkRightSyntax("SELECT '\\/\\/'");
+    checkRightSyntax("SELECT \"\\/\\/\"");
+
+  }
+
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

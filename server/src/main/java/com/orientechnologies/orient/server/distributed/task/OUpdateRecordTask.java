@@ -84,9 +84,9 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
         database.getName(), rid.toString(), version.toString());
 
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
-    if (!inTx) {
+    if (!inTx && lockRecord) {
       // TRY LOCKING RECORD
-      if (lockRecord && !ddb.lockRecord(rid, nodeSource))
+      if (!ddb.lockRecord(rid, nodeSource))
         throw new ODistributedRecordLockedException(rid);
     }
 
@@ -110,14 +110,14 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
       loadedRecord = database.save(loadedRecord);
 
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-          "+-> updated record %s/%s v.%s", database.getName(), rid.toString(), loadedRecord.getRecordVersion().toString());
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%s",
+          database.getName(), rid.toString(), loadedRecord.getRecordVersion().toString());
 
       // RETURN THE SAME OBJECT (NOT A COPY), SO AFTER COMMIT THE VERSIONS IS UPDATED AND SENT TO THE CALLER
       return loadedRecord.getRecordVersion();
 
     } finally {
-      if (!inTx)
+      if (!inTx && lockRecord)
         ddb.unlockRecord(rid);
     }
   }

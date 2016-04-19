@@ -25,6 +25,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OAutoConvertToRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -544,9 +545,6 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final ORecord oldRecord = oldIdentity.getRecord();
     if (oldRecord == null)
       graph.throwRecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
-
-    if (!graph.getRawGraph().getTransaction().isActive())
-      throw new IllegalStateException("Move vertex requires an active transaction to be executed in safe manner");
 
     // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
     oldRecord.delete();
