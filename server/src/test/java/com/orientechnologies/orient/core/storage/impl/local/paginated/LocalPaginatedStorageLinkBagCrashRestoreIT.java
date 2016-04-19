@@ -50,12 +50,18 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
     buildDirectory += "/localPaginatedStorageLinkBagCrashRestore";
 
     buildDir = new File(buildDirectory);
+
+    buildDirectory = buildDir.getCanonicalPath();
+    buildDir = new File(buildDirectory);
+
     if (buildDir.exists())
       OFileUtils.deleteRecursively(buildDir);
 
     buildDir.mkdir();
 
     String javaExec = System.getProperty("java.home") + "/bin/java";
+    javaExec = new File(javaExec).getCanonicalPath();
+
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-XX:MaxDirectMemorySize=512g", "-classpath", System.getProperty("java.class.path"),

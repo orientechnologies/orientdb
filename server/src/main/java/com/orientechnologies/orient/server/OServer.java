@@ -83,11 +83,11 @@ import java.util.concurrent.locks.ReentrantLock;
 public class OServer {
   private static final String ROOT_PASSWORD_VAR = "ORIENTDB_ROOT_PASSWORD";
   private static ThreadGroup threadGroup;
-  private static     Map<String, OServer> distributedServers = new ConcurrentHashMap<String, OServer>();
-  private final      CountDownLatch       startupLatch       = new CountDownLatch(1);
-  private final boolean                  shutdownEngineOnExit;
-  protected          ReentrantLock        lock               = new ReentrantLock();
-  protected volatile boolean              running            = false;
+  private static Map<String, OServer> distributedServers = new ConcurrentHashMap<String, OServer>();
+  private final  CountDownLatch       startupLatch       = new CountDownLatch(1);
+  private final boolean shutdownEngineOnExit;
+  protected          ReentrantLock lock    = new ReentrantLock();
+  protected volatile boolean       running = false;
   protected OServerConfigurationManager serverCfg;
   protected OContextConfiguration       contextConfiguration;
   protected OServerShutdownHook         shutdownHook;
@@ -102,11 +102,11 @@ public class OServer {
   private   OPartitionedDatabasePoolFactory dbPoolFactory;
   private SecureRandom        random    = new SecureRandom();
   private Map<String, Object> variables = new HashMap<String, Object>();
-  private       String                   serverRootDirectory;
-  private       String                   databaseDirectory;
-  private       OClientConnectionManager clientConnectionManager;
-  private       ClassLoader              extensionClassLoader;
-  private       OTokenHandler            tokenHandler;
+  private String                   serverRootDirectory;
+  private String                   databaseDirectory;
+  private OClientConnectionManager clientConnectionManager;
+  private ClassLoader              extensionClassLoader;
+  private OTokenHandler            tokenHandler;
 
   public OServer()
       throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
@@ -189,7 +189,7 @@ public class OServer {
   }
 
   public void restart() throws ClassNotFoundException, InvocationTargetException, InstantiationException, NoSuchMethodException,
-      IllegalAccessException {
+      IllegalAccessException, IOException {
     try {
       shutdown();
     } finally {
@@ -278,13 +278,13 @@ public class OServer {
   }
 
   public OServer startup(final OServerConfiguration iConfiguration)
-      throws IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
+      throws IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
     serverCfg = new OServerConfigurationManager(iConfiguration);
     return startupFromConfiguration();
   }
 
   public OServer startupFromConfiguration()
-      throws IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
+      throws IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
     OLogManager.instance().info(this, "OrientDB Server v" + OConstants.getVersion() + " is starting up...");
 
     Orient.instance();
@@ -306,6 +306,8 @@ public class OServer {
     databaseDirectory = databaseDirectory.replace("//", "/");
     if (!databaseDirectory.endsWith("/"))
       databaseDirectory += "/";
+
+    databaseDirectory = (new File(databaseDirectory)).getCanonicalPath();
 
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
@@ -811,7 +813,7 @@ public class OServer {
   }
 
   public void addTemporaryUser(final String iName, final String iPassword, final String iPermissions) {
-  	 serverCfg.setEphemeralUser(iName, iPassword, iPermissions);
+    serverCfg.setEphemeralUser(iName, iPassword, iPermissions);
   }
 
   public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {
@@ -972,7 +974,7 @@ public class OServer {
 
     configuration.isAfterFirstTime = true;
 
-    if(OGlobalConfiguration.CREATE_DEFAULT_USERS.getValueAsBoolean())
+    if (OGlobalConfiguration.CREATE_DEFAULT_USERS.getValueAsBoolean())
       createDefaultServerUsers();
   }
 

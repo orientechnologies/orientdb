@@ -44,12 +44,16 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
     buildDirectory += "/indexCrashRestoreMultiValueAddDelete";
 
     buildDir = new File(buildDirectory);
+    buildDirectory = buildDir.getCanonicalPath();
+
     if (buildDir.exists())
       OFileUtils.deleteRecursively(buildDir);
 
     buildDir.mkdir();
 
     String javaExec = System.getProperty("java.home") + "/bin/java";
+    javaExec = new File(javaExec).getCanonicalPath();
+
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath", System.getProperty("java.class.path"),

@@ -59,12 +59,18 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
     buildDirectory += "/localPaginatedStorageMixCrashRestore";
 
     buildDir = new File(buildDirectory);
+
+    buildDirectory = buildDir.getCanonicalPath();
+    buildDir = new File(buildDirectory);
+
     if (buildDir.exists())
       OFileUtils.deleteRecursively(buildDir);
 
     buildDir.mkdir();
 
     String javaExec = System.getProperty("java.home") + "/bin/java";
+    javaExec = new File(javaExec).getCanonicalPath();
+
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
