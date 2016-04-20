@@ -42,6 +42,8 @@ import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -491,7 +493,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       pos = iURL.indexOf('?');
 
       Map<String, String> parameters = null;
-      final String dbPath;
+      String dbPath;
       if (pos > 0) {
         dbPath = iURL.substring(0, pos);
         iURL = iURL.substring(pos + 1);
@@ -509,6 +511,14 @@ public class Orient extends OListenerManger<OOrientListener> {
         }
       } else
         dbPath = iURL;
+
+      if (registerDatabaseByPath) {
+        try {
+          dbPath = new File(dbPath).getCanonicalPath();
+        } catch (IOException e) {
+          // IGNORE IT
+        }
+      }
 
       final String dbName = registerDatabaseByPath ? dbPath : engine.getNameFromPath(dbPath);
 

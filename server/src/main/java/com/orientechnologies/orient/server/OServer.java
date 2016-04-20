@@ -81,42 +81,40 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
-  private static final String ROOT_PASSWORD_VAR = "ORIENTDB_ROOT_PASSWORD";
-  private static ThreadGroup threadGroup;
-  private static Map<String, OServer> distributedServers = new ConcurrentHashMap<String, OServer>();
-  private final  CountDownLatch       startupLatch       = new CountDownLatch(1);
-  private final boolean shutdownEngineOnExit;
-  protected          ReentrantLock lock    = new ReentrantLock();
-  protected volatile boolean       running = false;
-  protected OServerConfigurationManager serverCfg;
-  protected OContextConfiguration       contextConfiguration;
-  protected OServerShutdownHook         shutdownHook;
+  private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
+  private static ThreadGroup                               threadGroup;
+  private static Map<String, OServer>                      distributedServers     = new ConcurrentHashMap<String, OServer>();
+  private final CountDownLatch                             startupLatch           = new CountDownLatch(1);
+  private final boolean                                    shutdownEngineOnExit;
+  protected ReentrantLock                                  lock                   = new ReentrantLock();
+  protected volatile boolean                               running                = false;
+  protected OServerConfigurationManager                    serverCfg;
+  protected OContextConfiguration                          contextConfiguration;
+  protected OServerShutdownHook                            shutdownHook;
   protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols       = new HashMap<String, Class<? extends ONetworkProtocol>>();
   protected Map<String, OServerSocketFactory>              networkSocketFactories = new HashMap<String, OServerSocketFactory>();
   protected List<OServerNetworkListener>                   networkListeners       = new ArrayList<OServerNetworkListener>();
   protected List<OServerLifecycleListener>                 lifecycleListeners     = new ArrayList<OServerLifecycleListener>();
-  protected OServerPluginManager            pluginManager;
-  protected OConfigurableHooksManager       hookManager;
-  protected ODistributedServerManager       distributedManager;
-  protected OServerSecurity                 serverSecurity;
-  private   OPartitionedDatabasePoolFactory dbPoolFactory;
-  private SecureRandom        random    = new SecureRandom();
-  private Map<String, Object> variables = new HashMap<String, Object>();
-  private String                   serverRootDirectory;
-  private String                   databaseDirectory;
-  private OClientConnectionManager clientConnectionManager;
-  private ClassLoader              extensionClassLoader;
-  private OTokenHandler            tokenHandler;
+  protected OServerPluginManager                           pluginManager;
+  protected OConfigurableHooksManager                      hookManager;
+  protected ODistributedServerManager                      distributedManager;
+  protected OServerSecurity                                serverSecurity;
+  private OPartitionedDatabasePoolFactory                  dbPoolFactory;
+  private SecureRandom                                     random                 = new SecureRandom();
+  private Map<String, Object>                              variables              = new HashMap<String, Object>();
+  private String                                           serverRootDirectory;
+  private String                                           databaseDirectory;
+  private OClientConnectionManager                         clientConnectionManager;
+  private ClassLoader                                      extensionClassLoader;
+  private OTokenHandler                                    tokenHandler;
 
-  public OServer()
-      throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
-      MBeanRegistrationException, NotCompliantMBeanException {
+  public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
+      InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
     this(true);
   }
 
-  public OServer(boolean shutdownEngineOnExit)
-      throws ClassNotFoundException, MalformedObjectNameException, NullPointerException, InstanceAlreadyExistsException,
-      MBeanRegistrationException, NotCompliantMBeanException {
+  public OServer(boolean shutdownEngineOnExit) throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
+      InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
     this.shutdownEngineOnExit = shutdownEngineOnExit;
 
     serverRootDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}", ".");
@@ -230,9 +228,8 @@ public class OServer {
     return null;
   }
 
-  public OServer startup()
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
-      InvocationTargetException, NoSuchMethodException {
+  public OServer startup() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException,
+      SecurityException, InvocationTargetException, NoSuchMethodException {
     String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
     if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
       config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
@@ -244,9 +241,8 @@ public class OServer {
     return this;
   }
 
-  public OServer startup(final File iConfigurationFile)
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
-      InvocationTargetException, NoSuchMethodException {
+  public OServer startup(final File iConfigurationFile) throws InstantiationException, IllegalAccessException,
+      ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException {
     // Startup function split to allow pre-activation changes
     try {
       serverCfg = new OServerConfigurationManager(iConfigurationFile);
@@ -259,9 +255,8 @@ public class OServer {
     }
   }
 
-  public OServer startup(final String iConfiguration)
-      throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException, SecurityException,
-      InvocationTargetException, NoSuchMethodException, IOException {
+  public OServer startup(final String iConfiguration) throws InstantiationException, IllegalAccessException, ClassNotFoundException,
+      IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException, IOException {
     return startup(new ByteArrayInputStream(iConfiguration.getBytes()));
   }
 
@@ -304,27 +299,27 @@ public class OServer {
     databaseDirectory = contextConfiguration.getValue("server.database.path", serverRootDirectory + "/databases/");
     databaseDirectory = OFileUtils.getPath(OSystemVariableResolver.resolveSystemVariables(databaseDirectory));
     databaseDirectory = databaseDirectory.replace("//", "/");
-    if (!databaseDirectory.endsWith("/"))
-      databaseDirectory += "/";
 
     databaseDirectory = (new File(databaseDirectory)).getCanonicalPath();
 
+    if (!databaseDirectory.endsWith("/"))
+      databaseDirectory += "/";
+
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
-    Orient.instance().getProfiler()
-        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
-            new OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                final StringBuilder dbs = new StringBuilder(64);
-                for (String dbName : getAvailableStorageNames().keySet()) {
-                  if (dbs.length() > 0)
-                    dbs.append(',');
-                  dbs.append(dbName);
-                }
-                return dbs.toString();
-              }
-            });
+    Orient.instance().getProfiler().registerHookValue("system.databases", "List of databases configured in Server",
+        METRIC_TYPE.TEXT, new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            final StringBuilder dbs = new StringBuilder(64);
+            for (String dbName : getAvailableStorageNames().keySet()) {
+              if (dbs.length() > 0)
+                dbs.append(',');
+              dbs.append(dbName);
+            }
+            return dbs.toString();
+          }
+        });
 
     return this;
   }
@@ -361,9 +356,8 @@ public class OServer {
 
         // STARTUP LISTENERS
         for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-          networkListeners.add(
-              new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange, l.protocol,
-                  networkProtocols.get(l.protocol), l.parameters, l.commands));
+          networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
+              l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
 
       } else
         OLogManager.instance().warn(this, "Network configuration was not found");
@@ -647,8 +641,10 @@ public class OServer {
   /**
    * Authenticate a server user.
    *
-   * @param iUserName Username to authenticate
-   * @param iPassword Password in clear
+   * @param iUserName
+   *          Username to authenticate
+   * @param iPassword
+   *          Password in clear
    * @return true if authentication is ok, otherwise false
    */
   public boolean authenticate(final String iUserName, final String iPassword, final String iResourceToCheck) {
@@ -685,7 +681,8 @@ public class OServer {
   /**
    * Checks if a server user is allowed to operate with a resource.
    *
-   * @param iUserName Username to authenticate
+   * @param iUserName
+   *          Username to authenticate
    * @return true if authentication is ok, otherwise false
    */
   public boolean isAllowed(final String iUserName, final String iResourceToCheck) {
