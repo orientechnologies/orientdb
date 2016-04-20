@@ -618,10 +618,10 @@ public class ODistributedResponseManager {
   protected void undoRequest() {
     // DETERMINE IF ANY CREATE FAILED TO RESTORE RIDS
     for (ODistributedResponse r : getReceivedResponses()) {
-      if (r.getPayload() instanceof Throwable)
-        // NO NEED TO UNDO AN OPERATION THAT RETURNED EXCEPTION
-        // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
-        continue;
+//      if (r.getPayload() instanceof Throwable)
+//        // NO NEED TO UNDO AN OPERATION THAT RETURNED EXCEPTION
+//        // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
+//        continue;
 
       final ORemoteTask task = request.getTask();
       if (task instanceof OAbstractReplicatedTask) {
