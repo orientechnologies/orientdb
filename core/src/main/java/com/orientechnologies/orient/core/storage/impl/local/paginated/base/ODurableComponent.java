@@ -62,7 +62,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected final OAbstractPaginatedStorage    storage;
   protected final OReadCache                   readCache;
   protected final OWriteCache                  writeCache;
-  private final   OPerformanceStatisticManager performanceStatisticManager;
+  protected final OPerformanceStatisticManager performanceStatisticManager;
 
   private volatile String name;
   private volatile String fullName;
@@ -226,7 +226,8 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
         .getSessionPerformanceStatistic();
     if (sessionStoragePerformanceStatistic != null) {
-      sessionStoragePerformanceStatistic.startComponentOperation(getFullName());
+      sessionStoragePerformanceStatistic
+          .startComponentOperation(getFullName(), OSessionStoragePerformanceStatistic.ComponentType.GENERAL);
     }
   }
 
