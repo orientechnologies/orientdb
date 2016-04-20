@@ -51,7 +51,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
@@ -671,6 +670,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         if (isNodeOnline(nodeName, iDatabase.getName()))
           installDbClustersLocalStrategy(iDatabase);
       }
+    } catch (HazelcastException e) {
+      throw new OOfflineNodeException("Hazelcast instance is not available");
+
     } catch (HazelcastInstanceNotActiveException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
@@ -1364,10 +1366,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     for (Map.Entry<String, OLogSequenceNumber> entry : selectedNodes.entrySet()) {
 
       final OSyncDatabaseDeltaTask deployTask = new OSyncDatabaseDeltaTask(entry.getValue());
-      for (String clName : cfg.getClusterNames()) {
-        if (!cfg.isReplicationActive(clName, nodeName))
-          deployTask.excludeClusterName(clName);
-      }
+      // DON'T EXCLUDE CLUSTERS ANYMORE TO GET SCHEMA, INDEX MGR CHANGES
+      // for (String clName : cfg.getClusterNames()) {
+      // if (!cfg.isReplicationActive(clName, nodeName))
+      // deployTask.excludeClusterName(clName);
+      // }
 
       final List<String> targetNodes = new ArrayList<String>(1);
       targetNodes.add(entry.getKey());
@@ -1636,12 +1639,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final ODatabaseDocumentTx db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta);
 
     if (db != null) {
-      db.activateOnCurrentThread();
-      db.close();
-      final OStorage stg = Orient.instance().getStorage(databaseName);
-      if (stg != null)
-        stg.close();
-
       final Lock lock = getLock(databaseName + ".cfg");
       lock.lock();
       try {

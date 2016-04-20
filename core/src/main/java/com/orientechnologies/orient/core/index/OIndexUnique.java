@@ -65,7 +65,7 @@ public class OIndexUnique extends OIndexOneValue {
             else
               throw new ORecordDuplicatedException(String.format(
                   "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                  iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
+                  iSingleValue.getIdentity(), key, getName(), value.getIdentity()), getName(), value.getIdentity());
           } else
             return this;
         }

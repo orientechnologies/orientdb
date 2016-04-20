@@ -246,7 +246,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
         } else
           throw new ORecordDuplicatedException(String.format(
               "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", iRecord,
-              iKey, getName(), previousRecord), previousRecord.getIdentity());
+              iKey, getName(), previousRecord), getName(), previousRecord.getIdentity());
       }
       return super.checkEntry(iRecord, iKey);
     }

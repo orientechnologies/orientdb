@@ -95,6 +95,8 @@ public abstract class AbstractServerClusterTest {
   }
 
   public void init(final int servers) {
+    Orient.instance().closeAllStorages();
+
     System.setProperty(GroupProperties.PROP_WAIT_SECONDS_BEFORE_JOIN, "1");
 
     Orient.setRegisterDatabaseByPath(true);

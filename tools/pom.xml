@@ -42,6 +42,7 @@
         </osgi.export>
         <jar.manifest.mainclass>com.orientechnologies.orient.console.OConsoleDatabaseApp</jar.manifest.mainclass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-XX:MaxDirectMemorySize=512g</argLine>
     </properties>
 
     <dependencies>

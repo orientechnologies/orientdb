@@ -29,15 +29,18 @@ import com.orientechnologies.orient.core.id.ORID;
  * @since 9/5/12
  */
 public class ORecordDuplicatedException extends OCoreException implements OHighLevelException {
-  private final ORID rid;
+  private final ORID   rid;
+  private final String indexName;
 
-  public ORecordDuplicatedException(ORecordDuplicatedException exception) {
+  public ORecordDuplicatedException(final ORecordDuplicatedException exception) {
     super(exception);
+    this.indexName = exception.indexName;
     this.rid = exception.rid;
   }
 
-  public ORecordDuplicatedException(final String message, final ORID iRid) {
+  public ORecordDuplicatedException(final String message, final String indexName, final ORID iRid) {
     super(message);
+    this.indexName = indexName;
     this.rid = iRid;
   }
 
@@ -45,9 +48,16 @@ public class ORecordDuplicatedException extends OCoreException implements OHighL
     return rid;
   }
 
+  public String getIndexName() {
+    return indexName;
+  }
+
   @Override
   public boolean equals(final Object obj) {
     if (obj == null || !obj.getClass().equals(getClass()))
+      return false;
+
+    if (!indexName.equals(((ORecordDuplicatedException) obj).indexName))
       return false;
 
     return rid.equals(((ORecordDuplicatedException) obj).rid);
@@ -60,6 +70,6 @@ public class ORecordDuplicatedException extends OCoreException implements OHighL
 
   @Override
   public String toString() {
-    return super.toString() + " RID=" + rid;
+    return super.toString() + "INDEX=" + indexName + " RID=" + rid;
   }
 }

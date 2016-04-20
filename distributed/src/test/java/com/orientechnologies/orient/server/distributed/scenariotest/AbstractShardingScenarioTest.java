@@ -422,7 +422,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
     protected void checkVertex(OrientBaseGraph graph, int i) {
       OrientVertex vertex = loadVertex(graph, this.shardName, this.serverId, this.threadId, i);
-      junit.framework.Assert.assertEquals(vertex.getProperty("updated"), Boolean.TRUE);
+      assertEquals(vertex.getProperty("updated"), Boolean.TRUE);
     }
 
     protected void checkIndex(OrientBaseGraph graph, final String key, final ORID rid) {
@@ -443,7 +443,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
     protected void checkVertex(OrientBaseGraph graph, OrientVertex vertex) {
       vertex.reload();
-      junit.framework.Assert.assertEquals(vertex.getProperty("updated"), Boolean.TRUE);
+      assertEquals(vertex.getProperty("updated"), Boolean.TRUE);
     }
 
     protected void deleteRecord(OrientBaseGraph graph, OrientVertex vertex) {
@@ -453,7 +453,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     protected void checkRecordIsDeleted(OrientBaseGraph graph, OrientVertex vertex) {
       try {
         vertex.reload();
-        junit.framework.Assert.fail("Record found while it should be deleted");
+        fail("Record found while it should be deleted");
       } catch (ORecordNotFoundException e) {
       }
     }

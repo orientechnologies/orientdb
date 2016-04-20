@@ -49,6 +49,9 @@ set LOG_LEVEL=warning
 set WWW_PATH=%ORIENTDB_HOME%/www
 set JAVA_OPTS=-Djava.awt.headless=true
 
-call %JAVA% -client %JAVA_OPTS% -Dorientdb.config.file="%CONFIG_FILE%" -cp "%ORIENTDB_HOME%\lib\orientdb-tools-@VERSION@.jar;%ORIENTDB_HOME%\lib\*" com.orientechnologies.orient.server.OServerShutdownMain %CMD_LINE_ARGS%
+rem It's better to set MaxDirectMemorySize, since no one sure OServerShutdownMain will refer inside it
+set ORIENTDB_SETTINGS=-XX:MaxDirectMemorySize=512g
+
+call %JAVA% -client %JAVA_OPTS% %ORIENTDB_SETTINGS% -Dorientdb.config.file="%CONFIG_FILE%" -cp "%ORIENTDB_HOME%\lib\orientdb-tools-@VERSION@.jar;%ORIENTDB_HOME%\lib\*" com.orientechnologies.orient.server.OServerShutdownMain %CMD_LINE_ARGS%
 
 :end
