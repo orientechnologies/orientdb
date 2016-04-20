@@ -37,7 +37,7 @@ import java.util.*;
 
 
 /**
- * Abstract class to find paths between nodes using heuristic.
+ * Abstract class to find paths between nodes using heuristic .
  *
  * @author Saeed Tabrizi (saeed a_t  nowcando.com)
  */
