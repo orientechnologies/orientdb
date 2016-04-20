@@ -607,10 +607,10 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     @Override
     public void onAfterRecordLock(ORecordId rid) {
       try {
-        OLogManager.instance().info(this, "Waiting %s for %dms with locked record [%s]", Thread.currentThread().getId(), delay,
+        OLogManager.instance().info(this, "Thread [%d] waiting for %dms with locked record [%s]", Thread.currentThread().getId(), delay,
             rid.toString());
         Thread.sleep(delay);
-        OLogManager.instance().info(this, "Finished %s waiting for %dms with locked record [%s]", Thread.currentThread().getId(),
+        OLogManager.instance().info(this, "Thread [%d] finished waiting for %dms with locked record [%s]", Thread.currentThread().getId(),
             delay, rid.toString());
       } catch (InterruptedException e) {
 
