@@ -32,7 +32,7 @@ import java.util.*;
 
 
 /**
- *  Heuristic formula enum .
+ *  Heuristic formula enum.
  *
  * @author Saeed Tabrizi (saeed a_t  nowcando.com)
  *

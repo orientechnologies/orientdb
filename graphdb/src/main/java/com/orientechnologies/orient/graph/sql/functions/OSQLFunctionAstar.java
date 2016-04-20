@@ -50,7 +50,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * The first parameter is source record. The second parameter is destination record. The third parameter is a name of property that
  * represents 'weight' and fourth represnts the map of options.
  * <p>
- * If property is not defined in edge or is null, distance between vertexes are 0.
+ * If property is not defined in edge or is null, distance between vertexes are 0 .
  *
  * @author Saeed Tabrizi (saeed a_t  nowcando.com)
  */
