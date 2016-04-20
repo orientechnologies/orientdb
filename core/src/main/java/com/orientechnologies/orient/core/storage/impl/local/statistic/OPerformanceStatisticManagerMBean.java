@@ -96,6 +96,61 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
   public static final String FULL_CHECKPOINT_TIME = "fullCheckpointTime";
 
   /**
+   * Name of "fullCheckpointCount" performance attribute
+   */
+  public static final String FULL_CHECKPOINT_COUNT = "fullCheckpointCount";
+
+  /**
+   * Name of "readCacheSize" performance attribute
+   */
+  public static final String READ_CACHE_SIZE = "readCacheSize";
+
+  /**
+   * Name of "writeCacheSize" performance attribute
+   */
+  public static final String WRITE_CACHE_SIZE = "writeCacheSize";
+
+  /**
+   * Name of "exclusiveWriteCacheSize" performance attribute
+   */
+  public static final String EXCLUSIVE_WRITE_CACHE_SIZE = "exclusiveWriteCacheSize";
+
+  /**
+   * Name of "writeCacheOverflowCount" performance attribute
+   */
+  public static final String WRITE_CACHE_OVERFLOW_COUNT = "writeCacheOverflowCount";
+
+  /**
+   * Name of "walSize" performance attribute
+   */
+  public static final String WAL_SIZE = "walSize";
+
+  /**
+   * Name of "walCacheOverflowCount" performance attribute
+   */
+  public static final String WAL_CACHE_OVERFLOW_COUNT = "walCacheOverflowCount";
+
+  /**
+   * Name of "walLogTime" performance attribute
+   */
+  public static final String WAL_LOG_TIME = "walLogTime";
+
+  /**
+   * Name of "walStartAOLogTime" performance attribute
+   */
+  public static final String WAL_START_AO_LOG_TIME = "walStartAOLogTime";
+
+  /**
+   * Name of "walEndAOLogTime" performance attribute
+   */
+  public static final String WAL_END_AO_LOG_TIME = "walEndAOLogTime";
+
+  /**
+   * Name of "walFlushTime" performance attribute
+   */
+  public static final String WAL_FLUSH_TIME = "walFlushTime";
+
+  /**
    * Reference to related performance manager
    */
   private final OPerformanceStatisticManager manager;
@@ -188,6 +243,61 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
         return manager.getFullCheckpointTime();
       else
         throwComponentsAreNotSupported(FULL_CHECKPOINT_TIME);
+    } else if (attributeName.equals(FULL_CHECKPOINT_COUNT)) {
+      if (componentName == null)
+        return manager.getFullCheckpointCount();
+      else
+        throwComponentsAreNotSupported(FULL_CHECKPOINT_COUNT);
+    } else if (attributeName.equals(READ_CACHE_SIZE)) {
+      if (componentName == null)
+        return manager.getReadCacheSize();
+      else
+        throwComponentsAreNotSupported(READ_CACHE_SIZE);
+    } else if (attributeName.equals(WRITE_CACHE_SIZE)) {
+      if (componentName == null)
+        return manager.getWriteCacheSize();
+      else
+        throwComponentsAreNotSupported(WRITE_CACHE_SIZE);
+    } else if (attributeName.equals(EXCLUSIVE_WRITE_CACHE_SIZE)) {
+      if (componentName == null)
+        return manager.getExclusiveWriteCacheSize();
+      else
+        throwComponentsAreNotSupported(EXCLUSIVE_WRITE_CACHE_SIZE);
+    } else if (attributeName.equals(WRITE_CACHE_OVERFLOW_COUNT)) {
+      if (componentName == null)
+        return manager.getWriteCacheOverflowCount();
+      else
+        throwComponentsAreNotSupported(WAL_CACHE_OVERFLOW_COUNT);
+    } else if (attributeName.equals(WAL_SIZE)) {
+      if (componentName == null)
+        return manager.getWALSize();
+      else
+        throwComponentsAreNotSupported(WAL_SIZE);
+    } else if (attributeName.equals(WAL_CACHE_OVERFLOW_COUNT)) {
+      if (componentName == null)
+        return manager.getWALCacheOverflowCount();
+      else
+        throwComponentsAreNotSupported(WAL_CACHE_OVERFLOW_COUNT);
+    } else if (attributeName.equals(WAL_LOG_TIME)) {
+      if (componentName == null)
+        return manager.getWALLogRecordTime();
+      else
+        throwComponentsAreNotSupported(WAL_LOG_TIME);
+    } else if (attributeName.equals(WAL_START_AO_LOG_TIME)) {
+      if (componentName == null)
+        return manager.getWALStartAOLogRecordTime();
+      else
+        throwComponentsAreNotSupported(WAL_START_AO_LOG_TIME);
+    } else if (attributeName.equals(WAL_END_AO_LOG_TIME)) {
+      if (componentName == null)
+        return manager.getWALStopAOLogRecordTime();
+      else
+        throwComponentsAreNotSupported(WAL_END_AO_LOG_TIME);
+    } else if (attributeName.equals(WAL_FLUSH_TIME)) {
+      if (componentName == null)
+        return manager.getWALFlushTime();
+      else
+        throwComponentsAreNotSupported(WAL_FLUSH_TIME);
     }
 
     throw new AttributeNotFoundException("Cannot find " + attribute + " attribute in " + getClass().getSimpleName());
@@ -298,6 +408,19 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
     populateWriteCacheFuzzyCheckpointTime(performanceAttributes);
 
     populateFullCheckpointTime(performanceAttributes);
+    populateFullCheckpointCount(performanceAttributes);
+
+    populateReadCacheSize(performanceAttributes);
+    populateWriteCacheSize(performanceAttributes);
+    populateExclusiveWriteCacheSize(performanceAttributes);
+    populateWriteCacheOverflowCount(performanceAttributes);
+
+    populateWALSize(performanceAttributes);
+    populateWALCacheOverflowCount(performanceAttributes);
+    populateWALLogTime(performanceAttributes);
+    populateWALEndAOLogTime(performanceAttributes);
+    populateWALStartAOLogTime(performanceAttributes);
+    populateWALFlushTime(performanceAttributes);
   }
 
   private void populateWriteSpeedInCache(List<MBeanAttributeInfo> performanceAttributes, Collection<String> components) {
@@ -393,4 +516,82 @@ public class OPerformanceStatisticManagerMBean implements DynamicMBean {
 
     performanceAttributes.add(fullCheckpointTime);
   }
+
+  private void populateFullCheckpointCount(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo fullCheckpointCount = new ModelMBeanAttributeInfo(FULL_CHECKPOINT_COUNT, long.class.getName(),
+        "Amount of times full checkpoints were executed by storage", true, false, false);
+
+    performanceAttributes.add(fullCheckpointCount);
+  }
+
+  private void populateReadCacheSize(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo readCacheSize = new ModelMBeanAttributeInfo(READ_CACHE_SIZE, long.class.getName(),
+        "Size of read cache in bytes", true, false, false);
+
+    performanceAttributes.add(readCacheSize);
+  }
+
+  private void populateWriteCacheSize(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo writeCacheSize = new ModelMBeanAttributeInfo(WRITE_CACHE_SIZE, long.class.getName(),
+        "Size of write cache in bytes", true, false, false);
+
+    performanceAttributes.add(writeCacheSize);
+  }
+
+  private void populateExclusiveWriteCacheSize(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo exclusiveWriteCacheSize = new ModelMBeanAttributeInfo(EXCLUSIVE_WRITE_CACHE_SIZE, long.class.getName(),
+        "Size of exclusive part of write cache in bytes", true, false, false);
+
+    performanceAttributes.add(exclusiveWriteCacheSize);
+  }
+
+  private void populateWriteCacheOverflowCount(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo writeCacheOverflowCount = new ModelMBeanAttributeInfo(WRITE_CACHE_OVERFLOW_COUNT, long.class.getName(),
+        "Count of times when there was not enough space in write cache to keep already written data", true, false, false);
+
+    performanceAttributes.add(writeCacheOverflowCount);
+  }
+
+  private void populateWALSize(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo walSize = new ModelMBeanAttributeInfo(WAL_SIZE, long.class.getName(), "WAL size in bytes", true, false,
+        false);
+
+    performanceAttributes.add(walSize);
+  }
+
+  private void populateWALCacheOverflowCount(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo walCacheOverflowCount = new ModelMBeanAttributeInfo(WAL_CACHE_OVERFLOW_COUNT, long.class.getName(),
+        "Count of times when there was not enough space in WAL to keep already written data", true, false, false);
+
+    performanceAttributes.add(walCacheOverflowCount);
+  }
+
+  private void populateWALLogTime(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo walLogTime = new ModelMBeanAttributeInfo(WAL_LOG_TIME, long.class.getName(),
+        "Time which is spent to log single record in WAL", true, false, false);
+
+    performanceAttributes.add(walLogTime);
+  }
+
+  private void populateWALEndAOLogTime(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo walLogTime = new ModelMBeanAttributeInfo(WAL_END_AO_LOG_TIME, long.class.getName(),
+        "Time which is spent to log record which indicates end of atomic operation in WAL", true, false, false);
+
+    performanceAttributes.add(walLogTime);
+  }
+
+  private void populateWALStartAOLogTime(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo walLogTime = new ModelMBeanAttributeInfo(WAL_START_AO_LOG_TIME, long.class.getName(),
+        "Time which is spent to log record which indicates start of atomic operation in WAL", true, false, false);
+
+    performanceAttributes.add(walLogTime);
+  }
+
+  private void populateWALFlushTime(List<MBeanAttributeInfo> performanceAttributes) {
+    final MBeanAttributeInfo walFlushTime = new ModelMBeanAttributeInfo(WAL_FLUSH_TIME, long.class.getName(),
+        "Time which is spent on flush of WAL cache", true, false, false);
+
+    performanceAttributes.add(walFlushTime);
+  }
+
 }
