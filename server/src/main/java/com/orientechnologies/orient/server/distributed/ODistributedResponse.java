@@ -59,10 +59,6 @@ public class ODistributedResponse implements Externalizable {
     return senderNodeName;
   }
 
-  public void setSenderNodeName(final String senderNodeName) {
-    this.senderNodeName = senderNodeName;
-  }
-
   public Object getPayload() {
     return payload;
   }

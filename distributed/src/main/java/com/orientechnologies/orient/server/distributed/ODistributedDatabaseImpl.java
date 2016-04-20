@@ -68,12 +68,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected volatile ReadWriteLock                                              processLock                    = new ReentrantReadWriteLock();
   protected AtomicBoolean                                                       status                         = new AtomicBoolean(
       false);
+  private String                                                                localNodeName;
 
   public ODistributedDatabaseImpl(final OHazelcastPlugin manager, final ODistributedMessageServiceImpl msgService,
       final String iDatabaseName) {
     this.manager = manager;
     this.msgService = msgService;
     this.databaseName = iDatabaseName;
+    this.localNodeName = manager.getLocalNodeName();
 
     this.requestLock = manager.getHazelcastInstance().getLock(NODE_LOCK_PREFIX + iDatabaseName);
 
@@ -234,8 +236,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       if (localResult != null)
         // COLLECT LOCAL RESULT
-        currentResponseMgr.collectResponse(new ODistributedResponse(iRequest.getId(), manager.getLocalNodeName(),
-            manager.getLocalNodeName(), (Serializable) localResult));
+        currentResponseMgr.collectResponse(new ODistributedResponse(iRequest.getId(), localNodeName,
+            localNodeName, (Serializable) localResult));
 
       if (!(iNodes instanceof List))
         iNodes = new ArrayList<String>(iNodes);
@@ -254,11 +256,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         } catch (Throwable e) {
           if (!manager.isNodeAvailable(node))
             // NODE IS NOT AVAILABLE
-            ODistributedServerLog.debug(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
+            ODistributedServerLog.debug(this, localNodeName, node, ODistributedServerLog.DIRECTION.OUT,
                 "Error on sending distributed request %s. The target node is not available. Active nodes: %s", e, iRequest,
                 manager.getAvailableNodeNames(databaseName));
           else
-            ODistributedServerLog.error(this, manager.getLocalNodeName(), node, ODistributedServerLog.DIRECTION.OUT,
+            ODistributedServerLog.error(this, localNodeName, node, ODistributedServerLog.DIRECTION.OUT,
                 "Error on sending distributed request %s. Active nodes: %s", e, iRequest,
                 manager.getAvailableNodeNames(databaseName));
         }
@@ -544,6 +546,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected String getLocalNodeName() {
-    return manager.getLocalNodeName();
+    return localNodeName;
   }
 }

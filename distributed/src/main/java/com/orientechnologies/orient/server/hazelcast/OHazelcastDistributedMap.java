@@ -37,13 +37,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> implements EntryAddedListener<String, Object>,
     EntryRemovedListener<String, Object>, MapClearedListener, EntryUpdatedListener<String, Object> {
-  private final HazelcastInstance    hz;
   private final IMap<String, Object> hzMap;
+  private final String               membershipListenerRegistration;
 
   public OHazelcastDistributedMap(final HazelcastInstance hz) {
-    this.hz = hz;
     hzMap = hz.getMap("orientdb");
-    hzMap.addEntryListener(this, true);
+    membershipListenerRegistration = hzMap.addEntryListener(this, true);
 
     super.putAll(hzMap);
   }
@@ -54,10 +53,14 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
 
   @Override
   public Object get(final Object key) {
-    // final Object res = super.get(key);
-    // if (res != null)
-    // return res;
-    //
+    return hzMap.get(key);
+  }
+
+  public Object getCachedValue(final Object key) {
+    final Object res = super.get(key);
+    if (res != null)
+      return res;
+
     return hzMap.get(key);
   }
 
@@ -97,5 +100,10 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
   @Override
   public void mapCleared(MapEvent event) {
     super.clear();
+  }
+
+  public void destroy() {
+    clear();
+    hzMap.removeEntryListener(membershipListenerRegistration);
   }
 }

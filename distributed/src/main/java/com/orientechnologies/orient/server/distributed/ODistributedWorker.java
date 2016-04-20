@@ -45,6 +45,7 @@ public class ODistributedWorker extends Thread {
   protected final ODistributedDatabaseImpl                distributed;
   protected final ODistributedServerManager               manager;
   protected final ODistributedMessageServiceImpl          msgService;
+  protected final String                                  localNodeName;
   protected final String                                  databaseName;
   protected final ArrayBlockingQueue<ODistributedRequest> localQueue;
   protected final int                                     id;
@@ -63,13 +64,14 @@ public class ODistributedWorker extends Thread {
     databaseName = iDatabaseName;
     manager = distributed.getManager();
     msgService = distributed.msgService;
+    localNodeName = manager.getLocalNodeName();
   }
 
   public void processRequest(final ODistributedRequest request) {
     try {
       localQueue.put(request);
     } catch (InterruptedException e) {
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+      ODistributedServerLog.warn(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
           "Received interruption signal, closing distributed worker thread");
 
       shutdown();
@@ -104,15 +106,13 @@ public class ODistributedWorker extends Thread {
         if (e.getCause() instanceof InterruptedException)
           Thread.interrupted();
         else
-          ODistributedServerLog.error(this, manager.getLocalNodeName(),
-              reqId != null ? manager.getNodeNameById(reqId.getNodeId()) : "?", ODistributedServerLog.DIRECTION.IN,
-              "Error on executing distributed request %s: %s", e, message != null ? message.getId() : -1,
-              message != null ? message.getTask() : "-");
+          ODistributedServerLog.error(this, localNodeName, reqId != null ? manager.getNodeNameById(reqId.getNodeId()) : "?",
+              ODistributedServerLog.DIRECTION.IN, "Error on executing distributed request %s: %s", e,
+              message != null ? message.getId() : -1, message != null ? message.getTask() : "-");
       }
     }
 
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "end of reading requests for database %s",
-        databaseName);
+    ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE, "end of reading requests for database %s", databaseName);
   }
 
   public void initDatabaseInstance() {
@@ -133,7 +133,7 @@ public class ODistributedWorker extends Thread {
     final int pendingMsgs = localQueue.size();
 
     if (pendingMsgs > 0)
-      ODistributedServerLog.info(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+      ODistributedServerLog.info(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
           "Received shutdown signal, waiting for distributed worker queue is empty (pending msgs=%d)...", pendingMsgs);
 
     interrupt();
@@ -143,11 +143,11 @@ public class ODistributedWorker extends Thread {
         try {
           join(MAX_SHUTDOWN_TIMEOUT);
         } catch (Exception e) {
-          ODistributedServerLog.debug(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
               "Interrupted shutdown of distributed worker thread");
         }
 
-      ODistributedServerLog.debug(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+      ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
           "Shutdown distributed worker completed");
 
       localQueue.clear();
@@ -158,7 +158,7 @@ public class ODistributedWorker extends Thread {
       }
 
     } catch (Exception e) {
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+      ODistributedServerLog.warn(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
           "Error on shutting down distributed worker", e);
 
     }
@@ -177,8 +177,8 @@ public class ODistributedWorker extends Thread {
 
     if (ODistributedServerLog.isDebugEnabled()) {
       final String senderNodeName = manager.getNodeNameById(req.getId().getNodeId());
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.IN,
-          "Processing request=(%s) sourceNode=%s", req, senderNodeName);
+      ODistributedServerLog.debug(this, localNodeName, senderNodeName, DIRECTION.IN, "Processing request=(%s) sourceNode=%s", req,
+          senderNodeName);
     }
 
     return req;
@@ -197,7 +197,7 @@ public class ODistributedWorker extends Thread {
     final ORemoteTask task = iRequest.getTask();
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.IN, "Received request: %s", iRequest);
+      ODistributedServerLog.debug(this, localNodeName, senderNodeName, DIRECTION.IN, "Received request: %s", iRequest);
 
     // EXECUTE IT LOCALLY
     Serializable responsePayload;
@@ -232,7 +232,7 @@ public class ODistributedWorker extends Thread {
         if (responsePayload instanceof OModificationOperationProhibitedException) {
           // RETRY
           try {
-            ODistributedServerLog.info(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.IN,
+            ODistributedServerLog.info(this, localNodeName, senderNodeName, DIRECTION.IN,
                 "Database is frozen, waiting and retrying. Request %s (retry=%d, worker=%d)", iRequest, retry, id);
 
             Thread.sleep(1000);
@@ -241,8 +241,8 @@ public class ODistributedWorker extends Thread {
         } else {
           // OPERATION EXECUTED (OK OR ERROR), NO RETRY NEEDED
           if (retry > 1)
-            ODistributedServerLog.info(this, manager.getLocalNodeName(), senderNodeName, DIRECTION.IN,
-                "Request %s succeed after retry=%d", iRequest, retry);
+            ODistributedServerLog.info(this, localNodeName, senderNodeName, DIRECTION.IN, "Request %s succeed after retry=%d",
+                iRequest, retry);
 
           break;
         }
@@ -266,7 +266,7 @@ public class ODistributedWorker extends Thread {
   }
 
   protected String getLocalNodeName() {
-    return manager.getLocalNodeName();
+    return localNodeName;
   }
 
   private void sendResponseBack(final ODistributedRequest iRequest, Serializable responsePayload) {
@@ -276,20 +276,20 @@ public class ODistributedWorker extends Thread {
 
     final String senderNodeName = manager.getNodeNameById(iRequest.getId().getNodeId());
 
-    final ODistributedResponse response = new ODistributedResponse(iRequest.getId(), manager.getLocalNodeName(), senderNodeName,
+    final ODistributedResponse response = new ODistributedResponse(iRequest.getId(), localNodeName, senderNodeName,
         responsePayload);
 
     try {
       // GET THE SENDER'S RESPONSE QUEUE
       final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
 
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+      ODistributedServerLog.debug(this, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Sending response %s back", response);
 
       remoteSenderServer.sendResponse(response, senderNodeName);
 
     } catch (Exception e) {
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+      ODistributedServerLog.debug(this, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Error on sending response %s back", response);
     }
   }
@@ -307,7 +307,7 @@ public class ODistributedWorker extends Thread {
 
           if (localQueue.size() >= OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getValueAsInteger()) {
             // QUEUE FULL, EMPTY THE QUEUE, IGNORE ALL THE NEXT MESSAGES UNTIL A DELTA SYNC IS EXECUTED
-            ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+            ODistributedServerLog.warn(this, localNodeName, null, DIRECTION.NONE,
                 "Replication queue is full (retry=%d, queue=%d), replication could be delayed", retry + 1, localQueue.size());
           }
 
