@@ -51,11 +51,13 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
     public static final String PARAM_CUSTOM_HEURISTIC_FORMULA = "customHeuristicFormula";
     public static final String PARAM_D_FACTOR = "dFactor";
     public static final String PARAM_TIE_BREAKER = "tieBreaker";
+    public static final String PARAM_EMPTY_IF_MAX_DEPTH = "emptyIfMaxDepth";
     protected OrientBaseGraph db;
     protected static Random rnd = new Random();
 
     protected Boolean paramParallel = false;
     protected Boolean paramTieBreaker = true;
+    protected Boolean paramEmptyIfMaxDepth = false;
     protected String[] paramEdgeTypeNames = new String[]{};
     protected String[] paramVertexAxisNames = new String[]{};
     protected OrientVertex paramSourceVertex;

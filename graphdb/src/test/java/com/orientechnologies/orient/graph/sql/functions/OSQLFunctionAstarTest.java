@@ -327,7 +327,6 @@ public class OSQLFunctionAstarTest {
                 new OBasicCommandContext());
         assertEquals(16, graph.countEdges("has_path"));
         assertEquals(6, result.size());
-        assertEquals(6, result.size());
         assertEquals(v6, result.get(0));
         assertEquals(v5, result.get(1));
         assertEquals(v2, result.get(2));
@@ -335,4 +334,47 @@ public class OSQLFunctionAstarTest {
         assertEquals(v4, result.get(4));
         assertEquals(v1, result.get(5));
     }
+
+    @Test
+    public void test11Execute() throws Exception {
+        Map<String, Object> options = new HashMap<String, Object>();
+        options.put(OSQLFunctionAstar.PARAM_DIRECTION, Direction.OUT);
+        options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
+        options.put(OSQLFunctionAstar.PARAM_TIE_BREAKER, false);
+        options.put(OSQLFunctionAstar.PARAM_EMPTY_IF_MAX_DEPTH, true);
+        options.put(OSQLFunctionAstar.PARAM_MAX_DEPTH, 3);
+        options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[]{"has_path"});
+        options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[]{"lat","lon"});
+        options.put(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA, HeuristicFormula.CUSTOM);
+        options.put(OSQLFunctionAstar.PARAM_CUSTOM_HEURISTIC_FORMULA, "myCustomHeuristic");
+        final List<OrientVertex> result = functionAstar.execute(null, null, null, new Object[] { v6, v1,"'weight'",options },
+                new OBasicCommandContext());
+        assertEquals(16, graph.countEdges("has_path"));
+        assertEquals(0, result.size());
+
+    }
+
+    @Test
+    public void test12Execute() throws Exception {
+        Map<String, Object> options = new HashMap<String, Object>();
+        options.put(OSQLFunctionAstar.PARAM_DIRECTION, Direction.OUT);
+        options.put(OSQLFunctionAstar.PARAM_PARALLEL, true);
+        options.put(OSQLFunctionAstar.PARAM_TIE_BREAKER, false);
+        options.put(OSQLFunctionAstar.PARAM_EMPTY_IF_MAX_DEPTH, false);
+        options.put(OSQLFunctionAstar.PARAM_MAX_DEPTH, 3);
+        options.put(OSQLFunctionAstar.PARAM_EDGE_TYPE_NAMES, new String[]{"has_path"});
+        options.put(OSQLFunctionAstar.PARAM_VERTEX_AXIS_NAMES, new String[]{"lat","lon"});
+        options.put(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA, HeuristicFormula.CUSTOM);
+        options.put(OSQLFunctionAstar.PARAM_CUSTOM_HEURISTIC_FORMULA, "myCustomHeuristic");
+        final List<OrientVertex> result = functionAstar.execute(null, null, null, new Object[] { v6, v1,"'weight'",options },
+                new OBasicCommandContext());
+        assertEquals(16, graph.countEdges("has_path"));
+        assertEquals(4, result.size());
+        assertEquals(v6, result.get(0));
+        assertEquals(v5, result.get(1));
+        assertEquals(v2, result.get(2));
+        assertEquals(v3, result.get(3));
+
+    }
+
 }

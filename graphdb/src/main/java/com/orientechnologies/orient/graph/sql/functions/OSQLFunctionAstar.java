@@ -129,6 +129,11 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
         while (!open.isEmpty()) {
             OrientVertex current = open.poll();
 
+            // we discussed about this feature in https://github.com/orientechnologies/orientdb/pull/6002#issuecomment-212492687
+            if (paramEmptyIfMaxDepth==true && currentDepth >= paramMaxDepth ){
+                route.clear(); // to ensure our result is empty
+                return getPath();
+            }
             // if start and goal vertex is equal so return current path from  cameFrom hash map
             if (current.getIdentity().equals(goal.getIdentity()) || currentDepth >= paramMaxDepth) {
 
@@ -195,6 +200,7 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
 
             ctx.paramParallel = booleanOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_PARALLEL), false);
             ctx.paramMaxDepth = longOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_MAX_DEPTH), ctx.paramMaxDepth);
+            ctx.paramEmptyIfMaxDepth = booleanOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_EMPTY_IF_MAX_DEPTH), ctx.paramEmptyIfMaxDepth);
             ctx.paramTieBreaker = booleanOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_TIE_BREAKER), ctx.paramTieBreaker);
             ctx.paramDFactor = doubleOrDefault(mapParams.get(OSQLFunctionAstar.PARAM_D_FACTOR), ctx.paramDFactor);
             if(mapParams.get(OSQLFunctionAstar.PARAM_HEURISTIC_FORMULA) !=null){
