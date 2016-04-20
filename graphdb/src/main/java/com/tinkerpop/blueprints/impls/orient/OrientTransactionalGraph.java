@@ -133,7 +133,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void setAutoStartTx(boolean autoStartTx) {
     makeActive();
 
-    final boolean showWarning = !autoStartTx && isAutoStartTx() && database != null && database.getTransaction().isActive();
+    final boolean showWarning = !autoStartTx && isAutoStartTx() && getDatabase() != null && getDatabase().getTransaction().isActive();
     super.setAutoStartTx(autoStartTx);
 
     if (showWarning)
@@ -153,8 +153,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void stopTransaction(final Conclusion conclusion) {
     makeActive();
 
-    if (database.isClosed() || database.getTransaction() instanceof OTransactionNoTx
-        || database.getTransaction().getStatus() != TXSTATUS.BEGUN)
+    if (getDatabase().isClosed() || getDatabase().getTransaction() instanceof OTransactionNoTx
+        || getDatabase().getTransaction().getStatus() != TXSTATUS.BEGUN)
       return;
 
     if (Conclusion.SUCCESS == conclusion)
@@ -169,10 +169,10 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void commit() {
     makeActive();
 
-    if (database == null)
+    if (getDatabase() == null)
       return;
 
-    database.commit();
+    getDatabase().commit();
     if (isAutoStartTx())
       ensureTransaction();
   }
@@ -183,10 +183,10 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void rollback() {
     makeActive();
 
-    if (database == null)
+    if (getDatabase() == null)
       return;
 
-    database.rollback();
+    getDatabase().rollback();
     if (isAutoStartTx())
       ensureTransaction();
   }
@@ -198,17 +198,17 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     // XXX: Under some circumstances, auto started transactions are committed outside of the graph using the
     // underlying database and later restarted using the graph. So we have to check the status of the
     // database transaction to support this behaviour.
-    if (isAutoStartTx() && database.getTransaction().isActive())
+    if (isAutoStartTx() && getDatabase().getTransaction().isActive())
       throw new OTransactionException("A mixture of auto started and manually started transactions is not allowed. "
           + "Disable auto transactions for the graph before starting a manual transaction.");
 
-    database.begin();
-    database.getTransaction().setUsingLog(settings.isUseLog());
+    getDatabase().begin();
+    getDatabase().getTransaction().setUsingLog(settings.isUseLog());
   }
 
   @Override
   protected void autoStartTransaction() {
-    final boolean txBegun = database.getTransaction().isActive();
+    final boolean txBegun = getDatabase().getTransaction().isActive();
 
     if (!isAutoStartTx()) {
       if (isRequireTransaction() && !txBegun)
@@ -218,16 +218,16 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     }
 
     if (!txBegun) {
-      database.begin();
-      database.getTransaction().setUsingLog(settings.isUseLog());
+      getDatabase().begin();
+      getDatabase().getTransaction().setUsingLog(settings.isUseLog());
     }
   }
 
   private void ensureTransaction() {
-    final boolean txBegun = database.getTransaction().isActive();
+    final boolean txBegun = getDatabase().getTransaction().isActive();
     if (!txBegun) {
-      database.begin();
-      database.getTransaction().setUsingLog(settings.isUseLog());
+      getDatabase().begin();
+      getDatabase().getTransaction().setUsingLog(settings.isUseLog());
     }
   }
 
