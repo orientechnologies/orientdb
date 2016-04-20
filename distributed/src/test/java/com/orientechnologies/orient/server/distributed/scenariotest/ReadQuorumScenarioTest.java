@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
@@ -81,10 +82,25 @@ public class ReadQuorumScenarioTest  extends AbstractScenarioTest {
     System.out.println("\nConfiguration updated.");
 
     // inserting record r1 and checking consistency on all the servers
-    System.out.print("Inserting record r1 and checking consistency...");
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
-    new ODocument("Person").fields("id", "R001", "firstName", "Luke", "lastName", "Skywalker").save();
-    Thread.sleep(200);
+    try {
+      ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
+
+      // removing index
+      OIndexManager indexManager = dbServer1.getMetadata().getIndexManager();
+      indexManager.dropIndex("Person.name");
+      assertNull(dbServer1.getMetadata().getIndexManager().getIndex("Person.name"));
+
+      System.out.print("Inserting record r1...");
+      new ODocument("Person").fields("id", "R001", "firstName", "Luke", "lastName", "Skywalker").save();
+      System.out.println("Done.");
+    } catch (Exception e) {
+      e.printStackTrace();
+      fail("Record r1 not inserted!.");
+    }
+
+    waitForInsertedRecordPropagation("R001");
+
+    System.out.print("Checking consistency for record r1...");
     ODocument r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
     ODocument r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
     ODocument r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001");
@@ -110,7 +126,7 @@ public class ReadQuorumScenarioTest  extends AbstractScenarioTest {
     assertFalse(serverInstance.get(2).isActive());
 
     // updaing r1 in r1* on server3
-    banner("Updaing r1 in r1* on server3 (isolated from the the cluster)");
+    banner("Updating r1 in r1* on server3 (isolated from the the cluster)");
     ODatabaseDocumentTx dbServer3 = null;
     ODocument retrievedRecord = null;
     try {

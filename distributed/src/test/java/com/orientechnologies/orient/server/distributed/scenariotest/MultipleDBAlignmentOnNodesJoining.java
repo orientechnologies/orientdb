@@ -73,6 +73,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
       banner("Test with quorum = 2");
 
       // TODO
+      // Override prepare() method in AbstractServerClusterTest
 
       // check consistency on all the server:
       // all the records destined to server3 were redirected to an other server, so we must inspect consistency for all 500 records

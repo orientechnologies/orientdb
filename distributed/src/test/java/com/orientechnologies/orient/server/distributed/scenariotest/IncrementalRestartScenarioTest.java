@@ -47,7 +47,7 @@ import static org.junit.Assert.*;
  * - restart server3
  * - 5 threads on server3 write 100 records
  * - check consistency
- * - changing quorum (quorum=3)
+ * - changing quorum (quorum=1)
  * - network fault on server2 and server3
  * - 3 writes on server1 checking they succeed
  * - restart server2
@@ -86,8 +86,8 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
        */
 
       try {
-        currentFuture = exec.submit(tq2);
-        currentFuture.get();
+//        currentFuture = exec.submit(tq2);
+//        currentFuture.get();
       } catch (Exception e) {
         e.printStackTrace();
         fail();
@@ -179,6 +179,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
         // restarting server2
         try {
+          System.out.println("Restarting server 2...");
           serverInstance.get(1).startServer(getDistributedServerConfiguration(serverInstance.get(1)));
           System.out.println("Server 2 restarted.");
           assertTrue(serverInstance.get(1).isActive());
@@ -195,8 +196,9 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
         // restarting server3
         try {
+          System.out.println("Restarting server 3...");
           serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(2)));
-          System.out.println("Server 2 restarted.");
+          System.out.println("Server 3 restarted.");
           assertTrue(serverInstance.get(2).isActive());
         } catch (Exception e) {
           e.printStackTrace();
@@ -282,9 +284,11 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         // writes on server1
         ODatabaseRecordThreadLocal.INSTANCE.set(dbServer1);
         try {
-          new ODocument("Person").fields("name", "Jay", "surname", "Miner").save();
+          System.out.println("Inserting 3 record on server1...");
+          new ODocument("Person").fields("name", "Darth", "surname", "Vader").save();
           new ODocument("Person").fields("name", "Luke", "surname", "Skywalker").save();
           new ODocument("Person").fields("name", "Yoda", "surname", "Nothing").save();
+          System.out.println("Done.");
         } catch (Exception e) {
           e.printStackTrace();
           fail("Record not inserted even though writeQuorum=1.");
@@ -297,6 +301,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
         // restarting server2
         try {
+          System.out.println("Restarting server 2...");
           serverInstance.get(1).startServer(getDistributedServerConfiguration(serverInstance.get(1)));
           System.out.println("Server 2 restarted.");
           assertTrue(serverInstance.get(1).isActive());
@@ -313,6 +318,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
 
         // restarting server3
         try {
+          System.out.println("Restarting server 3...");
           serverInstance.get(2).startServer(getDistributedServerConfiguration(serverInstance.get(2)));
           System.out.println("Server 3 restarted.");
           assertTrue(serverInstance.get(2).isActive());
