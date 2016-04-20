@@ -114,7 +114,7 @@ public class ServerRun {
   }
 
   public OServer startServer(final String iServerConfigFile) throws Exception {
-    System.out.println("Starting server " + serverId + " from " + getServerHome() + "...");
+    System.out.println("Starting server with serverId " + serverId + " from " + getServerHome() + "...");
 
     System.setProperty("ORIENTDB_HOME", getServerHome());
 
