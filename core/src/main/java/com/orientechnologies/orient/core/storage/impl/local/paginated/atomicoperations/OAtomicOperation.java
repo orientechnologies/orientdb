@@ -363,7 +363,8 @@ public class OAtomicOperation {
 
     if (sessionStoragePerformanceStatistic != null) {
       sessionStoragePerformanceStatistic.startCommitTimer();
-      sessionStoragePerformanceStatistic.startComponentOperation("atomic operation");
+      sessionStoragePerformanceStatistic
+          .startComponentOperation("atomic operation", OSessionStoragePerformanceStatistic.ComponentType.GENERAL);
     }
 
     try {
@@ -549,7 +550,8 @@ public class OAtomicOperation {
 
       if (sessionStoragePerformanceStatistic != null) {
         sessionStoragePerformanceStatistic.startCommitTimer();
-        sessionStoragePerformanceStatistic.startComponentOperation("atomic operation");
+        sessionStoragePerformanceStatistic
+            .startComponentOperation("atomic operation", OSessionStoragePerformanceStatistic.ComponentType.GENERAL);
       }
 
       try {

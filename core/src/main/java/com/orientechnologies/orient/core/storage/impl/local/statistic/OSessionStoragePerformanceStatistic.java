@@ -162,7 +162,7 @@ public class OSessionStoragePerformanceStatistic {
   public OSessionStoragePerformanceStatistic(long intervalBetweenSnapshots, NanoTimer nanoTimer, long cleanUpInterval) {
     this.nanoTimer = nanoTimer;
     this.intervalBetweenSnapshots = intervalBetweenSnapshots;
-    this.performanceCountersHolder = new PerformanceCountersHolder();
+    this.performanceCountersHolder = ComponentType.GENERAL.newCountersHolder();
     this.cleanUpInterval = cleanUpInterval;
     this.lastCleanUpTimeStamp = nanoTimer.getNano();
   }
@@ -176,8 +176,9 @@ public class OSessionStoragePerformanceStatistic {
    * both components at once started to be gathered.
    *
    * @param componentName Name of component which started to perform operation on data. Name is case sensitive.
+   * @param type
    */
-  public void startComponentOperation(String componentName) {
+  public void startComponentOperation(String componentName, ComponentType type) {
     final Component currentComponent = componentsStack.peek();
 
     if (currentComponent != null && componentName.equals(currentComponent.name)) {
@@ -185,14 +186,14 @@ public class OSessionStoragePerformanceStatistic {
       return;
     }
 
-    componentsStack.push(new Component(componentName));
+    componentsStack.push(new Component(componentName, type));
   }
 
   /**
    * Indicates that the most earliest component in stack of components has completed it's operation, so performance data
    * for this component is stopped to be gathered.
    *
-   * @see #startComponentOperation(String)
+   * @see #startComponentOperation(String, ComponentType)
    */
   public void completeComponentOperation() {
     final Component currentComponent = componentsStack.peek();
@@ -206,7 +207,7 @@ public class OSessionStoragePerformanceStatistic {
 
       PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
       if (cHolder == null) {
-        cHolder = new PerformanceCountersHolder();
+        cHolder = currentComponent.type.newCountersHolder();
         countersByComponent.put(componentName, cHolder);
       }
 
@@ -456,7 +457,7 @@ public class OSessionStoragePerformanceStatistic {
 
       PerformanceCountersHolder holder = counters.get(componentName);
       if (holder == null) {
-        holder = new PerformanceCountersHolder();
+        holder = entry.getValue().newInstance();
         counters.put(componentName, holder);
       }
 
@@ -597,7 +598,7 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Increments counter of page accesses from cache.
    * <p>
-   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)} method
+   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String, ComponentType)} method
    * before the call and {@link #completeComponentOperation()} after the call.
    */
   public void incrementPageAccessOnCacheLevel(boolean cacheHit) {
@@ -610,7 +611,7 @@ public class OSessionStoragePerformanceStatistic {
 
       PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
       if (cHolder == null) {
-        cHolder = new PerformanceCountersHolder();
+        cHolder = component.type.newCountersHolder();
         countersByComponent.put(componentName, cHolder);
       }
 
@@ -632,7 +633,7 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Stops and records results of timer which counts how much time was spent on read of page from file system.
    * <p>
-   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)} method
+   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String, ComponentType)} method
    * before the call and {@link #completeComponentOperation()} after the call.
    *
    * @param readPages Amount of pages which were read by single call to file system.
@@ -649,7 +650,7 @@ public class OSessionStoragePerformanceStatistic {
 
       PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
       if (cHolder == null) {
-        cHolder = new PerformanceCountersHolder();
+        cHolder = component.type.newCountersHolder();
         countersByComponent.put(componentName, cHolder);
       }
       cHolder.pageReadFromFileTime += timeDiff;
@@ -728,7 +729,7 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Stops and records results of timer which counts how much time was spent on read of page from disk cache.
    * <p>
-   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)} method
+   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String, ComponentType)} method
    * before the call and {@link #completeComponentOperation()} after the call.
    */
   public void stopPageReadFromCacheTimer() {
@@ -742,7 +743,7 @@ public class OSessionStoragePerformanceStatistic {
       final String componentName = component.name;
       PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
       if (cHolder == null) {
-        cHolder = new PerformanceCountersHolder();
+        cHolder = component.type.newCountersHolder();
         countersByComponent.put(componentName, cHolder);
       }
 
@@ -786,7 +787,7 @@ public class OSessionStoragePerformanceStatistic {
   /**
    * Stops and records results of timer which counts how much time was spent to write page to disk cache.
    * <p>
-   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String)} method
+   * If you wish to gather statistic for current durable component please call {@link #startComponentOperation(String, ComponentType)} method
    * before the call and {@link #completeComponentOperation()} after the call.
    */
   public void stopPageWriteInCacheTimer() {
@@ -800,13 +801,117 @@ public class OSessionStoragePerformanceStatistic {
       final String componentName = component.name;
       PerformanceCountersHolder cHolder = countersByComponent.get(componentName);
       if (cHolder == null) {
-        cHolder = new PerformanceCountersHolder();
+        cHolder = component.type.newCountersHolder();
         countersByComponent.put(componentName, cHolder);
       }
 
       cHolder.pageWriteToCacheTime += timeDiff;
       cHolder.pageWriteToCacheCount++;
     }
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  public void startRecordCreationTimer() {
+    pushTimer();
+  }
+
+  public void stopRecordCreationTimer() {
+    final Component component = componentsStack.peek();
+
+    if (component.type.equals(ComponentType.CLUSTER))
+      throw new IllegalStateException(
+          "Invalid component type , required " + ComponentType.CLUSTER + " but found " + component.type);
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    if (cHolder == null) {
+      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      countersByComponent.put(component.name, cHolder);
+    }
+
+    cHolder.createdRecords++;
+    cHolder.timeRecordCreation += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  public void startRecordDeletionTimer() {
+    pushTimer();
+  }
+
+  public void stopRecordDeletionTimer() {
+    final Component component = componentsStack.peek();
+
+    if (component.type.equals(ComponentType.CLUSTER))
+      throw new IllegalStateException(
+          "Invalid component type , required " + ComponentType.CLUSTER + " but found " + component.type);
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    if (cHolder == null) {
+      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      countersByComponent.put(component.name, cHolder);
+    }
+
+    cHolder.deletedRecords++;
+    cHolder.timeRecordDeletion += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  public void startRecordUpdateTimer() {
+    pushTimer();
+  }
+
+  public void stopRecordUpdateTimer() {
+    final Component component = componentsStack.peek();
+
+    if (component.type.equals(ComponentType.CLUSTER))
+      throw new IllegalStateException(
+          "Invalid component type , required " + ComponentType.CLUSTER + " but found " + component.type);
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    if (cHolder == null) {
+      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      countersByComponent.put(component.name, cHolder);
+    }
+
+    cHolder.updatedRecords++;
+    cHolder.timeRecordUpdate += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  public void startRecordReadTimer() {
+    pushTimer();
+  }
+
+  public void stopRecordReadTimer() {
+    final Component component = componentsStack.peek();
+
+    if (component.type.equals(ComponentType.CLUSTER))
+      throw new IllegalStateException(
+          "Invalid component type , required " + ComponentType.CLUSTER + " but found " + component.type);
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    if (cHolder == null) {
+      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      countersByComponent.put(component.name, cHolder);
+    }
+
+    cHolder.readRecords++;
+    cHolder.timeRecordRead += timeDiff;
 
     makeSnapshotIfNeeded(endTs);
   }
@@ -945,14 +1050,46 @@ public class OSessionStoragePerformanceStatistic {
    * Contains information about system component, name and count of operations in progress at current moment.
    */
   private static final class Component {
-    private final String name;
+    private final String        name;
+    private final ComponentType type;
 
     private int operationCount;
 
-    Component(String name) {
+    Component(String name, ComponentType type) {
       this.name = name;
+      this.type = type;
+
       operationCount = 1;
     }
+  }
+
+  public enum ComponentType {
+    GENERAL {
+      @Override
+      PerformanceCountersHolder newCountersHolder() {
+        return new PerformanceCountersHolder();
+      }
+    },
+    INDEX {
+      @Override
+      IndexCountersHolder newCountersHolder() {
+        return new IndexCountersHolder();
+      }
+    },
+    CLUSTER {
+      @Override
+      ClusterCountersHolder newCountersHolder() {
+        return new ClusterCountersHolder();
+      }
+    },
+    RIDBAG {
+      @Override
+      RidbagCountersHolder newCountersHolder() {
+        return new RidbagCountersHolder();
+      }
+    };
+
+    abstract PerformanceCountersHolder newCountersHolder();
   }
 
   /**
@@ -1207,9 +1344,130 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   /**
+   * Container for cluster related performance numbers
+   */
+  public static class ClusterCountersHolder extends PerformanceCountersHolder {
+    /**
+     * Amount of all created records.
+     */
+    private long createdRecords;
+
+    /**
+     * Total time is needed to create all records
+     */
+    private long timeRecordCreation;
+
+    /**
+     * Amount of all deleted records
+     */
+    private long deletedRecords;
+
+    /**
+     * Total time is needed to delete all records
+     */
+    private long timeRecordDeletion;
+
+    /**
+     * Amount of all updated records
+     */
+    private long updatedRecords;
+
+    /**
+     * Total time which is needed to update all records
+     */
+    private long timeRecordUpdate;
+
+    /**
+     * Amount of all read records
+     */
+    private long readRecords;
+
+    /**
+     * Total time which is needed to read all records.
+     */
+    private long timeRecordRead;
+
+    @Override
+    public ClusterCountersHolder newInstance() {
+      return new ClusterCountersHolder();
+    }
+
+    @Override
+    public void clean() {
+      super.clean();
+
+      createdRecords = 0;
+      timeRecordCreation = 0;
+
+      deletedRecords = 0;
+      timeRecordDeletion = 0;
+
+      updatedRecords = 0;
+      timeRecordUpdate = 0;
+
+      readRecords = 0;
+      timeRecordRead = 0;
+    }
+
+    public long getRecordCreationTime() {
+      if (createdRecords == 0)
+        return -1;
+
+      return timeRecordCreation / createdRecords;
+    }
+
+    public long getRecordDeletionTime() {
+      if (deletedRecords == 0)
+        return -1;
+
+      return timeRecordDeletion / deletedRecords;
+    }
+
+    public long getRecordUpdateTime() {
+      if (updatedRecords == 0)
+        return -1;
+
+      return timeRecordUpdate / updatedRecords;
+    }
+
+    public long getRecordReadTime() {
+      if (readRecords == 0)
+        return -1;
+
+      return timeRecordRead / readRecords;
+    }
+
+    @Override
+    public ODocument toDocument() {
+      final ODocument document = super.toDocument();
+
+      document.field("recordCreationTime", getRecordCreationTime());
+      document.field("recordDeletionTime", getRecordDeletionTime());
+      document.field("recordUpdateTime", getRecordUpdateTime());
+      document.field("recordReadTime", getRecordReadTime());
+
+      return document;
+    }
+  }
+
+  public static class IndexCountersHolder extends PerformanceCountersHolder {
+    @Override
+    public IndexCountersHolder newInstance() {
+      return new IndexCountersHolder();
+    }
+  }
+
+  public static class RidbagCountersHolder extends PerformanceCountersHolder {
+    @Override
+    public PerformanceCountersHolder newInstance() {
+      return new RidbagCountersHolder();
+    }
+  }
+
+  /**
    * Container for all performance counters which are shared between durable components and whole system.
    */
-  public static final class PerformanceCountersHolder implements CountersHolder<PerformanceCountersHolder> {
+  public static class PerformanceCountersHolder implements CountersHolder<PerformanceCountersHolder> {
     /**
      * Amount of times when atomic operation commit was performed.
      */
@@ -1405,6 +1663,10 @@ public class OSessionStoragePerformanceStatistic {
 
       return document;
     }
+
+    public PerformanceCountersHolder newInstance() {
+      return new PerformanceCountersHolder();
+    }
   }
 
   /**
@@ -1425,13 +1687,13 @@ public class OSessionStoragePerformanceStatistic {
         Map<String, PerformanceCountersHolder> countersByComponent, WritCacheCountersHolder writCacheCountersHolder,
         StorageCountersHolder storageCountersHolder, WALCountersHolder walCountersHolder) {
 
-      this.performanceCountersHolder = new PerformanceCountersHolder();
+      this.performanceCountersHolder = performanceCountersHolder.newInstance();
       performanceCountersHolder.pushData(this.performanceCountersHolder);
 
       //to preserve thread safety we assign map instance to the final field when it is completely filled by data
       Map<String, PerformanceCountersHolder> counters = new HashMap<String, PerformanceCountersHolder>();
       for (Map.Entry<String, PerformanceCountersHolder> entry : countersByComponent.entrySet()) {
-        final PerformanceCountersHolder holder = new PerformanceCountersHolder();
+        final PerformanceCountersHolder holder = entry.getValue().newInstance();
         entry.getValue().pushData(holder);
 
         counters.put(entry.getKey(), holder);

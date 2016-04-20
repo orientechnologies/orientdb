@@ -25,6 +25,7 @@ import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -58,7 +59,7 @@ public class OEngineMemory extends OEngineAbstract {
 
   @Override
   public void startup() {
-    OByteBufferPool.checkConfiguration();
+    OMemory.checkDirectMemoryConfiguration();
 
     try {
       if (OByteBufferPool.instance() != null)

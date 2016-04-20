@@ -20,15 +20,6 @@
 
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -44,6 +35,10 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * This is implementation which is based on B+-tree implementation threaded tree.
@@ -2069,6 +2064,16 @@ public class OSBTree<K, V> extends ODurableComponent {
       } finally {
         completeOperation();
       }
+    }
+  }
+
+  @Override
+  protected void startOperation() {
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
+        .getSessionPerformanceStatistic();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic
+          .startComponentOperation(getFullName(), OSessionStoragePerformanceStatistic.ComponentType.INDEX);
     }
   }
 }
