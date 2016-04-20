@@ -22,37 +22,18 @@ package com.orientechnologies.common.directmemory;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
-import com.orientechnologies.common.io.OUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-
-import javax.management.*;
-
-import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 import javax.management.*;
 import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.lang.management.RuntimeMXBean;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReferenceArray;
-
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -70,9 +51,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    * {@link OByteBufferPool}'s MBean name.
    */
   public static final String MBEAN_NAME = "com.orientechnologies.common.directmemory:type=OByteBufferPoolMXBean";
-
-  // JVM accepts this option exactly as it appears here, no lowercase/uppercase mixing and additional spacing allowed
-  private static final String XX_MAX_DIRECT_MEMORY_SIZE = "-XX:MaxDirectMemorySize=";
 
   private static final OByteBufferPool INSTANCE;
 
@@ -138,63 +116,6 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    */
   public static OByteBufferPool instance() {
     return INSTANCE;
-  }
-
-  /**
-   * Checks the memory configuration for compatibility with byte buffer pools.
-   *
-   * @throws OConfigurationException if configuration is not compatible.
-   */
-  public static void checkConfiguration() throws OConfigurationException {
-    long osMemory = -1;
-
-    final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
-    try {
-      final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
-      memorySize.setAccessible(true);
-      osMemory = (Long) memorySize.invoke(mxBean);
-    } catch (NoSuchMethodException e) {
-      OLogManager.instance().error(OByteBufferPool.class, "Unable to determine the amount of installed RAM.", e);
-    } catch (InvocationTargetException e) {
-      OLogManager.instance().error(OByteBufferPool.class, "Unable to determine the amount of installed RAM.", e);
-    } catch (IllegalAccessException e) {
-      OLogManager.instance().error(OByteBufferPool.class, "Unable to determine the amount of installed RAM.", e);
-    }
-
-    long maxDirectMemorySize = -1;
-
-    final RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
-    final List<String> vmArgs = runtimeMXBean.getInputArguments();
-    for (String arg : vmArgs)
-      if (arg.startsWith(XX_MAX_DIRECT_MEMORY_SIZE)) {
-        try {
-          maxDirectMemorySize = OUtils.parseVmArgsSize(arg.substring(XX_MAX_DIRECT_MEMORY_SIZE.length()));
-        } catch (IllegalArgumentException e) {
-          OLogManager.instance().error(OByteBufferPool.class, "Unable to parse the value of -XX:MaxDirectMemorySize option.", e);
-        }
-        break;
-      }
-
-    if (maxDirectMemorySize == -1) {
-      if (osMemory != -1)
-        throw new OConfigurationException("MaxDirectMemorySize JVM option is not set or has invalid value, "
-            + "that may cause out of memory errors. Please set the -XX:MaxDirectMemorySize=" + osMemory / (1024 * 1024)
-            + "m option when you start the JVM.");
-      else
-        throw new OConfigurationException("MaxDirectMemorySize JVM option is not set or has invalid value, "
-            + "that may cause out of memory errors. Please set the -XX:MaxDirectMemorySize=<SIZE>m JVM option "
-            + "when you start the JVM, where <SIZE> is the memory size of this machine in megabytes.");
-    }
-
-    final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
-    final long maxCacheMemory = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024
-        + (OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsLong() + 1) * pageSize;
-    if (maxCacheMemory > maxDirectMemorySize)
-      throw new OConfigurationException("Configured maximum amount of memory available to the caches (" + maxCacheMemory +
-          " bytes) is larger than configured JVM maximum direct memory size (" + maxDirectMemorySize + " bytes). That may cause "
-          + "out of memory errors, please tune the configuration up. Use the -XX:MaxDirectMemorySize JVM option to raise the JVM "
-          + "maximum direct memory size or storage.diskCache.bufferSize and storage.wal.cacheSize OrientDB options to lower "
-          + "memory requirements of the caches.");
   }
 
   /**

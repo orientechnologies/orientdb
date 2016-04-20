@@ -24,6 +24,7 @@ import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -47,11 +48,12 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   @Override
   public void startup() {
+    OMemory.checkDirectMemoryConfiguration();
+    OMemory.checkCacheMemoryConfiguration();
+
     readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
         OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger());
-
-    OByteBufferPool.checkConfiguration();
 
     try {
       if (OByteBufferPool.instance() != null)

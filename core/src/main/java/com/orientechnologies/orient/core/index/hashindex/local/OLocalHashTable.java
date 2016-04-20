@@ -6,12 +6,13 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.exception.OLocalHashTableException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
@@ -327,8 +328,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
             V result = null;
             OCacheEntry cacheEntry = loadPage(atomicOperation, nullBucketFileId, 0, false);
             try {
-              ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, getChanges(atomicOperation, cacheEntry),
-                  valueSerializer, false);
+              ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, getChanges(atomicOperation, cacheEntry), valueSerializer,
+                  false);
               result = nullBucket.getValue();
             } finally {
               releasePage(atomicOperation, cacheEntry);
@@ -1402,8 +1403,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
 
       cacheEntry.acquireExclusiveLock();
       try {
-        ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, getChanges(atomicOperation, cacheEntry), valueSerializer,
-            isNew);
+        ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, getChanges(atomicOperation, cacheEntry), valueSerializer, isNew);
         if (nullBucket.getValue() != null)
           sizeDiff--;
 
@@ -1955,4 +1955,13 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
     throw new IllegalStateException("Extendible hashing tree in corrupted state.");
   }
 
+  @Override
+  protected void startOperation() {
+    OSessionStoragePerformanceStatistic sessionStoragePerformanceStatistic = performanceStatisticManager
+        .getSessionPerformanceStatistic();
+    if (sessionStoragePerformanceStatistic != null) {
+      sessionStoragePerformanceStatistic
+          .startComponentOperation(getFullName(), OSessionStoragePerformanceStatistic.ComponentType.INDEX);
+    }
+  }
 }

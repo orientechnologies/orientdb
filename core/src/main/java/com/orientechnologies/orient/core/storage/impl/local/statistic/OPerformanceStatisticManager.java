@@ -382,7 +382,7 @@ public class OPerformanceStatisticManager {
     try {
       enabled = false;
 
-      final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
+      final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
       final Map<String, PerformanceCountersHolder> componentCountersHolder = new HashMap<String, PerformanceCountersHolder>();
 
       WritCacheCountersHolder writCacheCountersHolder = deadThreadsStatistic.writCacheCountersHolder;
@@ -529,7 +529,7 @@ public class OPerformanceStatisticManager {
     switchLock.acquireReadLock();
     try {
       if (enabled) {
-        final PerformanceCountersHolder componentCountersHolder = new PerformanceCountersHolder();
+        final PerformanceCountersHolder componentCountersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchComponentCounters(componentName, componentCountersHolder);
         return componentCountersHolder.getAmountOfPagesPerOperation();
       } else {
@@ -556,7 +556,7 @@ public class OPerformanceStatisticManager {
     switchLock.acquireReadLock();
     try {
       if (enabled) {
-        final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
+        final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchSystemCounters(countersHolder);
         return countersHolder.getCacheHits();
       } else {
@@ -583,7 +583,7 @@ public class OPerformanceStatisticManager {
     switchLock.acquireReadLock();
     try {
       if (enabled) {
-        final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
+        final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchComponentCounters(componentName, countersHolder);
         return countersHolder.getCacheHits();
       } else {
@@ -610,7 +610,7 @@ public class OPerformanceStatisticManager {
     switchLock.acquireReadLock();
     try {
       if (enabled) {
-        final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
+        final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchSystemCounters(countersHolder);
         return countersHolder.getCommitTime();
       } else {
@@ -633,7 +633,7 @@ public class OPerformanceStatisticManager {
     switchLock.acquireReadLock();
     try {
       if (enabled) {
-        final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
+        final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchSystemCounters(countersHolder);
         return countersHolder.getReadSpeedFromCacheInPages();
       } else {
@@ -661,7 +661,7 @@ public class OPerformanceStatisticManager {
     switchLock.acquireReadLock();
     try {
       if (enabled) {
-        final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
+        final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchComponentCounters(componentName, countersHolder);
         return countersHolder.getReadSpeedFromCacheInPages();
       } else {
@@ -689,7 +689,7 @@ public class OPerformanceStatisticManager {
     switchLock.acquireReadLock();
     try {
       if (enabled) {
-        final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
+        final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchSystemCounters(countersHolder);
         return countersHolder.getReadSpeedFromFileInPages();
       } else {
@@ -717,7 +717,7 @@ public class OPerformanceStatisticManager {
     switchLock.acquireReadLock();
     try {
       if (enabled) {
-        final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
+        final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchComponentCounters(componentName, countersHolder);
         return countersHolder.getReadSpeedFromFileInPages();
       } else {
@@ -744,7 +744,7 @@ public class OPerformanceStatisticManager {
     switchLock.acquireReadLock();
     try {
       if (enabled) {
-        final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
+        final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchSystemCounters(countersHolder);
         return countersHolder.getWriteSpeedInCacheInPages();
       } else {
@@ -773,7 +773,7 @@ public class OPerformanceStatisticManager {
     switchLock.acquireReadLock();
     try {
       if (enabled) {
-        final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
+        final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
         fetchComponentCounters(componentName, countersHolder);
         return countersHolder.getWriteSpeedInCacheInPages();
       } else {
@@ -1456,7 +1456,7 @@ public class OPerformanceStatisticManager {
       //we accumulate all statistic in intermediate fields and only then put
       //results in #deadThreadsStatistic field to preserve thread safety features
       final ImmutableStatistic oldDS = deadThreadsStatistic;
-      final PerformanceCountersHolder countersHolder = new PerformanceCountersHolder();
+      final PerformanceCountersHolder countersHolder = ComponentType.GENERAL.newCountersHolder();
       final Map<String, PerformanceCountersHolder> countersByComponents = new HashMap<String, PerformanceCountersHolder>();
 
       WritCacheCountersHolder writeCacheCountersHolder = null;
@@ -1468,7 +1468,7 @@ public class OPerformanceStatisticManager {
         oldDS.countersHolder.pushData(countersHolder);
 
         for (Map.Entry<String, PerformanceCountersHolder> oldEntry : oldDS.countersByComponents.entrySet()) {
-          final PerformanceCountersHolder holder = new PerformanceCountersHolder();
+          final PerformanceCountersHolder holder = oldEntry.getValue().newInstance();
           oldEntry.getValue().pushData(holder);
 
           countersByComponents.put(oldEntry.getKey(), holder);

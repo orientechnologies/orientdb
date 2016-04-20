@@ -25,7 +25,7 @@ public class PerformanceStatisticManagerMBeanTest {
     assertOperation(operations, "stopMonitoring");
 
     final MBeanAttributeInfo[] attributes = mBeanInfo.getAttributes();
-    Assert.assertEquals(attributes.length, 19);
+    Assert.assertEquals(attributes.length, 30);
 
     assertAttribute(attributes, "cacheHits", int.class);
     assertAttribute(attributes, "cacheHits_com1", int.class);
