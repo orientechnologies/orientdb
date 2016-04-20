@@ -50,6 +50,9 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
         OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger());
+
+    OByteBufferPool.checkConfiguration();
+
     try {
       if (OByteBufferPool.instance() != null)
         OByteBufferPool.instance().registerMBean();
@@ -103,7 +106,8 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     readCache.clear();
 
     try {
-      OByteBufferPool.instance().unregisterMBean();
+      if (OByteBufferPool.instance() != null)
+        OByteBufferPool.instance().unregisterMBean();
     } catch (Exception e) {
       OLogManager.instance().error(this, "MBean for byte buffer pool cannot be unregistered", e);
     }
