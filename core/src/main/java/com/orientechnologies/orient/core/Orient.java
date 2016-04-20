@@ -579,7 +579,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       try {
         engine.startup();
       } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during initialization of engine %s , engine will be removed", entry.getKey());
+        OLogManager.instance().error(this, "Error during initialization of engine '%s', engine will be removed", e, entry.getKey());
 
         try {
           engine.shutdown();

@@ -81,6 +81,6 @@ public class HATest extends AbstractServerClusterTxTest {
 
   @Override
   public String getDatabaseName() {
-    return "distributed-inserttxha";
+    return "distributed-hatest";
   }
 }

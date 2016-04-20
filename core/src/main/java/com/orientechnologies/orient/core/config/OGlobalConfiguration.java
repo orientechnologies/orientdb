@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
-import java.lang.management.PlatformManagedObject;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
@@ -916,8 +915,6 @@ public enum OGlobalConfiguration {
   }
 
   private static void autoConfig() {
-    checkVMDirectMemoryOptions();
-
     if (System.getProperty(DISK_CACHE_SIZE.key) == null)
       autoConfigDiskCacheSize();
 
@@ -929,39 +926,6 @@ public enum OGlobalConfiguration {
       else if (jvmMaxMemory > 512 * OFileUtils.MEGABYTE)
         // INCREASE WAL RESTORE BATCH SIZE TO 10K INSTEAD OF DEFAULT 1K
         WAL_RESTORE_BATCH_SIZE.setValue(10000);
-    }
-  }
-
-  private static void checkVMDirectMemoryOptions() {
-    final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
-    try {
-      final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
-      memorySize.setAccessible(true);
-
-      final long osMemory = (Long) memorySize.invoke(mxBean);
-
-      final Class<? extends PlatformManagedObject> hotSpotDiagnosticMXBeanClass = (Class<? extends PlatformManagedObject>) OGlobalConfiguration.class
-          .getClassLoader().loadClass("com.sun.management.HotSpotDiagnosticMXBean");
-      final Class<?> vmOptionClass = OGlobalConfiguration.class.getClassLoader().loadClass("com.sun.management.VMOption");
-
-      final PlatformManagedObject hotSpotDiagnosticMXBean = ManagementFactory.getPlatformMXBean(hotSpotDiagnosticMXBeanClass);
-
-      final Method getVMOption = hotSpotDiagnosticMXBeanClass.getMethod("getVMOption", String.class);
-
-      final Object vmOption = getVMOption.invoke(hotSpotDiagnosticMXBean, "MaxDirectMemorySize");
-      final Method getValue = vmOptionClass.getMethod("getValue");
-
-      final String value = (String) getValue.invoke(vmOption);
-      if ("0".equals(value)) {
-        OLogManager.instance().warn(null,
-            "MaxDirectMemorySize option is not set. It may cause %s. Please set the option"
-                + " -XX:MaxDirectMemorySize=%dm when you start the JVM",
-            OutOfMemoryError.class.getSimpleName(), osMemory / (1024 * 1024));
-      }
-    } catch (NoSuchMethodException e) {
-    } catch (InvocationTargetException e) {
-    } catch (IllegalAccessException e) {
-    } catch (ClassNotFoundException e) {
     }
   }
 
