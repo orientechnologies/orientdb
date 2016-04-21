@@ -559,6 +559,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             clSel = cls.getClusterSelection();
           }
 
+          if (!(clSel instanceof OLocalClusterStrategy))
+            throw new ODistributedException("Cannot install local cluster strategy on class '" + cls.getName() + "'");
+
           OLogManager.instance().warn(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
               + "' (it is '" + masterNode + "'). Reloading distributed configuration for database '" + getName() + "'");
 
@@ -644,7 +647,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(finalClusterName), nodes,
                       task, null, localPlaceholder, unlockCallback));
                 }
-              }
+              } else
+                unlockCallback.call(null);
+
               return localResult;
             }
           });
@@ -853,6 +858,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 localResult = null;
 
               if (nodes.isEmpty()) {
+                unlockCallback.call(null);
+
                 if (localResult == null)
                   throw new ODistributedException(
                       "Cannot execute distributed update on record " + iRecordId + " because no nodes are available");
@@ -981,6 +988,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               dManager.getAvailableNodes(nodes, getName());
 
               if (nodes.isEmpty()) {
+                unlockCallback.call(null);
+
                 if (localResult == null)
                   throw new ODistributedException(
                       "Cannot execute distributed update on record " + iRecordId + " because no nodes are available");
