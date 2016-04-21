@@ -496,7 +496,7 @@ public class OServer {
 
     if (dbPath.startsWith("/")) {
       if (!dbPath.startsWith(getDatabaseDirectory()))
-        throw new IllegalArgumentException("Storage path is invalid because points to an absolute directory");
+        throw new IllegalArgumentException("Storage path is invalid because it points to an absolute directory");
     }
 
     final OStorage stg = Orient.instance().getStorage(dbName);

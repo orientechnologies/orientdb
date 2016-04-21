@@ -134,7 +134,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     makeActive();
     putInInitializationStack();
 
-    this.username = database.getUser() != null ? database.getUser().getName() : null;
+    this.username = getDatabase().getUser() != null ? getDatabase().getUser().getName() : null;
 
     readDatabaseConfiguration();
   }
@@ -145,7 +145,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     database = pool.acquire();
     makeActive();
     putInInitializationStack();
-    this.username = database.getUser() != null ? database.getUser().getName() : null;
+    this.username = getDatabase().getUser() != null ? getDatabase().getUser().getName() : null;
 
     readDatabaseConfiguration();
     configure(iConfiguration);
@@ -361,8 +361,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     activeGraph.set(this);
 
     final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (database != null && tlDb != database)
-      ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    if (getDatabase() != null && tlDb != getDatabase())
+      ODatabaseRecordThreadLocal.INSTANCE.set(getDatabase());
   }
 
   /**
@@ -403,7 +403,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return executeOutsideTx(new OCallable<Index<T>, OrientBaseGraph>() {
       public Index<T> call(final OrientBaseGraph g) {
 
-        final OIndexManager indexManager = database.getMetadata().getIndexManager();
+        final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
 
         if (indexManager.getIndex(indexName) != null)
           throw ExceptionFactory.indexAlreadyExists(indexName);
@@ -432,7 +432,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public <T extends Element> Index<T> getIndex(final String indexName, final Class<T> indexClass) {
     makeActive();
 
-    final OIndexManager indexManager = database.getMetadata().getIndexManager();
+    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
     final OIndex idx = indexManager.getIndex(indexName);
     if (idx == null || !hasIndexClass(idx))
       return null;
@@ -504,20 +504,20 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public ORecordConflictStrategy getConflictStrategy() {
     makeActive();
 
-    return database.getStorage().getConflictStrategy();
+    return getDatabase().getStorage().getConflictStrategy();
   }
 
   public OrientBaseGraph setConflictStrategy(final String iStrategyName) {
     makeActive();
 
-    database.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+    getDatabase().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
   }
 
   public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
     makeActive();
 
-    database.setConflictStrategy(iResolver);
+    getDatabase().setConflictStrategy(iResolver);
     return this;
   }
 
@@ -815,7 +815,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final String className = iKey.substring(0, pos);
       key = iKey.substring(iKey.indexOf('.') + 1);
 
-      clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
+      clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
 
       final Collection<? extends OIndex<?>> indexes = clazz.getIndexes();
       for (OIndex<?> index : indexes) {
@@ -833,7 +833,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       key = iKey;
     }
 
-    final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(indexName);
+    final OIndex<?> idx = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
     if (idx != null) {
       iValue = convertKey(idx, iValue);
 
@@ -875,7 +875,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     else
       indexName = OrientVertexType.CLASS_NAME + "." + iKey;
 
-    final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(indexName);
+    final OIndex<?> idx = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
     if (idx != null) {
       iValue = convertKey(idx, iValue);
 
@@ -900,7 +900,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    */
   public Iterable<Vertex> getVertices(final String label, final String[] iKey, Object[] iValue) {
     makeActive();
-    final OClass clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(label);
+    final OClass clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(label);
     Set<OIndex<?>> indexes = clazz.getInvolvedIndexes(Arrays.asList(iKey));
     if (indexes.iterator().hasNext()) {
       final OIndex<?> idx = indexes.iterator().next();
@@ -1014,7 +1014,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       key = iKey;
     }
 
-    final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(indexName);
+    final OIndex<?> idx = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
     if (idx != null) {
       iValue = convertKey(idx, iValue);
 
@@ -1117,7 +1117,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public boolean isClosed() {
     makeActive();
 
-    return database == null || database.isClosed();
+    return getDatabase() == null || getDatabase().isClosed();
   }
 
   /**
@@ -1141,11 +1141,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     makeActive();
 
     try {
-      if (!database.isClosed() && commitTx) {
-        final OStorage storage = database.getStorage().getUnderlying();
+      if (!getDatabase().isClosed() && commitTx) {
+        final OStorage storage = getDatabase().getStorage().getUnderlying();
         if (storage instanceof OAbstractPaginatedStorage) {
           if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
-            database.commit();
+            getDatabase().commit();
         }
 
       }
@@ -1158,8 +1158,12 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       throw OException.wrapException(new ODatabaseException("Error during context close for db " + url), e);
     } finally {
       try {
-        if (closeDb)
-          database.close();
+        if (closeDb) {
+          getDatabase().close();
+          if(getDatabase().isPooled()){
+            database = null;
+          }
+        }
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during context close for db " + url, e);
       }
@@ -1172,7 +1176,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     pollGraphFromStack(closeDb);
 
     if (!closeDb)
-      database.activateOnCurrentThread();
+      getDatabase().activateOnCurrentThread();
   }
 
   /**
@@ -1186,7 +1190,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Returns the underlying Database instance as ODatabaseDocumentTx instance.
    */
   public ODatabaseDocumentTx getRawGraph() {
-    return database;
+    return getDatabase();
   }
 
   /**
@@ -1891,9 +1895,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (getThreadMode() == THREAD_MODE.ALWAYS_AUTOSET || tlDb == null) {
-      if (database != null && tlDb != database)
+      if (getDatabase() != null && tlDb != getDatabase())
         // SET IT
-        ODatabaseRecordThreadLocal.INSTANCE.set(database);
+        ODatabaseRecordThreadLocal.INSTANCE.set(getDatabase());
     }
   }
 
@@ -1951,21 +1955,21 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       database = new ODatabaseDocumentTx(url);
 
       final OStorageRemote.CONNECTION_STRATEGY connMode = settings.getConnectionStrategy();
-      database.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
+      getDatabase().setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
 
-      if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
-        ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).registerRecoverListener(this);
+      if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+        ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).registerRecoverListener(this);
 
-      if (url.startsWith("remote:") || database.exists()) {
-        if (database.isClosed())
-          database.open(username, password);
+      if (url.startsWith("remote:") || getDatabase().exists()) {
+        if (getDatabase().isClosed())
+          getDatabase().open(username, password);
       } else
-        database.create();
+        getDatabase().create();
     } else {
       database = pool.acquire();
 
-      if (database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
-        ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).registerRecoverListener(this);
+      if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+        ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying()).registerRecoverListener(this);
     }
 
     makeActive();
@@ -1974,7 +1978,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
   private List<Index<? extends Element>> loadManualIndexes() {
     final List<Index<? extends Element>> result = new ArrayList<Index<? extends Element>>();
-    for (OIndex<?> idx : database.getMetadata().getIndexManager().getIndexes()) {
+    for (OIndex<?> idx : getDatabase().getMetadata().getIndexManager().getIndexes()) {
       if (hasIndexClass(idx))
         // LOAD THE INDEXES
         result.add(new OrientIndex<OrientElement>(this, idx));
@@ -1989,6 +1993,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
         // compatibility with versions earlier 1.6.3
         || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
+  }
+
+  protected ODatabaseDocumentTx getDatabase() {
+    if (database == null) {
+      throw new ODatabaseException("Database is closed");
+    }
+    return database;
   }
 
   private static class InitializationStackThreadLocal extends ThreadLocal<Deque<OrientBaseGraph>> {

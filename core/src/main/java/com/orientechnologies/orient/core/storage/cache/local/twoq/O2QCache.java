@@ -689,8 +689,7 @@ public class O2QCache implements OReadCache {
     try {
       fileLock = fileLockManager.acquireExclusiveLock(fileId);
       try {
-        truncateFile(fileId, writeCache);
-
+        clearFile(fileId);
         filePages.remove(fileId);
         writeCache.deleteFile(fileId);
       } finally {

@@ -317,20 +317,50 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             // / NO NODE TO REPLICATE
             return null;
 
-          if (executeLocally(localNodeName, dbCfg, exec, involvedClusters, nodes))
+          if (executeOnlyLocally(localNodeName, dbCfg, exec, involvedClusters, nodes))
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
             // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
             return wrapped.command(iCommand);
 
-          final ODistributedResponse dResponse = dManager.sendRequest(getName(), involvedClusters, nodes, task,
-              EXECUTION_MODE.RESPONSE, null, null);
+          final Object localResult;
+          if (nodes.contains(localNodeName)) {
+            // EXECUTE ON LOCAL NODE FIRST
+            try {
 
-          result = dResponse.getPayload();
+              localResult = ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+                @Override
+                public Object call() throws Exception {
+                  return wrapped.command(iCommand);
+                }
+              });
+            } catch (RuntimeException e) {
+              throw e;
+            } catch (Exception e) {
+              OException.wrapException(new ODistributedException("Cannot execute command " + iCommand), e);
+              // UNREACHABLE
+              return null;
+            }
+            nodes.remove(localNodeName);
+          } else
+            localResult = null;
 
-          if (exec.involveSchema())
-            // UPDATE THE SCHEMA
-            dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
+          if (nodes.isEmpty()) {
+            if (localResult == null)
+              throw new ODistributedException(
+                  "Cannot execute distributed command '" + iCommand + "' because no nodes are available");
+          } else {
+
+            final ODistributedResponse dResponse = dManager.sendRequest(getName(), involvedClusters, nodes, task,
+                EXECUTION_MODE.RESPONSE, localResult, null);
+
+            result = dResponse.getPayload();
+
+          }
         }
+
+        if (exec.involveSchema())
+          // UPDATE THE SCHEMA
+          dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
 
         break;
       }
@@ -455,8 +485,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return list;
   }
 
-  protected boolean executeLocally(final String localNodeName, final ODistributedConfiguration dbCfg, final OCommandExecutor exec,
-      final Collection<String> involvedClusters, final Collection<String> nodes) {
+  protected boolean executeOnlyLocally(final String localNodeName, final ODistributedConfiguration dbCfg,
+      final OCommandExecutor exec, final Collection<String> involvedClusters, final Collection<String> nodes) {
     boolean executeLocally = false;
     if (exec.isIdempotent()) {
       final int availableNodes = dManager.getAvailableNodes(nodes, getName());
@@ -528,6 +558,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             dManager.propagateSchemaChanges(db);
             clSel = cls.getClusterSelection();
           }
+
+          if (!(clSel instanceof OLocalClusterStrategy))
+            throw new ODistributedException("Cannot install local cluster strategy on class '" + cls.getName() + "'");
 
           OLogManager.instance().warn(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
               + "' (it is '" + masterNode + "'). Reloading distributed configuration for database '" + getName() + "'");
@@ -614,7 +647,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(finalClusterName), nodes,
                       task, null, localPlaceholder, unlockCallback));
                 }
-              }
+              } else
+                unlockCallback.call(null);
+
               return localResult;
             }
           });
@@ -822,10 +857,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               } else
                 localResult = null;
 
-              // FILTER ONLY AVAILABLE NODES
-              dManager.getAvailableNodes(nodes, getName());
-
               if (nodes.isEmpty()) {
+                unlockCallback.call(null);
+
                 if (localResult == null)
                   throw new ODistributedException(
                       "Cannot execute distributed update on record " + iRecordId + " because no nodes are available");
@@ -954,6 +988,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               dManager.getAvailableNodes(nodes, getName());
 
               if (nodes.isEmpty()) {
+                unlockCallback.call(null);
+
                 if (localResult == null)
                   throw new ODistributedException(
                       "Cannot execute distributed update on record " + iRecordId + " because no nodes are available");

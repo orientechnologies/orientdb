@@ -163,10 +163,6 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     return -1;
   }
 
-  protected String getLocalNodeNameAndThread() {
-    return manager.getLocalNodeName() + ":" + Thread.currentThread().getId();
-  }
-
   protected void purgePendingMessages() {
     final long now = System.currentTimeMillis();
 

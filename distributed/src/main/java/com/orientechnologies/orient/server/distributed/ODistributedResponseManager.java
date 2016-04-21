@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -97,7 +98,7 @@ public class ODistributedResponseManager {
     try {
       if (!executorNode.equals(dManager.getLocalNodeName()) && !responses.containsKey(executorNode)) {
         ODistributedServerLog.warn(this, senderNode, executorNode, DIRECTION.IN,
-            "received response for request (%s) from unexpected node. Expected are: %s", request, getExpectedNodes());
+            "Received response for request (%s) from unexpected node. Expected are: %s", request, getExpectedNodes());
 
         Orient.instance().getProfiler().updateCounter("distributed.node.unexpectedNodeResponse",
             "Number of responses from unexpected nodes", +1);
@@ -111,7 +112,6 @@ public class ODistributedResponseManager {
       Orient.instance().getProfiler().stopChrono("distributed.node." + executorNode + ".latency",
           "Latency of distributed messages per node", sentOn, "distributed.node.*.latency");
 
-      boolean completed = false;
       responses.put(executorNode, response);
       receivedResponses++;
 
@@ -154,6 +154,8 @@ public class ODistributedResponseManager {
           }
 
           if (foundBucket) {
+            if (responseGroup.size() > 0 && responseGroup.get(0).getExecutorNodeName().equals(response.getExecutorNodeName()))
+              OLogManager.instance().error(this, "AAAA");
             responseGroup.add(response);
             break;
           }
@@ -167,7 +169,7 @@ public class ODistributedResponseManager {
         }
       }
 
-      completed = getExpectedResponses() == receivedResponses;
+      boolean completed = getExpectedResponses() == receivedResponses;
 
       if (completed || isMinimumQuorumReached()) {
         // NOTIFY TO THE WAITER THE RESPONSE IS COMPLETE NOW
@@ -618,10 +620,10 @@ public class ODistributedResponseManager {
   protected void undoRequest() {
     // DETERMINE IF ANY CREATE FAILED TO RESTORE RIDS
     for (ODistributedResponse r : getReceivedResponses()) {
-//      if (r.getPayload() instanceof Throwable)
-//        // NO NEED TO UNDO AN OPERATION THAT RETURNED EXCEPTION
-//        // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
-//        continue;
+      // if (r.getPayload() instanceof Throwable)
+      // // NO NEED TO UNDO AN OPERATION THAT RETURNED EXCEPTION
+      // // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
+      // continue;
 
       final ORemoteTask task = request.getTask();
       if (task instanceof OAbstractReplicatedTask) {

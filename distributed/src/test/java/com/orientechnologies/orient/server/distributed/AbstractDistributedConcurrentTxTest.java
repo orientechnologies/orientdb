@@ -94,7 +94,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
 
             localVertex.reload();
 
-            OLogManager.instance().info(this, "Retry with reloaded vertex v=%d", localVertex.getRecord().getVersion());
+            OLogManager.instance().info(this, "Retry %d with reloaded vertex v=%d", retry, localVertex.getRecord().getVersion());
           }
 
           Assert.assertTrue("Unable to complete the transaction (last=" + i + "/" + count + "), even after " + retry + " retries",
