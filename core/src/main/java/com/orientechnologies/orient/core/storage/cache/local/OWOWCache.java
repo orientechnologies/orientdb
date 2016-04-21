@@ -1146,8 +1146,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private String doDeleteFile(int fileId) throws IOException {
+    final int intId = extractFileId(fileId);
     if (isOpen(fileId))
-      truncateFile(fileId);
+      removeCachedPages(intId);
 
     final OFileClassic fileClassic = files.remove(fileId);
 
