@@ -236,6 +236,8 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
           return builder.toString();
         }
         return result.toString();
+      }catch (OCommandSQLParsingException sqlx){
+        throw sqlx;
       } catch (Exception e) {
         throwParsingException("Error parsing query: \n" + queryText + "\n" + e.getMessage(), e);
       }

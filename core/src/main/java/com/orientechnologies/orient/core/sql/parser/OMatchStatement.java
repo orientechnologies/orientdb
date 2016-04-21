@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OIterableRecordSource;
 import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.core.sql.query.OBasicResultSet;
@@ -150,7 +151,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       this.returnAliases = result.returnAliases;
       this.limit = result.limit;
     } catch (ParseException e) {
-      OErrorCode.QUERY_PARSE_ERROR.throwException(e.getMessage(), e);
+      OCommandSQLParsingException ex = new OCommandSQLParsingException(e, queryText);
+      OErrorCode.QUERY_PARSE_ERROR.throwException(ex.getMessage(), ex);
     }
 
     assignDefaultAliases(this.matchExpressions);
