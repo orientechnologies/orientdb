@@ -171,7 +171,10 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   public V get(K key) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -224,12 +227,17 @@ public class OSBTree<K, V> extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.startIndexEntryReadTimer();
       completeOperation();
     }
   }
 
   public void put(K key, V value) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryUpdateTimer();
     try {
       final OAtomicOperation atomicOperation;
       try {
@@ -366,6 +374,8 @@ public class OSBTree<K, V> extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryUpdateTimer();
       completeOperation();
     }
   }
@@ -576,7 +586,10 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   public V remove(K key) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryDeletionTimer();
     try {
       final OAtomicOperation atomicOperation;
       try {
@@ -661,12 +674,18 @@ public class OSBTree<K, V> extends ODurableComponent {
         releaseExclusiveLock();
       }
     } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryDeletionTimer();
       completeOperation();
     }
   }
 
   public OSBTreeCursor<K, V> iterateEntriesMinor(K key, boolean inclusive, boolean ascSortOrder) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
+
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -688,12 +707,17 @@ public class OSBTree<K, V> extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryReadTimer();
       completeOperation();
     }
   }
 
   public OSBTreeCursor<K, V> iterateEntriesMajor(K key, boolean inclusive, boolean ascSortOrder) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -715,12 +739,17 @@ public class OSBTree<K, V> extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryReadTimer();
       completeOperation();
     }
   }
 
   public K firstKey() {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -750,12 +779,18 @@ public class OSBTree<K, V> extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryReadTimer();
       completeOperation();
     }
   }
 
   public K lastKey() {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
+
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -785,12 +820,18 @@ public class OSBTree<K, V> extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryReadTimer();
       completeOperation();
     }
   }
 
   public OSBTreeKeyCursor<K> keyCursor() {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
+
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -817,13 +858,18 @@ public class OSBTree<K, V> extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryReadTimer();
       completeOperation();
     }
   }
 
   public OSBTreeCursor<K, V> iterateEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
       boolean ascSortOrder) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -844,6 +890,8 @@ public class OSBTree<K, V> extends ODurableComponent {
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryReadTimer();
       completeOperation();
     }
   }
@@ -1779,7 +1827,10 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     @Override
     public K next(int prefetchSize) {
+      final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
       startOperation();
+      if (statistic != null)
+        statistic.startIndexEntryReadTimer();
       try {
         if (keysIterator == null)
           return null;
@@ -1846,6 +1897,8 @@ public class OSBTree<K, V> extends ODurableComponent {
         keysIterator = keysCache.iterator();
         return keysIterator.next();
       } finally {
+        if (statistic != null)
+          statistic.stopIndexEntryReadTimer();
         completeOperation();
       }
     }
@@ -1875,7 +1928,10 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
 
     public Map.Entry<K, V> next(int prefetchSize) {
+      final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
       startOperation();
+      if (statistic != null)
+        statistic.startIndexEntryReadTimer();
       try {
         if (dataCacheIterator == null)
           return null;
@@ -1955,6 +2011,8 @@ public class OSBTree<K, V> extends ODurableComponent {
 
         return dataCacheIterator.next();
       } finally {
+        if (statistic != null)
+          statistic.stopIndexEntryReadTimer();
         completeOperation();
       }
     }
@@ -1984,7 +2042,10 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
 
     public Map.Entry<K, V> next(int prefetchSize) {
+      final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
       startOperation();
+      if (statistic != null)
+        statistic.startIndexEntryReadTimer();
       try {
         if (dataCacheIterator == null)
           return null;
@@ -2062,6 +2123,8 @@ public class OSBTree<K, V> extends ODurableComponent {
 
         return dataCacheIterator.next();
       } finally {
+        if (statistic != null)
+          statistic.stopIndexEntryReadTimer();
         completeOperation();
       }
     }
