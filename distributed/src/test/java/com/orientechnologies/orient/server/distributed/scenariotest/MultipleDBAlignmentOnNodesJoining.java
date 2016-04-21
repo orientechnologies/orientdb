@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ServerRun;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ import static org.junit.Assert.fail;
  */
 public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
 
-
+  @Ignore
   @Test
   public void test() throws Exception {
 
