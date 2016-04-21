@@ -108,7 +108,7 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     try {
       final String url = "remote:localhost:" + serverPort + "/" + graphDirectoryName;
       final OrientGraph graph = currentGraphs.get(url);
-      if (graph != null)
+      if (graph != null && !graph.isClosed())
         graph.shutdown();
 
       final OrientGraphFactory factory = graphFactories.remove(url);

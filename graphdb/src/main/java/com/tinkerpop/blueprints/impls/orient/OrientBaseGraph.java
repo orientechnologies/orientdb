@@ -1115,9 +1115,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @return True if it is closed, otherwise false
    */
   public boolean isClosed() {
-    makeActive();
-
-    return getDatabase() == null || getDatabase().isClosed();
+    return database == null || database.isClosed();
   }
 
   /**
@@ -1141,7 +1139,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     makeActive();
 
     try {
-      if (!getDatabase().isClosed() && commitTx) {
+      if (!isClosed() && commitTx) {
         final OStorage storage = getDatabase().getStorage().getUnderlying();
         if (storage instanceof OAbstractPaginatedStorage) {
           if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
@@ -1908,7 +1906,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
   private void pollGraphFromStack(boolean updateDb) {
     final Deque<OrientBaseGraph> stack = initializationStack.get();
-    stack.poll();
+    stack.remove(this);
 
     final OrientBaseGraph prevGraph = stack.peek();
 
