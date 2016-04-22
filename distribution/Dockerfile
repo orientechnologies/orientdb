@@ -6,7 +6,7 @@ FROM java:8-jdk
 
 MAINTAINER OrientDB LTD (info@orientdb.com)
 
-ENV ORIENTDB_VERSION 2.2.0-SNAPSHOT
+ENV ORIENTDB_VERSION 3.0.0-SNAPSHOT
 
 
 #download distribution tar, untar and delete databases
