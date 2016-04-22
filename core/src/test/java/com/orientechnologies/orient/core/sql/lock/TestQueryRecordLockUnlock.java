@@ -64,7 +64,7 @@ public class TestQueryRecordLockUnlock {
       db = new ODatabaseDocumentTx("memory:" + TestQueryRecordLockUnlock.class.getSimpleName());
       db.open("admin", "admin");
       ODocument doc = db.load(id);
-      assertEquals(50, doc.field("count"));
+      assertEquals(50, doc.<Object>field("count"));
 
     } finally {
       if (db != null) {
@@ -122,7 +122,7 @@ public class TestQueryRecordLockUnlock {
       db = new ODatabaseDocumentTx("memory:" + TestQueryRecordLockUnlock.class.getSimpleName());
       db.open("admin", "admin");
       ODocument doc = db.load(id);
-      assertEquals(50, doc.field("count"));
+      assertEquals(50, doc.<Object>field("count"));
 
     } finally {
       if (db != null) {
@@ -180,7 +180,7 @@ public class TestQueryRecordLockUnlock {
       db = new ODatabaseDocumentTx("memory:" + TestQueryRecordLockUnlock.class.getSimpleName());
       db.open("admin", "admin");
       ODocument doc = db.load(id);
-      assertEquals(50, doc.field("count"));
+      assertEquals(50, doc.<Object>field("count"));
 
     } finally {
       if (db != null) {

@@ -272,7 +272,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     Assert.assertEquals(counter.get(), PESSIMISTIC_CYCLES * THREADS);
 
     doc1 = database.load(rid1, null, true);
-    Assert.assertEquals(doc1.field("total"), PESSIMISTIC_CYCLES * THREADS);
+    Assert.assertEquals(doc1.<Object>field("total"), PESSIMISTIC_CYCLES * THREADS);
 
     database.close();
 

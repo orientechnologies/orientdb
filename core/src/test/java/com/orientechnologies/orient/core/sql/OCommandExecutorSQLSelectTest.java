@@ -856,11 +856,11 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> results = db.query(sql);
     assertEquals(1, results.size());
     ODocument doc = results.get(0);
-    assertEquals(5, doc.field("collection_size"));
-    assertEquals(130, doc.field("collection_sum"));
-    assertEquals(26, doc.field("collection_avg"));
-    assertEquals(0, doc.field("collection_min"));
-    assertEquals(50, doc.field("collection_max"));
+    assertEquals(5, doc.<Object>field("collection_size"));
+    assertEquals(130, doc.<Object>field("collection_sum"));
+    assertEquals(26, doc.<Object>field("collection_avg"));
+    assertEquals(0, doc.<Object>field("collection_min"));
+    assertEquals(50, doc.<Object>field("collection_max"));
   }
 
   @Test
@@ -884,7 +884,7 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
     ODocument doc = results.get(0);
-    assertEquals(doc.field("integer"), 1);
+    assertEquals(doc.<Object>field("integer"), 1);
     assertEquals(doc.field("string"), "Test");
     assertNull(doc.field("nothing"));
     boolean nullFound = false;
@@ -906,7 +906,7 @@ public class OCommandExecutorSQLSelectTest {
     List<OIdentifiable> results = db.query(sql);
     assertEquals(results.size(), 1);
     ODocument doc = results.get(0).getRecord();
-    assertEquals(doc.field("nnum"), 1);
+    assertEquals(doc.<Object>field("nnum"), 1);
   }
 
   @Test
@@ -915,7 +915,7 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
     ODocument doc = results.get(0);
-    assertEquals(doc.field("r"), 10);
+    assertEquals(doc.<Object>field("r"), 10);
   }
 
   @Test
@@ -950,7 +950,7 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 5);
     for (int i = 0; i < results.size(); i++) {
       ODocument doc = results.get(i);
-      assertEquals(doc.field("nnum"), skip + i);
+      assertEquals(doc.<Object>field("nnum"), skip + i);
     }
   }
 
@@ -963,7 +963,7 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 5);
     for (int i = 0; i < results.size(); i++) {
       ODocument doc = results.get(i);
-      assertEquals(doc.field("nnum"), ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
+      assertEquals(doc.<Object>field("nnum"), ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
     }
   }
 
@@ -1187,7 +1187,7 @@ public class OCommandExecutorSQLSelectTest {
     sql = new OSQLSynchQuery("SELECT expand(collection[value < 0]) FROM ComplexFilterInSquareBrackets2");
     results = db.query(sql);
     assertEquals(results.size(), 1);
-    assertEquals(results.iterator().next().field("value"), -1);
+    assertEquals(results.iterator().next().<Object>field("value"), -1);
 
     sql = new OSQLSynchQuery("SELECT expand(collection[2]) FROM ComplexFilterInSquareBrackets2");
     results = db.query(sql);
@@ -1221,7 +1221,7 @@ public class OCommandExecutorSQLSelectTest {
 
     List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select count(*) from OCommandExecutorSqlSelectTest_testCountUniqueIndex where AAA='missing'"));
     assertEquals(results.size(), 1);
-    assertEquals(results.iterator().next().field("count"), 0l);
+    assertEquals(results.iterator().next().<Object>field("count"), 0l);
 
   }
 
@@ -1229,7 +1229,7 @@ public class OCommandExecutorSQLSelectTest {
     //http://www.prjhub.com/#/issues/6472
     List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT EVAL(\"86400000 * 26\") AS value"));
     assertEquals(results.size(), 1);
-    assertEquals(results.get(0).field("value"), 86400000l*26);
+    assertEquals(results.get(0).<Object>field("value"), 86400000l*26);
   }
 
   public void testCollateOnLinked() {

@@ -535,20 +535,20 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       final ODocument restrictedFields = new ODocument();
       if (restricted != null) {
         for (OProperty prop : restricted.properties()) {
-          restrictedFields.field(prop.getName(), record.field(prop.getName()));
+          restrictedFields.field(prop.getName(), record.<Object>field(prop.getName()));
         }
 
         OClass recordClass = ODocumentInternal.getImmutableSchemaClass(record);
         if (recordClass != null && recordClass.isSubClassOf("V")) {
           for (String fieldName : record.fieldNames()) {
             if (fieldName.startsWith("in_") || fieldName.startsWith("out_")) {
-              restrictedFields.field(fieldName, record.field(fieldName));
+              restrictedFields.field(fieldName, record.<Object>field(fieldName));
             }
           }
         } else if (recordClass != null && recordClass.isSubClassOf("E")) {
           for (String fieldName : record.fieldNames()) {
             if (fieldName.equals("in") || fieldName.equals("out")) {
-              restrictedFields.field(fieldName, record.field(fieldName));
+              restrictedFields.field(fieldName, record.<Object>field(fieldName));
             }
           }
         }

@@ -25,7 +25,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(created.getVersion(), 1);
     Assert.assertEquals(created.field("name"), "Jay");
     Assert.assertEquals(created.field("surname"), "Miner");
-    Assert.assertEquals(created.field("age"), 99);
+    Assert.assertEquals(created.<Object>field("age"), 99);
     Assert.assertEquals(created.getVersion(), 1);
   }
 
@@ -37,7 +37,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(created.field("name"), "Jay");
     Assert.assertEquals(created.field("surname"), "Miner");
-    Assert.assertEquals(created.field("age"), 99);
+    Assert.assertEquals(created.<Object>field("age"), 99);
     Assert.assertEquals(created.getVersion(), 1);
 
     get("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1)).exec();
@@ -46,7 +46,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(updated.field("name"), "Jay");
     Assert.assertEquals(updated.field("surname"), "Miner");
-    Assert.assertEquals(updated.field("age"), 99);
+    Assert.assertEquals(updated.<Object>field("age"), 99);
     Assert.assertEquals(updated.getVersion(), 1);
   }
 
@@ -58,7 +58,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(created.field("name"), "Jay");
     Assert.assertEquals(created.field("surname"), "Miner");
-    Assert.assertEquals(created.field("age"), 0);
+    Assert.assertEquals(created.<Object>field("age"), 0);
     Assert.assertEquals(created.getVersion(), 1);
 
     created.field("name", "Jay2");
@@ -72,7 +72,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(updated.field("name"), "Jay2");
     Assert.assertEquals(updated.field("surname"), "Miner2");
-    Assert.assertEquals(updated.field("age"), 1);
+    Assert.assertEquals(updated.<Object>field("age"), 1);
     Assert.assertEquals(updated.getVersion(), 2);
   }
 
@@ -84,7 +84,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(created.field("name"), "Jay");
     Assert.assertEquals(created.field("surname"), "Miner");
-    Assert.assertEquals(created.field("age"), 0);
+    Assert.assertEquals(created.<Object>field("age"), 0);
     Assert.assertEquals(created.getVersion(), 1);
 
     put("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1))
@@ -94,7 +94,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(updated.field("name"), "Jay2");
     Assert.assertEquals(updated.field("surname"), "Miner2");
-    Assert.assertEquals(updated.field("age"), 1);
+    Assert.assertEquals(updated.<Object>field("age"), 1);
     Assert.assertEquals(updated.getVersion(), 2);
   }
 
@@ -106,7 +106,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(created.field("name"), "Jay");
     Assert.assertEquals(created.field("surname"), "Miner");
-    Assert.assertEquals(created.field("age"), 0);
+    Assert.assertEquals(created.<Object>field("age"), 0);
     Assert.assertEquals(created.getVersion(), 1);
 
     put("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1))
@@ -122,7 +122,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(created.field("name"), "Jay");
     Assert.assertEquals(created.field("surname"), "Miner");
-    Assert.assertEquals(created.field("age"), 0);
+    Assert.assertEquals(created.<Object>field("age"), 0);
     Assert.assertEquals(created.getVersion(), 1);
 
     put("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1) + "?updateMode=partial")
@@ -132,7 +132,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(updated.field("name"), "Jay");
     Assert.assertEquals(updated.field("surname"), "Miner");
-    Assert.assertEquals(updated.field("age"), 1);
+    Assert.assertEquals(updated.<Object>field("age"), 1);
     Assert.assertEquals(updated.getVersion(), 2);
   }
 
@@ -144,7 +144,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(created.field("name"), "Jay");
     Assert.assertEquals(created.field("surname"), "Miner");
-    Assert.assertEquals(created.field("age"), 0);
+    Assert.assertEquals(created.<Object>field("age"), 0);
     Assert.assertEquals(created.getVersion(), 1);
 
     delete("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1)).exec();
@@ -162,7 +162,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(created.field("name"), "Jay");
     Assert.assertEquals(created.field("surname"), "Miner");
-    Assert.assertEquals(created.field("age"), 0);
+    Assert.assertEquals(created.<Object>field("age"), 0);
     Assert.assertEquals(created.getVersion(), 1);
 
     delete("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1))

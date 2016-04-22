@@ -122,7 +122,7 @@ public class DefaultValuesTrivialTest {
 	      ODocument doc = new ODocument(classA);
 	      assertEquals("default name", doc.field("name"));
 	      assertNotNull(doc.field("date"));
-	      assertEquals(true, doc.field("active"));
+	      assertEquals(true, doc.<Object>field("active"));
       }
       
       {
@@ -133,7 +133,7 @@ public class DefaultValuesTrivialTest {
 	      doc.setClassName(classA.getName());
 	      assertEquals("default name", doc.field("name"));
 	      assertNotNull(doc.field("date"));
-	      assertEquals(true, doc.field("active"));
+	      assertEquals(true, doc.<Object>field("active"));
       }
       
       {
@@ -144,7 +144,7 @@ public class DefaultValuesTrivialTest {
 	      doc.setClassNameIfExists(classA.getName());
 	      assertEquals("default name", doc.field("name"));
 	      assertNotNull(doc.field("date"));
-	      assertEquals(true, doc.field("active"));
+	      assertEquals(true, doc.<Object>field("active"));
       }
 
       

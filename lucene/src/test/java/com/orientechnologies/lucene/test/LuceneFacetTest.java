@@ -96,8 +96,8 @@ public class LuceneFacetTest extends BaseLuceneTest {
     Assert.assertEquals(facets.size(), 1);
 
     ODocument facet = facets.get(0);
-    Assert.assertEquals(facet.field("childCount"), 1);
-    Assert.assertEquals(facet.field("value"), 2);
+    Assert.assertEquals(facet.<Object>field("childCount"), 1);
+    Assert.assertEquals(facet.<Object>field("value"), 2);
     Assert.assertEquals(facet.field("dim"), "category");
 
     List<ODocument> labelsValues = facet.field("labelsValue");
@@ -106,7 +106,7 @@ public class LuceneFacetTest extends BaseLuceneTest {
 
     ODocument labelValues = labelsValues.get(0);
 
-    Assert.assertEquals(labelValues.field("value"), 2);
+    Assert.assertEquals(labelValues.<Object>field("value"), 2);
     Assert.assertEquals(labelValues.field("label"), "Electronic");
 
     result = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(
@@ -120,8 +120,8 @@ public class LuceneFacetTest extends BaseLuceneTest {
 
     facet = facets.get(0);
 
-    Assert.assertEquals(facet.field("childCount"), 2);
-    Assert.assertEquals(facet.field("value"), 2);
+    Assert.assertEquals(facet.<Object>field("childCount"), 2);
+    Assert.assertEquals(facet.<Object>field("value"), 2);
     Assert.assertEquals(facet.field("dim"), "category");
 
     labelsValues = facet.field("labelsValue");
@@ -130,12 +130,12 @@ public class LuceneFacetTest extends BaseLuceneTest {
 
     labelValues = labelsValues.get(0);
 
-    Assert.assertEquals(labelValues.field("value"), 1);
+    Assert.assertEquals(labelValues.<Object>field("value"), 1);
     Assert.assertEquals(labelValues.field("label"), "HiFi");
 
     labelValues = labelsValues.get(1);
 
-    Assert.assertEquals(labelValues.field("value"), 1);
+    Assert.assertEquals(labelValues.<Object>field("value"), 1);
     Assert.assertEquals(labelValues.field("label"), "Computer");
 
   }

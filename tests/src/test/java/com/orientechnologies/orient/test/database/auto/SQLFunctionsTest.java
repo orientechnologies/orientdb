@@ -147,28 +147,28 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
     ODocument count = result.get(0);
-    Assert.assertEquals(2L, count.field("count"));
+    Assert.assertEquals(2L, count.<Object>field("count"));
 
     database.close();
     database.open("admin", "admin");
 
     result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
     count = result.get(0);
-    Assert.assertEquals(2L, count.field("count"));
+    Assert.assertEquals(2L, count.<Object>field("count"));
 
     database.close();
     database.open("reader", "reader");
 
     result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
     count = result.get(0);
-    Assert.assertEquals(1L, count.field("count"));
+    Assert.assertEquals(1L, count.<Object>field("count"));
 
     database.close();
     database.open("superReader", "superReader");
 
     result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
     count = result.get(0);
-    Assert.assertEquals(2L, count.field("count"));
+    Assert.assertEquals(2L, count.<Object>field("count"));
   }
 
   @Test
@@ -454,7 +454,7 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("value"));
       Assert.assertTrue(d.field("value") instanceof Long);
-      Assert.assertEquals(moreThanInteger, d.field("value"));
+      Assert.assertEquals(moreThanInteger, d.<Object>field("value"));
     }
   }
 
@@ -487,8 +487,8 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
         .command(new OSQLSynchQuery<ODocument>("select first(sequence) from V where sequence is not null")).execute();
 
     Assert.assertEquals(result.size(), 2);
-    Assert.assertEquals(result.get(0).field("first"), 0l);
-    Assert.assertEquals(result.get(1).field("first"), 1l);
+    Assert.assertEquals(result.get(0).<Object>field("first"), 0l);
+    Assert.assertEquals(result.get(1).<Object>field("first"), 1l);
   }
 
   @Test
@@ -505,8 +505,8 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
         .command(new OSQLSynchQuery<ODocument>("select last(sequence2) from V where sequence2 is not null")).execute();
 
     Assert.assertEquals(result.size(), 2);
-    Assert.assertEquals(result.get(0).field("last"), 99l);
-    Assert.assertEquals(result.get(1).field("last"), 98l);
+    Assert.assertEquals(result.get(0).<Object>field("last"), 99l);
+    Assert.assertEquals(result.get(1).<Object>field("last"), 98l);
 
   }
 

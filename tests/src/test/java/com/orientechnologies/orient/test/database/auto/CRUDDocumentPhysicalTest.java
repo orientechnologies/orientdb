@@ -744,7 +744,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     ODocument changedDoc1 = bank.field("embedded.total", 100);
     // MUST CHANGE THE PARENT DOC BECAUSE IT'S EMBEDDED
     Assert.assertEquals(changedDoc1.field("name"), "MyBankChained");
-    Assert.assertEquals(changedDoc1.field("embedded.total"), 100);
+    Assert.assertEquals(changedDoc1.<Object>field("embedded.total"), 100);
 
     ODocument changedDoc2 = bank.field("embeddeds.total", 200);
     // MUST CHANGE THE PARENT DOC BECAUSE IT'S EMBEDDED
@@ -757,7 +757,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     ODocument changedDoc3 = bank.field("linked.total", 300);
     // MUST CHANGE THE LINKED DOCUMENT
     Assert.assertEquals(changedDoc3.field("name"), "linked1");
-    Assert.assertEquals(changedDoc3.field("total"), 300);
+    Assert.assertEquals(changedDoc3.<Object>field("total"), 300);
 
     try {
       bank.field("linkeds.total", 400);

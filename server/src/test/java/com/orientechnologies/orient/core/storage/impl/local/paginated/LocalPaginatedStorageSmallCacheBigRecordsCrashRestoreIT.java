@@ -185,12 +185,12 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
         } else {
           ODocument testDocument = testDocuments.get(0);
 
-          assertThat(testDocument.field("id")).as("id:: %s", testDocument.field("id")).isEqualTo(baseDocument.field("id"));
-          assertThat(testDocument.field("timestamp")).as("documents:: %s - %s", testDocument, baseDocument)
+          assertThat(testDocument.<Object>field("id")).as("id:: %s", testDocument.field("id")).isEqualTo(baseDocument.field("id"));
+          assertThat(testDocument.<Object>field("timestamp")).as("documents:: %s - %s", testDocument, baseDocument)
               .isEqualTo(baseDocument.field("timestamp"));
-          assertThat(testDocument.field("stringValue")).as("id:: %s", testDocument.field("id"))
+          assertThat(testDocument.<Object>field("stringValue")).as("id:: %s", testDocument.field("id"))
               .isEqualTo(baseDocument.field("stringValue"));
-          assertThat(testDocument.field("binaryValue")).as("id:: %s", testDocument.field("id"))
+          assertThat(testDocument.<Object>field("binaryValue")).as("id:: %s", testDocument.field("id"))
               .isEqualTo(baseDocument.field("binaryValue"));
 
           recordsRestored++;

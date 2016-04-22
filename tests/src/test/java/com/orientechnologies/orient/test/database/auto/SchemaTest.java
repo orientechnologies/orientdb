@@ -492,10 +492,10 @@ public class SchemaTest extends DocumentDBBaseTest {
     // TEST SAVING OF OFFLINE STATUS
 
     // TEST UPDATE - NO EFFECT
-    Assert.assertEquals(database.command(new OCommandSQL("update TestOffline set name = 'yeah'")).execute(), 0);
+    Assert.assertEquals(database.command(new OCommandSQL("update TestOffline set name = 'yeah'")).<Object>execute(), 0);
 
     // TEST DELETE - NO EFFECT
-    Assert.assertEquals(database.command(new OCommandSQL("delete from TestOffline")).execute(), 0);
+    Assert.assertEquals(database.command(new OCommandSQL("delete from TestOffline")).<Object>execute(), 0);
 
     // TEST CREATE -> EXCEPTION
     try {
@@ -659,6 +659,6 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 1);
 
     ODocument document = result.get(0);
-    Assert.assertEquals(document.field("iteration"), i);
+    Assert.assertEquals(document.<Object>field("iteration"), i);
   }
 }

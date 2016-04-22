@@ -49,7 +49,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
       assertEquals(3, doc.fields());
       assertEquals(names[i], doc.field("name"));
       assertEquals(surnames[i], doc.field("surname"));
-      assertEquals(i, doc.field("id"));
+      assertEquals(i, doc.<Object>field("id"));
       i++;
     }
   }
@@ -118,7 +118,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.field("firstNumber"));
+    assertEquals(10.78f, doc.<Object>field("firstNumber"));
   }
 
   @Test
@@ -128,7 +128,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.field("firstNumber"));
+    assertEquals(10.78f, doc.<Object>field("firstNumber"));
   }
 
   @Test
@@ -138,7 +138,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.field("firstNumber"));
+    assertEquals(10.78f, doc.<Object>field("firstNumber"));
   }
 
   @Test
@@ -277,7 +277,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
     assertEquals(new Integer(1), (Integer) doc.field("id"));
-    assertThat(doc.field("title")).isNull();
+    assertThat(doc.<Object>field("title")).isNull();
     // assertEquals("", (String) doc.field("title"));
     assertEquals("Hello", (String) doc.field("text"));
   }
@@ -290,7 +290,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
     assertEquals(new Integer(1), (Integer) doc.field("id"));
-    assertThat(doc.field("title")).isNull();
+    assertThat(doc.<Object>field("title")).isNull();
     assertEquals("Hello", (String) doc.field("text"));
   }
 
@@ -327,7 +327,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
     assertThat(doc.<Integer>field("id ")).isEqualTo(1);
-    assertThat(doc.field("text")).isNull();
+    assertThat(doc.<Object>field("text")).isNull();
     assertThat(doc.<String>field("text ")).isEqualTo("my test text");
     assertThat(doc.<Integer>field("num ")).isEqualTo(1);
   }

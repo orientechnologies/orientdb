@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.After;
@@ -72,7 +73,7 @@ public class LuceneInsertUpdateTest extends BaseLuceneTest {
     Assert.assertEquals(coll.size(), 1);
 
     OIdentifiable next = (OIdentifiable) coll.iterator().next();
-    doc = databaseDocumentTx.load(next.getRecord());
+    doc = databaseDocumentTx.load(next.<ORecord>getRecord());
     Assert.assertEquals(doc.field("name"), "Rome");
 
     doc.field("name", "London");
@@ -84,7 +85,7 @@ public class LuceneInsertUpdateTest extends BaseLuceneTest {
     Assert.assertEquals(coll.size(), 1);
 
     next = (OIdentifiable) coll.iterator().next();
-    doc = databaseDocumentTx.load(next.getRecord());
+    doc = databaseDocumentTx.load(next.<ORecord>getRecord());
     Assert.assertEquals(doc.field("name"), "London");
 
     doc.field("name", "Berlin");

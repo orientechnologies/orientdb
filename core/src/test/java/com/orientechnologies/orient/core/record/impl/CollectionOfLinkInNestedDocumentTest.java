@@ -8,6 +8,7 @@ import java.util.Collections;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -81,7 +82,7 @@ public class CollectionOfLinkInNestedDocumentTest {
     ODocument base1 = db.load(id.getIdentity());
     ODocument nest1 = base1.field("nested");
     assertNotNull(nest1);
-    assertEquals(nest1.field("list"), nested.field("list"));
+    assertEquals(nest1.<Object>field("list"), nested.field("list"));
   }
 
   @Test
@@ -104,6 +105,6 @@ public class CollectionOfLinkInNestedDocumentTest {
     ODocument base1 = db.load(id.getIdentity());
     ODocument nest1 = base1.field("nested");
     assertNotNull(nest1);
-    assertEquals(nest1.field("map"), nested.field("map"));
+    assertEquals(nest1.<Object>field("map"), nested.field("map"));
   }
 }

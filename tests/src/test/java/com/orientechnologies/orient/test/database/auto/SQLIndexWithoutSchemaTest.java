@@ -102,7 +102,7 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
     for (int i = 0, resultsSize = results.size(); i < resultsSize; i++) {
       ODocument result = results.get(i).field("rid");
 
-      Assert.assertEquals(result.field("prop1"), i + 1);
+      Assert.assertEquals(result.<Object>field("prop1"), i + 1);
     }
   }
 
@@ -116,7 +116,7 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
     for (int i = 0, resultsSize = results.size(); i < resultsSize; i++) {
       ODocument result = results.get(i).field("rid");
 
-      Assert.assertEquals(result.field("prop1"), i + 6);
+      Assert.assertEquals(result.<Object>field("prop1"), i + 6);
     }
   }
 
@@ -188,7 +188,7 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
     for (int i = 0, resultsSize = results.size(); i < resultsSize; i++) {
       ODocument result = results.get(i).field("rid");
 
-      Assert.assertEquals(result.field("cp1"), i + 1);
+      Assert.assertEquals(result.<Object>field("cp1"), i + 1);
     }
   }
 
@@ -202,7 +202,7 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
     for (int i = 0, resultsSize = results.size(); i < resultsSize; i++) {
       ODocument result = results.get(i).field("rid");
 
-      Assert.assertEquals(result.field("cp1"), i + 6);
+      Assert.assertEquals(result.<Object>field("cp1"), i + 6);
     }
   }
 
@@ -216,7 +216,7 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
         + " WHERE cp2 = 70 and cp3 = 700"));
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertEquals(result.get(0).field("cp1"), 7);
+    Assert.assertEquals(result.get(0).<Object>field("cp1"), 7);
 
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldCompositeIndexUsage + 1);

@@ -101,8 +101,8 @@ public class ODocumentSerializationPersistentTest {
     List<ODocument> emb = extr.field("emb");
     assertNotNull(emb);
     assertEquals(((ORidBag) emb.get(0).field("rids")).size(), rids.size());
-    assertEquals(emb.get(1).field("text"), doc2.field("text"));
-    assertEquals(extr.field("name"), doc.field("name"));
+    assertEquals(emb.get(1).<Object>field("text"), doc2.field("text"));
+    assertEquals(extr.<Object>field("name"), doc.field("name"));
 
   }
 }

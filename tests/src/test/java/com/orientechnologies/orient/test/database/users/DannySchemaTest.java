@@ -47,7 +47,7 @@ public class DannySchemaTest {
 			for (ODocument doc : db.browseClass("Dependents")) {
 				System.out.println(doc);
 				for (ODocument emb : (Iterable<ODocument>) doc.field("dependents"))
-					Assert.assertEquals(emb.field("master"), 4151788013272153098L);
+					Assert.assertEquals(emb.<Object>field("master"), 4151788013272153098L);
 			}
 			db.close();
 

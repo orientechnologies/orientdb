@@ -28,7 +28,7 @@ public class ODocumentTest {
         .setFieldType("integer", OType.INTEGER).setFieldType("string", OType.STRING).setFieldType("binary", OType.BINARY);
     ODocumentInternal.addOwner(doc2, new ODocument());
 
-    assertEquals(doc2.field("integer2"), 123);
+    assertEquals(doc2.<Object>field("integer2"), 123);
     assertEquals(doc2.field("string"), "OrientDB");
     assertEquals(doc2.field("a"), 123.3);
 
@@ -40,9 +40,9 @@ public class ODocumentTest {
 
     doc1.copyTo(doc2);
 
-    assertEquals(doc2.field("integer2"), null);
-    assertEquals(doc2.field("string"), null);
-    assertEquals(doc2.field("a"), null);
+    assertEquals(doc2.<Object>field("integer2"), null);
+    assertEquals(doc2.<Object>field("string"), null);
+    assertEquals(doc2.<Object>field("a"), null);
 
     assertEquals(doc2.fieldType("integer"), null);
     assertEquals(doc2.fieldType("string"), null);
@@ -246,10 +246,10 @@ public class ODocumentTest {
 
     assertEquals(doc.field("data.array[3].prop"), "B");
 
-    assertEquals(doc.field("data.array[0]"), 1);
+    assertEquals(doc.<Object>field("data.array[0]"), 1);
     doc.field("data.array[0]", 5);
 
-    assertEquals(doc.field("data.array[0]"), 5);
+    assertEquals(doc.<Object>field("data.array[0]"), 5);
   }
 
   @Test

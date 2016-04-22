@@ -88,7 +88,7 @@ public class LockMultithreadingTest {
         if (!deleted.contains(updateCounter)) {
           System.out.println(Thread.currentThread() + " : after search cycle(update) " + updateCounter);
           ODocument document = execute.get(0);
-          document.field("counter2", document.field("counter"));
+          document.field("counter2", document.<Object>field("counter"));
           try {
             document.save();
             System.out.println(Thread.currentThread() + " : document " + updateCounter + " updated");

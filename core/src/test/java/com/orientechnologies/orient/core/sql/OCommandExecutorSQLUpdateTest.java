@@ -283,15 +283,15 @@ public class OCommandExecutorSQLUpdateTest {
 
     db.command(new OCommandSQL("UPDATE test INCREMENT count = 2")).execute();
     queried.reload();
-    assertEquals(queried.field("count"), 22);
+    assertEquals(queried.<Object>field("count"), 22);
 
     db.command(new OCommandSQL("UPDATE test INCREMENT `map.nestedCount` = 5")).execute();
     queried.reload();
-    assertEquals(queried.field("map.nestedCount"), 15);
+    assertEquals(queried.<Object>field("map.nestedCount"), 15);
 
     db.command(new OCommandSQL("UPDATE test INCREMENT map.nestedCount = 5")).execute();
     queried.reload();
-    assertEquals(queried.field("map.nestedCount"), 20);
+    assertEquals(queried.<Object>field("map.nestedCount"), 20);
 
     db.close();
   }

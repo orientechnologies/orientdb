@@ -21,7 +21,7 @@ public class OJsonReadWriteTest {
 
     ODocument doc1 = new ODocument();
     doc1.fromJSON(json);
-    assertEquals(doc.field("test"),doc1.field("test"));
+    assertEquals(doc.<Object>field("test"),doc1.field("test"));
 
 
   }

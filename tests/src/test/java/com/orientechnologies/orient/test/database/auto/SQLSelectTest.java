@@ -145,7 +145,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     database.getMetadata().reload();
     final long vertexesCount = database.countClass("V");
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
-    Assert.assertEquals(result.get(0).field("count"), vertexesCount);
+    Assert.assertEquals(result.get(0).<Object>field("count"), vertexesCount);
   }
 
   @Test
@@ -1633,7 +1633,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertFalse(result.isEmpty());
     int i = 1;
     for (OIdentifiable r : result) {
-      Assert.assertEquals(((ODocument) r.getRecord()).field("counter"), i++);
+      Assert.assertEquals(((ODocument) r.getRecord()).<Object>field("counter"), i++);
     }
   }
 
@@ -1688,7 +1688,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(result.size(), 1);
 
     for (OIdentifiable r : result) {
-      Assert.assertEquals(((ODocument) r.getRecord()).field("name"), null);
+      Assert.assertEquals(((ODocument) r.getRecord()).<Object>field("name"), null);
     }
   }
 

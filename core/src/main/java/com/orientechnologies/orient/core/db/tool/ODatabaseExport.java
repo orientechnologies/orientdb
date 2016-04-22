@@ -438,10 +438,10 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
             exportEntry.field("key", binaryContent);
           } else {
             exportEntry.field("binary", false);
-            exportEntry.field("key", indexEntry.field("key"));
+            exportEntry.field("key", indexEntry.<Object>field("key"));
           }
 
-          exportEntry.field("rid", indexEntry.field("rid"));
+          exportEntry.field("rid", indexEntry.<Object>field("rid"));
 
           i++;
 

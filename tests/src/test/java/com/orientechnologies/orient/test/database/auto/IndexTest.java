@@ -967,7 +967,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     result = database.command(new OCommandSQL("select rid from index:Profile.nick where key = ?"))
-        .execute(firstProfile.field("nick"));
+        .execute(firstProfile.<Object>field("nick"));
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.get(0).field("rid"), firstProfile.getIdentity());
@@ -975,7 +975,7 @@ public class IndexTest extends ObjectDBBaseTest {
     firstProfile.delete();
 
     result = database.command(new OCommandSQL("select rid from index:Profile.nick where key = ?"))
-        .execute(firstProfile.field("nick"));
+        .execute(firstProfile.<Object>field("nick"));
     Assert.assertTrue(result.isEmpty());
 
   }
@@ -1024,12 +1024,12 @@ public class IndexTest extends ObjectDBBaseTest {
     result = db.command(new OSQLSynchQuery("select * from ChildTestClass where testParentProperty = 10")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(1, result.size());
-    Assert.assertEquals(10L, result.get(0).field("testParentProperty"));
+    Assert.assertEquals(10L, result.get(0).<Object>field("testParentProperty"));
 
     result = db.command(new OCommandSQL("select * from AnotherChildTestClass where testParentProperty = 11")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(1, result.size());
-    Assert.assertEquals(11L, result.get(0).field("testParentProperty"));
+    Assert.assertEquals(11L, result.get(0).<Object>field("testParentProperty"));
   }
 
   @Test
@@ -1214,7 +1214,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
-    database.delete(database.detach(loadedProfile, true));
+    database.delete(database.<Object>detach(loadedProfile, true));
 
     Assert.assertFalse(nickIndex.contains("NonProxiedObjectToDelete"));
   }
@@ -1230,7 +1230,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
-    database.delete(database.detachAll(loadedProfile, true));
+    database.delete(database.<Object>detachAll(loadedProfile, true));
 
     Assert.assertFalse(nickIndex.contains("NonProxiedObjectToDelete"));
   }
@@ -1290,8 +1290,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
     for (int i = 0; i < 2; i++) {
       final ODocument document = result.get(i);
-      Assert.assertEquals(document.field("val"), 1);
-      Assert.assertEquals(document.field("index"), 15 + i);
+      Assert.assertEquals(document.<Object>field("val"), 1);
+      Assert.assertEquals(document.<Object>field("index"), 15 + i);
     }
   }
 

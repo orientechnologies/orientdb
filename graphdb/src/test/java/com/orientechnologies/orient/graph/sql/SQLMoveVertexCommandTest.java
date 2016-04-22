@@ -282,7 +282,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
 
       Assert.assertEquals(newDocument.field("city"), "Rome");
       Assert.assertEquals(newDocument.field("a"), "test3");
-      Assert.assertEquals(newDocument.field("b"), 5);
+      Assert.assertEquals(newDocument.<Object>field("b"), 5);
     }
 
     Assert.assertEquals(tot, 2);

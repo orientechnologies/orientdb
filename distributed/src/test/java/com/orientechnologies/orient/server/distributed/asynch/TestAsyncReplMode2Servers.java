@@ -101,8 +101,8 @@ public class TestAsyncReplMode2Servers extends BareBoneBase2ServerTest {
 
           parentV1.reload();
           parentV2.reload();
-          assertEquals("parentV1 (" + parentV1.getRecord() + ")", ++countPropValue, parentV1.getProperty(CNT_PROP_NAME));
-          assertEquals("parentV2 (" + parentV2.getRecord() + ")", countPropValue, parentV2.getProperty(CNT_PROP_NAME));
+          assertEquals("parentV1 (" + parentV1.getRecord() + ")", ++countPropValue, parentV1.<Object>getProperty(CNT_PROP_NAME));
+          assertEquals("parentV2 (" + parentV2.getRecord() + ")", countPropValue, parentV2.<Object>getProperty(CNT_PROP_NAME));
         }
       } catch (Throwable e) {
         if (exceptionInThread == null) {

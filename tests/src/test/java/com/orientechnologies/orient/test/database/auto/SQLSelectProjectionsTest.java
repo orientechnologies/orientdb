@@ -249,7 +249,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 1);
 
     for (ODocument d : result)
-      Assert.assertEquals(d.field("result"), 5);
+      Assert.assertEquals(d.<Object>field("result"), 5);
 
   }
 
@@ -288,21 +288,21 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0-1] as set from OUser")).execute();
     Assert.assertEquals(result.size(), 1);
     for (ODocument d : result) {
-      Assert.assertTrue(OMultiValue.isMultiValue(d.field("set")));
+      Assert.assertTrue(OMultiValue.isMultiValue(d.<Object>field("set")));
       Assert.assertTrue(OMultiValue.getSize(d.field("set")) <= 2);
     }
 
     result = database.command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0,1] as set from OUser")).execute();
     Assert.assertEquals(result.size(), 1);
     for (ODocument d : result) {
-      Assert.assertTrue(OMultiValue.isMultiValue(d.field("set")));
+      Assert.assertTrue(OMultiValue.isMultiValue(d.<Object>field("set")));
       Assert.assertTrue(OMultiValue.getSize(d.field("set")) <= 2);
     }
 
     result = database.command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0] as unique from OUser")).execute();
     Assert.assertEquals(result.size(), 1);
     for (ODocument d : result) {
-      Assert.assertFalse(OMultiValue.isMultiValue(d.field("unique")));
+      Assert.assertFalse(OMultiValue.isMultiValue(d.<Object>field("unique")));
     }
   }
 

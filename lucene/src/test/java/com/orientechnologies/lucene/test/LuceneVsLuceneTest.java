@@ -121,7 +121,7 @@ public class LuceneVsLuceneTest extends BaseLuceneTest {
 
     int i = 0;
     for (ScoreDoc hit : hits) {
-      Assert.assertEquals(oDocs.get(i).field("$score"), hit.score);
+      Assert.assertEquals(oDocs.get(i).<Object>field("$score"), hit.score);
       i++;
     }
     reader.close();

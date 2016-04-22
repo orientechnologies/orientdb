@@ -34,7 +34,7 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
     final ODocument jay = new ODocument().fromJSON(response);
     Assert.assertEquals(jay.field("name"), "Jay");
     Assert.assertEquals(jay.field("surname"), "Miner");
-    Assert.assertEquals(jay.field("age"), 99);
+    Assert.assertEquals(jay.<Object>field("age"), 99);
     Assert.assertEquals(jay.getVersion(), 1);
   }
 
@@ -67,7 +67,7 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
     final ODocument jay = new ODocument().fromJSON(response);
     Assert.assertEquals(jay.field("name"), "Harry2");
     Assert.assertEquals(jay.field("surname"), "Potter2");
-    Assert.assertEquals(jay.field("age"), 182);
+    Assert.assertEquals(jay.<Object>field("age"), 182);
     Assert.assertEquals(jay.getVersion(), 1);
   }
 
@@ -104,7 +104,7 @@ public class HttpIndexTest extends BaseHttpDatabaseTest {
     harry = new ODocument().fromJSON(response);
     Assert.assertEquals(harry.field("name"), "Harry3");
     Assert.assertEquals(harry.field("surname"), "Potter3");
-    Assert.assertEquals(harry.field("age"), 183);
+    Assert.assertEquals(harry.<Object>field("age"), 183);
     Assert.assertEquals(harry.getVersion(), 2);
   }
 

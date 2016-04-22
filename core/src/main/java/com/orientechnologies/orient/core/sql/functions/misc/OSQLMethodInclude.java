@@ -101,7 +101,7 @@ public class OSQLMethodInclude extends OAbstractSQLMethod {
     for (int i = 0; i < iFieldNames.length; ++i) {
       if (iFieldNames[i] != null) {
         final String fieldName = (String) iFieldNames[i].toString();
-        doc.field(fieldName, document.field(fieldName));
+        doc.field(fieldName, document.<Object>field(fieldName));
       }
     }
     return doc;

@@ -449,7 +449,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             for (Map.Entry<String, Object> p : proj.entrySet()) {
               // WRITE THE FIELD AS IS
               if (!(p.getValue() instanceof OSQLFunctionRuntime))
-                doc.field(p.getKey(), ((ODocument) r).field(p.getKey()));
+                doc.field(p.getKey(), ((ODocument) r).<Object>field(p.getKey()));
             }
           }
         }
