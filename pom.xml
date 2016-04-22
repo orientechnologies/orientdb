@@ -170,8 +170,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.resourceEncoding>UTF-8</project.build.resourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ssZ</maven.build.timestamp.format>
         <implementation.build>${scmBranch}@r${buildNumber}</implementation.build>
         <blueprints.version>2.6.0</blueprints.version>
@@ -327,12 +327,12 @@
                     <version>1.13</version>
                     <configuration>
                         <!--
-                        Keep aligned with the maven-compiler-plugins source/target, ATM this is 1.6,
-                        so we use the java16 signature.
+                        Keep aligned with the maven-compiler-plugins source/target, ATM this is 1.8,
+                        so we use the java18 signature.
                         -->
                         <signature>
                             <groupId>org.codehaus.mojo.signature</groupId>
-                            <artifactId>java16</artifactId>
+                            <artifactId>java18</artifactId>
                             <version>1.1</version>
                         </signature>
                     </configuration>
@@ -434,7 +434,7 @@
                         <Private-Package>${osgi.private}</Private-Package>
                         <Import-Package>${project.groupId}.*;provide:=true,${osgi.import}</Import-Package>
                         <DynamicImport-Package>${osgi.dynamicImport}</DynamicImport-Package>
-                        <Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
+                        <Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
                     </instructions>
                 </configuration>
                 <executions>

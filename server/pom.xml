@@ -26,8 +26,8 @@
     <name>OrientDB Server</name>
 
     <properties>
-        <javac.src.version>1.6</javac.src.version>
-        <javac.target.version>1.6</javac.target.version>
+        <javac.src.version>1.8</javac.src.version>
+        <javac.target.version>1.8</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
         <osgi.import>
             javax.mail.*;resolution:=optional,
