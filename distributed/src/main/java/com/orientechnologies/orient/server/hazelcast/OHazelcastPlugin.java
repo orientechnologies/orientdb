@@ -122,6 +122,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
   protected OHazelcastDistributedMap                             configurationMap;
+  protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
 
   public OHazelcastPlugin() {
   }
@@ -498,7 +499,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final Collection<String> iTargetNodes, final ORemoteTask iTask, final EXECUTION_MODE iExecutionMode, final Object localResult,
       final OCallable<Void, ODistributedRequestId> iAfterSentCallback) {
 
-    final ODistributedRequest req = new ODistributedRequest(nodeId, getNextMessageIdCounter(), iDatabaseName, iTask,
+    final ODistributedRequest req = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), iDatabaseName, iTask,
         iExecutionMode);
 
     final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -1704,6 +1705,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     return toSynchClusters;
   }
 
+  @Override
+  public ORemoteTaskFactory getTaskFactory() {
+    return taskFactory;
+  }
+
   /**
    * Guarantees, foreach class, that has own master cluster.
    */
@@ -2091,8 +2097,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void stopNode(final String iNode) throws IOException {
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of stopping node '%s'...", iNode);
 
-    final ODistributedRequest request = new ODistributedRequest(nodeId, getNextMessageIdCounter(), null, new OStopNodeTask(),
-        EXECUTION_MODE.NO_RESPONSE);
+    final ODistributedRequest request = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), null,
+        new OStopNodeTask(), EXECUTION_MODE.NO_RESPONSE);
 
     getRemoteServer(iNode).sendRequest(request, iNode);
   }
@@ -2100,8 +2106,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   public void restartNode(final String iNode) throws IOException {
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of restarting node '%s'...", iNode);
 
-    final ODistributedRequest request = new ODistributedRequest(nodeId, getNextMessageIdCounter(), null, new ORestartNodeTask(),
-        EXECUTION_MODE.NO_RESPONSE);
+    final ODistributedRequest request = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), null,
+        new ORestartNodeTask(), EXECUTION_MODE.NO_RESPONSE);
 
     getRemoteServer(iNode).sendRequest(request, iNode);
   }

@@ -821,7 +821,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     final byte[] serializedReq = channel.readBytes();
 
     final ODistributedServerManager manager = server.getDistributedManager();
-    final ODistributedRequest req = new ODistributedRequest();
+    final ODistributedRequest req = new ODistributedRequest(manager.getTaskFactory());
 
     final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(serializedReq));
     try {

@@ -19,13 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+
 /**
  * Factory of remote tasks.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ORemoteTaskFactory {
-  public static ORemoteTask createTask(final int code) {
+public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
+  public ORemoteTask createTask(final int code) {
     switch (code) {
     case OCreateRecordTask.FACTORYID: // 0
       return new OCreateRecordTask();
@@ -54,8 +56,8 @@ public class ORemoteTaskFactory {
     case OCompletedTxTask.FACTORYID: // 8
       return new OCompletedTxTask();
 
-    // TODO: REASSIGN IDs
-    // 9
+    case OStopNodeTask.FACTORYID: // 9
+      return new OStopNodeTask();
 
     case ORestartNodeTask.FACTORYID: // 10
       return new ORestartNodeTask();
@@ -74,9 +76,6 @@ public class ORemoteTaskFactory {
 
     case OCopyDatabaseChunkTask.FACTORYID: // 15
       return new OCopyDatabaseChunkTask();
-
-    case OStopNodeTask.FACTORYID: // 16
-      return new OStopNodeTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

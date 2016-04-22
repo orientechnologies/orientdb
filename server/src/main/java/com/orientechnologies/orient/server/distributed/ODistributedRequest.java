@@ -19,13 +19,13 @@
       */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
  *
@@ -37,21 +37,21 @@ public class ODistributedRequest implements Externalizable {
     RESPONSE, NO_RESPONSE
   }
 
-  private ODistributedRequestId id;
-  private EXECUTION_MODE        executionMode;
-  private String                databaseName;
-  private long                  senderThreadId;
-  private ORemoteTask           task;
-  private ORID                  userRID;       // KEEP ALSO THE RID TO AVOID SECURITY PROBLEM ON DELETE & RECREATE USERS
+  private final ORemoteTaskFactory taskFactory;
+  private ODistributedRequestId    id;
+  private EXECUTION_MODE           executionMode;
+  private String                   databaseName;
+  private long                     senderThreadId;
+  private ORemoteTask              task;
+  private ORID                     userRID;       // KEEP ALSO THE RID TO AVOID SECURITY PROBLEM ON DELETE & RECREATE USERS
 
-  /**
-   * Constructor used by serializer.
-   */
-  public ODistributedRequest() {
+  public ODistributedRequest(final ORemoteTaskFactory taskFactory) {
+    this.taskFactory = taskFactory;
   }
 
-  public ODistributedRequest(final int senderNodeId, final long msgSequence, final String databaseName, final ORemoteTask payload,
-      EXECUTION_MODE iExecutionMode) {
+  public ODistributedRequest(final ORemoteTaskFactory taskFactory, final int senderNodeId, final long msgSequence,
+      final String databaseName, final ORemoteTask payload, EXECUTION_MODE iExecutionMode) {
+    this.taskFactory = taskFactory;
     this.id = new ODistributedRequestId(senderNodeId, msgSequence);
     this.databaseName = databaseName;
     this.senderThreadId = Thread.currentThread().getId();
@@ -107,7 +107,8 @@ public class ODistributedRequest implements Externalizable {
     out.writeObject(id);
     out.writeLong(senderThreadId);
     out.writeUTF(databaseName != null ? databaseName : "");
-    out.writeObject(task);
+    out.writeByte(task.getFactoryId());
+    task.writeExternal(out);
     out.writeObject(userRID);
   }
 
@@ -118,7 +119,8 @@ public class ODistributedRequest implements Externalizable {
     databaseName = in.readUTF();
     if (databaseName.isEmpty())
       databaseName = null;
-    task = (ORemoteTask) in.readObject();
+    task = (ORemoteTask) taskFactory.createTask(in.readByte());
+    task.readExternal(in);
     userRID = (ORID) in.readObject();
   }
 

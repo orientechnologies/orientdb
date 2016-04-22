@@ -40,15 +40,14 @@ import java.util.TimerTask;
  */
 public class OStopNodeTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 16;
+  public static final int   FACTORYID        = 9;
 
   public OStopNodeTask() {
   }
 
   @Override
   public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentTx database)
-      throws Exception {
+      final ODatabaseDocumentTx database) throws Exception {
 
     ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
         "Stopping current server...");
