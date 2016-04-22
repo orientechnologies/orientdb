@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
@@ -2135,6 +2136,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         lastURL = useNewServerURL(lastURL);
         if (lastURL == null) {
           parseServerURLs();
+          if (cause instanceof OInterruptedException)
+            throw (OInterruptedException) cause;
           if (cause instanceof IOException)
             throw (IOException) cause;
           throw new OIOException("Cannot open a connection to remote server: " + iCurrentURL, cause);
