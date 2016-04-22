@@ -1544,18 +1544,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           .debug(this, "Parallel query '%s' split in %d jobs, waiting for completion...", parserText, jobs.size());
     }
 
-    int processed = 0;
-    int total = jobs.size();
+
     try {
       for (Future<?> j : jobs) {
         j.get();
-        processed++;
-
-        if (OLogManager.instance().isDebugEnabled()) {
-          if (processed % (total / 10) == 0) {
-            OLogManager.instance().debug(this, "Executed parallel query %d/%d", processed, total);
-          }
-        }
       }
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on executing parallel query: %s", e, parserText);
