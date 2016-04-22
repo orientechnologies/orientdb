@@ -103,25 +103,30 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (partitionKey < 0) {
       processLock.writeLock().lock();
       try {
-        boolean anyQueueWorkerIsWorking = false;
-        for (ODistributedWorker w : workerThreads) {
-          if (!w.localQueue.isEmpty()) {
-            anyQueueWorkerIsWorking = true;
-            break;
-          }
+        // COUNT HOW MANY QUEUE ARE NOT EMPTY AND WAIT ONLY THEM ARE FREE BEFORE TO EXECUTE CURRENT COMMAND
+        int anyQueueWorkerIsWorking = 0;
+        final boolean[] workingQueues = new boolean[workerThreads.size()];
+        for (int i = 0; i < workerThreads.size(); ++i) {
+          final ODistributedWorker w = workerThreads.get(i);
+          workingQueues[i] = !w.localQueue.isEmpty();
+          if (workingQueues[i])
+            anyQueueWorkerIsWorking++;
         }
 
-        if (anyQueueWorkerIsWorking) {
+        if (anyQueueWorkerIsWorking > 0) {
           // WAIT ALL THE REQUESTS ARE MANAGED
           ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
               "Request %s on database %s waiting for all the previous requests to be completed", request, databaseName);
 
-          final CountDownLatch emptyQueues = new CountDownLatch(workerThreads.size());
+          final CountDownLatch emptyQueues = new CountDownLatch(anyQueueWorkerIsWorking);
 
-          for (ODistributedWorker w : workerThreads) {
-            final ODistributedRequest req = new ODistributedRequest(request.getId().getNodeId(), -1, databaseName,
-                new OSynchronizedTaskWrapper(emptyQueues), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
-            w.processRequest(req);
+          // PUT THE SYNC TASK ONLY IN THE WORKING QUEUES
+          for (int i = 0; i < workerThreads.size(); ++i) {
+            if (workingQueues[i]) {
+              final ODistributedRequest req = new ODistributedRequest(manager.getTaskFactory(), request.getId().getNodeId(), -1,
+                  databaseName, new OSynchronizedTaskWrapper(emptyQueues), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+              workerThreads.get(i).processRequest(req);
+            }
           }
 
           try {
@@ -236,8 +241,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       if (localResult != null)
         // COLLECT LOCAL RESULT
-        currentResponseMgr.collectResponse(new ODistributedResponse(iRequest.getId(), localNodeName,
-            localNodeName, (Serializable) localResult));
+        currentResponseMgr
+            .collectResponse(new ODistributedResponse(iRequest.getId(), localNodeName, localNodeName, (Serializable) localResult));
 
       if (!(iNodes instanceof List))
         iNodes = new ArrayList<String>(iNodes);
