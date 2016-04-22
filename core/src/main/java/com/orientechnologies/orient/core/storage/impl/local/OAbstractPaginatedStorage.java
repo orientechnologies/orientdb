@@ -1064,8 +1064,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   @Override
-  public OStorageOperationResult<Integer> recyclePosition(final ORecordId rid, final boolean updateContent, final byte[] content,
-      final int version, final byte recordType, final int mode, final ORecordCallback<Integer> callback) {
+  public OStorageOperationResult<Integer> recyclePosition(final ORecordId rid, final byte[] content, final int version,
+      final byte recordType) {
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
 
@@ -1073,7 +1073,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null) {
       final long timer = Orient.instance().getProfiler().startChrono();
       try {
-        return doRecycleRecord(rid, updateContent, content, version, recordType, callback, cluster);
+        return doRecycleRecord(rid, content, version, cluster, recordType);
       } finally {
         Orient.instance().getProfiler().stopChrono(PROFILER_RECYCLE_RECORD, "Recycled a record position in database", timer,
             "db.*.recyclePosition");
@@ -1089,7 +1089,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         checkOpeness();
 
         // RECYCLING IT
-        return doRecycleRecord(rid, updateContent, content, version, recordType, callback, cluster);
+        return doRecycleRecord(rid, content, version, cluster, recordType);
       } finally {
         lock.unlock();
       }
@@ -3051,39 +3051,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private OStorageOperationResult<Integer> doRecycleRecord(final ORecordId rid, final boolean updateContent, byte[] content,
-      final int version, final byte recordType, final ORecordCallback<Integer> callback, final OCluster cluster) {
+  private OStorageOperationResult<Integer> doRecycleRecord(final ORecordId rid, byte[] content, final int version,
+      final OCluster cluster, final byte recordType) {
 
     try {
       final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
       if (!checkForRecordValidity(ppos)) {
         final int recordVersion = -1;
-        if (callback != null)
-          callback.call(rid, recordVersion);
-
         return new OStorageOperationResult<Integer>(recordVersion);
-      }
-
-      boolean contentModified = false;
-      if (updateContent) {
-        final AtomicInteger recVersion = new AtomicInteger(version);
-        final AtomicInteger dbVersion = new AtomicInteger(ppos.recordVersion);
-
-        final byte[] newContent = checkAndIncrementVersion(cluster, rid, recVersion, dbVersion, content, recordType);
-
-        ppos.recordVersion = dbVersion.get();
-
-        if (newContent != null) {
-          contentModified = true;
-          content = newContent;
-        }
       }
 
       makeStorageDirty();
       atomicOperationsManager.startAtomicOperation((String) null, true);
       try {
-        if (updateContent)
-          cluster.recycleRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
+        cluster.recycleRecord(rid.clusterPosition, content, version, recordType);
 
         final ORecordSerializationContext context = ORecordSerializationContext.getContext();
         if (context != null)
@@ -3095,28 +3076,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", e);
 
         final int recordVersion = -1;
-        if (callback != null)
-          callback.call(rid, recordVersion);
 
         return new OStorageOperationResult<Integer>(recordVersion);
       }
 
-      if (callback != null)
-        callback.call(rid, ppos.recordVersion);
-
       if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Recycled record %s v.%s size=%d", rid, ppos.recordVersion, content.length);
+        OLogManager.instance().debug(this, "Recycled record %s v.%s size=%d", rid, version, content.length);
 
-      if (contentModified)
-        return new OStorageOperationResult<Integer>(ppos.recordVersion, content, false);
-      else
-        return new OStorageOperationResult<Integer>(ppos.recordVersion);
+      return new OStorageOperationResult<Integer>(version, content, false);
+
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", ioe);
 
       final int recordVersion = -1;
-      if (callback != null)
-        callback.call(rid, recordVersion);
 
       return new OStorageOperationResult<Integer>(recordVersion);
     }
