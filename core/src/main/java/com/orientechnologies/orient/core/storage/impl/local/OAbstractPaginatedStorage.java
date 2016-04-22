@@ -112,6 +112,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private final String                              PROFILER_READ_RECORD;
   private final String                              PROFILER_UPDATE_RECORD;
   private final String                              PROFILER_DELETE_RECORD;
+  private final String                              PROFILER_RECYCLE_RECORD;
   private final Map<String, OCluster>               clusterMap                                 = new HashMap<String, OCluster>();
   private List<OCluster>                            clusters                                   = new ArrayList<OCluster>();
 
@@ -157,6 +158,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     PROFILER_READ_RECORD = "db." + this.name + ".readRecord";
     PROFILER_UPDATE_RECORD = "db." + this.name + ".updateRecord";
     PROFILER_DELETE_RECORD = "db." + this.name + ".deleteRecord";
+    PROFILER_RECYCLE_RECORD = "db." + this.name + ".recyclePosition";
 
     sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
   }
@@ -1058,6 +1060,43 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } finally {
       stateLock.releaseReadLock();
       Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
+    }
+  }
+
+  @Override
+  public OStorageOperationResult<Integer> recyclePosition(final ORecordId rid, final boolean updateContent, final byte[] content,
+      final int version, final byte recordType, final int mode, final ORecordCallback<Integer> callback) {
+    checkOpeness();
+    checkLowDiskSpaceAndFullCheckpointRequests();
+
+    final OCluster cluster = getClusterById(rid.clusterId);
+    if (transaction.get() != null) {
+      final long timer = Orient.instance().getProfiler().startChrono();
+      try {
+        return doRecycleRecord(rid, updateContent, content, version, recordType, callback, cluster);
+      } finally {
+        Orient.instance().getProfiler().stopChrono(PROFILER_RECYCLE_RECORD, "Recycled a record position in database", timer,
+            "db.*.recyclePosition");
+      }
+    }
+
+    final long timer = Orient.instance().getProfiler().startChrono();
+    stateLock.acquireReadLock();
+    try {
+      // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
+      final Lock lock = recordVersionManager.acquireExclusiveLock(rid);
+      try {
+        checkOpeness();
+
+        // RECYCLING IT
+        return doRecycleRecord(rid, updateContent, content, version, recordType, callback, cluster);
+      } finally {
+        lock.unlock();
+      }
+    } finally {
+      stateLock.releaseReadLock();
+      Orient.instance().getProfiler().stopChrono(PROFILER_RECYCLE_RECORD, "Recycled a record to database", timer,
+          "db.*.recyclePosition");
     }
   }
 
@@ -2937,8 +2976,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private OStorageOperationResult<Integer> doUpdateRecord(ORecordId rid, boolean updateContent, byte[] content, int version,
-      byte recordType, ORecordCallback<Integer> callback, OCluster cluster) {
+  private OStorageOperationResult<Integer> doUpdateRecord(final ORecordId rid, final boolean updateContent, byte[] content,
+      final int version, final byte recordType, final ORecordCallback<Integer> callback, final OCluster cluster) {
 
     try {
       final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
@@ -2960,6 +2999,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         ppos.recordVersion = dbVersion.get();
 
+        // REMOVED BECAUSE DISTRIBUTED COULD UNDO AN OPERATION RESTORING A LOWER VERSION
         // assert ppos.recordVersion >= oldVersion;
 
         if (newContent != null) {
@@ -3002,6 +3042,77 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         return new OStorageOperationResult<Integer>(ppos.recordVersion);
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", ioe);
+
+      final int recordVersion = -1;
+      if (callback != null)
+        callback.call(rid, recordVersion);
+
+      return new OStorageOperationResult<Integer>(recordVersion);
+    }
+  }
+
+  private OStorageOperationResult<Integer> doRecycleRecord(final ORecordId rid, final boolean updateContent, byte[] content,
+      final int version, final byte recordType, final ORecordCallback<Integer> callback, final OCluster cluster) {
+
+    try {
+      final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
+      if (!checkForRecordValidity(ppos)) {
+        final int recordVersion = -1;
+        if (callback != null)
+          callback.call(rid, recordVersion);
+
+        return new OStorageOperationResult<Integer>(recordVersion);
+      }
+
+      boolean contentModified = false;
+      if (updateContent) {
+        final AtomicInteger recVersion = new AtomicInteger(version);
+        final AtomicInteger dbVersion = new AtomicInteger(ppos.recordVersion);
+
+        final byte[] newContent = checkAndIncrementVersion(cluster, rid, recVersion, dbVersion, content, recordType);
+
+        ppos.recordVersion = dbVersion.get();
+
+        if (newContent != null) {
+          contentModified = true;
+          content = newContent;
+        }
+      }
+
+      makeStorageDirty();
+      atomicOperationsManager.startAtomicOperation((String) null, true);
+      try {
+        if (updateContent)
+          cluster.recycleRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
+
+        final ORecordSerializationContext context = ORecordSerializationContext.getContext();
+        if (context != null)
+          context.executeOperations(this);
+        atomicOperationsManager.endAtomicOperation(false, null);
+      } catch (Exception e) {
+        atomicOperationsManager.endAtomicOperation(true, e);
+
+        OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", e);
+
+        final int recordVersion = -1;
+        if (callback != null)
+          callback.call(rid, recordVersion);
+
+        return new OStorageOperationResult<Integer>(recordVersion);
+      }
+
+      if (callback != null)
+        callback.call(rid, ppos.recordVersion);
+
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Recycled record %s v.%s size=%d", rid, ppos.recordVersion, content.length);
+
+      if (contentModified)
+        return new OStorageOperationResult<Integer>(ppos.recordVersion, content, false);
+      else
+        return new OStorageOperationResult<Integer>(ppos.recordVersion);
+    } catch (IOException ioe) {
+      OLogManager.instance().error(this, "Error on recycling record " + rid + " (cluster: " + cluster + ")", ioe);
 
       final int recordVersion = -1;
       if (callback != null)
