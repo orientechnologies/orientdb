@@ -59,34 +59,44 @@ public interface OCluster {
   void truncate() throws IOException;
 
   /**
-   * Allocate a physical position pointer on the storage for generate an id without a content.
+   * Allocates a physical position pointer on the storage for generate an id without a content.
    *
-   * @param recordType the type of record of which allocate the position.
+   * @param recordType
+   *          the type of record of which allocate the position.
    * @return the allocated position.
    * @throws IOException
    */
   OPhysicalPosition allocatePosition(byte recordType) throws IOException;
 
   /**
-   * Create a new record in the cluster.
+   * Creates a new record in the cluster.
    *
-   * @param content           the content of the record.
-   * @param recordVersion     the current version
-   * @param recordType        the type of the record
-   * @param allocatedPosition the eventual allocated position or null if there is no allocated position.
+   * @param content
+   *          the content of the record.
+   * @param recordVersion
+   *          the current version
+   * @param recordType
+   *          the type of the record
+   * @param allocatedPosition
+   *          the eventual allocated position or null if there is no allocated position.
    * @return the position where the record si created.
    * @throws IOException
    */
-  OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition) throws IOException;
+  OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
+      throws IOException;
 
   boolean deleteRecord(long clusterPosition) throws IOException;
 
   void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
 
+  /**
+   * Recycling a record position that was deleted.
+   */
+  void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException;
+
   ORawBuffer readRecord(long clusterPosition) throws IOException;
 
-  ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion) throws IOException,
-      ORecordNotFoundException;
+  ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion) throws IOException, ORecordNotFoundException;
 
   boolean exists();
 

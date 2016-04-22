@@ -915,6 +915,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
+  public OStorageOperationResult<Integer> recyclePosition(final ORecordId iRecordId, final boolean updateContent,
+      final byte[] iContent, final int iVersion, final byte iRecordType, final int iMode,
+      final ORecordCallback<Integer> iCallback) {
+    return wrapped.recyclePosition(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
+  }
+
+  @Override
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final int iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
     resetLastValidBackup();

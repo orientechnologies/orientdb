@@ -297,7 +297,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
         if (pageIndex >= getFilledUpTo(atomicOperation, fileId))
           throw new OClusterPositionMapException(
-              "Passed in cluster position " + clusterPosition + " is outside of range of cluster-position map.", this);
+              "Passed in cluster position " + clusterPosition + " is outside of range of cluster-position map", this);
 
         final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
         cacheEntry.acquireExclusiveLock();
@@ -319,6 +319,48 @@ public class OClusterPositionMap extends ODurableComponent {
         endAtomicOperation(true, e);
         throw OException.wrapException(
             new OClusterPositionMapException("Error of update of mapping between logical adn physical record position", this), e);
+      } finally {
+        releaseExclusiveLock();
+      }
+    } finally {
+      completeOperation();
+    }
+  }
+
+  public void resurrect(final long clusterPosition, final OClusterPositionMapBucket.PositionEntry entry) throws IOException {
+    startOperation();
+    try {
+      OAtomicOperation atomicOperation = startAtomicOperation(true);
+
+      acquireExclusiveLock();
+      try {
+        final long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+        final int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
+
+        if (pageIndex >= getFilledUpTo(atomicOperation, fileId))
+          throw new OClusterPositionMapException(
+              "Passed in cluster position " + clusterPosition + " is outside of range of cluster-position map", this);
+
+        final OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
+        cacheEntry.acquireExclusiveLock();
+        try {
+          final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry,
+              getChanges(atomicOperation, cacheEntry));
+          bucket.resurrect(index, entry);
+        } finally {
+          cacheEntry.releaseExclusiveLock();
+          releasePage(atomicOperation, cacheEntry);
+        }
+
+        endAtomicOperation(false, null);
+      } catch (IOException e) {
+        endAtomicOperation(true, e);
+        throw OException.wrapException(
+            new OClusterPositionMapException("Error of resurrecting mapping between logical adn physical record position", this), e);
+      } catch (RuntimeException e) {
+        endAtomicOperation(true, e);
+        throw OException.wrapException(
+            new OClusterPositionMapException("Error of resurrecting mapping between logical adn physical record position", this), e);
       } finally {
         releaseExclusiveLock();
       }
