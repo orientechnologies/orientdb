@@ -170,10 +170,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       try {
         connection = onBeforeRequest();
       } catch (Exception e) {
-        sendError(connection, clientTxId, e);
-        handleConnectionError(connection, e);
-        onAfterRequest(connection);
-        sendShutdown();
+        if(requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
+          sendError(connection, clientTxId, e);
+          handleConnectionError(connection, e);
+          onAfterRequest(connection);
+          sendShutdown();
+        }
         return;
       }
 

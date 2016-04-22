@@ -91,6 +91,7 @@ public class OServerAdmin {
     networkAdminOperation(new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute(OChannelBinaryAsynchClient network) throws IOException {
+        OStorageRemoteNodeSession nodeSession = storage.getCurrentSession().getOrCreate(network.getServerURL());
         try {
           storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONNECT);
 
@@ -114,13 +115,13 @@ public class OServerAdmin {
         }
 
         try {
-          network.beginResponse(session.sessionId, false);
-          session.sessionId = network.readInt();
+          network.beginResponse(nodeSession.getSessionId(), false);
+          int sessionId = network.readInt();
           byte[] sessionToken = network.readBytes();
           if (sessionToken.length == 0) {
             sessionToken = null;
           }
-          session.tokens.put(network.getServerURL(), sessionToken);
+          nodeSession.setSession(sessionId, sessionToken);
         } finally {
           storage.endResponse(network);
         }
@@ -190,7 +191,7 @@ public class OServerAdmin {
   }
 
   public int getSessionId() {
-    return session.sessionId;
+    return session.getSessionId();
   }
 
   /**

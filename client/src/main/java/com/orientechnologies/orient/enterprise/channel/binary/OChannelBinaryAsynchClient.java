@@ -26,6 +26,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
 import com.orientechnologies.orient.client.remote.OStorageRemoteSession;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -451,13 +452,14 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
               + (throwable != null ? throwable.getClass().getName() : "null"));
   }
 
-  public void beginRequest(byte iCommand, OStorageRemoteSession session, byte[] token)
+  public void beginRequest(byte iCommand, OStorageRemoteSession session)
       throws IOException {
+    OStorageRemoteNodeSession nodeSession = session.get(getServerURL());
     writeByte(iCommand);
-    writeInt(session.sessionId);
-    if (token != null) {
+    writeInt(nodeSession.getSessionId());
+    if (nodeSession.getToken() != null) {
       if (!session.has(this)) {
-        writeBytes(token);
+        writeBytes(nodeSession.getToken());
         session.add(this);
       } else
         writeBytes(new byte[] {});
