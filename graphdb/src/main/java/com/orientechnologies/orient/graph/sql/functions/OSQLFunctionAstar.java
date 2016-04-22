@@ -19,30 +19,20 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
-import java.awt.*;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
-import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
-import com.sun.javafx.scene.layout.region.Margins;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.*;
 
 /**
  * A*'s algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph with husrestic function.
