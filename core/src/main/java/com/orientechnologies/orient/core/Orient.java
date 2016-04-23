@@ -536,10 +536,10 @@ public class Orient extends OListenerManger<OOrientListener> {
         final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
         if (oldStorage != null)
           storage = oldStorage;
-      }
 
-      for (OOrientListener l : browseListeners())
-        l.onStorageRegistered(storage);
+        for (OOrientListener l : browseListeners())
+          l.onStorageRegistered(storage);
+      }
 
       return storage;
     } finally {

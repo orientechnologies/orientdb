@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.ONeedRetryException;
@@ -74,6 +62,18 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -1155,6 +1155,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   @Override
   public void delete() {
     wrapped.delete();
+
+    if (wrapped instanceof OLocalPaginatedStorage)
+      dropStorageFiles();
   }
 
   @Override
@@ -1174,20 +1177,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public void close(final boolean iForce, final boolean onDelete) {
+    wrapped.close(iForce, onDelete);
+
     if (onDelete && wrapped instanceof OLocalPaginatedStorage) {
       // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
-      final File dCfg = new File(
-          ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + getDistributedManager().FILE_DISTRIBUTED_DB_CONFIG);
-      if (dCfg.exists())
-        dCfg.delete();
-
-      final File dCfg2 = new File(
-          ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
-      if (dCfg2.exists())
-        dCfg2.delete();
+      dropStorageFiles();
     }
 
-    wrapped.close(iForce, onDelete);
     if (isClosed())
       shutdownAsynchronousWorker();
   }
@@ -1693,6 +1689,34 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           return null;
         }
       });
+    }
+  }
+
+  protected void dropStorageFiles() {
+    // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
+    final File dCfg = new File(
+        ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + getDistributedManager().FILE_DISTRIBUTED_DB_CONFIG);
+
+    try {
+      if (dCfg.exists()) {
+        for (int i = 0; i < 10; ++i) {
+          if (dCfg.delete())
+            break;
+          Thread.sleep(100);
+        }
+      }
+
+      final File dCfg2 = new File(
+          ((OLocalPaginatedStorage) wrapped).getStoragePath() + "/" + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
+      if (dCfg2.exists()) {
+        for (int i = 0; i < 10; ++i) {
+          if (dCfg2.delete())
+            break;
+          Thread.sleep(100);
+        }
+      }
+    } catch (InterruptedException e) {
+      // IGNORE IT
     }
   }
 }

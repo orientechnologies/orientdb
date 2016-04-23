@@ -837,9 +837,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     final String dbName = req.getDatabaseName();
     if (dbName != null) {
-      final ODistributedDatabase ddb = manager.getMessageService().getDatabase(dbName);
+
+      ODistributedDatabase ddb = manager.getMessageService().getDatabase(dbName);
       if (ddb == null)
         throw new ODistributedException("Database configuration not found for database '" + req.getDatabaseName() + "'");
+
       ddb.processRequest(req);
     } else
       manager.executeOnLocalNode(req.getId(), req.getTask(), null);
