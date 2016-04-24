@@ -657,6 +657,15 @@ public class OSessionStoragePerformanceStatistic {
       cHolder.pageReadFromFileCount += readPages;
     }
 
+    final Component currentComponent = componentsStack.peek();
+    if (currentComponent != null) {
+      PerformanceCountersHolder currentHolder = countersByComponent.get(currentComponent.name);
+
+      if (currentHolder.currentOperation != null) {
+        currentHolder.currentOperation.incrementOperationsCounter(0, readPages);
+      }
+    }
+
     makeSnapshotIfNeeded(endTs);
   }
 
@@ -751,6 +760,15 @@ public class OSessionStoragePerformanceStatistic {
       cHolder.pageReadFromCacheCount++;
     }
 
+    final Component currentComponent = componentsStack.peek();
+    if (currentComponent != null) {
+      PerformanceCountersHolder currentHolder = countersByComponent.get(currentComponent.name);
+
+      if (currentHolder.currentOperation != null) {
+        currentHolder.currentOperation.incrementOperationsCounter(1, 0);
+      }
+    }
+
     makeSnapshotIfNeeded(endTs);
   }
 
@@ -824,9 +842,9 @@ public class OSessionStoragePerformanceStatistic {
     final long endTs = nanoTimer.getNano();
     final long timeDiff = (endTs - timeStamps.pop());
 
-    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    OClusterCountersHolder cHolder = (OClusterCountersHolder) countersByComponent.get(component.name);
     if (cHolder == null) {
-      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      cHolder = (OClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
       countersByComponent.put(component.name, cHolder);
     }
 
@@ -848,9 +866,9 @@ public class OSessionStoragePerformanceStatistic {
     final long endTs = nanoTimer.getNano();
     final long timeDiff = (endTs - timeStamps.pop());
 
-    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    OClusterCountersHolder cHolder = (OClusterCountersHolder) countersByComponent.get(component.name);
     if (cHolder == null) {
-      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      cHolder = (OClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
       countersByComponent.put(component.name, cHolder);
     }
 
@@ -872,9 +890,9 @@ public class OSessionStoragePerformanceStatistic {
     final long endTs = nanoTimer.getNano();
     final long timeDiff = (endTs - timeStamps.pop());
 
-    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    OClusterCountersHolder cHolder = (OClusterCountersHolder) countersByComponent.get(component.name);
     if (cHolder == null) {
-      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      cHolder = (OClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
       countersByComponent.put(component.name, cHolder);
     }
 
@@ -896,9 +914,9 @@ public class OSessionStoragePerformanceStatistic {
     final long endTs = nanoTimer.getNano();
     final long timeDiff = (endTs - timeStamps.pop());
 
-    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    OClusterCountersHolder cHolder = (OClusterCountersHolder) countersByComponent.get(component.name);
     if (cHolder == null) {
-      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      cHolder = (OClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
       countersByComponent.put(component.name, cHolder);
     }
 
@@ -1243,8 +1261,8 @@ public class OSessionStoragePerformanceStatistic {
     },
     CLUSTER {
       @Override
-      ClusterCountersHolder newCountersHolder() {
-        return new ClusterCountersHolder();
+      OClusterCountersHolder newCountersHolder() {
+        return new OClusterCountersHolder();
       }
     },
     RIDBAG {
@@ -1508,122 +1526,27 @@ public class OSessionStoragePerformanceStatistic {
     }
   }
 
-  /**
-   * Container for cluster related performance numbers
-   */
-  public static class ClusterCountersHolder extends PerformanceCountersHolder {
-    /**
-     * Amount of all created records.
-     */
-    private long createdRecords;
-
-    /**
-     * Total time is needed to create all records
-     */
-    private long timeRecordCreation;
-
-    /**
-     * Amount of all deleted records
-     */
-    private long deletedRecords;
-
-    /**
-     * Total time is needed to delete all records
-     */
-    private long timeRecordDeletion;
-
-    /**
-     * Amount of all updated records
-     */
-    private long updatedRecords;
-
-    /**
-     * Total time which is needed to update all records
-     */
-    private long timeRecordUpdate;
-
-    /**
-     * Amount of all read records
-     */
-    private long readRecords;
-
-    /**
-     * Total time which is needed to read all records.
-     */
-    private long timeRecordRead;
-
-    @Override
-    public ClusterCountersHolder newInstance() {
-      return new ClusterCountersHolder();
-    }
-
-    @Override
-    public void clean() {
-      super.clean();
-
-      createdRecords = 0;
-      timeRecordCreation = 0;
-
-      deletedRecords = 0;
-      timeRecordDeletion = 0;
-
-      updatedRecords = 0;
-      timeRecordUpdate = 0;
-
-      readRecords = 0;
-      timeRecordRead = 0;
-    }
-
-    public long getRecordCreationTime() {
-      if (createdRecords == 0)
-        return -1;
-
-      return timeRecordCreation / createdRecords;
-    }
-
-    public long getRecordDeletionTime() {
-      if (deletedRecords == 0)
-        return -1;
-
-      return timeRecordDeletion / deletedRecords;
-    }
-
-    public long getRecordUpdateTime() {
-      if (updatedRecords == 0)
-        return -1;
-
-      return timeRecordUpdate / updatedRecords;
-    }
-
-    public long getRecordReadTime() {
-      if (readRecords == 0)
-        return -1;
-
-      return timeRecordRead / readRecords;
-    }
-
-    @Override
-    public ODocument toDocument() {
-      final ODocument document = super.toDocument();
-
-      document.field("recordCreationTime", getRecordCreationTime());
-      document.field("recordDeletionTime", getRecordDeletionTime());
-      document.field("recordUpdateTime", getRecordUpdateTime());
-      document.field("recordReadTime", getRecordReadTime());
-
-      return document;
-    }
-  }
-
   public static class IndexCountersHolder extends PerformanceCountersHolder {
     private long updatedEntries;
     private long timeUpdateEntry;
+    private long updateEntryPages;
+    private long updateEntryFilePages;
+    private long updateEntryPageTime;
+    private long updateEntryFilePageTime;
 
     private long deletedEntries;
     private long timeDeleteEntry;
+    private long deleteEntryPages;
+    private long deleteEntryFilePages;
+    private long deleteEntryPageTime;
+    private long deleteEntryFilePageTime;
 
     private long readEntries;
     private long timeReadEntry;
+    private long readEntryPages;
+    private long readEntryFilePages;
+    private long readEntryPageTime;
+    private long readEntryFilePageTime;
 
     @Override
     public IndexCountersHolder newInstance() {
@@ -1636,12 +1559,24 @@ public class OSessionStoragePerformanceStatistic {
 
       updatedEntries = 0;
       timeUpdateEntry = 0;
+      updateEntryPages = 0;
+      updateEntryFilePages = 0;
+      updateEntryPageTime = 0;
+      updateEntryFilePageTime = 0;
 
       deletedEntries = 0;
       timeDeleteEntry = 0;
+      deleteEntryPages = 0;
+      deleteEntryFilePages = 0;
+      deleteEntryPageTime = 0;
+      deleteEntryFilePageTime = 0;
 
       readEntries = 0;
       timeReadEntry = 0;
+      readEntryPages = 0;
+      readEntryFilePages = 0;
+      readEntryPageTime = 0;
+      readEntryFilePageTime = 0;
     }
 
     public long getUpdateEntryTime() {
@@ -1651,11 +1586,53 @@ public class OSessionStoragePerformanceStatistic {
       return timeUpdateEntry / updatedEntries;
     }
 
+    public long getUpdateEntryPages() {
+      if (updatedEntries == 0)
+        return -1;
+
+      return updateEntryPages / updatedEntries;
+    }
+
+    public long getUpdateEntryHitRate() {
+      if (updateEntryPages == 0)
+        return -1;
+
+      return (int) ((100 * (updateEntryPages - updateEntryFilePages)) / updateEntryPages);
+    }
+
+    public long getUpdateEntryPageTime() {
+      if (updateEntryPages == 0)
+        return -1;
+
+      return updateEntryPageTime / updateEntryPages;
+    }
+
+    public long getUpdateEntryFilePageTime() {
+      if (updateEntryFilePages == 0)
+        return -1;
+
+      return updateEntryFilePageTime / updateEntryFilePages;
+    }
+
     public long getDeleteEntryTime() {
       if (deletedEntries == 0)
         return -1;
 
       return timeDeleteEntry / deletedEntries;
+    }
+
+    public long getDeleteEntryPages() {
+      if (deletedEntries == 0)
+        return -1;
+
+      return deleteEntryPages / deletedEntries;
+    }
+
+    public long getDeleteEntryHitRate() {
+      if (deleteEntryPages == 0)
+        return -1;
+
+      return (int) ((100 * (deleteEntryPages - deleteEntryFilePages)) / deleteEntryPages);
     }
 
     public long getReadEntryTime() {
@@ -1665,30 +1642,72 @@ public class OSessionStoragePerformanceStatistic {
       return timeReadEntry / readEntries;
     }
 
+    public long getReadEntryPages() {
+      if (readEntries == 0)
+        return -1;
+
+      return readEntryPages / readEntries;
+    }
+
     @Override
     public ODocument toDocument() {
       final ODocument document = super.toDocument();
 
       document.field("updateEntryTime", getUpdateEntryTime());
+      document.field("updateEntryPages", getUpdateEntryPages());
       document.field("deleteEntryTime", getDeleteEntryTime());
+      document.field("deleteEntryPages", getDeleteEntryPages());
       document.field("readEntryTime", getReadEntryTime());
+      document.field("readEntryPages", getReadEntryPages());
 
       return document;
+    }
+
+    private class UpdateEntryOperation extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        IndexCountersHolder.this.updateEntryPages += pages;
+        IndexCountersHolder.this.updateEntryFilePages += filePages;
+      }
+    }
+
+    private class DeleteEntryOperation extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        IndexCountersHolder.this.deleteEntryPages += pages;
+        IndexCountersHolder.this.deleteEntryFilePages += filePages;
+      }
+    }
+
+    private class ReadEntryOperation extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        IndexCountersHolder.this.readEntryPages += pages;
+        IndexCountersHolder.this.readEntryFilePages += filePages;
+      }
     }
   }
 
   public static class RidbagCountersHolder extends PerformanceCountersHolder {
     private long updatedEntries;
     private long timeUpdateEntry;
+    private long updateEntryPages;
+    private long updateEntryFilePages;
 
     private long deletedEntries;
     private long timeDeleteEntry;
+    private long deleteEntryPages;
+    private long deleteEntryFilePages;
 
     private long readEntries;
     private long timeReadEntry;
+    private long readEntryPages;
+    private long readEntryFilePages;
 
     private long loads;
     private long loadTime;
+    private long loadPages;
+    private long loadFilePages;
 
     @Override
     public PerformanceCountersHolder newInstance() {
@@ -1701,15 +1720,23 @@ public class OSessionStoragePerformanceStatistic {
 
       updatedEntries = 0;
       timeUpdateEntry = 0;
+      updateEntryPages = 0;
+      updateEntryFilePages = 0;
 
       deletedEntries = 0;
       timeDeleteEntry = 0;
+      deleteEntryPages = 0;
+      deleteEntryFilePages = 0;
 
       readEntries = 0;
       timeReadEntry = 0;
+      readEntryPages = 0;
+      readEntryFilePages = 0;
 
       loads = 0;
       loadTime = 0;
+      loadPages = 0;
+      loadFilePages = 0;
     }
 
     public long getUpdateEntryTime() {
@@ -1719,11 +1746,25 @@ public class OSessionStoragePerformanceStatistic {
       return timeUpdateEntry / updatedEntries;
     }
 
+    public long getUpdateEntryPages() {
+      if (updatedEntries == 0)
+        return -1;
+
+      return updateEntryPages / updatedEntries;
+    }
+
     public long getDeleteEntryTime() {
       if (deletedEntries == 0)
         return -1;
 
       return timeDeleteEntry / deletedEntries;
+    }
+
+    public long getDeleteEntryPages() {
+      if (deletedEntries == 0)
+        return -1;
+
+      return deleteEntryPages / deletedEntries;
     }
 
     public long getReadEntryTime() {
@@ -1733,8 +1774,22 @@ public class OSessionStoragePerformanceStatistic {
       return timeReadEntry / readEntries;
     }
 
+    public long getReadEntryPages() {
+      if (readEntries == 0)
+        return -1;
+
+      return readEntryPages / readEntries;
+    }
+
     public long getLoadTime() {
       return loadTime / loads;
+    }
+
+    public long getLoadPages() {
+      if (loads == 0)
+        return -1;
+
+      return loadPages / loads;
     }
 
     @Override
@@ -1742,11 +1797,47 @@ public class OSessionStoragePerformanceStatistic {
       final ODocument document = super.toDocument();
 
       document.field("updateEntryTime", getUpdateEntryTime());
+      document.field("updateEntryPages", getUpdateEntryPages());
       document.field("deleteEntryTime", getDeleteEntryTime());
+      document.field("deleteEntryPages", getDeleteEntryPages());
       document.field("readEntryTime", getReadEntryTime());
+      document.field("readEntryPages", getReadEntryPages());
       document.field("loadTime", getLoadTime());
+      document.field("loadPages", getLoadPages());
 
       return document;
+    }
+
+    private class UpdateEntryOperation extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        RidbagCountersHolder.this.updateEntryPages += pages;
+        RidbagCountersHolder.this.updateEntryFilePages += filePages;
+      }
+    }
+
+    private class DeleteEntryPages extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        RidbagCountersHolder.this.deleteEntryPages += pages;
+        RidbagCountersHolder.this.deleteEntryFilePages += filePages;
+      }
+    }
+
+    private class ReadEntryPages extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        RidbagCountersHolder.this.readEntryPages += pages;
+        RidbagCountersHolder.this.readEntryFilePages += filePages;
+      }
+    }
+
+    private class LoadPages extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        RidbagCountersHolder.this.loadPages += pages;
+        RidbagCountersHolder.this.loadFilePages += filePages;
+      }
     }
   }
 
@@ -1808,6 +1899,8 @@ public class OSessionStoragePerformanceStatistic {
      * Amount of pages in total which were written to disk cache.
      */
     private long pageWriteToCacheCount = 0;
+
+    private OOperation currentOperation;
 
     /**
      * Clears all performance data.
