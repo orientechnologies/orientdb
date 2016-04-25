@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -114,7 +114,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
   private final OAbstractPaginatedStorage storage;
   private final OWriteAheadLog            writeAheadLog;
-  private final OLockManager<String> lockManager = new OLockManager<String>(true, -1,
+  private final OOneEntryPerKeyLockManager<String> lockManager = new OOneEntryPerKeyLockManager<String>(true, -1,
       OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
   private final OReadCache  readCache;
   private final OWriteCache writeCache;
@@ -429,7 +429,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       }
 
       for (String lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
       atomicOperationsCount.decrement();
     }
@@ -457,7 +457,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (operation.containsInLockedObjects(fullName))
       return;
 
-    lockManager.acquireLock(fullName, OLockManager.LOCK.EXCLUSIVE);
+    lockManager.acquireLock(fullName, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
     operation.addLockedObject(fullName);
   }
 
@@ -467,7 +467,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     assert durableComponent.getLockName() != null;
 
-    lockManager.acquireLock(durableComponent.getLockName(), OLockManager.LOCK.SHARED);
+    lockManager.acquireLock(durableComponent.getLockName(), OOneEntryPerKeyLockManager.LOCK.SHARED);
   }
 
   public void releaseReadLock(ODurableComponent durableComponent) {
@@ -477,7 +477,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     assert durableComponent.getName() != null;
     assert durableComponent.getLockName() != null;
 
-    lockManager.releaseLock(this, durableComponent.getLockName(), OLockManager.LOCK.SHARED);
+    lockManager.releaseLock(this, durableComponent.getLockName(), OOneEntryPerKeyLockManager.LOCK.SHARED);
   }
 
   public void registerMBean() {
@@ -622,7 +622,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         activeAtomicOperations.remove(operation.getOperationUnitId());
 
       for (String lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
       atomicOperationsCount.decrement();
 
@@ -648,7 +648,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         activeAtomicOperations.remove(operation.getOperationUnitId());
 
       for (String lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
       atomicOperationsCount.decrement();
     }

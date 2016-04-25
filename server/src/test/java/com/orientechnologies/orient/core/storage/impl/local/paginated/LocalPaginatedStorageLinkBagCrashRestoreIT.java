@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -31,9 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LocalPaginatedStorageLinkBagCrashRestoreIT {
   private static String URL_BASE;
   private static String URL_TEST;
-  private final OLockManager<ORID>              lockManager     = new OLockManager<ORID>(true, 30000, 10000);
-  private final AtomicInteger                   positionCounter = new AtomicInteger();
-  private final OPartitionedDatabasePoolFactory poolFactory     = new OPartitionedDatabasePoolFactory();
+  private final OOneEntryPerKeyLockManager<ORID> lockManager     = new OOneEntryPerKeyLockManager<ORID>(true, 30000, 10000);
+  private final AtomicInteger                    positionCounter = new AtomicInteger();
+  private final OPartitionedDatabasePoolFactory  poolFactory     = new OPartitionedDatabasePoolFactory();
   private File buildDir;
   private ExecutorService executorService = Executors.newCachedThreadPool();
   private          Process process;
@@ -301,7 +301,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
         final int position = random.nextInt((int) lastClusterPosition);
         final ORID orid = new ORecordId(defaultClusterId, position);
 
-        lockManager.acquireLock(orid, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.acquireLock(orid, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
         try {
 
           try {
@@ -323,7 +323,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
             throw e;
           }
         } finally {
-          lockManager.releaseLock(this, orid, OLockManager.LOCK.EXCLUSIVE);
+          lockManager.releaseLock(this, orid, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
         }
       }
     }
@@ -354,7 +354,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
           final long position = random.nextInt((int) lastClusterPosition);
           final ORID orid = new ORecordId(defaultClusterId, position);
 
-          lockManager.acquireLock(orid, OLockManager.LOCK.EXCLUSIVE);
+          lockManager.acquireLock(orid, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
           try {
             ODatabaseDocumentTx base_db = poolFactory.get(URL_BASE, "admin", "admin").acquire();
             final List<ORID> ridsToRemove = new ArrayList<ORID>();
@@ -392,7 +392,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
 
             test_db.close();
           } finally {
-            lockManager.releaseLock(this, orid, OLockManager.LOCK.EXCLUSIVE);
+            lockManager.releaseLock(this, orid, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
           }
         }
       } catch (RuntimeException e) {

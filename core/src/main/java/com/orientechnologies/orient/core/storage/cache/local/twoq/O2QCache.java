@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.concur.lock.ONewLockManager;
+import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -35,9 +35,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
-import javax.management.*;
 import java.io.*;
-import java.lang.management.ManagementFactory;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.util.*;
@@ -111,10 +109,10 @@ public class O2QCache implements OReadCache {
    */
   private final int                                    percentOfPinnedPages;
 
-  private final OReadersWriterSpinLock                 cacheLock                           = new OReadersWriterSpinLock();
-  private final ONewLockManager                        fileLockManager                     = new ONewLockManager(true);
-  private final ONewLockManager<PageKey>               pageLockManager                     = new ONewLockManager<PageKey>();
-  private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages                         = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
+  private final OReadersWriterSpinLock                 cacheLock       = new OReadersWriterSpinLock();
+  private final OPartitionedLockManager                fileLockManager = new OPartitionedLockManager(true);
+  private final OPartitionedLockManager<PageKey>       pageLockManager = new OPartitionedLockManager<PageKey>();
+  private final ConcurrentMap<PinnedPage, OCacheEntry> pinnedPages     = new ConcurrentHashMap<PinnedPage, OCacheEntry>();
 
   private final AtomicBoolean                          coldPagesRemovalInProgress          = new AtomicBoolean();
 

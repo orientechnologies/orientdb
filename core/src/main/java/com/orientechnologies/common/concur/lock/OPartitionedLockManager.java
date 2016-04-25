@@ -28,10 +28,13 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
+ * Lock manager implementation that uses multipel partitions to increase the level of concurrency without having to keep one entry
+ * per locked key, like for {@link OOneEntryPerKeyLockManager} implementation.
+ * 
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/11/14
  */
-public class ONewLockManager<T> {
+public class OPartitionedLockManager<T> implements OLockManager<T> {
   private static final int               HASH_BITS         = 0x7fffffff;
 
   private static final int               CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() << 6);
@@ -44,6 +47,7 @@ public class ONewLockManager<T> {
   public static final Comparator         COMPARATOR        = new Comparator() {
                                                              @Override
                                                              public int compare(final Object one, final Object two) {
+                                                               // TODO: ORDER BY HASH INSTEAD TO MINIMIZE CALLING HASH FUNCTION
                                                                final int indexOne;
                                                                if (one == null)
                                                                  indexOne = 0;
@@ -109,11 +113,11 @@ public class ONewLockManager<T> {
     }
   }
 
-  public ONewLockManager() {
+  public OPartitionedLockManager() {
     this(false);
   }
 
-  public ONewLockManager(boolean useSpinLock) {
+  public OPartitionedLockManager(boolean useSpinLock) {
     this.useSpinLock = useSpinLock;
     if (useSpinLock) {
       OReadersWriterSpinLock[] lcks = new OReadersWriterSpinLock[CONCURRENCY_LEVEL];
@@ -184,6 +188,7 @@ public class ONewLockManager<T> {
     return lock;
   }
 
+  @Override
   public Lock acquireExclusiveLock(T value) {
     final int index;
     if (value == null)
@@ -246,6 +251,7 @@ public class ONewLockManager<T> {
     return lock.tryLock(timeout, TimeUnit.MILLISECONDS);
   }
 
+  @Override
   public Lock[] acquireExclusiveLocksInBatch(final T... value) {
     if (value == null)
       return new Lock[0];
@@ -338,7 +344,8 @@ public class ONewLockManager<T> {
     return lock;
   }
 
-  public Lock acquireSharedLock(T value) {
+  @Override
+  public Lock acquireSharedLock(final T value) {
     final int index;
     if (value == null)
       index = 0;
@@ -359,7 +366,7 @@ public class ONewLockManager<T> {
     return lock;
   }
 
-  public void releaseSharedLock(int value) {
+  public void releaseSharedLock(final int value) {
     final int index = index(value);
 
     if (useSpinLock) {
@@ -372,12 +379,12 @@ public class ONewLockManager<T> {
     rwLock.readLock().unlock();
   }
 
-  public void releaseSharedLock(long value) {
+  public void releaseSharedLock(final long value) {
     final int hashCode = longHashCode(value);
     final int index = index(hashCode);
 
     if (useSpinLock) {
-      OReadersWriterSpinLock spinLock = spinLocks[index];
+      final OReadersWriterSpinLock spinLock = spinLocks[index];
       spinLock.releaseReadLock();
       return;
     }
@@ -388,7 +395,7 @@ public class ONewLockManager<T> {
     lock.unlock();
   }
 
-  public void releaseSharedLock(T value) {
+  public void releaseSharedLock(final T value) {
     final int index;
     if (value == null)
       index = 0;
@@ -407,7 +414,7 @@ public class ONewLockManager<T> {
     lock.unlock();
   }
 
-  public void releaseExclusiveLock(int value) {
+  public void releaseExclusiveLock(final int value) {
     final int index = index(value);
     if (useSpinLock) {
       OReadersWriterSpinLock spinLock = spinLocks[index];
@@ -419,7 +426,7 @@ public class ONewLockManager<T> {
     rwLock.writeLock().unlock();
   }
 
-  public void releaseExclusiveLock(long value) {
+  public void releaseExclusiveLock(final long value) {
     final int hashCode = longHashCode(value);
     final int index = index(hashCode);
 
@@ -435,7 +442,7 @@ public class ONewLockManager<T> {
     lock.unlock();
   }
 
-  public void releaseExclusiveLock(T value) {
+  public void releaseExclusiveLock(final T value) {
     final int index;
     if (value == null)
       index = 0;
@@ -454,7 +461,7 @@ public class ONewLockManager<T> {
     lock.unlock();
   }
 
-  public void releaseLock(Lock lock) {
+  public void releaseLock(final Lock lock) {
     lock.unlock();
   }
 
