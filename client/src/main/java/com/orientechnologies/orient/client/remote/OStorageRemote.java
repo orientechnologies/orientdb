@@ -20,8 +20,10 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
@@ -140,6 +142,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public <T> T networkOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {
+    int retry = connectionRetry;
     do {
       OChannelBinaryAsynchClient network = null;
       try {
@@ -160,11 +163,41 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         return operation.execute(network);
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
+      } catch (OTokenException e) {
+        OStorageRemoteSession session = getCurrentSession();
+        session.remove(network.getServerURL());
+      } catch (OTokenSecurityException e) {
+        OStorageRemoteSession session = getCurrentSession();
+        session.remove(network.getServerURL());
+      } catch (OOfflineNodeException e) {
+        //TODO: Force the jump to another node.
+      } catch (IOException e) {
+        retry = handleIOException(retry, network, e);
+      } catch (OIOException e) {
+        retry = handleIOException(retry, network, e);
+      } catch (OException e) {
+        throw e;
       } catch (Exception e) {
-        handleException(network, errorMessage, e);
+        throw OException.wrapException(new OStorageException(errorMessage), e);
       }
     } while (true);
 
+  }
+
+  private int handleIOException(int retry, OChannelBinaryAsynchClient network, Exception e) {
+    OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", e.getMessage());
+    OLogManager.instance().debug(this, "I/O error stack: ", e);
+    engine.getConnectionManager().remove(network);
+    if (--retry <= 0)
+      throw OException.wrapException(new OIOException(e.getMessage()), e);
+    else {
+      try {
+        Thread.sleep(connectionRetryDelay);
+      } catch (InterruptedException e1) {
+        throw OException.wrapException(new OInterruptedException(e1.getMessage()), e);
+      }
+    }
+    return retry;
   }
 
   @Override
@@ -1630,108 +1663,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return session.connectionUserName;
   }
 
-  /**
-   * Handles exceptions. In case of IO errors retries to reconnect until the configured retry times has reached.
-   *
-   * @param message
-   *          the detail message
-   * @param exception
-   *          cause of the error
-   */
-  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String message, final Exception exception) {
-
-    final Throwable firstCause = OException.getFirstCause(exception);
-
-    final boolean tokenException = firstCause instanceof OTokenException || firstCause instanceof OTokenSecurityException;
-
-    // CHECK IF THE EXCEPTION SHOULD BE JUST PROPAGATED
-    if (!(firstCause instanceof IOException) && !(firstCause instanceof OIOException)
-        && !(firstCause instanceof IllegalMonitorStateException) && !(firstCause instanceof OOfflineNodeException)
-        && !tokenException) {
-      if (exception instanceof OException)
-        // NOT AN IO CAUSE, JUST PROPAGATE IT
-        throw (OException) exception;
-
-      // WRAP IT
-      throw OException.wrapException(new OStorageException(message), exception);
-    }
-
-    // IO CAUSE: REMOVE THE CONNECTION FROM THE POOL AND TRY TO RECONNECT TRANSPARENTLY
-    if (!tokenException)
-      if (iNetwork != null) {
-        OLogManager.instance().warn(this, "Caught I/O errors from %s (local socket=%s), trying to reconnect (error: %s)", iNetwork,
-            iNetwork.getLocalSocketAddress(), firstCause);
-        OLogManager.instance().debug(this, "I/O error stack: ", firstCause);
-
-        try {
-          engine.getConnectionManager().remove(iNetwork);
-        } catch (Exception e) {
-          OLogManager.instance().debug(this, "Cannot remove connection from connection manager", e);
-        }
-      } else {
-        OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", firstCause.toString());
-        OLogManager.instance().debug(this, "I/O error stack: ", firstCause);
-      }
-
-    final long lostConnectionTime = System.currentTimeMillis();
-
-    final int currentMaxRetry;
-    final int currentRetryDelay;
-
-    final int urlSize;
-    synchronized (serverURLs) {
-      urlSize = serverURLs.size();
-    }
-
-    if (urlSize > 1) {
-      // IN CLUSTER: NO RETRY AND 0 SLEEP TIME BETWEEN NODES
-      currentMaxRetry = 1;
-      currentRetryDelay = 0;
-    } else {
-      currentMaxRetry = connectionRetry;
-      currentRetryDelay = connectionRetryDelay;
-    }
-
-    for (int retry = 0; retry < currentMaxRetry; ++retry) {
-      // WAIT THE DELAY BEFORE TO RETRY (BUT FIRST TRY)
-      if (retry > 0 && currentRetryDelay > 0)
-        try {
-          Thread.sleep(currentRetryDelay);
-        } catch (InterruptedException e) {
-          // THREAD INTERRUPTED: RETURN EXCEPTION
-          Thread.currentThread().interrupt();
-          break;
-        }
-
-      try {
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this,
-              "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
-
-        // FORCE RESET OF THREAD DATA (SERVER URL + SESSION ID)
-        if (tokenException) {
-          OStorageRemoteSession session = getCurrentSession();
-          session.remove(iNetwork.getServerURL());
-        }
-        // REACQUIRE DB SESSION ID
-        final String currentURL = reopenRemoteDatabase();
-
-        if (!tokenException)
-          OLogManager.instance().warn(this,
-              "Connection re-acquired transparently after %dms and %d retries to server '%s': no errors will be thrown at application level",
-              System.currentTimeMillis() - lostConnectionTime, retry + 1, currentURL);
-
-        // RECONNECTED!
-        return;
-
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error during exception handling", t);
-      }
-    }
-
-    // RECONNECTION FAILED: THROW+LOG THE ORIGINAL EXCEPTION
-    throw OException.wrapException(new OStorageException(message), exception);
-  }
 
   protected String reopenRemoteDatabase() throws IOException {
     String currentURL = getCurrentServerURL();
