@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -37,6 +33,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Distributed updated record task used for synchronization.
@@ -99,9 +99,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
       ODocument loadedDocument = (ODocument) loadedRecord;
       int loadedRecordVersion = loadedDocument.merge(newDocument, false, false).getVersion();
-      if (loadedRecordVersion != version) {
-        loadedDocument.setDirty();
-      }
+      loadedDocument.setDirty();
       ORecordInternal.setVersion(loadedDocument, version);
     } else
       ORecordInternal.fill(loadedRecord, rid, version, content, true);
