@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -34,10 +38,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 /**
  * Distributed updated record task used for synchronization.
  *
@@ -48,7 +48,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
   public static final int   FACTORYID        = 3;
 
-  private byte              recordType;
+  protected byte            recordType;
   protected byte[]          content;
 
   private transient ORecord record;
@@ -139,7 +139,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public ORemoteTask getUndoTask(ODistributedRequestId reqId) {
+  public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
     if (previousRecord == null)
       return null;
 

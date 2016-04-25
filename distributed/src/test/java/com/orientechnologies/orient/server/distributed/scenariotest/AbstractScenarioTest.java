@@ -232,15 +232,20 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
             // checking that all the records have the same version and values (each record is equal to the next one)
             int k = 0;
             while (k <= docsToCompare.size() - 2) {
-              assertEquals("Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k+1) + "," + (k+2),
+              assertEquals(
+                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
                   docsToCompare.get(k).field("@version"), docsToCompare.get(k + 1).field("@version"));
-              assertEquals("Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k+1) + "," + (k+2),
+              assertEquals(
+                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
                   docsToCompare.get(k).field("name"), docsToCompare.get(k + 1).field("name"));
-              assertEquals("Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k+1) + "," + (k+2),
+              assertEquals(
+                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
                   docsToCompare.get(k).field("surname"), docsToCompare.get(k + 1).field("surname"));
-              assertEquals("Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k+1) + "," + (k+2),
+              assertEquals(
+                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
                   docsToCompare.get(k).field("birthday"), docsToCompare.get(k + 1).field("birthday"));
-              assertEquals("Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k+1) + "," + (k+2),
+              assertEquals(
+                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
                   docsToCompare.get(k).field("children"), docsToCompare.get(k + 1).field("children"));
               k++;
             }
@@ -266,7 +271,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   }
 
-  // waiting for all the records' inserts in the cluster are propagated in the cluster inside a specific timebox passed as timeout parameter
+  // waiting for all the records' inserts in the cluster are propagated in the cluster inside a specific timebox passed as timeout
+  // parameter
   protected void waitForMultipleInsertsInClassPropagation(final long expectedCount, final String className, final long timeout) {
 
     waitFor(timeout, new OCallable<Boolean, Void>() {
@@ -286,11 +292,11 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected void waitForInsertedRecordPropagation(final String recordId) {
-      waitForRecordPropagation(recordId, true);
+    waitForRecordPropagation(recordId, true);
   }
 
   protected void waitForDeletedRecordPropagation(final String recordId) {
-      waitForRecordPropagation(recordId, false);
+    waitForRecordPropagation(recordId, false);
   }
 
   protected void waitForRecordPropagation(final String recordId, final boolean hasToBePresent) {
@@ -420,23 +426,22 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     new Timer(true).schedule(new TimerTask() {
       @Override
       public void run() {
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
-        db.open("admin", "admin");
         try {
-          totalVertices.set(db.countClass(iClassName));
+          ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
+          db.open("admin", "admin");
+          try {
+            totalVertices.set(db.countClass(iClassName));
+          } catch (Exception e) {
+            e.printStackTrace();
+          } finally {
+            db.close();
+          }
         } catch (Exception e) {
-          e.printStackTrace();
-        } finally {
-          db.close();
+          // IGNORE IT
         }
       }
     }, 1000, 1000);
   }
-
-  // @Override
-  // public String getDatabaseName() {
-  // return "distributed-inserttxha";
-  // }
 
   @Override
   protected String getDistributedServerConfiguration(final ServerRun server) {
@@ -558,9 +563,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
    */
   protected class RecordDeleter implements Callable<Void> {
 
-    private String              dbServerUrl;
+    private String    dbServerUrl;
     private ODocument recordToDelete;
-    private boolean             useTransaction;
+    private boolean   useTransaction;
 
     protected RecordDeleter(String dbServerUrl, ODocument recordToDelete, boolean useTransaction) {
       this.dbServerUrl = dbServerUrl;
@@ -595,7 +600,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }
   }
 
-
   class AfterRecordLockDelayer implements ODistributedStorageEventListener {
 
     private long delay;
@@ -612,11 +616,11 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     @Override
     public void onAfterRecordLock(ORecordId rid) {
       try {
-        OLogManager.instance().info(this, "Thread [%d] waiting for %dms with locked record [%s]", Thread.currentThread().getId(), delay,
-            rid.toString());
-        Thread.sleep(delay);
-        OLogManager.instance().info(this, "Thread [%d] finished waiting for %dms with locked record [%s]", Thread.currentThread().getId(),
+        OLogManager.instance().info(this, "Thread [%d] waiting for %dms with locked record [%s]", Thread.currentThread().getId(),
             delay, rid.toString());
+        Thread.sleep(delay);
+        OLogManager.instance().info(this, "Thread [%d] finished waiting for %dms with locked record [%s]",
+            Thread.currentThread().getId(), delay, rid.toString());
       } catch (InterruptedException e) {
 
       }

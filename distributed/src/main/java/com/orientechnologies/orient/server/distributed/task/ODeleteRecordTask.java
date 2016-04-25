@@ -21,17 +21,14 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
  * Distributed delete record task used for synchronization.
@@ -41,7 +38,6 @@ import java.io.ObjectOutput;
 public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
   public static final int   FACTORYID        = 4;
-  private boolean           delayed          = false;
 
   public ODeleteRecordTask() {
   }
@@ -71,17 +67,8 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
       return true;
 
     final ORecord loadedRecord = previousRecord.copy();
-    if (loadedRecord != null) {
-      if (delayed)
-        if (loadedRecord.getVersion() == version)
-          // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
-          ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
-        else
-          throw new OConcurrentModificationException(rid, loadedRecord.getVersion(), version, ORecordOperation.DELETED);
-      else
-        // DELETE IT RIGHT NOW
-        loadedRecord.delete();
-    }
+    if (loadedRecord != null)
+      loadedRecord.delete();
 
     return true;
   }
@@ -94,24 +81,17 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ORemoteTask getFixTask(final ODistributedRequest iRequest, final ORemoteTask iOriginalTask, final Object iBadResponse,
       final Object iGoodResponse, String executorNodeName, ODistributedServerManager dManager) {
-    return new OResurrectRecordTask(rid, version);
+    return new ODeleteRecordTask(rid, version);
   }
 
   @Override
-  public ORemoteTask getUndoTask(ODistributedRequestId reqId) {
-    return new OResurrectRecordTask(rid, version);
-  }
+  public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
+    if (previousRecord == null)
+      return null;
 
-  @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
-    out.writeBoolean(delayed);
-  }
-
-  @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
-    delayed = in.readBoolean();
+    final OResurrectRecordTask task = new OResurrectRecordTask(previousRecord);
+    task.setLockRecords(false);
+    return task;
   }
 
   @Override
@@ -119,14 +99,9 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
     return "record_delete";
   }
 
-  public ODeleteRecordTask setDelayed(final boolean delayed) {
-    this.delayed = delayed;
-    return this;
-  }
-
   @Override
   public String toString() {
-    return getName() + "(" + rid + " delayed=" + delayed + ")";
+    return getName() + "(" + rid + ")";
   }
 
   @Override

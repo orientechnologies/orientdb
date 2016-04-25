@@ -79,6 +79,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     this.requestLock = manager.getHazelcastInstance().getLock(NODE_LOCK_PREFIX + iDatabaseName);
 
+    startAcceptingRequests();
+
+    checkLocalNodeInConfiguration();
+  }
+
+  private void startAcceptingRequests() {
     // START ALL THE WORKER THREADS (CONFIGURABLE)
     final int totalWorkers = OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getValueAsInteger();
     if (totalWorkers < 1)
@@ -89,7 +95,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       workerThreads.add(workerThread);
       workerThread.start();
     }
-    checkLocalNodeInConfiguration();
   }
 
   /**
@@ -436,6 +441,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
         "Shutting down distributed database manager '%s'. Pending objects: txs=%d locks=%d", databaseName, activeTxContexts.size(),
         lockManager.size());
+
+    workerThreads.clear();
   }
 
   protected void checkForServerOnline(final ODistributedRequest iRequest) throws ODistributedException {

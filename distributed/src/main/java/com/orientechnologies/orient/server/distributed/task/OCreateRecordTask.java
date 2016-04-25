@@ -275,7 +275,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
       } else
         // ANY OTHER CASE JUST DELETE IT
-        result = new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getVersion()).setDelayed(false);
+        result = new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getVersion());
     }
 
     return result;
@@ -284,7 +284,6 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ODeleteRecordTask getUndoTask(ODistributedRequestId reqId) {
     final ODeleteRecordTask task = new ODeleteRecordTask(rid, -1);
-    task.setDelayed(false);
     task.setLockRecords(false);
     return task;
   }

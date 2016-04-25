@@ -94,17 +94,17 @@ public class ODistributedWorker extends Thread {
 
       } catch (InterruptedException e) {
         // EXIT CURRENT THREAD
-        Thread.interrupted();
+        Thread.currentThread().interrupt();
         break;
       } catch (DistributedObjectDestroyedException e) {
-        Thread.interrupted();
+        Thread.currentThread().interrupt();
         break;
       } catch (HazelcastInstanceNotActiveException e) {
-        Thread.interrupted();
+        Thread.currentThread().interrupt();
         break;
       } catch (Throwable e) {
         if (e.getCause() instanceof InterruptedException)
-          Thread.interrupted();
+          Thread.currentThread().interrupt();
         else
           ODistributedServerLog.error(this, localNodeName, reqId != null ? manager.getNodeNameById(reqId.getNodeId()) : "?",
               ODistributedServerLog.DIRECTION.IN, "Error on executing distributed request %s: %s", e,
@@ -119,8 +119,8 @@ public class ODistributedWorker extends Thread {
     // OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
 
     if (database == null) {
-      // OPEN IT
       database = distributed.getDatabaseInstance();
+
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
       manager.getServerInstance().openDatabase(database, "internal", "internal", null, true);

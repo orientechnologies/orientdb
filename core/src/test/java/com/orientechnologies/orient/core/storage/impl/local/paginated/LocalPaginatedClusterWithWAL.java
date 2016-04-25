@@ -248,6 +248,11 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     assertFileRestoreFromWAL();
   }
 
+  public void testResurrectRecord() throws IOException {
+    super.testResurrectRecord();
+    assertFileRestoreFromWAL();
+  }
+
   @Override
   public void testUpdateManySmallRecords() throws IOException {
     super.testUpdateManySmallRecords();

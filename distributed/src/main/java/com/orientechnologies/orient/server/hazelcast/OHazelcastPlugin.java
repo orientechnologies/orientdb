@@ -647,6 +647,39 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       final ODistributedDatabaseImpl distribDatabase = messageService.registerDatabase(iDatabase.getName());
       distribDatabase.setOnline();
 
+      // TODO: TEMPORARY PATCH TO WAIT FOR DB PROPAGATION
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new ODistributedException("Error on creating database '" + iDatabase.getName() + "' on distributed nodes");
+      }
+
+      // WAIT UNTIL THE DATABASE HAS BEEN PROPAGATED IN ALL THE NODES
+      final Set<String> servers = cfg.getAllConfiguredServers();
+      if (servers.size() > 1) {
+        boolean allServersAreOnline = true;
+        while (true) {
+          for (String server : servers) {
+            if (!isNodeOnline(server, iDatabase.getName())) {
+              allServersAreOnline = false;
+              break;
+            }
+          }
+
+          if (allServersAreOnline)
+            break;
+
+          // WAIT FOR ANOTHER RETRY
+          try {
+            Thread.sleep(200);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ODistributedException("Error on creating database '" + iDatabase.getName() + "' on distributed nodes");
+          }
+        }
+      }
+
       onOpen(iDatabase);
 
     } finally {
@@ -1330,25 +1363,28 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName);
 
+    boolean databaseInstalled;
+
     // CREATE THE DISTRIBUTED QUEUE
     if (distrDatabase.getSyncConfiguration().isEmpty()) {
       // FIRST TIME, ASK FOR FULL REPLICA
 
-      return requestFullDatabase(databaseName, iStartup, distrDatabase);
+      databaseInstalled = requestFullDatabase(databaseName, iStartup, distrDatabase);
 
     } else {
       try {
 
         // TRY WITH DELTA
-        return requestDatabaseDelta(distrDatabase, databaseName);
+        databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName);
         // return requestFullDatabase(databaseName, backupDatabase, distrDatabase);
 
       } catch (ODistributedDatabaseDeltaSyncException e) {
         // SWITCH TO FULL
-        return requestFullDatabase(databaseName, iStartup, distrDatabase);
+        databaseInstalled = requestFullDatabase(databaseName, iStartup, distrDatabase);
       }
     }
 
+    return databaseInstalled;
   }
 
   protected boolean requestFullDatabase(String databaseName, boolean backupDatabase, ODistributedDatabaseImpl distrDatabase) {

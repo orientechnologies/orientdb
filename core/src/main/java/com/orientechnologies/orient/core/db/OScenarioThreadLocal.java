@@ -76,14 +76,14 @@ public class OScenarioThreadLocal extends ThreadLocal<RUN_MODE> {
     }
   }
 
-  public static Object executeAsDefault(final Callable<Object> iCallback) {
+  public static <T> Object executeAsDefault(final Callable<T> iCallback) {
     final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
     if (currentDistributedMode == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
       // ASSURE SCHEMA CHANGES ARE NEVER PROPAGATED ON CLUSTER
       OScenarioThreadLocal.INSTANCE.set(RUN_MODE.DEFAULT);
 
     try {
-      return iCallback.call();
+      return (T) iCallback.call();
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {

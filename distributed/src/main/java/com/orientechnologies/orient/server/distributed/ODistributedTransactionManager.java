@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.*;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
@@ -47,9 +50,6 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.*;
-
-import java.util.*;
-import java.util.concurrent.Callable;
 
 /**
  * Distributed transaction manager.
@@ -427,7 +427,7 @@ public class ODistributedTransactionManager {
         if (op.type == ORecordOperation.UPDATED)
           undoTask = new OUpdateRecordTask(previousRecord, ORecordVersionHelper.clearRollbackMode(previousRecord.getVersion()));
         else
-          undoTask = new OResurrectRecordTask(previousRecord, ORecordVersionHelper.clearRollbackMode(previousRecord.getVersion()));
+          undoTask = new OResurrectRecordTask(previousRecord);
         break;
 
       default:
