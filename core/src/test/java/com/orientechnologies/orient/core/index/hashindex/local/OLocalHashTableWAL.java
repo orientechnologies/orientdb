@@ -1,19 +1,5 @@
 package com.orientechnologies.orient.core.index.hashindex.local;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -28,6 +14,15 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -35,10 +30,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
  */
 @Test
 public class OLocalHashTableWAL extends OLocalHashTableTest {
-
   static {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
-    OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(100000000);
   }
 
   private String buildDirectory;
@@ -95,6 +88,11 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     expectedStorageDir = ((OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getStoragePath();
 
     createActualHashTable();
+
+    OLocalPaginatedStorage actualStorage = (OLocalPaginatedStorage) databaseDocumentTx.getStorage();
+    ODiskWriteAheadLog diskWriteAheadLog = (ODiskWriteAheadLog) actualStorage.getWALInstance();
+
+    diskWriteAheadLog.preventCutTill(diskWriteAheadLog.getFlushedLsn());
   }
 
   @AfterMethod
@@ -103,11 +101,13 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     if (databaseDocumentTx.isClosed())
       databaseDocumentTx.open("admin", "admin");
 
+    databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.drop();
 
     if (expectedDatabaseDocumentTx.isClosed())
       expectedDatabaseDocumentTx.open("admin", "admin");
 
+    expectedDatabaseDocumentTx.activateOnCurrentThread();
     expectedDatabaseDocumentTx.drop();
 
     Assert.assertTrue(new File(buildDirectory).delete());
@@ -211,7 +211,9 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     restoreDataFromWAL();
     System.out.println("Stop data restore");
 
+    databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.close();
+    expectedDatabaseDocumentTx.activateOnCurrentThread();
     expectedDatabaseDocumentTx.close();
 
     System.out.println("Start data comparison");
@@ -246,7 +248,6 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     }
 
     Assert.assertTrue(atomicUnit.isEmpty());
-    log.close();
 
     OWriteCache writeCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
     writeCache.flush();
@@ -281,8 +282,7 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
             if (!expectedWriteCache.isOpen(fileId))
               expectedReadCache.openFile(fileId, expectedWriteCache);
 
-            OCacheEntry cacheEntry = expectedReadCache
-                .load(fileId, pageIndex, true, expectedWriteCache, 0);
+            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
             if (cacheEntry == null)
               do {
                 cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
@@ -304,7 +304,7 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
             if (expectedWriteCache.exists(fileName))
               expectedReadCache.openFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
             else
-              expectedReadCache.addFile(fileName, expectedWriteCache);
+              expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
           }
         }
 
@@ -338,8 +338,7 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     });
 
     for (File expectedDataFile : expectedDataFiles) {
-      String fileName = expectedDataFile.getName();
-      File actualDataFile = new File(actualStorageDir, "actualLocalHashTable" + fileName.charAt(fileName.length() - 5) + ".obf");
+      File actualDataFile = new File(actualStorageDir, "actualLocalHashTable.obf");
       assertCompareFilesAreTheSame(expectedDataFile, actualDataFile);
     }
   }
