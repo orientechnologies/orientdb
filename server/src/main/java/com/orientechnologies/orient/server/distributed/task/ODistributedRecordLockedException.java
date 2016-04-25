@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.id.ORID;
 public class ODistributedRecordLockedException extends ONeedRetryException {
   protected ORID rid;
 
-  protected ODistributedRecordLockedException(ODistributedRecordLockedException exception) {
+  public ODistributedRecordLockedException(ODistributedRecordLockedException exception) {
     super(exception);
   }
 
