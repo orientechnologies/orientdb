@@ -43,10 +43,10 @@ import java.util.concurrent.*;
  * Insert records concurrently against the cluster
  */
 public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
-  protected volatile int     delayWriter           = 0;
-  protected volatile int     delayReader           = 1000;
-  protected static final int writerCount           = 5;
-  protected int              baseCount             = 0;
+  protected volatile int delayWriter = 0;
+  protected volatile int delayReader = 1000;
+  protected static   int writerCount = 5;
+  protected          int baseCount   = 0;
   protected int              expected;
   protected OIndex<?>        idx;
   protected int              maxRetries            = 1;
