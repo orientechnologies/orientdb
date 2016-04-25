@@ -2884,7 +2884,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   protected void checkOpeness() {
-    if (isClosed())
+    if (status == STATUS.CLOSED)
       throw new ODatabaseException("Database '" + getURL() + "' is closed");
   }
 
