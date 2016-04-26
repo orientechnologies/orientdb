@@ -20,7 +20,9 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.concur.lock.ONewLockManager;
+import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
+import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -29,6 +31,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -45,6 +48,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -58,7 +62,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Handles indexing when records change.
+ * Handles indexing when records change. The underlying lock manager for keys can be the {@link OPartitionedLockManager}, the
+ * default one, or the {@link OOneEntryPerKeyLockManager} in case of distributed. This is to avoid deadlock situation between nodes
+ * where keys have the same hash code.
  *
  * @author Luca Garulli
  */
@@ -67,7 +73,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   protected static final String                 CONFIG_MAP_RID  = "mapRid";
   protected static final String                 CONFIG_CLUSTERS = "clusters";
   protected final String                        type;
-  protected final ONewLockManager<Object>       keyLockManager  = new ONewLockManager<Object>();
+  protected final OLockManager<Object>          keyLockManager;
   protected volatile IndexConfiguration         configuration;
 
   protected final ODocument                     metadata;
@@ -87,8 +93,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   private volatile boolean                      rebuilding      = false;
   private volatile ThreadLocal<IndexTxSnapshot> txSnapshot      = new IndexTxSnapshotThreadLocal();
 
-  public OIndexAbstract(String name, final String type, String algorithm, String valueContainerAlgorithm, ODocument metadata,
-      int version, OAbstractPaginatedStorage storage) {
+  public OIndexAbstract(String name, final String type, final String algorithm, final String valueContainerAlgorithm,
+      final ODocument metadata, final int version, final OStorage storage) {
     acquireExclusiveLock();
     try {
       databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
@@ -99,7 +105,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       this.algorithm = algorithm;
       this.metadata = metadata;
       this.valueContainerAlgorithm = valueContainerAlgorithm;
-      this.storage = storage;
+      this.storage = (OAbstractPaginatedStorage) storage.getUnderlying();
+      this.keyLockManager = Orient.instance().isRunningDistributed()
+          ? new OOneEntryPerKeyLockManager<Object>(true, -1, OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger())
+          : new OPartitionedLockManager<Object>();
 
       Orient.instance().registerWeakOrientStartupListener(this);
       Orient.instance().registerWeakOrientShutdownListener(this);
@@ -110,7 +119,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   public static OIndexMetadata loadMetadataInternal(final ODocument config, final String type, final String algorithm,
       final String valueContainerAlgorithm) {
-    String indexName = config.field(OIndexInternal.CONFIG_NAME);
+    final String indexName = config.field(OIndexInternal.CONFIG_NAME);
 
     final ODocument indexDefinitionDoc = config.field(OIndexInternal.INDEX_DEFINITION);
     OIndexDefinition loadedIndexDefinition = null;

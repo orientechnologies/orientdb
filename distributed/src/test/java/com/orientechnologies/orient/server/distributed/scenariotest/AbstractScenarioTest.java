@@ -21,9 +21,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.OServer;
@@ -459,17 +457,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
           + " counting cluster: " + database.countClusterElements("Person"));
 
-      if (((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().existsClass("ODistributedConflict"))
-        try {
-          List<ODocument> conflicts = database
-              .query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));
-          long totalConflicts = conflicts.get(0).field("count");
-          junit.framework.Assert.assertEquals(0l, totalConflicts);
-          System.out.println("\nReader " + name + " conflicts: " + totalConflicts);
-        } catch (OQueryParsingException e) {
-          // IGNORE IT
-        }
-
     } finally {
       database.close();
     }
@@ -477,7 +464,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected void waitFor(final int serverId, OCallable<Boolean, ODatabaseDocumentTx> condition) {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
     try {
 
       while (true) {
@@ -501,7 +488,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }
   }
 
-  public void executeFutures(Collection<Future<Void>> futures) {
+  public void executeFutures(final Collection<Future<Void>> futures) {
     try {
       for (Future f : futures) {
         f.get();
@@ -528,7 +515,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       this.useTransaction = useTransaction;
     }
 
-    protected RecordUpdater(String dbServerUrl, String rid, Map<String, Object> fields, boolean useTransaction) {
+    protected RecordUpdater(final String dbServerUrl, final String rid, final Map<String, Object> fields, final boolean useTransaction) {
       this.dbServerUrl = dbServerUrl;
       this.useTransaction = useTransaction;
       this.recordToUpdate = retrieveRecord(dbServerUrl, rid);
@@ -538,7 +525,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     @Override
     public Void call() throws Exception {
 
-      ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
+      final ODatabaseDocumentTx dbServer = poolFactory.get(dbServerUrl, "admin", "admin").acquire();
 
       if (useTransaction) {
         dbServer.begin();

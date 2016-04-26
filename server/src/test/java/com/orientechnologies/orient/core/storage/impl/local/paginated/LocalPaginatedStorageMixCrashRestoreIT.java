@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -41,7 +41,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
   private File buildDir;
   private AtomicInteger idGen = new AtomicInteger();
 
-  private OLockManager<Integer> idLockManager = new OLockManager<Integer>(true, 1000, 10000);
+  private OOneEntryPerKeyLockManager<Integer> idLockManager = new OOneEntryPerKeyLockManager<Integer>(true, 1000, 10000);
 
   private ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -370,7 +370,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
     private long createRecord() {
       long ts = -1;
       final int idToCreate = idGen.getAndIncrement();
-      idLockManager.acquireLock(idToCreate, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.acquireLock(idToCreate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
       try {
         final ODocument document = new ODocument("TestClass");
         document.field("id", idToCreate);
@@ -382,7 +382,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
         addedIds.add(document.<Integer>field("id"));
       } finally {
-        idLockManager.releaseLock(Thread.currentThread(), idToCreate, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.releaseLock(Thread.currentThread(), idToCreate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
       }
 
       return ts;
@@ -395,16 +395,16 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       if (idToDelete == null)
         idToDelete = addedIds.first();
 
-      idLockManager.acquireLock(idToDelete, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.acquireLock(idToDelete, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
       while (deletedIds.containsKey(idToDelete)) {
-        idLockManager.releaseLock(Thread.currentThread(), idToDelete, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.releaseLock(Thread.currentThread(), idToDelete, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
         closeId = random.nextInt(idGen.get());
 
         idToDelete = addedIds.ceiling(closeId);
         if (idToDelete == null)
           idToDelete = addedIds.first();
-        idLockManager.acquireLock(idToDelete, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.acquireLock(idToDelete, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
       }
 
       addedIds.remove(idToDelete);
@@ -424,7 +424,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
       deletedIds.put(idToDelete, ts);
 
-      idLockManager.releaseLock(Thread.currentThread(), idToDelete, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.releaseLock(Thread.currentThread(), idToDelete, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
       return ts;
     }
@@ -436,17 +436,17 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       if (idToUpdate == null)
         idToUpdate = addedIds.first();
 
-      idLockManager.acquireLock(idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.acquireLock(idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
       while (deletedIds.containsKey(idToUpdate)) {
-        idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
         closeId = random.nextInt(idGen.get());
 
         idToUpdate = addedIds.ceiling(closeId);
         if (idToUpdate == null)
           idToUpdate = addedIds.first();
 
-        idLockManager.acquireLock(idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.acquireLock(idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
       }
 
       addedIds.remove(idToUpdate);
@@ -466,7 +466,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
       updatedIds.add(idToUpdate);
 
-      idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
       return ts;
     }

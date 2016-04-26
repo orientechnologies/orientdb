@@ -24,8 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager.LOCK;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
@@ -36,15 +36,15 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  */
 public class LockManagerTest {
 
-  public static final int                 THREADS         = 64;
-  public static int                       cyclesByProcess = 10000000;
-  public static boolean                             verbose         = false;
-  public static OLockManager<Callable<?>> lockMgr         = new OLockManager<Callable<?>>(
+  public static final int                                     THREADS         = 64;
+  public static       int                                     cyclesByProcess = 10000000;
+  public static       boolean                                 verbose         = false;
+  public static       OOneEntryPerKeyLockManager<Callable<?>> lockMgr         = new OOneEntryPerKeyLockManager<Callable<?>>(
                                                                         OGlobalConfiguration.ENVIRONMENT_CONCURRENT
                                                                             .getValueAsBoolean(),
                                                                         5000, 10000);
-  protected List<Callable<?>>                       resources       = new ArrayList<Callable<?>>();
-  protected List<Thread>                            processes       = Collections.synchronizedList(new ArrayList<Thread>());
+  protected           List<Callable<?>>                       resources       = new ArrayList<Callable<?>>();
+  protected           List<Thread>                            processes       = Collections.synchronizedList(new ArrayList<Thread>());
   protected List<Throwable>                         exceptions      = Collections.synchronizedList(new ArrayList<Throwable>());
   protected AtomicInteger                           counter         = new AtomicInteger();
 
