@@ -19,6 +19,11 @@ public class OSequenceTrigger extends ODocumentHookAbstract {
   }
 
   @Override
+  public SCOPE[] getScopes() {
+    return new SCOPE[] { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
+  }
+
+  @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
   }

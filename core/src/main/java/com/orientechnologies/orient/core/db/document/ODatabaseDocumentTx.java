@@ -124,8 +124,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private   byte                     recordType;
   @Deprecated
   private   String                   recordFormat;
-  private final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
-  private       boolean                                     retainRecords = true;
+  private final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks                = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
+  private       boolean                                     retainRecords        = true;
   private OLocalRecordCache                localCache;
   private boolean                          mvcc;
   private OCurrentStorageComponentsFactory componentsFactory;
@@ -133,6 +133,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private OTransaction currentTx;
   private boolean keepStorageOpen = false;
   protected ODatabaseSessionMetadata sessionMetadata;
+
+  private final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
 
   /**
    * Creates a new connection to the database.
@@ -921,6 +923,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           hooks.put(e.getKey(), e.getValue());
       }
     }
+
+    compileHooks();
+
     return (DB) this;
   }
 
@@ -939,7 +944,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (iHookImpl != null) {
       iHookImpl.onUnregister();
       hooks.remove(iHookImpl);
+      compileHooks();
     }
+
     return (DB) this;
   }
 
@@ -968,7 +975,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id) {
     if (id == null || hooks.isEmpty())
       return ORecordHook.RESULT.RECORD_NOT_CHANGED;
-    ORID identity = id.getIdentity().copy();
+
+    final ORecordHook.SCOPE scope = ORecordHook.SCOPE.typeToScope(type);
+    final int scopeOrdinal = scope.ordinal();
+
+    final ORID identity = id.getIdentity().copy();
     if (!pushInHook(identity))
       return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
@@ -980,7 +991,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.get();
 
       boolean recordChanged = false;
-      for (ORecordHook hook : hooks.keySet()) {
+      for (ORecordHook hook : hooksByScope[scopeOrdinal]) {
         switch (runMode) {
         case DEFAULT: // NON_DISTRIBUTED OR PROXIED DB
           if (getStorage().isDistributed()
@@ -2794,6 +2805,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       h.onUnregister();
 
     hooks.clear();
+    compileHooks();
 
     close();
 
@@ -3217,6 +3229,22 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         } catch (Throwable t) {
           OLogManager.instance().error(this, "Error after transaction rollback", t);
         }
+    }
+  }
+
+  private void compileHooks() {
+    final List<ORecordHook>[] intermediateHooksByScope = new List[ORecordHook.SCOPE.values().length];
+    for (ORecordHook.SCOPE scope : ORecordHook.SCOPE.values())
+      intermediateHooksByScope[scope.ordinal()] = new ArrayList<>();
+
+    for (ORecordHook hook : hooks.keySet())
+      for (ORecordHook.SCOPE scope : hook.getScopes())
+        intermediateHooksByScope[scope.ordinal()].add(hook);
+
+    for (ORecordHook.SCOPE scope : ORecordHook.SCOPE.values()) {
+      final int ordinal = scope.ordinal();
+      final List<ORecordHook> scopeHooks = intermediateHooksByScope[ordinal];
+      hooksByScope[ordinal] = scopeHooks.toArray(new ORecordHook[scopeHooks.size()]);
     }
   }
 

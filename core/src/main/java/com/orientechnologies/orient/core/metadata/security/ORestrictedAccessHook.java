@@ -42,6 +42,11 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
     super(database);
   }
 
+  @Override
+  public SCOPE[] getScopes() {
+    return new SCOPE[] { SCOPE.CREATE, SCOPE.READ, SCOPE.UPDATE, SCOPE.DELETE };
+  }
+
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.BOTH;
   }

@@ -68,6 +68,11 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
     db.registerListener(this);
   }
 
+  @Override
+  public SCOPE[] getScopes() {
+    return new SCOPE[] { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
+  }
+
   private static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
     return (OLiveQueryOps) db.getStorage().getResource("LiveQueryOps", new Callable<Object>() {
       @Override

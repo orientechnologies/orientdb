@@ -54,6 +54,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OLuceneClassIndexManager extends ODocumentHookAbstract {
 
   @Override
+  public SCOPE[] getScopes() {
+    return new SCOPE[] { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
+  }
+
+  @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
   }

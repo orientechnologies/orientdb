@@ -39,6 +39,11 @@ public class OCommandCacheHook extends ORecordHookAbstract {
   }
 
   @Override
+  public SCOPE[] getScopes() {
+    return new SCOPE[] { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
+  }
+
+  @Override
   public void onRecordAfterCreate(final ORecord iRecord) {
     if (cmdCache == null)
       return;

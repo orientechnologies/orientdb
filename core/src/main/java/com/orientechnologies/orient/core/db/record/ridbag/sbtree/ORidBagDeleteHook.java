@@ -37,6 +37,11 @@ public class ORidBagDeleteHook extends ODocumentHookAbstract {
   }
 
   @Override
+  public SCOPE[] getScopes() {
+    return new SCOPE[] { SCOPE.DELETE };
+  }
+
+  @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
   }

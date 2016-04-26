@@ -43,6 +43,11 @@ public class OUserTrigger extends ODocumentHookAbstract {
   }
 
   @Override
+  public SCOPE[] getScopes() {
+    return new SCOPE[] { SCOPE.CREATE, SCOPE.UPDATE };
+  }
+
+  @Override
   public RESULT onTrigger(TYPE iType, ORecord iRecord) {
     OImmutableClass clazz = null;
     if (iRecord instanceof ODocument)
