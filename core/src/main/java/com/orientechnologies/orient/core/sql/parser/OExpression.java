@@ -72,10 +72,12 @@ public class OExpression extends SimpleNode {
     return false;
   }
 
-  public String getDefaultAlias() {
+  public OIdentifier getDefaultAlias() {
 
     if (value instanceof String) {
-      return (String) value;
+      OIdentifier identifier = new OIdentifier(-1);
+      identifier.setValue((String)value);
+      return identifier;
     }
     // TODO create an interface for this;
 
@@ -89,9 +91,11 @@ public class OExpression extends SimpleNode {
     // return null;// TODO
     // }
 
-    return ("" + value).replaceAll("\\.", "_").replaceAll(" ", "_").replaceAll("\n", "_").replaceAll("\b", "_")
+    String result = ("" + value).replaceAll("\\.", "_").replaceAll(" ", "_").replaceAll("\n", "_").replaceAll("\b", "_")
         .replaceAll("\\[", "_").replaceAll("\\]", "_").replaceAll("\\(", "_").replaceAll("\\)", "_");
-
+    OIdentifier identifier = new OIdentifier(-1);
+    identifier.setValue(result);
+    return identifier;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

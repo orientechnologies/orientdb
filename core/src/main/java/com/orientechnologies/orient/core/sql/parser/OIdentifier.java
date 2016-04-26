@@ -22,13 +22,45 @@ public class OIdentifier extends SimpleNode {
     return visitor.visit(this, data);
   }
 
+  /**
+   * returns the value as is, with back-ticks quoted with backslash
+   * @return
+   */
   public String getValue() {
     return value;
   }
 
+  /**
+   * accepts a plain value. Back-ticks have to be quoted.
+   * @param value
+   */
   public void setValue(String value) {
     this.value = value;
   }
+
+  /**
+   * returns the plain string representation of this identifier, with quoting removed from back-ticks
+   * @return
+   */
+  public String getStringValue(){
+    if(value == null){
+      return null;
+    }
+    return value.replaceAll("\\\\`", "`");
+  }
+
+  /**
+   * returns the plain string representation of this identifier, with quoting removed from back-ticks
+   * @return
+   */
+  public void setStringValue(String s){
+    if(s == null){
+      value = null;
+    }else{
+      value = s.replaceAll("`", "\\\\`");
+    }
+  }
+
 
   @Override
   public String toString(String prefix) {
