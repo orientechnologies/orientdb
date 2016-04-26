@@ -70,7 +70,7 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public Object execute(Object targetObjects, OCommandContext ctx) {
-    return execute(targetObjects, ctx, name.getValue());
+    return execute(targetObjects, ctx, name.getStringValue());
   }
 
   private Object execute(Object targetObjects, OCommandContext ctx, String name) {
@@ -90,7 +90,7 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean isIndexedFunctionCall() {
-    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getValue());
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     return (function instanceof OIndexableSQLFunction);
   }
 
@@ -105,7 +105,7 @@ public class OFunctionCall extends SimpleNode {
    */
   public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext ctx, OBinaryCompareOperator operator,
       Object rightValue) {
-    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getValue());
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     if (function instanceof OIndexableSQLFunction) {
       return ((OIndexableSQLFunction) function).searchFromTarget(target, operator, rightValue, ctx,
           this.getParams().toArray(new OExpression[] {}));
@@ -126,7 +126,7 @@ public class OFunctionCall extends SimpleNode {
    * @return the approximate number of items returned by the condition execution, -1 if the extimation cannot be executed
    */
   public long estimateIndexedFunction(OFromClause target, OCommandContext ctx, OBinaryCompareOperator operator, Object rightValue) {
-    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getValue());
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     if (function instanceof OIndexableSQLFunction) {
       return ((OIndexableSQLFunction) function).estimate(target, operator, rightValue, ctx,
           this.getParams().toArray(new OExpression[] {}));
