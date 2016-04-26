@@ -42,7 +42,7 @@ public class OSuffixIdentifier extends SimpleNode {
       return iCurrentRecord;
     }
     if (identifier != null) {
-      String varName = identifier.getValue();
+      String varName = identifier.getStringValue();
       if (ctx.getVariable(varName) != null) {
         return ctx.getVariable(varName);
       }
@@ -62,7 +62,7 @@ public class OSuffixIdentifier extends SimpleNode {
       return currentValue;
     }
     if (identifier != null) {
-      String varName = identifier.getValue();
+      String varName = identifier.getStringValue();
       if (ctx.getVariable(varName) != null) {
         return ctx.getVariable(varName);
       }

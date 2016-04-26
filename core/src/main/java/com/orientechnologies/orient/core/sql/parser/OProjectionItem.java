@@ -6,9 +6,9 @@ import java.util.Map;
 
 public class OProjectionItem extends SimpleNode {
 
-  protected boolean     all = false;
+  protected boolean all = false;
 
-  protected String      alias;
+  protected OIdentifier alias;
 
   protected OExpression expression;
 
@@ -20,7 +20,9 @@ public class OProjectionItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -39,11 +41,11 @@ public class OProjectionItem extends SimpleNode {
     this.all = all;
   }
 
-  public String getAlias() {
+  public OIdentifier getAlias() {
     return alias;
   }
 
-  public void setAlias(String alias) {
+  public void setAlias(OIdentifier alias) {
     this.alias = alias;
   }
 
@@ -55,25 +57,27 @@ public class OProjectionItem extends SimpleNode {
     this.expression = expression;
   }
 
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (all) {
       builder.append("*");
     } else {
       expression.toString(params, builder);
-      if (alias != null && alias.trim().length() > 0) {
-        builder.append(" AS " + alias);
+      if (alias != null) {
+
+        builder.append(" AS ");
+        alias.toString(params, builder);
       }
     }
   }
 
-  public String getDefaultAlias() {
+  public OIdentifier getDefaultAlias() {
     if (expression == null) {
-      return "null";
+      OIdentifier result = new OIdentifier(-1);
+      result.setValue("null");
+      return result;
     }
     return expression.getDefaultAlias();
   }
-
 
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

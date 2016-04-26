@@ -82,7 +82,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
       if (preParsedStatement != null) { // new parser, this will be removed and implemented with the new executor
         OIdentifier name = ((OTruncateClusterStatement) preParsedStatement).clusterName;
         if (name != null) {
-          clusterName = name.getValue();
+          clusterName = name.getStringValue();
         }
       }
 

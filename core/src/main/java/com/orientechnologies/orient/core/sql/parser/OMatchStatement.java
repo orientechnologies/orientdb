@@ -578,16 +578,16 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       int i = 0;
       for (OExpression item : returnItems) {
         OIdentifier returnAliasIdentifier = returnAliases.get(i);
-        String returnAlias;
+        OIdentifier returnAlias;
 
         if (returnAliasIdentifier == null) {
           returnAlias = item.getDefaultAlias();
         } else {
-          returnAlias = returnAliasIdentifier.getValue();
+          returnAlias = returnAliasIdentifier;
         }
         ODocument mapDoc = new ODocument();
         mapDoc.fromMap((Map) matchContext.matched);
-        doc.field(returnAlias, item.execute(mapDoc, ctx));
+        doc.field(returnAlias.getStringValue(), item.execute(mapDoc, ctx));
 
         i++;
       }
