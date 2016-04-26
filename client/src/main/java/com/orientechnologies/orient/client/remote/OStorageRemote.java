@@ -64,7 +64,6 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
@@ -189,8 +188,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     addUser();
     try {
       OStorageRemoteSession session = getCurrentSession();
-      if (status == STATUS.CLOSED || !iUserName.equals(session.connectionUserName) || !iUserPassword.equals(session.connectionUserPassword)
-          || session.sessions.isEmpty()) {
+      if (status == STATUS.CLOSED || !iUserName.equals(session.connectionUserName)
+          || !iUserPassword.equals(session.connectionUserPassword) || session.sessions.isEmpty()) {
 
         OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
 
@@ -296,29 +295,31 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       if (status == STATUS.CLOSED)
         return;
 
-      OStorageRemoteSession session = getCurrentSession();
-      Collection<OStorageRemoteNodeSession> nodes = session.getAll();
-      if (!nodes.isEmpty()) {
-        for (OStorageRemoteNodeSession nodeSession : nodes) {
-          try {
-            network = getAvailableNetwork(nodeSession.getServerURL());
-            network.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE, session);
-            endRequest(network);
-            engine.getConnectionManager().release(network);
-          } catch (OIOException ex) {
-            //IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
-            OLogManager.instance().debug(this, "Impossible to comunicate to the server for close: %s", ex);
-          } catch (IOException ex) {
-            //IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
-            OLogManager.instance().debug(this, "Impossible to comunicate to the server for close: %s", ex);
+      final OStorageRemoteSession session = getCurrentSession();
+      if (session != null) {
+        final Collection<OStorageRemoteNodeSession> nodes = session.getAll();
+        if (!nodes.isEmpty()) {
+          for (OStorageRemoteNodeSession nodeSession : nodes) {
+            try {
+              network = getAvailableNetwork(nodeSession.getServerURL());
+              network.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE, session);
+              endRequest(network);
+              engine.getConnectionManager().release(network);
+            } catch (OIOException ex) {
+              // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
+              OLogManager.instance().debug(this, "Impossible to comunicate to the server for close: %s", ex);
+            } catch (IOException ex) {
+              // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
+              OLogManager.instance().debug(this, "Impossible to comunicate to the server for close: %s", ex);
+            }
           }
+          session.close();
+          if (!checkForClose(iForce))
+            return;
+        } else {
+          if (!iForce)
+            return;
         }
-        session.close();
-        if (!checkForClose(iForce))
-          return;
-      } else {
-        if (!iForce)
-          return;
       }
 
       status = STATUS.CLOSING;
@@ -1755,7 +1756,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           OStorageRemoteSession session = getCurrentSession();
           OStorageRemoteNodeSession nodeSession = session.getOrCreate(network.getServerURL());
-          if (nodeSession == null ) {
+          if (nodeSession == null) {
             openRemoteDatabase(network);
             return network.getServerURL();
           } else {
@@ -1773,9 +1774,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               byte[] newToken = network.beginResponse(nodeSession.getSessionId(), true);
               sessionId = network.readInt();
               if (newToken != null && newToken.length > 0) {
-                nodeSession.setSession(sessionId,newToken);
+                nodeSession.setSession(sessionId, newToken);
               } else {
-                nodeSession.setSession(sessionId,nodeSession.getToken());
+                nodeSession.setSession(sessionId, nodeSession.getToken());
               }
               OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
               return currentURL;
@@ -2087,7 +2088,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return DEFAULT_SSL_PORT;
   }
 
-
   /**
    * Acquire a network channel from the pool. Don't lock the write stream since the connection usage is exclusive.
    *
@@ -2218,7 +2218,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     OStorageRemoteNodeSession nodeSession = session.get(iNetwork.getServerURL());
     byte[] newToken = iNetwork.beginResponse(nodeSession.getSessionId(), true);
     if (newToken != null && newToken.length > 0) {
-      nodeSession.setSession(nodeSession.getSessionId(),newToken);
+      nodeSession.setSession(nodeSession.getSessionId(), newToken);
     }
   }
 

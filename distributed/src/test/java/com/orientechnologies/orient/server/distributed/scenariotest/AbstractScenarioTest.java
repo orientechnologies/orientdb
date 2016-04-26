@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterInsertTest;
 import com.orientechnologies.orient.server.distributed.ODistributedStorageEventListener;
 import com.orientechnologies.orient.server.distributed.ServerRun;
@@ -420,8 +419,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected void simulateServerFault(ServerRun serverRun, String faultName) {
-
-    OServer server = serverRun.getServerInstance();
 
     if (faultName.equals("shutdown"))
       serverRun.terminateServer();
