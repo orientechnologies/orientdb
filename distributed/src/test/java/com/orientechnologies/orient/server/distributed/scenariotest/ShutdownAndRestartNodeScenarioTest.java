@@ -51,6 +51,9 @@ import static org.junit.Assert.*;
  * - restart server3
  * - 5 threads for each running server write 100 records
  * - check consistency
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {

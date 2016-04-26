@@ -46,6 +46,9 @@ import static org.junit.Assert.fail;
  * - check consistency on all servers:
  *      - all the servers have  db A, db B, db C.
  *      - db A, db B and db C are consistent on each server
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
 

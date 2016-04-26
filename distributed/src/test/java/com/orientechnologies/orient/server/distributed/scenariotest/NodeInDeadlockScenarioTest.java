@@ -24,6 +24,7 @@ import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -44,6 +45,9 @@ import static org.junit.Assert.fail;
  * - deadlock-ending on server3
  * - after a while check that last
  * changes are propagated on server3.
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
@@ -52,6 +56,7 @@ public class NodeInDeadlockScenarioTest extends AbstractScenarioTest {
   volatile int     serverStarted    = 0;
   volatile boolean backupInProgress = false;
 
+  @Ignore
   @Test
   public void test() throws Exception {
 

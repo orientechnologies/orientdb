@@ -40,6 +40,9 @@ import static org.junit.Assert.*;
 
 /**
  * It represents an abstract scenario test with sharding on the cluster.
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public class AbstractShardingScenarioTest extends AbstractScenarioTest {

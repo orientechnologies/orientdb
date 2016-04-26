@@ -32,11 +32,13 @@ import com.orientechnologies.orient.server.distributed.ServerRun;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * It represents an abstract scenario test.
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTest {
@@ -354,7 +356,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }, String.format("Expected value %s for field %s on record %s", expectedFieldValue, fieldName, recordId));
   }
 
-  private ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {
+  protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {
     ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
     try {
@@ -364,10 +366,17 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
           return MISSING_DOCUMENT;
         }
         assertTrue("No record found with id = '" + uniqueId + "'!", false);
-      } else if (result.size() > 1)
-        assertTrue(result.size() + " records found with id = '" + uniqueId + "'!", false);
+      } else if (result.size() > 1) {
+        fail(result.size() + " records found with id = '" + uniqueId + "'!");
+      }
 
-      return (ODocument) result.get(0).reload();
+      ODocument doc = (ODocument) result.get(0);
+//      try {
+//        doc.reload();
+//      } catch (ORecordNotFoundException e) {
+////        e.printStackTrace();
+//      }
+      return doc;
     } finally {
       ODatabaseRecordThreadLocal.INSTANCE.set(null);
     }
