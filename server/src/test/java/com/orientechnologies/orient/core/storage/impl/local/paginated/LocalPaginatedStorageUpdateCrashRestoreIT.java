@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -39,7 +39,7 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
   private File buildDir;
   private AtomicInteger idGen = new AtomicInteger(0);
 
-  private OLockManager<Integer> idLockManager = new OLockManager<Integer>(true, 1000, 10000);
+  private OOneEntryPerKeyLockManager<Integer> idLockManager = new OOneEntryPerKeyLockManager<Integer>(true, 1000, 10000);
 
   private ExecutorService executorService = Executors.newCachedThreadPool();
   private Process process;
@@ -279,7 +279,7 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
       try {
         while (true) {
           final int idToUpdate = random.nextInt(idGen.get());
-          idLockManager.acquireLock(idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+          idLockManager.acquireLock(idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
           try {
             OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from TestClass where id  = " + idToUpdate);
             final List<ODocument> result = baseDB.query(query);
@@ -297,7 +297,7 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
             if (counter % 50000 == 0)
               System.out.println(counter + " records were updated.");
           } finally {
-            idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+            idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
           }
         }
       } finally {

@@ -18,7 +18,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.concur.lock.OComparableLockManager;
-import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import org.testng.Assert;
 import org.testng.annotations.Test;

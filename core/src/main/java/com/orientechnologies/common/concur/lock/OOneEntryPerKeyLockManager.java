@@ -19,25 +19,37 @@
  */
 package com.orientechnologies.common.concur.lock;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.exception.OException;
 
 import java.util.Collection;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class OComparableLockManager<T extends  Comparable> {
+/**
+ * Original Lock Manager implementation that uses a concurrent linked hash map to store one entry per key. This could be very
+ * expensive in case the number of locks are a lot. This implementation works better than {@link OPartitionedLockManager} when
+ * running distributed because there is no way to
+ * 
+ * @param <T>
+ *          Type of keys
+ * @author Luca Garulli
+ */
+public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   public enum LOCK {
     SHARED, EXCLUSIVE
   }
 
-  private static final int DEFAULT_CONCURRENCY_LEVEL = 16;
-  private         long                                    acquireTimeout;
-  protected final ConcurrentSkipListMap<T, CountableLock> map;
-  private final   boolean                                 enabled;
-  private final static Object NULL_KEY = new Object();
+  private static final int                                  DEFAULT_CONCURRENCY_LEVEL = 16;
+  private long                                              acquireTimeout;
+  protected final ConcurrentLinkedHashMap<T, CountableLock> map;
+  private final boolean                                     enabled;
+  private final int                                         amountOfCachedInstances;
+  private final static Object                               NULL_KEY                  = new Object();
 
   @SuppressWarnings("serial")
   private static class CountableLock {
@@ -45,31 +57,41 @@ public class OComparableLockManager<T extends  Comparable> {
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
   }
 
-  public OComparableLockManager(final boolean iEnabled, final int iAcquireTimeout) {
-    this(iEnabled, iAcquireTimeout, defaultConcurrency());
+  public OOneEntryPerKeyLockManager(final boolean iEnabled, final int iAcquireTimeout, final int amountOfCachedInstances) {
+    this(iEnabled, iAcquireTimeout, defaultConcurrency(), amountOfCachedInstances);
   }
 
-  public OComparableLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel) {
+  public OOneEntryPerKeyLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel,
+      final int amountOfCachedInstances) {
+
+    this.amountOfCachedInstances = amountOfCachedInstances;
     final int cL = closestInteger(concurrencyLevel);
 
-    map = new ConcurrentSkipListMap<T, CountableLock>();
+    map = new ConcurrentLinkedHashMap.Builder<T, CountableLock>().concurrencyLevel(cL).maximumWeightedCapacity(Long.MAX_VALUE)
+        .build();
 
     acquireTimeout = iAcquireTimeout;
     enabled = iEnabled;
   }
 
-  public void acquireSharedLock(final T key) {
+  @Override
+  public Lock acquireSharedLock(final T key) {
     acquireLock(key, LOCK.SHARED);
+    return null;
   }
 
+  @Override
   public void releaseSharedLock(final T key) {
     releaseLock(Thread.currentThread(), key, LOCK.SHARED);
   }
 
-  public void acquireExclusiveLock(final T key) {
+  @Override
+  public Lock acquireExclusiveLock(final T key) {
     acquireLock(key, LOCK.EXCLUSIVE);
+    return null;
   }
 
+  @Override
   public void releaseExclusiveLock(final T key) {
     releaseLock(Thread.currentThread(), key, LOCK.EXCLUSIVE);
   }
@@ -90,25 +112,56 @@ public class OComparableLockManager<T extends  Comparable> {
       immutableResource = (T) NULL_KEY;
 
     CountableLock lock;
+    do {
+      lock = map.get(immutableResource);
 
+      if (lock != null) {
+        final int oldLockCount = lock.countLocks.get();
 
-    while (true) {
-      lock = new CountableLock();
-
-      CountableLock oldLock = map.putIfAbsent(immutableResource, lock);
-      if (oldLock == null)
-        break;
-
-      lock = oldLock;
-      final int oldValue = lock.countLocks.get();
-
-      if (oldValue >= 0) {
-        if (lock.countLocks.compareAndSet(oldValue, oldValue + 1)) {
-          assert map.get(immutableResource) == lock;
-          break;
+        if (oldLockCount >= 0) {
+          if (lock.countLocks.compareAndSet(oldLockCount, oldLockCount + 1)) {
+            break;
+          }
+        } else {
+          map.remove(immutableResource, lock);
         }
-      } else {
-        map.remove(immutableResource, lock);
+      }
+    } while (lock != null);
+
+    if (lock == null) {
+      while (true) {
+        lock = new CountableLock();
+
+        CountableLock oldLock = map.putIfAbsent(immutableResource, lock);
+        if (oldLock == null)
+          break;
+
+        lock = oldLock;
+        final int oldValue = lock.countLocks.get();
+
+        if (oldValue >= 0) {
+          if (lock.countLocks.compareAndSet(oldValue, oldValue + 1)) {
+            assert map.get(immutableResource) == lock;
+            break;
+          }
+        } else {
+          map.remove(immutableResource, lock);
+        }
+      }
+    }
+
+    if (map.size() > amountOfCachedInstances) {
+      final Iterator<T> keyToRemoveIterator = map.ascendingKeySetWithLimit(1).iterator();
+      if (keyToRemoveIterator.hasNext()) {
+        final T keyToRemove = keyToRemoveIterator.next();
+        final CountableLock lockToRemove = map.get(keyToRemove);
+        if (lockToRemove != null) {
+          final int counter = lockToRemove.countLocks.get();
+          if (counter == 0 && lockToRemove.countLocks.compareAndSet(counter, -1)) {
+            assert lockToRemove.countLocks.get() == -1;
+            map.remove(keyToRemove, lockToRemove);
+          }
+        }
       }
     }
 
@@ -131,8 +184,8 @@ public class OComparableLockManager<T extends  Comparable> {
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw OException
-              .wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"), e);
+          throw OException.wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"),
+              e);
         }
       }
     } catch (RuntimeException e) {
@@ -153,16 +206,10 @@ public class OComparableLockManager<T extends  Comparable> {
 
     final CountableLock lock = map.get(iResourceId);
     if (lock == null)
-      throw new OLockException(
-          "Error on releasing a non acquired lock by the requester '" + iRequester + "' against the resource: '" + iResourceId
-              + "'");
+      throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
+          + "' against the resource: '" + iResourceId + "'");
 
-    final int lockCount = lock.countLocks.decrementAndGet();
-    if (lockCount == 0) {
-      if (lock.countLocks.compareAndSet(0, -1)) {
-        map.remove(iResourceId, lock);
-      }
-    }
+    lock.countLocks.decrementAndGet();
 
     if (iLockType == LOCK.SHARED)
       lock.readWriteLock.readLock().unlock();
@@ -170,17 +217,20 @@ public class OComparableLockManager<T extends  Comparable> {
       lock.readWriteLock.writeLock().unlock();
   }
 
-  public void acquireExclusiveLocksInBatch(final T... values) {
+  @Override
+  public Lock[] acquireExclusiveLocksInBatch(final T... values) {
     if (values == null || values.length == 0)
-      return;
+      return null;
 
     final T[] sortedValues = OPartitionedLockManager.getOrderedValues(values);
 
     for (int n = 0; n < sortedValues.length; n++) {
       acquireLock(sortedValues[n], LOCK.EXCLUSIVE);
     }
+    return null;
   }
 
+  @Override
   public void acquireExclusiveLocksInBatch(Collection<T> values) {
     if (values == null || values.isEmpty())
       return;
@@ -192,12 +242,14 @@ public class OComparableLockManager<T extends  Comparable> {
     }
   }
 
+  @Override
   public void lockAllExclusive() {
     for (CountableLock lock : map.values()) {
       lock.readWriteLock.writeLock().lock();
     }
   }
 
+  @Override
   public void unlockAllExclusive() {
     for (CountableLock lock : map.values()) {
       lock.readWriteLock.writeLock().unlock();
@@ -214,9 +266,8 @@ public class OComparableLockManager<T extends  Comparable> {
   }
 
   private static int defaultConcurrency() {
-    return (Runtime.getRuntime().availableProcessors() << 6) > DEFAULT_CONCURRENCY_LEVEL ?
-        (Runtime.getRuntime().availableProcessors() << 6) :
-        DEFAULT_CONCURRENCY_LEVEL;
+    return (Runtime.getRuntime().availableProcessors() << 6) > DEFAULT_CONCURRENCY_LEVEL
+        ? (Runtime.getRuntime().availableProcessors() << 6) : DEFAULT_CONCURRENCY_LEVEL;
   }
 
   private static int closestInteger(int value) {

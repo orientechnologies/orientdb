@@ -252,6 +252,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       // WAKE UP LISTENERS
       callOnOpenListeners();
+
     } catch (OException e) {
       close();
       throw e;
@@ -2938,11 +2939,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     } else if (iUserName != null && iUserPassword != null)
       user = new OImmutableUser(-1, new OUser(iUserName, OUser.encryptPassword(iUserPassword))
           .addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
-
-    // if (ORecordSerializerSchemaAware2CSV.NAME.equals(serializeName)
-    // && !metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
-    // // @COMPATIBILITY 1.0RC9
-    // metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
     initialized = true;
   }

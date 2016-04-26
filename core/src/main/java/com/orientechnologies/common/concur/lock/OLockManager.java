@@ -1,6 +1,6 @@
 /*
  *
- *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *  Copyright 2014 OrientDB LTD (info(at)orientdb.com)
  *  *
  *  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  *  you may not use this file except in compliance with the License.
@@ -14,242 +14,34 @@
  *  *  See the License for the specific language governing permissions and
  *  *  limitations under the License.
  *  *
- *  * For more information: http://www.orientechnologies.com
+ *  * For more information: http://orientdb.com
  *
  */
 package com.orientechnologies.common.concur.lock;
 
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import com.orientechnologies.common.exception.OException;
-
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.Lock;
 
-public class OLockManager<T> {
-  public enum LOCK {
-    SHARED, EXCLUSIVE
-  }
+/**
+ * Lock Manager interface.
+ * 
+ * @author Luca Garulli
+ * @since 2.2.0
+ */
+public interface OLockManager<T> {
+  Lock acquireSharedLock(T key);
 
-  private static final int                                  DEFAULT_CONCURRENCY_LEVEL = 16;
-  private long                                              acquireTimeout;
-  protected final ConcurrentLinkedHashMap<T, CountableLock> map;
-  private final boolean                                     enabled;
-  private final int                                         amountOfCachedInstances;
-  private final static Object                               NULL_KEY                  = new Object();
+  void releaseSharedLock(T key);
 
-  @SuppressWarnings("serial")
-  private static class CountableLock {
-    private final AtomicInteger countLocks    = new AtomicInteger(1);
-    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-  }
+  Lock acquireExclusiveLock(T key);
 
-  public OLockManager(final boolean iEnabled, final int iAcquireTimeout, final int amountOfCachedInstances) {
-    this(iEnabled, iAcquireTimeout, defaultConcurrency(), amountOfCachedInstances);
-  }
+  void releaseExclusiveLock(T key);
 
-  public OLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel,
-      final int amountOfCachedInstances) {
+  Lock[] acquireExclusiveLocksInBatch(T... values);
 
-    this.amountOfCachedInstances = amountOfCachedInstances;
-    final int cL = closestInteger(concurrencyLevel);
+  void acquireExclusiveLocksInBatch(Collection<T> values);
 
-    map = new ConcurrentLinkedHashMap.Builder<T, CountableLock>().concurrencyLevel(cL).maximumWeightedCapacity(Long.MAX_VALUE)
-        .build();
+  void lockAllExclusive();
 
-    acquireTimeout = iAcquireTimeout;
-    enabled = iEnabled;
-  }
-
-  public void acquireSharedLock(final T key) {
-    acquireLock(key, LOCK.SHARED);
-  }
-
-  public void releaseSharedLock(final T key) {
-    releaseLock(Thread.currentThread(), key, LOCK.SHARED);
-  }
-
-  public void acquireExclusiveLock(final T key) {
-    acquireLock(key, LOCK.EXCLUSIVE);
-  }
-
-  public void releaseExclusiveLock(final T key) {
-    releaseLock(Thread.currentThread(), key, LOCK.EXCLUSIVE);
-  }
-
-  public void acquireLock(final T iResourceId, final LOCK iLockType) {
-    acquireLock(iResourceId, iLockType, acquireTimeout);
-  }
-
-  public void acquireLock(final T iResourceId, final LOCK iLockType, long iTimeout) {
-    if (!enabled)
-      return;
-
-    if (!enabled)
-      return;
-
-    T immutableResource = getImmutableResourceId(iResourceId);
-    if( immutableResource == null )
-      immutableResource = (T) NULL_KEY;
-
-    CountableLock lock;
-    do {
-      lock = map.get(immutableResource);
-
-      if (lock != null) {
-        final int oldLockCount = lock.countLocks.get();
-
-        if (oldLockCount >= 0) {
-          if (lock.countLocks.compareAndSet(oldLockCount, oldLockCount + 1)) {
-            break;
-          }
-        } else {
-          map.remove(immutableResource, lock);
-        }
-      }
-    } while (lock != null);
-
-    if (lock == null) {
-      while (true) {
-        lock = new CountableLock();
-
-        CountableLock oldLock = map.putIfAbsent(immutableResource, lock);
-        if (oldLock == null)
-          break;
-
-        lock = oldLock;
-        final int oldValue = lock.countLocks.get();
-
-        if (oldValue >= 0) {
-          if (lock.countLocks.compareAndSet(oldValue, oldValue + 1)) {
-            assert map.get(immutableResource) == lock;
-            break;
-          }
-        } else {
-          map.remove(immutableResource, lock);
-        }
-      }
-    }
-
-    if (map.size() > amountOfCachedInstances) {
-      final Iterator<T> keyToRemoveIterator = map.ascendingKeySetWithLimit(1).iterator();
-      if (keyToRemoveIterator.hasNext()) {
-        final T keyToRemove = keyToRemoveIterator.next();
-        final CountableLock lockToRemove = map.get(keyToRemove);
-        if (lockToRemove != null) {
-          final int counter = lockToRemove.countLocks.get();
-          if (counter == 0 && lockToRemove.countLocks.compareAndSet(counter, -1)) {
-            assert lockToRemove.countLocks.get() == -1;
-            map.remove(keyToRemove, lockToRemove);
-          }
-        }
-      }
-    }
-
-    try {
-      if (iTimeout <= 0) {
-        if (iLockType == LOCK.SHARED)
-          lock.readWriteLock.readLock().lock();
-        else
-          lock.readWriteLock.writeLock().lock();
-      } else {
-        try {
-          if (iLockType == LOCK.SHARED) {
-            if (!lock.readWriteLock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException(
-                  "Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
-          } else {
-            if (!lock.readWriteLock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException(
-                  "Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
-          }
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw OException.wrapException(new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'"),
-              e);
-        }
-      }
-    } catch (RuntimeException e) {
-      final int usages = lock.countLocks.decrementAndGet();
-      if (usages == 0)
-        map.remove(immutableResource);
-
-      throw e;
-    }
-  }
-
-  public void releaseLock(final Object iRequester, T iResourceId, final LOCK iLockType) throws OLockException {
-    if (!enabled)
-      return;
-
-    if( iResourceId == null )
-      iResourceId = (T) NULL_KEY;
-
-    final CountableLock lock = map.get(iResourceId);
-    if (lock == null)
-      throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
-          + "' against the resource: '" + iResourceId + "'");
-
-    lock.countLocks.decrementAndGet();
-
-    if (iLockType == LOCK.SHARED)
-      lock.readWriteLock.readLock().unlock();
-    else
-      lock.readWriteLock.writeLock().unlock();
-  }
-
-  public void acquireExclusiveLocksInBatch(final T... values) {
-    if (values == null || values.length == 0)
-      return;
-
-    final T[] sortedValues = ONewLockManager.getOrderedValues(values);
-
-    for (int n = 0; n < sortedValues.length; n++) {
-      acquireLock(sortedValues[n], LOCK.EXCLUSIVE);
-    }
-  }
-
-  public void acquireExclusiveLocksInBatch(Collection<T> values) {
-    if (values == null || values.isEmpty())
-      return;
-
-    final Collection<T> valCopy = ONewLockManager.getOrderedValues(values);
-
-    for (T val : valCopy) {
-      acquireExclusiveLock(val);
-    }
-  }
-
-  public void lockAllExclusive() {
-    for (CountableLock lock : map.values()) {
-      lock.readWriteLock.writeLock().lock();
-    }
-  }
-
-  public void unlockAllExclusive() {
-    for (CountableLock lock : map.values()) {
-      lock.readWriteLock.writeLock().unlock();
-    }
-  }
-
-  // For tests purposes.
-  public int getCountCurrentLocks() {
-    return map.size();
-  }
-
-  protected T getImmutableResourceId(final T iResourceId) {
-    return iResourceId;
-  }
-
-  private static int defaultConcurrency() {
-    return (Runtime.getRuntime().availableProcessors() << 6) > DEFAULT_CONCURRENCY_LEVEL
-        ? (Runtime.getRuntime().availableProcessors() << 6) : DEFAULT_CONCURRENCY_LEVEL;
-  }
-
-  private static int closestInteger(int value) {
-    return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
-  }
+  void unlockAllExclusive();
 }
