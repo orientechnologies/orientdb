@@ -189,9 +189,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
     if (index.getInternal() == null)
       throw new OIndexException("Index with name " + indexName + " has no internal presentation.");
-
-    index.getInternal().addCluster(clusterName);
-    save();
+    if(!index.getInternal().getClusters().contains(clusterName)) {
+      index.getInternal().addCluster(clusterName);
+      save();
+    }
   }
 
   @Override

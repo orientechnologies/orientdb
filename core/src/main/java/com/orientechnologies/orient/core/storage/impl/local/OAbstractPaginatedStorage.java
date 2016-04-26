@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.common.concur.lock.OComparableLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
-import com.orientechnologies.common.concur.lock.ONewLockManager;
+import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -106,7 +106,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   /**
    * Lock is used to atomically update record versions.
    */
-  private final ONewLockManager<ORID> recordVersionManager;
+  private final OPartitionedLockManager<ORID> recordVersionManager;
 
   private final String PROFILER_CREATE_RECORD;
   private final String PROFILER_READ_RECORD;
@@ -152,7 +152,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     this.id = id;
     lockManager = new ORIDOLockManager(OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
-    recordVersionManager = new ONewLockManager<ORID>();
+    recordVersionManager = new OPartitionedLockManager<ORID>();
 
     PROFILER_CREATE_RECORD = "db." + this.name + ".createRecord";
     PROFILER_READ_RECORD = "db." + this.name + ".readRecord";

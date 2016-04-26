@@ -117,7 +117,7 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
 
     } catch (Exception e) {
       // UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW AN IO EXCEPTION
-      rootException = OException.wrapException(new OIOException(iMessage), iPrevious);
+      rootException = OException.wrapException(new OSystemException(iMessage), iPrevious);
     }
 
     if (c != null)

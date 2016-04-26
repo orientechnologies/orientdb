@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Test;
 
 import java.util.HashSet;
@@ -121,6 +122,11 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     System.out.println(command);
     Set<String> resultSet = new HashSet();
     db.open("admin", "admin");
+
+    // CREATE A GRAPH TO MANIPULATE ELEMENTS
+    final OrientGraphNoTx graph = new OrientGraphNoTx((ODatabaseDocumentTx) db);
+    graph.makeActive();
+
     try {
       Object o = db.command(new OCommandSQL(command)).execute();
       if (o instanceof List) {
@@ -131,6 +137,7 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
       }
     } finally {
       db.close();
+      graph.shutdown();
     }
     return resultSet;
   }
