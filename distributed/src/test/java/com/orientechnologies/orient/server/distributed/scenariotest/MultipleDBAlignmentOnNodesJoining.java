@@ -16,13 +16,21 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,14 +75,12 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
 
     try {
 
-      /*
-       * Test with quorum = 2
-       */
+      banner("Populating databases on server1 and server2");
 
-      banner("Test with quorum = 2");
 
-      // TODO
-      // Override prepare() method in AbstractServerClusterTest
+
+
+
 
       // check consistency on all the server:
       // all the records destined to server3 were redirected to an other server, so we must inspect consistency for all 500 records
@@ -93,6 +99,82 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     }
   }
 
+
+  /**
+   * Creates the databases as follows:
+   * - server1: db A, db B
+   * - server2: db B, db C
+   *
+   * @throws IOException
+   */
+  @Override
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase, final OCallable<Object, OrientGraphFactory> iCfgCallback) throws IOException {
+
+    // creating databases on server1
+    ServerRun master = serverInstance.get(0);
+
+    if (iCreateDatabase) {
+      final OrientBaseGraph graph1 = master.createDatabase("db-A", iCfgCallback);
+      final OrientBaseGraph graph2 = master.createDatabase("db-B", iCfgCallback);
+      try {
+        onAfterDatabaseCreation(graph1);
+        onAfterDatabaseCreation(graph2);
+      } finally {
+        if(!graph1.isClosed()) {
+          graph1.shutdown();
+        }
+        if(!graph1.isClosed()) {
+          graph2.shutdown();
+        }
+        Orient.instance().closeAllStorages();
+      }
+    }
+
+    // creating databases on server1
+    master = serverInstance.get(1);
+
+    if (iCreateDatabase) {
+      final OrientBaseGraph graph1 = master.createDatabase("db-B", iCfgCallback);
+      final OrientBaseGraph graph2 = master.createDatabase("db-C", iCfgCallback);
+      try {
+        onAfterDatabaseCreation(graph1);
+        onAfterDatabaseCreation(graph2);
+      } finally {
+        if(!graph1.isClosed()) {
+          graph1.shutdown();
+        }
+        if(!graph1.isClosed()) {
+          graph2.shutdown();
+        }
+        Orient.instance().closeAllStorages();
+      }
+    }
+  }
+
+  /**
+   * Event called right after the database has been created. It builds the schema and populates the db.
+   *
+   * @param db
+   *          Current database
+   */
+  @Override
+  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
+    System.out.println("Creating database schema...");
+
+    // building basic schema
+    OClass personClass = db.getRawGraph().getMetadata().getSchema().createClass("Person");
+    personClass.createProperty("id", OType.STRING);
+    personClass.createProperty("name", OType.STRING);
+    personClass.createProperty("birthday", OType.DATE);
+    personClass.createProperty("children", OType.STRING);
+
+    final OSchema schema = db.getRawGraph().getMetadata().getSchema();
+    OClass person = schema.getClass("Person");
+    idx = person.createIndex("Person.name", OClass.INDEX_TYPE.UNIQUE, "name");
+
+    // populating db
+//    executeMultipleWrites();
+  }
 
 
 }

@@ -64,16 +64,26 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     return result.get(0);
   }
 
+  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType) throws InterruptedException, ExecutionException {
+    executeMultipleWrites(executeOnServers, storageType, null);
+  }
+
   /*
    * It executes multiple writes using different concurrent writers (as specified by the value writerCount) on all the servers
    * present in the collection passed as parameter. Each write performs a document insert and some update and check operations on
-   * it.
+   * it. Tha target db is passed as parameter, otherwise is kept the default one on servers.
    */
 
-  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType)
+  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType, String dbURL)
       throws InterruptedException, ExecutionException {
 
-    ODatabaseDocumentTx database = poolFactory.get(getPlocalDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+    ODatabaseDocumentTx database;
+    if(dbURL == null) {
+      database = poolFactory.get(getPlocalDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+    }
+    else {
+      database = poolFactory.get(dbURL, "admin", "admin").acquire();
+    }
 
     try {
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
