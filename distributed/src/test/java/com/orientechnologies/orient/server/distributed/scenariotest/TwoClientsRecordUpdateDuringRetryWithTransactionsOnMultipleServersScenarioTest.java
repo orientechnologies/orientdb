@@ -91,8 +91,8 @@ public class TwoClientsRecordUpdateDuringRetryWithTransactionsOnMultipleServersS
 
     // sets a delay for operations on distributed storage of server1 and server2
     // so that server1 will start to commit after server2 has started the transaction
-    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer(1000));
-    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer(250));
+    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer("server2", 1000));
+    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer("server1", 250));
 
     // updates the same record from two different clients, each calling a different node
     ODocument record1Server2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);

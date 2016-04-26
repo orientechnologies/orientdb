@@ -43,15 +43,17 @@ import java.util.concurrent.*;
  * Insert records concurrently against the cluster
  */
 public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
-  protected volatile int delayWriter = 0;
-  protected volatile int delayReader = 1000;
-  protected static   int writerCount = 5;
-  protected          int baseCount   = 0;
-  protected int              expected;
-  protected OIndex<?>        idx;
-  protected int              maxRetries            = 1;
-  protected boolean          useTransactions       = false;
-  protected List<ServerRun>  executeTestsOnServers = serverInstance;
+  protected volatile int    delayWriter           = 0;
+  protected volatile int    delayReader           = 1000;
+  protected static int      writerCount           = 5;
+  protected int             baseCount             = 0;
+  protected int             expected;
+  protected OIndex<?>       idx;
+  protected int             maxRetries            = 1;
+  protected boolean         useTransactions       = false;
+  protected List<ServerRun> executeTestsOnServers = serverInstance;
+  protected String          className             = "Person";
+  protected String          indexName             = "Person.name";
 
   protected class BaseWriter implements Callable<Void> {
     protected final String databaseUrl;
@@ -163,7 +165,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     }
 
     protected void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
-      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?"))
+      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:" + indexName + " where key = ?"))
           .execute(key);
       Assert.assertNotNull(result);
       Assert.assertEquals(result.size(), 1);
@@ -404,16 +406,19 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void checkIndexedEntries() {
+    if (indexName == null )
+      return;
+    
     ODatabaseDocumentTx database;
     for (ServerRun server : serverInstance) {
       if (server.isActive()) {
         database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
         try {
-          final long indexSize = database.getMetadata().getIndexManager().getIndex("Person.name").getSize();
+          final long indexSize = database.getMetadata().getIndexManager().getIndex(indexName).getSize();
 
           if (indexSize != expected) {
             // ERROR: DUMP ALL THE RECORDS
-            List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select from index:Person.name"));
+            List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select from index:" + indexName));
             int i = 0;
             for (ODocument d : result) {
               System.out.println((i++) + ": " + ((OIdentifiable) d.field("rid")).getRecord());
@@ -424,7 +429,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
           System.out.println("From metadata: indexes " + indexSize + " items");
 
-          List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from index:Person.name"));
+          List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from index:" + indexName));
           Assert.assertEquals(expected, ((Long) result.get(0).field("count")).longValue());
 
           System.out.println("From sql: indexes " + indexSize + " items");
@@ -441,7 +446,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       if (server.isActive()) {
         database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
         try {
-          final int total = (int) database.countClass("Person");
+          final int total = (int) database.countClass(className);
 
           Assert.assertEquals("Server " + server.getServerId() + " count is not what was expected", expected, total);
 
@@ -459,11 +464,12 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   private void printStats(final String databaseUrl) {
     final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
     try {
-      List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+      List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from " + className));
 
       final String name = database.getURL();
 
-      System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person"));
+      System.out
+          .println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass(className));
 
     } catch (Exception e) {
 

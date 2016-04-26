@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
@@ -61,19 +62,30 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
 
   public synchronized void commit() {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-        "Distributed transaction: Committing transaction %s", reqId);
-    unlock();
-    undoTasks.clear();
+        "Distributed transaction %s: committing transaction", reqId);
   }
 
-  public synchronized void fix() {
-    unlock();
-    undoTasks.clear();
+  public synchronized void fix(final ODatabaseDocumentTx database, final List<ORemoteTask> fixTasks) {
+    ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+        "Distributed transaction %s: fixing transaction (db=%s tasks=%d)", reqId, db.getDatabaseName(), fixTasks.size());
+
+    for (ORemoteTask fixTask : fixTasks) {
+      try {
+        if (fixTask instanceof OAbstractRecordReplicatedTask)
+          ((OAbstractRecordReplicatedTask) fixTask).setLockRecords(false);
+
+        fixTask.execute(reqId, db.getManager().getServerInstance(), db.getManager(), database);
+
+      } catch (Exception e) {
+        ODistributedServerLog.error(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Error on fixing transaction %s db=%s task=%s", e, reqId, db.getDatabaseName(), fixTask);
+      }
+    }
   }
 
   public synchronized int rollback(final ODatabaseDocumentTx database) {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-        "Distributed transaction: rolling back transaction %s (%d ops)", reqId, undoTasks.size());
+        "Distributed transaction %s: rolling back transaction (%d ops)", reqId, undoTasks.size());
 
     for (ORemoteTask task : undoTasks) {
       try {
@@ -85,12 +97,17 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
             "Error on rolling back transaction %s task %s", e, reqId, task);
       }
     }
-    unlock();
-
     return undoTasks.size();
   }
 
-  protected void unlock() {
+  @Override
+  public synchronized void destroy() {
+    unlock();
+    undoTasks.clear();
+  }
+
+  @Override
+  public void unlock() {
     if (!acquiredLocks.isEmpty()) {
       for (ORID lockedRID : acquiredLocks)
         db.unlockRecord(lockedRID, reqId);

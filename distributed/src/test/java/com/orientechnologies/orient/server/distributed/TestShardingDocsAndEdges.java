@@ -112,10 +112,7 @@ public class TestShardingDocsAndEdges extends AbstractServerClusterTest {
     compare(queryResult, new String[] { "mike", "phoebe" });
 
     // LINE A
-    execute(USA,
-        "create edge Follows " + "from (select from User where name = 'mike') " + "to (select from User where name = 'phoebe')");
-
-    // ...
+    execute(USA, "create edge Follows from (select from User where name = 'mike') to (select from User where name = 'phoebe')");
   }
 
   static Set<String> execute(ODatabaseDocument db, String command) throws InterruptedException {

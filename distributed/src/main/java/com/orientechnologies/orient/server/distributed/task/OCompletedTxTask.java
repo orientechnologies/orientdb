@@ -64,7 +64,7 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   public Object execute(final ODistributedRequestId msgId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentTx database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "%s transaction db=%s originalReqId=%s...", (success ? "committing" : fixTasks.isEmpty() ? "rolling back" : "fixing"),
+        "%s transaction db=%s originalReqId=%s...", (success ? "Committing" : fixTasks.isEmpty() ? "Rolling back" : "Fixing"),
         database.getName(), requestId, requestId);
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
@@ -73,54 +73,38 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
 
     final ODistributedTxContext pRequest = ddb.popTxContext(requestId);
-    if (success) {
-      // COMMIT
-      if (pRequest != null)
-        pRequest.commit();
-      else {
-        // UNABLE TO FIND TX CONTEXT
-        ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-            "Error on committing transaction %s db=%s", requestId, database.getName());
-        return Boolean.FALSE;
-      }
-
-    } else if (fixTasks.isEmpty()) {
-      // ROLLBACK
-      if (pRequest != null)
-        pRequest.rollback(database);
-      else {
-        // UNABLE TO FIND TX CONTEXT
-        ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-            "Error on rolling back transaction %s db=%s", requestId, database.getName());
-        return Boolean.FALSE;
-      }
-
-    } else {
-      try {
-        // FIX TRANSACTION CONTENT
-        ODistributedServerLog.info(this, ddb.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "Distributed transaction: fixing transaction %s (tasks:%d)", requestId, fixTasks.size());
-
-        for (ORemoteTask fixTask : fixTasks) {
-          try {
-            if (fixTask instanceof OAbstractRecordReplicatedTask)
-              ((OAbstractRecordReplicatedTask) fixTask).setLockRecords(false);
-
-            fixTask.execute(requestId, iManager.getServerInstance(), iManager, database);
-
-          } catch (Exception e) {
-            ODistributedServerLog.error(this, iManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                "Error on fixing transaction %s task %s", e, requestId, fixTask);
-          }
-        }
-      } finally {
+    try {
+      if (success) {
+        // COMMIT
         if (pRequest != null)
-          pRequest.fix();
+          pRequest.commit();
+        else {
+          // UNABLE TO FIND TX CONTEXT
+          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+              "Error on committing transaction %s db=%s", requestId, database.getName());
+        }
+
+      } else if (fixTasks.isEmpty()) {
+        // ROLLBACK
+        if (pRequest != null)
+          pRequest.rollback(database);
+        else {
+          // UNABLE TO FIND TX CONTEXT
+          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+              "Error on rolling back transaction %s db=%s", requestId, database.getName());
+        }
+      } else {
+
+        // FIX TRANSACTION CONTENT
+        pRequest.fix(database, fixTasks);
+
       }
+    } finally {
+      if (pRequest != null)
+        pRequest.destroy();
     }
 
     return Boolean.TRUE;
-
   }
 
   @Override

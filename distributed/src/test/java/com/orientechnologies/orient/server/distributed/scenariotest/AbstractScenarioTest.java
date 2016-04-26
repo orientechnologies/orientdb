@@ -47,7 +47,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   // FIXME: these should be parameters read from configuration file (or, if missing, defaulted to some values)
   private final long               PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT = 15000;
-  protected final long             DOCUMENT_WRITE_TIMEOUT                = 5000;
+  protected final long             DOCUMENT_WRITE_TIMEOUT                = 10000;
 
   protected ODocument loadRecord(ODatabaseDocumentTx database, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
@@ -464,7 +464,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected void waitFor(final int serverId, OCallable<Boolean, ODatabaseDocumentTx> condition) {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(serverId))).open("admin",
+        "admin");
     try {
 
       while (true) {
@@ -515,7 +516,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       this.useTransaction = useTransaction;
     }
 
-    protected RecordUpdater(final String dbServerUrl, final String rid, final Map<String, Object> fields, final boolean useTransaction) {
+    protected RecordUpdater(final String dbServerUrl, final String rid, final Map<String, Object> fields,
+        final boolean useTransaction) {
       this.dbServerUrl = dbServerUrl;
       this.useTransaction = useTransaction;
       this.recordToUpdate = retrieveRecord(dbServerUrl, rid);
@@ -589,28 +591,39 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   class AfterRecordLockDelayer implements ODistributedStorageEventListener {
 
-    private long delay;
+    private String serverName;
+    private long   delay;
 
-    public AfterRecordLockDelayer(long delay) {
+    public AfterRecordLockDelayer(String serverName, long delay) {
+      this.serverName = serverName;
       this.delay = delay;
-      OLogManager.instance().info(this, ("Delayer created with " + delay + "ms of delay"));
+      OLogManager.instance().info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName,
+          Thread.currentThread().getId());
     }
 
-    public AfterRecordLockDelayer() {
-      this(DOCUMENT_WRITE_TIMEOUT);
+    public AfterRecordLockDelayer(String serverName) {
+      this.serverName = serverName;
+      this.delay = DOCUMENT_WRITE_TIMEOUT;
+      OLogManager.instance().info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName,
+          Thread.currentThread().getId());
     }
 
     @Override
     public void onAfterRecordLock(ORecordId rid) {
-      try {
-        OLogManager.instance().info(this, "Thread [%d] waiting for %dms with locked record [%s]", Thread.currentThread().getId(),
-            delay, rid.toString());
-        Thread.sleep(delay);
-        OLogManager.instance().info(this, "Thread [%d] finished waiting for %dms with locked record [%s]",
-            Thread.currentThread().getId(), delay, rid.toString());
-      } catch (InterruptedException e) {
+      if (delay > 0)
+        try {
+          OLogManager.instance().info(this, "Thread [%s-%d] waiting for %dms with locked record [%s]", serverName,
+              Thread.currentThread().getId(), delay, rid.toString());
+          Thread.sleep(delay);
 
-      }
+          OLogManager.instance().info(this, "Thread [%s-%d] finished waiting for %dms with locked record [%s]", serverName,
+              Thread.currentThread().getId(), delay, rid.toString());
+
+          // RESET THE DELAY FOR FURTHER TIMES
+          delay = 0;
+
+        } catch (InterruptedException e) {
+        }
     }
 
     @Override

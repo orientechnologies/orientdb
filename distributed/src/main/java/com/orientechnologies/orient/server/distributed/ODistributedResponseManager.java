@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
@@ -27,12 +33,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Asynchronous response manager
@@ -634,7 +634,6 @@ public class ODistributedResponseManager {
       // // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
       // continue;
       //
-
       final String targetNode = r.getExecutorNodeName();
       if (targetNode.equals(dManager.getLocalNodeName()))
         // AVOID TO UNDO LOCAL NODE BECAUSE THE OPERATION IS MANAGED APART
@@ -649,7 +648,7 @@ public class ODistributedResponseManager {
               "Sending undo message (%s) for request (%s) to server %s", undoTask, request, targetNode);
 
           dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(targetNode), undoTask,
-              ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+              dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
         }
       }
     }
@@ -681,7 +680,7 @@ public class ODistributedResponseManager {
               "Sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
           dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), fixTask,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
+              dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
         }
       }
     }

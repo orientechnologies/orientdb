@@ -86,8 +86,9 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentTx database) throws Exception {
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%d",
-        database.getName(), rid.toString(), version);
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%d",
+          database.getName(), rid.toString(), version);
 
     checkRecordExists();
 
@@ -99,15 +100,17 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
       ODocument loadedDocument = (ODocument) loadedRecord;
       int loadedRecordVersion = loadedDocument.merge(newDocument, false, false).getVersion();
-      loadedDocument.setDirty();
       ORecordInternal.setVersion(loadedDocument, version);
     } else
       ORecordInternal.fill(loadedRecord, rid, version, content, true);
 
+    loadedRecord.setDirty();
+
     record = database.save(loadedRecord);
 
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%d",
-        database.getName(), rid.toString(), record.getVersion());
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%d",
+          database.getName(), rid.toString(), record.getVersion());
 
     return record.getVersion();
   }
