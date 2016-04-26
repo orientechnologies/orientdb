@@ -39,7 +39,8 @@ public class OClusterPositionMapBucket extends ODurablePage {
   private static final int SIZE_OFFSET      = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int POSITIONS_OFFSET = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  public static final byte NOT_EXISTENT     = 0; // NEVER USED ON DISK
+  // NEVER USED ON DISK
+  public static final byte NOT_EXISTENT     = 0;
   public static final byte REMOVED          = 1;
   public static final byte FILLED           = 2;
   public static final byte ALLOCATED        = 4;
@@ -93,18 +94,34 @@ public class OClusterPositionMapBucket extends ODurablePage {
     return readEntry(position);
   }
 
-  public void set(int index, PositionEntry entry) throws IOException {
-    int size = getIntValue(SIZE_OFFSET);
+  public void set(final int index, final PositionEntry entry) throws IOException {
+    final int size = getIntValue(SIZE_OFFSET);
 
     if (index >= size)
-      throw new OStorageException("Provided index " + index + " is out of range.");
+      throw new OStorageException("Provided index " + index + " is out of range");
 
     final int position = entryPosition(index);
     final byte flag = getByteValue(position);
     if (flag == ALLOCATED)
       setByteValue(position, FILLED);
     else if (flag != FILLED)
-      throw new OStorageException("Provided index " + index + " points to removed entry.");
+      throw new OStorageException("Provided index " + index + " points to removed entry");
+
+    updateEntry(position, entry);
+  }
+
+  public void resurrect(final int index, final PositionEntry entry) throws IOException {
+    final int size = getIntValue(SIZE_OFFSET);
+
+    if (index >= size)
+      throw new OStorageException("Cannot resurrect a record: provided index " + index + " is out of range");
+
+    final int position = entryPosition(index);
+    final byte flag = getByteValue(position);
+    if (flag == REMOVED)
+      setByteValue(position, FILLED);
+    else
+      throw new OStorageException("Cannot resurrect a record: provided index " + index + " points to a non removed entry");
 
     updateEntry(position, entry);
   }
@@ -140,11 +157,10 @@ public class OClusterPositionMapBucket extends ODurablePage {
   private PositionEntry readEntry(int position) {
     position += OByteSerializer.BYTE_SIZE;
 
-    long pageIndex = getLongValue(position);
+    final long pageIndex = getLongValue(position);
     position += OLongSerializer.LONG_SIZE;
 
-    int pagePosition = getIntValue(position);
-    position += OIntegerSerializer.INT_SIZE;
+    final int pagePosition = getIntValue(position);
 
     return new PositionEntry(pageIndex, pagePosition);
   }
@@ -180,7 +196,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     private final long pageIndex;
     private final int  recordPosition;
 
-    public PositionEntry(long pageIndex, int recordPosition) {
+    public PositionEntry(final long pageIndex,final  int recordPosition) {
       this.pageIndex = pageIndex;
       this.recordPosition = recordPosition;
     }

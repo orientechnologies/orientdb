@@ -14,8 +14,6 @@ import java.util.concurrent.Callable;
  * This class is an LRU cache for already parsed SQL statement executors. It stores itself in the storage as a resource. It also
  * acts an an entry point for the SQL parser.
  *
- *
- *
  * @author Luigi Dell'Aquila
  */
 public class OStatementCache {
@@ -24,9 +22,7 @@ public class OStatementCache {
   int                     mapSize;
 
   /**
-   *
-   * @param size
-   *          the size of the cache
+   * @param size the size of the cache
    */
   public OStatementCache(int size) {
     this.mapSize = size;
@@ -38,9 +34,7 @@ public class OStatementCache {
   }
 
   /**
-   *
-   * @param statement
-   *          an SQL statement
+   * @param statement an SQL statement
    * @return true if the corresponding executor is present in the cache
    */
   public synchronized boolean contains(String statement) {
@@ -48,14 +42,11 @@ public class OStatementCache {
   }
 
   /**
-   *
    * returns an already parsed SQL executor, taking it from the cache if it exists or creating a new one (parsing and then putting
    * it into the cache) if it doesn't
-   * 
-   * @param statement
-   *          the SQL statement
-   * @param db
-   *          the current DB instance. If null, cache is ignored and a new executor is created through statement parsing
+   *
+   * @param statement the SQL statement
+   * @param db        the current DB instance. If null, cache is ignored and a new executor is created through statement parsing
    * @return a statement executor from the cache
    */
   public static OStatement get(String statement, ODatabaseDocumentInternal db) {
@@ -64,8 +55,7 @@ public class OStatementCache {
     }
 
     OStatementCache resource = db.getStorage().getResource(OStatementCache.class.getSimpleName(), new Callable<OStatementCache>() {
-      @Override
-      public OStatementCache call() throws Exception {
+      @Override public OStatementCache call() throws Exception {
         return new OStatementCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
       }
     });
@@ -73,9 +63,7 @@ public class OStatementCache {
   }
 
   /**
-   *
-   * @param statement
-   *          an SQL statement
+   * @param statement an SQL statement
    * @return the corresponding executor, taking it from the internal cache, if it exists
    */
   public synchronized OStatement get(String statement) {
@@ -89,12 +77,10 @@ public class OStatementCache {
 
   /**
    * parses an SQL statement and returns the corresponding executor
-   * 
-   * @param statement
-   *          the SQL statement
+   *
+   * @param statement the SQL statement
    * @return the corresponding executor
-   * @throws OCommandSQLParsingException
-   *           if the input parameter is not a valid SQL statement
+   * @throws OCommandSQLParsingException if the input parameter is not a valid SQL statement
    */
   protected static OStatement parse(String statement) throws OCommandSQLParsingException {
     try {
@@ -103,13 +89,13 @@ public class OStatementCache {
       OStatement result = osql.parse();
       return result;
     } catch (ParseException e) {
-      throwParsingException(e.getMessage());
+      throwParsingException(e, statement);
     }
     return null;
   }
 
-  protected static void throwParsingException(final String iText) {
-    throw new OCommandSQLParsingException(iText);
+  protected static void throwParsingException(ParseException e, String statement) {
+    throw new OCommandSQLParsingException(e, statement);
   }
 
 }

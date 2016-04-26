@@ -657,6 +657,15 @@ public class OSessionStoragePerformanceStatistic {
       cHolder.pageReadFromFileCount += readPages;
     }
 
+    final Component currentComponent = componentsStack.peek();
+    if (currentComponent != null) {
+      PerformanceCountersHolder currentHolder = countersByComponent.get(currentComponent.name);
+
+      if (currentHolder.currentOperation != null) {
+        currentHolder.currentOperation.incrementOperationsCounter(0, readPages);
+      }
+    }
+
     makeSnapshotIfNeeded(endTs);
   }
 
@@ -751,6 +760,15 @@ public class OSessionStoragePerformanceStatistic {
       cHolder.pageReadFromCacheCount++;
     }
 
+    final Component currentComponent = componentsStack.peek();
+    if (currentComponent != null) {
+      PerformanceCountersHolder currentHolder = countersByComponent.get(currentComponent.name);
+
+      if (currentHolder.currentOperation != null) {
+        currentHolder.currentOperation.incrementOperationsCounter(1, 0);
+      }
+    }
+
     makeSnapshotIfNeeded(endTs);
   }
 
@@ -819,16 +837,14 @@ public class OSessionStoragePerformanceStatistic {
   public void stopRecordCreationTimer() {
     final Component component = componentsStack.peek();
 
-    if (component.type.equals(ComponentType.CLUSTER))
-      throw new IllegalStateException(
-          "Invalid component type , required " + ComponentType.CLUSTER + " but found " + component.type);
+    checkComponentType(component, ComponentType.CLUSTER);
 
     final long endTs = nanoTimer.getNano();
     final long timeDiff = (endTs - timeStamps.pop());
 
-    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    OClusterCountersHolder cHolder = (OClusterCountersHolder) countersByComponent.get(component.name);
     if (cHolder == null) {
-      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      cHolder = (OClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
       countersByComponent.put(component.name, cHolder);
     }
 
@@ -845,16 +861,14 @@ public class OSessionStoragePerformanceStatistic {
   public void stopRecordDeletionTimer() {
     final Component component = componentsStack.peek();
 
-    if (component.type.equals(ComponentType.CLUSTER))
-      throw new IllegalStateException(
-          "Invalid component type , required " + ComponentType.CLUSTER + " but found " + component.type);
+    checkComponentType(component, ComponentType.CLUSTER);
 
     final long endTs = nanoTimer.getNano();
     final long timeDiff = (endTs - timeStamps.pop());
 
-    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    OClusterCountersHolder cHolder = (OClusterCountersHolder) countersByComponent.get(component.name);
     if (cHolder == null) {
-      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      cHolder = (OClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
       countersByComponent.put(component.name, cHolder);
     }
 
@@ -871,16 +885,14 @@ public class OSessionStoragePerformanceStatistic {
   public void stopRecordUpdateTimer() {
     final Component component = componentsStack.peek();
 
-    if (component.type.equals(ComponentType.CLUSTER))
-      throw new IllegalStateException(
-          "Invalid component type , required " + ComponentType.CLUSTER + " but found " + component.type);
+    checkComponentType(component, ComponentType.CLUSTER);
 
     final long endTs = nanoTimer.getNano();
     final long timeDiff = (endTs - timeStamps.pop());
 
-    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    OClusterCountersHolder cHolder = (OClusterCountersHolder) countersByComponent.get(component.name);
     if (cHolder == null) {
-      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      cHolder = (OClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
       countersByComponent.put(component.name, cHolder);
     }
 
@@ -897,21 +909,187 @@ public class OSessionStoragePerformanceStatistic {
   public void stopRecordReadTimer() {
     final Component component = componentsStack.peek();
 
-    if (component.type.equals(ComponentType.CLUSTER))
-      throw new IllegalStateException(
-          "Invalid component type , required " + ComponentType.CLUSTER + " but found " + component.type);
+    checkComponentType(component, ComponentType.CLUSTER);
 
     final long endTs = nanoTimer.getNano();
     final long timeDiff = (endTs - timeStamps.pop());
 
-    ClusterCountersHolder cHolder = (ClusterCountersHolder) countersByComponent.get(component.name);
+    OClusterCountersHolder cHolder = (OClusterCountersHolder) countersByComponent.get(component.name);
     if (cHolder == null) {
-      cHolder = (ClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
+      cHolder = (OClusterCountersHolder) ComponentType.CLUSTER.newCountersHolder();
       countersByComponent.put(component.name, cHolder);
     }
 
     cHolder.readRecords++;
     cHolder.timeRecordRead += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  public void startIndexEntryUpdateTimer() {
+    pushTimer();
+  }
+
+  public void stopIndexEntryUpdateTimer() {
+    final Component component = componentsStack.peek();
+
+    checkComponentType(component, ComponentType.INDEX);
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    IndexCountersHolder cHolder = (IndexCountersHolder) countersByComponent.get(component.name);
+    if (cHolder == null) {
+      cHolder = (IndexCountersHolder) ComponentType.INDEX.newCountersHolder();
+      countersByComponent.put(component.name, cHolder);
+    }
+
+    cHolder.updatedEntries++;
+    cHolder.timeUpdateEntry += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  public void startIndexEntryDeletionTimer() {
+    pushTimer();
+  }
+
+  public void stopIndexEntryDeletionTimer() {
+    final Component component = componentsStack.peek();
+
+    checkComponentType(component, ComponentType.INDEX);
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    IndexCountersHolder cHolder = (IndexCountersHolder) countersByComponent.get(component.name);
+    if (cHolder == null) {
+      cHolder = (IndexCountersHolder) ComponentType.INDEX.newCountersHolder();
+      countersByComponent.put(component.name, cHolder);
+    }
+
+    cHolder.deletedEntries++;
+    cHolder.timeDeleteEntry += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  public void startIndexEntryReadTimer() {
+    pushTimer();
+  }
+
+  public void stopIndexEntryReadTimer() {
+    final Component component = componentsStack.peek();
+
+    checkComponentType(component, ComponentType.INDEX);
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    IndexCountersHolder cHolder = (IndexCountersHolder) countersByComponent.get(component.name);
+    if (cHolder == null) {
+      cHolder = (IndexCountersHolder) ComponentType.INDEX.newCountersHolder();
+      countersByComponent.put(component.name, cHolder);
+    }
+
+    cHolder.readEntries++;
+    cHolder.timeReadEntry += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  public void startRidBagEntryReadTimer() {
+    pushTimer();
+  }
+
+  public void stopRidBagEntryReadTimer(int entriesRead) {
+    final Component component = componentsStack.peek();
+
+    checkComponentType(component, ComponentType.RIDBAG);
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    RidbagCountersHolder cHolder = (RidbagCountersHolder) countersByComponent.get(component.name);
+    if (cHolder == null) {
+      cHolder = (RidbagCountersHolder) ComponentType.INDEX.newCountersHolder();
+      countersByComponent.put(component.name, cHolder);
+    }
+
+    cHolder.readEntries += entriesRead;
+    cHolder.timeReadEntry += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  public void startRidBagEntryUpdateTimer() {
+    pushTimer();
+  }
+
+  public void stopRidBagEntryUpdateTimer() {
+    final Component component = componentsStack.peek();
+
+    checkComponentType(component, ComponentType.RIDBAG);
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    RidbagCountersHolder cHolder = (RidbagCountersHolder) countersByComponent.get(component.name);
+    if (cHolder == null) {
+      cHolder = (RidbagCountersHolder) ComponentType.INDEX.newCountersHolder();
+      countersByComponent.put(component.name, cHolder);
+    }
+
+    cHolder.updatedEntries++;
+    cHolder.timeUpdateEntry += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  public void startRidBagEntryDeletionTimer() {
+    pushTimer();
+  }
+
+  public void stopRidBagEntryDeletionTimer() {
+    final Component component = componentsStack.peek();
+
+    checkComponentType(component, ComponentType.RIDBAG);
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    RidbagCountersHolder cHolder = (RidbagCountersHolder) countersByComponent.get(component.name);
+    if (cHolder == null) {
+      cHolder = (RidbagCountersHolder) ComponentType.INDEX.newCountersHolder();
+      countersByComponent.put(component.name, cHolder);
+    }
+
+    cHolder.deletedEntries++;
+    cHolder.timeDeleteEntry += timeDiff;
+
+    makeSnapshotIfNeeded(endTs);
+  }
+
+  public void startRidBagEntryLoadTimer() {
+    pushTimer();
+  }
+
+  public void stopRidBagEntryLoadTimer() {
+    final Component component = componentsStack.peek();
+
+    checkComponentType(component, ComponentType.RIDBAG);
+
+    final long endTs = nanoTimer.getNano();
+    final long timeDiff = (endTs - timeStamps.pop());
+
+    RidbagCountersHolder cHolder = (RidbagCountersHolder) countersByComponent.get(component.name);
+    if (cHolder == null) {
+      cHolder = (RidbagCountersHolder) ComponentType.INDEX.newCountersHolder();
+      countersByComponent.put(component.name, cHolder);
+    }
+
+    cHolder.loads++;
+    cHolder.loadTime += timeDiff;
 
     makeSnapshotIfNeeded(endTs);
   }
@@ -991,6 +1169,11 @@ public class OSessionStoragePerformanceStatistic {
     walCountersHolder.flushTime += timeDiff;
 
     makeSnapshotIfNeeded(endTs);
+  }
+
+  private void checkComponentType(Component component, ComponentType expected) {
+    if (component.type.equals(expected))
+      throw new IllegalStateException("Invalid component type , required " + expected + " but found " + component.type);
   }
 
   /**
@@ -1078,8 +1261,8 @@ public class OSessionStoragePerformanceStatistic {
     },
     CLUSTER {
       @Override
-      ClusterCountersHolder newCountersHolder() {
-        return new ClusterCountersHolder();
+      OClusterCountersHolder newCountersHolder() {
+        return new OClusterCountersHolder();
       }
     },
     RIDBAG {
@@ -1343,124 +1526,318 @@ public class OSessionStoragePerformanceStatistic {
     }
   }
 
-  /**
-   * Container for cluster related performance numbers
-   */
-  public static class ClusterCountersHolder extends PerformanceCountersHolder {
-    /**
-     * Amount of all created records.
-     */
-    private long createdRecords;
+  public static class IndexCountersHolder extends PerformanceCountersHolder {
+    private long updatedEntries;
+    private long timeUpdateEntry;
+    private long updateEntryPages;
+    private long updateEntryFilePages;
+    private long updateEntryPageTime;
+    private long updateEntryFilePageTime;
 
-    /**
-     * Total time is needed to create all records
-     */
-    private long timeRecordCreation;
+    private long deletedEntries;
+    private long timeDeleteEntry;
+    private long deleteEntryPages;
+    private long deleteEntryFilePages;
+    private long deleteEntryPageTime;
+    private long deleteEntryFilePageTime;
 
-    /**
-     * Amount of all deleted records
-     */
-    private long deletedRecords;
-
-    /**
-     * Total time is needed to delete all records
-     */
-    private long timeRecordDeletion;
-
-    /**
-     * Amount of all updated records
-     */
-    private long updatedRecords;
-
-    /**
-     * Total time which is needed to update all records
-     */
-    private long timeRecordUpdate;
-
-    /**
-     * Amount of all read records
-     */
-    private long readRecords;
-
-    /**
-     * Total time which is needed to read all records.
-     */
-    private long timeRecordRead;
+    private long readEntries;
+    private long timeReadEntry;
+    private long readEntryPages;
+    private long readEntryFilePages;
+    private long readEntryPageTime;
+    private long readEntryFilePageTime;
 
     @Override
-    public ClusterCountersHolder newInstance() {
-      return new ClusterCountersHolder();
+    public IndexCountersHolder newInstance() {
+      return new IndexCountersHolder();
     }
 
     @Override
     public void clean() {
       super.clean();
 
-      createdRecords = 0;
-      timeRecordCreation = 0;
+      updatedEntries = 0;
+      timeUpdateEntry = 0;
+      updateEntryPages = 0;
+      updateEntryFilePages = 0;
+      updateEntryPageTime = 0;
+      updateEntryFilePageTime = 0;
 
-      deletedRecords = 0;
-      timeRecordDeletion = 0;
+      deletedEntries = 0;
+      timeDeleteEntry = 0;
+      deleteEntryPages = 0;
+      deleteEntryFilePages = 0;
+      deleteEntryPageTime = 0;
+      deleteEntryFilePageTime = 0;
 
-      updatedRecords = 0;
-      timeRecordUpdate = 0;
-
-      readRecords = 0;
-      timeRecordRead = 0;
+      readEntries = 0;
+      timeReadEntry = 0;
+      readEntryPages = 0;
+      readEntryFilePages = 0;
+      readEntryPageTime = 0;
+      readEntryFilePageTime = 0;
     }
 
-    public long getRecordCreationTime() {
-      if (createdRecords == 0)
+    public long getUpdateEntryTime() {
+      if (updatedEntries == 0)
         return -1;
 
-      return timeRecordCreation / createdRecords;
+      return timeUpdateEntry / updatedEntries;
     }
 
-    public long getRecordDeletionTime() {
-      if (deletedRecords == 0)
+    public long getUpdateEntryPages() {
+      if (updatedEntries == 0)
         return -1;
 
-      return timeRecordDeletion / deletedRecords;
+      return updateEntryPages / updatedEntries;
     }
 
-    public long getRecordUpdateTime() {
-      if (updatedRecords == 0)
+    public long getUpdateEntryHitRate() {
+      if (updateEntryPages == 0)
         return -1;
 
-      return timeRecordUpdate / updatedRecords;
+      return (int) ((100 * (updateEntryPages - updateEntryFilePages)) / updateEntryPages);
     }
 
-    public long getRecordReadTime() {
-      if (readRecords == 0)
+    public long getUpdateEntryPageTime() {
+      if (updateEntryPages == 0)
         return -1;
 
-      return timeRecordRead / readRecords;
+      return updateEntryPageTime / updateEntryPages;
+    }
+
+    public long getUpdateEntryFilePageTime() {
+      if (updateEntryFilePages == 0)
+        return -1;
+
+      return updateEntryFilePageTime / updateEntryFilePages;
+    }
+
+    public long getDeleteEntryTime() {
+      if (deletedEntries == 0)
+        return -1;
+
+      return timeDeleteEntry / deletedEntries;
+    }
+
+    public long getDeleteEntryPages() {
+      if (deletedEntries == 0)
+        return -1;
+
+      return deleteEntryPages / deletedEntries;
+    }
+
+    public long getDeleteEntryHitRate() {
+      if (deleteEntryPages == 0)
+        return -1;
+
+      return (int) ((100 * (deleteEntryPages - deleteEntryFilePages)) / deleteEntryPages);
+    }
+
+    public long getReadEntryTime() {
+      if (readEntries == 0)
+        return -1;
+
+      return timeReadEntry / readEntries;
+    }
+
+    public long getReadEntryPages() {
+      if (readEntries == 0)
+        return -1;
+
+      return readEntryPages / readEntries;
     }
 
     @Override
     public ODocument toDocument() {
       final ODocument document = super.toDocument();
 
-      document.field("recordCreationTime", getRecordCreationTime());
-      document.field("recordDeletionTime", getRecordDeletionTime());
-      document.field("recordUpdateTime", getRecordUpdateTime());
-      document.field("recordReadTime", getRecordReadTime());
+      document.field("updateEntryTime", getUpdateEntryTime());
+      document.field("updateEntryPages", getUpdateEntryPages());
+      document.field("deleteEntryTime", getDeleteEntryTime());
+      document.field("deleteEntryPages", getDeleteEntryPages());
+      document.field("readEntryTime", getReadEntryTime());
+      document.field("readEntryPages", getReadEntryPages());
 
       return document;
     }
-  }
 
-  public static class IndexCountersHolder extends PerformanceCountersHolder {
-    @Override
-    public IndexCountersHolder newInstance() {
-      return new IndexCountersHolder();
+    private class UpdateEntryOperation extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        IndexCountersHolder.this.updateEntryPages += pages;
+        IndexCountersHolder.this.updateEntryFilePages += filePages;
+      }
+    }
+
+    private class DeleteEntryOperation extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        IndexCountersHolder.this.deleteEntryPages += pages;
+        IndexCountersHolder.this.deleteEntryFilePages += filePages;
+      }
+    }
+
+    private class ReadEntryOperation extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        IndexCountersHolder.this.readEntryPages += pages;
+        IndexCountersHolder.this.readEntryFilePages += filePages;
+      }
     }
   }
 
   public static class RidbagCountersHolder extends PerformanceCountersHolder {
+    private long updatedEntries;
+    private long timeUpdateEntry;
+    private long updateEntryPages;
+    private long updateEntryFilePages;
+
+    private long deletedEntries;
+    private long timeDeleteEntry;
+    private long deleteEntryPages;
+    private long deleteEntryFilePages;
+
+    private long readEntries;
+    private long timeReadEntry;
+    private long readEntryPages;
+    private long readEntryFilePages;
+
+    private long loads;
+    private long loadTime;
+    private long loadPages;
+    private long loadFilePages;
+
     @Override
     public PerformanceCountersHolder newInstance() {
       return new RidbagCountersHolder();
+    }
+
+    @Override
+    public void clean() {
+      super.clean();
+
+      updatedEntries = 0;
+      timeUpdateEntry = 0;
+      updateEntryPages = 0;
+      updateEntryFilePages = 0;
+
+      deletedEntries = 0;
+      timeDeleteEntry = 0;
+      deleteEntryPages = 0;
+      deleteEntryFilePages = 0;
+
+      readEntries = 0;
+      timeReadEntry = 0;
+      readEntryPages = 0;
+      readEntryFilePages = 0;
+
+      loads = 0;
+      loadTime = 0;
+      loadPages = 0;
+      loadFilePages = 0;
+    }
+
+    public long getUpdateEntryTime() {
+      if (updatedEntries == 0)
+        return -1;
+
+      return timeUpdateEntry / updatedEntries;
+    }
+
+    public long getUpdateEntryPages() {
+      if (updatedEntries == 0)
+        return -1;
+
+      return updateEntryPages / updatedEntries;
+    }
+
+    public long getDeleteEntryTime() {
+      if (deletedEntries == 0)
+        return -1;
+
+      return timeDeleteEntry / deletedEntries;
+    }
+
+    public long getDeleteEntryPages() {
+      if (deletedEntries == 0)
+        return -1;
+
+      return deleteEntryPages / deletedEntries;
+    }
+
+    public long getReadEntryTime() {
+      if (timeReadEntry == 0)
+        return -1;
+
+      return timeReadEntry / readEntries;
+    }
+
+    public long getReadEntryPages() {
+      if (readEntries == 0)
+        return -1;
+
+      return readEntryPages / readEntries;
+    }
+
+    public long getLoadTime() {
+      return loadTime / loads;
+    }
+
+    public long getLoadPages() {
+      if (loads == 0)
+        return -1;
+
+      return loadPages / loads;
+    }
+
+    @Override
+    public ODocument toDocument() {
+      final ODocument document = super.toDocument();
+
+      document.field("updateEntryTime", getUpdateEntryTime());
+      document.field("updateEntryPages", getUpdateEntryPages());
+      document.field("deleteEntryTime", getDeleteEntryTime());
+      document.field("deleteEntryPages", getDeleteEntryPages());
+      document.field("readEntryTime", getReadEntryTime());
+      document.field("readEntryPages", getReadEntryPages());
+      document.field("loadTime", getLoadTime());
+      document.field("loadPages", getLoadPages());
+
+      return document;
+    }
+
+    private class UpdateEntryOperation extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        RidbagCountersHolder.this.updateEntryPages += pages;
+        RidbagCountersHolder.this.updateEntryFilePages += filePages;
+      }
+    }
+
+    private class DeleteEntryPages extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        RidbagCountersHolder.this.deleteEntryPages += pages;
+        RidbagCountersHolder.this.deleteEntryFilePages += filePages;
+      }
+    }
+
+    private class ReadEntryPages extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        RidbagCountersHolder.this.readEntryPages += pages;
+        RidbagCountersHolder.this.readEntryFilePages += filePages;
+      }
+    }
+
+    private class LoadPages extends OOperation {
+      @Override
+      void incrementOperationsCounter(int pages, int filePages) {
+        RidbagCountersHolder.this.loadPages += pages;
+        RidbagCountersHolder.this.loadFilePages += filePages;
+      }
     }
   }
 
@@ -1522,6 +1899,8 @@ public class OSessionStoragePerformanceStatistic {
      * Amount of pages in total which were written to disk cache.
      */
     private long pageWriteToCacheCount = 0;
+
+    private OOperation currentOperation;
 
     /**
      * Clears all performance data.

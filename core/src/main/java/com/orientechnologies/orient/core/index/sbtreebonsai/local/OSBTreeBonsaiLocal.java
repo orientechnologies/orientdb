@@ -21,7 +21,7 @@
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.concur.lock.ONewLockManager;
+import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -56,7 +56,7 @@ import java.util.concurrent.locks.Lock;
  * @since 1.6.0
  */
 public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTreeBonsai<K, V> {
-  private static final ONewLockManager<Integer> fileLockManager = new ONewLockManager<Integer>();
+  private static final OPartitionedLockManager<Integer> fileLockManager = new OPartitionedLockManager<Integer>();
 
   private static final int                  PAGE_SIZE             =
       OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
@@ -169,7 +169,10 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   @Override
   public V get(K key) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startRidBagEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -201,13 +204,18 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopRidBagEntryReadTimer(1);
       completeOperation();
     }
   }
 
   @Override
   public boolean put(K key, V value) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startRidBagEntryUpdateTimer();
     try {
       final OAtomicOperation atomicOperation;
       try {
@@ -271,6 +279,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       }
 
     } finally {
+      if (statistic != null)
+        statistic.stopRidBagEntryUpdateTimer();
       completeOperation();
     }
   }
@@ -463,7 +473,10 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   public void load(OBonsaiBucketPointer rootBucketPointer) {
+    OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startRidBagEntryLoadTimer();
     try {
       Lock lock = fileLockManager.acquireExclusiveLock(fileId);
       try {
@@ -495,6 +508,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         lock.unlock();
       }
     } finally {
+      if (statistic != null)
+        statistic.stopRidBagEntryLoadTimer();
       completeOperation();
     }
   }
@@ -547,7 +562,10 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   @Override
   public V remove(K key) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startRidBagEntryDeletionTimer();
     try {
       final OAtomicOperation atomicOperation;
       try {
@@ -599,6 +617,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         lock.unlock();
       }
     } finally {
+      if (statistic != null)
+        statistic.stopRidBagEntryDeletionTimer();
       completeOperation();
     }
   }
@@ -628,7 +648,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   @Override
   public void loadEntriesMinor(K key, boolean inclusive, RangeResultListener<K, V> listener) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    int readEntries = 0;
+    if (statistic != null)
+      statistic.startRidBagEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -656,8 +680,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
                 index = bucket.size() - 1;
 
               for (int i = index; i >= 0; i--) {
-                if (!listener.addResult(bucket.getEntry(i)))
+                if (!listener.addResult(bucket.getEntry(i))) {
+                  readEntries++;
                   return;
+                }
+
               }
 
               bucketPointer = bucket.getLeftSibling();
@@ -679,6 +706,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopRidBagEntryReadTimer(readEntries);
       completeOperation();
     }
   }
@@ -716,7 +745,12 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
    */
   @Override
   public void loadEntriesMajor(K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
+    int readEntries = 0;
+
     startOperation();
+    if (statistic != null)
+      statistic.startRidBagEntryReadTimer();
     try {
       if (!ascSortOrder)
         throw new IllegalStateException("Descending sort order is not supported.");
@@ -744,8 +778,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
                   keySerializer, valueSerializer, getChanges(atomicOperation, cacheEntry), this);
               int bucketSize = bucket.size();
               for (int i = index; i < bucketSize; i++) {
-                if (!listener.addResult(bucket.getEntry(i)))
+                if (!listener.addResult(bucket.getEntry(i))) {
+                  readEntries++;
                   return;
+                }
+
               }
 
               bucketPointer = bucket.getRightSibling();
@@ -766,6 +803,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopRidBagEntryReadTimer(readEntries);
       completeOperation();
     }
   }
@@ -795,7 +834,10 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   @Override
   public K firstKey() {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startRidBagEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -872,13 +914,18 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopRidBagEntryReadTimer(1);
       completeOperation();
     }
   }
 
   @Override
   public K lastKey() {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startRidBagEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -955,6 +1002,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopRidBagEntryReadTimer(1);
       completeOperation();
     }
   }
@@ -962,7 +1011,12 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   @Override
   public void loadEntriesBetween(K keyFrom, boolean fromInclusive, K keyTo, boolean toInclusive,
       RangeResultListener<K, V> listener) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
+    int readEntries = 0;
+
     startOperation();
+    if (statistic != null)
+      statistic.startRidBagEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -1007,8 +1061,11 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
                 endIndex = indexTo;
 
               for (int i = startIndex; i <= endIndex; i++) {
-                if (!listener.addResult(bucket.getEntry(i)))
+                if (!listener.addResult(bucket.getEntry(i))) {
+                  readEntries++;
                   break resultsLoop;
+                }
+
               }
 
               if (bucketPointer.equals(bucketPointerTo))
@@ -1034,6 +1091,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopRidBagEntryReadTimer(readEntries);
       completeOperation();
     }
   }

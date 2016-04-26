@@ -53,7 +53,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRe
 @Test
 public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
   static {
-    OGlobalConfiguration.INDEX_TX_MODE.setValue("FULL");
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }
 

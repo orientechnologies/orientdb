@@ -52,7 +52,7 @@ public class OConcurrentModificationException extends ONeedRetryException implem
     this.recordOperation = exception.recordOperation;
   }
 
-  protected OConcurrentModificationException(String message) {
+  protected OConcurrentModificationException(final String message) {
     super(message);
   }
 

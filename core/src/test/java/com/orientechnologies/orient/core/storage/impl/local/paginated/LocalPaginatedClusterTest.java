@@ -1,13 +1,22 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
+import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
+import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -15,25 +24,12 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Andrey Lomakin
@@ -41,16 +37,16 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
  */
 @Test
 public class LocalPaginatedClusterTest {
-  private static final int RECORD_SYSTEM_INFORMATION =
-      2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE;
-  public    OPaginatedCluster paginatedCluster;
-  protected String            buildDirectory;
+  private static final int           RECORD_SYSTEM_INFORMATION = 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
+      + OLongSerializer.LONG_SIZE;
+  public OPaginatedCluster           paginatedCluster;
+  protected String                   buildDirectory;
 
-  protected O2QCache    readCache;
-  protected OWriteCache writeCache;
+  protected O2QCache                 readCache;
+  protected OWriteCache              writeCache;
 
   protected OAtomicOperationsManager atomicOperationsManager;
-  private OContextConfiguration contextConfiguration = new OContextConfiguration();
+  private OContextConfiguration      contextConfiguration      = new OContextConfiguration();
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -93,9 +89,7 @@ public class LocalPaginatedClusterTest {
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
     when(storage.getMode()).thenReturn("rw");
 
-
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
-
 
     paginatedCluster = new OPaginatedCluster("paginatedClusterTest", storage);
     paginatedCluster.configure(storage, 5, "paginatedClusterTest", buildDirectory, -1);
@@ -286,7 +280,6 @@ public class LocalPaginatedClusterTest {
     Assert.assertNotNull(rec);
   }
 
-
   public void testManyAllocatePositionMap() throws IOException {
     final int records = 10000;
 
@@ -299,16 +292,13 @@ public class LocalPaginatedClusterTest {
       positions.add(position);
     }
 
-    for(int i = 0 ; i < records; i++) {
+    for (int i = 0; i < records; i++) {
       OPhysicalPosition position = positions.get(i);
       paginatedCluster.createRecord(new byte[20], 1, (byte) 'd', position);
       ORawBuffer rec = paginatedCluster.readRecord(position.clusterPosition);
       Assert.assertNotNull(rec);
     }
   }
-
-
-
 
   public void testRemoveHalfSmallRecords() throws IOException {
     final int records = 10000;
@@ -1264,4 +1254,58 @@ public class LocalPaginatedClusterTest {
         fullContentSize + (OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE));
     readCache.release(cacheEntry, writeCache);
   }
+
+  public void testResurrectRecord() throws IOException {
+    byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
+    int recordVersion = 0;
+    recordVersion++;
+    recordVersion++;
+
+    OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
+    Assert.assertEquals(physicalPosition.clusterPosition, 0);
+
+    Assert.assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition),
+        OPaginatedCluster.RECORD_STATUS.PRESENT);
+
+    for (int i = 0; i < 1000; ++i) {
+      recordVersion++;
+      smallRecord = new byte[] { 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3 };
+      try {
+        paginatedCluster.recycleRecord(physicalPosition.clusterPosition, smallRecord, recordVersion, (byte) 2);
+        Assert.fail("it must be not possible to resurrect a non deleted record");
+      } catch (OPaginatedClusterException e) {
+        // OK
+      }
+
+      Assert.assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition),
+          OPaginatedCluster.RECORD_STATUS.PRESENT);
+
+      paginatedCluster.deleteRecord(physicalPosition.clusterPosition);
+
+      Assert.assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition),
+          OPaginatedCluster.RECORD_STATUS.REMOVED);
+
+      ORawBuffer rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition);
+      Assert.assertNull(rawBuffer);
+
+      paginatedCluster.recycleRecord(physicalPosition.clusterPosition, smallRecord, recordVersion, (byte) 2);
+
+      rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition);
+      Assert.assertNotNull(rawBuffer);
+      Assert.assertEquals(rawBuffer.version, recordVersion);
+      Assert.assertEquals(rawBuffer.buffer, smallRecord);
+      Assert.assertEquals(rawBuffer.recordType, 2);
+
+      // UPDATE 10 TIMES WITH A GROWING CONTENT TO STIMULATE DEFRAG AND CHANGE OF PAGES
+      for (int k = 0; k < 10; ++k) {
+        final byte[] updatedRecord = new byte[10 * k];
+        for (int j = 0; j < updatedRecord.length; ++j) {
+          updatedRecord[j] = (byte) j;
+        }
+        paginatedCluster.updateRecord(physicalPosition.clusterPosition, updatedRecord, recordVersion, (byte) 4);
+
+      }
+    }
+  }
+
 }

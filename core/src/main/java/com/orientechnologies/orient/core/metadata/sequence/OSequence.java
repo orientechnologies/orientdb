@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OApi;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -12,6 +13,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
+import java.util.Random;
 import java.util.concurrent.Callable;
 
 /**
@@ -23,7 +25,7 @@ public abstract class OSequence extends ODocumentWrapper {
   public static final int     DEFAULT_INCREMENT = 1;
   public static final int     DEFAULT_CACHE     = 20;
 
-  protected static final int  DEF_MAX_RETRY     = 100;
+  protected static final int  DEF_MAX_RETRY     = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
   public static final String  CLASS_NAME        = "OSequence";
 
   private static final String FIELD_START       = "start";
@@ -210,6 +212,12 @@ public abstract class OSequence extends ODocumentWrapper {
       try {
         return callInTx(callable);
       } catch (OConcurrentModificationException ex) {
+        try {
+          Thread.sleep(1 + new Random().nextInt(OGlobalConfiguration.SEQUENCE_RETRY_DELAY.getValueAsInteger()));
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          break;
+        }
         reloadSequence();
       } catch (OStorageException e) {
         if (e.getCause() instanceof OConcurrentModificationException) {

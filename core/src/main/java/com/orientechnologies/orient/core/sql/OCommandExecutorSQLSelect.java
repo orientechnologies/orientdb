@@ -1529,18 +1529,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final int[] clusterIds = iTarget instanceof ORecordIteratorClusters ? ((ORecordIteratorClusters) iTarget).getClusterIds()
         : null;
 
-    // CHECK TO ACTIVATE AUTOMATIC PARALLEL EXECUTION
-    if ((parallel || OGlobalConfiguration.QUERY_PARALLEL_AUTO.getValueAsBoolean()) && iTarget instanceof ORecordIteratorClusters) {
-      if (clusterIds.length > 1) {
-        final long totalRecords = getDatabase().getStorage().count(clusterIds);
-        if (totalRecords > OGlobalConfiguration.QUERY_PARALLEL_MINIMUM_RECORDS.getValueAsLong()) {
-          // ACTIVATE PARALLEL
-          parallel = true;
-          OLogManager.instance().debug(this, "Activated parallel query automatically. clusterIds=%d, totalRecords=%d",
-              clusterIds.length, totalRecords);
-        }
-      }
-    }
+    parallel = (parallel || OGlobalConfiguration.QUERY_PARALLEL_AUTO.getValueAsBoolean()) && canRunParallel(clusterIds, iTarget);
 
     try {
       if (parallel)
@@ -1556,6 +1545,21 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     } finally {
       context.setVariable("fetchingFromTargetElapsed", (System.currentTimeMillis() - startFetching));
     }
+  }
+
+  private boolean canRunParallel(int[] clusterIds, Iterator<? extends OIdentifiable> iTarget) {
+    if (iTarget instanceof ORecordIteratorClusters) {
+      if (clusterIds.length > 1) {
+        final long totalRecords = getDatabase().getStorage().count(clusterIds);
+        if (totalRecords > OGlobalConfiguration.QUERY_PARALLEL_MINIMUM_RECORDS.getValueAsLong()) {
+          // ACTIVATE PARALLEL
+          OLogManager.instance().debug(this, "Activated parallel query. clusterIds=%d, totalRecords=%d",
+              clusterIds.length, totalRecords);
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private boolean canScanStorageCluster(final int[] clusterIds) {

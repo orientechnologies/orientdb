@@ -312,7 +312,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   public V get(K key) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryReadTimer();
     try {
       atomicOperationsManager.acquireReadLock(this);
       try {
@@ -374,13 +377,18 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         atomicOperationsManager.releaseReadLock(this);
       }
     } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryReadTimer();
       completeOperation();
     }
   }
 
   @Override
   public void put(K key, V value) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryUpdateTimer();
     try {
       final OAtomicOperation atomicOperation;
       try {
@@ -408,13 +416,18 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         releaseExclusiveLock();
       }
     } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryUpdateTimer();
       completeOperation();
     }
   }
 
   @Override
   public V remove(K key) {
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
+    if (statistic != null)
+      statistic.startIndexEntryDeletionTimer();
     try {
       final OAtomicOperation atomicOperation;
       try {
@@ -512,6 +525,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
         releaseExclusiveLock();
       }
     } finally {
+      if (statistic != null)
+        statistic.stopIndexEntryDeletionTimer();
       completeOperation();
     }
   }

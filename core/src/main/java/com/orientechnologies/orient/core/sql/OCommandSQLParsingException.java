@@ -20,17 +20,45 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.exception.OCoreException;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 
 public class OCommandSQLParsingException extends OCoreException {
 
-  private String            text;
-  private int               position;
+  private Integer line;
+  private Integer column;
+  private String  statement;
+  private String  text;
+  private int     position;
   private static final long serialVersionUID = -7430575036316163711L;
+
+  public OCommandSQLParsingException(ParseException e, String statement) {
+    super(generateMessage(e, statement, e.currentToken.next.beginLine, e.currentToken.next.endColumn));
+    this.statement = statement;
+    this.line = e.currentToken.next.beginLine;
+    this.column = e.currentToken.next.endColumn;
+  }
+
+  private static String generateMessage(ParseException e, String statement, Integer line, Integer column) {
+    StringBuilder result = new StringBuilder();
+    result.append("Error parsing query:\n");
+    String[] stmLines = statement.split("\n");
+    for (int i = 0; i < stmLines.length; i++) {
+      result.append(stmLines[i]);
+      result.append("\n");
+      if (i == line - 1) {
+        for (int c = 0; c < column - 1; c++) {
+          result.append(' ');
+        }
+        result.append("^\n");
+      }
+    }
+    result.append(e.getMessage());
+    return result.toString();
+  }
 
   private static String makeMessage(int position, String text, String message) {
     StringBuilder buffer = new StringBuilder();
-    buffer.append("Error on parsing command at position #");
-    buffer.append(position);
+    buffer.append("Error on parsing command");
     buffer.append(": ").append(message);
 
     if (text != null) {
@@ -61,5 +89,17 @@ public class OCommandSQLParsingException extends OCoreException {
 
     text = iText;
     position = iPosition;
+  }
+
+  public Integer getLine() {
+    return line;
+  }
+
+  public Integer getColumn() {
+    return column;
+  }
+
+  public String getStatement() {
+    return statement;
   }
 }

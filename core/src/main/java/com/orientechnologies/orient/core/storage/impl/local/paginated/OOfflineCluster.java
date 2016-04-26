@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
@@ -26,6 +24,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.io.IOException;
 
 /**
  * Represents an offline cluster, created with the "alter cluster X status offline" command. To restore the original cluster assure
@@ -130,6 +130,11 @@ public class OOfflineCluster implements OCluster {
   @Override
   public void updateRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
+  }
+
+  @Override
+  public void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+    throw new OOfflineClusterException("Cannot resurrect a record on offline cluster '" + name + "'");
   }
 
   @Override

@@ -21,19 +21,13 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.ODistributedStorage;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Distributed task to fix delete record in conflict on synchronization.
@@ -41,46 +35,33 @@ import java.io.ObjectOutput;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public class OResurrectRecordTask extends OAbstractRemoteTask {
+public class OResurrectRecordTask extends OUpdateRecordTask {
   private static final long serialVersionUID = 1L;
   public static final int   FACTORYID        = 11;
-  private ORecordId         rid;
-  private int               version;
 
   public OResurrectRecordTask() {
   }
 
-  public OResurrectRecordTask(final OIdentifiable iRid, final int iVersion) {
-    rid = (ORecordId) iRid.getIdentity();
-    version = iVersion;
-  }
-
   public OResurrectRecordTask(final ORecord record) {
-    this((ORecordId) record.getIdentity(), record.getVersion());
-  }
-
-  public ORecordId getRid() {
-    return rid;
-  }
-
-  public int getVersion() {
-    return version;
+    super(record);
   }
 
   @Override
-  public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
+  public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentTx database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "resurrecting deleted record %s/%s v.%d", database.getName(), rid.toString(), version);
 
-    if (((ODistributedStorage) database.getStorage()).resurrectDeletedRecord(rid)) {
+    try {
+      database.getStorage().recyclePosition(rid, content, version, recordType);
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
           "+-> resurrected deleted record");
       return Boolean.TRUE;
-    }
 
-    ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "+-> error on resurrecting deleted record: the record is already deleted");
+    } catch (Exception e) {
+      ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "+-> error on resurrecting deleted record: the record is already deleted");
+    }
     return Boolean.FALSE;
   }
 
@@ -89,15 +70,14 @@ public class OResurrectRecordTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(rid.toString());
-    out.writeInt(version);
+  public ORemoteTask getUndoTask(ODistributedRequestId reqId) {
+    return null;
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    rid = new ORecordId(in.readUTF());
-    version = in.readInt();
+  public ORemoteTask getFixTask(ODistributedRequest iRequest, ORemoteTask iOriginalTask, Object iBadResponse, Object iGoodResponse,
+      String executorNodeName, ODistributedServerManager dManager) {
+    return null;
   }
 
   @Override
@@ -109,5 +89,4 @@ public class OResurrectRecordTask extends OAbstractRemoteTask {
   public int getFactoryId() {
     return FACTORYID;
   }
-
 }

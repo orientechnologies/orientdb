@@ -49,7 +49,6 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -67,7 +66,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
   private final OScriptManager                                                       scriptManager                 = new OScriptManager();
   private final ThreadGroup                                                          threadGroup;
-  private final AtomicInteger                                                        serialId                      = new AtomicInteger();
   private final ReadWriteLock                                                        engineLock                    = new ReentrantReadWriteLock();
   private final ORecordConflictStrategyFactory                                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
   private final ReferenceQueue<OOrientStartupListener>                               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
@@ -109,6 +107,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   private ThreadPoolExecutor             workers;
   private OSignalHandler                 signalHandler;
   private volatile OSecuritySystem       security;
+  private boolean                        runningDistributed   = false;
 
   private static class WeakHashSetValueHolder<T> extends WeakReference<T> {
     private final int hashCode;
@@ -536,10 +535,10 @@ public class Orient extends OListenerManger<OOrientListener> {
         final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
         if (oldStorage != null)
           storage = oldStorage;
-      }
 
-      for (OOrientListener l : browseListeners())
-        l.onStorageRegistered(storage);
+        for (OOrientListener l : browseListeners())
+          l.onStorageRegistered(storage);
+      }
 
       return storage;
     } finally {
@@ -986,5 +985,13 @@ public class Orient extends OListenerManger<OOrientListener> {
     public String toString() {
       return getClass().getSimpleName();
     }
+  }
+
+  public boolean isRunningDistributed() {
+    return runningDistributed;
+  }
+
+  public void setRunningDistributed(final boolean runningDistributed) {
+    this.runningDistributed = runningDistributed;
   }
 }
