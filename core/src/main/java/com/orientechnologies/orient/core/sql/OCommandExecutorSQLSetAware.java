@@ -91,11 +91,33 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
     }
     //CLUSTER
     if (iTarget.toUpperCase().startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
-      String clusterName = iTarget.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
+      String clusterName = iTarget.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length()).trim();
       ODatabaseDocumentInternal db = getDatabase();
-      OCluster cluster = db.getStorage().getClusterByName(clusterName);
-      if (cluster != null) {
-        return db.getMetadata().getSchema().getClassByClusterId(cluster.getId());
+      if(clusterName.startsWith("[") && clusterName.endsWith("]")) {
+        String[] clusterNames = clusterName.substring(1, clusterName.length()-1).split(",");
+        OClass candidateClass = null;
+        for(String cName:clusterNames){
+          OCluster aCluster = db.getStorage().getClusterByName(cName.trim());
+          if(aCluster == null){
+            return null;
+          }
+          OClass aClass = db.getMetadata().getSchema().getClassByClusterId(aCluster.getId());
+          if(aClass==null){
+            return null;
+          }
+          if(candidateClass == null || candidateClass.equals(aClass) || candidateClass.isSubClassOf(aClass)){
+            candidateClass = aClass;
+          }else {
+            return null;
+          }
+
+        }
+        return candidateClass;
+      } else {
+        OCluster cluster = db.getStorage().getClusterByName(clusterName);
+        if (cluster != null) {
+          return db.getMetadata().getSchema().getClassByClusterId(cluster.getId());
+        }
       }
     }
     return null;
