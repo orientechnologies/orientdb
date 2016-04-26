@@ -54,15 +54,15 @@ public class OMethodCall extends SimpleNode {
   }
 
   public boolean isBidirectional() {
-    return bidirectionalMethods.contains(methodName.getValue().toLowerCase());
+    return bidirectionalMethods.contains(methodName.getStringValue().toLowerCase());
   }
 
   public Object execute(Object targetObjects, OCommandContext ctx) {
-    return execute(targetObjects, ctx, methodName.getValue(), params, null);
+    return execute(targetObjects, ctx, methodName.getStringValue(), params, null);
   }
 
   public Object execute(Object targetObjects, Iterable<OIdentifiable> iPossibleResults, OCommandContext ctx) {
-    return execute(targetObjects, ctx, methodName.getValue(), params, iPossibleResults);
+    return execute(targetObjects, ctx, methodName.getStringValue(), params, iPossibleResults);
   }
 
   private Object execute(Object targetObjects, OCommandContext ctx, String name, List<OExpression> iParams,
@@ -94,7 +94,7 @@ public class OMethodCall extends SimpleNode {
       throw new UnsupportedOperationException();
     }
 
-    String straightName = methodName.getValue();
+    String straightName = methodName.getStringValue();
     if (straightName.equalsIgnoreCase("out")) {
       return execute(targetObjects, ctx, "in", params, null);
     }

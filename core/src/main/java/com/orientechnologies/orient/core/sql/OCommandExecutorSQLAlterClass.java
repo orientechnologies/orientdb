@@ -103,7 +103,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
       }
       OAlterClassStatement stm = (OAlterClassStatement) preParsedStatement;
       if (this.preParsedStatement != null && stm.property == ATTRIBUTES.CUSTOM) {
-        value = "" + stm.customKey.getValue() + "=" + stm.customValue.toString();
+        value = "" + stm.customKey.getStringValue() + "=" + stm.customValue.toString();
       }
 
       if (parserTextUpperCase.endsWith("UNSAFE")) {
