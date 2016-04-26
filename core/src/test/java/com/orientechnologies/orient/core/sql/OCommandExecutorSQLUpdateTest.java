@@ -397,4 +397,26 @@ public class OCommandExecutorSQLUpdateTest {
   }
 
 
+  @Test
+  public void testUpdateContentOnClusterTarget() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:UpdateContentOnClusterTarget");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class Foo")).execute();
+      db.command(new OCommandSQL("CREATE class Bar")).execute();
+      db.command(new OCommandSQL("CREATE property Foo.bar EMBEDDED Bar")).execute();
+
+      db.command(new OCommandSQL("insert into cluster:foo set bar = {\"value\":\"zz\\\\\"}")).execute();
+      db.command(new OCommandSQL("UPDATE cluster:foo set bar = {\"value\":\"foo\\\\\"}")).execute();
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from cluster:foo"));
+      ODocument doc = (ODocument) result.iterator().next();
+      assertEquals(((ODocument)doc.field("bar")).field("value"), "foo\\");
+
+
+
+    } finally {
+      db.close();
+    }
+  }
+
 }
