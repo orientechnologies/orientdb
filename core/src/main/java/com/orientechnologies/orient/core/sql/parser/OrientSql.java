@@ -5150,7 +5150,7 @@ Token token;
     throw new Error("Missing return statement in function");
   }
 
-  final public String Alias() throws ParseException {
+  final public OIdentifier Alias() throws ParseException {
  /*@bgen(jjtree) Alias */
   OAlias jjtn000 = new OAlias(JJTALIAS);
   boolean jjtc000 = true;
@@ -5161,7 +5161,7 @@ Token token;
           jjtree.closeNodeScope(jjtn000, true);
           jjtc000 = false;
           jjtn000.jjtSetLastToken(getToken(0));
-         {if (true) return identifier.getValue();}
+         {if (true) return identifier;}
     } catch (Throwable jjte000) {
           if (jjtc000) {
             jjtree.clearNodeScope(jjtn000);

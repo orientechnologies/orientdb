@@ -670,6 +670,11 @@ public class OSelectStatementTest {
         + " SKIP 10 LIMIT 1");
   }
 
+  @Test
+  public void testQuotedBacktick(){
+    checkRightSyntax("SELECT \"\" as `bla\\`bla` from foo");
+  }
+
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());
     OrientSql osql = new OrientSql(is);
