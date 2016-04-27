@@ -1239,6 +1239,12 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 1);
   }
 
+  public void testParamConcat() {
+    //issue #6049
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from TestParams where surname like ? + '%'"), "fo");
+    assertEquals(results.size(), 1);
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {
