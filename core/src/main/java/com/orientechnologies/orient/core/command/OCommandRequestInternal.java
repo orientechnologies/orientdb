@@ -47,4 +47,14 @@ public interface OCommandRequestInternal extends OCommandRequest, OSerializableS
   boolean isCacheableResult();
 
   void setCacheableResult(boolean iValue);
+
+  /**
+   * Communicate to a listener if the result set is an record based or anything else
+   *
+   * @param recordResultSet
+   */
+  void setRecordResultSet(boolean recordResultSet);
+
+  boolean isRecordResultSet();
+
 }

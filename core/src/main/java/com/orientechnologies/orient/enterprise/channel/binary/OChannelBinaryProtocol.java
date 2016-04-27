@@ -29,9 +29,9 @@ import java.io.IOException;
 
 /**
  * The range of the requests is 1-79.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ *
  */
 public class OChannelBinaryProtocol {
   // OUTGOING
@@ -143,7 +143,8 @@ public class OChannelBinaryProtocol {
   public static final int   PROTOCOL_VERSION_34                       = 34;                 // ON CONNECT DECLARE IF PUSH MESSAGES
                                                                                             // ARE SUPPORTED + COLLECT STATS
 
-  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_34;
+  public static final int   PROTOCOL_VERSION_35                       = 35;
+  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_35;
 
   public static OIdentifiable readIdentifiable(final OChannelBinary network) throws IOException {
     final int classId = network.readShort();

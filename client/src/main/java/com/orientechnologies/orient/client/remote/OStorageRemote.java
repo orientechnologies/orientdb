@@ -1231,9 +1231,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
       result = coll;
       break;
-    case 'a':
-      final String value = new String(network.readBytes());
-      result = ORecordSerializerStringAbstract.fieldTypeFromStream(null, ORecordSerializerStringAbstract.getType(value), value);
+    case 'w':
+      final OIdentifiable record = OChannelBinaryProtocol.readIdentifiable(network);
+      //((ODocument) record).setLazyLoad(false);
+      result = ((ODocument) record).field("result");
       break;
 
     default:

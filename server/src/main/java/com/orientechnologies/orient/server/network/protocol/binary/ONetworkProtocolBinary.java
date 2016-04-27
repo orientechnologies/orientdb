@@ -33,6 +33,7 @@ import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
+import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -1417,7 +1418,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         // SYNCHRONOUS
         sendOk(connection, clientTxId);
 
-        serializeValue(connection, listener, result, false);
+        boolean isRecordResultSet = true;
+        if(command instanceof OCommandRequestInternal)
+          isRecordResultSet = command.isRecordResultSet();
+
+        serializeValue(connection, listener, result,false,isRecordResultSet);
 
         if (listener instanceof OSyncCommandResultListener) {
           // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
@@ -1439,7 +1444,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   public void serializeValue(final OClientConnection connection, final OAbstractCommandResultListener listener, Object result,
-      boolean load) throws IOException {
+      boolean load,boolean isRecordResultSet) throws IOException {
     if (result == null) {
       // NULL VALUE
       channel.writeByte((byte) 'n');
@@ -1459,6 +1464,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       if (listener != null)
         listener.result(doc);
       writeIdentifiable(connection, doc);
+    } else if (!isRecordResultSet) {
+      writeSimpleValue(connection, listener, result);
     } else if (OMultiValue.isMultiValue(result)) {
       final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
       channel.writeByte(collectionType);
@@ -1515,6 +1522,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     } else {
       // ANY OTHER (INCLUDING LITERALS)
+      writeSimpleValue(connection, listener, result);
+    }
+  }
+
+  private void writeSimpleValue(OClientConnection connection, OAbstractCommandResultListener listener, Object result)
+      throws IOException {
+    if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_35) {
+      channel.writeByte((byte) 'w');
+      ODocument document = new ODocument();
+      document.field("result", result);
+      writeIdentifiable(connection, document);
+    } else {
       channel.writeByte((byte) 'a');
       final StringBuilder value = new StringBuilder(64);
       if (listener != null)
