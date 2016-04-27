@@ -2130,6 +2130,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         OLogManager.instance().debug(this, "Error during acquiring of connection to URL " + lastURL, e);
         network = null;
         cause = e;
+        if (cause instanceof OInterruptedException)
+          throw (OInterruptedException) cause;
       }
 
       if (network == null) {
