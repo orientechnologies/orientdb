@@ -187,12 +187,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       activeNodes.put(localNodeName, hazelcastInstance.getCluster().getLocalMember());
       activeNodesNamesByMemberId.put(nodeUuid, localNodeName);
 
+      configurationMap = new OHazelcastDistributedMap(hazelcastInstance);
+      membershipListenerMapRegistration = configurationMap.getHazelcastMap().addEntryListener(this, true);
+
       membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
 
       OServer.registerServerInstance(localNodeName, serverInstance);
-
-      configurationMap = new OHazelcastDistributedMap(hazelcastInstance);
-      membershipListenerMapRegistration = configurationMap.getHazelcastMap().addEntryListener(this, true);
 
       // REGISTER CURRENT NODES
       for (Member m : hazelcastInstance.getCluster().getMembers()) {
@@ -498,11 +498,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public ODistributedResponse sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
-      final Collection<String> iTargetNodes, final ORemoteTask iTask, final EXECUTION_MODE iExecutionMode, final Object localResult,
-      final OCallable<Void, ODistributedRequestId> iAfterSentCallback) {
+      final Collection<String> iTargetNodes, final ORemoteTask iTask, final long reqId, final EXECUTION_MODE iExecutionMode,
+      final Object localResult, final OCallable<Void, ODistributedRequestId> iAfterSentCallback) {
 
-    final ODistributedRequest req = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), iDatabaseName, iTask,
-        iExecutionMode);
+    final ODistributedRequest req = new ODistributedRequest(taskFactory, nodeId, reqId, iDatabaseName, iTask, iExecutionMode);
 
     final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (currentDatabase != null && currentDatabase.getUser() != null)
@@ -764,14 +763,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
     super.onDrop(iDatabase);
 
-    configurationMap.remove(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName);
+    if (configurationMap != null) {
+      configurationMap.remove(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + nodeName + "." + dbName);
 
-    final int availableNodes = getAvailableNodes(dbName);
-    if (availableNodes == 0) {
-      // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
-      configurationMap.remove(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Dropped last copy of database %s, removing it from the cluster", dbName);
+      final int availableNodes = getAvailableNodes(dbName);
+      if (availableNodes == 0) {
+        // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
+        configurationMap.remove(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
+        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "Dropped last copy of database %s, removing it from the cluster", dbName);
+      }
     }
   }
 
@@ -1432,12 +1433,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     for (Map.Entry<String, OLogSequenceNumber> entry : selectedNodes.entrySet()) {
 
       final OSyncDatabaseDeltaTask deployTask = new OSyncDatabaseDeltaTask(entry.getValue());
-      // DON'T EXCLUDE CLUSTERS ANYMORE TO GET SCHEMA, INDEX MGR CHANGES
-      // for (String clName : cfg.getClusterNames()) {
-      // if (!cfg.isReplicationActive(clName, nodeName))
-      // deployTask.excludeClusterName(clName);
-      // }
-
       final List<String> targetNodes = new ArrayList<String>(1);
       targetNodes.add(entry.getKey());
 
@@ -1445,7 +1440,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
           databaseName, entry.getValue());
 
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
-          EXECUTION_MODE.RESPONSE, null, null).getPayload();
+          getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null).getPayload();
 
       ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Receiving delta sync for '%s'...", databaseName);
 
@@ -1521,7 +1516,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask();
 
     final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, selectedNodes, deployTask,
-        EXECUTION_MODE.RESPONSE, null, null).getPayload();
+        getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null).getPayload();
 
     ODistributedServerLog.debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Deploy returned: %s", results);
 
@@ -1641,7 +1636,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
               for (int chunkNum = 2; !chunk.last; chunkNum++) {
                 final ODistributedResponse response = sendRequest(databaseName, null, OMultiValue.getSingletonList(iNode),
                     new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-                    EXECUTION_MODE.RESPONSE, null, null);
+                    getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null);
 
                 final Object result = response.getPayload();
                 if (result instanceof Boolean)
@@ -2193,7 +2188,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   public long getNextMessageIdCounter() {
-    return localMessageIdCounter.getAndIncrement();
+    final long v = localMessageIdCounter.getAndIncrement();
+    return v;
   }
 
   private void closeRemoteServer(final String node) {

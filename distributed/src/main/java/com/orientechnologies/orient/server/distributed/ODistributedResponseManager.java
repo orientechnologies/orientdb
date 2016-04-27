@@ -19,21 +19,20 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Asynchronous response manager
@@ -154,8 +153,6 @@ public class ODistributedResponseManager {
           }
 
           if (foundBucket) {
-            if (responseGroup.size() > 0 && responseGroup.get(0).getExecutorNodeName().equals(response.getExecutorNodeName()))
-              OLogManager.instance().error(this, "AAAA");
             responseGroup.add(response);
             break;
           }
@@ -584,8 +581,20 @@ public class ODistributedResponseManager {
       return (RuntimeException) goodResponsePayload;
     else if (goodResponsePayload instanceof Throwable)
       return OException.wrapException(new ODistributedException(composeConflictMessage()), (Throwable) goodResponsePayload);
-    else
+    else {
+      if (responseGroups.size() <= 2) {
+        // CHECK IF THE BAD RESPONSE IS AN EXCEPTION, THEN PROPAGATE IT
+        for (int i = 0; i < responseGroups.size(); ++i) {
+          if (i == bestResponsesGroupIndex)
+            continue;
+          final List<ODistributedResponse> badResponses = responseGroups.get(i);
+          if (badResponses.get(0).getPayload() instanceof RuntimeException)
+            return (RuntimeException) badResponses.get(0).getPayload();
+        }
+      }
+
       return new ODistributedOperationException(composeConflictMessage());
+    }
   }
 
   private String composeConflictMessage() {
@@ -624,21 +633,22 @@ public class ODistributedResponseManager {
       // // NO NEED TO UNDO AN OPERATION THAT RETURNED EXCEPTION
       // // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
       // continue;
+      //
+      final String targetNode = r.getExecutorNodeName();
+      if (targetNode.equals(dManager.getLocalNodeName()))
+        // AVOID TO UNDO LOCAL NODE BECAUSE THE OPERATION IS MANAGED APART
+        continue;
 
       final ORemoteTask task = request.getTask();
       if (task instanceof OAbstractReplicatedTask) {
         final ORemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request.getId());
 
         if (undoTask != null) {
-          final String targetNode = r.getExecutorNodeName();
-          if (!dManager.getLocalNodeName().equals(targetNode)) {
-            // REMOTE
-            ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
-                "Sending undo message (%s) for request (%s) to server %s", undoTask, request, targetNode);
+          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), targetNode, DIRECTION.OUT,
+              "Sending undo message (%s) for request (%s) to server %s", undoTask, request, targetNode);
 
-            dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(targetNode), undoTask,
-                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
-          }
+          dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(targetNode), undoTask,
+              dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
         }
       }
     }
@@ -670,7 +680,7 @@ public class ODistributedResponseManager {
               "Sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
           dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), fixTask,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
+              dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE, null, null);
         }
       }
     }

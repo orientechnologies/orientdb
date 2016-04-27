@@ -46,6 +46,9 @@ import static org.junit.Assert.*;
  * - check consistency no-replica (can retry only records in shard1 and shard2)
  * - restart server3
  * - check consistency no-replica
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenarioTest {

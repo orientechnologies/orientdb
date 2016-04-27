@@ -33,10 +33,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 
 import java.io.PrintStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
@@ -476,21 +472,28 @@ public enum OGlobalConfiguration {
 
   PROFILER_MAXVALUES("profiler.maxValues", "Maximum values to store. Values are managed in a LRU", Integer.class, 200),
 
+  SEQUENCE_MAX_RETRY("sequence.maxRetry", "Maximum number of retries between attempt to change a sequence in concurrent mode",
+      Integer.class, 100),
+
+  SEQUENCE_RETRY_DELAY("sequence.retryDelay",
+      "Maximum number of ms to wait between concurrent modification exceptions. The value is computed as random between 1 and this number",
+      Integer.class, 200),
+
   /**
    * Interval between snapshots of profiler state in milliseconds, default value is 100.
    */
   STORAGE_PROFILER_SNAPSHOT_INTERVAL("storageProfiler.intervalBetweenSnapshots",
       "Interval between snapshots of profiler state in milliseconds", Integer.class, 100),
 
-  STORAGE_PROFILER_CLEANUP_INTERVAL("storageProfiler.cleanUpInterval",
-      "Interval between time series in milliseconds", Integer.class, 5000),
+  STORAGE_PROFILER_CLEANUP_INTERVAL("storageProfiler.cleanUpInterval", "Interval between time series in milliseconds",
+      Integer.class, 5000),
 
   // LOG
-  LOG_CONSOLE_LEVEL("log.console.level", "Console logging level.", String.class, "info", new OConfigurationChangeCallback() {
-    public void change(final Object iCurrentValue, final Object iNewValue) {
-      OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
-    }
-  }),
+      LOG_CONSOLE_LEVEL("log.console.level", "Console logging level.", String.class, "info", new OConfigurationChangeCallback() {
+        public void change(final Object iCurrentValue, final Object iNewValue) {
+          OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
+        }
+      }),
 
   LOG_FILE_LEVEL("log.file.level", "File logging level.", String.class, "fine", new OConfigurationChangeCallback() {
     public void change(final Object iCurrentValue, final Object iNewValue) {
@@ -522,7 +525,7 @@ public enum OGlobalConfiguration {
       Integer.class, 500),
 
   // QUERY
-  QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met.", Boolean.class, false),
+      QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met.", Boolean.class, false),
 
   QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords",
       "Minimum number of records to activate parallel query automatically.", Long.class, 300000),
@@ -686,39 +689,38 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)
-  CLIENT_KRB5_CONFIG("client.krb5.config", "Location of the Kerberos configuration file", String.class, null),
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_CONFIG("client.krb5.config", "Location of the Kerberos configuration file",
+      String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)
-  CLIENT_KRB5_CCNAME("client.krb5.ccname", "Location of the Kerberos client ticketcache", String.class, null),
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_CCNAME("client.krb5.ccname", "Location of the Kerberos client ticketcache",
+      String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)
-  CLIENT_KRB5_KTNAME("client.krb5.ktname", "Location of the Kerberos client keytab", String.class, null),
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_KTNAME("client.krb5.ktname", "Location of the Kerberos client keytab",
+      String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)
-  CLIENT_CREDENTIAL_INTERCEPTOR("client.credentialinterceptor", "The name of the CredentialInterceptor class", String.class, null),
-  
-  /**
-   * @Since 2.2
-   */
-  @OApi(maturity = OApi.MATURITY.NEW)
-  CREATE_DEFAULT_USERS("security.createDefaultUsers", "Indicates whether default database users should be created", Boolean.class, true),
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_CREDENTIAL_INTERCEPTOR("client.credentialinterceptor",
+      "The name of the CredentialInterceptor class", String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)
-  SERVER_SECURITY_FILE("server.security.file", "Location of the OrientDB security.json configuration file", String.class, null),
+  @OApi(maturity = OApi.MATURITY.NEW) CREATE_DEFAULT_USERS("security.createDefaultUsers",
+      "Indicates whether default database users should be created", Boolean.class, true),
 
+  /**
+   * @Since 2.2
+   */
+  @OApi(maturity = OApi.MATURITY.NEW) SERVER_SECURITY_FILE("server.security.file",
+      "Location of the OrientDB security.json configuration file", String.class, null),
 
   @Deprecated DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout",
       "Maximum timeout (in ms) to wait for the response in replication.", Long.class, 500000l, true),
@@ -939,7 +941,8 @@ public enum OGlobalConfiguration {
       final long diskCacheInMB = jvmMaxMemory / 1024 / 1024;
       OLogManager.instance().info(null,
           "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB direct=%,dMB os=%,dMB), assuming maximum direct memory size "
-              + "equals to maximum JVM heap size.", diskCacheInMB, diskCacheInMB, diskCacheInMB, osMemory / 1024 / 1024);
+              + "equals to maximum JVM heap size.",
+          diskCacheInMB, diskCacheInMB, diskCacheInMB, osMemory / 1024 / 1024);
       DISK_CACHE_SIZE.setValue(diskCacheInMB);
       MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB, MEMORY_CHUNK_SIZE.getValueAsLong()));
       return;
@@ -961,8 +964,8 @@ public enum OGlobalConfiguration {
       diskCacheInMB = Math.min(O2QCache.MIN_CACHE_SIZE, maxDirectMemoryInMB);
       OLogManager.instance().warn(null,
           "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB direct=%,dMB). Set lower Maximum Heap (-Xmx "
-              + "setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + diskCacheInMB + "MB", osMemory / 1024 / 1024,
-          jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB);
+              + "setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + diskCacheInMB + "MB",
+          osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB);
       DISK_CACHE_SIZE.setValue(diskCacheInMB);
       MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB, MEMORY_CHUNK_SIZE.getValueAsLong()));
 

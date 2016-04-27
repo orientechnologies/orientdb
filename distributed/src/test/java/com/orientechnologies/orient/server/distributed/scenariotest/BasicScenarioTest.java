@@ -41,6 +41,9 @@ import org.junit.Test;
  * - 5 threads for each server write 100 records
  * - check consistency
  * - no faults
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public class BasicScenarioTest extends AbstractScenarioTest {

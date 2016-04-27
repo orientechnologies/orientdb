@@ -84,7 +84,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
 
       className = word.toString();
       if(this.preParsedStatement!=null){
-        className = ((OCreateClassStatement)preParsedStatement).name.getValue();
+        className = ((OCreateClassStatement)preParsedStatement).name.getStringValue();
       }
       if (className == null)
         throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);

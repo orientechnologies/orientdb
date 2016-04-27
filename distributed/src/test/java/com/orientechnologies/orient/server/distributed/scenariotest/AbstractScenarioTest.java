@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterInsertTest;
 import com.orientechnologies.orient.server.distributed.ODistributedStorageEventListener;
 import com.orientechnologies.orient.server.distributed.ServerRun;
@@ -32,11 +31,13 @@ import com.orientechnologies.orient.server.distributed.ServerRun;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * It represents an abstract scenario test.
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTest {
@@ -47,7 +48,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   // FIXME: these should be parameters read from configuration file (or, if missing, defaulted to some values)
   private final long               PROPAGATION_DOCUMENT_RETRIEVE_TIMEOUT = 15000;
-  protected final long             DOCUMENT_WRITE_TIMEOUT                = 5000;
+  protected final long             DOCUMENT_WRITE_TIMEOUT                = 10000;
 
   protected ODocument loadRecord(ODatabaseDocumentTx database, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
@@ -62,16 +63,26 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     return result.get(0);
   }
 
+  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType) throws InterruptedException, ExecutionException {
+    executeMultipleWrites(executeOnServers, storageType, null);
+  }
+
   /*
    * It executes multiple writes using different concurrent writers (as specified by the value writerCount) on all the servers
    * present in the collection passed as parameter. Each write performs a document insert and some update and check operations on
-   * it.
+   * it. Tha target db is passed as parameter, otherwise is kept the default one on servers.
    */
 
-  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType)
+  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType, String dbURL)
       throws InterruptedException, ExecutionException {
 
-    ODatabaseDocumentTx database = poolFactory.get(getPlocalDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+    ODatabaseDocumentTx database;
+    if(dbURL == null) {
+      database = poolFactory.get(getPlocalDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
+    }
+    else {
+      database = poolFactory.get(dbURL, "admin", "admin").acquire();
+    }
 
     try {
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
@@ -344,7 +355,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     }, String.format("Expected value %s for field %s on record %s", expectedFieldValue, fieldName, recordId));
   }
 
-  private ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {
+  protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {
     ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
     try {
@@ -354,10 +365,17 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
           return MISSING_DOCUMENT;
         }
         assertTrue("No record found with id = '" + uniqueId + "'!", false);
-      } else if (result.size() > 1)
-        assertTrue(result.size() + " records found with id = '" + uniqueId + "'!", false);
+      } else if (result.size() > 1) {
+        fail(result.size() + " records found with id = '" + uniqueId + "'!");
+      }
 
-      return (ODocument) result.get(0).reload();
+      ODocument doc = (ODocument) result.get(0);
+//      try {
+//        doc.reload();
+//      } catch (ORecordNotFoundException e) {
+////        e.printStackTrace();
+//      }
+      return doc;
     } finally {
       ODatabaseRecordThreadLocal.INSTANCE.set(null);
     }
@@ -411,8 +429,6 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   protected void simulateServerFault(ServerRun serverRun, String faultName) {
 
-    OServer server = serverRun.getServerInstance();
-
     if (faultName.equals("shutdown"))
       serverRun.terminateServer();
     else if (faultName.equals("net-fault")) {
@@ -464,7 +480,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected void waitFor(final int serverId, OCallable<Boolean, ODatabaseDocumentTx> condition) {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(serverId))).open("admin",
+        "admin");
     try {
 
       while (true) {
@@ -515,7 +532,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       this.useTransaction = useTransaction;
     }
 
-    protected RecordUpdater(final String dbServerUrl, final String rid, final Map<String, Object> fields, final boolean useTransaction) {
+    protected RecordUpdater(final String dbServerUrl, final String rid, final Map<String, Object> fields,
+        final boolean useTransaction) {
       this.dbServerUrl = dbServerUrl;
       this.useTransaction = useTransaction;
       this.recordToUpdate = retrieveRecord(dbServerUrl, rid);
@@ -589,28 +607,39 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   class AfterRecordLockDelayer implements ODistributedStorageEventListener {
 
-    private long delay;
+    private String serverName;
+    private long   delay;
 
-    public AfterRecordLockDelayer(long delay) {
+    public AfterRecordLockDelayer(String serverName, long delay) {
+      this.serverName = serverName;
       this.delay = delay;
-      OLogManager.instance().info(this, ("Delayer created with " + delay + "ms of delay"));
+      OLogManager.instance().info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName,
+          Thread.currentThread().getId());
     }
 
-    public AfterRecordLockDelayer() {
-      this(DOCUMENT_WRITE_TIMEOUT);
+    public AfterRecordLockDelayer(String serverName) {
+      this.serverName = serverName;
+      this.delay = DOCUMENT_WRITE_TIMEOUT;
+      OLogManager.instance().info(this, "Thread [%s-%d] delayer created with " + delay + "ms of delay", serverName,
+          Thread.currentThread().getId());
     }
 
     @Override
     public void onAfterRecordLock(ORecordId rid) {
-      try {
-        OLogManager.instance().info(this, "Thread [%d] waiting for %dms with locked record [%s]", Thread.currentThread().getId(),
-            delay, rid.toString());
-        Thread.sleep(delay);
-        OLogManager.instance().info(this, "Thread [%d] finished waiting for %dms with locked record [%s]",
-            Thread.currentThread().getId(), delay, rid.toString());
-      } catch (InterruptedException e) {
+      if (delay > 0)
+        try {
+          OLogManager.instance().info(this, "Thread [%s-%d] waiting for %dms with locked record [%s]", serverName,
+              Thread.currentThread().getId(), delay, rid.toString());
+          Thread.sleep(delay);
 
-      }
+          OLogManager.instance().info(this, "Thread [%s-%d] finished waiting for %dms with locked record [%s]", serverName,
+              Thread.currentThread().getId(), delay, rid.toString());
+
+          // RESET THE DELAY FOR FURTHER TIMES
+          delay = 0;
+
+        } catch (InterruptedException e) {
+        }
     }
 
     @Override

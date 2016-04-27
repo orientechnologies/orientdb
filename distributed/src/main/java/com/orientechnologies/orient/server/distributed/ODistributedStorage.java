@@ -123,9 +123,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             ODistributedRequestId reqId = null;
             try {
               final ODistributedResponse dResponse = dManager.sendRequest(operation.getDatabaseName(), operation.getClusterNames(),
-                  operation.getNodes(), operation.getTask(),
+                  operation.getNodes(), operation.getTask(), operation.getMessageId(),
                   operation.getCallback() != null ? EXECUTION_MODE.RESPONSE : EXECUTION_MODE.NO_RESPONSE,
-                  operation.getLocalResult(), operation.getAfterRequestCallback());
+                  operation.getLocalResult(), operation.getAfterSendCallback());
 
               if (dResponse != null) {
                 reqId = dResponse.getRequestId();
@@ -136,8 +136,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
             } finally {
               // ASSURE IT'S CALLED ANYWAY
-              if (operation.getAfterRequestCallback() != null)
-                operation.getAfterRequestCallback().call(reqId);
+              if (operation.getAfterSendCallback() != null)
+                operation.getAfterSendCallback().call(reqId);
             }
 
           } catch (InterruptedException e) {
@@ -316,7 +316,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           } else {
 
             final ODistributedResponse dResponse = dManager.sendRequest(getName(), involvedClusters, nodes, task,
-                EXECUTION_MODE.RESPONSE, localResult, null);
+                dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResult, null);
 
             result = dResponse.getPayload();
 
@@ -377,8 +377,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         nodes.clear();
         nodes.add(nodeName);
 
-        results.put(nodeName,
-            dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE, null, null).getPayload());
+        results.put(nodeName, dManager.sendRequest(getName(), involvedClusters, nodes, task, dManager.getNextMessageIdCounter(),
+            EXECUTION_MODE.RESPONSE, null, null).getPayload());
       }
     }
 
@@ -587,7 +587,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
                   // SYNCHRONOUS CALL: REPLICATE IT
                   final ODistributedResponse dResponse = dManager.sendRequest(getName(), Collections.singleton(finalClusterName),
-                      nodes, task, EXECUTION_MODE.RESPONSE, localPlaceholder, unlockCallback);
+                      nodes, task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localPlaceholder, unlockCallback);
 
                   final Object payload = dResponse.getPayload();
                   if (payload != null) {
@@ -610,7 +610,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 } else {
                   // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
                   asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(finalClusterName), nodes,
-                      task, null, localPlaceholder, unlockCallback));
+                      task, dManager.getNextMessageIdCounter(), localPlaceholder, unlockCallback, null));
                 }
               } else
                 unlockCallback.call(null);
@@ -659,7 +659,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       // DISTRIBUTE IT
       final Object dResult = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
-          new OReadRecordTask(iRecordId), EXECUTION_MODE.RESPONSE, null, null).getPayload();
+          new OReadRecordTask(iRecordId), dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null).getPayload();
 
       if (dResult instanceof ONeedRetryException)
         throw (ONeedRetryException) dResult;
@@ -708,8 +708,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
 
       // DISTRIBUTE IT
-      final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
-          new OReadRecordIfNotLatestTask(rid, recordVersion), EXECUTION_MODE.RESPONSE, null, null).getPayload();
+      final Object result = dManager
+          .sendRequest(getName(), Collections.singleton(clusterName), nodes, new OReadRecordIfNotLatestTask(rid, recordVersion),
+              dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null)
+          .getPayload();
 
       if (result instanceof ONeedRetryException)
         throw (ONeedRetryException) result;
@@ -822,7 +824,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 if (syncMode || localResult == null) {
                   // REPLICATE IT
                   final ODistributedResponse dResponse = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
-                      task, EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
+                      task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
 
                   final Object payload = dResponse.getPayload();
 
@@ -842,7 +844,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
                 // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
                 asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, task,
-                    null, localResultPayload, unlockCallback));
+                    dManager.getNextMessageIdCounter(), localResultPayload, unlockCallback, null));
               }
               return localResult;
             }
@@ -958,7 +960,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 if (syncMode || localResult == null) {
                   // REPLICATE IT
                   final ODistributedResponse dResponse = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
-                      task, EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
+                      task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
 
                   final Object payload = dResponse.getPayload();
 
@@ -978,7 +980,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
                 if (!nodes.isEmpty())
                   asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, task,
-                      null, localResultPayload, unlockCallback));
+                      dManager.getNextMessageIdCounter(), localResultPayload, unlockCallback, null));
               }
               return localResult;
             }
@@ -1061,23 +1063,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     }
   }
 
-  Object executeOperationInLock(final boolean iExclusiveLock,
-      final OCallable<Object, OCallable<Void, ODistributedRequestId>> callback) {
+  Object executeOperationInLock(final boolean iExclusiveLock, final OCallable<Object, Void> callback) {
     if (iExclusiveLock)
       messageManagementLock.writeLock().lock();
     else
       messageManagementLock.readLock().lock();
 
     try {
-      final OCallable<Void, ODistributedRequestId> unlockCallback = new OCallable<Void, ODistributedRequestId>() {
-        @Override
-        public Void call(final ODistributedRequestId req) {
-          // UNLOCK AS SOON AS THE REQUEST IS SENT
-          return null;
-        }
-      };
-
-      return callback.call(unlockCallback);
+      return callback.call(null);
     } finally {
       if (iExclusiveLock)
         messageManagementLock.writeLock().unlock();

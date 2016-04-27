@@ -85,7 +85,7 @@ public class ServerRun {
     return createDatabase(iName, null);
   }
 
-  protected OrientBaseGraph createDatabase(final String iName, final OCallable<Object, OrientGraphFactory> iCfgCallback) {
+  public OrientBaseGraph createDatabase(final String iName, final OCallable<Object, OrientGraphFactory> iCfgCallback) {
     String dbPath = getDatabasePath(iName);
 
     new File(dbPath).mkdirs();

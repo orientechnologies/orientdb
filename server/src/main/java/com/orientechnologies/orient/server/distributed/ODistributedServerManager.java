@@ -139,6 +139,7 @@ public interface ODistributedServerManager {
    * @param iClusterNames
    * @param iTargetNodeNames
    * @param iTask
+   * @param messageId Message Id as long
    * @param iExecutionMode
    * @param localResult
    *          It's the result of the request executed locally
@@ -147,7 +148,7 @@ public interface ODistributedServerManager {
    * @return
    */
   ODistributedResponse sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames,
-      ORemoteTask iTask, EXECUTION_MODE iExecutionMode, Object localResult,
+      ORemoteTask iTask, long messageId, EXECUTION_MODE iExecutionMode, Object localResult,
       OCallable<Void, ODistributedRequestId> iAfterSentCallback);
 
   ODocument getStats();

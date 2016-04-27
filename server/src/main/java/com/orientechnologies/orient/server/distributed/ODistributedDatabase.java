@@ -32,6 +32,9 @@ import java.util.Collection;
  *
  */
 public interface ODistributedDatabase {
+
+  String getDatabaseName();
+
   ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, Collection<String> iNodes,
       ODistributedRequest.EXECUTION_MODE iExecutionMode, Object localResult,
       OCallable<Void, ODistributedRequestId> iAfterSentCallback);

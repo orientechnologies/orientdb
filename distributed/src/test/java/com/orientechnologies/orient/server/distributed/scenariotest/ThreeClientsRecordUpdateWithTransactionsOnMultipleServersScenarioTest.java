@@ -116,9 +116,9 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioTe
     System.out.println("Actual version: " + actualVersion);
 
     // sets a delay for operations on distributed storage of all servers
-    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer(DOCUMENT_WRITE_TIMEOUT));
-    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer(DOCUMENT_WRITE_TIMEOUT / 4));
-    ((ODistributedStorage) dbServer3.getStorage()).setEventListener(new AfterRecordLockDelayer(DOCUMENT_WRITE_TIMEOUT / 2));
+    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
+    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
+    ((ODistributedStorage) dbServer3.getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
 
     // updates the same record from three different clients, each calling a different server
     List<Callable<Void>> clients = new LinkedList<Callable<Void>>();

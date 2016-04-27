@@ -91,7 +91,7 @@ public class TwoClientsRecordUpdateWithTransactionsOnMultipleServersScenarioTest
     int actualVersion = record1Server1.getVersion();
 
     // sets a delay for operations on distributed storage of server1
-    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer());
+    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer("server1"));
 
     // updates the same record from two different clients, each calling a different node
     List<Callable<Void>> clients = new LinkedList<Callable<Void>>();

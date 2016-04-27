@@ -57,7 +57,7 @@ public class OSelectStatement extends OStatement {
     super(p, id);
   }
 
-  private String getAlias(OProjectionItem item) {
+  private OIdentifier getAlias(OProjectionItem item) {
     if (item.getAlias() != null) {
       return item.getAlias();
     } else {

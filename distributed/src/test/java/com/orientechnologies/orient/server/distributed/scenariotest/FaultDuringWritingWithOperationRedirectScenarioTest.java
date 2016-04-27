@@ -44,6 +44,9 @@ import static org.junit.Assert.*;
  * - check consistency on all servers:
  *      - all the records destined to server3 were redirected to an other server, so we must inspect consistency for all 500 records
  *      - all records on each server are consistent in the cluster
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public class FaultDuringWritingWithOperationRedirectScenarioTest extends AbstractScenarioTest {

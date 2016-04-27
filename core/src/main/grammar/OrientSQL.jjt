@@ -531,7 +531,7 @@ TOKEN :
 {
   < IDENTIFIER: ( ((<DOLLAR>) | <LETTER>) (<PART_LETTER>)* ) >
 |
-  < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
+  < QUOTED_IDENTIFIER: ( "`" (~["`"] | "\\`") (~["`"] | "\\`")*  "`") >
 |
   < INDEX_COLON: <INDEX> ":" >
 |
@@ -1971,11 +1971,11 @@ OArrayRangeSelector ArrayRangeSelector():
 }
 
 
-String Alias():
+OIdentifier Alias():
 { OIdentifier identifier; }
 {
 	identifier = Identifier()
-	{return identifier.getValue();}
+	{return identifier;}
 }
 
 ORecordAttribute RecordAttribute():

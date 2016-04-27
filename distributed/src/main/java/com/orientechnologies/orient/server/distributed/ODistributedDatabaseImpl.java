@@ -327,20 +327,20 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (iRequestId.equals(oldReqId)) {
         // SAME ID, ALREADY LOCKED
         ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "Distributed transaction: %s re=locked record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
+            "Distributed transaction: %s locked record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
             iRequestId);
         return true;
       }
     }
 
-    // if (ODistributedServerLog.isDebugEnabled())
-    if (locked)
-      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Distributed transaction: %s locked record %s in database '%s'", iRequestId, iRecord, databaseName);
-    else
-      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Distributed transaction: %s cannot lock record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
-          oldReqId);
+    if (ODistributedServerLog.isDebugEnabled())
+      if (locked)
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "Distributed transaction: %s locked record %s in database '%s'", iRequestId, iRecord, databaseName);
+      else
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "Distributed transaction: %s cannot lock record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
+            oldReqId);
 
     return locked;
   }
@@ -352,18 +352,26 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     final ODistributedRequestId owner = lockManager.remove(iRecord.getIdentity());
 
-    // if (ODistributedServerLog.isDebugEnabled())
-    ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-        "Distributed transaction: %s unlocked record %s in database '%s' (owner=%s)", requestId, iRecord, databaseName, owner);
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Distributed transaction: %s unlocked record %s in database '%s' (owner=%s)", requestId, iRecord, databaseName, owner);
   }
 
   @Override
   public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId) {
-    final ODistributedTxContextImpl ctx = new ODistributedTxContextImpl(this, reqId);
-    if (activeTxContexts.put(reqId, ctx) != null)
+    ODistributedTxContextImpl ctx = new ODistributedTxContextImpl(this, reqId);
+
+    final ODistributedTxContextImpl prevCtx = activeTxContexts.putIfAbsent(reqId, ctx);
+    if (prevCtx != null) {
+      // ALREADY EXISTENT
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Distributed transaction: error on registering request %s in database '%s': request was already registered", reqId,
-          databaseName);
+          "Distributed transaction: repeating request %s in database '%s'", reqId, databaseName);
+      ctx = prevCtx;
+    } else
+      // REGISTERED
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Distributed transaction: registered request %s in database '%s'", reqId, databaseName);
+
     return ctx;
   }
 
@@ -418,6 +426,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           rollbacks, tasks, databaseName, manager.getNodeNameById(iNodeId));
   }
 
+  @Override
   public String getDatabaseName() {
     return databaseName;
   }
