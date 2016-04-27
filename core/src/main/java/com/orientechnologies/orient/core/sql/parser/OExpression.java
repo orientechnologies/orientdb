@@ -30,8 +30,6 @@ public class OExpression extends SimpleNode {
     if (value instanceof ORid) {
       ORid v = (ORid) value;
       return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
-    } else if (value instanceof OInputParameter) {
-      return ((OInputParameter) value).bindFromInputParams(ctx.getInputParameters());
     } else if (value instanceof OMathExpression) {
       return ((OMathExpression) value).execute(iCurrentRecord, ctx);
     } else if (value instanceof OJson) {
@@ -61,10 +59,6 @@ public class OExpression extends SimpleNode {
     if(value instanceof String) {
       return true;
     }
-    if(value instanceof OInputParameter) {
-      return true;
-    }
-
     if(value instanceof OMathExpression) {
       return ((OMathExpression)value).isEarlyCalculated();
     }
@@ -82,8 +76,6 @@ public class OExpression extends SimpleNode {
     // TODO create an interface for this;
 
     // if (value instanceof ORid) {
-    // return null;// TODO
-    // } else if (value instanceof OInputParameter) {
     // return null;// TODO
     // } else if (value instanceof OMathExpression) {
     // return null;// TODO

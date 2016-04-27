@@ -675,6 +675,15 @@ public class OSelectStatementTest {
     checkRightSyntax("SELECT \"\" as `bla\\`bla` from foo");
   }
 
+  @Test
+  public void testParamConcat(){
+    //issue #6049
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? ");
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? + '%'");
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like \"%\" + ? + '%'");
+  }
+
+
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());
     OrientSql osql = new OrientSql(is);
