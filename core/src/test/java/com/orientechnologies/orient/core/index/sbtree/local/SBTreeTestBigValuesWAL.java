@@ -1,50 +1,26 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import org.testng.Assert;
+import org.testng.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.orientechnologies.common.directmemory.OByteBufferPool;
-import org.mockito.Mockito;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -56,6 +32,8 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }
 
+  private ODatabaseDocumentTx expectedDatabaseDocumentTx;
+
   private String buildDirectory;
 
   private String actualStorageDir;
@@ -63,28 +41,13 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
   private ODiskWriteAheadLog writeAheadLog;
 
-  private OReadCache  actualReadCache;
-  private OWriteCache actualWriteCache;
+  private OReadCache actualReadCache;
 
-  private OReadCache  expectedReadCache;
-  private OWriteCache expectedWriteCache;
-
-  private OLocalPaginatedStorage actualStorage;
-
-  private OSBTree<Integer, byte[]> expectedSBTree;
-  private OLocalPaginatedStorage   expectedStorage;
-  private OStorageConfiguration    expectedStorageConfiguration;
-  private OStorageConfiguration    actualStorageConfiguration;
-
-  private OAtomicOperationsManager actualAtomicOperationsManager;
+  private OReadCache expectedReadCache;
 
   @BeforeClass
   @Override
   public void beforeClass() {
-    actualStorage = mock(OLocalPaginatedStorage.class);
-    actualStorageConfiguration = mock(OStorageConfiguration.class);
-    expectedStorage = mock(OLocalPaginatedStorage.class);
-    expectedStorageConfiguration = mock(OStorageConfiguration.class);
   }
 
   @AfterClass
@@ -94,26 +57,50 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
   @BeforeMethod
   public void beforeMethod() throws IOException {
-    Mockito.reset(actualStorage, expectedStorage, expectedStorageConfiguration, actualStorageConfiguration);
-
     buildDirectory = System.getProperty("buildDirectory", ".");
 
     buildDirectory += "/sbtreeWithBigValuesWALTest";
 
-    createExpectedSBTree();
+    actualStorageDir = buildDirectory + File.separator + this.getClass().getSimpleName() + "Actual";
+
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + actualStorageDir);
+    if (databaseDocumentTx.exists()) {
+      databaseDocumentTx.open("admin", "admin");
+      databaseDocumentTx.drop();
+    }
+
+    databaseDocumentTx.create();
+
+    final String expectedStorageName = this.getClass().getSimpleName() + "Expected";
+    expectedStorageDir = buildDirectory + File.separator + expectedStorageName;
+
+    expectedDatabaseDocumentTx = new ODatabaseDocumentTx("plocal:" + expectedStorageDir);
+    if (expectedDatabaseDocumentTx.exists()) {
+      expectedDatabaseDocumentTx.open("admin", "admin");
+      expectedDatabaseDocumentTx.drop();
+    }
+
+    expectedDatabaseDocumentTx.create();
+
+    expectedReadCache = ((OLocalPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getReadCache();
+
     createActualSBTree();
   }
 
   @AfterMethod
   @Override
   public void afterMethod() throws Exception {
-    sbTree.delete();
-    expectedSBTree.delete();
+    if (databaseDocumentTx.isClosed())
+      databaseDocumentTx.open("admin", "admin");
 
-    actualReadCache.deleteStorage(actualWriteCache);
-    expectedReadCache.deleteStorage(expectedWriteCache);
+    databaseDocumentTx.activateOnCurrentThread();
+    databaseDocumentTx.drop();
 
-    writeAheadLog.delete();
+    if (expectedDatabaseDocumentTx.isClosed())
+      expectedDatabaseDocumentTx.open("admin", "admin");
+
+    expectedDatabaseDocumentTx.activateOnCurrentThread();
+    expectedDatabaseDocumentTx.drop();
 
     Assert.assertTrue(new File(actualStorageDir).delete());
     Assert.assertTrue(new File(expectedStorageDir).delete());
@@ -122,104 +109,14 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
   }
 
   private void createActualSBTree() throws IOException {
-    actualStorageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
-    actualStorageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
-    actualStorageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
+    writeAheadLog = (ODiskWriteAheadLog) ((OLocalPaginatedStorage) databaseDocumentTx.getStorage()).getWALInstance();
+    writeAheadLog.preventCutTill(writeAheadLog.getFlushedLsn());
 
-    actualStorageDir = buildDirectory + "/sbtreeWithBigValuesWALTestActual";
-    when(actualStorage.getStoragePath()).thenReturn(actualStorageDir);
-    when(actualStorage.getName()).thenReturn("sbtreeBigValuesWithWALTesActual");
+    actualReadCache = ((OLocalPaginatedStorage) databaseDocumentTx.getStorage()).getReadCache();
 
-    File buildDir = new File(buildDirectory);
-    if (!buildDir.exists())
-      buildDir.mkdirs();
-
-    File actualStorageDirFile = new File(actualStorageDir);
-    if (!actualStorageDirFile.exists())
-      actualStorageDirFile.mkdirs();
-
-    OStorageVariableParser variableParser = new OStorageVariableParser(actualStorageDir);
-    when(actualStorage.getVariableParser()).thenReturn(variableParser);
-    when(actualStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(actualStorageConfiguration));
-
-    writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
-
-    when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
-    actualAtomicOperationsManager = new OAtomicOperationsManager(actualStorage);
-
-    actualWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
-        new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 100000, writeAheadLog, 100,
-        1648L * 1024 * 1024, 400L * 1024 * 1024 * 1024 + 1648L * 1024 * 1024, actualStorage, true, 1);
-    actualReadCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
-        true, 20);
-
-    when(actualStorage.getStorageTransaction()).thenReturn(null);
-    when(actualStorage.getReadCache()).thenReturn(actualReadCache);
-    when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
-    when(actualStorage.getConfiguration()).thenReturn(actualStorageConfiguration);
-    when(actualStorage.getAtomicOperationsManager()).thenReturn(actualAtomicOperationsManager);
-    when(actualStorage.getMode()).thenReturn("rw");
-
-    when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
-
-    sbTree = new OSBTree<Integer, byte[]>("actualSBTree", ".sbt", true, ".nbt", actualStorage);
+    sbTree = new OSBTree<Integer, byte[]>("actualSBTree", ".sbt", true, ".nbt",
+        (OLocalPaginatedStorage) databaseDocumentTx.getStorage());
     sbTree.create(OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, 1, false);
-  }
-
-  private void createExpectedSBTree() {
-    expectedStorageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
-    expectedStorageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
-    expectedStorageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
-
-    expectedStorageDir = buildDirectory + "/sbtreeWithBigValuesWALTestExpected";
-    when(expectedStorage.getStoragePath()).thenReturn(expectedStorageDir);
-    when(expectedStorage.getName()).thenReturn("sbtreeWithBigValuesWALTesExpected");
-
-    File buildDir = new File(buildDirectory);
-    if (!buildDir.exists())
-      buildDir.mkdirs();
-
-    File expectedStorageDirFile = new File(expectedStorageDir);
-    if (!expectedStorageDirFile.exists())
-      expectedStorageDirFile.mkdirs();
-
-    OStorageVariableParser variableParser = new OStorageVariableParser(expectedStorageDir);
-    when(expectedStorage.getVariableParser()).thenReturn(variableParser);
-    when(expectedStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(expectedStorageConfiguration));
-
-    OAtomicOperationsManager atomicOperationsManager = new OAtomicOperationsManager(expectedStorage);
-
-    expectedWriteCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
-        new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 1000000, writeAheadLog, 100,
-        1648L * 1024 * 1024, 1648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, expectedStorage, true, 1);
-    expectedReadCache = new O2QCache(400L * 1024 * 1024 * 1024,
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false, 20);
-
-    when(expectedStorage.getStorageTransaction()).thenReturn(null);
-    when(expectedStorage.getReadCache()).thenReturn(expectedReadCache);
-    when(expectedStorage.getWALInstance()).thenReturn(null);
-    when(expectedStorage.getConfiguration()).thenReturn(expectedStorageConfiguration);
-    when(expectedStorage.getMode()).thenReturn("rw");
-    when(expectedStorage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
-
-    when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
-
-    expectedSBTree = new OSBTree<Integer, byte[]>("expectedSBTree", ".sbt", true, ".nbt", expectedStorage);
-    expectedSBTree.create(OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, 1, false);
-  }
-
-  @Override
-  @Test(enabled = false)
-  protected void doReset() {
-    Mockito.reset(actualStorage, actualStorageConfiguration);
-
-    when(actualStorage.getStorageTransaction()).thenReturn(null);
-    when(actualStorage.getReadCache()).thenReturn(actualReadCache);
-    when(actualStorage.getAtomicOperationsManager()).thenReturn(actualAtomicOperationsManager);
-    when(actualStorage.getConfiguration()).thenReturn(actualStorageConfiguration);
-    when(actualStorage.getMode()).thenReturn("rw");
-    when(actualStorage.getStoragePath()).thenReturn(actualStorageDir);
-    when(actualStorage.getName()).thenReturn("sbtreeBigValuesWithWALTesActual");
   }
 
   @Override
@@ -350,82 +247,114 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
   }
 
   private void assertFileRestoreFromWAL() throws IOException {
-    sbTree.close();
-    writeAheadLog.close();
-    expectedSBTree.close();
-
-    ((O2QCache) actualReadCache).clear();
+    actualReadCache.clear();
 
     restoreDataFromWAL();
 
-    ((O2QCache) expectedReadCache).clear();
+    expectedReadCache.clear();
 
-    assertFileContentIsTheSame(expectedSBTree.getName(), sbTree.getName());
+    assertFileContentIsTheSame("expectedSBTree", sbTree.getName());
   }
 
   private void restoreDataFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, null, actualStorage);
+    OWriteAheadLog log = ((OAbstractPaginatedStorage) databaseDocumentTx.getStorage()).getWALInstance();
+
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();
+    List<OWALRecord> batch = new ArrayList<OWALRecord>();
 
     boolean atomicChangeIsProcessed = false;
     while (lsn != null) {
       OWALRecord walRecord = log.read(lsn);
+      batch.add(walRecord);
+
+      if (batch.size() >= 1000) {
+        atomicChangeIsProcessed = restoreDataFromBatch(atomicChangeIsProcessed, atomicUnit, batch);
+        batch = new ArrayList<OWALRecord>();
+      }
+
+      lsn = log.next(lsn);
+    }
+
+    if (batch.size() > 0) {
+      restoreDataFromBatch(atomicChangeIsProcessed, atomicUnit, batch);
+      batch = null;
+    }
+
+    Assert.assertTrue(atomicUnit.isEmpty());
+
+    OWriteCache writeCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
+    writeCache.flush();
+  }
+
+  private boolean restoreDataFromBatch(boolean atomicChangeIsProcessed, List<OWALRecord> atomicUnit, List<OWALRecord> records)
+      throws IOException {
+
+    final OReadCache expectedReadCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getReadCache();
+    final OWriteCache expectedWriteCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
+
+    for (OWALRecord walRecord : records) {
       atomicUnit.add(walRecord);
 
-      if (!atomicChangeIsProcessed) {
-        Assert.assertTrue(walRecord instanceof OAtomicUnitStartRecord);
+      if (!atomicChangeIsProcessed && walRecord instanceof OAtomicUnitStartRecord) {
         atomicChangeIsProcessed = true;
       } else if (walRecord instanceof OAtomicUnitEndRecord) {
         atomicChangeIsProcessed = false;
 
         for (OWALRecord restoreRecord : atomicUnit) {
           if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord
-              || restoreRecord instanceof ONonTxOperationPerformedWALRecord || restoreRecord instanceof OFileCreatedWALRecord)
+              || restoreRecord instanceof ONonTxOperationPerformedWALRecord || restoreRecord instanceof OFullCheckpointStartRecord
+              || restoreRecord instanceof OCheckpointEndRecord || restoreRecord instanceof OFuzzyCheckpointStartRecord ||
+              restoreRecord instanceof OFuzzyCheckpointEndRecord)
             continue;
 
-          final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
+          if (restoreRecord instanceof OUpdatePageRecord) {
+            final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
 
-          final long fileId = updatePageRecord.getFileId();
-          final long pageIndex = updatePageRecord.getPageIndex();
+            final long fileId = updatePageRecord.getFileId();
+            final long pageIndex = updatePageRecord.getPageIndex();
 
-          if (!expectedWriteCache.isOpen(fileId))
-            expectedReadCache.openFile(fileId, expectedWriteCache);
+            if (!expectedWriteCache.isOpen(fileId))
+              expectedReadCache.openFile(fileId, expectedWriteCache);
 
-          OCacheEntry cacheEntry = expectedReadCache
-              .load(fileId, pageIndex, true, expectedWriteCache, 0);
-          if (cacheEntry == null) {
-            do {
-              if (cacheEntry != null)
-                expectedReadCache.release(cacheEntry, expectedWriteCache);
+            OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
+            if (cacheEntry == null)
+              do {
+                cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
+              } while (cacheEntry.getPageIndex() != pageIndex);
 
-              cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
-            } while (cacheEntry.getPageIndex() != pageIndex);
-          }
-          cacheEntry.acquireExclusiveLock();
-          try {
-            ODurablePage durablePage = new ODurablePage(cacheEntry, null);
-            durablePage.restoreChanges(updatePageRecord.getChanges());
-            durablePage.setLsn(updatePageRecord.getLsn());
+            cacheEntry.acquireExclusiveLock();
+            try {
+              ODurablePage durablePage = new ODurablePage(cacheEntry, null);
+              durablePage.restoreChanges(updatePageRecord.getChanges());
+              durablePage.setLsn(updatePageRecord.getLsn());
+            } finally {
+              cacheEntry.releaseExclusiveLock();
+              expectedReadCache.release(cacheEntry, expectedWriteCache);
+            }
+          } else if (restoreRecord instanceof OFileCreatedWALRecord) {
+            final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
+            String fileName = fileCreatedCreatedRecord.getFileName().replace("actualSBTree", "expectedSBTree");
 
-            cacheEntry.markDirty();
-          } finally {
-            cacheEntry.releaseExclusiveLock();
-            expectedReadCache.release(cacheEntry, expectedWriteCache);
+            if (expectedWriteCache.exists(fileName))
+              expectedReadCache.openFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
+            else
+              expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
           }
         }
+
         atomicUnit.clear();
       } else {
-        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof ONonTxOperationPerformedWALRecord
-            || walRecord instanceof OFileCreatedWALRecord);
+        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
+            || walRecord instanceof ONonTxOperationPerformedWALRecord || walRecord instanceof OFullCheckpointStartRecord
+            || walRecord instanceof OCheckpointEndRecord || walRecord instanceof OFuzzyCheckpointStartRecord ||
+            walRecord instanceof OFuzzyCheckpointEndRecord);
       }
 
-      lsn = log.next(lsn);
     }
 
-    Assert.assertTrue(atomicUnit.isEmpty());
-    log.close();
+    return atomicChangeIsProcessed;
   }
 
   private void assertFileContentIsTheSame(String expectedBTree, String actualBTree) throws IOException {
