@@ -2103,29 +2103,9 @@ OExpression Expression():
 {
     (
         <NULL> {jjtThis.value = null;}
-
-/*        |
-        LOOKAHEAD(2)
-        token = <STRING_LITERAL>
-        {
-            jjtThis.value = token.image.substring(1, token.image.length() - 1);
-            if(token.image.startsWith("'")) {
-                jjtThis.singleQuotes = true;
-            }else{
-                jjtThis.doubleQuotes = true;
-            }
-
-        }
-
-        |
-        token = <CHARACTER_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);  jjtThis.singleQuotes = true;}
-        */
         |
         LOOKAHEAD( Rid() )
         jjtThis.value = Rid()
-        |
-        LOOKAHEAD( InputParameter() )
-        jjtThis.value = InputParameter()
         |
         LOOKAHEAD( MathExpression() )
         jjtThis.value = MathExpression()
