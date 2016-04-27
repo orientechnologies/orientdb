@@ -1306,11 +1306,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       final String value = new String(network.readBytes());
       result = ORecordSerializerStringAbstract.fieldTypeFromStream(null, ORecordSerializerStringAbstract.getType(value), value);
       break;
-    case 'w':
-      final OIdentifiable record = OChannelBinaryProtocol.readIdentifiable(network);
-      //((ODocument) record).setLazyLoad(false);
-      result = ((ODocument) record).field("result");
-      break;
 
     default:
       OLogManager.instance().warn(this, "Received unexpected result from query: %d", type);

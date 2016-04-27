@@ -1378,10 +1378,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         listener.result(doc);
       writeIdentifiable( doc);
     } else if (!isRecordResultSet) {
-      channel.writeByte((byte) 'w');
-      ODocument document = new ODocument();
-      document.field("result", result);
-      writeIdentifiable(document);
+      // ANY OTHER (INCLUDING LITERALS)
+      channel.writeByte((byte) 'a');
+      final StringBuilder value = new StringBuilder(64);
+      if (listener != null)
+        listener.result(result);
+      ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
+      channel.writeString(value.toString());
     } else if (OMultiValue.isMultiValue(result)) {
       final byte collectionType = result instanceof Set ? (byte) 's' : (byte) 'l';
       channel.writeByte(collectionType);
