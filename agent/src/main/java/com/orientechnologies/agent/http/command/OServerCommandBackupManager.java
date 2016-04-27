@@ -32,7 +32,8 @@ import java.io.IOException;
 public class OServerCommandBackupManager extends OServerCommandDistributedScope {
 
   OBackupManager                backupManager;
-  private static final String[] NAMES = { "GET|backupManager", "GET|backupManager/*", "POST|backupManager","POST|backupManager/*", "PUT|backupManager/*" };
+  private static final String[] NAMES = { "GET|backupManager", "GET|backupManager/*", "POST|backupManager", "POST|backupManager/*",
+      "PUT|backupManager/*" };
 
   public OServerCommandBackupManager() {
     super("server.backup");
@@ -85,7 +86,7 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
     } else if (parts.length == 2) {
 
-    } else if (parts.length == 3) {
+    } else if (parts.length >= 3) {
       String uuid = parts[1];
       String command = parts[2];
 
@@ -93,11 +94,20 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
         ODocument status = backupManager.logs(uuid, 0, 1);
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, status.toJSON(""), null);
       } else if (command.equalsIgnoreCase("log")) {
+
         String pagePize = iRequest.getParameter("pageSize");
         String page = iRequest.getParameter("page");
-        int pSize = pagePize != null ? Integer.valueOf(pagePize) : 5;
+        int pSize = pagePize != null ? Integer.valueOf(pagePize) : 10;
         int p = page != null ? Integer.valueOf(page) : 0;
-        ODocument history = backupManager.logs(uuid, p, pSize);
+        ODocument history;
+        if (parts.length == 4) {
+          Long unitId = Long.parseLong(parts[3]);
+          history = backupManager.logs(uuid, unitId, p, pSize);
+        } else {
+
+          history = backupManager.logs(uuid, p, pSize);
+
+        }
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, history.toJSON(""), null);
       } else {
         throw new IllegalArgumentException("cannot find executor for command:" + command);

@@ -20,26 +20,32 @@ package com.orientechnologies.agent.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Created by Enrico Risa on 31/03/16.
  */
 public class OBackupUnit {
 
-  protected List<OBackupLog> logs = new LinkedList<OBackupLog>();
+  protected Map<Long, OBackupTxGroup> groups = new LinkedHashMap<Long, OBackupTxGroup>();
 
-  public void push(OBackupLog log) {
-    logs.add(0, log);
+  public void addToGroup(OBackupLog log) {
+
+    OBackupTxGroup group = groups.get(log.getTxId());
+    if (group == null) {
+      group = new OBackupTxGroup();
+      groups.put(log.getTxId(), group);
+    }
+    group.push(log);
   }
 
-  public List<ODocument> asDocs() {
-    List<ODocument> docs = new ArrayList<ODocument>();
-    for (OBackupLog log : logs) {
-      docs.add(log.toDoc());
+  public ODocument asDoc() {
+    ODocument unit = new ODocument();
+    for (Long aLong : groups.keySet()) {
+      OBackupTxGroup group = groups.get(aLong);
+      unit.field(aLong.toString(), group.asDocs());
     }
-    return docs;
+    return unit;
   }
 }

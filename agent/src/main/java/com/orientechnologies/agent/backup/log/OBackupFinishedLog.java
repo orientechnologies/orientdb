@@ -30,8 +30,8 @@ public class OBackupFinishedLog extends OBackupLog {
   public long   elapsedTime = 0;
   public long   fileSize    = 0;
 
-  public OBackupFinishedLog(long opsId, String uuid, String dbName, String mode) {
-    super(opsId, uuid, dbName, mode);
+  public OBackupFinishedLog(long unitId, long opsId, String uuid, String dbName, String mode) {
+    super(unitId, opsId, uuid, dbName, mode);
   }
 
   @Override

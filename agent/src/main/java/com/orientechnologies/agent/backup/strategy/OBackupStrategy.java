@@ -50,17 +50,20 @@ public abstract class OBackupStrategy {
 
     OBackupLog last = logger.findLast(OBackupLogType.BACKUP_SCHEDULED, getUUID());
 
-    long lsn;
+    long txId;
+    long unitId;
     if (last != null) {
-      lsn = last.getLsn();
+      unitId = last.getUnitId();
+      txId = last.getTxId();
     } else {
-      lsn = logger.nextOpId();
+      unitId = logger.nextOpId();
+      txId = logger.nextOpId();
     }
-    return new OBackupStartedLog(lsn, getUUID(), getDbName(), getMode().toString());
+    return new OBackupStartedLog(unitId, txId, getUUID(), getDbName(), getMode().toString());
   }
 
-  public OBackupFinishedLog endBackup(long opsId) {
-    return new OBackupFinishedLog(opsId, getUUID(), getDbName(), getMode().toString());
+  public OBackupFinishedLog endBackup(long unitId, long opsId) {
+    return new OBackupFinishedLog(unitId, opsId, getUUID(), getDbName(), getMode().toString());
   }
 
   // Backup
@@ -75,7 +78,7 @@ public abstract class OBackupStrategy {
       end = doBackup(start);
       logger.log(end);
     } catch (Exception e) {
-      OBackupErrorLog error = new OBackupErrorLog(start.getLsn(), getUUID(), getDbName(), getMode().toString());
+      OBackupErrorLog error = new OBackupErrorLog(start.getUnitId(), start.getTxId(), getUUID(), getDbName(), getMode().toString());
       logger.log(error);
       listener.onEvent(cfg, error);
       return;
@@ -86,22 +89,25 @@ public abstract class OBackupStrategy {
 
   public void doRestore(OBackupListener listener, ODocument doc) {
     String databaseName = doc.field("target");
-    String path = doc.field("path");
-    Long lsnTo = doc.field("to");
+    Long unitId = doc.field("unitId");
     OServer server = OServerMain.server();
-    String url = "plocal:" + server.getDatabaseDirectory() + databaseName;
-    final ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-    if (!database.exists()) {
-      try {
+
+    ODatabaseDocumentTx database = null;
+    try {
+      OBackupFinishedLog finished = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID(), unitId);
+      String url = "plocal:" + server.getDatabaseDirectory() + databaseName;
+      database = new ODatabaseDocumentTx(url);
+      if (!database.exists()) {
         database.create();
-        database.incrementalRestore(path);
-      } catch (Exception e) {
-        e.printStackTrace();
-      } finally {
+        database.incrementalRestore(finished.getPath());
+      }
+    } catch (Exception e) {
+
+    } finally {
+      if (database != null) {
         database.close();
       }
     }
-
   }
 
   protected OBackupFinishedLog doBackup(OBackupStartedLog start) {
@@ -111,7 +117,7 @@ public abstract class OBackupStrategy {
       db = getDatabase();
       String path = calculatePath();
       String fName = db.incrementalBackup(path);
-      OBackupFinishedLog end = endBackup(start.getLsn());
+      OBackupFinishedLog end = endBackup(start.getUnitId(), start.getTxId());
       end.setFileName(fName);
       end.setPath(path);
       end.fileSize = calculateFileSize(path + File.separator + fName);
@@ -169,7 +175,7 @@ public abstract class OBackupStrategy {
       lastSchedule = logger.findLast(OBackupLogType.BACKUP_SCHEDULED, getUUID());
       if (lastSchedule != null) {
         OBackupLog lastBackup = logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
-        if (lastBackup != null && lastBackup.getLsn() == lastSchedule.getLsn()) {
+        if (lastBackup != null && lastBackup.getTxId() == lastSchedule.getTxId()) {
           lastSchedule = null;
         }
       }

@@ -19,15 +19,13 @@
 package com.orientechnologies.agent.backup.strategy;
 
 import com.orientechnologies.agent.backup.OBackupConfig;
-import com.orientechnologies.agent.backup.log.OBackupFinishedLog;
-import com.orientechnologies.agent.backup.log.OBackupLogType;
-import com.orientechnologies.agent.backup.log.OBackupLogger;
-import com.orientechnologies.agent.backup.log.OBackupScheduledLog;
+import com.orientechnologies.agent.backup.log.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
 import com.orientechnologies.orient.server.schedule.CronExpression;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.Date;
 
@@ -62,7 +60,16 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
   }
 
   protected String defaultPath() {
-    final long begin = System.currentTimeMillis();
+
+    long begin = System.currentTimeMillis();
+    try {
+      OBackupLog last = logger.findLast(OBackupLogType.BACKUP_SCHEDULED, getUUID());
+      if (last != null) {
+        begin = last.getUnitId();
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
     String basePath = cfg.field(OBackupConfig.DIRECTORY);
     String dbName = cfg.field(OBackupConfig.DBNAME);
     return basePath + File.separator + dbName + "-" + begin;
@@ -85,10 +92,21 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
 
         Date nextFull = eFull.getNextValidTimeAfter(now);
         Date nextIncremental = eIncremental.getNextValidTimeAfter(now);
-        isIncremental = nextIncremental.before(nextFull);
-
-        Date nextExecution = isIncremental ? nextIncremental : nextFull;
-        OBackupScheduledLog log = new OBackupScheduledLog(logger.nextOpId(), getUUID(), getDbName(), getMode().toString());
+        OBackupLog lastCompleted = null;
+        Long unitId = logger.nextOpId();
+        try {
+          lastCompleted = logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
+          if (lastCompleted != null && nextIncremental.before(nextFull)) {
+            unitId = lastCompleted.getUnitId();
+            isIncremental = true;
+          } else {
+            isIncremental = false;
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        Date nextExecution = nextIncremental.before(nextFull) ? nextIncremental : nextFull;
+        OBackupScheduledLog log = new OBackupScheduledLog(unitId, logger.nextOpId(), getUUID(), getDbName(), getMode().toString());
         log.nextExecution = nextExecution.getTime();
         getLogger().log(log);
         return nextExecution;

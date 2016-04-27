@@ -23,8 +23,8 @@ package com.orientechnologies.agent.backup.log;
  */
 public class OBackupStartedLog extends OBackupLog {
 
-  public OBackupStartedLog(long opsId, String uuid, String dbName, String mode) {
-    super(opsId, uuid, dbName, mode);
+  public OBackupStartedLog(long unitId, long opsId, String uuid, String dbName, String mode) {
+    super(unitId, opsId, uuid, dbName, mode);
   }
 
   @Override

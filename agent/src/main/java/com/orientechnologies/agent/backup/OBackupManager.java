@@ -19,13 +19,15 @@
 package com.orientechnologies.agent.backup;
 
 import com.orientechnologies.agent.backup.log.OBackupDiskLogger;
+import com.orientechnologies.agent.backup.log.OBackupLog;
 import com.orientechnologies.agent.backup.log.OBackupLogger;
-import com.orientechnologies.agent.backup.log.OBackupUnit;
 import com.orientechnologies.agent.backup.strategy.OBackupStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -82,7 +84,6 @@ public class OBackupManager {
   public void changeBackup(String uuid, ODocument doc) {
 
     config.changeBackup(uuid, doc);
-
     OBackupTask oBackupTask = tasks.get(uuid);
     oBackupTask.changeConfig(config, doc);
   }
@@ -94,11 +95,27 @@ public class OBackupManager {
   public ODocument logs(String uuid, int page, int pageSize) {
     ODocument history = new ODocument();
     try {
-      Map<Long, OBackupUnit> byUUID = logger.findByUUID(uuid, page, pageSize);
-      for (Long aLong : byUUID.keySet()) {
-        OBackupUnit unit = byUUID.get(aLong);
-        history.field(aLong.toString(), unit.asDocs());
+      List<OBackupLog> byUUID = logger.findAllLatestByUUID(uuid, page, pageSize);
+      List<ODocument> docs = new ArrayList<ODocument>();
+      for (OBackupLog oBackupLog : byUUID) {
+        docs.add(oBackupLog.toDoc());
       }
+      history.field("logs", docs);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return history;
+  }
+
+  public ODocument logs(String uuid, Long unitId, int page, int pageSize) {
+    ODocument history = new ODocument();
+    try {
+      List<OBackupLog> byUUID = logger.findByUUIDAndUnitId(uuid, unitId, page, pageSize);
+      List<ODocument> docs = new ArrayList<ODocument>();
+      for (OBackupLog oBackupLog : byUUID) {
+        docs.add(oBackupLog.toDoc());
+      }
+      history.field("logs", docs);
     } catch (IOException e) {
       e.printStackTrace();
     }

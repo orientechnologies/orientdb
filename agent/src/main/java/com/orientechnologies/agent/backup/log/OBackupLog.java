@@ -26,21 +26,23 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public abstract class OBackupLog {
 
   public static final String OP        = "op";
-  public static final String LSN       = "lsn";
+  public static final String UNITID    = "unitId";
+  public static final String TXID      = "txId";
   public static final String UUID      = "uuid";
   public static final String DBNAME    = "dbName";
   public static final String MODE      = "mode";
   public static final String TIMESTAMP = "timestamp";
-
+  private long               unitId;
   private String             mode;
-  private long               lsn;
+  private long               txId;
   private String             uuid;
   private String             dbName;
   private long               timestamp;
 
-  public OBackupLog(long opsId, String uuid, String dbName, String mode) {
-    this.lsn = opsId;
-    this.timestamp = System.currentTimeMillis() / 1000L;
+  public OBackupLog(long unitId, long txId, String uuid, String dbName, String mode) {
+    this.txId = txId;
+    this.unitId = unitId;
+    this.timestamp = System.currentTimeMillis();
     this.uuid = uuid;
     this.dbName = dbName;
     this.mode = mode;
@@ -49,7 +51,8 @@ public abstract class OBackupLog {
   public ODocument toDoc() {
     ODocument log = new ODocument();
     log.field(OP, getType());
-    log.field(LSN, lsn);
+    log.field(UNITID, unitId);
+    log.field(TXID, txId);
     log.field(TIMESTAMP, timestamp);
     log.field(UUID, uuid);
     log.field(MODE, mode);
@@ -60,15 +63,20 @@ public abstract class OBackupLog {
   public abstract OBackupLogType getType();
 
   public void fromDoc(ODocument doc) {
-    lsn = doc.field(LSN);
+    unitId = doc.field(UNITID);
+    txId = doc.field(TXID);
     uuid = doc.field(UUID);
     dbName = doc.field(DBNAME);
     timestamp = doc.field(TIMESTAMP);
     mode = doc.field(MODE);
   }
 
-  public long getLsn() {
-    return lsn;
+  public long getUnitId() {
+    return unitId;
+  }
+
+  public long getTxId() {
+    return txId;
   }
 
   public long getTimestamp() {

@@ -29,7 +29,8 @@ public class OBackupLogFactory {
 
     String opString = doc.field(OBackupLog.OP);
     OBackupLogType op = OBackupLogType.valueOf(opString);
-    long lsn = doc.field(OBackupLog.LSN);
+    long unitId = doc.field(OBackupLog.UNITID);
+    long txId = doc.field(OBackupLog.TXID);
     String uuid = doc.field(OBackupLog.UUID);
     String dbName = doc.field(OBackupLog.DBNAME);
     String mode = doc.field(OBackupLog.MODE);
@@ -37,19 +38,19 @@ public class OBackupLogFactory {
     OBackupLog log = null;
     switch (op) {
     case BACKUP_STARTED:
-      log = new OBackupStartedLog(lsn, uuid, dbName, mode);
+      log = new OBackupStartedLog(unitId, txId, uuid, dbName, mode);
       log.fromDoc(doc);
       break;
     case BACKUP_ERROR:
-      log = new OBackupErrorLog(lsn, uuid, dbName, mode);
+      log = new OBackupErrorLog(unitId, txId, uuid, dbName, mode);
       log.fromDoc(doc);
       break;
     case BACKUP_FINISHED:
-      log = new OBackupFinishedLog(lsn, uuid, dbName, mode);
+      log = new OBackupFinishedLog(unitId, txId, uuid, dbName, mode);
       log.fromDoc(doc);
       break;
     case BACKUP_SCHEDULED:
-      log = new OBackupScheduledLog(lsn, uuid, dbName, mode);
+      log = new OBackupScheduledLog(unitId, txId, uuid, dbName, mode);
       log.fromDoc(doc);
       break;
     default:

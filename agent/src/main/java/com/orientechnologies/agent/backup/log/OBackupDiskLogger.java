@@ -24,7 +24,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -94,7 +96,7 @@ public class OBackupDiskLogger implements OBackupLogger {
     OBackupLog log = null;
     while (true) {
       String s = iterator.readLine();
-      if (s == null)
+      if (s == null || s.isEmpty())
         break;
 
       ODocument doc = new ODocument().fromJSON(s);
@@ -108,31 +110,92 @@ public class OBackupDiskLogger implements OBackupLogger {
   }
 
   @Override
-  public Map<Long, OBackupUnit> findByUUID(String uuid, int page, int pageSize) throws IOException {
+  public OBackupLog findLast(OBackupLogType op, String uuid, Long unitId) throws IOException {
+    OReverseLoggerIterator iterator = new OReverseLoggerIterator(randomAccessFile);
+    OBackupLog log = null;
+    while (true) {
+      String s = iterator.readLine();
+      if (s == null || s.isEmpty())
+        break;
 
-    Map<Long, OBackupUnit> units = new LinkedHashMap<Long, OBackupUnit>();
+      ODocument doc = new ODocument().fromJSON(s);
+      OBackupLog oBackupLog = factory.fromDoc(doc);
+      if (oBackupLog.getType().equals(op) && oBackupLog.getUuid().equals(uuid) && unitId.equals(oBackupLog.getUnitId())) {
+        log = oBackupLog;
+        break;
+      }
+    }
+    return log;
+  }
+
+  @Override
+  public List<OBackupLog> findByUUID(String uuid, int page, int pageSize) throws IOException {
+
+    List<OBackupLog> logs = new ArrayList<OBackupLog>();
 
     OReverseLoggerIterator iterator = new OReverseLoggerIterator(randomAccessFile);
 
     int unitSize = 0;
     while (true) {
       String s = iterator.readLine();
-      if (s == null)
+      if (s == null || unitSize == pageSize)
         break;
 
       ODocument doc = new ODocument().fromJSON(s);
       OBackupLog log = factory.fromDoc(doc);
-      OBackupUnit unit = units.get(log.getLsn());
-      if (unit == null) {
-        if (unitSize == pageSize)
-          break;
-        unit = new OBackupUnit();
-        units.put(log.getLsn(), unit);
+      if (log.getType().equals(OBackupLogType.BACKUP_SCHEDULED)) {
         unitSize++;
       }
-      unit.push(log);
+      logs.add(log);
     }
-    return units;
+    return logs;
+  }
+
+  @Override
+  public List<OBackupLog> findByUUIDAndUnitId(String uuid, Long unitId, int page, int pageSize) throws IOException {
+    List<OBackupLog> logs = new ArrayList<OBackupLog>();
+
+    OReverseLoggerIterator iterator = new OReverseLoggerIterator(randomAccessFile);
+
+    int unitSize = 0;
+    while (true) {
+      String s = iterator.readLine();
+      if (s == null || unitSize == pageSize)
+        break;
+
+      ODocument doc = new ODocument().fromJSON(s);
+      OBackupLog log = factory.fromDoc(doc);
+      if (log.getUnitId() == unitId) {
+        unitSize++;
+        logs.add(log);
+      }
+    }
+    return logs;
+  }
+
+  @Override
+  public List<OBackupLog> findAllLatestByUUID(String uuid, int page, int pageSize) throws IOException {
+    List<OBackupLog> logs = new ArrayList<OBackupLog>();
+
+    OReverseLoggerIterator iterator = new OReverseLoggerIterator(randomAccessFile);
+
+    Map<Long, Boolean> units = new HashMap<Long, Boolean>();
+
+    int unitSize = 0;
+    while (true) {
+      String s = iterator.readLine();
+      if (s == null || unitSize == pageSize)
+        break;
+      ODocument doc = new ODocument().fromJSON(s);
+      OBackupLog log = factory.fromDoc(doc);
+      Boolean aBoolean = units.get(log.getUnitId());
+      if (aBoolean == null) {
+        unitSize++;
+        logs.add(log);
+        units.put(log.getUnitId(), true);
+      }
+    }
+    return logs;
   }
 
   protected class OReverseLoggerIterator {

@@ -27,8 +27,8 @@ public class OBackupScheduledLog extends OBackupLog {
 
   public long nextExecution = 0;
 
-  public OBackupScheduledLog(long opsId, String uuid, String dbName, String mode) {
-    super(opsId, uuid, dbName, mode);
+  public OBackupScheduledLog(long unitId, long opsId, String uuid, String dbName, String mode) {
+    super(unitId, opsId, uuid, dbName, mode);
   }
 
   @Override

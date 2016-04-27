@@ -725,7 +725,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
       server.getDistributedManager().registerLifecycleListener(new ODistributedLifecycleListener() {
         @Override
         public boolean onNodeJoining(String iNode) {
-          return false;
+          return true;
         }
 
         @Override

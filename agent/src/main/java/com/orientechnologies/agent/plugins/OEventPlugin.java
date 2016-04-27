@@ -71,8 +71,8 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
       try {
         writeConfiguration();
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException("Cannot Write EventConfiguration configuration file '" + configFile
-            + "'. Restoring old configuration."), e);
+        OException.wrapException(new OConfigurationException(
+            "Cannot Write EventConfiguration configuration file '" + configFile + "'. Restoring old configuration."), e);
         configuration = oldConfig;
       }
 
@@ -107,8 +107,8 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
         final String configurationContent = OIOUtils.readFileAsString(f);
         configuration = new ODocument().fromJSON(configurationContent);
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException("Cannot load Events configuration file '" + configFile
-            + "'. Events  Plugin will be disabled"), e);
+        OException.wrapException(new OConfigurationException(
+            "Cannot load Events configuration file '" + configFile + "'. Events  Plugin will be disabled"), e);
       }
     } else {
       try {
@@ -118,8 +118,8 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
 
         OLogManager.instance().info(this, "Events plugin: created configuration to file '%s'", f);
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException("Cannot create Events plugin configuration file '" + configFile
-            + "'. Events Plugin will be disabled"), e);
+        OException.wrapException(new OConfigurationException(
+            "Cannot create Events plugin configuration file '" + configFile + "'. Events Plugin will be disabled"), e);
       }
     }
     eventController = new OEventController(this);
@@ -155,21 +155,21 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
         @Override
         public boolean onNodeJoining(String iNode) {
 
-          return false;
+          return true;
         }
 
         @Override
         public void onNodeJoined(String iNode) {
           if (isLeader(distributedManager))
-            eventController
-                .broadcast(OEvent.EVENT_TYPE.LOG_WHEN, new ODocument().field("server", iNode).field("message", "ONLINE"));
+            eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN,
+                new ODocument().field("server", iNode).field("message", "ONLINE"));
         }
 
         @Override
         public void onNodeLeft(String iNode) {
           if (isLeader(distributedManager))
-            eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN, new ODocument().field("server", iNode)
-                .field("message", "OFFLINE"));
+            eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN,
+                new ODocument().field("server", iNode).field("message", "OFFLINE"));
         }
 
         @Override

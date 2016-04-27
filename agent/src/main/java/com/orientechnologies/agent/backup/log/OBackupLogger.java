@@ -19,7 +19,7 @@
 package com.orientechnologies.agent.backup.log;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Created by Enrico Risa on 25/03/16.
@@ -32,5 +32,11 @@ public interface OBackupLogger {
 
   public OBackupLog findLast(OBackupLogType op, String uuid) throws IOException;
 
-  public Map<Long, OBackupUnit> findByUUID(String uuid, int page, int pageSize) throws IOException;
+  public OBackupLog findLast(OBackupLogType op, String uuid, Long unitId) throws IOException;
+
+  public List<OBackupLog> findByUUID(String uuid, int page, int pageSize) throws IOException;
+
+  public List<OBackupLog> findByUUIDAndUnitId(String uuid, Long unitId, int page, int pageSize) throws IOException;
+
+  public List<OBackupLog> findAllLatestByUUID(String uuid, int page, int pageSize) throws IOException;
 }
