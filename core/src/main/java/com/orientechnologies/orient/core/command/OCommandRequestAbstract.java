@@ -53,6 +53,8 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
 
   private final Set<String> nodesToExclude = new HashSet<String>();
+  private boolean recordResultSet = true;
+
 
   protected OCommandRequestAbstract() {
   }
@@ -217,5 +219,15 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
   public OAsyncReplicationError getOnAsyncReplicationError() {
     return onAsyncReplicationError;
+  }
+
+
+  @Override
+  public void setRecordResultSet(boolean recordResultSet) {
+    this.recordResultSet = recordResultSet;
+  }
+
+  public boolean isRecordResultSet() {
+    return recordResultSet;
   }
 }

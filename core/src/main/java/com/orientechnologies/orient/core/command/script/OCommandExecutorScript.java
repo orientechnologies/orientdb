@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -41,6 +42,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -472,6 +474,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         result.add(res);
       }
       lastResult = result;
+      checkIsRecordResultSet(lastResult);
     } else if (variable.startsWith("{") && variable.endsWith("}")) {
       // MAP
       final Map<String, String> map = OStringSerializerHelper.getMap(variable);
@@ -510,11 +513,23 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         result.put(key, value);
       }
       lastResult = result;
-    } else
+      checkIsRecordResultSet(lastResult);
+    } else {
       lastResult = new OSQLPredicate(variable).evaluate(context);
-
+      checkIsRecordResultSet(lastResult);
+    }
     // END OF THE SCRIPT
     return lastResult;
+  }
+
+  private void checkIsRecordResultSet(Object result){
+    if (!(result instanceof OIdentifiable) && !(result instanceof OResultSet) ){
+      if (!OMultiValue.isMultiValue(result)) {
+        request.setRecordResultSet(false);
+      } else if (!(OMultiValue.getFirstValue(result) instanceof OIdentifiable)) {
+        request.setRecordResultSet(false);
+      }
+    }
   }
 
   private void executeSleep(String lastCommand) {
