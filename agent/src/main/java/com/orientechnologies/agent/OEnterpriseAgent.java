@@ -29,13 +29,13 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
@@ -97,6 +97,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
           while (true) {
             ODistributedServerManager manager = OServerMain.server().getDistributedManager();
             if (manager == null) {
+
               if (retry == 5) {
                 break;
               }
@@ -108,11 +109,16 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
               retry++;
               continue;
             } else {
+              OHazelcastPlugin plugin = (OHazelcastPlugin) manager;
+              try {
+                plugin.waitUntilOnline();
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+              }
               Map<String, Object> map = manager.getConfigurationMap();
               map.put(EE + manager.getLocalNodeName(), TOKEN);
               break;
             }
-
           }
 
         }
@@ -183,11 +189,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
-/*  	
-    final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks();
-    for (ORecordHook h : hooks.keySet())
-      if (h instanceof OAuditingHook)
-        ((OAuditingHook) h).shutdown(false);*/
+    /*
+     * final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks = iDatabase.getHooks(); for (ORecordHook h : hooks.keySet()) if (h
+     * instanceof OAuditingHook) ((OAuditingHook) h).shutdown(false);
+     */
   }
 
   @Override
