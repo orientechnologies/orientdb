@@ -60,7 +60,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
           int retry;
           for (retry = 0; retry < maxRetries; retry++) {
             if ((i + 1) % printBlocksOf == 0)
-              System.out.println("\nWriter " + database.getURL() + "(thread=" + threadId + ") managed " + (i + 1) + "/" + count
+              System.out.println("\nDBStartupWriter " + database.getURL() + "(thread=" + threadId + ") managed " + (i + 1) + "/" + count
                   + " records so far");
 
             if (useTransactions)
@@ -95,7 +95,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
 
             } catch (InterruptedException e) {
               // STOP IT
-              System.out.println("Writer received interrupt (db=" + database.getURL());
+              System.out.println("DBStartupWriter received interrupt (db=" + database.getURL());
               Thread.currentThread().interrupt();
               break;
             } catch (ORecordNotFoundException e) {
@@ -141,7 +141,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
         }
       }
 
-      System.out.println("\nWriter " + name + " END total:" + count + " clusters:" + clusters + " names:" + clusterNames);
+      System.out.println("\nDBStartupWriter " + name + " END total:" + count + " clusters:" + clusters + " names:" + clusterNames);
       return null;
     }
 
