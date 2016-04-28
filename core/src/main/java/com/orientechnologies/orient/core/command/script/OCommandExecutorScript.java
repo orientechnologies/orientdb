@@ -466,7 +466,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         if (item.startsWith("$"))
           res = getContext().getVariable(item);
         else
-          res = item;
+          res =  new OSQLPredicate(item).evaluate(context);;
 
         if (OMultiValue.isMultiValue(res) && OMultiValue.getSize(res) == 1)
           res = OMultiValue.getFirstValue(res);
