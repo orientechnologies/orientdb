@@ -66,7 +66,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
 
         try {
           if ((i + 1) % 100 == 0)
-            System.out.println("\nDBStartupWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
+            System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
 
           int retry = 0;
           boolean success = false;
@@ -101,11 +101,11 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
               success);
 
         } catch (InterruptedException e) {
-          System.out.println("DBStartupWriter received interrupt (db=" + databaseUrl);
+          System.out.println("Writer received interrupt (db=" + databaseUrl);
           Thread.currentThread().interrupt();
           break;
         } catch (Exception e) {
-          System.out.println("DBStartupWriter received exception (db=" + databaseUrl);
+          System.out.println("Writer received exception (db=" + databaseUrl);
           e.printStackTrace();
           break;
         } finally {
@@ -113,7 +113,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
         }
       }
 
-      System.out.println("\nDBStartupWriter " + name + " END. count = " + count + " lockExceptions: " + lockExceptions);
+      System.out.println("\nWriter " + name + " END. count = " + count + " lockExceptions: " + lockExceptions);
       return null;
     }
   }

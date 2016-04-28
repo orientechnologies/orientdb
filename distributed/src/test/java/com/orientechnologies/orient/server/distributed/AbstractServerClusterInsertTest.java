@@ -45,7 +45,7 @@ import java.util.concurrent.*;
 public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
   protected volatile int    delayWriter           = 0;
   protected volatile int    delayReader           = 1000;
-  protected int             writerCount           = 5;
+  protected static int      writerCount           = 5;
   protected int             baseCount             = 0;
   protected int             expected;
   protected OIndex<?>       idx;
@@ -97,7 +97,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
                 database.commit();
 
               if ((i + 1) % 100 == 0)
-                System.out.println("\nDBStartupWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+                System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
 
               if (delayWriter > 0)
                 Thread.sleep(delayWriter);
@@ -106,14 +106,14 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
               break;
 
             } catch (InterruptedException e) {
-              System.out.println("DBStartupWriter received interrupt (db=" + database.getURL());
+              System.out.println("Writer received interrupt (db=" + database.getURL());
               Thread.currentThread().interrupt();
               break;
             } catch (ORecordDuplicatedException e) {
-              System.out.println("DBStartupWriter received exception (db=" + database.getURL());
+              System.out.println("Writer received exception (db=" + database.getURL());
               // IGNORE IT
             } catch (ONeedRetryException e) {
-              System.out.println("DBStartupWriter received exception (db=" + database.getURL());
+              System.out.println("Writer received exception (db=" + database.getURL());
 
               if (retry >= maxRetries)
                 e.printStackTrace();
@@ -125,7 +125,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
                 throw e;
               }
             } catch (Throwable e) {
-              System.out.println("DBStartupWriter received exception (db=" + database.getURL() + ")");
+              System.out.println("Writer received exception (db=" + database.getURL() + ")");
               e.printStackTrace();
               return null;
             }
@@ -137,7 +137,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         j++;
       }
 
-      System.out.println("\nDBStartupWriter " + name + " END");
+      System.out.println("\nWriter " + name + " END");
       return null;
     }
 

@@ -23,14 +23,13 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import junit.framework.Assert;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.*;
-
-import static org.junit.Assert.*;
 
 /**
  * Insert records concurrently against the cluster
@@ -61,7 +60,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
         try {
           if ((i + 1) % 100 == 0)
             System.out.println(
-                "\nDBStartupWriter " + threadId + "(" + database.getURL() + ") managed " + (i + 1) + "/" + count + " records so far");
+                "\nWriter " + threadId + "(" + database.getURL() + ") managed " + (i + 1) + "/" + count + " records so far");
 
           final ODocument person = createRecord(database, i);
           updateRecord(database, i);
@@ -72,11 +71,11 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
             Thread.sleep(delayWriter);
 
         } catch (InterruptedException e) {
-          System.out.println("DBStartupWriter received interrupt (db=" + database.getURL());
+          System.out.println("Writer received interrupt (db=" + database.getURL());
           Thread.currentThread().interrupt();
           break;
         } catch (Exception e) {
-          System.out.println("DBStartupWriter received exception (db=" + database.getURL());
+          System.out.println("Writer received exception (db=" + database.getURL());
           e.printStackTrace();
           break;
         } finally {
@@ -85,7 +84,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
         }
       }
 
-      System.out.println("\nDBStartupWriter " + name + " END");
+      System.out.println("\nWriter " + name + " END");
       return null;
     }
 
@@ -96,7 +95,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
           "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
       database.save(person);
 
-      assertTrue(person.getIdentity().isPersistent());
+      Assert.assertTrue(person.getIdentity().isPersistent());
 
       return person;
     }
@@ -109,16 +108,16 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
 
     private void checkRecord(ODatabaseDocumentTx database, int i) {
       ODocument doc = loadRecord(database, i);
-      assertEquals(doc.field("updated"), Boolean.TRUE);
+      Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
     private void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
       final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?"))
           .execute(key);
-      assertNotNull(result);
-      assertEquals(result.size(), 1);
-      assertNotNull(result.get(0).getRecord());
-      assertEquals(((ODocument) result.get(0)).field("rid"), rid);
+      Assert.assertNotNull(result);
+      Assert.assertEquals(result.size(), 1);
+      Assert.assertNotNull(result.get(0).getRecord());
+      Assert.assertEquals(((ODocument) result.get(0)).field("rid"), rid);
     }
 
     private ODocument loadRecord(ODatabaseDocumentTx database, int i) {
@@ -127,9 +126,9 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
       List<ODocument> result = database
           .query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId + "'"));
       if (result.size() == 0)
-        assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
+        Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
       else if (result.size() > 1)
-        assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
+        Assert.assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
 
       return result.get(0);
     }
@@ -168,7 +167,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
     }
 
     writerExecutors.shutdown();
-    assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
+    Assert.assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
 
     System.out.println("All writer threads have finished, shutting down readers");
   }
