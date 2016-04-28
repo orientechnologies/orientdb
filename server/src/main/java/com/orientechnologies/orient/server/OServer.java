@@ -300,7 +300,9 @@ public class OServer {
     databaseDirectory = OFileUtils.getPath(OSystemVariableResolver.resolveSystemVariables(databaseDirectory));
     databaseDirectory = databaseDirectory.replace("//", "/");
 
+    // CONVERT IT TO ABSOLUTE PATH
     databaseDirectory = (new File(databaseDirectory)).getCanonicalPath();
+    databaseDirectory = OFileUtils.getPath(databaseDirectory);
 
     if (!databaseDirectory.endsWith("/"))
       databaseDirectory += "/";
