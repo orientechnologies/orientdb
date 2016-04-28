@@ -55,6 +55,10 @@ public interface ODistributedServerManager {
 
   Set<String> getAvailableNodeNames(String databaseName);
 
+  void waitUntilNodeOnline() throws InterruptedException;
+
+  void waitUntilNodeOnline(final String nodeName, final String databaseName) throws InterruptedException;
+
   OServer getServerInstance();
 
   boolean isEnabled();
@@ -139,7 +143,8 @@ public interface ODistributedServerManager {
    * @param iClusterNames
    * @param iTargetNodeNames
    * @param iTask
-   * @param messageId Message Id as long
+   * @param messageId
+   *          Message Id as long
    * @param iExecutionMode
    * @param localResult
    *          It's the result of the request executed locally

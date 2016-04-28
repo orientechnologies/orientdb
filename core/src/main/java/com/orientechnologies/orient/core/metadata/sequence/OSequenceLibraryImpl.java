@@ -50,7 +50,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
   @Override
   public Set<String> getSequenceNames() {
-    return null;
+    return sequences.keySet();
   }
 
   @Override

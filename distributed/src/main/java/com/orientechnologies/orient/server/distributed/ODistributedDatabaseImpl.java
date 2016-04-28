@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -387,6 +388,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return manager;
   }
 
+  public boolean exists() {
+    try {
+      manager.getServerInstance().getStoragePath(databaseName);
+      return true;
+    } catch (OConfigurationException e) {
+      return false;
+    }
+  }
+
   public ODistributedSyncConfiguration getSyncConfiguration() {
     if (syncConfiguration == null) {
       final String path = manager.getServerInstance().getDatabaseDirectory() + databaseName + "/" + DISTRIBUTED_SYNC_JSON_FILENAME;
@@ -552,7 +562,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
       if (foundPartition != null) {
-        // SET THE NODE.DB AS OFFLINE, READY TO BE SYNCHRONIZED
         manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
 
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",

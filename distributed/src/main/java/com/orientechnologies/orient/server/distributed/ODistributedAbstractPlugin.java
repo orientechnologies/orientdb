@@ -64,6 +64,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected int                                            nodeId                      = -1;
   protected File                                           defaultDatabaseConfigFile;
   protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
+  protected volatile NODE_STATUS                           status                      = NODE_STATUS.OFFLINE;
 
   public static Object runInDistributedMode(final Callable iCall) throws Exception {
     final OScenarioThreadLocal.RUN_MODE currentRunningMode = OScenarioThreadLocal.INSTANCE.get();
@@ -91,6 +92,16 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
         OScenarioThreadLocal.INSTANCE.set(currentRunningMode);
     }
+  }
+
+  public void waitUntilNodeOnline() throws InterruptedException {
+    while (!status.equals(NODE_STATUS.ONLINE))
+      Thread.sleep(100);
+  }
+
+  public void waitUntilNodeOnline(final String nodeName, final String databaseName) throws InterruptedException {
+    while (!isNodeOnline(nodeName, databaseName))
+      Thread.sleep(100);
   }
 
   @Override
