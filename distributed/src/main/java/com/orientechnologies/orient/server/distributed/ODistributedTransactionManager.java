@@ -390,10 +390,12 @@ public class ODistributedTransactionManager {
     }
 
     ORecordId lastRecordCannotLock = null;
+    ODistributedRequestId lockHolder = null;
 
     // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED
     for (int retry = 1; retry <= maxAutoRetry; ++retry) {
       lastRecordCannotLock = null;
+      lockHolder = null;
 
       for (ORecordId rid : recordsToLock) {
         try {
@@ -410,6 +412,7 @@ public class ODistributedTransactionManager {
         } catch (ODistributedRecordLockedException e) {
           // LOCKED, UNLOCK ALL AND RETRY IN A WHILE
           lastRecordCannotLock = rid;
+          lockHolder = e.getLockHolder();
 
           reqContext.unlock();
 
@@ -429,7 +432,7 @@ public class ODistributedTransactionManager {
     }
 
     if (lastRecordCannotLock != null)
-      throw new ODistributedRecordLockedException(lastRecordCannotLock);
+      throw new ODistributedRecordLockedException(lastRecordCannotLock, lockHolder);
   }
 
   /**
@@ -529,12 +532,12 @@ public class ODistributedTransactionManager {
         ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
             "Distributed transaction %s error: record %s is locked", reqId, ((ODistributedRecordLockedException) result).getRid());
 
-      ctx.unlock();
+      // ctx.unlock();
 
       if (autoRetryDelay > 0)
         Thread.sleep(autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay));
 
-      acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay, eventListener, ctx);
+      // acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay, eventListener, ctx);
 
       // RETRY
       return false;

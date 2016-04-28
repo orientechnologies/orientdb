@@ -134,7 +134,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
     return replaceCluster(dManager, serverInstance, databaseName, clusterName);
   }
 
-  public static Object replaceCluster(final OHazelcastPlugin dManager, final OServer serverInstance, final String databaseName,
+  public static Object replaceCluster(final ODistributedAbstractPlugin dManager, final OServer serverInstance, final String databaseName,
       final String clusterName) {
     final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
     final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;

@@ -52,7 +52,7 @@ public interface ODistributedDatabase {
    *          Request id
    * @return true if the lock succeed, otherwise false
    */
-  boolean lockRecord(OIdentifiable iRecord, final ODistributedRequestId iRequestId);
+  ODistributedRequestId lockRecord(OIdentifiable iRecord, final ODistributedRequestId iRequestId);
 
   /**
    * Unlocks the record previously locked through #lockRecord method.

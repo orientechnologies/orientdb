@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.util.*;
 
@@ -36,9 +35,9 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwnershipAssignmentStrategy {
-  private final OHazelcastPlugin manager;
+  private final ODistributedAbstractPlugin manager;
 
-  public ODefaultClusterOwnershipAssignmentStrategy(final OHazelcastPlugin manager) {
+  public ODefaultClusterOwnershipAssignmentStrategy(final ODistributedAbstractPlugin manager) {
     this.manager = manager;
   }
 
