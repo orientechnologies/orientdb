@@ -113,7 +113,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected volatile int         requestType;
   protected int                  clientTxId;
   protected boolean              okSent;
-  // protected OClientConnection connection;
+  private long                   distributedRequests  = 0;
+  private long                   distributedResponses = 0;
 
   public ONetworkProtocolBinary() {
     this("OrientDB <- BinaryClient/?");
@@ -171,7 +172,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       try {
         connection = onBeforeRequest();
       } catch (Exception e) {
-        if(requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
+        if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
           sendError(connection, clientTxId, e);
           handleConnectionError(connection, e);
           onAfterRequest(connection);
@@ -840,6 +841,20 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     final String dbName = req.getDatabaseName();
     if (dbName != null) {
+      if (distributedRequests == 0) {
+        if (req.getTask().isNodeOnlineRequired()) {
+          try {
+            manager.waitUntilNodeOnline(manager.getLocalNodeName(), dbName);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            ODistributedServerLog.error(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getId().getNodeId()),
+                ODistributedServerLog.DIRECTION.IN, "Distributed request %s interrupted waiting for the database to be online",
+                req);
+            throw new ODistributedException(
+                "Distributed request " + req.getId() + " interrupted waiting for the database to be online");
+          }
+        }
+      }
 
       ODistributedDatabase ddb = manager.getMessageService().getDatabase(dbName);
       if (ddb == null)
@@ -848,6 +863,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       ddb.processRequest(req);
     } else
       manager.executeOnLocalNode(req.getId(), req.getTask(), null);
+
+    distributedRequests++;
   }
 
   private void executeDistributedResponse(OClientConnection connection) throws IOException {
@@ -871,6 +888,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         "Executing distributed response %s", response);
 
     manager.getMessageService().dispatchResponseToThread(response);
+
+    distributedResponses++;
   }
 
   protected void sendError(final OClientConnection connection, final int iClientTxId, final Throwable t) throws IOException {
@@ -1419,10 +1438,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         sendOk(connection, clientTxId);
 
         boolean isRecordResultSet = true;
-        if(command instanceof OCommandRequestInternal)
+        if (command instanceof OCommandRequestInternal)
           isRecordResultSet = command.isRecordResultSet();
 
-        serializeValue(connection, listener, result,false,isRecordResultSet);
+        serializeValue(connection, listener, result, false, isRecordResultSet);
 
         if (listener instanceof OSyncCommandResultListener) {
           // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
@@ -1444,7 +1463,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   public void serializeValue(final OClientConnection connection, final OAbstractCommandResultListener listener, Object result,
-      boolean load,boolean isRecordResultSet) throws IOException {
+      boolean load, boolean isRecordResultSet) throws IOException {
     if (result == null) {
       // NULL VALUE
       channel.writeByte((byte) 'n');

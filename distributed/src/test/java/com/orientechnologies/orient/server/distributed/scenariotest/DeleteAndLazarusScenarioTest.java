@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -29,7 +30,7 @@ import static org.junit.Assert.*;
 
 /**
  * It checks the consistency in the cluster with the following scenario:
- * - 3 server (writeQuorum=majority)
+ * - 3 servers (writeQuorum=majority)
  * - record r1 (version x) is present in full replica on all the servers
  * - server3 is isolated (simulated by: shutdown + opening plocal db)
  * - update of r1 on server3 succeeds, so we have r1* on server3
@@ -105,6 +106,8 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     ODocument r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
     ODocument r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
     ODocument r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001");
+
+    final ORecordId r1Rid = (ORecordId) r1onServer1.getIdentity();
 
     assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
     assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
@@ -217,7 +220,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     // delete request on server1 for r1
     try {
       dbServer1 = poolFactory.get(getRemoteDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
-      Integer result = dbServer1.command(new OCommandSQL("delete from Person where @rid=#27:0")).execute();
+      Integer result = dbServer1.command(new OCommandSQL("delete from " + r1Rid)).execute();
     } catch(Exception e) {
       e.printStackTrace();
     }
