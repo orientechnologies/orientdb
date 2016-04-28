@@ -3,10 +3,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.List;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -31,7 +28,7 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
   public static final String TEST_CLASS = "sqlIndexWithoutSchemaTest";
 
   @Parameters("url")
-  public SQLIndexWithoutSchemaTest(final String iURL) {
+  public SQLIndexWithoutSchemaTest(@Optional final String iURL) {
     super(iURL);
   }
 

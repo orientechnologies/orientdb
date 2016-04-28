@@ -85,8 +85,10 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   public void dropSequence(String iName) {
     OSequence seq = getSequence(iName);
 
-    seq.getDocument().delete();
-    sequences.remove(iName);
+    if (seq != null) {
+      seq.getDocument().delete();
+      sequences.remove(iName);
+    }
   }
 
   @Override

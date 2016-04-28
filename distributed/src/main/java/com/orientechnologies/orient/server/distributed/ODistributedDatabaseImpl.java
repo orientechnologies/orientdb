@@ -314,11 +314,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public boolean lockRecord(final OIdentifiable iRecord, final ODistributedRequestId iRequestId) {
+  public ODistributedRequestId lockRecord(final OIdentifiable iRecord, final ODistributedRequestId iRequestId) {
     final ORID rid = iRecord.getIdentity();
     if (!rid.isPersistent())
       // TEMPORARY RECORD
-      return true;
+      return null;
 
     final ODistributedRequestId oldReqId = lockManager.putIfAbsent(rid, iRequestId);
 
@@ -330,7 +330,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
             "Distributed transaction: %s locked record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
             iRequestId);
-        return true;
+        return null;
       }
     }
 
@@ -343,7 +343,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             "Distributed transaction: %s cannot lock record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
             oldReqId);
 
-    return locked;
+    return oldReqId;
   }
 
   @Override

@@ -1252,8 +1252,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     final ODistributedRequestId localReqId = new ODistributedRequestId(dManager.getLocalNodeId(),
         dManager.getNextMessageIdCounter());
 
-    if (!(localDistributedDatabase.lockRecord(rid, localReqId)))
-      throw new ODistributedRecordLockedException(rid);
+    final ODistributedRequestId lockHolder = localDistributedDatabase.lockRecord(rid, localReqId);
+    if (lockHolder != null)
+      throw new ODistributedRecordLockedException(rid, lockHolder);
 
     if (eventListener != null) {
       try {

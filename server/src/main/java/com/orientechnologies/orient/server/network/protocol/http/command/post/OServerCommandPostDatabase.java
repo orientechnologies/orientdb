@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
@@ -49,6 +42,13 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServerAbstract {
   private static final String[] NAMES = { "POST|database/*" };
@@ -78,7 +78,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
             if (stg.getName().equalsIgnoreCase(database.getName()) && stg.exists())
               throw new ODatabaseException("Database named '" + database.getName() + "' already exists: " + stg);
           }
-          OLogManager.instance().info(this, "Creating database " + url);
+          OLogManager.instance().info(this, "Creating database: " + url);
           database.create();
           sendDatabaseInfo(iRequest, iResponse, database);
         }

@@ -46,8 +46,9 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   }
 
   public synchronized void lock(final ORID rid) {
-    if (!db.lockRecord(rid, reqId))
-      throw new ODistributedRecordLockedException(rid);
+    final ODistributedRequestId lockHolder = db.lockRecord(rid, reqId);
+    if (lockHolder != null)
+      throw new ODistributedRecordLockedException(rid, lockHolder);
 
     acquiredLocks.add(rid);
   }
