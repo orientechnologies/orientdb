@@ -116,8 +116,6 @@ public class ODistributedWorker extends Thread {
   }
 
   public void initDatabaseInstance() {
-    // OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
-
     if (database == null) {
       database = distributed.getDatabaseInstance();
 

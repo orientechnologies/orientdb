@@ -49,7 +49,7 @@ public class HATxTest extends AbstractServerClusterTxTest {
     banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
     serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
     if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
-      serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilOnline();
+      serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
 
     Thread.sleep(1000);
 

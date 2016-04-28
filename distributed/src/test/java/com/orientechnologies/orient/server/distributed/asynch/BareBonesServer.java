@@ -4,7 +4,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -41,7 +40,7 @@ public class BareBonesServer {
       server.startup(new File(configFileDir, configFileName));
       server.activate();
       if (server.getPluginByClass(OHazelcastPlugin.class) != null)
-        server.getPluginByClass(OHazelcastPlugin.class).waitUntilOnline();
+        server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
     } catch (Exception e) {
       OLogManager.instance().error(this, "start", e);
     }

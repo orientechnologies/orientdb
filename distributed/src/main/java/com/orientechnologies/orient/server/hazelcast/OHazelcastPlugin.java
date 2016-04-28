@@ -101,8 +101,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   protected ODistributedMessageServiceImpl                       messageService;
   protected Date                                                 startedOn                         = new Date();
 
-  protected volatile NODE_STATUS                                 status                            = NODE_STATUS.OFFLINE;
-
   protected String                                               membershipListenerRegistration;
   protected String                                               membershipListenerMapRegistration;
 
@@ -641,10 +639,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       if (configurationMap.containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + iDatabase.getName()))
         throw new ODistributedException("Cannot create a new database with the same name of one available distributed");
 
-      final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
-      cfg.addNewNodeInServerList(nodeName);
-      updateCachedDatabaseConfiguration(iDatabase.getName(), cfg.serialize(), true, true);
-
       final ODistributedDatabaseImpl distribDatabase = messageService.registerDatabase(iDatabase.getName());
       distribDatabase.setOnline();
 
@@ -657,6 +651,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       }
 
       // WAIT UNTIL THE DATABASE HAS BEEN PROPAGATED IN ALL THE NODES
+      final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
+
       final Set<String> servers = cfg.getAllConfiguredServers();
       if (servers.size() > 1) {
         boolean allServersAreOnline = true;
@@ -933,9 +929,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
           for (String databaseName : getManagedDatabases()) {
             final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
-            if (electCurrentNodeAsNewCoordinator(cfg, nodeLeftName, databaseName)) {
-              ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Distributed configuration modified");
-              updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+
+            final String coordinator = getCoordinatorServer(cfg);
+            if (nodeLeftName.equals(coordinator)) {
+              if (electCurrentNodeAsNewCoordinator(cfg, nodeLeftName, databaseName)) {
+                ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Distributed configuration modified");
+                updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+              }
             }
           }
         } finally {
@@ -1250,6 +1250,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
 
   @Override
   public boolean isNodeAvailable(final String iNodeName) {
+    if (iNodeName == null)
+      return false;
     return activeNodes.containsKey(iNodeName);
   }
 
@@ -1273,11 +1275,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
         it.remove();
     }
     return iNodes.size();
-  }
-
-  public void waitUntilOnline() throws InterruptedException {
-    while (!status.equals(NODE_STATUS.ONLINE))
-      Thread.sleep(100);
   }
 
   public HazelcastInstance getHazelcastInstance() {
@@ -1369,28 +1366,27 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     boolean databaseInstalled;
 
     // CREATE THE DISTRIBUTED QUEUE
-    if (distrDatabase.getSyncConfiguration().isEmpty()) {
-      // FIRST TIME, ASK FOR FULL REPLICA
+    if (!distrDatabase.exists() || distrDatabase.getSyncConfiguration().isEmpty()) {
 
-      databaseInstalled = requestFullDatabase(databaseName, iStartup, distrDatabase);
+      // FIRST TIME, ASK FOR FULL REPLICA
+      databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup);
 
     } else {
       try {
 
-        // TRY WITH DELTA
+        // TRY WITH DELTA SYNC
         databaseInstalled = requestDatabaseDelta(distrDatabase, databaseName);
-        // return requestFullDatabase(databaseName, backupDatabase, distrDatabase);
 
       } catch (ODistributedDatabaseDeltaSyncException e) {
-        // SWITCH TO FULL
-        databaseInstalled = requestFullDatabase(databaseName, iStartup, distrDatabase);
+        // FALL BACK TO FULL BACKUP
+        databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup);
       }
     }
 
     return databaseInstalled;
   }
 
-  protected boolean requestFullDatabase(String databaseName, boolean backupDatabase, ODistributedDatabaseImpl distrDatabase) {
+  protected boolean requestFullDatabase(ODistributedDatabaseImpl distrDatabase, String databaseName, boolean backupDatabase) {
     for (int retry = 0; retry < DEPLOY_DB_MAX_RETRIES; ++retry) {
       // ASK DATABASE TO THE FIRST NODE, THE FIRST ATTEMPT, OTHERWISE ASK TO EVERYONE
       if (requestDatabaseFullSync(distrDatabase, backupDatabase, databaseName, retry > 0))
@@ -1698,30 +1694,33 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
     }
 
     final ODatabaseDocumentTx db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta);
-
     if (db != null) {
-      final Lock lock = getLock(databaseName + ".cfg");
-      lock.lock();
       try {
-        // GET LAST VERSION IN LOCK
-        final ODistributedConfiguration cfg = getDatabaseConfiguration(db.getName());
+        final Lock lock = getLock(databaseName + ".cfg");
+        lock.lock();
 
-        final boolean distribCfgDirty = rebalanceClusterOwnership(nodeName, db, cfg, new HashSet<String>(), true);
-        if (distribCfgDirty) {
-          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Distributed configuration modified");
-          updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
+        try {
+          // GET LAST VERSION IN LOCK
+          final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+
+          final boolean distribCfgDirty = rebalanceClusterOwnership(nodeName, db, cfg, new HashSet<String>(), true);
+          if (distribCfgDirty) {
+            ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Distributed configuration modified");
+            updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+          }
+
+          distrDatabase.setOnline();
+        } finally {
+          lock.unlock();
         }
 
-        distrDatabase.setOnline();
       } finally {
-        lock.unlock();
+        db.activateOnCurrentThread();
+        db.close();
       }
-
-      db.activateOnCurrentThread();
-      db.close();
     }
 
-    final ODistributedConfiguration cfg = getDatabaseConfiguration(db.getName());
+    final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
     // ASK FOR INDIVIDUAL CLUSTERS IN CASE OF SHARDING AND NO LOCAL COPY
     final Set<String> localManagedClusters = cfg.getClustersOnServer(localNodeName);
@@ -1802,7 +1801,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
   }
 
   protected void onDatabaseEvent(final ODocument config, final String databaseName) {
-    updateCachedDatabaseConfiguration(databaseName, config, true, false);
+    if (messageService.getDatabase(databaseName) != null)
+      // DATABASE IS CONFIGURED ON LOCAL NODE, UPDATE THE CFG
+      updateCachedDatabaseConfiguration(databaseName, config, true, false);
+
     installNewDatabase(false, databaseName, config);
   }
 

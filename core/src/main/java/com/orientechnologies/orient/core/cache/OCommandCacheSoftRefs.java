@@ -144,7 +144,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   private boolean updateCfgOnDisk() throws IOException {
     File f = getConfigFile();
     if (f != null) {
-      OLogManager.instance().info(this, "Saving Command Cache config for db : %s", databaseName);
+      OLogManager.instance().info(this, "Saving Command Cache config for db: %s", databaseName);
       OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
       return true;
     }
@@ -190,7 +190,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   protected void deleteFileIfExists() {
     File f = getConfigFile();
     if (f != null) {
-      OLogManager.instance().info(this, "Removing Command Cache config for db : %s", databaseName);
+      OLogManager.instance().info(this, "Removing Command Cache config for db: %s", databaseName);
       f.delete();
     }
   }
@@ -208,8 +208,8 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     try {
       updateCfgOnDisk();
     } catch (IOException e) {
-      OException
-          .wrapException(new OConfigurationException("Cannot write Command Cache Cache configuration to  file '" + CONFIG_FILE), e);
+      OException.wrapException(
+          new OConfigurationException("Cannot write Command Cache Cache configuration to file '" + CONFIG_FILE + "'"), e);
     }
     return this;
   }
@@ -226,8 +226,8 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     try {
       updateCfgOnDisk();
     } catch (IOException e) {
-      OException
-          .wrapException(new OConfigurationException("Cannot write Command Cache Cache configuration to  file '" + CONFIG_FILE), e);
+      OException.wrapException(
+          new OConfigurationException("Cannot write Command Cache Cache configuration to file '" + CONFIG_FILE + "'"), e);
     }
     return this;
   }
@@ -357,7 +357,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
 
       if (evictStrategy == STRATEGY.INVALIDATE_ALL) {
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "Invalidate all cached results (%d)  ", size());
+          OLogManager.instance().debug(this, "Invalidate all cached results (%d)", size());
 
         clear();
         return;

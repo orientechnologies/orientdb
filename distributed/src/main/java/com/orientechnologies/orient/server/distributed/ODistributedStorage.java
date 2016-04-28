@@ -288,7 +288,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             return wrapped.command(iCommand);
 
           final Object localResult;
-          if (nodes.contains(localNodeName)) {
+
+          final boolean executedLocally = nodes.contains(localNodeName);
+          if (executedLocally) {
             // EXECUTE ON LOCAL NODE FIRST
             try {
 
@@ -310,7 +312,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             localResult = null;
 
           if (nodes.isEmpty()) {
-            if (localResult == null)
+            if (!executedLocally)
               throw new ODistributedException(
                   "Cannot execute distributed command '" + iCommand + "' because no nodes are available");
           } else {
@@ -450,6 +452,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return list;
   }
 
+  /**
+   * Only idempotent commands that don't involve any other node can be executed locally.
+   * 
+   * @return
+   */
   protected boolean executeOnlyLocally(final String localNodeName, final ODistributedConfiguration dbCfg,
       final OCommandExecutor exec, final Collection<String> involvedClusters, final Collection<String> nodes) {
     boolean executeLocally = false;
@@ -469,8 +476,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       if (nodes.size() == 1 && nodes.iterator().next().equals(localNodeName) && maxReadQuorum <= 1)
         executeLocally = true;
 
-    } else if (nodes.size() == 1 && nodes.iterator().next().equals(localNodeName))
-      executeLocally = true;
+    }
 
     return executeLocally;
   }
@@ -788,7 +794,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
               final OStorageOperationResult<Integer> localResult;
 
-              if (nodes.contains(localNodeName)) {
+              final boolean executedLocally = nodes.contains(localNodeName);
+              if (executedLocally) {
                 // EXECUTE ON LOCAL NODE FIRST
                 try {
                   // LOAD CURRENT RECORD
@@ -815,7 +822,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               if (nodes.isEmpty()) {
                 unlockCallback.call(null);
 
-                if (localResult == null)
+                if (!executedLocally)
                   throw new ODistributedException(
                       "Cannot execute distributed update on record " + iRecordId + " because no nodes are available");
               } else {
@@ -921,7 +928,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               final ODeleteRecordTask task = new ODeleteRecordTask(iRecordId, iVersion);
 
               final OStorageOperationResult<Boolean> localResult;
-              if (nodes.contains(localNodeName)) {
+
+              final boolean executedLocally = nodes.contains(localNodeName);
+              if (executedLocally) {
                 // EXECUTE ON LOCAL NODE FIRST
                 try {
                   // LOAD CURRENT RECORD
@@ -951,9 +960,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               if (nodes.isEmpty()) {
                 unlockCallback.call(null);
 
-                if (localResult == null)
+                if (!executedLocally)
                   throw new ODistributedException(
                       "Cannot execute distributed update on record " + iRecordId + " because no nodes are available");
+
               } else {
                 final Boolean localResultPayload = localResult != null ? localResult.getResult() : null;
 
