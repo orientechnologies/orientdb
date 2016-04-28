@@ -17,13 +17,13 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import com.orientechnologies.orient.server.security.OServerSecurity;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,11 +32,11 @@ import java.util.List;
 
 public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private static final String[] NAMES = { "GET|auditing/*", "POST|auditing/*" };
-  private OEnterpriseAgent      oEnterpriseAgent;
+  private OServerSecurity       security;
 
-  public OServerCommandAuditing(OEnterpriseAgent oEnterpriseAgent) {
+  public OServerCommandAuditing(OServerSecurity security) {
     super("server.profiler");
-    this.oEnterpriseAgent = oEnterpriseAgent;
+    this.security = security;
   }
 
   @Override
@@ -151,14 +151,24 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     ODocument config = new ODocument().fromJSON(iRequest.content, "noMap");
     iRequest.databaseName = db;
     getProfiledDatabaseInstance(iRequest);
-    oEnterpriseAgent.auditingListener.changeConfig(db, config);
+
+    if (security.getAuditing() != null)
+      security.getAuditing().changeConfig(db, config);
+
     iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
   }
 
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String db) throws Exception {
     iRequest.databaseName = db;
     getProfiledDatabaseInstance(iRequest);
-    ODocument config = oEnterpriseAgent.auditingListener.getConfig(db);
+
+    ODocument config = null;
+    if (security.getAuditing() != null) {
+      config = security.getAuditing().getConfig(db);
+    } else {
+      config = new ODocument();
+    }
+
     iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
 
   }

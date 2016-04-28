@@ -60,11 +60,14 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     OLogManager.instance().info(this, "Enterprise storage installed correctly.");
   }
 
-  public void incrementalBackup(final String backupDirectory) {
-    incrementalBackup(new File(backupDirectory));
+  @Override
+  public String incrementalBackup(final String backupDirectory) {
+    return incrementalBackup(new File(backupDirectory));
   }
 
-  private void incrementalBackup(final File backupDirectory) {
+  private String incrementalBackup(final File backupDirectory) {
+  	 String fileName = "";
+  	 
     if (!backupDirectory.exists()) {
       if (!backupDirectory.mkdirs()) {
         throw new OStorageException(
@@ -88,7 +91,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       }
 
       final SimpleDateFormat dateFormat = new SimpleDateFormat(INCREMENTAL_BACKUP_DATEFORMAT);
-      final String fileName;
 
       if (lastLsn != null)
         fileName = getName() + "_" + dateFormat.format(new Date()) + "_" + nextIndex + IBU_EXTENSION;
@@ -138,6 +140,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         throw OException.wrapException(new OStorageException("Error during incremental backup"), e);
       }
     }
+    
+    return fileName;
   }
 
   private String[] fetchIBUFiles(final File backupDirectory) throws IOException {

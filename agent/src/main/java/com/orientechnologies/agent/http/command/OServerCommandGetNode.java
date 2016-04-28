@@ -58,7 +58,7 @@ public class OServerCommandGetNode extends OServerCommandDistributedScope {
   private void doPost(OHttpResponse iResponse, String[] parts, String command) throws IOException {
     if (command.equalsIgnoreCase("connection") && parts.length == 4) {
       if ("KILL".equalsIgnoreCase(parts[2])) {
-        server.getClientConnectionManager().kill(Integer.parseInt(parts[3]));
+        server.getClientConnectionManager().kill(server, Integer.parseInt(parts[3]));
       } else if ("INTERRUPT".equalsIgnoreCase(parts[2])) {
         server.getClientConnectionManager().interrupt(Integer.parseInt(parts[3]));
       } else {

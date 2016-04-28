@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -133,19 +132,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         });
       }
 
-    } else if (command.equalsIgnoreCase("queue")) {
-
-      final ODistributedMessageService messageService = manager.getMessageService();
-      if (id == null) {
-        // RETURN QUEUE NAMES
-        final List<String> queues = messageService.getManagedQueueNames();
-        doc = new ODocument();
-        doc.field("queues", queues);
-      } else {
-        doc = messageService.getQueueStats(id);
-      }
-
-    } else if (command.equalsIgnoreCase("database")) {
+    }  else if (command.equalsIgnoreCase("database")) {
 
       ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
       doc = cfg.serialize();
