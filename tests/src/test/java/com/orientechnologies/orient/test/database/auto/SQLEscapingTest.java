@@ -37,8 +37,8 @@ public class SQLEscapingTest {
   }
 
   @Parameters(value = "url")
-  public SQLEscapingTest(String url) {
-    this.url = url;
+  public SQLEscapingTest(@Optional String url) {
+    this.url = BaseTest.prepareUrl(url);
   }
 
   @BeforeClass
