@@ -52,7 +52,7 @@ public class OSequenceCached extends OSequence {
           allocateCache(getCacheSize());
         }
 
-        ++cacheStart;
+        cacheStart = cacheStart + increment;
         return cacheStart;
       }
     }, "next");
