@@ -157,6 +157,6 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
 
   @Override
   public String toString() {
-    return getName() + " type: " + (success ? "commit" : (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops)"));
+    return getName() + " type: " + (success ? "commit" : (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) [" + fixTasks + "]"));
   }
 }

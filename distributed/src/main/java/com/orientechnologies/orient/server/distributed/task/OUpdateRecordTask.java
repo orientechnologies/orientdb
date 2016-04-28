@@ -109,8 +109,8 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     record = database.save(loadedRecord);
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%d",
-          database.getName(), rid.toString(), record.getVersion());
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%d [%s]",
+          database.getName(), rid.toString(), record.getVersion(), record);
 
     return record.getVersion();
   }

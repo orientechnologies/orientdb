@@ -352,7 +352,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         }
         return true;
       }
-    }, String.format("Expected value %s for field %s on record %s", expectedFieldValue, fieldName, recordId));
+    }, String.format("Expected value %s for field %s on record %s on all servers.", expectedFieldValue, fieldName, recordId));
   }
 
   protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {

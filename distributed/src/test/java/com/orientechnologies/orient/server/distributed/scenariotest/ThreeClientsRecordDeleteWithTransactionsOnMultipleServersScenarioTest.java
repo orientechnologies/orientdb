@@ -33,9 +33,12 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Checks for consistency on the cluster with these steps: - 3 server (quorum=2) - record1 is inserted on server1 - record1 (version
- * 1) is propagated to the other two servers - introduce a delay after record locking for all servers (different for each one) - the
- * three clients at the same time delete the same record
+ * Checks for consistency on the cluster with these steps:
+ * - 3 server (quorum=2)
+ * - record1 is inserted on server1
+ * - record1 (version 1) is propagated to the other two servers
+ * - introduce a delay after record locking for all servers (different for each one)
+ * - the three clients at the same time delete the same record
  *
  */
 
@@ -76,10 +79,8 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioTe
 
     // sets a delay for operations on distributed storage of all servers
     ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
-    ((ODistributedStorage) dbServer2.getStorage())
-        .setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
-    ((ODistributedStorage) dbServer3.getStorage())
-        .setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
+    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
+    ((ODistributedStorage) dbServer3.getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
 
     // updates the same record from three different clients, each calling a different server
     List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
