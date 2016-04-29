@@ -2556,15 +2556,27 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         if (op.type == ORecordOperation.DELETED) {
           final ORecord rec = op.getRecord();
           if (rec != null && rec instanceof ODocument) {
-            if (((ODocument) rec).getSchemaClass().isSubClassOf(iClassName))
-              deletedInTx++;
+            OClass schemaClass = ((ODocument)rec).getSchemaClass();
+            if (iPolymorphic) {
+              if (schemaClass.isSubClassOf(iClassName))
+                deletedInTx++;
+            } else {
+              if (iClassName.equals(schemaClass.getName()) || iClassName.equals(schemaClass.getShortName()))
+                deletedInTx++;
+            }
           }
         }
         if (op.type == ORecordOperation.CREATED) {
           final ORecord rec = op.getRecord();
           if (rec != null && rec instanceof ODocument) {
-            if (((ODocument) rec).getSchemaClass().isSubClassOf(iClassName))
-              addedInTx++;
+            OClass schemaClass = ((ODocument)rec).getSchemaClass();
+            if (iPolymorphic) {
+              if (schemaClass.isSubClassOf(iClassName))
+                addedInTx++;
+            } else {
+              if (iClassName.equals(schemaClass.getName()) || iClassName.equals(schemaClass.getShortName()))
+                addedInTx++;
+            }
           }
         }
       }
