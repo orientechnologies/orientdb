@@ -17,16 +17,20 @@
         </div>
       </div>
     </div>
-    <div class="card">
+    <div class="card config-card">
       <div class="row">
-        <ul class="nav nav-tabs">
-          <li ng-repeat="tab in tabs" ng-class="{active : tab == active}">
-            <a href="#/database/{{ db }}/db/{{ tab }}">{{ tabsI18n[tab] }}</a>
-          </li>
-        </ul>
-        <div class="container-fluid config-tab">
-          <div class="row" ng-repeat="tab in tabs" ng-show="tab == active">
-            <ng-include src="getTemplate(tab)"></ng-include>
+        <div class="col-md-12">
+          <ul class="nav nav-tabs">
+            <li ng-repeat="tab in tabs" ng-class="{active : tab == active}">
+              <a href="#/database/{{ db }}/db/{{ tab }}">{{ tabsI18n[tab] }}</a>
+            </li>
+          </ul>
+        </div>
+        <div class="col-md-12">
+          <div class="container-fluid config-tab">
+            <div class="row" ng-repeat="tab in tabs" ng-show="tab == active">
+              <ng-include src="getTemplate(tab)"></ng-include>
+            </div>
           </div>
         </div>
       </div>

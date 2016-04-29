@@ -10,7 +10,6 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
   $scope.tab = $routeParams.db;
 
 
-
   $scope.links = {
     ee: "http://www.orientdb.com/orientdb-enterprise"
   }
@@ -212,6 +211,7 @@ ee.controller('ClusterController', function ($scope, Cluster, Notification, $roo
 
     if (AgentService.active) {
       Cluster.stats().then(function (data) {
+
 
         $scope.servers = data.members;
 
@@ -514,16 +514,17 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
 }]);
 
 
-ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'ngTableParams', 'AgentService', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams, AgentService) {
+ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'ngTableParams', 'AgentService', 'SecurityService', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams, AgentService, SecurityService) {
 
 
+  $scope.enabled = false;
+  $scope.clazz = "tabs-style-line";
   $scope.links = {
     ee: "http://www.orientdb.com/orientdb-enterprise"
   }
   $scope.agentActive = AgentService.active;
 
   $scope.active = 'log';
-
   $scope.logs = [];
   $scope.query = {
     limit: 100
@@ -546,36 +547,51 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
   $scope.template = 'views/server/stats/auditing/log.html';
 
   var initConfig = function () {
-    Auditing.getConfig({db: $scope.db}).then(function (data) {
 
-      $scope.config = data;
-      var cls = $scope.config.classes;
-      $scope.classes = Object.keys(cls).filter(function (k) {
-        return (k != "@type" && k != "@version")
-      }).map(function (k) {
+    SecurityService.get().then(function (security) {
+      try {
+        $scope.auditingCfg = security.auditing;
+        $scope.enabled = security.auditing.enabled
+      } catch (e) {
+      }
+      if ($scope.enabled) {
+        Auditing.getConfig({db: $scope.db}).then(function (data) {
+          $scope.config = data;
+          var cls = $scope.config.classes;
+          $scope.classes = Object.keys(cls).filter(function (k) {
+            return (k != "@type" && k != "@version")
+          }).map(function (k) {
 
-        var clazz = {
-          name: k,
-          polymorphic: cls[k].polymorphic
-        }
+            var clazz = {
+              name: k,
+              polymorphic: cls[k].polymorphic
+            }
+            return clazz;
+          })
+          $scope.query.clazz = $scope.config.auditClassName;
+          Spinner.start();
+          Auditing.query({db: $scope.db, query: $scope.query}).then(function (data) {
+            $scope.logs = data.result;
+            Spinner.stopSpinner();
+          }).catch(function (error) {
+            Spinner.stopSpinner();
+          })
+        });
+      }
+    })
 
-        return clazz;
+  }
+  $scope.enableAuditing = function () {
 
-      })
-
-      $scope.query.clazz = $scope.config.auditClassName;
-
-      Spinner.start();
-      Auditing.query({db: $scope.db, query: $scope.query}).then(function (data) {
-        $scope.logs = data.result;
-
-        Spinner.stopSpinner();
-      }).catch(function (error) {
-        Spinner.stopSpinner();
-      })
+    var config = angular.copy($scope.auditingCfg);
+    config.enabled = !config.enabled;
+    SecurityService.reload({"module": "auditing", "config": config}).then(function (c) {
+      $scope.enabled = security.auditing.enabled
+      initConfig();
+    }).catch(function (e) {
+      console.log(e);
     });
   }
-
   $scope.$watch("db", function (db) {
     if (db) {
       initConfig();
@@ -660,9 +676,7 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
 }]);
 
 
-ee.controller('PluginsController', function ($scope, Plugins, Cluster, Notification,AgentService) {
-
-
+ee.controller('PluginsController', function ($scope, Plugins, Cluster, Notification, AgentService) {
 
 
   $scope.links = {
@@ -809,7 +823,7 @@ ee.controller('AutomaticBackupController', function ($scope, $modal, Database) {
 
 });
 
-ee.controller('EEDashboardController', function ($scope, $rootScope) {
+ee.controller('EEDashboardController', function ($scope, $rootScope, $routeParams) {
 
 
   $rootScope.$on('servermgmt:open', function () {
@@ -819,16 +833,34 @@ ee.controller('EEDashboardController', function ($scope, $rootScope) {
     $scope.show = "";
   })
 
+
   $scope.menus = [
     {name: "stats", title: "Dashboard", template: 'stats', icon: 'fa-dashboard'},
     {name: "general", title: "Servers Management", template: 'general', icon: 'fa-desktop'},
     {name: "cluster", title: "Cluster Management", template: 'distributed', icon: 'fa-sitemap'},
+    //{name: "backup", title: "Backup Management", template: 'backup', icon: 'fa-clock-o'},
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
+    //{name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
     {name: "auditing", title: "Auditing", template: 'auditing', icon: 'fa-headphones'},
     {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb'},
     {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'}
 
   ]
+
+
+  $rootScope.$on("$routeChangeStart", function (event, next, current) {
+    if (next.params.tab) {
+      $scope.menus.forEach(function (e) {
+        if (e.name == next.params.tab) {
+          $scope.activeTab = e;
+        }
+      })
+    } else {
+      $scope.activeTab = $scope.menus[0];
+    }
+    console.log($scope.activeTab);
+  });
+
 })
 
 
@@ -904,15 +936,24 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
 
 
   $scope.roles = ["master", "replica"];
+
+
+  $scope.quorums = ['majority'];
+
+
   $scope.$on('db-chosen', function (evt, db) {
 
+    $scope.servers = angular.copy($scope.servers);
+
+    $scope.servers.forEach(function (el, idx, arr) {
+      $scope.quorums.push((idx + 1).toString());
+    })
     Cluster.database(db.name).then(function (data) {
       $scope.config = data;
       $scope.name = db.name;
 
 
       $scope.calculatedRoles = {};
-
       if ($scope.config.servers) {
         Object.keys($scope.config.servers).forEach(function (k) {
           if (k === "*") {
@@ -933,6 +974,12 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
       return tmp.servers.indexOf(node) != -1;
     }
 
+    $scope.getOwnership = function (cluster, node) {
+      var tmp = $scope.config.clusters[cluster];
+      if (!tmp.servers)return "";
+      return tmp.servers.indexOf(node) == 0 ? "X" : "o";
+    }
+
   })
 
   $scope.saveConfig = function () {
@@ -950,6 +997,8 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
 
     Cluster.saveDBConfig({name: $scope.name, config: $scope.config}).then(function () {
       Notification.push({content: "Distributed Configuration correctly saved.", autoHide: true});
+    }).catch(function (err) {
+      Notification.push({content: err.data, error: true, autoHide: true});
     })
 
   }
@@ -1279,3 +1328,244 @@ ee.controller("GlobalConfiController", function ($scope, ServerApi) {
   });
 });
 
+
+ee.controller("BackupConfigController", function ($scope, AgentService, $rootScope, $timeout, Cluster, BackupService) {
+
+
+  $scope.agentActive = AgentService.active;
+
+
+  $scope.clazz = 'tabs-style-linebox';
+  $scope.icon = 'fa-database';
+
+  $scope.databases = null;
+  $scope.$on('context:changed', function (evt, context) {
+
+    $timeout(function () {
+      $scope.$broadcast('db-chosen', {name: context, backup: $scope.databases[context]});
+    }, 100)
+
+  })
+
+  if (AgentService.active) {
+    Cluster.node().then(function (data) {
+      $scope.servers = data.members;
+      $scope.server = $scope.servers[0];
+
+      $scope.databases = {};
+      $scope.server.databases.forEach(function (db) {
+        $scope.databases[db] = {};
+      });
+
+      BackupService.get().then(function (d) {
+        d.backups.forEach(function (b) {
+          $scope.databases[b.dbName] = b;
+        });
+      })
+
+    });
+  }
+});
+
+/**
+ *  Single Backup Controller
+ */
+ee.controller("SingleBackupController", function ($scope, BackupService, Notification, $modal, $timeout) {
+
+
+  $scope.mode = "1";
+  $scope.modes = {"1": "Incremental Backup", "2": "Full Backup", "3": "Full + Incremental Backup"};
+  $scope.$on('db-chosen', function (evt, db) {
+    $scope.backup = db.backup;
+    var incr = undefined;
+    var full = undefined;
+    if ($scope.backup.modes) {
+      if ($scope.backup.modes["INCREMENTAL_BACKUP"] && $scope.backup.modes["FULL_BACKUP"]) {
+        $scope.mode = "3";
+        incr = $scope.backup.modes["INCREMENTAL_BACKUP"].when;
+        full = $scope.backup.modes["FULL_BACKUP"].when;
+      } else if ($scope.backup.modes["FULL_BACKUP"]) {
+        $scope.mode = "2";
+        full = $scope.backup.modes["FULL_BACKUP"].when;
+      } else if ($scope.backup.modes["INCREMENTAL_BACKUP"]) {
+        $scope.mode = "1";
+        incr = $scope.backup.modes["INCREMENTAL_BACKUP"].when;
+      }
+    }
+    function initTimeline(data) {
+      var events = data.logs.map(function (e) {
+        var date = new Date(e.timestamp);
+        var m = moment(date);
+        return {
+          "start_date": {
+            "year": m.year(),
+            "month": m.month(),
+            "day": m.date(),
+            "hour": m.hour(),
+            "minute": m.minute(),
+            "second": m.second(),
+            "millisecond": m.millisecond()
+          },
+          media: {
+            "caption": "Illustration of evolution of the universe from the Big Bang",
+            "credit": "Kaldari (Wikipedia)",
+            "url": ""
+          },
+          "text": {
+            "headline": e.op,
+            "text": $scope.info(e)
+          }
+
+        }
+      })
+
+      $scope.timeline = new TL.Timeline("timeline", {"scale": "human", events: events}, {
+        "scale": "human",
+        "start_at_slide": (events.length - 1)
+      });
+    }
+
+    if (!$scope.backup.uuid) {
+      $scope.backup.dbName = db.name;
+      $scope.backup.modes = {};
+    } else {
+      BackupService.logs($scope.backup.uuid).then(function (data) {
+        $scope.logs = data.logs;
+        $scope.currentUnit = $scope.logs[0];
+
+        BackupService.unitLogs($scope.backup.uuid, $scope.currentUnit.unitId).then(function (data) {
+          $scope.currentUnitLogs = data.logs;
+          initTimeline(data);
+        })
+      });
+    }
+
+    $scope.restore = function () {
+      var modalScope = $scope.$new(true);
+      modalScope.unit = $scope.currentUnit;
+      modalScope.restored = {unitId: $scope.currentUnit.unitId};
+      modalScope.onRestore = function (obj) {
+        BackupService.restore($scope.backup.uuid, obj).then(function (data) {
+          console.log(data);
+        }).catch(function (err) {
+          Notification.push({content: err.data, error: true, autoHide: true});
+        })
+      }
+      var modalPromise = $modal({template: 'views/server/backup/restore.html', scope: modalScope, show: false});
+      modalPromise.$promise.then(modalPromise.show);
+
+
+    }
+    $scope.setCurrent = function (log) {
+      $scope.currentUnit = log;
+      BackupService.unitLogs($scope.backup.uuid, $scope.currentUnit.unitId).then(function (data) {
+        $scope.currentUnitLogs = data.logs;
+        initTimeline(data);
+      })
+    }
+    $scope.status = function (events) {
+      var keys = Object.keys(events);
+      var last = events[keys[0]];
+      return last[0];
+    }
+
+    var modeToString = function (mode) {
+
+      switch (mode) {
+        case "INCREMENTAL_BACKUP":
+          return "Incremental backup";
+        case "FULL_BACKUP":
+          return "Full backup";
+      }
+    }
+    $scope.info = function (event) {
+      var info = modeToString(event.mode);
+      switch (event.op) {
+        case "BACKUP_FINISHED":
+          info += " executed at " + moment(new Date(event.timestamp)).format('MMMM Do YYYY, h:mm:ss') + ".";
+          break;
+        case "BACKUP_SCHEDULED":
+          info += " scheduled at " + moment(new Date(event.nextExecution)).format('MMMM Do YYYY, h:mm:ss') + ".";
+          break;
+
+        case "BACKUP_STARTED":
+          info += " started at " + moment(new Date(event.timestamp)).format('MMMM Do YYYY, h:mm:ss') + ".";
+          break;
+      }
+      return info;
+    }
+    $scope.$watch("mode", function (m) {
+      if (m) {
+        switch (m) {
+          case "1":
+            if (!$scope.backup.modes["INCREMENTAL_BACKUP"]) {
+              $scope.backup.modes["INCREMENTAL_BACKUP"] = {when: "0 0/1 * * * ?"}
+            }
+            delete $scope.backup.modes["FULL_BACKUP"]
+            break;
+          case "2":
+            if (!$scope.backup.modes["FULL_BACKUP"]) {
+              $scope.backup.modes["FULL_BACKUP"] = {when: "0 0/1 * * * ?"}
+            }
+            delete $scope.backup.modes["INCREMENTAL_BACKUP"];
+            break;
+          case "3":
+            if (!$scope.backup.modes["FULL_BACKUP"]) {
+              $scope.backup.modes["FULL_BACKUP"] = {when: "0 0/1 * * * ?"}
+            }
+            if (!$scope.backup.modes["INCREMENTAL_BACKUP"]) {
+              $scope.backup.modes["INCREMENTAL_BACKUP"] = {when: "0 0/1 * * * ?"}
+            }
+            break;
+        }
+
+      }
+    })
+    $('#incremental_cron').cron({
+      initial: incr,
+      onChange: function () {
+        if ($scope.backup.modes["INCREMENTAL_BACKUP"]) {
+          $scope.backup.modes["INCREMENTAL_BACKUP"].when = $(this).cron("value");
+        }
+      }
+    });
+    $('#full_cron').cron({
+      initial: full,
+      onChange: function () {
+        if ($scope.backup.modes["FULL_BACKUP"]) {
+          $scope.backup.modes["FULL_BACKUP"].when = $(this).cron("value");
+        }
+      }
+    });
+  })
+
+
+  $scope.save = function () {
+    BackupService.save($scope.backup).then(function (data) {
+      Notification.push({content: "Backup saved", autoHide: true});
+    }).catch(function (err) {
+      Notification.push({content: err.data, error: true, autoHide: true});
+    });
+  }
+});
+
+
+ee.controller("RestoreController", function ($scope) {
+
+
+})
+/**
+ * Security Controller Auditing + Authenticator
+ */
+ee.controller("ServerSecurityController", function ($scope, AgentService) {
+
+
+  $scope.agentActive = AgentService.active;
+  $scope.clazz = 'tabs-style-linebox';
+  $scope.icon = 'fa-database';
+  $scope.securityTabs = [
+    {"name": "Auditing", "template": "views/server/stats/auditing.html"}
+  ]
+
+
+});

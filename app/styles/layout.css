@@ -88,10 +88,20 @@ body div.container-studio {
   padding: 10px;
   padding-left: 35px;
   margin: 0;
+  border-radius: 0px;
+
 }
 
+.console_class_functions div.row .functiotron:first-child {
+  border-top: 3px solid #c5c5c5;
+}
 .console_class_functions > div.row div.col-md-12 {
   border-left: 3px solid #c5c5c5;
+  border-right: 3px solid #c5c5c5;
+  border-bottom: 3px solid #c5c5c5;
+
+
+
 }
 
 .console_class_functions .parameters .row > div {
@@ -138,6 +148,10 @@ body div.container-studio {
 .panel .page-header {
   margin-top: 10px;
   padding-bottom: 0px;
+}
+
+.page-header {
+  margin: 20px 0 20px;
 }
 
 .opanel .col-md-2 {
@@ -397,7 +411,16 @@ text.vicon {
 
 .btn {
   border-radius: 0;
-  background-color: #acacad;
+}
+.btn-default {
+  background-color: #c0c0c0;
+  background-image: none;
+  color: rgb(76, 79, 83);
+  text-shadow: none;
+}
+
+.btn-default:hover {
+  background-color: #c0c0c0;
 }
 
 .btn-trasparent {
@@ -920,8 +943,8 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 }
 
 .tabs-style-line nav li.tab-current a {
-  box-shadow: inset 0 -2px #2CC185;
-  color: #2CC185;
+  box-shadow: inset 0 -2px #FF6600;
+  color: #FF6600;
 }
 
 .tabs-style-line > nav a {
@@ -962,7 +985,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 
 .tabs-style-linebox nav a:hover,
 .tabs-style-linebox nav a:focus {
-  color: #2CC185;
+  color: #FF6600;
   box-shadow: none;
 }
 
@@ -999,7 +1022,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 .tabs-style-linebox nav a:hover::after,
 .tabs-style-linebox nav a:focus::after,
 .tabs-style-linebox nav li.tab-current a::after {
-  background: #2CC185;
+  background: #FF6600;
 }
 
 @media screen and (max-width: 58em) {
@@ -1039,13 +1062,15 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 .studio-well-tips {
   background-color: #f4f4f4;
   padding: 20px;
-  border-left: 3px solid #2CC185;
+  border-left: 3px solid #FF6600;
 }
+
 .studio-well-tips-sm {
   background-color: #f4f4f4;
   padding: 10px;
-  border-left: 3px solid #2CC185;
+  border-left: 3px solid #FF6600;
 }
+
 .field-set {
   border-radius: 6px;
   color: inherit;
@@ -1053,13 +1078,12 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   padding: 20px;
 }
 
-
 .card {
   position: relative;
   background: #fff;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
   margin-bottom: 30px;
-  padding: 15px;
+  padding: 5px;
 }
 
 .card-function {
@@ -1067,7 +1091,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 }
 
 .row span.title {
-  background-color: #2CC185;
+  background-color: #FF6600;
   color: white;
   font-size: 1.5em;
   padding: 5px;
@@ -1108,6 +1132,20 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   background: #007299;
   box-shadow: none;
 }
+
 .studio-well-tips-sm .tab {
   padding-left: 20px;
+}
+
+.sidebar .nav-pills > li.active > a, .sidebar .nav-pills > li.active > a:focus, .sidebar .nav-pills > li.active > a:hover {
+  text-decoration: none;
+  background-color: #eee;
+  color: #60676d;
+}
+
+.security-card {
+  padding: 15px;
+}
+.config-card {
+  padding: 15px;
 }

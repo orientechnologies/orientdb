@@ -38,7 +38,13 @@
   <link rel="stylesheet" href="components/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css">
   <link rel="stylesheet" href="components/c3js-chart/c3.min.css">
   <link rel="stylesheet" href="components/selectize/dist/css/selectize.css">
+  <link rel="stylesheet" href="components/selectize/dist/css/selectize.bootstrap3.css">
+
   <link rel="stylesheet" href="components/selectize/dist/css/selectize.default.css">
+  <link rel="stylesheet" href="components/jquery-cron/cron/jquery-cron.css">
+
+  <link rel="stylesheet" href="components/TimelineJS3/compiled/css/timeline.css">
+  <link rel="stylesheet" href="components/TimelineJS3/compiled/css/fonts/font.default.css">
 
   <link rel="stylesheet" href="styles/main.css">
   <link rel="stylesheet" href="styles/animation.css">
@@ -99,7 +105,7 @@
 
   <nav class="sidebar ee-view-hide" ng-controller="EEDashboardController" ng-class="show">
     <ul class="nav nav-pills nav-stacked">
-      <li ng-repeat="m in menus">
+      <li ng-class="{'active' :  m.name  == activeTab.name }" ng-repeat="m in menus">
         <a href="#/dashboard/{{m.name}}"> <i class="fa fa-2x {{m.icon}}"></i>
         </a>
       </li>
@@ -177,11 +183,12 @@
 <script src="components/datatables/media/js/jquery.dataTables.min.js"></script>
 <script src="components/angular-datatables/dist/angular-datatables.min.js"></script>
 <script src="components/c3js-chart/c3.js"></script>
-<script src="components/angular-ui-select/dist/select.min.js"></script>
+<script src="components/angular-ui-select/dist/select.js"></script>
 <script src="components/microplugin/src/microplugin.js"></script>
 <script src="components/selectize/dist/js/selectize.js"></script>
 <script src="components/filesize/lib/filesize.min.js"></script>
 <script src="components/noty/js/noty/packaged/jquery.noty.packaged.min.js"></script>
+<script src="components/TimelineJS3/compiled/js/timeline.js"></script>
 
 
 <!--<script type="text/javascript"-->
@@ -192,7 +199,6 @@
 
 <script src="scripts/api.js"></script>
 <script src="scripts/app.js"></script>
-<script src="scripts/controllers/main.js"></script>
 <script src="scripts/controllers/header-controller.js"></script>
 <script src="scripts/controllers/server-controller.js"></script>
 <script src="scripts/controllers/breadcrumb-controller.js"></script>
@@ -226,7 +232,7 @@
 <script src="scripts/widgets/tabset.js"></script>
 <script src="scripts/controllers/configuration-controller.js"></script>
 <script type="text/javascript" src="scripts/widgets/patch/ui-codemirror.js"></script>
-
+<script src="scripts/vendor/jquery-cron-min.js"></script>
 
 <!-- endbuild -->
 

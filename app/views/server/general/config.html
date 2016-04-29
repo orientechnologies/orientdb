@@ -54,19 +54,19 @@
             <td>{{ props.key }}</td>
             <td>{{ props.description }}</td>
             <td>
-              <input type="checkbox" disabled class="form-control" ng-show="isBoolean(props.defaultValue)"
+              <input type="checkbox" disabled  ng-show="isBoolean(props.defaultValue)"
                      ng-model="props.defaultValue">
               <span ng-hide="isBoolean(props.defaultValue)"> {{ props.defaultValue }}</span>
             </td>
             <td ng-if="!props.canChange">
 
-              <input type="checkbox" disabled class="form-control" ng-show="isBoolean(props.value)"
+              <input type="checkbox" disabled  ng-show="isBoolean(props.value)"
                      ng-model="props.value">
               <span ng-hide="isBoolean(props.value)"> {{ props.value }}</span>
             </td>
             <td ng-if="props.canChange">
 
-              <input class="form-control" type=" {{ getType(props.value)}}" ng-change="changeGlobal(props)"
+              <input class="{ 'form-control' : {{ getType(props.value) != 'checkbox' }} }" type=" {{ getType(props.value)}}" ng-change="changeGlobal(props)"
                      ng-model="props.value">
             </td>
           </tr>

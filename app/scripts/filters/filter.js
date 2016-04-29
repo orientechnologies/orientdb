@@ -121,8 +121,14 @@ filterModule.filter('operation', function () {
       case 4:
         return "Command"
         break;
+      case 5:
+        return "Create Class"
+        break;
+      case 6:
+        return "Drop Class"
+        break;
     }
-    return "";
+    return input;
   };
 });
 

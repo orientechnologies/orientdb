@@ -12,6 +12,7 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
   }).catch(function (err) {
 
   })
+  $scope.databases = [];
   DatabaseApi.listDatabases(function (data) {
     $scope.databases = data.databases;
     if ($scope.databases.length > 0) {
@@ -52,6 +53,7 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
     modalScope.createNew = function () {
       modalScope.creating = true;
       DatabaseApi.createDatabase(modalPromise.$scope.name, modalPromise.$scope.type, modalPromise.$scope.stype, modalPromise.$scope.username, modalPromise.$scope.password, function (data) {
+
         $scope.databases.push(modalPromise.$scope.name);
         $scope.database = modalPromise.$scope.name;
 

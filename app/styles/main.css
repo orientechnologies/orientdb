@@ -10,6 +10,9 @@ body {
   font-family: 'Source Sans Pro', sans-serif;
 }
 
+#timeline {
+  height: 300px;
+}
 .header {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
   border: none;
@@ -670,7 +673,9 @@ ul.arrayrid > li {
 
 .navbar .nav > li > a {
   color: #FFFFFF;
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .container-notification {
@@ -1222,3 +1227,8 @@ span.badge-edge {
   text-align: center;
 }
 
+
+
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak, .ng-hide:not(.ng-hide-animate) {
+  display: none !important;
+}

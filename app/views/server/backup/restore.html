@@ -1,0 +1,32 @@
+<div class="modal" ng-controller="RestoreController">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
+        </button>
+        <h3>Restore from Unit {{unit.unitId}} </h3>
+      </div>
+      <div class="modal-body edge">
+        <form id="signin" name="newDB" class="form-horizontal" novalidate="">
+          <fieldset>
+            <div class="form-group">
+              <label class="control-label col-md-2">Name</label>
+
+              <div class="col-md-10">
+                <input type="text" class="form-control" required ng-model="restored.target"
+                       placeholder="Database name" focus="true"/>
+              </div>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" ng-click="$hide()">Cancel</button>
+        <button class="btn btn-primary" ng-disabled="newDB.$invalid" ng-click="onRestore(restored)">Restore
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+

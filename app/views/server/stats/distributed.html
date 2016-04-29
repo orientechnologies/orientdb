@@ -6,17 +6,16 @@
       <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
     </div>
   </div>
-  <div class="row" ng-show="agentActive">
-    <div class="col-md-12 studio-well">
-      <h4>Active nodes: {{ servers.length }}</h4>
-    </div>
-  </div>
+  <!--<div class="row" ng-show="agentActive">-->
+    <!--<div class="col-md-12 studio-well">-->
+      <!--<h4>Active nodes: {{ servers.length }}</h4>-->
+    <!--</div>-->
+  <!--</div>-->
   <div class="row row-space" ng-show="agentActive">
     <div class="col-md-12">
       <tabset>
         <tab title="Overview" template-url="views/server/distributed/overview.html"></tab>
         <tab title="Databases" template-url="views/server/distributed/databases.html"></tab>
-        <!--<tab title="Queues" template-url="views/server/distributed/queues.html"></tab>-->
       </tabset>
     </div>
   </div>

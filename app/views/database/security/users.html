@@ -1,64 +1,66 @@
 <div ng-controller="UsersController" class="users-ui">
-    <div class="container-fluid">
-        <div class="row vertical-align">
-            <div class="col-md-6 col-xs-12">
-                <form class="form-search">
-                    <div class="input-group">
-                        <input type="text" class="input-xxlarge form-control search-query" ng-model="queryy"
-                               placeholder="Search user" focus="true">
+  <div class="container-fluid">
+    <div class="row vertical-align">
+      <div class="col-md-6 col-xs-12">
+        <form class="form-search">
+          <div class="input-group">
+            <input type="text" class="input-xxlarge form-control search-query" ng-model="queryy"
+                   placeholder="Search user" focus="true">
                         <span class="input-group-btn">
                         <button type="submit" class="btn" ng-click="">
-                            <i class="fa fa-search"></i>
+                          <i class="fa fa-search"></i>
                         </button>
                             </span>
-                    </div>
-                </form>
-            </div>
-            <div class="col-md-6 col-xs-12">
-                <div class="btn-group pull-right">
-                    <button class="btn btn-sm btn-success" ng-disabled="disabledSecurity" ng-click="addUser()"><i class="fa fa-plus-circle"> Add
-                        user</i></button>
-                </div>
-            </div>
+          </div>
+        </form>
+      </div>
+      <div class="col-md-6 col-xs-12">
+        <div class="btn-group pull-right">
+          <button class="btn btn-sm btn-success" ng-disabled="disabledSecurity" ng-click="addUser()"><i
+            class="fa fa-plus-circle">
+          </i> Add user
+          </button>
         </div>
-        <div class="row">
-            <div class="col-md-12 console_class_functions">
-                <table ng-table="tableParams"
-                       class="table table-striped table-bordered table-hover table-condensed pointer">
-                    <thead>
-                    <th>Name
-                        <a href="javascript:void(0)" tabindex="1"
-                           data-trigger="focus" data-placement="right"
-                           data-container="body"
-                           data-content="{{ 'security.users' | translate:links }}" bs-popover>
-                            <i class="fa fa-question-circle"></i>
-                        </a>
-                    </th>
-                    <th>Roles</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                    </thead>
-                    <tbody>
-                    <tr ng-repeat="result in $data | filter: queryy |  orderBy:predicate:reverse">
-                        <td data-title="'Name'">{{result['name']}}</td>
-                        <td data-title="'Roles'">
-                            <tags-input ng-model="result.roles" placeholder="Add role" add-from-autocomplete-only="true"
-                                        display-property="name" on-tag-added="tagAdded($tag,result)"
-                                        on-tag-removed="tagRemoved($tag,result)">
-                                <auto-complete min-length="0"
-                                               debounce-delay="0"
-                                               max-results-to-show="10" source="loadRoles($query)"></auto-complete>
-                            </tags-input>
-                        </td>
-                        <td data-title="'Status'">{{result['status']}}</td>
-                        <td data-title="'Actions'">
-                            <button class="btn btn-sm btn-primary" ng-click="edit(result)">Edit</button>
-                            <button class="btn btn-sm btn-danger" ng-click="delete(result)">Delete</button>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+      </div>
     </div>
+    <div class="row">
+      <div class="col-md-12 console_class_functions">
+        <table ng-table="tableParams"
+               class="table table-striped table-bordered table-hover table-condensed pointer">
+          <thead>
+          <th>Name
+            <a href="javascript:void(0)" tabindex="1"
+               data-trigger="focus" data-placement="right"
+               data-container="body"
+               data-content="{{ 'security.users' | translate:links }}" bs-popover>
+              <i class="fa fa-question-circle"></i>
+            </a>
+          </th>
+          <th>Roles</th>
+          <th>Status</th>
+          <th>Actions</th>
+          </thead>
+          <tbody>
+          <tr ng-repeat="result in $data | filter: queryy |  orderBy:predicate:reverse">
+            <td data-title="'Name'">{{result['name']}}</td>
+            <td data-title="'Roles'">
+              <tags-input ng-model="result.roles" placeholder="Add role" add-from-autocomplete-only="true"
+                          display-property="name" on-tag-added="tagAdded($tag,result)"
+                          on-tag-removed="tagRemoved($tag,result)">
+                <auto-complete min-length="0"
+                               debounce-delay="0"
+                               max-results-to-show="10" source="loadRoles($query)"></auto-complete>
+              </tags-input>
+            </td>
+            <td data-title="'Status'">{{result['status']}}</td>
+            <td data-title="'Actions'">
+              <button class="btn btn-sm btn-primary" ng-click="edit(result)">Edit</button>
+              <button class="btn btn-sm btn-danger" ng-click="delete(result)">Delete</button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>

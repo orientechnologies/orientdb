@@ -1,15 +1,7 @@
-<div class="row" ng-controller="ClusterDBController">
-  <div class="col-md-12">
-    <h3 class="text-center">Available Databases</h3>
-  </div>
-  <div class="col-md-12">
-    <div class="panel panel-default">
-      <div class="panel-body">
-        <tabset clazz="clazz">
-          <tab title="{{key}}" icon="icon" context="key" ng-repeat="(key, value) in databases"
-               template-url="views/server/distributed/singleDB.html"></tab>
-        </tabset>
-      </div>
-    </div>
-  </div>
+<div class="col-md-12" ng-controller="ClusterDBController">
+  
+  <tabset clazz="clazz">
+    <tab title="{{key}}" icon="icon" context="key" ng-repeat="(key, value) in databases"
+         template-url="views/server/distributed/singleDB.html"></tab>
+  </tabset>
 </div>

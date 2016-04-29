@@ -604,6 +604,106 @@ ee.factory("AgentService", function (Profiler, $q) {
   }
   return agent;
 })
+
+ee.factory("BackupService", function (Profiler, $q, $http) {
+  var backups = {}
+
+
+  backups.restore = function (uuid, restored) {
+
+    var deferred = $q.defer();
+    var url = API + 'backupManager/' + uuid + "/restore";
+    $http.post(url, restored).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+  backups.get = function () {
+    var deferred = $q.defer();
+    var url = API + 'backupManager';
+    $http.get(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+
+
+  backups.logs = function (uuid) {
+    var deferred = $q.defer();
+    var url = API + 'backupManager/' + uuid + "/log";
+    $http.get(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+
+    return deferred.promise;
+  }
+  backups.unitLogs = function (uuid, unitId) {
+    var deferred = $q.defer();
+    var url = API + 'backupManager/' + uuid + "/log/" + unitId;
+    $http.get(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+
+    return deferred.promise;
+  }
+  backups.save = function (backup) {
+    var deferred = $q.defer();
+    var url = API + 'backupManager';
+
+    if (backup.uuid) {
+      $http.put(url + "/" + backup.uuid, backup).success(function (data) {
+        deferred.resolve(data)
+      }).error(function (data, status, headers, config) {
+        deferred.reject({data: data, status: status});
+      });
+    } else {
+      $http.post(url, backup).success(function (data) {
+        deferred.resolve(data)
+      }).error(function (data, status, headers, config) {
+        deferred.reject({data: data, status: status});
+      });
+    }
+
+    return deferred.promise;
+  }
+  return backups;
+})
+
+ee.factory("SecurityService", function (Profiler, $q, $http) {
+  var config = {}
+
+
+  config.get = function () {
+    var deferred = $q.defer();
+    var url = API + 'security/config';
+    $http.get(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+
+  config.reload = function (config) {
+    var deferred = $q.defer();
+    var url = API + 'security/reload';
+    $http.post(url, config).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+  return config;
+})
 var AgentResolve = {
   current: function (AgentService, $q) {
     var deferred = $q.defer();

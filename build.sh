@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-STUDIO=studio-2.2.zip
+STUDIO=studio-2.1.zip
 
 bower install
 grunt build
