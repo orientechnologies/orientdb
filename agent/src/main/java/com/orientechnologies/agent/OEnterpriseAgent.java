@@ -111,7 +111,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
             } else {
               OHazelcastPlugin plugin = (OHazelcastPlugin) manager;
               try {
-                plugin.waitUntilOnline();
+                plugin.waitUntilNodeOnline();
               } catch (InterruptedException e) {
                 e.printStackTrace();
               }
