@@ -1375,8 +1375,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // END OF RECORD ENTRIES
           network.writeByte((byte) 0);
 
-          // SEND INDEX ENTRIES
-          network.writeBytes(iTx.getIndexChanges().toStream());
+          // OLD SEND INDEX ENTRIES, NON NEEDED, CALCULATED SERVER SIDE
+          //network.writeBytes(iTx.getIndexChanges().toStream());
+          network.writeBytes(new ODocument().toStream());
         } finally {
           endRequest(network);
         }

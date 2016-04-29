@@ -471,6 +471,11 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) index);
       else if (index instanceof OIndexOneValue)
         return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
+    } else {
+      if (index instanceof OIndexRemoteMultiValue)
+        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
+      else if (index instanceof OIndexRemoteOneValue)
+        return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
     }
     return index;
   }
