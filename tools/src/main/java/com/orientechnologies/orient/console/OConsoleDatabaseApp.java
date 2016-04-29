@@ -280,36 +280,16 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
-  @ConsoleCommand(description = "Create a new database from incremental backup. For encrypted database or portion of database, set the variable 'storage.encryptionKey' with the key to use",
-      onlineHelp = "Console-Command-Create-Database")
-  public void createFromBackup(
-      @ConsoleParameter(name = "database-url", description = "The url of the database to create in the format '<mode>:<path>'") String iDatabaseURL,
-      @ConsoleParameter(name = "user", optional = true, description = "Server administrator name") String iUserName,
-      @ConsoleParameter(name = "password", optional = true, description = "Server administrator password") String iUserPassword,
-      @ConsoleParameter(name = "backup-path", optional = true, description = "Path to incremental backup directory") String backupPath,
-      @ConsoleParameter(name = "storage-type", optional = true, description = "The type of the storage: 'plocal' for disk-based databases and 'memory' for in-memory database") String iStorageType,
-      @ConsoleParameter(name = "db-type", optional = true, description = "The type of the database used between 'document' and 'graph'. By default is graph.") String iDatabaseType,
-      @ConsoleParameter(name = "[options]", optional = true, description = "Additional options, example: -encryption=aes -compression=snappy") final String iOptions)
-      throws IOException {
-
-    doCreateDatabase(iDatabaseURL, iUserName, iUserPassword, iStorageType, iDatabaseType, iOptions, backupPath);
-  }
-
   @ConsoleCommand(description = "Create a new database. For encrypted database or portion of database, set the variable 'storage.encryptionKey' with the key to use", onlineHelp = "Console-Command-Create-Database")
   public void createDatabase(
-      @ConsoleParameter(name = "database-url", description = "The url of the database to create in the format '<mode>:<path>'") String iDatabaseURL,
-      @ConsoleParameter(name = "user", optional = true, description = "Server administrator name") String iUserName,
-      @ConsoleParameter(name = "password", optional = true, description = "Server administrator password") String iUserPassword,
-      @ConsoleParameter(name = "storage-type", optional = true, description = "The type of the storage: 'plocal' for disk-based databases and 'memory' for in-memory database") String iStorageType,
-      @ConsoleParameter(name = "db-type", optional = true, description = "The type of the database used between 'document' and 'graph'. By default is graph.") String iDatabaseType,
-      @ConsoleParameter(name = "[options]", optional = true, description = "Additional options, example: -encryption=aes -compression=snappy") final String iOptions)
+      @ConsoleParameter(name = "database-url", description = "The url of the database to create in the format '<mode>:<path>'") String databaseURL,
+      @ConsoleParameter(name = "user", optional = true, description = "Server administrator name") String userName,
+      @ConsoleParameter(name = "password", optional = true, description = "Server administrator password") String userPassword,
+      @ConsoleParameter(name = "storage-type", optional = true, description = "The type of the storage: 'plocal' for disk-based databases and 'memory' for in-memory database") String storageType,
+      @ConsoleParameter(name = "db-type", optional = true, description = "The type of the database used between 'document' and 'graph'. By default is graph.") String databaseType,
+      @ConsoleParameter(name = "[options]", optional = true, description = "Additional options, example: -encryption=aes -compression=snappy") final String options)
       throws IOException {
 
-    doCreateDatabase(iDatabaseURL, iUserName, iUserPassword, iStorageType, iDatabaseType, iOptions, null);
-  }
-
-  private void doCreateDatabase(String databaseURL, String userName, String userPassword, String storageType, String databaseType,
-      String options, String backupPath) throws IOException {
     if (userName == null)
       userName = OUser.ADMIN;
     if (userPassword == null)
@@ -331,6 +311,21 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     currentDatabaseUserName = userName;
     currentDatabaseUserPassword = userPassword;
 
+    final Map<String, String> omap = new HashMap<String, String>();
+
+    if (options != null) {
+      final List<String> kvOptions = OStringSerializerHelper.smartSplit(options, ',', false);
+      for (String option : kvOptions) {
+        final String[] values = option.split("=");
+        if (values.length != 2)
+          throw new IllegalArgumentException("Options must have in th format -<option>=<value>[,-<option>=<value>]*");
+
+        omap.put(values[0], values[1]);
+      }
+    }
+
+    final String backupPath = omap.remove("-restore");
+
     if (databaseURL.startsWith(OEngineRemote.NAME)) {
       // REMOTE CONNECTION
       final String dbURL = databaseURL.substring(OEngineRemote.NAME.length() + 1);
@@ -348,20 +343,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       currentDatabase = new ODatabaseDocumentTx(databaseURL);
 
-      if (options != null) {
-        final List<String> kvOptions = OStringSerializerHelper.smartSplit(options, ',', false);
-        for (String option : kvOptions) {
-          final String[] values = option.split("=");
-          if (values.length != 2)
-            throw new IllegalArgumentException("Options must have in th format -<option>=<value>[,-<option>=<value>]*");
-
-          if ("-encryption".equalsIgnoreCase(values[0]))
-            currentDatabase.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey(), values[1]);
-          else if ("-compression".equalsIgnoreCase(values[0]))
-            currentDatabase.setProperty(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey(), values[1]);
-          else
-            currentDatabase.setProperty(values[0], values[1]);
-        }
+      for (Map.Entry<String, String> oentry : omap.entrySet()) {
+        if ("-encryption".equalsIgnoreCase(oentry.getKey()))
+          currentDatabase.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey(), oentry.getValue());
+        else if ("-compression".equalsIgnoreCase(oentry.getKey()))
+          currentDatabase.setProperty(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey(), oentry.getValue());
+        else
+          currentDatabase.setProperty(oentry.getKey(), oentry.getValue());
       }
 
       if (backupPath == null)
