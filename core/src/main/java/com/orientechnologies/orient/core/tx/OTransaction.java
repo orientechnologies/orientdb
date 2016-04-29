@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public interface OTransaction {
   enum TXTYPE {
@@ -124,6 +125,8 @@ public interface OTransaction {
   List<String> getInvolvedIndexes();
 
   ODocument getIndexChanges();
+
+  Map<String, OTransactionIndexChanges> getIndexEntries() ;
 
   void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
       final Object iKey, final OIdentifiable iValue);

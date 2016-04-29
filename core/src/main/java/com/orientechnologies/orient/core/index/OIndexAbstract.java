@@ -54,7 +54,9 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -742,6 +744,42 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       applyIndexTxEntry(snapshot, nullIndexEntry);
     } finally {
       releaseSharedLock();
+    }
+  }
+
+  public void addTxOperation(final OTransactionIndexChanges changes) {
+    acquireSharedLock();
+    try {
+      final IndexTxSnapshot indexTxSnapshot = txSnapshot.get();
+      if(changes.cleared)
+        clearSnapshot(indexTxSnapshot);
+      final Map<Object, Object> snapshot = indexTxSnapshot.indexSnapshot;
+      for (final OTransactionIndexChangesPerKey entry :changes.changesPerKey.values()){
+        applyIndexTxEntry(snapshot, entry);
+      }
+      applyIndexTxEntry(snapshot, changes.nullKeyChanges);
+
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  private void applyIndexTxEntry(Map<Object, Object> snapshot, OTransactionIndexChangesPerKey entry) {
+    for(OTransactionIndexChangesPerKey.OTransactionIndexEntry op :entry.entries){
+      switch (op.operation){
+      case PUT:
+        putInSnapshot(entry.key,op.value,snapshot);
+        break;
+      case REMOVE:
+        if (op.value != null)
+          removeFromSnapshot(entry.key, op.value, snapshot);
+        else
+          removeFromSnapshot(entry.key, snapshot);
+        break;
+      case CLEAR:
+        //SHOULD NEVER BE THE CASE HANDLE BY cleared FLAG
+        break;
+      }
     }
   }
 

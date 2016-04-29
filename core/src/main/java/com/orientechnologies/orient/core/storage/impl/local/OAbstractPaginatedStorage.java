@@ -79,6 +79,7 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerforman
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -1270,6 +1271,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
+
+    final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
+    for (OIndex<?> index : databaseRecord.getMetadata().getIndexManager().getIndexes())
+      indexes.put(index.getName(), index);
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
 
     for (ORecordOperation txEntry : entries) {
@@ -1331,8 +1336,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             result.add(txEntry);
           }
 
-          if (callback != null)
-            callback.run();
+          commitIndexes(clientTx, indexes);
 
           endStorageTx();
 
@@ -1356,6 +1360,42 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return result;
   }
 
+  private void commitIndexes(OTransaction clientTx, Map<String, OIndex<?>> indexes) {
+    Map<String, OTransactionIndexChanges> indexChanges = clientTx.getIndexEntries();
+    assert indexChanges != null;
+    final Map<String, OIndexInternal<?>> indexesToCommit = new HashMap<String, OIndexInternal<?>>();
+
+    for (Map.Entry<String, OTransactionIndexChanges> indexChange : indexChanges.entrySet()) {
+      final OIndex<?> idx = indexes.get(indexChange.getKey());
+      if (idx == null)
+        throw new OTransactionException("Cannot find index '" + indexChange.getKey() + "' while committing transaction");
+
+      final OIndexInternal<?> index = idx.getInternal();
+      indexesToCommit.put(index.getName(), index.getInternal());
+    }
+
+    for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+      indexInternal.preCommit();
+
+    for (Map.Entry<String, OTransactionIndexChanges> indexEntry : indexChanges.entrySet()) {
+      final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
+
+      if (index == null) {
+        OLogManager.instance().error(this, "Index with name '" + indexEntry.getKey() + "' was not found.");
+        throw new OIndexException("Index with name '" + indexEntry.getKey() + "' was not found.");
+      } else
+        index.addTxOperation(indexEntry.getValue());
+    }
+
+    try {
+      for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+        indexInternal.commit();
+    } finally {
+      for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+        indexInternal.postCommit();
+    }
+  }
+
   @Override
   public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction clientTx, Runnable callback) {
     boolean success = false;
@@ -1364,6 +1404,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
+
+    final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
+    for (OIndex<?> index : databaseRecord.getMetadata().getIndexManager().getIndexes())
+      indexes.put(index.getName(), index);
+
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
 
     for (ORecordOperation txEntry : entries) {
@@ -1424,8 +1469,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             result.add(txEntry);
           }
 
-          if (callback != null)
-            callback.run();
+          commitIndexes(clientTx, indexes);
 
           final OUncompletedCommit<List<ORecordOperation>> uncompletedCommit = new UncompletedCommit(clientTx, entries, result,
               atomicOperationsManager.initiateCommit());

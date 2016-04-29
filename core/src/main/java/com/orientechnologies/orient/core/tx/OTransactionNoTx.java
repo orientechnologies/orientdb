@@ -39,10 +39,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * No operation transaction.
@@ -340,6 +337,12 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public ODocument getIndexChanges() {
     return null;
   }
+
+  @Override
+  public Map<String, OTransactionIndexChanges> getIndexEntries() {
+    return null;
+  }
+
 
   public OTransactionIndexChangesPerKey getIndexEntry(final String iIndexName, final Object iKey) {
     return null;

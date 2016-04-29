@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 
 import java.util.Collection;
 
@@ -181,6 +182,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
   void preCommit();
 
   void addTxOperation(ODocument operationDocument);
+  void addTxOperation(final OTransactionIndexChanges changes);
 
   void commit();
 
