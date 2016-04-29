@@ -19,7 +19,7 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(get("connect/" + getDatabaseName()).getResponse().getStatusLine().getStatusCode(), 204);
   }
 
-  @Test
+  
   public void testTooManyConnect() throws Exception {
     if (isInDevelopmentMode())
       // SKIP IT
