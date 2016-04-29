@@ -56,7 +56,7 @@ node("master") {
     def jsBuildImg = docker.image("orientdb/jenkins-slave-node-0.10:20160112")
 
 
-    odbImg.withRun("-e ORIENTDB_ROOT_PASSWORD=root") { odb ->
+    odbImg.withRun("-v ~/jobs/${env.JOB_NAME}/workspace/orientjs/ci:/orientdb/config -e ORIENTDB_ROOT_PASSWORD=root") { odb ->
         jsBuildImg.inside("-v /home/orient/.npm:/home/jenkins/.npm:rw -v /home/orient/node_modules:/home/jenkins/node_modules:rw --link=${odb.id}:odb -e ORIENTDB_HOST=odb -e ORIENTDB_BIN_PORT=2424 -e ORIENTDB_HTTP_PORT=2480") {
             git url: 'https://github.com/orientechnologies/orientjs.git', branch:"${env.BRANCH_NAME}"
             sh "npm install"

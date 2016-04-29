@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.text.ParseException;
-import java.util.*;
-
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -46,6 +43,9 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.text.ParseException;
+import java.util.*;
 
 /**
  * Contains the description of a persistent class property.
@@ -202,6 +202,21 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     acquireSchemaReadLock();
     try {
       return owner.createIndex(getFullName(), iType, globalRef.getName());
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  @Override
+  public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
+    return createIndex(iType.name(), metadata);
+  }
+
+  @Override
+  public OIndex<?> createIndex(String iType, ODocument metadata) {
+    acquireSchemaReadLock();
+    try {
+      return owner.createIndex(getFullName(), iType, null, metadata, new String[]{globalRef.getName()});
     } finally {
       releaseSchemaReadLock();
     }
