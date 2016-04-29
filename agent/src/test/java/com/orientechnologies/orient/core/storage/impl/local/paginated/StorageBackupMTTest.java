@@ -86,10 +86,9 @@ public class StorageBackupMTTest {
 
     System.out.println("create");
     final ODatabaseDocumentTx backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
-    backedUpDb.create();
+    backedUpDb.create(backupDir.getAbsolutePath());
 
     System.out.println("restore");
-    backedUpDb.incrementalRestore(backupDir.getAbsolutePath());
     final OStorage backupStorage = backedUpDb.getStorage();
     backedUpDb.close();
 

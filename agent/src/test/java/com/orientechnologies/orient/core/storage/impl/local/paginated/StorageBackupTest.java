@@ -96,9 +96,8 @@ public class StorageBackupTest {
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
     final ODatabaseDocumentTx backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
-    backedUpDb.create();
+    backedUpDb.create(backupDir.getAbsolutePath());
 
-    backedUpDb.incrementalRestore(backupDir.getAbsolutePath());
     final OStorage backupStorage = backedUpDb.getStorage();
     backedUpDb.close();
 
@@ -188,9 +187,8 @@ public class StorageBackupTest {
     OFileUtils.deleteRecursively(new File(backedUpDbDirectory));
 
     final ODatabaseDocumentTx backedUpDb = new ODatabaseDocumentTx("plocal:" + backedUpDbDirectory);
-    backedUpDb.create();
+    backedUpDb.create(backupDir.getAbsolutePath());
 
-    backedUpDb.incrementalRestore(backupDir.getAbsolutePath());
     final OStorage backupStorage = backedUpDb.getStorage();
     backedUpDb.close();
 
@@ -206,13 +204,13 @@ public class StorageBackupTest {
 
     Assert.assertTrue(compare.compare());
 
-     db.open("admin", "admin");
-     db.drop();
+    db.open("admin", "admin");
+    db.drop();
 
-     backedUpDb.open("admin", "admin");
-     backedUpDb.drop();
+    backedUpDb.open("admin", "admin");
+    backedUpDb.drop();
 
-     OFileUtils.deleteRecursively(backupDir);
+    OFileUtils.deleteRecursively(backupDir);
   }
 
 }
