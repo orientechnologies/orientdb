@@ -247,6 +247,10 @@ public class ODistributedWorker extends Thread {
 
       }
 
+    } catch (RuntimeException e) {
+      sendResponseBack(iRequest, e);
+      throw e;
+
     } finally {
       if (database != null && !database.isClosed()) {
         database.activateOnCurrentThread();
