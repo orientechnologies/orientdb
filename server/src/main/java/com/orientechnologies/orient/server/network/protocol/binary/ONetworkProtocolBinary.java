@@ -844,7 +844,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     final String dbName = req.getDatabaseName();
     if (dbName != null) {
       if (distributedRequests == 0) {
-        if (req.getTask().isNodeOnlineRequired()) {
+        if (req.getTask().isNodeOnlineRequired() ) {
           try {
             manager.waitUntilNodeOnline(manager.getLocalNodeName(), dbName);
           } catch (InterruptedException e) {

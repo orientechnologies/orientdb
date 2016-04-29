@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.orient.console.OTableFormatter;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -26,10 +27,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Formats information about distributed cfg.
@@ -37,6 +36,92 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedOutput {
+
+  public static String formatServerStatus(final ODistributedServerManager manager, final ODocument distribCfg) {
+    final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
+
+    final Collection<ODocument> members = distribCfg.field("members");
+
+    if (members != null)
+      for (ODocument m : members) {
+        if (m == null)
+          continue;
+
+        final ODocument serverRow = new ODocument();
+
+        final String serverName = m.field("name");
+
+        serverRow.field("Name", serverName + (manager.getLocalNodeName().equals(serverName) ? "*" : ""));
+        serverRow.field("Status", m.field("status"));
+        serverRow.field("Databases", (String) null);
+        serverRow.field("Conns", m.field("connections"));
+
+        final Date date = m.field("startedOn");
+
+        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
+        if (sdf.format(date).equals(sdf.format(new Date())))
+          // TODAY, PUT ONLY THE HOUR
+          serverRow.field("StartedOn", new SimpleDateFormat("HH:mm:ss").format(date));
+        else
+          // ANY OTHER DAY, PUT FULL DATE
+          serverRow.field("StartedOn", date);
+
+        final Collection<Map> listeners = m.field("listeners");
+        if (listeners != null) {
+          for (Map l : listeners) {
+            final String protocol = (String) l.get("protocol");
+            if (protocol.equals("ONetworkProtocolBinary")) {
+              serverRow.field("Binary", l.get("listen"));
+            } else if (protocol.equals("ONetworkProtocolHttpDb")) {
+              serverRow.field("HTTP", l.get("listen"));
+            }
+          }
+        }
+
+        final long usedMem = m.field("usedMemory");
+        final long maxMem = m.field("maxMemory");
+
+        serverRow.field("UsedMemory", String.format("%s/%s (%.2f%%)", OFileUtils.getSizeAsString(usedMem),
+            OFileUtils.getSizeAsString(maxMem), ((float) usedMem / (float) maxMem) * 100));
+
+        rows.add(serverRow);
+
+        final Collection<String> databases = m.field("databases");
+        if (databases != null) {
+          int serverNum = 0;
+          for (String dbName : databases) {
+            final StringBuilder buffer = new StringBuilder();
+            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName);
+
+            buffer.append(dbName);
+            buffer.append("=");
+            buffer.append(manager.getDatabaseStatus(serverName, dbName));
+            buffer.append(" (");
+            buffer.append(dbCfg.getServerRole(serverName));
+            buffer.append(")");
+
+            if (serverNum++ == 0)
+              // ADD THE 1ST DB IT IN THE SERVER ROW
+              serverRow.field("Databases", buffer.toString());
+            else
+              // ADD IN A SEPARATE ROW
+              rows.add(new ODocument().field("Databases", buffer.toString()));
+          }
+        }
+      }
+
+    final StringBuilder buffer = new StringBuilder();
+    final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
+      @Override
+      public void onMessage(final String text, final Object... args) {
+        buffer.append(String.format(text, args));
+      }
+    });
+    table.setColumnHidden("#");
+    table.writeRecords(rows, -1);
+    buffer.append("\n");
+    return buffer.toString();
+  }
 
   public static String formatClusterTable(final ODistributedServerManager manager, final String databaseName,
       final ODistributedConfiguration cfg, final int availableNodes) {

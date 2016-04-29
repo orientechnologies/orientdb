@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.core.Member;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.OConsoleReader;
@@ -56,15 +65,6 @@ import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLSy
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -142,7 +142,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public void waitUntilNodeOnline(final String nodeName, final String databaseName) throws InterruptedException {
-    while (!isNodeOnline(nodeName, databaseName))
+    while (messageService == null || messageService.getDatabase(databaseName) == null || !isNodeOnline(nodeName, databaseName))
       Thread.sleep(100);
   }
 
@@ -633,7 +633,16 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       if (member == null)
         throw new ODistributedException("Cannot find node '" + rNodeName + "'");
 
-      final ODocument cfg = getNodeConfigurationByUuid(member.getUuid());
+      ODocument cfg = getNodeConfigurationByUuid(member.getUuid());
+      while (cfg == null) {
+        try {
+          Thread.sleep(100);
+          cfg = getNodeConfigurationByUuid(member.getUuid());
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new ODistributedException("Cannot find node '" + rNodeName + "'");
+        }
+      }
 
       final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
       if (listeners == null)
@@ -1097,7 +1106,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         throw new IllegalArgumentException("Type " + value + " not supported");
     }
 
-    throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
+    throw new ODistributedException("No response received from remote nodes for auto-deploy of database '" + databaseName + "'");
   }
 
   protected void backupCurrentDatabase(final String iDatabaseName) {
@@ -1361,6 +1370,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   protected void onDatabaseEvent(final String nodeName, final String databaseName, final DB_STATUS status) {
     updateLastClusterChange();
+    dumpServersStatus();
   }
 
   protected synchronized boolean rebalanceClusterOwnership(final String iNode, final ODatabaseInternal iDatabase,
@@ -1661,5 +1671,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return false;
 
     return true;
+  }
+
+  protected void dumpServersStatus() {
+    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status:\n%s",
+        ODistributedOutput.formatServerStatus(this, getClusterConfiguration()));
   }
 }

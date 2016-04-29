@@ -134,9 +134,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       activeNodesNamesByMemberId.put(nodeUuid, localNodeName);
 
       configurationMap = new OHazelcastDistributedMap(hazelcastInstance);
-      membershipListenerMapRegistration = configurationMap.getHazelcastMap().addEntryListener(this, true);
-
-      membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
 
       OServer.registerServerInstance(localNodeName, serverInstance);
 
@@ -210,6 +207,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       loadLocalDatabases();
 
+      membershipListenerMapRegistration = configurationMap.getHazelcastMap().addEntryListener(this, true);
+      membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
+
       // REGISTER CURRENT MEMBERS
       setNodeStatus(NODE_STATUS.ONLINE);
 
@@ -235,6 +235,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       throw OException.wrapException(new ODistributedStartupException("Error on starting distributed plugin"), e);
     }
 
+    dumpServersStatus();
   }
 
   protected void publishLocalNodeConfiguration() {
