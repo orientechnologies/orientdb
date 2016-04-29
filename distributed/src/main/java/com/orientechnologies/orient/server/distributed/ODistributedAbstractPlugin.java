@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.core.Member;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.OConsoleReader;
@@ -65,6 +56,15 @@ import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLSy
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -1047,6 +1047,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers(null, nodeName);
 
+    if (nodes.isEmpty()) {
+      ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+          "Cannot request full deploy of database '%s' because there are no nodes available with such database", databaseName);
+      return false;
+    }
+
     final List<String> selectedNodes = new ArrayList<String>();
 
     if (!iAskToAllNodes) {
@@ -1085,7 +1091,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       if (value instanceof Boolean)
         continue;
       else if (value instanceof Throwable) {
-        ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database %s in %s",
+        ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database '%s' in %s",
             (Exception) value, databaseName, dbPath);
       } else if (value instanceof ODistributedDatabaseChunk) {
         if (backupDatabase)
@@ -1581,8 +1587,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
         } else {
 
-          // IMPORT FULL DATABASE
-          db.restore(in, null, null, this);
+          // IMPORT FULL DATABASE (LISTENER ONLY FOR DEBUG PURPOSE)
+          db.restore(in, null, null, ODistributedServerLog.isDebugEnabled() ? this : null);
 
         }
       } finally {
