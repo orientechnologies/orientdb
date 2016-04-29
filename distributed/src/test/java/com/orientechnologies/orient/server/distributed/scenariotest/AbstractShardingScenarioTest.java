@@ -361,7 +361,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
                 if ((i + 1) % 100 == 0)
                   System.out.println(
-                      "\nWriter " + graph.getRawGraph().getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+                      "\nDBStartupWriter " + graph.getRawGraph().getURL() + " managed " + (i + 1) + "/" + count + " records so far");
 
                 if (delayWriter > 0)
                   Thread.sleep(delayWriter);
@@ -370,13 +370,13 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
                 break;
 
               } catch (InterruptedException e) {
-                System.out.println("Writer received interrupt (db=" + graph.getRawGraph().getURL());
+                System.out.println("DBStartupWriter received interrupt (db=" + graph.getRawGraph().getURL());
                 Thread.currentThread().interrupt();
                 break;
               } catch (ORecordDuplicatedException e) {
                 // IGNORE IT
               } catch (ONeedRetryException e) {
-                System.out.println("Writer received exception (db=" + graph.getRawGraph().getURL());
+                System.out.println("DBStartupWriter received exception (db=" + graph.getRawGraph().getURL());
 
                 if (retry >= maxRetries)
                   e.printStackTrace();
@@ -388,7 +388,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
                   throw e;
                 }
               } catch (Throwable e) {
-                System.out.println("Writer received exception (db=" + graph.getRawGraph().getURL());
+                System.out.println("DBStartupWriter received exception (db=" + graph.getRawGraph().getURL());
                 e.printStackTrace();
                 return null;
               }
@@ -400,7 +400,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
         graph.getRawGraph().close();
 
-        System.out.println("\nWriter " + name + " END");
+        System.out.println("\nDBStartupWriter " + name + " END");
       } catch (Exception e) {
         e.printStackTrace();
       }
