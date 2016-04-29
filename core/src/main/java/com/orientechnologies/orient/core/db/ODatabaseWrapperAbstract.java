@@ -72,7 +72,12 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   }
 
   public <THISDB extends ODatabase> THISDB create() {
-    return create(null);
+    return (THISDB) underlying.create();
+  }
+
+  @Override
+  public <THISDB extends ODatabase> THISDB create(String incrementalBackupPath) {
+    return (THISDB) underlying.create(incrementalBackupPath);
   }
 
   public <THISDB extends ODatabase> THISDB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {

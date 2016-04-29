@@ -31,120 +31,120 @@ import java.io.IOException;
  * The range of the requests is 1-79.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class OChannelBinaryProtocol {
   // OUTGOING
-  public static final byte  REQUEST_SHUTDOWN                          = 1;
-  public static final byte  REQUEST_CONNECT                           = 2;
+  public static final byte REQUEST_SHUTDOWN = 1;
+  public static final byte REQUEST_CONNECT  = 2;
 
-  public static final byte  REQUEST_DB_OPEN                           = 3;
-  public static final byte  REQUEST_DB_CREATE                         = 4;
-  public static final byte  REQUEST_DB_CLOSE                          = 5;
-  public static final byte  REQUEST_DB_EXIST                          = 6;
-  public static final byte  REQUEST_DB_DROP                           = 7;
-  public static final byte  REQUEST_DB_SIZE                           = 8;
-  public static final byte  REQUEST_DB_COUNTRECORDS                   = 9;
-  public static final byte  REQUEST_DB_REOPEN                         = 17;
+  public static final byte REQUEST_DB_OPEN         = 3;
+  public static final byte REQUEST_DB_CREATE       = 4;
+  public static final byte REQUEST_DB_CLOSE        = 5;
+  public static final byte REQUEST_DB_EXIST        = 6;
+  public static final byte REQUEST_DB_DROP         = 7;
+  public static final byte REQUEST_DB_SIZE         = 8;
+  public static final byte REQUEST_DB_COUNTRECORDS = 9;
+  public static final byte REQUEST_DB_REOPEN       = 17;
 
-  public static final byte  REQUEST_DATACLUSTER_ADD                   = 10;
-  public static final byte  REQUEST_DATACLUSTER_DROP                  = 11;
-  public static final byte  REQUEST_DATACLUSTER_COUNT                 = 12;
-  public static final byte  REQUEST_DATACLUSTER_DATARANGE             = 13;
-  public static final byte  REQUEST_DATACLUSTER_COPY                  = 14;                 // NOT USED ANYMORE
-  public static final byte  REQUEST_DATACLUSTER_LH_CLUSTER_IS_USED    = 16;                 // since 1.2.0
+  public static final byte REQUEST_DATACLUSTER_ADD                = 10;
+  public static final byte REQUEST_DATACLUSTER_DROP               = 11;
+  public static final byte REQUEST_DATACLUSTER_COUNT              = 12;
+  public static final byte REQUEST_DATACLUSTER_DATARANGE          = 13;
+  public static final byte REQUEST_DATACLUSTER_COPY               = 14;                 // NOT USED ANYMORE
+  public static final byte REQUEST_DATACLUSTER_LH_CLUSTER_IS_USED = 16;                 // since 1.2.0
 
-  public static final byte  REQUEST_DATASEGMENT_ADD                   = 20;                 // NOT USED ANYMORE
-  public static final byte  REQUEST_DATASEGMENT_DROP                  = 21;                 // NOT USED ANYMORE
+  public static final byte REQUEST_DATASEGMENT_ADD  = 20;                 // NOT USED ANYMORE
+  public static final byte REQUEST_DATASEGMENT_DROP = 21;                 // NOT USED ANYMORE
 
-  public static final byte  REQUEST_INCREMENTAL_BACKUP                = 27;                 // since 2.2
-  public static final byte  REQUEST_INCREMENTAL_RESTORE               = 28;                 // since 2.2
+  public static final byte REQUEST_INCREMENTAL_BACKUP  = 27;                 // since 2.2
 
-  public static final byte  REQUEST_RECORD_METADATA                   = 29;                 // since 1.4.0
-  public static final byte  REQUEST_RECORD_LOAD                       = 30;
-  public static final byte  REQUEST_RECORD_CREATE                     = 31;
-  public static final byte  REQUEST_RECORD_UPDATE                     = 32;
-  public static final byte  REQUEST_RECORD_DELETE                     = 33;
-  public static final byte  REQUEST_RECORD_COPY                       = 34;                 // NOT USED ANYMORE
-  public static final byte  REQUEST_POSITIONS_HIGHER                  = 36;                 // since 1.3.0
-  public static final byte  REQUEST_POSITIONS_LOWER                   = 37;                 // since 1.3.0
-  public static final byte  REQUEST_RECORD_CLEAN_OUT                  = 38;                 // since 1.3.0
-  public static final byte  REQUEST_POSITIONS_FLOOR                   = 39;                 // since 1.3.0
+  public static final byte REQUEST_RECORD_METADATA  = 29;                 // since 1.4.0
+  public static final byte REQUEST_RECORD_LOAD      = 30;
+  public static final byte REQUEST_RECORD_CREATE    = 31;
+  public static final byte REQUEST_RECORD_UPDATE    = 32;
+  public static final byte REQUEST_RECORD_DELETE    = 33;
+  public static final byte REQUEST_RECORD_COPY      = 34;                 // NOT USED ANYMORE
+  public static final byte REQUEST_POSITIONS_HIGHER = 36;                 // since 1.3.0
+  public static final byte REQUEST_POSITIONS_LOWER  = 37;                 // since 1.3.0
+  public static final byte REQUEST_RECORD_CLEAN_OUT = 38;                 // since 1.3.0
+  public static final byte REQUEST_POSITIONS_FLOOR  = 39;                 // since 1.3.0
 
-  public static final byte  REQUEST_COUNT                             = 40;                 // DEPRECATED: USE
-                                                                                            // REQUEST_DATACLUSTER_COUNT
-  public static final byte  REQUEST_COMMAND                           = 41;
-  public static final byte  REQUEST_POSITIONS_CEILING                 = 42;                 // since 1.3.0
-  public static final byte  REQUEST_RECORD_HIDE                       = 43;                 // since 1.7
-  public static final byte  REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST = 44;                 // since 2.1
+  public static final byte REQUEST_COUNT                             = 40;                 // DEPRECATED: USE
+  // REQUEST_DATACLUSTER_COUNT
+  public static final byte REQUEST_COMMAND                           = 41;
+  public static final byte REQUEST_POSITIONS_CEILING                 = 42;                 // since 1.3.0
+  public static final byte REQUEST_RECORD_HIDE                       = 43;                 // since 1.7
+  public static final byte REQUEST_RECORD_LOAD_IF_VERSION_NOT_LATEST = 44;                 // since 2.1
 
-  public static final byte  REQUEST_TX_COMMIT                         = 60;
+  public static final byte REQUEST_TX_COMMIT = 60;
 
-  public static final byte  REQUEST_CONFIG_GET                        = 70;
-  public static final byte  REQUEST_CONFIG_SET                        = 71;
-  public static final byte  REQUEST_CONFIG_LIST                       = 72;
-  public static final byte  REQUEST_DB_RELOAD                         = 73;                 // SINCE 1.0rc4
-  public static final byte  REQUEST_DB_LIST                           = 74;                 // SINCE 1.0rc6
-  public static final byte  REQUEST_SERVER_INFO                       = 75;                 // SINCE 2.2.0
+  public static final byte REQUEST_CONFIG_GET  = 70;
+  public static final byte REQUEST_CONFIG_SET  = 71;
+  public static final byte REQUEST_CONFIG_LIST = 72;
+  public static final byte REQUEST_DB_RELOAD   = 73;                 // SINCE 1.0rc4
+  public static final byte REQUEST_DB_LIST     = 74;                 // SINCE 1.0rc6
+  public static final byte REQUEST_SERVER_INFO = 75;                 // SINCE 2.2.0
 
-  public static final byte  REQUEST_PUSH_DISTRIB_CONFIG               = 80;
-  public static final byte  REQUEST_PUSH_LIVE_QUERY                   = 81;                 // SINCE 2.1
+  public static final byte REQUEST_PUSH_DISTRIB_CONFIG = 80;
+  public static final byte REQUEST_PUSH_LIVE_QUERY     = 81;                 // SINCE 2.1
 
   // DISTRIBUTED
-  public static final byte  REQUEST_DB_COPY                           = 90;                 // SINCE 1.0rc8
-  public static final byte  REQUEST_REPLICATION                       = 91;                 // SINCE 1.0
-  public static final byte  REQUEST_CLUSTER                           = 92;                 // SINCE 1.0
-  public static final byte  REQUEST_DB_TRANSFER                       = 93;                 // NOT USED ANYMORE
+  public static final byte REQUEST_DB_COPY     = 90;                 // SINCE 1.0rc8
+  public static final byte REQUEST_REPLICATION = 91;                 // SINCE 1.0
+  public static final byte REQUEST_CLUSTER     = 92;                 // SINCE 1.0
+  public static final byte REQUEST_DB_TRANSFER = 93;                 // NOT USED ANYMORE
 
   // Lock + sync
-  public static final byte  REQUEST_DB_FREEZE                         = 94;                 // SINCE 1.1.0
-  public static final byte  REQUEST_DB_RELEASE                        = 95;                 // SINCE 1.1.0
+  public static final byte REQUEST_DB_FREEZE  = 94;                 // SINCE 1.1.0
+  public static final byte REQUEST_DB_RELEASE = 95;                 // SINCE 1.1.0
 
-  public static final byte  REQUEST_DATACLUSTER_FREEZE                = 96;
-  public static final byte  REQUEST_DATACLUSTER_RELEASE               = 97;
+  public static final byte REQUEST_DATACLUSTER_FREEZE  = 96;
+  public static final byte REQUEST_DATACLUSTER_RELEASE = 97;
 
   // REMOTE SB-TREE COLLECTIONS
-  public static final byte  REQUEST_CREATE_SBTREE_BONSAI              = 110;
-  public static final byte  REQUEST_SBTREE_BONSAI_GET                 = 111;
-  public static final byte  REQUEST_SBTREE_BONSAI_FIRST_KEY           = 112;
-  public static final byte  REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR   = 113;
-  public static final byte  REQUEST_RIDBAG_GET_SIZE                   = 114;
+  public static final byte REQUEST_CREATE_SBTREE_BONSAI            = 110;
+  public static final byte REQUEST_SBTREE_BONSAI_GET               = 111;
+  public static final byte REQUEST_SBTREE_BONSAI_FIRST_KEY         = 112;
+  public static final byte REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR = 113;
+  public static final byte REQUEST_RIDBAG_GET_SIZE                 = 114;
 
   // TASK
-  public static final byte  DISTRIBUTED_REQUEST                       = 120;
-  public static final byte  DISTRIBUTED_RESPONSE                      = 121;
+  public static final byte DISTRIBUTED_REQUEST  = 120;
+  public static final byte DISTRIBUTED_RESPONSE = 121;
 
   // INCOMING
-  public static final byte  RESPONSE_STATUS_OK                        = 0;
-  public static final byte  RESPONSE_STATUS_ERROR                     = 1;
-  public static final byte  PUSH_DATA                                 = 3;
+  public static final byte RESPONSE_STATUS_OK    = 0;
+  public static final byte RESPONSE_STATUS_ERROR = 1;
+  public static final byte PUSH_DATA             = 3;
 
   // CONSTANTS
-  public static final short RECORD_NULL                               = -2;
-  public static final short RECORD_RID                                = -3;
+  public static final short RECORD_NULL = -2;
+  public static final short RECORD_RID  = -3;
 
   // FOR MORE INFO: https://github.com/orientechnologies/orientdb/wiki/Network-Binary-Protocol#wiki-Compatibility
-  public static final int   PROTOCOL_VERSION_21                       = 21;
+  public static final int PROTOCOL_VERSION_21 = 21;
 
-  public static final int   PROTOCOL_VERSION_24                       = 24;
-  public static final int   PROTOCOL_VERSION_25                       = 25;
-  public static final int   PROTOCOL_VERSION_26                       = 26;
-  public static final int   PROTOCOL_VERSION_27                       = 27;
-  public static final int   PROTOCOL_VERSION_28                       = 28;                 // SENT AS SHORT AS FIRST PACKET AFTER
-                                                                                            // SOCKET CONNECTION
-  public static final int   PROTOCOL_VERSION_29                       = 29;                 // ADDED PUSH SUPPORT FOR LIVE QUERY
-  public static final int   PROTOCOL_VERSION_30                       = 30;                 // NEW COMMAND TO READ RECORD ONLY IF
-                                                                                            // VERSION IS NOT LATEST WAS ADD
-  public static final int   PROTOCOL_VERSION_31                       = 31;                 // CHANGED STORAGE CFG TO ADD
-                                                                                            // ENCRYPTION
-  public static final int   PROTOCOL_VERSION_32                       = 32;                 // STREAMABLE RESULT SET
+  public static final int PROTOCOL_VERSION_24 = 24;
+  public static final int PROTOCOL_VERSION_25 = 25;
+  public static final int PROTOCOL_VERSION_26 = 26;
+  public static final int PROTOCOL_VERSION_27 = 27;
+  public static final int PROTOCOL_VERSION_28 = 28;                 // SENT AS SHORT AS FIRST PACKET AFTER
+  // SOCKET CONNECTION
+  public static final int PROTOCOL_VERSION_29 = 29;                 // ADDED PUSH SUPPORT FOR LIVE QUERY
+  public static final int PROTOCOL_VERSION_30 = 30;                 // NEW COMMAND TO READ RECORD ONLY IF
+  // VERSION IS NOT LATEST WAS ADD
+  public static final int PROTOCOL_VERSION_31 = 31;                 // CHANGED STORAGE CFG TO ADD
+  // ENCRYPTION
+  public static final int PROTOCOL_VERSION_32 = 32;                 // STREAMABLE RESULT SET
 
-  public static final int   PROTOCOL_VERSION_33                       = 33;                 // INCREMENTAL BACKUP/RESTORE
-  public static final int   PROTOCOL_VERSION_34                       = 34;                 // ON CONNECT DECLARE IF PUSH MESSAGES
-                                                                                            // ARE SUPPORTED + COLLECT STATS
+  public static final int PROTOCOL_VERSION_33 = 33;                 // INCREMENTAL BACKUP/RESTORE
+  public static final int PROTOCOL_VERSION_34 = 34;                 // ON CONNECT DECLARE IF PUSH MESSAGES
+  // ARE SUPPORTED + COLLECT STATS
 
-  public static final int   PROTOCOL_VERSION_35                       = 35;
-  public static final int   CURRENT_PROTOCOL_VERSION                  = PROTOCOL_VERSION_35;
+  public static final int PROTOCOL_VERSION_35 = 35;
+  public static final int PROTOCOL_VERSION_36 = 36;                 //ABILITY TO CREATE DATABASE FROM INCREMENTAL BACKUP
+
+  public static final int CURRENT_PROTOCOL_VERSION = PROTOCOL_VERSION_36;
 
   public static OIdentifiable readIdentifiable(final OChannelBinary network) throws IOException {
     final int classId = network.readShort();

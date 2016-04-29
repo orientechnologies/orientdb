@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -75,6 +76,12 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 
   @Override
   public ODatabaseDocumentTxPooled create() {
+    throw new UnsupportedOperationException(
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseDocumentTx instance if you want to manually open the connection");
+  }
+
+  @Override
+  public <DB extends ODatabase> DB create(String incrementalBackupPath) {
     throw new UnsupportedOperationException(
         "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseDocumentTx instance if you want to manually open the connection");
   }

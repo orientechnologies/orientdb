@@ -113,17 +113,17 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private final Map<String, Object> properties = new HashMap<String, Object>();
   private final Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
   private final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
-  protected ORecordSerializer        serializer;
-  private   String                   url;
-  private   OStorage                 storage;
-  private   STATUS                   status;
-  private   OIntent                  currentIntent;
-  private   ODatabaseInternal<?>     databaseOwner;
-  private   OMetadataDefault         metadata;
-  private   OImmutableUser           user;
-  private   byte                     recordType;
+  protected ORecordSerializer    serializer;
+  private   String               url;
+  private   OStorage             storage;
+  private   STATUS               status;
+  private   OIntent              currentIntent;
+  private   ODatabaseInternal<?> databaseOwner;
+  private   OMetadataDefault     metadata;
+  private   OImmutableUser       user;
+  private   byte                 recordType;
   @Deprecated
-  private   String                   recordFormat;
+  private   String               recordFormat;
   private final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   private       boolean                                     retainRecords = true;
   private OLocalRecordCache                localCache;
@@ -333,7 +333,21 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    */
   @Override
   public <DB extends ODatabase> DB create() {
-    return create(null);
+    return create((Map<OGlobalConfiguration, Object>) null);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public <DB extends ODatabase> DB create(String incrementalBackupPath) {
+    create();
+
+    final OStorage storage = getStorage();
+    storage.restoreFromIncrementalBackup(incrementalBackupPath);
+    getMetadata().reload();
+
+    return (DB) this;
   }
 
   @Override
@@ -407,6 +421,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return (DB) this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void drop() {
     checkOpeness();
@@ -460,7 +477,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     db.initialized = true;
     if (storage instanceof OStorageProxy) {
-      db.storage = ((OStorageProxy) storage).copy(this,db);
+      db.storage = ((OStorageProxy) storage).copy(this, db);
       ((OStorageProxy) db.storage).addUser();
     } else {
       db.storage = storage;
@@ -1381,7 +1398,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       // for backward compatibility, until 2.1.13 OrientDB accepted timezones in lowercase as well
       TimeZone timeZoneValue = TimeZone.getTimeZone(stringValue.toUpperCase());
-      if(timeZoneValue.equals(TimeZone.getTimeZone("GMT"))){
+      if (timeZoneValue.equals(TimeZone.getTimeZone("GMT"))) {
         timeZoneValue = TimeZone.getTimeZone(stringValue);
       }
 
@@ -1820,28 +1837,28 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         throw new IllegalArgumentException("Cluster name '" + iClusterName + "' is not configured");
 
     }
-    OClass schemaClass= null;
+    OClass schemaClass = null;
     //if cluster id is not set yet try to find it out
     if (rid.getClusterId() <= ORID.CLUSTER_ID_INVALID && storage.isAssigningClusterIds()) {
       if (record instanceof ODocument) {
         schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
-        if (schemaClass!= null) {
+        if (schemaClass != null) {
           if (schemaClass.isAbstract())
             throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
           rid.clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
-        }else
+        } else
           rid.clusterId = getDefaultClusterId();
       } else {
         rid.clusterId = getDefaultClusterId();
         if (record instanceof OBlob && rid.clusterId != ORID.CLUSTER_ID_INVALID) {
-//          Set<Integer> blobClusters = getMetadata().getSchema().getBlobClusters();
-//          if (!blobClusters.contains(rid.clusterId) && rid.clusterId != getDefaultClusterId() && rid.clusterId != 0) {
-//            if (iClusterName == null)
-//              iClusterName = getClusterNameById(rid.clusterId);
-//            throw new IllegalArgumentException(
-//                "Cluster name '" + iClusterName + "' (id=" + rid.clusterId + ") is not configured to store blobs, valid are "
-//                    + blobClusters.toString());
-//          }
+          //          Set<Integer> blobClusters = getMetadata().getSchema().getBlobClusters();
+          //          if (!blobClusters.contains(rid.clusterId) && rid.clusterId != getDefaultClusterId() && rid.clusterId != 0) {
+          //            if (iClusterName == null)
+          //              iClusterName = getClusterNameById(rid.clusterId);
+          //            throw new IllegalArgumentException(
+          //                "Cluster name '" + iClusterName + "' (id=" + rid.clusterId + ") is not configured to store blobs, valid are "
+          //                    + blobClusters.toString());
+          //          }
         }
       }
     } else if (record instanceof ODocument)
@@ -2810,16 +2827,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public void incrementalRestore(final String path) {
-    checkOpeness();
-    checkIfActive();
-
-    storage.restoreFromIncrementalBackup(path);
-    metadata.reload();
-
-  }
-
-  @Override
   @Deprecated
   public <DB extends ODatabaseDocument> DB checkSecurity(final String iResource, final int iOperation) {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
@@ -3033,8 +3040,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
       if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null || (recordClass != null
           && !recordClass.equals(clusterIdClass)))
-        throw new IllegalArgumentException("Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
-            + "' but has been created with class '" + recordClass + "'");
+        throw new IllegalArgumentException(
+            "Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
+                + "' but has been created with class '" + recordClass + "'");
     }
   }
 
@@ -3122,7 +3130,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   private class UncompletedCommit implements OUncompletedCommit<Void> {
 
-    private final boolean            topLevel;
+    private final boolean                  topLevel;
     private final OUncompletedCommit<Void> nestedCommit;
 
     public UncompletedCommit(boolean topLevel, OUncompletedCommit<Void> nestedCommit) {

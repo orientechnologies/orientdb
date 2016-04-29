@@ -644,23 +644,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   @Override
   public void restoreFromIncrementalBackup(final String filePath) {
-    networkOperation(new OStorageRemoteOperation<Void>() {
-      @Override
-      public Void execute(OChannelBinaryAsynchClient network) throws IOException {
-        try {
-          beginRequest(network, OChannelBinaryProtocol.REQUEST_INCREMENTAL_RESTORE);
-          network.writeString(filePath);
-        } finally {
-          endRequest(network);
-        }
-
-        beginResponse(network);
-        endResponse(network);
-
-        return null;
-      }
-    }, "Error on restore from incremental backup");
-
+    throw new UnsupportedOperationException("This operations is part of internal API and is not supported in remote storage");
   }
 
   public OStorageOperationResult<Integer> updateRecord(final ORecordId iRid, final boolean updateContent, final byte[] iContent,

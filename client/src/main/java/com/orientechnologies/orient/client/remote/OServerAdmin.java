@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -36,15 +30,20 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Remote administration class of OrientDB Server instances.
  */
 public class OServerAdmin {
-  protected OStorageRemote        storage;
+  protected OStorageRemote storage;
   protected OStorageRemoteSession session      = new OStorageRemoteSession(-1);
   protected String                clientType   = OStorageRemote.DRIVER_NAME;
   protected boolean               collectStats = true;
@@ -62,7 +61,7 @@ public class OServerAdmin {
     if (!iURL.contains("/"))
       iURL += "/";
 
-    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN, false){
+    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN, false) {
       @Override
       protected OStorageRemoteSession getCurrentSession() {
         return session;
@@ -214,17 +213,27 @@ public class OServerAdmin {
     return createDatabase(storage.getName(), iDatabaseType, iStorageMode);
   }
 
+  public synchronized String getStorageName() {
+    return storage.getName();
+  }
+
+  public synchronized OServerAdmin createDatabase(final String iDatabaseName, final String iDatabaseType, final String iStorageMode)
+      throws IOException {
+    return createDatabase(iDatabaseName, iDatabaseType, iStorageMode, null);
+  }
+
   /**
    * Creates a database in a remote server.
    *
    * @param iDatabaseName The database name
    * @param iDatabaseType 'document' or 'graph'
    * @param iStorageMode  local or memory
+   * @param backupPath    path to incremental backup which will be used to create database (optional)
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
-  public synchronized OServerAdmin createDatabase(final String iDatabaseName, final String iDatabaseType, final String iStorageMode)
-      throws IOException {
+  public synchronized OServerAdmin createDatabase(final String iDatabaseName, final String iDatabaseType, final String iStorageMode,
+      final String backupPath) throws IOException {
 
     if (iDatabaseName == null || iDatabaseName.length() <= 0) {
       final String message = "Cannot create unnamed remote storage. Check your syntax";
@@ -246,6 +255,9 @@ public class OServerAdmin {
             if (network.getSrvProtocolVersion() >= 8)
               network.writeString(iDatabaseType);
             network.writeString(storageMode);
+
+            if (network.getSrvProtocolVersion() > 35)
+              network.writeString(backupPath);
           } finally {
             storage.endRequest(network);
           }

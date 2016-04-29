@@ -149,9 +149,7 @@ public class AutomaticBackupTest {
     final ODatabaseDocumentTx database2 = new ODatabaseDocumentTx(URL2);
     if (database2.exists())
       database2.open("admin", "admin").drop();
-    database2.create();
-
-    database2.incrementalRestore(BACKUPDIR + "/" + DBNAME);
+    database2.create(BACKUPDIR + "/" + DBNAME);
 
     Assert.assertEquals(database2.countClass("TestBackup"), 1);
   }

@@ -107,14 +107,14 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
-  protected final Level          logClientExceptions;
-  protected final boolean        logClientFullStackTrace;
-  protected OChannelBinaryServer channel;
-  protected volatile int         requestType;
-  protected int                  clientTxId;
-  protected boolean              okSent;
-  private long                   distributedRequests  = 0;
-  private long                   distributedResponses = 0;
+  protected final    Level                logClientExceptions;
+  protected final    boolean              logClientFullStackTrace;
+  protected          OChannelBinaryServer channel;
+  protected volatile int                  requestType;
+  protected          int                  clientTxId;
+  protected          boolean              okSent;
+  private long distributedRequests  = 0;
+  private long distributedResponses = 0;
 
   public ONetworkProtocolBinary() {
     this("OrientDB <- BinaryClient/?");
@@ -495,10 +495,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         incrementalBackup(connection);
         break;
 
-      case OChannelBinaryProtocol.REQUEST_INCREMENTAL_RESTORE:
-        incrementalRestore(connection);
-        break;
-
       case OChannelBinaryProtocol.DISTRIBUTED_REQUEST:
         executeDistributedRequest(connection);
         break;
@@ -801,24 +797,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
   }
 
-  private void incrementalRestore(OClientConnection connection) throws IOException {
-    setDataCommandInfo(connection, "Incremental backup");
-
-    if (!isConnectionAlive(connection))
-      return;
-
-    final String path = channel.readString();
-
-    connection.getDatabase().incrementalRestore(path);
-
-    beginResponse();
-    try {
-      sendOk(connection, clientTxId);
-    } finally {
-      endResponse(connection);
-    }
-  }
-
   private void executeDistributedRequest(OClientConnection connection) throws IOException {
     setDataCommandInfo(connection, "Distributed request");
 
@@ -844,7 +822,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     final String dbName = req.getDatabaseName();
     if (dbName != null) {
       if (distributedRequests == 0) {
-        if (req.getTask().isNodeOnlineRequired() ) {
+        if (req.getTask().isNodeOnlineRequired()) {
           try {
             manager.waitUntilNodeOnline(manager.getLocalNodeName(), dbName);
           } catch (InterruptedException e) {
@@ -1155,11 +1133,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     // READ DB-TYPE FROM THE CLIENT
     dbType = channel.readString();
     String storageType = channel.readString();
+    String backupPath = null;
+
+    if (connection.getData().protocolVersion > 35) {
+      backupPath = channel.readString();
+    }
 
     checkServerAccess("database.create", connection);
     checkStorageExistence(dbName);
     connection.setDatabase(getDatabaseInstance(dbName, dbType, storageType));
-    createDatabase(connection.getDatabase(), null, null);
+
+    createDatabase(connection.getDatabase(), null, null, backupPath);
 
     beginResponse();
     try {
@@ -2573,11 +2557,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
   }
 
-  protected ODatabaseDocumentTx createDatabase(final ODatabaseDocumentTx iDatabase, String dbUser, final String dbPasswd) {
+  protected ODatabaseDocumentTx createDatabase(final ODatabaseDocumentTx iDatabase, String dbUser, final String dbPasswd,
+      final String backupPath) {
     if (iDatabase.exists())
       throw new ODatabaseException("Database '" + iDatabase.getURL() + "' already exists");
 
-    iDatabase.create();
+    if (backupPath == null)
+      iDatabase.create();
+    else
+      iDatabase.create(backupPath);
+
     if (dbUser != null) {
 
       OUser oUser = iDatabase.getMetadata().getSecurity().getUser(dbUser);
