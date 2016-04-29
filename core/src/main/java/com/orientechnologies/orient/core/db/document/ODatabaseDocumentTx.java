@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.ClassIndexManagerRemote;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -385,8 +386,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       getStorage().getConfiguration().update();
 
+      //THIS IF SHOULDN'T BE NEEDED, CREATE HAPPEN ONLY IN EMBEDDED
       if (!(getStorage() instanceof OStorageProxy))
-        installHooks();
+        installHooksEmbedded();
+
 
       // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
       metadata = new OMetadataDefault(this);
@@ -486,6 +489,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     db.setStatus(STATUS.OPEN);
     db.metadata.load();
 
+    if (!(db.getStorage() instanceof OStorageProxy))
+      db.installHooksEmbedded();
+    else
+      db.installHooksRemote();
+
+    db.initialized = true;
+
     if (dbInThreadLocal != null) {
       dbInThreadLocal.activateOnCurrentThread();
     } else {
@@ -493,6 +503,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         ODatabaseRecordThreadLocal.INSTANCE.remove();
       }
     }
+
     return db;
   }
 
@@ -2949,20 +2960,22 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         user = null;
       }
 
-      installHooks();
 
+      installHooksEmbedded();
       registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
       registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
 
       user = null;
-    } else if (iUserName != null && iUserPassword != null)
+    } else if (iUserName != null && iUserPassword != null) {
       user = new OImmutableUser(-1, new OUser(iUserName, OUser.encryptPassword(iUserPassword))
           .addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
+      installHooksRemote();
+    }
 
     initialized = true;
   }
 
-  private void installHooks() {
+  private void installHooksEmbedded() {
     hooks.clear();
     registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
@@ -2973,6 +2986,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new ORidBagDeleteHook(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
+  }
+
+  private void installHooksRemote() {
+    hooks.clear();
+    registerHook(new ClassIndexManagerRemote(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
   private void closeOnDelete() {
