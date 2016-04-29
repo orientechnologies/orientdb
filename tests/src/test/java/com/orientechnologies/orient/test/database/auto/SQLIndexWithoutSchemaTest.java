@@ -142,7 +142,7 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
   @Test
   public void testCreateCompositeIndex() {
     database.command(
-        new OCommandSQL("CREATE INDEX compositeIndexWithoutSchema ON " + TEST_CLASS + " (cp2, cp3) NOTUNIQUE INTEGER, INTEGER"))
+        new OCommandSQL("CREATE INDEX compositeIndexWithoutSchema ON " + TEST_CLASS + " (cp2, cp3) NOTUNIQUE INTEGER, INTEGER METADATA { ignoreNullValues: true }"))
         .execute();
 
     database.getMetadata().getIndexManager().reload();

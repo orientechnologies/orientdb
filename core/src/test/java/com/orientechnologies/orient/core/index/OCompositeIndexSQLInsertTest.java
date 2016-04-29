@@ -31,7 +31,13 @@ public class OCompositeIndexSQLInsertTest {
     book.createProperty("title", OType.STRING);
     book.createProperty("publicationYears", OType.EMBEDDEDLIST, OType.INTEGER);
     book.createIndex("books", "unique", "author", "title", "publicationYears");
+
+    book.createProperty("nullKey1", OType.STRING);
+    ODocument indexOptions = new ODocument();
+    indexOptions.field("ignoreNullValues", true);
+    book.createIndex("indexignoresnulls", "NOTUNIQUE", null, indexOptions, new String[]{"nullKey1"});
   }
+
 
   @AfterClass
   public void after() {
@@ -50,7 +56,7 @@ public class OCompositeIndexSQLInsertTest {
 
   @Test(expectedExceptions = OException.class)
   public void testIndexInsertNull() {
-    db.command(new OCommandSQL("insert into index:books (key, rid) values (null, #12:0)")).execute();
+    db.command(new OCommandSQL("insert into index:indexignoresnulls (key, rid) values (null, #12:0)")).execute();
   }
 
   @Test()

@@ -291,7 +291,7 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
     graph.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
       @Override
       public Object call(OrientBaseGraph iArgument) {
-        customer.createProperty("id", OType.LONG).createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
+        customer.createProperty("id", OType.LONG).createIndex(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX);
         return null;
       }
     });

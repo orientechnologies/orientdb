@@ -357,7 +357,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
       break;
 
     case REMOVE:
-      assert key != null;
       delegate.remove(key, value);
       break;
     }

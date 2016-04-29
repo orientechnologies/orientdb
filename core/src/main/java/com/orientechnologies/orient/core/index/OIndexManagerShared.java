@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
@@ -43,6 +41,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.util.*;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -163,8 +163,13 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         progressListener = new OIndexRebuildOutputListener(index);
 
       final Set<String> clustersToIndex = findClustersByIds(clusterIdsToIndex, database);
-      if (metadata != null && Boolean.FALSE.equals(metadata.field("ignoreNullValues")) && indexDefinition != null)
-        indexDefinition.setNullValuesIgnored(false);
+      if(indexDefinition != null) {
+        if (metadata != null && Boolean.TRUE.equals(metadata.field("ignoreNullValues"))) {
+          indexDefinition.setNullValuesIgnored(true);
+        } else {
+          indexDefinition.setNullValuesIgnored(false);
+        }
+      }
 
       index.create(iName, indexDefinition, clusterName, clustersToIndex, true, progressListener);
 
