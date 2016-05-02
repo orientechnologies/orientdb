@@ -338,16 +338,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  @Override
-  public Map<String, OTransactionIndexChanges> getIndexEntries() {
-    return null;
-  }
-
-
-  public OTransactionIndexChangesPerKey getIndexEntry(final String iIndexName, final Object iKey) {
-    return null;
-  }
-
   public void addIndexEntry(final OIndex<?> delegate, final String indexName, final OPERATION status, final Object key,
       final OIdentifiable value) {
     switch (status) {

@@ -126,8 +126,6 @@ public interface OTransaction {
 
   ODocument getIndexChanges();
 
-  Map<String, OTransactionIndexChanges> getIndexEntries() ;
-
   void addIndexEntry(OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iStatus,
       final Object iKey, final OIdentifiable iValue);
 
