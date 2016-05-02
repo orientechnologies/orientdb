@@ -108,6 +108,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
   protected String                                               nodeUuid;
 
+  private volatile int                                           hashLastServerDump                = 0;
+
   public static Object runInDistributedMode(final Callable iCall) throws Exception {
     final OScenarioThreadLocal.RUN_MODE currentRunningMode = OScenarioThreadLocal.INSTANCE.get();
     if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
@@ -744,7 +746,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   @Override
   public int getNodeIdByName(final String name) {
     synchronized (registeredNodeByName) {
-      return registeredNodeByName.get(name);
+      final Integer val = registeredNodeByName.get(name);
+      if (val == null)
+        return -1;
+      return val.intValue();
     }
   }
 
@@ -1372,6 +1377,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       updateCachedDatabaseConfiguration(databaseName, config, true, false);
 
     installNewDatabase(false, databaseName, config);
+    dumpServersStatus();
   }
 
   protected void onDatabaseEvent(final String nodeName, final String databaseName, final DB_STATUS status) {
@@ -1679,8 +1685,17 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return true;
   }
 
+  /**
+   * Avoids to dump the same configuration twice if it's unchanged since the last time.
+   */
   protected void dumpServersStatus() {
-    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status:\n%s",
-        ODistributedOutput.formatServerStatus(this, getClusterConfiguration()));
+    final String dump = ODistributedOutput.formatServerStatus(this, getClusterConfiguration());
+
+    final int hashServerDump = dump.hashCode();
+
+    if (hashServerDump != hashLastServerDump) {
+      hashLastServerDump = hashServerDump;
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status:\n%s", dump);
+    }
   }
 }

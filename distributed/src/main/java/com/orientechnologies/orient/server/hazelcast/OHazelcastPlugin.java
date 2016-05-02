@@ -418,6 +418,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       }
 
       serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
+
+      dumpServersStatus();
     }
   }
 

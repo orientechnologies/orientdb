@@ -413,6 +413,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void handleUnreachableNode(final int iNodeId) {
+    if (iNodeId < 0)
+      return;
+
     int rollbacks = 0;
     int tasks = 0;
 
