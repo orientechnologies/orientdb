@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -37,7 +38,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
@@ -54,9 +54,12 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected Map<ORID, ORecordOperation>                       allEntries            = new HashMap<ORID, ORecordOperation>();
   protected Map<ORID, ORecordOperation>                       recordEntries         = new LinkedHashMap<ORID, ORecordOperation>();
   protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
+  protected Map<String, OTransactionIndexChanges>             indexEntriesClientOnly          = new LinkedHashMap<String, OTransactionIndexChanges>();
   protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int                                               id;
   protected int                                               newObjectCounter      = -2;
+
+
 
   /**
    * This set is used to track which documents are changed during tx, if documents are changed but not saved all changes are made
@@ -284,8 +287,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       indexDoc.field("entries", entries, OType.EMBEDDEDLIST);
 
       // STORE INDEX ENTRIES
-      for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values())
-        entries.add(serializeIndexChangeEntry(entry, indexDoc));
+      for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
+        if (!entry.clientTrackOnly)
+          entries.add(serializeIndexChangeEntry(entry, indexDoc));
+      }
 
       indexDoc.field("nullEntries", serializeIndexChangeEntry(indexEntry.getValue().nullKeyChanges, indexDoc));
     }
@@ -304,11 +309,17 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return indexEntries.get(iIndexName);
   }
 
+
+  public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
+      final Object key, final OIdentifiable iValue){
+    addIndexEntry(delegate, iIndexName, iOperation, key, iValue, false);
+  }
+
   /**
    * Bufferizes index changes to be flushed at commit time.
    */
   public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
-      final Object key, final OIdentifiable iValue) {
+      final Object key, final OIdentifiable iValue, boolean clientTrackOnly) {
     OTransactionIndexChanges indexEntry = indexEntries.get(iIndexName);
     if (indexEntry == null) {
       indexEntry = new OTransactionIndexChanges();
@@ -330,7 +341,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       }
 
       OTransactionIndexChangesPerKey changes = indexEntry.getChangesPerKey(key);
-
+      changes.clientTrackOnly = clientTrackOnly;
       changes.add(iValue, iOperation);
 
       if (iValue == null)
@@ -426,6 +437,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     // SERIALIZE VALUES
     if (entry.entries != null && !entry.entries.isEmpty()) {
       for (OTransactionIndexEntry e : entry.entries) {
+
         final ODocument changeDoc = new ODocument().setAllowChainedAccess(false);
         ODocumentInternal.addOwner((ODocument) changeDoc, indexDoc);
 
