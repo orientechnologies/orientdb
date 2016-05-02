@@ -24,6 +24,7 @@ import com.hazelcast.core.*;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -81,8 +82,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       assignNodeName();
 
     for (OServerParameterConfiguration param : iParams) {
-      if (param.name.equalsIgnoreCase("configuration.hazelcast"))
+      if (param.name.equalsIgnoreCase("configuration.hazelcast")) {
         hazelcastConfigFile = OSystemVariableResolver.resolveSystemVariables(param.value);
+        hazelcastConfigFile = OFileUtils.getPath(hazelcastConfigFile);
+      }
     }
   }
 
@@ -793,8 +796,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       final Set<String> servers = cfg.getAllConfiguredServers();
       if (servers.size() > 1) {
-        boolean allServersAreOnline = true;
         while (true) {
+          boolean allServersAreOnline = true;
           for (String server : servers) {
             if (!isNodeOnline(server, iDatabase.getName())) {
               allServersAreOnline = false;
