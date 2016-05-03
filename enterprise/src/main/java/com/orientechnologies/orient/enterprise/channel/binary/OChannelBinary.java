@@ -378,7 +378,7 @@ public abstract class OChannelBinary extends OChannel {
   @Override
   public void flush() throws IOException {
     if (debug)
-      OLogManager.instance().info(this, "%s - Flush",  socket != null ? " null probably already closed" :socket.getRemoteSocketAddress());
+      OLogManager.instance().info(this, "%s - Flush",  socket == null ? " null probably already closed" :socket.getRemoteSocketAddress());
 
     updateMetricFlushes();
 
@@ -391,7 +391,7 @@ public abstract class OChannelBinary extends OChannel {
   public void close() {
     if (debug)
       OLogManager.instance()
-          .info(this, "%s - Closing socket...", socket != null ? " null probably already closed" : socket.getRemoteSocketAddress());
+          .info(this, "%s - Closing socket...", socket == null ? " null probably already closed" : socket.getRemoteSocketAddress());
 
     try {
       if (in != null) {
