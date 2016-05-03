@@ -1471,6 +1471,8 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+    getDirtyManager().setDirty(this);
+
     // THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
     checkForFields();
 
