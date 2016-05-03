@@ -1571,11 +1571,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             if (listeners == null)
               throw new ODatabaseException("Received bad distributed configuration: missing 'listeners' array field");
 
-            for (Map<String, Object> listener : listeners) {
-              if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-                String url = (String) listener.get("listen");
-                if (!serverURLs.contains(url))
-                  addHost(url);
+            if (OGlobalConfiguration.NETWORK_BINARY_DNS_FALLBACK_SERVERS_ENABLED.getValueAsBoolean()) {
+              for (Map<String, Object> listener : listeners) {
+                if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+                  String url = (String) listener.get("listen");
+                  if (!serverURLs.contains(url))
+                    addHost(url);
+                }
               }
             }
           }
