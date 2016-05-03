@@ -110,10 +110,8 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
     final OProperty propOne = oClass.getProperty("prop1");
 
     final Collection<OIndex<?>> indexes = propOne.getIndexes();
-    Assert.assertEquals(indexes.size(), 3);
+    Assert.assertEquals(indexes.size(), 1);
     Assert.assertNotNull(containsIndex(indexes, "PropertyIndexTestClass.prop1"));
-    Assert.assertNotNull(containsIndex(indexes, "propOne1"));
-    Assert.assertNotNull(containsIndex(indexes, "propOne2"));
   }
 
   @Test(dependsOnMethods = "createAdditionalSchemas")
