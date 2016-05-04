@@ -721,7 +721,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Traverse records and display the results", onlineHelp = "SQL-Traverse")
   public void traverse(@ConsoleParameter(name = "query-text", description = "The traverse to execute") String iQueryText) {
     final int limit;
-    if (iQueryText.contains("limit")) {
+    if (iQueryText.toLowerCase().contains(" limit ")) {
       // RESET CONSOLE FLAG
       limit = -1;
     } else {
@@ -753,7 +753,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     iQueryText = "select " + iQueryText;
 
     final int limit;
-    if (iQueryText.contains("limit")) {
+    if (iQueryText.toLowerCase().contains(" limit ")) {
       limit = -1;
     } else {
       limit = Integer.parseInt(properties.get("limit"));
