@@ -191,6 +191,6 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 
   private boolean isDistributedCommand() {
     return database.getStorage().isDistributed()
-        && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
+        && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 }

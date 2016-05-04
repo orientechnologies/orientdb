@@ -109,7 +109,7 @@ public class ServerClusterAsyncGraphTest extends AbstractServerClusterTest {
       }
     }
 
-    Thread.sleep(2000);
+    Thread.sleep(1000);
 
     // CHECK VERTEX CREATION ON ALL THE SERVERS
     for (int s = 0; s<SERVERS; ++s) {

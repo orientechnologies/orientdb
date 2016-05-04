@@ -81,7 +81,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
       final OrientVertexType clientType = graphNoTx.createVertexType("Client", 1);
 
-      ODistributedConfiguration dCfg = new ODistributedConfiguration(this.getDatabaseName(), cfg);
+      ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
       for (int i = 0; i < serverInstance.size(); ++i) {
         final String serverName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
         clientType.addCluster("client_" + serverName);

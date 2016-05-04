@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -106,8 +107,7 @@ public class ODistributedTransactionManager {
           try {
             acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay, eventListener, ctx);
 
-            final List<ORecordOperation> uResult = (List<ORecordOperation>) ODistributedAbstractPlugin
-                .runInDistributedMode(new Callable() {
+            final List<ORecordOperation> uResult = (List<ORecordOperation>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
               @Override
               public Object call() throws Exception {
                 return storage.commit(iTx, callback);

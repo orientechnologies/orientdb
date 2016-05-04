@@ -117,11 +117,11 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
       }
 
       ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s", cls.getName(), clusterNames,
-          buffer.toString());
+          "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s (dCfgVersion=%d)", cls.getName(),
+          clusterNames, buffer.toString(), cfg.getVersion());
 
-      throw new ODatabaseException(
-          "Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName + "'. ClusterStrategy=" + getName());
+      throw new ODatabaseException("Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName
+          + "'. ClusterStrategy=" + getName() + " dCfgVersion=" + cfg.getVersion());
     }
 
     final List<Integer> newBestClusters = new ArrayList<Integer>();

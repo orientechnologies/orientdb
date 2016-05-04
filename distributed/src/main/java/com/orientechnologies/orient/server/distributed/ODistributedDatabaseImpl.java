@@ -38,7 +38,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -557,12 +556,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected void checkLocalNodeInConfiguration() {
-    manager.executeInDatabaseLock(databaseName, new Callable<Void>() {
+    manager.executeInDistributedDatabaseLock(databaseName, new OCallable<Void, ODistributedConfiguration>() {
       @Override
-      public Void call() throws Exception {
+      public Void call(final ODistributedConfiguration cfg) {
         // GET LAST VERSION IN LOCK
-        final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
-
         final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
         if (foundPartition != null) {
           manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
@@ -573,8 +570,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           // ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "\n--------------\n" + databaseName
           // + "\n--------------\n" + cfg.getDocument().toJSON("prettyPrint") + "\n--------------\n");
           // System.out.flush();
-
-          manager.updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
         }
         return null;
       }

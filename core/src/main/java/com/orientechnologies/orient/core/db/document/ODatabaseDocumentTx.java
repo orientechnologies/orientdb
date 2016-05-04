@@ -1026,7 +1026,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (rec == null)
         return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
-      final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.get();
+      final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.getRunMode();
 
       boolean recordChanged = false;
       for (ORecordHook hook : hooks.keySet()) {

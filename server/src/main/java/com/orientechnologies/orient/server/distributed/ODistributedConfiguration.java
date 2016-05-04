@@ -43,15 +43,13 @@ public class ODistributedConfiguration {
 
   private static final List<String> DEFAULT_CLUSTER_NAME = Collections.singletonList(ALL_WILDCARD);
 
-  private final String              dbName;
   private final ODocument           configuration;
 
   public enum ROLES {
     MASTER, REPLICA
   }
 
-  public ODistributedConfiguration(final String iDatabaseName, final ODocument iConfiguration) {
-    dbName = iDatabaseName;
+  public ODistributedConfiguration(final ODocument iConfiguration) {
     configuration = iConfiguration;
   }
 
@@ -522,6 +520,14 @@ public class ODistributedConfiguration {
     return configuration.copy();
   }
 
+  /**
+   * Adds a server in the configuration. It replaces all the tags &lt;NEW_NODE&gt; with the new server name<br>
+   * NOTE: It must be executed in distributed database lock.
+   * 
+   * @param iNode
+   *          Server name
+   * @return
+   */
   public List<String> addNewNodeInServerList(final String iNode) {
     synchronized (configuration) {
       final List<String> changedPartitions = new ArrayList<String>();
@@ -546,7 +552,8 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Sets the server as owner for the given cluster. The owner server is the first in server list.
+   * Sets the server as owner for the given cluster. The owner server is the first in server list.<br>
+   * NOTE: It must be executed in distributed database lock.
    *
    * @param iClusterName
    *          Cluster name or *. Does not accept null.
@@ -593,6 +600,14 @@ public class ODistributedConfiguration {
     }
   }
 
+  /**
+   * Removes a server from the list.<br>
+   * NOTE: It must be executed in distributed database lock.
+   * 
+   * @param iNode
+   *          Server name
+   * @return
+   */
   public List<String> removeServer(final String iNode) {
     synchronized (configuration) {
       final List<String> changedPartitions = new ArrayList<String>();
@@ -619,6 +634,16 @@ public class ODistributedConfiguration {
     return null;
   }
 
+  /**
+   * Set a server offline. It assures the offline server is never on top of the list.<br>
+   * NOTE: It must be executed in distributed database lock.
+   * 
+   * @param iNode
+   *          Server name
+   * @param newServerCoordinator
+   *          New coordinator server name
+   * @return
+   */
   public List<String> setServerOffline(final String iNode, final String newServerCoordinator) {
     final List<String> changedPartitions = new ArrayList<String>();
 

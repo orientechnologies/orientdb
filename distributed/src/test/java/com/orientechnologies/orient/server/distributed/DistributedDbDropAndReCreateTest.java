@@ -44,7 +44,7 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
         banner("DROPPING DATABASE ON SERVER " + server.getServerId());
         db.drop();
 
-        Thread.sleep(2000);
+        Thread.sleep(1000);
       }
 
       ServerRun server = serverInstance.get(s);

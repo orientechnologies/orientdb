@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * Interface to manage balancing of cluster ownership.
@@ -105,26 +106,26 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
             "Class '%s', creation of new local cluster '%s' (id=%d)", iClass, newClusterName,
             iDatabase.getClusterIdByName(newClusterName));
 
-        final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
-        if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
-          OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+        final String finalNewClusterName = newClusterName;
 
-        try {
-          iClass.addCluster(newClusterName);
-        } catch (OCommandSQLParsingException e) {
-          if (!e.getMessage().endsWith("already exists"))
-            throw e;
-        } catch (Exception e) {
-          ODistributedServerLog.error(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "Error on creating cluster '%s' in class '%s': ", newClusterName, iClass, e);
-          throw OException.wrapException(
-              new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'"), e);
-        } finally {
-
-          if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
-            // RESTORE PREVIOUS MODE
-            OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
-        }
+        OScenarioThreadLocal.executeAsDefault(new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            try {
+              iClass.addCluster(finalNewClusterName);
+            } catch (OCommandSQLParsingException e) {
+              if (!e.getMessage().endsWith("already exists"))
+                throw e;
+            } catch (Exception e) {
+              ODistributedServerLog.error(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                  "Error on creating cluster '%s' in class '%s': ", finalNewClusterName, iClass, e);
+              throw OException.wrapException(
+                  new ODistributedException("Error on creating cluster '" + finalNewClusterName + "' in class '" + iClass + "'"),
+                  e);
+            }
+            return null;
+          }
+        });
 
         assignClusterOwnership(iDatabase, cfg, iClass, newClusterName, server);
         cfgChanged = true;
