@@ -13,13 +13,13 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by tglman on 03/05/16.
  */
-public class TestDirtyTrackingTreeRiBbag {
+public class TestDirtyTrackingTreeRidBag {
 
   private OrientGraphFactory factory;
 
   @Before
   public void before() {
-    factory = new OrientGraphFactory("memory:" + TestDirtyTrackingTreeRiBbag.class.getSimpleName());
+    factory = new OrientGraphFactory("memory:" + TestDirtyTrackingTreeRidBag.class.getSimpleName());
   }
 
   @After
@@ -46,7 +46,7 @@ public class TestDirtyTrackingTreeRiBbag {
     Runnable tableRun = new Runnable() {
       @Override
       public void run() {
-        OrientBaseGraph innerGraph = TestDirtyTrackingTreeRiBbag.this.factory.getTx();
+        OrientBaseGraph innerGraph = TestDirtyTrackingTreeRidBag.this.factory.getTx();
         Vertex innerRoot = innerGraph.getVertex(rootId);
         for (int i = 0; i < max; i++) {
           Vertex v = innerGraph.addVertex("Vertex2", (String) null);
