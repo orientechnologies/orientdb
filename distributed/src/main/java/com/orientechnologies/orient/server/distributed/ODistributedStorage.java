@@ -342,6 +342,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (result instanceof ONeedRetryException)
         throw (ONeedRetryException) result;
+      else if (result instanceof RuntimeException)
+        throw (RuntimeException) result;
       else if (result instanceof Exception)
         throw OException.wrapException(new ODistributedException("Error on execution distributed COMMAND"), (Exception) result);
 

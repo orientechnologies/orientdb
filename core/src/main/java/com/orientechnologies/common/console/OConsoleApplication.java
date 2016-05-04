@@ -306,7 +306,7 @@ public class OConsoleApplication {
       }
 
     for (String cmd : exitCommands)
-      if (cmd.equals(commandWords[0])) {
+      if (cmd.equalsIgnoreCase(commandWords[0])) {
         return RESULT.EXIT;
       }
 

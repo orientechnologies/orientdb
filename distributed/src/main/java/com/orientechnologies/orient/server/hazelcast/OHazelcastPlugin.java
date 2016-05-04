@@ -395,6 +395,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return configurationMap;
   }
 
+  @Override
+  protected ODistributedConfiguration getLastDatabaseConfiguration(final String databaseName) {
+    ODocument distributedCfg = (ODocument) configurationMap.get(CONFIG_DATABASE_PREFIX + databaseName);
+    if (distributedCfg != null)
+      return new ODistributedConfiguration(distributedCfg);
+
+    // NOT AVAILABLE YET (STARTUP PHASE), USE THE LOCAL ONE
+    return getDatabaseConfiguration(databaseName);
+  }
+
   public Lock getLock(final String iName) {
     return getHazelcastInstance().getLock("orientdb." + iName);
   }
@@ -839,7 +849,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
       if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
         final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
-        installNewDatabase(iStartup, databaseName, (ODocument) entry.getValue());
+        installDatabase(iStartup, databaseName, (ODocument) entry.getValue());
       }
     }
   }

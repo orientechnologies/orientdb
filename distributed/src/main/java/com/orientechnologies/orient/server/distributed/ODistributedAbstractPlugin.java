@@ -111,6 +111,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   private volatile int                                           hashLastServerDump                = 0;
 
+  protected abstract ODistributedConfiguration getLastDatabaseConfiguration(String databaseName);
+
   public void waitUntilNodeOnline() throws InterruptedException {
     while (!status.equals(NODE_STATUS.ONLINE))
       Thread.sleep(100);
@@ -907,7 +909,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return availableNodes;
   }
 
-  public boolean installDatabase(final boolean iStartup, final String databaseName) {
+  public boolean installDatabase(final boolean iStartup, final String databaseName, final ODocument config) {
     // INIT THE STORAGE FIRST
     getStorage(databaseName);
 
@@ -921,6 +923,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return false;
 
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName);
+
+    final Boolean autoDeploy = config.field("autoDeploy");
+    if (autoDeploy == null || !autoDeploy) {
+      // NO AUTO DEPLOY
+      setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
+      return false;
+    }
 
     boolean databaseInstalled;
 
@@ -1352,7 +1361,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   /**
    * Executes an operation protected by a distributed lock (one per database).
-   * 
+   *
    * @param databaseName
    *          Database name
    * @param iCallback
@@ -1376,7 +1385,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       OScenarioThreadLocal.INSTANCE.setInDatabaseLock(true);
 
       // GET LAST VERSION IN LOCK
-      final ODistributedConfiguration lastCfg = getDatabaseConfiguration(databaseName);
+      final ODistributedConfiguration lastCfg = getLastDatabaseConfiguration(databaseName);
       final int cfgVersion = lastCfg.getVersion();
 
       try {
@@ -1413,7 +1422,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       });
     }
 
-    installNewDatabase(false, databaseName, config);
+    installDatabase(false, databaseName, config);
     dumpServersStatus();
   }
 
@@ -1553,14 +1562,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         break;
       }
     }
-  }
-
-  protected boolean installNewDatabase(boolean iStartup, final String databaseName, final ODocument config) {
-    final Boolean autoDeploy = config.field("autoDeploy");
-    if (autoDeploy != null && autoDeploy) {
-      return installDatabase(iStartup, databaseName);
-    }
-    return false;
   }
 
   protected long writeDatabaseChunk(final int iChunkId, final ODistributedDatabaseChunk chunk, final OutputStream out)
