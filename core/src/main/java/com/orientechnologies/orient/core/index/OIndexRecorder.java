@@ -382,11 +382,6 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public void addTxOperation(ODocument operationDocument) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
   public void addTxOperation(OTransactionIndexChanges changes) {
     throw new UnsupportedOperationException("Not allowed operation");
   }

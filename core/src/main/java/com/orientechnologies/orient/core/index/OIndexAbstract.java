@@ -39,15 +39,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -55,7 +51,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 import java.io.IOException;
@@ -722,31 +717,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     return configuration.getDocument();
   }
 
-  @SuppressWarnings("unchecked")
-  public void addTxOperation(final ODocument operationDocument) {
-    if (operationDocument == null)
-      return;
-
-    acquireSharedLock();
-    try {
-      final IndexTxSnapshot indexTxSnapshot = txSnapshot.get();
-
-      final Boolean clearAll = operationDocument.field("clear");
-      if (clearAll != null && clearAll)
-        clearSnapshot(indexTxSnapshot);
-
-      final Collection<ODocument> entries = operationDocument.field("entries");
-      final Map<Object, Object> snapshot = indexTxSnapshot.indexSnapshot;
-      for (final ODocument entry : entries)
-        applyIndexTxEntry(snapshot, entry);
-
-      final ODocument nullIndexEntry = operationDocument.field("nullEntries");
-      applyIndexTxEntry(snapshot, nullIndexEntry);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   public void addTxOperation(final OTransactionIndexChanges changes) {
     acquireSharedLock();
     try {
@@ -1050,60 +1020,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         }
       }
 
-    }
-  }
-
-  private void applyIndexTxEntry(Map<Object, Object> snapshot, ODocument entry) {
-    final Object key;
-    if (entry.field("k") != null) {
-      Object serKey = entry.field("k");
-      try {
-        ODocument keyContainer = null;
-        // Check for PROTOCOL_VERSION_24 that remove CSV serialization.
-        if (serKey instanceof String) {
-          final String serializedKey = OStringSerializerHelper.decode((String) serKey);
-          keyContainer = new ODocument();
-          keyContainer.setLazyLoad(false);
-          keyContainer.setTrackingChanges(false);
-
-          ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
-        } else if (serKey instanceof ODocument) {
-          keyContainer = (ODocument) serKey;
-        }
-
-        if (keyContainer == null)
-          throw new OTransactionException("Key was not provided during key-value pair insertion");
-
-        final Object storedKey = keyContainer.field("key");
-        if (storedKey instanceof List)
-          key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
-        else if (Boolean.TRUE.equals(keyContainer.field("binary"))) {
-          key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
-        } else
-          key = storedKey;
-      } catch (IOException ioe) {
-        throw OException.wrapException(new OTransactionException("Error during index changes deserialization. "), ioe);
-      }
-    } else
-      key = null;
-
-    final List<ODocument> operations = entry.field("ops");
-    if (operations != null) {
-      for (final ODocument op : operations) {
-        op.setLazyLoad(false);
-        final int operation = (Integer) op.rawField("o");
-        final OIdentifiable value = op.field("v");
-
-        if (operation == OPERATION.PUT.ordinal())
-          putInSnapshot(key, value, snapshot);
-        else if (operation == OPERATION.REMOVE.ordinal()) {
-          if (value == null)
-            removeFromSnapshot(key, snapshot);
-          else {
-            removeFromSnapshot(key, value, snapshot);
-          }
-        }
-      }
     }
   }
 

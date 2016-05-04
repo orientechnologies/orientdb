@@ -181,7 +181,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
   void preCommit();
 
-  void addTxOperation(ODocument operationDocument);
   void addTxOperation(final OTransactionIndexChanges changes);
 
   void commit();

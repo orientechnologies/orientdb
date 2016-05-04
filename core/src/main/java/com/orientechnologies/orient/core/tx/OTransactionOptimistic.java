@@ -63,52 +63,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   private boolean              usingLog = true;
   private int                  txStartCounter;
 
-  private class CommitIndexesCallback implements Runnable {
-    private final Map<String, OIndex<?>> indexes;
-
-    private CommitIndexesCallback(Map<String, OIndex<?>> indexes) {
-      this.indexes = indexes;
-    }
-
-    @Override
-    public void run() {
-      final ODocument indexEntries = getIndexChanges();
-      if (indexEntries != null) {
-        final Map<String, OIndexInternal<?>> indexesToCommit = new HashMap<String, OIndexInternal<?>>();
-
-        for (Entry<String, Object> indexEntry : indexEntries) {
-          final OIndex<?> idx = indexes.get(indexEntry.getKey());
-          if (idx == null)
-            throw new OTransactionException("Cannot find index '" + indexEntry.getKey() + "' while committing transaction");
-
-          final OIndexInternal<?> index = idx.getInternal();
-          indexesToCommit.put(index.getName(), index.getInternal());
-        }
-
-        for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-          indexInternal.preCommit();
-
-        for (Entry<String, Object> indexEntry : indexEntries) {
-          final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
-
-          if (index == null) {
-            OLogManager.instance().error(this, "Index with name '" + indexEntry.getKey() + "' was not found.");
-            throw new OIndexException("Index with name '" + indexEntry.getKey() + "' was not found.");
-          } else
-            index.addTxOperation((ODocument) indexEntry.getValue());
-        }
-
-        try {
-          for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-            indexInternal.commit();
-        } finally {
-          for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-            indexInternal.postCommit();
-        }
-      }
-    }
-  }
-
   public OTransactionOptimistic(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
   }
@@ -592,21 +546,16 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         database.getStorage().commit(this, null);
       else {
-        final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
-        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
-          indexes.put(index.getName(), index);
-
-        final Runnable callback = new CommitIndexesCallback(indexes);
 
         final String storageType = database.getStorage().getUnderlying().getType();
 
         if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-          database.getStorage().commit(OTransactionOptimistic.this, callback);
+          database.getStorage().commit(OTransactionOptimistic.this, null);
         else {
           database.getStorage().callInLock(new Callable<Object>() {
             @Override
             public Object call() throws Exception {
-              database.getStorage().commit(OTransactionOptimistic.this, callback);
+              database.getStorage().commit(OTransactionOptimistic.this, null);
               return null;
             }
           }, true);
@@ -630,21 +579,15 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         return new UncompletedCommit(true, database.getStorage().initiateCommit(this, null));
       else {
-        final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
-        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
-          indexes.put(index.getName(), index);
-
-        final Runnable callback = new CommitIndexesCallback(indexes);
-
         final String storageType = database.getStorage().getUnderlying().getType();
 
         if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-          return new UncompletedCommit(true, database.getStorage().initiateCommit(OTransactionOptimistic.this, callback));
+          return new UncompletedCommit(true, database.getStorage().initiateCommit(OTransactionOptimistic.this, null));
         else
           return database.getStorage().callInLock(new Callable<OUncompletedCommit<Void>>() {
             @Override
             public OUncompletedCommit<Void> call() throws Exception {
-              return new UncompletedCommit(true, database.getStorage().initiateCommit(OTransactionOptimistic.this, callback));
+              return new UncompletedCommit(true, database.getStorage().initiateCommit(OTransactionOptimistic.this, null));
             }
           }, true);
       }
