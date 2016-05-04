@@ -358,8 +358,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       cachedDatabaseConfiguration.put(iDatabaseName, cfg);
 
       // PRINT THE NEW CONFIGURATION
-      final String cfgOutput = ODistributedOutput.formatClusterTable(this, iDatabaseName, new ODistributedConfiguration(cfg),
-          getAvailableNodes(iDatabaseName));
+      final String cfgOutput = ODistributedOutput.formatClusterTable(this, iDatabaseName,
+          new ODistributedConfiguration(iDatabaseName, cfg), getAvailableNodes(iDatabaseName));
 
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
           "New distributed configuration for database: %s (version=%d)%s\n", iDatabaseName, cfg.field("version"), cfgOutput);
@@ -416,7 +416,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         cachedDatabaseConfiguration.put(iDatabaseName, cfg);
       }
 
-      return new ODistributedConfiguration(cfg);
+      return new ODistributedConfiguration(iDatabaseName, cfg);
     }
   }
 
@@ -705,7 +705,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return;
 
     if (installClustersOfClass(iDatabase, iClass))
-      updateCachedDatabaseConfiguration(iDatabase.getName(), cfg.serialize(), true, true);
+      updateCachedDatabaseConfiguration(iDatabase.getName(), cfg.getDocument(), true, true);
   }
 
   @SuppressWarnings("unchecked")
@@ -823,7 +823,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   protected String getCoordinatorServer(final ODistributedConfiguration cfg) {
-    final List<String> servers = cfg.getOriginalServers("*");
+    final List<String> servers = cfg.getServers("*");
     if (servers == null || servers.isEmpty())
       return null;
 
@@ -836,16 +836,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return next;
   }
 
-  private boolean isLocalNodeTheCoordinator(final ODistributedConfiguration cfg) {
-    final List<String> servers = cfg.getOriginalServers("*");
-    return !servers.isEmpty() && nodeName.equalsIgnoreCase(servers.get(0));
-  }
-
   /**
    * Returns the next eligible server coordinator (2nd in server list).
    */
   private String getNextEligibleServerCoordinator(final ODistributedConfiguration cfg) {
-    final List<String> servers = cfg.getOriginalServers("*");
+    final List<String> servers = cfg.getServers("*");
     if (servers.size() < 2)
       return null;
 
@@ -1078,7 +1073,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       selectedNodes.addAll(nodes);
 
     ODistributedServerLog.warn(this, nodeName, selectedNodes.toString(), DIRECTION.OUT,
-        "requesting deploy of database '%s' on local server...", databaseName);
+        "Requesting deploy of database '%s' on local server...", databaseName);
 
     final OAbstractReplicatedTask deployTask = new OSyncDatabaseTask();
 
@@ -1267,24 +1262,28 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODatabaseDocumentTx db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta);
     if (db != null) {
       try {
-        final Lock lock = getLock(databaseName + ".cfg");
-        lock.lock();
+        executeInDatabaseLock(databaseName, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            // GET LAST VERSION IN LOCK
+            final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
-        try {
-          // GET LAST VERSION IN LOCK
-          final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+            if (db.isClosed())
+              getServerInstance().openDatabase(db);
 
-          final boolean distribCfgDirty = rebalanceClusterOwnership(nodeName, db, cfg, new HashSet<String>(), true);
-          if (distribCfgDirty) {
-            ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Distributed configuration modified");
-            updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+            db.reload();
+            db.getMetadata().reload();
+
+            final boolean distribCfgDirty = rebalanceClusterOwnership(nodeName, db, cfg, new HashSet<String>(), true);
+            if (distribCfgDirty) {
+              ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Distributed configuration modified");
+              updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
+            }
+
+            distrDatabase.setOnline();
+            return null;
           }
-
-          distrDatabase.setOnline();
-        } finally {
-          lock.unlock();
-        }
-
+        });
       } finally {
         db.activateOnCurrentThread();
         db.close();
@@ -1331,7 +1330,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
 
     if (cfgUpdated)
-      updateCachedDatabaseConfiguration(iDatabase.getName(), cfg.serialize(), true, true);
+      updateCachedDatabaseConfiguration(iDatabase.getName(), cfg.getDocument(), true, true);
   }
 
   /**
@@ -1355,16 +1354,31 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     for (int clusterId : clusterIds)
       clusterNames.add(iDatabase.getClusterNameById(clusterId));
 
+    return executeInDatabaseLock(databaseName, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        // GET LAST VERSION IN LOCK
+        final ODistributedConfiguration lastCfg = getDatabaseConfiguration(iDatabase.getName());
+
+        final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
+
+        return clusterAssignmentStrategy.assignClusterOwnershipOfClass(iDatabase, lastCfg, iClass, availableNodes,
+            new HashSet<String>(), true);
+      }
+    });
+  }
+
+  public <T> T executeInDatabaseLock(final String databaseName, final Callable<T> iCallback) {
     final Lock lock = getLock(databaseName + ".cfg");
     lock.lock();
     try {
-      // GET LAST VERSION IN LOCK
-      cfg = getDatabaseConfiguration(iDatabase.getName());
 
-      final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
+      return (T) iCallback.call();
 
-      return clusterAssignmentStrategy.assignClusterOwnershipOfClass(iDatabase, cfg, iClass, availableNodes, new HashSet<String>(),
-          true);
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
 
     } finally {
       lock.unlock();
@@ -1584,22 +1598,26 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         }
       };
 
-      final Lock lock = getLock(databaseName + ".cfg");
-      lock.lock();
       try {
-        if (delta) {
+        final ODistributedAbstractPlugin me = this;
+        executeInDatabaseLock(databaseName, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            if (delta) {
 
-          new OIncrementalServerSync().importDelta(serverInstance, db, in, iNode);
+              new OIncrementalServerSync().importDelta(serverInstance, db, in, iNode);
 
-        } else {
+            } else {
 
-          // IMPORT FULL DATABASE (LISTENER ONLY FOR DEBUG PURPOSE)
-          db.restore(in, null, null, ODistributedServerLog.isDebugEnabled() ? this : null);
+              // IMPORT FULL DATABASE (LISTENER ONLY FOR DEBUG PURPOSE)
+              db.restore(in, null, null, ODistributedServerLog.isDebugEnabled() ? me : null);
 
-        }
+            }
+            return null;
+          }
+        });
       } finally {
         in.close();
-        lock.unlock();
       }
 
       ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Installed database '%s'", databaseName);

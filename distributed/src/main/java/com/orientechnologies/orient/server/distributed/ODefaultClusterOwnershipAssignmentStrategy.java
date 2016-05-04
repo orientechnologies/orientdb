@@ -102,7 +102,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
         }
 
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "class '%s', creation of new local cluster '%s' (id=%d)", iClass, newClusterName,
+            "Class '%s', creation of new local cluster '%s' (id=%d)", iClass, newClusterName,
             iDatabase.getClusterIdByName(newClusterName));
 
         final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
@@ -116,7 +116,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
             throw e;
         } catch (Exception e) {
           ODistributedServerLog.error(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "error on creating cluster '%s' in class '%s': ", newClusterName, iClass, e);
+              "Error on creating cluster '%s' in class '%s': ", newClusterName, iClass, e);
           throw OException.wrapException(
               new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'"), e);
         } finally {

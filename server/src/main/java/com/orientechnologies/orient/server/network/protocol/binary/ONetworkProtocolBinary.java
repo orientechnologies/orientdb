@@ -733,7 +733,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               .getDatabaseConfiguration(connection.getDatabase().getName());
           if (dbCfg != null) {
             // ENHANCE SERVER CFG WITH DATABASE CFG
-            distributedCfg.field("database", dbCfg.serialize(), OType.EMBEDDED);
+            distributedCfg.field("database", dbCfg.getDocument(), OType.EMBEDDED);
           }
         }
 
@@ -1001,7 +1001,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       checkServerAccess("server.replication.config", connection);
 
       response = new ODocument()
-          .fromJSON(dManager.getDatabaseConfiguration((String) request.field("db")).serialize().toJSON("prettyPrint"));
+          .fromJSON(dManager.getDatabaseConfiguration((String) request.field("db")).getDocument().toJSON("prettyPrint"));
 
     }
 

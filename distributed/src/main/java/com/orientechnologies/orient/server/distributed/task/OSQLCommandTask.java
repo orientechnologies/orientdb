@@ -19,15 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.*;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
@@ -41,6 +34,14 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Distributed task used for synchronization.
@@ -177,6 +178,20 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   @Override
   public String getPayload() {
     return text;
+  }
+
+  @Override
+  public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
+    final OCommandRequest cmd = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OCommandSQL(text));
+
+    if (cmd instanceof OCommandDistributedReplicateRequest) {
+      final String undoCommand = ((OCommandDistributedReplicateRequest) cmd).getUndoCommand();
+      if (undoCommand != null) {
+        return new OSQLCommandTask((OCommandRequestText) cmd, clusters);
+      }
+    }
+
+    return super.getUndoTask(reqId);
   }
 
   @Override

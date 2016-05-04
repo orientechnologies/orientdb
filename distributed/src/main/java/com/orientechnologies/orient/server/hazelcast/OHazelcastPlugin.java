@@ -369,7 +369,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final boolean publishCfg = !configurationMap.containsKey(CONFIG_DATABASE_PREFIX + databaseName);
         if (publishCfg) {
           // PUBLISH CFG FIRST TIME
-          ODocument cfgDoc = cfg.serialize();
+          ODocument cfgDoc = cfg.getDocument();
           ORecordInternal.setRecordSerializer(cfgDoc, ODatabaseDocumentTx.getDefaultSerializer());
           configurationMap.put(CONFIG_DATABASE_PREFIX + databaseName, cfgDoc);
         }
@@ -389,7 +389,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         }
 
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Distributed configuration modified");
-        updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+        updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
 
         ddb.setOnline();
       }
@@ -479,6 +479,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           // NOTIFY NODE WAS ADDED SUCCESSFULLY
           for (ODistributedLifecycleListener l : listeners)
             l.onNodeJoined(joinedNodeName);
+
+          dumpServersStatus();
         }
 
       } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
@@ -692,7 +694,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             if (nodeLeftName.equals(coordinator)) {
               if (electCurrentNodeAsNewCoordinator(cfg, nodeLeftName, databaseName)) {
                 ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Distributed configuration modified");
-                updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+                updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
               }
             }
           }

@@ -1317,8 +1317,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         final Object result = command(commandSQL);
         if (result != null && ((Integer) result).intValue() != clId) {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "Error on creating cluster on distributed nodes: ids are different (local=%d and remote=%d). Retrying %d/%d...", clId,
-              ((Integer) result).intValue(), retry, 10);
+              "Error on creating cluster '%s' on distributed nodes: ids are different (local=%d and remote=%d). Retrying %d/%d...",
+              iClusterName, clId, ((Integer) result).intValue(), retry, 10);
 
           wrapped.dropCluster(clId, false);
 
@@ -1344,7 +1344,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       return clId;
     }
 
-    throw new ODistributedException("Error on creating cluster on distributed nodes: local and remote ids assigned are different");
+    throw new ODistributedException(
+        "Error on creating cluster '" + iClusterName + "' on distributed nodes: local and remote ids assigned are different");
   }
 
   @Override

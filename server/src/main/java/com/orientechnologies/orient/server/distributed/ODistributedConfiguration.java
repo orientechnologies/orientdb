@@ -42,13 +42,16 @@ public class ODistributedConfiguration {
   public static final String        DEFAULT_WRITE_QUORUM = QUORUM_MAJORITY;
 
   private static final List<String> DEFAULT_CLUSTER_NAME = Collections.singletonList(ALL_WILDCARD);
-  private ODocument                 configuration;
+
+  private final String              dbName;
+  private final ODocument           configuration;
 
   public enum ROLES {
     MASTER, REPLICA
   }
 
-  public ODistributedConfiguration(final ODocument iConfiguration) {
+  public ODistributedConfiguration(final String iDatabaseName, final ODocument iConfiguration) {
+    dbName = iDatabaseName;
     configuration = iConfiguration;
   }
 
@@ -455,9 +458,11 @@ public class ODistributedConfiguration {
    * @param iClusterName
    *          Cluster name, or null for *
    */
-  public List<String> getOriginalServers(final String iClusterName) {
+  public List<String> getServers(final String iClusterName) {
     synchronized (configuration) {
-      return getClusterConfiguration(iClusterName).field("servers");
+      final Collection<? extends String> list = (Collection<? extends String>) getClusterConfiguration(iClusterName)
+          .field("servers");
+      return list != null ? new ArrayList<String>(list) : null;
     }
   }
 
@@ -513,39 +518,8 @@ public class ODistributedConfiguration {
     }
   }
 
-  /**
-   * Get the document representing the cluster configuration.
-   *
-   * @param iClusterName
-   *          Cluster name, or null for *
-   * @return Always a ODocument
-   * @throws OConfigurationException
-   *           in case "clusters" field is not found in configuration
-   */
-  public ODocument getClusterConfiguration(String iClusterName) {
-    synchronized (configuration) {
-      final ODocument clusters = getConfiguredClusters();
-
-      if (iClusterName == null)
-        iClusterName = ALL_WILDCARD;
-
-      final ODocument cfg;
-      if (!clusters.containsField(iClusterName))
-        // NO CLUSTER IN CFG: GET THE DEFAULT ONE
-        cfg = clusters.field(ALL_WILDCARD);
-      else
-        // GET THE CLUSTER CFG
-        cfg = clusters.field(iClusterName);
-
-      if (cfg == null)
-        return new ODocument();
-
-      return cfg;
-    }
-  }
-
-  public ODocument serialize() {
-    return configuration;
+  public ODocument getDocument() {
+    return configuration.copy();
   }
 
   public List<String> addNewNodeInServerList(final String iNode) {
@@ -553,7 +527,7 @@ public class ODistributedConfiguration {
       final List<String> changedPartitions = new ArrayList<String>();
       // NOT FOUND: ADD THE NODE IN CONFIGURATION. LOOK FOR $newNode TAG
       for (String clusterName : getClusterNames()) {
-        final List<String> partitions = getOriginalServers(clusterName);
+        final List<String> partitions = getClusterConfiguration(clusterName).field("servers");
         if (partitions != null) {
           final int newNodePos = partitions.indexOf(ODistributedConfiguration.NEW_NODE_TAG);
           if (newNodePos > -1 && !partitions.contains(iNode)) {
@@ -596,7 +570,7 @@ public class ODistributedConfiguration {
               + iServerName + "', because server '" + owner + "' was already configured as owner");
       }
 
-      List<String> serverList = getOriginalServers(iClusterName);
+      List<String> serverList = getClusterConfiguration(iClusterName).field("servers");
       if (serverList == null)
         serverList = initClusterServers(cluster);
 
@@ -619,30 +593,12 @@ public class ODistributedConfiguration {
     }
   }
 
-  public ODocument createCluster(final String iClusterName) {
-    // CREATE IT
-    final ODocument clusters = configuration.field("clusters");
-
-    ODocument cluster = clusters.field(iClusterName);
-    if (cluster != null)
-      // ALREADY EXISTS
-      return clusters;
-
-    cluster = new ODocument();
-    ODocumentInternal.addOwner(cluster, clusters);
-    clusters.field(iClusterName, cluster, OType.EMBEDDED);
-
-    initClusterServers(cluster);
-
-    return cluster;
-  }
-
   public List<String> removeServer(final String iNode) {
     synchronized (configuration) {
       final List<String> changedPartitions = new ArrayList<String>();
 
       for (String clusterName : getClusterNames()) {
-        final Collection<String> nodes = getOriginalServers(clusterName);
+        final Collection<String> nodes = getClusterConfiguration(clusterName).field("servers");
         if (nodes != null) {
           for (String node : nodes) {
             if (node.equals(iNode)) {
@@ -667,9 +623,9 @@ public class ODistributedConfiguration {
     final List<String> changedPartitions = new ArrayList<String>();
 
     final String[] clusters = getClusterNames();
-    for (String clusterName : clusters) {
-      final List<String> nodes = getOriginalServers(clusterName);
-      synchronized (configuration) {
+    synchronized (configuration) {
+      for (String clusterName : clusters) {
+        final List<String> nodes = getClusterConfiguration(clusterName).field("servers");
         if (nodes != null && nodes.size() > 1) {
           for (String node : nodes) {
             if (node.equals(iNode)) {
@@ -705,7 +661,14 @@ public class ODistributedConfiguration {
     return null;
   }
 
-  protected List<String> initClusterServers(final ODocument cluster) {
+  public int getVersion() {
+    final Integer v = configuration.field("version");
+    if (v == null)
+      return 0;
+    return v;
+  }
+
+  private List<String> initClusterServers(final ODocument cluster) {
     final ODocument any = getClusterConfiguration(ALL_WILDCARD);
 
     // COPY THE SERVER LIST FROM ALL_WILDCARD
@@ -716,14 +679,25 @@ public class ODistributedConfiguration {
     return servers;
   }
 
-  public int getVersion() {
-    final Integer v = configuration.field("version");
-    if (v == null)
-      return 0;
-    return v;
+  private ODocument createCluster(final String iClusterName) {
+    // CREATE IT
+    final ODocument clusters = configuration.field("clusters");
+
+    ODocument cluster = clusters.field(iClusterName);
+    if (cluster != null)
+      // ALREADY EXISTS
+      return clusters;
+
+    cluster = new ODocument();
+    ODocumentInternal.addOwner(cluster, clusters);
+    clusters.field(iClusterName, cluster, OType.EMBEDDED);
+
+    initClusterServers(cluster);
+
+    return cluster;
   }
 
-  protected void incrementVersion() {
+  private void incrementVersion() {
     // INCREMENT VERSION
     Integer oldVersion = configuration.field("version");
     if (oldVersion == null)
@@ -739,7 +713,7 @@ public class ODistributedConfiguration {
    * @param iAvailableNodes
    *          Total nodes available
    */
-  protected int getQuorum(final String quorumSetting, final String iClusterName, final int iAvailableNodes,
+  private int getQuorum(final String quorumSetting, final String iClusterName, final int iAvailableNodes,
       final Object defaultValue) {
     synchronized (configuration) {
       Object value = getClusterConfiguration(iClusterName).field(quorumSetting);
@@ -763,10 +737,41 @@ public class ODistributedConfiguration {
     }
   }
 
-  protected ODocument getConfiguredClusters() {
+  private ODocument getConfiguredClusters() {
     final ODocument clusters = configuration.field("clusters");
     if (clusters == null)
       throw new OConfigurationException("Cannot find 'clusters' in distributed database configuration");
     return clusters;
+  }
+
+  /**
+   * Get the document representing the cluster configuration.
+   *
+   * @param iClusterName
+   *          Cluster name, or null for *
+   * @return Always a ODocument
+   * @throws OConfigurationException
+   *           in case "clusters" field is not found in configuration
+   */
+  private ODocument getClusterConfiguration(String iClusterName) {
+    synchronized (configuration) {
+      final ODocument clusters = getConfiguredClusters();
+
+      if (iClusterName == null)
+        iClusterName = ALL_WILDCARD;
+
+      final ODocument cfg;
+      if (!clusters.containsField(iClusterName))
+        // NO CLUSTER IN CFG: GET THE DEFAULT ONE
+        cfg = clusters.field(ALL_WILDCARD);
+      else
+        // GET THE CLUSTER CFG
+        cfg = clusters.field(iClusterName);
+
+      if (cfg == null)
+        return new ODocument();
+
+      return cfg;
+    }
   }
 }
