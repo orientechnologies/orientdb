@@ -285,7 +285,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   // OServerSecurity
   public String getSystemDbPath() {
-    return "plocal:" + server.getDatabaseDirectory() + getSystemDbName();
+    return server.getDatabaseDirectory() + getSystemDbName();
   }
 
   // OServerSecurity
@@ -476,6 +476,12 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   public ODatabase<?> openSystemDatabase() {
     return openDatabase(getSystemDbName());
   }
+  
+  // OServerSecurity
+  public boolean systemDbExists() {
+    return new File(getSystemDbPath()).isDirectory();
+  }
+  
 
   @Override
   public OSyslog getSyslog() {
@@ -1047,9 +1053,9 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   private void checkSystemDatabase() {
     ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+
     try {
-      final String path = getSystemDbPath();
-      ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx(path);
+      ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDbPath());
 
       if (!sysDB.exists()) {
         OLogManager.instance().info(this, "Creating the System Database");
