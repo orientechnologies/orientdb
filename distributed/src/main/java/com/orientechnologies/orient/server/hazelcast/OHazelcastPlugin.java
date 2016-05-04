@@ -849,7 +849,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
       if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
         final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
-        installNewDatabase(iStartup, databaseName, (ODocument) entry.getValue());
+        installDatabase(iStartup, databaseName, (ODocument) entry.getValue());
       }
     }
   }

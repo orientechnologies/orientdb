@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
@@ -68,6 +59,15 @@ import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLSy
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -909,7 +909,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return availableNodes;
   }
 
-  public boolean installDatabase(final boolean iStartup, final String databaseName) {
+  public boolean installDatabase(final boolean iStartup, final String databaseName, final ODocument config) {
     // INIT THE STORAGE FIRST
     getStorage(databaseName);
 
@@ -923,6 +923,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return false;
 
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName);
+
+    final Boolean autoDeploy = config.field("autoDeploy");
+    if (autoDeploy == null || !autoDeploy) {
+      // NO AUTO DEPLOY
+      setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
+      return false;
+    }
 
     boolean databaseInstalled;
 
@@ -1354,7 +1361,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   /**
    * Executes an operation protected by a distributed lock (one per database).
-   * 
+   *
    * @param databaseName
    *          Database name
    * @param iCallback
@@ -1415,7 +1422,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       });
     }
 
-    installNewDatabase(false, databaseName, config);
+    installDatabase(false, databaseName, config);
     dumpServersStatus();
   }
 
@@ -1555,14 +1562,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         break;
       }
     }
-  }
-
-  protected boolean installNewDatabase(boolean iStartup, final String databaseName, final ODocument config) {
-    final Boolean autoDeploy = config.field("autoDeploy");
-    if (autoDeploy != null && autoDeploy) {
-      return installDatabase(iStartup, databaseName);
-    }
-    return false;
   }
 
   protected long writeDatabaseChunk(final int iChunkId, final ODistributedDatabaseChunk chunk, final OutputStream out)

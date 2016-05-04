@@ -95,7 +95,7 @@ public class OCommandExecutorSQLSyncDatabase extends OCommandExecutorSQLAbstract
 
     final String databaseName = database.getName();
 
-    return dManager.installDatabase(true, databaseName);
+    return dManager.installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument());
   }
 
   @Override
