@@ -318,9 +318,13 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         }
       } catch (Exception ex) {
         OLogManager.instance().error(this, "getSystemUser() Exception: %s", ex.getMessage());
-      } finally {
-        if (currentDB != null)
+      }
+      finally {
+        if(currentDB != null){
           ODatabaseRecordThreadLocal.INSTANCE.set(currentDB);
+        }else{
+          ODatabaseRecordThreadLocal.INSTANCE.remove();
+        }
       }
     }
 
@@ -1042,9 +1046,9 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   }
 
   private void checkSystemDatabase() {
+    ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
       final String path = getSystemDbPath();
-
       ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx(path);
 
       if (!sysDB.exists()) {
@@ -1060,6 +1064,12 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
     } catch (Exception ex) {
       OLogManager.instance().error(this, "checkSystemDatabase() Exception: %s", ex.getMessage());
+    }finally{
+      if(oldDbInThread != null){
+        ODatabaseRecordThreadLocal.INSTANCE.set(oldDbInThread);
+      }else{
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
+      }
     }
   }
 }
