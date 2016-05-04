@@ -28,9 +28,9 @@ public class OServerCommandGetDeployDb extends OServerCommandAuthenticatedServer
 
     ODistributedServerManager manager = OServerMain.server().getDistributedManager();
     Map<String, Object> config = manager.getConfigurationMap();
-    ODocument dbConf = (ODocument) config.get("database." + db);
+    final ODocument dbConf = (ODocument) config.get("database." + db);
     if (manager instanceof OHazelcastPlugin) {
-      ((OHazelcastPlugin) manager).installDatabase(true, db);
+      ((OHazelcastPlugin) manager).installDatabase(true, db, dbConf);
     }
 
     iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
