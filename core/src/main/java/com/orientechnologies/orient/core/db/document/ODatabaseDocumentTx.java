@@ -760,7 +760,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
         if (OLogManager.instance().isDebugEnabled())
           OLogManager.instance()
-              .debug(this, "[checkSecurity] User '%s' tried to access to the reserved resource '%s', operation '%s'", getUser(),
+              .debug(this, "[checkSecurity] User '%s' tried to access the reserved resource '%s', operation '%s'", getUser(),
                   resourceGeneric + "." + resourceSpecific, iOperation);
 
         throw e;
@@ -789,7 +789,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       } catch (OSecurityAccessException e) {
         if (OLogManager.instance().isDebugEnabled())
           OLogManager.instance().debug(this,
-              "[checkSecurity] User '%s' tried to access to the reserved resource '%s', target(s) '%s', operation '%s'", getUser(),
+              "[checkSecurity] User '%s' tried to access the reserved resource '%s', target(s) '%s', operation '%s'", getUser(),
               iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
 
         throw e;
@@ -813,7 +813,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       } catch (OSecurityAccessException e) {
         if (OLogManager.instance().isDebugEnabled())
           OLogManager.instance()
-              .debug(this, "[checkSecurity] User '%s' tried to access to the reserved resource '%s', target '%s', operation '%s'",
+              .debug(this, "[checkSecurity] User '%s' tried to access the reserved resource '%s', target '%s', operation '%s'",
                   getUser(), iResourceGeneric, iResourceSpecific, iOperation);
 
         throw e;
@@ -909,6 +909,26 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         this.user = new OImmutableUser(-1, (OUser) user);
     } else
       this.user = (OImmutableUser) user;
+  }
+
+  public void reloadUser() {
+    if(user != null) {
+      activateOnCurrentThread();
+    	
+      OMetadata metadata = getMetadata();
+
+      if (metadata != null) {
+        final OSecurity security = metadata.getSecurity();   
+        OUser secGetUser = security.getUser(user.getName());
+        
+        if(secGetUser != null)
+          user = new OImmutableUser(security.getVersion(), secGetUser);
+        else
+        	 user = new OImmutableUser(-1, new OUser());
+      }
+      else
+        user = new OImmutableUser(-1, new OUser());
+    }
   }
 
   /**
@@ -3134,7 +3154,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     final ODatabaseDocumentInternal currentDatabase = tl != null ? tl.get() : null;
     if (currentDatabase != this)
       throw new IllegalStateException(
-          "Current database instance (" + toString() + ") is not active on current thread (" + Thread.currentThread()
+          "The current database instance (" + toString() + ") is not active on the current thread (" + Thread.currentThread()
               + "). Current active database is: " + currentDatabase);
   }
 

@@ -1070,7 +1070,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (storageType == null)
       storageType = "plocal";
 
-    checkServerAccess("database.delete", connection);
+    checkServerAccess("database.drop", connection);
 
     connection.setDatabase(getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType));
 
