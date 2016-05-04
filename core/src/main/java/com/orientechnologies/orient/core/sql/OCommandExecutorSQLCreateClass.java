@@ -210,6 +210,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   }
 
   @Override
+  public String getUndoCommand() {
+    return "drop class " + className;
+  }
+
+  @Override
   public boolean involveSchema() {
     return true;
   }
