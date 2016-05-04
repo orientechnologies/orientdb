@@ -30,7 +30,7 @@ public class OServerCommandGetDeployDb extends OServerCommandAuthenticatedServer
     Map<String, Object> config = manager.getConfigurationMap();
     ODocument dbConf = (ODocument) config.get("database." + db);
     if (manager instanceof OHazelcastPlugin) {
-      ((OHazelcastPlugin) manager).installDatabase(true, db, dbConf);
+      ((OHazelcastPlugin) manager).installDatabase(true, db);
     }
 
     iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);

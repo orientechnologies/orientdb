@@ -135,7 +135,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     }  else if (command.equalsIgnoreCase("database")) {
 
       ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
-      doc = cfg.serialize();
+      doc = cfg.getDocument();
 
     } else if (command.equalsIgnoreCase("stats")) {
 
