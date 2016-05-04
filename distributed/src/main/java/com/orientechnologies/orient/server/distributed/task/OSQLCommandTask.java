@@ -183,11 +183,18 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   @Override
   public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
     final OCommandRequest cmd = ODatabaseRecordThreadLocal.INSTANCE.get().command(new OCommandSQL(text));
+    OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) cmd);
+    executor.parse(cmd);
 
-    if (cmd instanceof OCommandDistributedReplicateRequest) {
-      final String undoCommand = ((OCommandDistributedReplicateRequest) cmd).getUndoCommand();
+    if (executor instanceof OCommandExecutorSQLDelegate)
+      executor = ((OCommandExecutorSQLDelegate) executor).getDelegate();
+
+    if (executor instanceof OCommandDistributedReplicateRequest) {
+      final String undoCommand = ((OCommandDistributedReplicateRequest) executor).getUndoCommand();
       if (undoCommand != null) {
-        return new OSQLCommandTask((OCommandRequestText) cmd, clusters);
+        final OSQLCommandTask undoTask = new OSQLCommandTask((OCommandRequestText) cmd, clusters);
+        undoTask.setResultStrategy(resultStrategy);
+        return undoTask;
       }
     }
 

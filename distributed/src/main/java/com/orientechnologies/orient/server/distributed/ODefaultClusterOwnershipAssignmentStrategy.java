@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -88,7 +87,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
     // MOVE THE UNASSIGNED CLUSTERS TO THE ORIGINAL SET TO BE REALLOCATED FROM THE EXTERNAL
     clustersToReassign.addAll(clustersOfClassToReassign);
 
-    final Collection<String> allClusterNames = iDatabase.getClusterNames();
+    Collection<String> allClusterNames = iDatabase.getClusterNames();
 
     // CHECK OWNER AFTER RE-BALANCE AND CREATE NEW CLUSTERS IF NEEDED
     for (String server : availableNodes) {
@@ -113,19 +112,23 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
           public Object call() throws Exception {
             try {
               iClass.addCluster(finalNewClusterName);
-            } catch (OCommandSQLParsingException e) {
-              if (!e.getMessage().endsWith("already exists"))
-                throw e;
             } catch (Exception e) {
-              ODistributedServerLog.error(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                  "Error on creating cluster '%s' in class '%s': ", finalNewClusterName, iClass, e);
-              throw OException.wrapException(
-                  new ODistributedException("Error on creating cluster '" + finalNewClusterName + "' in class '" + iClass + "'"),
-                  e);
+              if (!iDatabase.getClusterNames().contains(finalNewClusterName)) {
+                // NOT CREATED
+                ODistributedServerLog.error(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                    "Error on creating cluster '%s' in class '%s': ", finalNewClusterName, iClass, e);
+                throw OException.wrapException(
+                    new ODistributedException("Error on creating cluster '" + finalNewClusterName + "' in class '" + iClass + "'"),
+                    e);
+              }
             }
+
             return null;
           }
         });
+
+        // RELOAD ALL THE CLUSTER NAMES
+        allClusterNames = iDatabase.getClusterNames();
 
         assignClusterOwnership(iDatabase, cfg, iClass, newClusterName, server);
         cfgChanged = true;

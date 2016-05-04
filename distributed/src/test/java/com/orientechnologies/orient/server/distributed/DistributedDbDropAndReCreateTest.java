@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
  * Distributed test on drop + recreate database.
  */
 public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTest {
-  final static int SERVERS = 2;
+  final static int SERVERS = 3;
 
   @Test
   public void test() throws Exception {
