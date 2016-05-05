@@ -125,9 +125,9 @@
                         <storage.wal.syncOnPageFlush>false</storage.wal.syncOnPageFlush>
                         <storage.configuration.syncOnUpdate>false</storage.configuration.syncOnUpdate>
                         <index.flushAfterCreate>false</index.flushAfterCreate>
-                        <buildDirectory>.</buildDirectory>
-                        <url>memory:demo</url>
-                        <testPath>.</testPath>
+                        <buildDirectory>${project.build.directory}</buildDirectory>
+                        <testPath>${project.basedir}</testPath>
+                        <orientdb.test.keepDatabase>true</orientdb.test.keepDatabase>
                     </systemPropertyVariables>
                 </configuration>
                 <executions>
