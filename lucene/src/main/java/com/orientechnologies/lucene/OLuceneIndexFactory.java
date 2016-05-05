@@ -193,8 +193,13 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   @Override
   public void fullCheckpointMade(OAbstractPaginatedStorage storage) {
 
+    if (storage.isClosed()) {
+      return;
+    }
+
     ODatabaseInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     boolean opened = false;
+
     if (db == null) {
       db = openDatabase(storage.getURL());
       opened = true;
