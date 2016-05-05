@@ -32,8 +32,11 @@ filterModule.filter('sizeFormat', function () {
 });
 filterModule.filter('nograph', function () {
   return function (input) {
-    if (input.startsWith("in_") || input.startsWith("out_")) {
-      return input.replace("in_", "").replace("out_", "");
+    if (input.startsWith("in_")) {
+      return input.replace("in_", "");
+    }
+    if (input.startsWith("out_")) {
+      return input.replace("out_", "");
     }
     return input;
 
@@ -86,7 +89,7 @@ filterModule.filter('classRender', function () {
 })
 filterModule.filter('formatArray', function () {
   return function (input) {
-    if (input instanceof  Array) {
+    if (input instanceof Array) {
       var output = "";
       input.forEach(function (e, idx, arr) {
         output += (idx > 0 ? ", " : " ") + e;

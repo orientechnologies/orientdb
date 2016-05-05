@@ -131,9 +131,9 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
         type = "INTEGER";
       } else if (typeof value === 'boolean') {
         type = "BOOLEAN";
-      } else if (value instanceof  Array) {
+      } else if (value instanceof Array) {
         return "EMBEDDED";
-      } else if (value instanceof  Object) {
+      } else if (value instanceof Object) {
         return "EMBEDDED";
       }
       return type;
@@ -388,6 +388,7 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
 
   return {
     restrict: 'A',
+    replace: true,
     link: function (scope, element, attr, ngModel) {
 
       var value = scope.result[scope.header];
@@ -402,7 +403,6 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
       }
       function isRids(value) {
         return (value instanceof Array && value.length > 0 && typeof value[0] == "string" && value[0].indexOf('#') == 0 )
-
       }
 
 
@@ -469,6 +469,70 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
         }
       }
 
+    }
+  };
+});
+
+
+var count = 0;
+
+Widget.directive('ridrender2', function (Database, $http, $compile) {
+
+  return {
+    restrict: 'E',
+    replace: true,
+    transclude: true,
+    scope: {
+      value: '=value'
+    },
+    link: function (scope, element, attr, ngModel) {
+      var value = scope.value;
+
+
+      var LIMIT = 5;
+      var PAGE = LIMIT;
+      var dbName = Database.getName();
+
+      scope.$new(true);
+
+      scope.expand = function () {
+        PAGE += LIMIT;
+        renderLimit(PAGE);
+      }
+      scope.collapse = function () {
+        PAGE -= LIMIT;
+        renderLimit(PAGE);
+      }
+
+      function renderLimit(limit) {
+        var i = 0;
+        var html = "<div class='rid-list'>";
+        value.some(function (elem) {
+          if (typeof elem == 'string' && elem.indexOf('#') == 0) {
+            var link = '<span class="label label-warning badge-edge"><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></span> ';
+            html += link;
+
+            if (i == PAGE) {
+              scope.moreVal = (value.length - 1) - PAGE;
+              var expand = '<span class="label label-primary badge-edge"><a ng-click="expand()" href="javascript:void(0)">..More({{moreVal}})</a></span>';
+              html += expand;
+              return true;
+            }
+            i++;
+            return false;
+          }
+          return false;
+        });
+        if (PAGE != LIMIT) {
+          var expand = '<span class="label label-primary badge-edge"><a ng-click="collapse()" href="javascript:void(0)">..Less</a></span>';
+          html += expand;
+        }
+        html += "</div>";
+        element.html('');
+        element.html($compile(html)(scope));
+      }
+
+      renderLimit(LIMIT);
     }
   };
 });

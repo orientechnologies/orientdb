@@ -608,6 +608,7 @@ ul.horizontallist, ol.horizontallist {
   display: inline-block;
   padding-left: 0;
   margin-top: 0;
+  margin-bottom: 0;
   border-radius: 4px;
 }
 

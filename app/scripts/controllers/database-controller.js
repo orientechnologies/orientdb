@@ -62,7 +62,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
   $scope.countPageOptions = [5, 10, 20, 50, 100, 500, 1000, 2000, 5000];
   var dbTime = localStorageService.get("Timeline");
-  if (!dbTime || dbTime instanceof  Array) {
+  if (!dbTime || dbTime instanceof Array) {
     dbTime = new Object;
     localStorageService.add("Timeline", dbTime);
   }
@@ -352,9 +352,10 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
 
 }]);
-dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller', '$ojson', 'Graph', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller, $ojson, Graph) {
+dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller', '$ojson', 'Graph', 'ngTableEventsChannel', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller, $ojson, Graph, ngTableEventsChannel) {
 
 
+  $scope.itemByPage = 10;
   var data = $scope.item.resultTotal;
 
   if ($scope.item.rawData instanceof Object) {
@@ -377,7 +378,6 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     mode: 'javascript',
     onLoad: function (_cm) {
       $scope.vcm = _cm;
-      //$scope.vcm.setValue($ojson.format($scope.item.rawData));
     }
 
   };
@@ -472,6 +472,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
       $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
     }
   });
+  $scope.counts = [10, 25, 50, 100, 1000, 5000];
 
   $scope.tableParams.settings().counts = [10, 25, 50, 100, 1000, 5000];
   $scope.switchPage = function (index) {
@@ -482,6 +483,8 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
         index * $scope.item.countPage
       );
     }
+
+
   }
   $scope.isDivider = function (index, header) {
 
@@ -534,7 +537,12 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     $scope.cm.setCursor($scope.cm.lineCount());
 
   }
+
+  $scope.changeItemByPage = function (count) {
+    $scope.itemByPage = count;
+  }
   $scope.cm.focus();
+
 }
 ])
 ;
@@ -552,7 +560,6 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
   $scope.hideSettings = config.hideSettings;
   $scope.showw = false;
 
-  ;
   $scope.$watch("limit", function (data) {
     config.set('limit', data);
   });
