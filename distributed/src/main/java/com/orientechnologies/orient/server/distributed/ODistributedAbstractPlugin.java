@@ -231,6 +231,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
       final String dbName = iDatabase.getName();
+
+      if (getMessageService().getDatabase(dbName) == null) {
+        // CHECK TO PUBLISH IT TO THE CLUSTER
+        final ODistributedDatabaseImpl distribDatabase = messageService.registerDatabase(dbName);
+        distribDatabase.setOnline();
+      }
+
       final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
       if (cfg == null)
         return;
@@ -397,11 +404,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     // LOAD FILE IN DATABASE DIRECTORY IF ANY
     final File specificDatabaseConfiguration = getDistributedConfigFile(iDatabaseName);
-    ODocument cfg = loadDatabaseConfiguration(iDatabaseName, specificDatabaseConfiguration);
+    ODocument cfg = loadDatabaseConfiguration(iDatabaseName, specificDatabaseConfiguration, false);
 
     if (cfg == null) {
       // FIRST TIME RUNNING: GET DEFAULT CFG
-      cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
+      cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile, true);
       if (cfg == null)
         throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
     }
@@ -417,7 +424,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return serverInstance;
   }
 
-  protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file) {
+  protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file, final boolean writeCfgToDisk) {
     if (!file.exists() || file.length() == 0)
       return null;
 
@@ -431,7 +438,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
       doc.field("version", 1);
-      updateCachedDatabaseConfiguration(iDatabaseName, doc, false);
+      updateCachedDatabaseConfiguration(iDatabaseName, doc, writeCfgToDisk);
       return doc;
 
     } catch (Exception e) {
@@ -910,9 +917,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public boolean installDatabase(final boolean iStartup, final String databaseName, final ODocument config) {
-    // INIT THE STORAGE FIRST
-    getStorage(databaseName);
-
     final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
     ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
