@@ -23,7 +23,6 @@ import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.exception.OHighLevelException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
@@ -59,7 +58,6 @@ import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
@@ -143,13 +141,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   public <T> T networkOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {
     int retry = connectionRetry;
+    OStorageRemoteSession session = getCurrentSession();
     do {
       OChannelBinaryAsynchClient network = null;
-      network = getNetwork(getNextAvailableServerURL(false));
+      String serverUrl = getNextAvailableServerURL(false, session);
+      try {
+        network = getNetwork(serverUrl);
+      } catch (OException e) {
+        serverUrl = useNewServerURL(serverUrl);
+        if (serverUrl == null)
+          throw e;
+      }
 
       try {
         // In case i do not have a token or i'm switching between server i've to execute a open operation.
-        OStorageRemoteSession session = getCurrentSession();
         OStorageRemoteNodeSession nodeSession = session.get(network.getServerURL());
         if (nodeSession == null) {
           openRemoteDatabase(network);
@@ -161,10 +166,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
       } catch (OTokenException e) {
-        OStorageRemoteSession session = getCurrentSession();
         session.remove(network.getServerURL());
       } catch (OTokenSecurityException e) {
-        OStorageRemoteSession session = getCurrentSession();
         session.remove(network.getServerURL());
       } catch (OOfflineNodeException e) {
         //TODO: Force the jump to another node.
@@ -1756,7 +1759,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   protected synchronized String openRemoteDatabase() throws IOException {
-    final String currentURL = getNextAvailableServerURL(true);
+    final String currentURL = getNextAvailableServerURL(true, getCurrentSession());
     return openRemoteDatabase(currentURL);
   }
 
@@ -2010,26 +2013,25 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return network;
   }
 
-  protected String getNextAvailableServerURL(boolean iIsConnectOperation) {
+  protected String getNextAvailableServerURL(boolean iIsConnectOperation, OStorageRemoteSession session) {
     String url = null;
-
     switch (connectionStrategy) {
     case STICKY:
-      url = getServerURL();
+      url = session != null ? session.getServerUrl() : null;
       if (url == null)
-        url = getServerURFromList(false);
+        url = getServerURFromList(false, session);
       break;
 
     case ROUND_ROBIN_CONNECT:
       if (!iIsConnectOperation)
-        url = getServerURL();
+        url = session != null ? session.getServerUrl() : null;
 
       if (url == null)
-        url = getServerURFromList(iIsConnectOperation);
+        url = getServerURFromList(iIsConnectOperation, session);
       break;
 
     case ROUND_ROBIN_REQUEST:
-      url = getServerURFromList(true);
+      url = getServerURFromList(true, session);
       break;
 
     default:
@@ -2040,11 +2042,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   protected String getCurrentServerURL() {
-    return getServerURFromList(false);
+    return getServerURFromList(false, getCurrentSession());
   }
 
-  protected String getServerURFromList(final boolean iNextAvailable) {
-
+  protected String getServerURFromList(final boolean iNextAvailable, OStorageRemoteSession session) {
     synchronized (serverURLs) {
       if (serverURLs.isEmpty()) {
         parseServerURLs();
@@ -2053,10 +2054,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
 
       // GET CURRENT THREAD INDEX
-      OStorageRemoteSession currentSession = getCurrentSession();
       int serverURLIndex;
-      if (currentSession != null)
-        serverURLIndex = currentSession.serverURLIndex;
+      if (session != null)
+        serverURLIndex = session.serverURLIndex;
       else
         serverURLIndex = 0;
 
@@ -2069,8 +2069,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       final String serverURL = serverURLs.get(serverURLIndex) + "/" + getName();
 
-      if (currentSession != null)
-        currentSession.serverURLIndex = serverURLIndex;
+      if (session != null)
+        session.serverURLIndex = serverURLIndex;
 
       return serverURL;
     }
