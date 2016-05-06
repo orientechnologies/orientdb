@@ -17,7 +17,6 @@
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -31,7 +30,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -51,6 +49,7 @@ import static org.junit.Assert.*;
  * - 3 server down (quorum=2) with DBs distributed as below:
  *    - server1: db A, db B
  *    - server2: db B, db C
+ * - populating the databases
  * - servers startup
  * - each server deploys its dbs in the cluster of nodes
  * - check consistency on all servers:
@@ -62,7 +61,11 @@ import static org.junit.Assert.*;
  */
 public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
 
-  @Ignore
+  private String dbA = "db-A";
+  private String dbB = "db-B";
+  private String dbC = "db-C";
+
+//  @Ignore
   @Test
   public void test() throws Exception {
 
@@ -77,26 +80,21 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
 
   public void executeTest() throws Exception {    //  TO-CHANGE
 
-    List<ODocument> result = null;
-    ODatabaseDocumentTx dbServer3 = new ODatabaseDocumentTx(getRemoteDatabaseURL(serverInstance.get(2))).open("admin", "admin");
-    String dbServerUrl1 = getRemoteDatabaseURL(serverInstance.get(0));
+    // wait for db deploy completion
+    Thread.sleep(5000L);
 
     try {
 
       // check consistency on all the server:
-      // all the records destined to server3 were redirected to an other server, so we must inspect consistency for all 500 records
-      checkWritesAboveCluster(serverInstance, executeWritesOnServers);
+      //  - all the servers have  db A, db B, db C.
+      //  - db A, db B and db C are consistent on each server
+      compareDBOnServer(serverInstance, dbA);
+      compareDBOnServer(serverInstance, dbB);
+      compareDBOnServer(serverInstance, dbC);
 
     } catch(Exception e) {
       e.printStackTrace();
       fail();
-    } finally {
-
-      if(!dbServer3.isClosed()) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(dbServer3);
-        dbServer3.close();
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
-      }
     }
   }
 
@@ -117,11 +115,11 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
     ServerRun master = serverInstance.get(0);
 
     if (iCreateDatabase) {
-      final OrientBaseGraph graph1 = master.createDatabase("db-A", iCfgCallback);
-      final OrientBaseGraph graph2 = master.createDatabase("db-B", iCfgCallback);
+      final OrientBaseGraph graph1 = master.createDatabase(dbA, iCfgCallback);
+      final OrientBaseGraph graph2 = master.createDatabase(dbB, iCfgCallback);
       try {
-        onAfterDatabaseCreation(graph1, "plocal:" + serverInstance.get(0).getDatabasePath("db-A"));
-        onAfterDatabaseCreation(graph2, "plocal:" + serverInstance.get(0).getDatabasePath("db-B"));
+        onAfterDatabaseCreation(graph1, "plocal:" + serverInstance.get(0).getDatabasePath(dbA));
+        onAfterDatabaseCreation(graph2, "plocal:" + serverInstance.get(0).getDatabasePath(dbB));
       } finally {
         if(!graph1.isClosed()) {
           graph1.shutdown();
@@ -129,26 +127,24 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
         if(!graph1.isClosed()) {
           graph2.shutdown();
         }
-        Orient.instance().closeAllStorages();
       }
     }
 
     // copying db-B on server2
     if (iCopyDatabaseToNodes)
-      master.copyDatabase("db-B", serverInstance.get(1).getDatabasePath("db-B"));
+      master.copyDatabase(dbB, serverInstance.get(1).getDatabasePath(dbB));
 
     // creating db-C on server2
     master = serverInstance.get(1);
 
     if (iCreateDatabase) {
-      final OrientBaseGraph graph1 = master.createDatabase("db-C", iCfgCallback);
+      final OrientBaseGraph graph1 = master.createDatabase(dbC, iCfgCallback);
       try {
-        onAfterDatabaseCreation(graph1, "plocal:" + serverInstance.get(1).getDatabasePath("db-C"));
+        onAfterDatabaseCreation(graph1, "plocal:" + serverInstance.get(1).getDatabasePath(dbC));
       } finally {
         if(!graph1.isClosed()) {
           graph1.shutdown();
         }
-        Orient.instance().closeAllStorages();
       }
     }
   }
@@ -200,15 +196,19 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
 
     // database must be present on all the servers
 
+    String checkOnServer = "";
     List<ODatabaseDocumentTx> dbs = new LinkedList<ODatabaseDocumentTx>();
     for (ServerRun server : checkConsistencyOnServers) {
 
       try {
-        dbs.add(poolFactory.get("plocal:" + server.getDatabasePath(databaseName), "admin", "admin").acquire());
+        dbs.add(poolFactory.get(getPlocalDatabaseURL(server, databaseName), "admin", "admin").acquire());
+        checkOnServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
       } catch(Exception e) {
         fail(databaseName + " is not present on server" + server.getServerId());
       }
     }
+    checkOnServer = checkOnServer.substring(0, checkOnServer.length() - 1);
+    super.banner("Checking " + databaseName + " consistency among servers...\nChecking on servers {" + checkOnServer + "}.");
 
     // class person is Present in each database
     for(ODatabaseDocumentTx db: dbs) {
@@ -221,17 +221,12 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
       long count1 = dbs.get(j).getMetadata().getSchema().getClass("Person").count();
       long count2 = dbs.get(j+1).getMetadata().getSchema().getClass("Person").count();
       assertEquals(count1, count2);
+      j++;
     }
 
     /*
      * Checking record by record
      */
-
-    String checkOnServer = "";
-    for (ServerRun server : checkConsistencyOnServers) {
-      checkOnServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
-    }
-    checkOnServer = checkOnServer.substring(0, checkOnServer.length() - 1);
 
     List<ODocument> docsToCompare = new LinkedList<ODocument>();
 
