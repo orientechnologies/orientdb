@@ -145,11 +145,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     int retry = connectionRetry;
     do {
       OChannelBinaryAsynchClient network = null;
-      try {
-        network = getAvailableNetwork(getNextAvailableServerURL(false));
-      } catch (IOException exception) {
-        throw OException.wrapException(new OStorageException(errorMessage), exception);
-      }
+      network = getNetwork(getNextAvailableServerURL(false));
+
       try {
         // In case i do not have a token or i'm switching between server i've to execute a open operation.
         OStorageRemoteSession session = getCurrentSession();
@@ -334,7 +331,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         if (!nodes.isEmpty()) {
           for (OStorageRemoteNodeSession nodeSession : nodes) {
             try {
-              network = getAvailableNetwork(nodeSession.getServerURL());
+              network = getNetwork(nodeSession.getServerURL());
               network.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE, session);
               endRequest(network);
               engine.getConnectionManager().release(network);
@@ -1668,7 +1665,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     String currentURL = getCurrentServerURL();
     do {
       do {
-        final OChannelBinaryAsynchClient network = getAvailableNetwork(currentURL);
+        final OChannelBinaryAsynchClient network = getNetwork(currentURL);
         try {
           OStorageRemoteSession session = getCurrentSession();
           OStorageRemoteNodeSession nodeSession = session.getOrCreate(network.getServerURL());
@@ -1820,12 +1817,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     do {
       do {
         OChannelBinaryAsynchClient network = null;
-        try {
-          network = getAvailableNetwork(currentURL);
-        } catch (IOException exception) {
-          throw OException.wrapException(
-              new OStorageException("Cannot create a connection to remote server address(es): " + serverURLs), exception);
-        }
+        network = getNetwork(currentURL);
         try {
           openRemoteDatabase(network);
           return currentURL;
@@ -2084,40 +2076,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  public OChannelBinaryAsynchClient getAvailableNetwork(final String iCurrentURL) throws IOException {
+  public OChannelBinaryAsynchClient getNetwork(final String iCurrentURL) {
     OChannelBinaryAsynchClient network;
-
-    String lastURL = iCurrentURL;
     do {
-      Exception cause = null;
       try {
-        network = engine.getConnectionManager().acquire(lastURL, clientConfiguration, connectionOptions, asynchEventListener);
-      } catch (Exception e) {
-        OLogManager.instance().debug(this, "Error during acquiring of connection to URL " + lastURL, e);
-        network = null;
-        cause = e;
+        network = engine.getConnectionManager().acquire(iCurrentURL, clientConfiguration, connectionOptions, asynchEventListener);
+      } catch (Exception cause) {
+        throw OException.wrapException(new OStorageException("Cannot open a connection to remote server: " + iCurrentURL), cause);
       }
-
-      if (network == null) {
-        lastURL = useNewServerURL(lastURL);
-        if (lastURL == null) {
-          parseServerURLs();
-          if (cause instanceof IOException)
-            throw (IOException) cause;
-          throw OException.wrapException(new OStorageException("Cannot open a connection to remote server: " + iCurrentURL), cause);
-        }
-      } else if (!network.isConnected()) {
-        // DISCONNECTED NETWORK, GET ANOTHER ONE
-        OLogManager.instance().error(this, "Removing disconnected network channel '%s'...", lastURL);
-        engine.getConnectionManager().remove(network);
-        network = null;
-      } else if (!network.tryLock()) {
+      if (!network.tryLock()) {
         // CANNOT LOCK IT, MAYBE HASN'T BE CORRECTLY UNLOCKED BY PREVIOUS USER
-        OLogManager.instance().error(this, "Removing locked network channel '%s'...", lastURL);
+        OLogManager.instance().error(this, "Removing locked network channel '%s'...", iCurrentURL);
         engine.getConnectionManager().remove(network);
         network = null;
       }
-
     } while (network == null);
     return network;
   }
