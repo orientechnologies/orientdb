@@ -594,10 +594,12 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
             for (OClientConnection cc : ccm.getConnections()) {
               try {
                 ODatabaseDocumentTx ccDB = cc.getDatabase();
-                ccDB.activateOnCurrentThread();
-                if (ccDB != null && !ccDB.isClosed() && ccDB.getURL() != null) {
-                  if (ccDB.getURL().equals(dbURL)) {
-                    ccDB.reloadUser();
+                if(ccDB != null) {
+                  ccDB.activateOnCurrentThread();
+                  if (!ccDB.isClosed() && ccDB.getURL() != null) {
+                    if (ccDB.getURL().equals(dbURL)) {
+                      ccDB.reloadUser();
+                    }
                   }
                 }
               } catch (Exception ex) {
