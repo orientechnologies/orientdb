@@ -357,8 +357,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       status = STATUS.CLOSING;
       // CLOSE ALL THE CONNECTIONS
-      engine.getConnectionManager().closePool(getCurrentServerURL());
-
+      for(String url: serverURLs) {
+        engine.getConnectionManager().closePool(url);
+      }
       sbTreeCollectionManager.close();
 
       super.close(iForce, onDelete);
