@@ -594,7 +594,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
             for (OClientConnection cc : ccm.getConnections()) {
               try {
                 ODatabaseDocumentTx ccDB = cc.getDatabase();
-
+                ccDB.activateOnCurrentThread();
                 if (ccDB != null && !ccDB.isClosed() && ccDB.getURL() != null) {
                   if (ccDB.getURL().equals(dbURL)) {
                     ccDB.reloadUser();
@@ -608,6 +608,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         } catch (Exception ex) {
           OLogManager.instance().error(this, "securityRecordChange() Exception: ", ex);
         }
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
       }
     });
 
