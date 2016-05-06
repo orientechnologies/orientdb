@@ -64,4 +64,6 @@ public interface OServerSecurity extends OSecuritySystem {
   ODatabase<?> openDatabase(final String dbName);
   
   ODatabase<?> openSystemDatabase();
+  
+  boolean systemDbExists();
 }

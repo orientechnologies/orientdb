@@ -285,7 +285,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   // OServerSecurity
   public String getSystemDbPath() {
-    return "plocal:" + server.getDatabaseDirectory() + getSystemDbName();
+    return server.getDatabaseDirectory() + getSystemDbName();
   }
 
   // OServerSecurity
@@ -476,6 +476,12 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   public ODatabase<?> openSystemDatabase() {
     return openDatabase(getSystemDbName());
   }
+  
+  // OServerSecurity
+  public boolean systemDbExists() {
+    return new File(getSystemDbPath()).isDirectory();
+  }
+  
 
   @Override
   public OSyslog getSyslog() {
@@ -588,10 +594,12 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
             for (OClientConnection cc : ccm.getConnections()) {
               try {
                 ODatabaseDocumentTx ccDB = cc.getDatabase();
-
-                if (ccDB != null && !ccDB.isClosed() && ccDB.getURL() != null) {
-                  if (ccDB.getURL().equals(dbURL)) {
-                    ccDB.reloadUser();
+                if(ccDB != null) {
+                  ccDB.activateOnCurrentThread();
+                  if (!ccDB.isClosed() && ccDB.getURL() != null) {
+                    if (ccDB.getURL().equals(dbURL)) {
+                      ccDB.reloadUser();
+                    }
                   }
                 }
               } catch (Exception ex) {
@@ -602,6 +610,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         } catch (Exception ex) {
           OLogManager.instance().error(this, "securityRecordChange() Exception: ", ex);
         }
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
       }
     });
 
@@ -1047,9 +1056,9 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
   private void checkSystemDatabase() {
     ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+
     try {
-      final String path = getSystemDbPath();
-      ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx(path);
+      ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDbPath());
 
       if (!sysDB.exists()) {
         OLogManager.instance().info(this, "Creating the System Database");

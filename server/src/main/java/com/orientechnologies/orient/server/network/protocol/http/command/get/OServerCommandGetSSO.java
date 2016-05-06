@@ -26,8 +26,6 @@ public class OServerCommandGetSSO extends OServerCommandAbstract
 	@Override
 	public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception
 	{
-		System.out.println("OServerCommandGetSSO.execute() url = " + iRequest.url);
-		
 		getJSON(iResponse);
 		
 		return false; // Is not a chained command.

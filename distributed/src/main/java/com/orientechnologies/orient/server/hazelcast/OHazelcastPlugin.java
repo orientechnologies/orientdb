@@ -334,7 +334,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file) {
+  protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file, final boolean saveCfgToDisk) {
     // FIRST LOOK IN THE CLUSTER
     if (hazelcastInstance != null) {
       final ODocument cfg = (ODocument) configurationMap.getLocalCachedValue(CONFIG_DATABASE_PREFIX + iDatabaseName);
@@ -346,7 +346,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     // NO NODE IN CLUSTER, LOAD FROM FILE
-    return super.loadDatabaseConfiguration(iDatabaseName, file);
+    return super.loadDatabaseConfiguration(iDatabaseName, file, saveCfgToDisk);
   }
 
   /**
