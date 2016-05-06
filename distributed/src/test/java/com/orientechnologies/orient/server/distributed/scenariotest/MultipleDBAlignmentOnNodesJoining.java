@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -65,7 +66,7 @@ public class MultipleDBAlignmentOnNodesJoining extends AbstractScenarioTest {
   private String dbB = "db-B";
   private String dbC = "db-C";
 
-//  @Ignore
+  @Ignore
   @Test
   public void test() throws Exception {
 
