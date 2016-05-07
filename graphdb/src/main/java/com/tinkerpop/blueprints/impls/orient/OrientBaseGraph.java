@@ -471,7 +471,12 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         try {
           final OIndexManager indexManager = getRawGraph().getMetadata().getIndexManager();
           final OIndex index = indexManager.getIndex(indexName);
-          final String recordMapIndexName = index.getConfiguration().field(OrientIndex.CONFIG_RECORD_MAP_NAME);
+          ODocument metadata = index.getConfiguration().field("metadata");
+
+          String recordMapIndexName =  null;
+          if(metadata != null){
+            recordMapIndexName = metadata.field(OrientIndex.CONFIG_RECORD_MAP_NAME);
+          }
 
           indexManager.dropIndex(indexName);
           if (recordMapIndexName != null)
