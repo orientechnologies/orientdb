@@ -56,7 +56,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
     return hzMap.get(key);
   }
 
-  public Object getCachedValue(final Object key) {
+  public Object getLocalCachedValue(final Object key) {
     final Object res = super.get(key);
     if (res != null)
       return res;
@@ -67,6 +67,10 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
   @Override
   public Object put(final String key, final Object value) {
     hzMap.put(key, value);
+    return super.put(key, value);
+  }
+
+  public Object putInLocalCache(final String key, final Object value) {
     return super.put(key, value);
   }
 

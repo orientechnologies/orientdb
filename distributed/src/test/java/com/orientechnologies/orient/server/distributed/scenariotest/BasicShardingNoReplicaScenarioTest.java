@@ -68,7 +68,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
     OHazelcastPlugin manager1 = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
 
     ODistributedConfiguration databaseConfiguration = manager1.getDatabaseConfiguration(this.getDatabaseName());
-    ODocument cfg = databaseConfiguration.serialize();
+    ODocument cfg = databaseConfiguration.getDocument();
     cfg.field("autoDeploy", false);
     cfg.field("version", (Integer) cfg.field("version") + 1);
 
@@ -88,7 +88,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
         dCfg.setServerOwner("client_" + serverName, serverName);
       }
-      manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), dCfg.serialize(), true, true);
+      manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), dCfg.getDocument(), true, true);
 
       final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name", OType.STRING);
       prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);

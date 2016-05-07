@@ -542,6 +542,9 @@ public class OServer {
         storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
     }
 
+    if (storages != null && getSecurity() != null && storages.containsKey(getSecurity().getSystemDbName()))
+      storages.remove(getSecurity().getSystemDbName());
+
     return storages;
   }
 

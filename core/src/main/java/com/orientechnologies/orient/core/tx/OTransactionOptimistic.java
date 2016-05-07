@@ -25,12 +25,14 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
@@ -588,7 +590,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.COMMITTING;
 
     if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
-      if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
+      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         database.getStorage().commit(this, null);
       else {
@@ -626,7 +628,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.COMMITTING;
 
     if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
-      if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
+      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         return new UncompletedCommit(true, database.getStorage().initiateCommit(this, null));
       else {

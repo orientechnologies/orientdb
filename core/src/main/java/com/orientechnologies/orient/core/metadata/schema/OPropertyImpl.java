@@ -216,7 +216,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public OIndex<?> createIndex(String iType, ODocument metadata) {
     acquireSchemaReadLock();
     try {
-      return owner.createIndex(getFullName(), iType, null, metadata, new String[]{globalRef.getName()});
+      return owner.createIndex(getFullName(), iType, null, metadata, new String[] { globalRef.getName() });
     } finally {
       releaseSchemaReadLock();
     }
@@ -409,7 +409,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
   protected static void checkSupportLinkedClass(OType type) {
     if (type != OType.LINK && type != OType.LINKSET && type != OType.LINKLIST && type != OType.LINKMAP && type != OType.EMBEDDED
-        && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDMAP && type != OType.LINKBAG )
+        && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDMAP && type != OType.LINKBAG)
       throw new OSchemaException("Linked class is not supported for type: " + type);
   }
 
@@ -1445,8 +1445,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   private boolean isDistributedCommand() {
-    return getDatabase().getStorage() instanceof OAutoshardedStorage
-        && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
+    return getDatabase().getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 
   @Override

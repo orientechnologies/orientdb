@@ -844,7 +844,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Traverse records and display the results", onlineHelp = "SQL-Traverse")
   public void traverse(@ConsoleParameter(name = "query-text", description = "The traverse to execute") String iQueryText) {
     final int limit;
-    if (iQueryText.contains("limit")) {
+    if (iQueryText.toLowerCase().contains(" limit ")) {
       // RESET CONSOLE FLAG
       limit = -1;
     } else {
@@ -877,7 +877,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final int queryLimit;
     final int displayLimit;
-    if (iQueryText.contains("limit")) {
+    if (iQueryText.toLowerCase().contains(" limit ")) {
       queryLimit = -1;
       displayLimit = -1;
     } else {
@@ -1743,7 +1743,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @ConsoleCommand(description = "Display all the connected servers that manage current database", onlineHelp = "Console-Command-List-Servers")
   public void listServers() {
-    message("\n\nCONFIGURED SERVERS");
 
     final ODocument distribCfg = getDistributedConfiguration();
     if (distribCfg == null) {
@@ -1755,7 +1754,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     final Collection<ODocument> members = distribCfg.field("members");
 
-    if (members != null)
+    if (members != null) {
+      message("\n\nCONFIGURED SERVERS");
+
       for (ODocument m : members) {
         final ODocument server = new ODocument();
 
@@ -1788,10 +1789,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
         servers.add(server);
       }
-
+    }
     currentResultSet = servers;
     new OTableFormatter(this).setMaxWidthSize(getWindowSize()).writeRecords(servers, -1);
   }
+
 
   @ConsoleCommand(description = "Loook up a record using the dictionary. If found, set it as the current record", onlineHelp = "Console-Command-Dictionary-Get")
   public void dictionaryGet(@ConsoleParameter(name = "key", description = "The key to search") final String iKey) {
@@ -2026,40 +2028,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
     } catch (ODatabaseExportException e) {
       printError(e);
-    }
-  }
-
-  @ConsoleCommand(description = "Restore a database into the current one", splitInWords = false, onlineHelp = "Console-Command-Restore")
-  public void restoreDatabase(@ConsoleParameter(name = "options", description = "Restore options") final String text)
-      throws IOException {
-    checkForDatabase();
-
-    final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
-
-    if (items.size() < 2)
-      try {
-        syntaxError("restoreDatabase", getClass().getMethod("restoreDatabase", String.class));
-        return;
-      } catch (NoSuchMethodException e) {
-      }
-
-    final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
-
-    final long startTime = System.currentTimeMillis();
-    try {
-
-      // FULL RESTORE
-      message("\nRestoring database '%s' from full backup...", text);
-      final FileInputStream f = new FileInputStream(fileName);
-      try {
-        currentDatabase.restore(f, null, null, this);
-      } finally {
-        f.close();
-      }
-    } catch (ODatabaseImportException e) {
-      printError(e);
-    } finally {
-      message("\nDatabase restored in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
     }
   }
 

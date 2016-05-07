@@ -46,8 +46,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
- * each others.
+ * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each others.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
@@ -413,6 +412,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void handleUnreachableNode(final int iNodeId) {
+    if (iNodeId < 0)
+      return;
+
     int rollbacks = 0;
     int tasks = 0;
 
@@ -554,25 +556,24 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected void checkLocalNodeInConfiguration() {
-    final Lock lock = manager.getLock(databaseName + ".cfg");
-    lock.lock();
-    try {
-      // GET LAST VERSION IN LOCK
-      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+    manager.executeInDistributedDatabaseLock(databaseName, new OCallable<Void, ODistributedConfiguration>() {
+      @Override
+      public Void call(final ODistributedConfiguration cfg) {
+        // GET LAST VERSION IN LOCK
+        final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
+        if (foundPartition != null) {
+          manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-      final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
-      if (foundPartition != null) {
-        manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+          ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Adding node '%s' in partition: db=%s %s",
+              getLocalNodeName(), databaseName, foundPartition);
 
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
-            getLocalNodeName(), databaseName, foundPartition);
-
-        manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+          // ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "\n--------------\n" + databaseName
+          // + "\n--------------\n" + cfg.getDocument().toJSON("prettyPrint") + "\n--------------\n");
+          // System.out.flush();
+        }
+        return null;
       }
-
-    } finally {
-      lock.unlock();
-    }
+    });
   }
 
   protected String getLocalNodeName() {

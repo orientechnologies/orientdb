@@ -735,6 +735,9 @@ public class ODocumentHelper {
       return null;
 
     final ODocument doc = ((ODocument) iCurrent.getRecord());
+    if (doc == null) {//broken link
+      return null;
+    }
     doc.checkForFields(iFieldName);
     ODocumentEntry entry = doc._fields.get(iFieldName);
     return entry != null ? entry.value : null;

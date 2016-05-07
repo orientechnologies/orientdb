@@ -284,8 +284,12 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
     final Set<OIndex<?>> rawResult = propertyIndex.get(multiKey);
     final Set<OIndex<?>> transactionalResult = new HashSet<OIndex<?>>(rawResult.size());
-    for (final OIndex<?> index : rawResult)
-      transactionalResult.add(preProcessBeforeReturn(index));
+    for (final OIndex<?> index : rawResult) {
+      //ignore indexes that ignore null values on partial match
+      if (fields.size() == index.getDefinition().getFields().size() || !index.getDefinition().isNullValuesIgnored()) {
+        transactionalResult.add(preProcessBeforeReturn(index));
+      }
+    }
 
     return transactionalResult;
   }

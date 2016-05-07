@@ -19,7 +19,6 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(get("connect/" + getDatabaseName()).getResponse().getStatusLine().getStatusCode(), 204);
   }
 
-  
   public void testTooManyConnect() throws Exception {
     if (isInDevelopmentMode())
       // SKIP IT
@@ -54,17 +53,16 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
     }
   }
 
-  @Test
   public void testConnectAutoDisconnectKeepAlive() throws Exception {
     setKeepAlive(true);
     testConnectAutoDisconnect();
   }
 
-  @Test
   public void testConnectAutoDisconnectNoKeepAlive() throws Exception {
     setKeepAlive(false);
     testConnectAutoDisconnect();
   }
+
 
   protected void testConnectAutoDisconnect() throws Exception {
     if (isInDevelopmentMode())

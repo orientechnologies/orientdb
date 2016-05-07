@@ -61,6 +61,38 @@ public class ORule implements Serializable {
                                                                                private static final long serialVersionUID = 1L;
                                                                              };
 
+    public static final ResourceGeneric                         SERVER               = new ResourceGeneric("SERVER", "server") {
+                                                                                       private static final long serialVersionUID = 1L;
+                                                                                     };
+
+    public static final ResourceGeneric                         DATABASE_COPY        = new ResourceGeneric("DATABASE_COPY", "database.copy") {
+                                                                                       private static final long serialVersionUID = 1L;
+                                                                                     };
+
+    public static final ResourceGeneric                         DATABASE_CREATE      = new ResourceGeneric("DATABASE_CREATE", "database.create") {
+                                                                                       private static final long serialVersionUID = 1L;
+                                                                                     };
+
+    public static final ResourceGeneric                         DATABASE_DROP        = new ResourceGeneric("DATABASE_DROP", "database.drop") {
+                                                                                       private static final long serialVersionUID = 1L;
+                                                                                     };
+
+    public static final ResourceGeneric                         DATABASE_EXISTS      = new ResourceGeneric("DATABASE_EXISTS", "database.exists") {
+                                                                                       private static final long serialVersionUID = 1L;
+                                                                                     };
+
+    public static final ResourceGeneric                         DATABASE_FREEZE      = new ResourceGeneric("DATABASE_FREEZE", "database.freeze") {
+                                                                                       private static final long serialVersionUID = 1L;
+                                                                                     };
+
+    public static final ResourceGeneric                         DATABASE_RELEASE     = new ResourceGeneric("DATABASE_RELEASE", "database.release") {
+                                                                                       private static final long serialVersionUID = 1L;
+                                                                                     };
+                                                                                     
+    public static final ResourceGeneric                         DATABASE_PASSTHROUGH = new ResourceGeneric("DATABASE_PASSTHROUGH", "database.passthrough") {
+                                                                                       private static final long serialVersionUID = 1L;
+                                                                                     };
+
     private final String                                  name;
     private final String                                  legacyName;
 

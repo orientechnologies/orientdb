@@ -414,6 +414,10 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     return "plocal:" + server.getDatabasePath(getDatabaseName());
   }
 
+  protected String getPlocalDatabaseURL(final ServerRun server, String databaseName) {
+    return "plocal:" + server.getDatabasePath(databaseName);
+  }
+
   protected String getRemoteDatabaseURL(final ServerRun server) {
     return "remote:" + server.getBinaryProtocolAddress() + "/" + getDatabaseName();
   }

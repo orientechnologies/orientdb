@@ -732,7 +732,7 @@ public class ODocument extends ORecordAbstract
 
     if (_fields == null || _fields.size() == 0)
       return EMPTY_STRINGS;
-    List<String> names = new ArrayList<String>(_fields.size());
+    final List<String> names = new ArrayList<String>(_fields.size());
     for (Entry<String, ODocumentEntry> entry : _fields.entrySet()) {
       if (entry.getValue().exist())
         names.add(entry.getKey());
@@ -1470,6 +1470,8 @@ public class ODocument extends ORecordAbstract
           e.setDirtyNoChanged();
       }
     }
+
+    getDirtyManager().setDirty(this);
 
     // THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
     checkForFields();

@@ -59,12 +59,12 @@ public class TestAsyncReplMode2ServersAddEdge extends BareBoneBase2ServerTest {
   }
 
   protected void dbClient2() {
-    sleep(1000);
+    sleep(500);
 
     synchronized (LOCK) {
       OrientBaseGraph graph = new OrientGraph(getLocalURL2());
       try {
-        sleep(5000);
+        sleep(500);
         OrientVertex parentV1 = graph.getVertex(parentV1Id);
         assertEquals(NUM_OF_LOOP_ITERATIONS + 1, parentV1.getRecord().getVersion());
       } catch (Throwable e) {

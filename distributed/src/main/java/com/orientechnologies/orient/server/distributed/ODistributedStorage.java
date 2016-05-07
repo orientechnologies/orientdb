@@ -81,28 +81,36 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedStorage implements OStorage, OFreezableStorage, OAutoshardedStorage {
-  protected final OServer                                    serverInstance;
-  protected final ODistributedServerManager                  dManager;
-  protected final OAbstractPaginatedStorage                  wrapped;
+  protected final OServer                              serverInstance;
+  protected final ODistributedServerManager            dManager;
+  protected OAbstractPaginatedStorage                  wrapped;
 
-  protected final BlockingQueue<OAsynchDistributedOperation> asynchronousOperationsQueue;
-  protected final Thread                                     asynchWorker;
-  protected volatile boolean                                 running               = true;
-  protected volatile File                                    lastValidBackup       = null;
-  private ODistributedServerManager.DB_STATUS                prevStatus;
-  private ODistributedDatabase                               localDistributedDatabase;
-  private final ODistributedTransactionManager               txManager;
-  private final ReentrantReadWriteLock                       messageManagementLock = new ReentrantReadWriteLock();
+  protected BlockingQueue<OAsynchDistributedOperation> asynchronousOperationsQueue;
+  protected Thread                                     asynchWorker;
+  protected volatile boolean                           running               = true;
+  protected volatile File                              lastValidBackup       = null;
+  private ODistributedServerManager.DB_STATUS          prevStatus;
+  private ODistributedDatabase                         localDistributedDatabase;
+  private ODistributedTransactionManager               txManager;
+  private final ReentrantReadWriteLock                 messageManagementLock = new ReentrantReadWriteLock();
   // ARRAY OF LOCKS FOR CONCURRENT OPERATIONS ON CLUSTERS
-  private final Semaphore[]                                  clusterLocks;
-  private ODistributedStorageEventListener                   eventListener;
+  private Semaphore[]                                  clusterLocks;
+  private ODistributedStorageEventListener             eventListener;
+  private volatile ODistributedConfiguration           distributedConfiguration;
 
-  public ODistributedStorage(final OServer iServer, final OAbstractPaginatedStorage wrapped) {
+  public ODistributedStorage(final OServer iServer) {
     this.serverInstance = iServer;
     this.dManager = iServer.getDistributedManager();
+  }
+
+  public void wrap(final OAbstractPaginatedStorage wrapped) {
+    if (this.wrapped != null)
+      // ALREADY WRAPPED
+      return;
+
     this.wrapped = wrapped;
     this.localDistributedDatabase = dManager.getMessageService().getDatabase(getName());
-    this.txManager = new ODistributedTransactionManager(this, iServer, localDistributedDatabase);
+    this.txManager = new ODistributedTransactionManager(this, serverInstance, localDistributedDatabase);
 
     ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
         ODistributedServerLog.DIRECTION.NONE, "Installing distributed storage on database '%s'", wrapped.getName());
@@ -195,11 +203,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
     servers.add(localNodeName);
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed())
       // ALREADY DISTRIBUTED
       return wrapped.command(iCommand);
 
-    final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+    final ODistributedConfiguration dbCfg = distributedConfiguration;
     if (!dbCfg.isReplicationActive(null, localNodeName))
       // DON'T REPLICATE
       return wrapped.command(iCommand);
@@ -220,7 +228,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE executionMode = OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.LOCAL;
       OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT resultMgmt = OCommandDistributedReplicateRequest.DISTRIBUTED_RESULT_MGMT.CHECK_FOR_EQUALS;
 
-      if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED) {
+      if (OScenarioThreadLocal.INSTANCE.getRunMode() != RUN_MODE.RUNNING_DISTRIBUTED) {
         if (exec instanceof OCommandDistributedReplicateRequest) {
           executionMode = ((OCommandDistributedReplicateRequest) exec).getDistributedExecutionMode();
           resultMgmt = ((OCommandDistributedReplicateRequest) exec).getDistributedResultManagement();
@@ -294,7 +302,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             // EXECUTE ON LOCAL NODE FIRST
             try {
 
-              localResult = ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+              localResult = OScenarioThreadLocal.executeAsDistributed(new Callable() {
                 @Override
                 public Object call() throws Exception {
                   return wrapped.command(iCommand);
@@ -334,6 +342,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (result instanceof ONeedRetryException)
         throw (ONeedRetryException) result;
+      else if (result instanceof RuntimeException)
+        throw (RuntimeException) result;
       else if (result instanceof Exception)
         throw OException.wrapException(new ODistributedException("Error on execution distributed COMMAND"), (Exception) result);
 
@@ -485,7 +495,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final int iRecordVersion, final byte iRecordType, final int iMode, final ORecordCallback<Long> iCallback) {
     resetLastValidBackup();
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED) {
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
       // ALREADY DISTRIBUTED
       return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
     }
@@ -500,7 +510,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final String localNodeName = dManager.getLocalNodeName();
 
-      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+      final ODistributedConfiguration dbCfg = distributedConfiguration;
 
       checkNodeIsMaster(localNodeName, dbCfg);
 
@@ -509,7 +519,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (nodes.isEmpty()) {
         // DON'T REPLICATE OR DISTRIBUTE
-        return (OStorageOperationResult<OPhysicalPosition>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+        return (OStorageOperationResult<OPhysicalPosition>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override
           public Object call() throws Exception {
             return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
@@ -648,14 +658,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+      final ODistributedConfiguration dbCfg = distributedConfiguration;
       final List<String> nodes = dbCfg.getServers(clusterName, null);
       final int availableNodes = dManager.getAvailableNodes(nodes, getName());
 
       // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
       if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes) <= 1) {
         // DON'T REPLICATE
-        return (OStorageOperationResult<ORawBuffer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+        return (OStorageOperationResult<ORawBuffer>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override
           public Object call() throws Exception {
             return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback);
@@ -698,14 +708,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     try {
       final String clusterName = getClusterNameByRID(rid);
 
-      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+      final ODistributedConfiguration dbCfg = distributedConfiguration;
       final List<String> nodes = dbCfg.getServers(clusterName, null);
       final int availableNodes = dManager.getAvailableNodes(nodes, getName());
 
       // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
       if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes) <= 1) {
         // DON'T REPLICATE
-        return (OStorageOperationResult<ORawBuffer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+        return (OStorageOperationResult<ORawBuffer>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override
           public Object call() throws Exception {
             return wrapped.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion);
@@ -753,7 +763,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final ORecordCallback<Integer> iCallback) {
     resetLastValidBackup();
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED) {
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
       // ALREADY DISTRIBUTED
       return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
     }
@@ -761,7 +771,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+      final ODistributedConfiguration dbCfg = distributedConfiguration;
 
       final String localNodeName = dManager.getLocalNodeName();
 
@@ -772,7 +782,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (nodes.isEmpty()) {
         // DON'T REPLICATE OR DISTRIBUTE
-        return (OStorageOperationResult<Integer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+        return (OStorageOperationResult<Integer>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override
           public Object call() throws Exception {
             return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
@@ -801,7 +811,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   // LOAD CURRENT RECORD
                   task.checkRecordExists();
 
-                  localResult = (OStorageOperationResult<Integer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+                  localResult = (OStorageOperationResult<Integer>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
                     @Override
                     public Object call() throws Exception {
                       task.setLastLSN(wrapped.getLSN());
@@ -887,7 +897,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final ORecordCallback<Boolean> iCallback) {
     resetLastValidBackup();
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED) {
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
       // ALREADY DISTRIBUTED
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
     }
@@ -895,7 +905,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+      final ODistributedConfiguration dbCfg = distributedConfiguration;
 
       final String localNodeName = dManager.getLocalNodeName();
 
@@ -906,7 +916,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (nodes.isEmpty()) {
         // DON'T REPLICATE OR DISTRIBUTE
-        return (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+        return (OStorageOperationResult<Boolean>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override
           public Object call() throws Exception {
             return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
@@ -936,7 +946,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                   // LOAD CURRENT RECORD
                   task.checkRecordExists();
 
-                  localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+                  localResult = (OStorageOperationResult<Boolean>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
                     @Override
                     public Object call() throws Exception {
                       task.setLastLSN(wrapped.getLSN());
@@ -1043,7 +1053,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       };
 
-      return ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+      return OScenarioThreadLocal.executeAsDistributed(new Callable() {
         @Override
         public Object call() throws Exception {
           return callback.call(unlockCallback);
@@ -1180,6 +1190,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public void close(final boolean iForce, final boolean onDelete) {
+    if (wrapped == null)
+      return;
+
     wrapped.close(iForce, onDelete);
 
     if (onDelete && wrapped instanceof OLocalPaginatedStorage) {
@@ -1193,6 +1206,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public boolean isClosed() {
+    if (wrapped == null)
+      return true;
+
     return wrapped.isClosed();
   }
 
@@ -1200,12 +1216,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {
     resetLastValidBackup();
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED) {
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
       // ALREADY DISTRIBUTED
       return wrapped.commit(iTx, callback);
     }
 
-    final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+    final ODistributedConfiguration dbCfg = distributedConfiguration;
 
     final String localNodeName = dManager.getLocalNodeName();
 
@@ -1214,7 +1230,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     try {
       if (!dbCfg.isReplicationActive(null, localNodeName)) {
         // DON'T REPLICATE
-        ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+        OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override
           public Object call() throws Exception {
             return wrapped.commit(iTx, callback);
@@ -1304,7 +1320,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     for (int retry = 0; retry < 10; ++retry) {
       int clId = wrapped.addCluster(iClusterName, false, iParameters);
 
-      if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT) {
+      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
 
         final StringBuilder cmd = new StringBuilder("create cluster `");
         cmd.append(iClusterName);
@@ -1317,8 +1333,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         final Object result = command(commandSQL);
         if (result != null && ((Integer) result).intValue() != clId) {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "Error on creating cluster on distributed nodes: ids are different (local=%d and remote=%d). Retrying %d/%d...", clId,
-              ((Integer) result).intValue(), retry, 10);
+              "Error on creating cluster '%s' on distributed nodes: ids are different (local=%d and remote=%d). Retrying %d/%d...",
+              iClusterName, clId, ((Integer) result).intValue(), retry, 10);
 
           wrapped.dropCluster(clId, false);
 
@@ -1344,7 +1360,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       return clId;
     }
 
-    throw new ODistributedException("Error on creating cluster on distributed nodes: local and remote ids assigned are different");
+    throw new ODistributedException(
+        "Error on creating cluster '" + iClusterName + "' on distributed nodes: local and remote ids assigned are different");
   }
 
   @Override
@@ -1476,6 +1493,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return dManager;
   }
 
+  public ODistributedConfiguration getDistributedConfiguration() {
+    return distributedConfiguration;
+  }
+
+  public void setDistributedConfiguration(final ODistributedConfiguration distributedConfiguration) {
+    this.distributedConfiguration = distributedConfiguration;
+  }
+
   @Override
   public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
     return wrapped.ceilingPhysicalPositions(clusterId, physicalPosition);
@@ -1582,12 +1607,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   public void shutdownAsynchronousWorker() {
     running = false;
-    asynchWorker.interrupt();
-    try {
-      asynchWorker.join();
-    } catch (InterruptedException e) {
+    if (asynchWorker != null) {
+      asynchWorker.interrupt();
+      try {
+        asynchWorker.join();
+      } catch (InterruptedException e) {
+      }
     }
-    asynchronousOperationsQueue.clear();
+
+    if (asynchronousOperationsQueue != null)
+      asynchronousOperationsQueue.clear();
   }
 
   protected void checkNodeIsMaster(final String localNodeName, final ODistributedConfiguration dbCfg) {

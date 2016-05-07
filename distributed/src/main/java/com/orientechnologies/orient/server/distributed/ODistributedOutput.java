@@ -78,12 +78,13 @@ public class ODistributedOutput {
           }
         }
 
-        final long usedMem = m.field("usedMemory");
-        final long maxMem = m.field("maxMemory");
+        final Long usedMem = m.field("usedMemory");
+        if (usedMem != null) {
+          final long maxMem = m.field("maxMemory");
 
-        serverRow.field("UsedMemory", String.format("%s/%s (%.2f%%)", OFileUtils.getSizeAsString(usedMem),
-            OFileUtils.getSizeAsString(maxMem), ((float) usedMem / (float) maxMem) * 100));
-
+          serverRow.field("UsedMemory", String.format("%s/%s (%.2f%%)", OFileUtils.getSizeAsString(usedMem),
+              OFileUtils.getSizeAsString(maxMem), ((float) usedMem / (float) maxMem) * 100));
+        }
         rows.add(serverRow);
 
         final Collection<String> databases = m.field("databases");
@@ -146,7 +147,7 @@ public class ODistributedOutput {
     final int defaultWQ = cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes);
     final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes);
     final String defaultOwner = "" + cfg.getClusterOwner(ODistributedConfiguration.ALL_WILDCARD);
-    final List<String> defaultServers = cfg.getOriginalServers(ODistributedConfiguration.ALL_WILDCARD);
+    final List<String> defaultServers = cfg.getServers(ODistributedConfiguration.ALL_WILDCARD);
 
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
     final Set<String> allServers = new HashSet<String>();
@@ -155,7 +156,7 @@ public class ODistributedOutput {
       final int wQ = cfg.getWriteQuorum(cluster, availableNodes);
       final int rQ = cfg.getReadQuorum(cluster, availableNodes);
       final String owner = cfg.getClusterOwner(cluster);
-      final List<String> servers = cfg.getOriginalServers(cluster);
+      final List<String> servers = cfg.getServers(cluster);
 
       if (!cluster.equals(ODistributedConfiguration.ALL_WILDCARD) && defaultWQ == wQ && defaultRQ == rQ
           && defaultOwner.equals(owner) && defaultServers.size() == servers.size() && defaultServers.containsAll(servers))

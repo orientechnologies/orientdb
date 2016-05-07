@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -29,13 +27,14 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+
+import java.util.Map;
 
 /**
  * SQL SYNC DATABASE command: synchronize database form distributed servers.
@@ -96,10 +95,7 @@ public class OCommandExecutorSQLSyncDatabase extends OCommandExecutorSQLAbstract
 
     final String databaseName = database.getName();
 
-    Map<String, Object> config = dManager.getConfigurationMap();
-    final ODocument dbConf = (ODocument) config.get(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + databaseName);
-
-    return dManager.installDatabase(true, databaseName, dbConf);
+    return dManager.installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument());
   }
 
   @Override

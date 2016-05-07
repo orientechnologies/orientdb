@@ -1262,7 +1262,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             network.writeByte((byte) 0);
 
             // SEND EMPTY TX CHANGES, TRACKING MADE SERVER SIDE
-            network.writeBytes(new ODocument().toStream());
+            network.writeBytes(iTx.getIndexChanges().toStream());
           } finally {
             endRequest(network);
           }

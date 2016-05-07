@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.security;
 
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 
@@ -45,7 +46,13 @@ public interface OSecuritySystem
 
 	ODocument getComponentConfig(final String name);
 
-	String getSystemDbName();
+	/**
+	 * Returns the "System User" associated with 'username' from the system database.
+	 * If not found, returns null.
+	 * dbName is used to filter the assigned roles.  It may be null.
+	 */
+	OUser getSystemUser(final String username, final String dbName);
+
 
 	// Walks through the list of Authenticators.
 	boolean isAuthorized(final String username, final String resource);
@@ -65,6 +72,11 @@ public interface OSecuritySystem
 	void reload(final ODocument jsonConfig);
 	
 	void reloadComponent(final String name, final ODocument jsonConfig);
+	
+	/**
+	 * Called each time one of the security classes (OUser, ORole, OServerRole) is modified.
+	 */
+	void securityRecordChange(final String dbURL, final ODocument record);
 
 	void unregisterSecurityClass(final Class<?> cls);
 
