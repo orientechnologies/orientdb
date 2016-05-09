@@ -29,13 +29,12 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -46,6 +45,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -82,6 +82,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
   private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
+  private static final String                              SYSTEM_DB_NAME         = "OSystem";
   private static ThreadGroup                               threadGroup;
   private static Map<String, OServer>                      distributedServers     = new ConcurrentHashMap<String, OServer>();
   private final CountDownLatch                             startupLatch           = new CountDownLatch(1);
@@ -193,6 +194,37 @@ public class OServer {
     } finally {
       startup(serverCfg.getConfiguration());
       activate();
+    }
+  }
+
+  public String getSystemDatabaseName() {
+    return OServer.SYSTEM_DB_NAME;
+  }
+
+  public String getSystemDatabasePath() {
+    return getDatabaseDirectory() + getSystemDatabaseName();
+  }
+
+  public Object executeSystemDatabaseCommand(final OCallable<Object, Object> callback, final String serverUser, final String sql,
+      final Object... args) {
+    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    try {
+      // BYPASS SECURITY
+      final ODatabase<?> db = openDatabase("plocal:" + getSystemDatabasePath(), serverUser, "", null, true);
+      try {
+
+        final Object result = db.command(new OCommandSQL(sql)).execute(args);
+        return callback.call(result);
+
+      } finally {
+        db.close();
+      }
+
+    } finally {
+      if (currentDB != null)
+        ODatabaseRecordThreadLocal.INSTANCE.set(currentDB);
+      else
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
     }
   }
 
@@ -331,6 +363,10 @@ public class OServer {
     try {
       serverSecurity = new ODefaultServerSecurity(this, serverCfg);
       Orient.instance().setSecurity(serverSecurity);
+
+      // Checks to see if the OrientDB System Database exists and creates it if not.
+      // Make sure this happens after setSecurityFactory() is called.
+      checkSystemDatabase();
 
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onBeforeActivate();
@@ -542,8 +578,8 @@ public class OServer {
         storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
     }
 
-    if (storages != null && getSecurity() != null && storages.containsKey(getSecurity().getSystemDbName()))
-      storages.remove(getSecurity().getSystemDbName());
+    if (storages != null)
+      storages.remove(SYSTEM_DB_NAME);
 
     return storages;
   }
@@ -1201,5 +1237,31 @@ public class OServer {
 
   public OTokenHandler getTokenHandler() {
     return tokenHandler;
+  }
+
+  private void checkSystemDatabase() {
+    final ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    try {
+
+      ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDatabasePath());
+
+      if (!sysDB.exists()) {
+        OLogManager.instance().info(this, "Creating the system database 'OSystem' for current server");
+
+        Map<OGlobalConfiguration, Object> settings = new ConcurrentHashMap<OGlobalConfiguration, Object>();
+        settings.put(OGlobalConfiguration.CREATE_DEFAULT_USERS, false);
+        settings.put(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1);
+
+        sysDB.create(settings);
+        sysDB.close();
+      }
+
+    } finally {
+      if (oldDbInThread != null) {
+        ODatabaseRecordThreadLocal.INSTANCE.set(oldDbInThread);
+      } else {
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
+      }
+    }
   }
 }

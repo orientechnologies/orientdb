@@ -19,13 +19,13 @@
   */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
+
+import java.io.IOException;
 
 public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedServerAbstract {
   private static final String[] NAMES = { "GET|listDatabases" };
@@ -46,19 +46,18 @@ public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedS
     iRequest.data.commandInfo = "Server status";
 
     final ODocument result = new ODocument();
-      
+
     // We copy the returned set so that we can modify it, and we use a LinkedHashSet to preserve the ordering.
     java.util.Set<String> storageNames = new java.util.LinkedHashSet(server.getAvailableStorageNames().keySet());
-      
+
     // This just adds the system database if the guest user has the specified permission (server.listDatabases.system).
-    if (server.getSecurity() != null && server.getSecurity().isAuthorized(OServerConfiguration.GUEST_USER, "server.listDatabases.system")) {
-      if (server.getSecurity().systemDbExists()) {
-        storageNames.add(server.getSecurity().getSystemDbName());
-      }
+    if (server.getSecurity() != null
+        && server.getSecurity().isAuthorized(OServerConfiguration.GUEST_USER, "server.listDatabases.system")) {
+      storageNames.add(server.getSystemDatabaseName());
     }
-      
+
     result.field("databases", storageNames);
-    iResponse.writeRecord(result);   
+    iResponse.writeRecord(result);
 
     return false;
   }
