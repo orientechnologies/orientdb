@@ -55,7 +55,7 @@ import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLSyncCluster;
+import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
@@ -1038,7 +1038,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           // SYNC ALL THE CLUSTERS
           for (String cl : toSyncClusters) {
             // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
-            OCommandExecutorSQLSyncCluster.replaceCluster(this, serverInstance, databaseName, cl);
+            OCommandExecutorSQLHASyncCluster.replaceCluster(this, serverInstance, databaseName, cl);
           }
 
           ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Installed delta of database '%s'...",
@@ -1115,7 +1115,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         // SYNC ALL THE CLUSTERS
         for (String cl : toSyncClusters) {
           // FILTER CLUSTER CHECKING IF ANY NODE IS ACTIVE
-          OCommandExecutorSQLSyncCluster.replaceCluster(this, serverInstance, databaseName, cl);
+          OCommandExecutorSQLHASyncCluster.replaceCluster(this, serverInstance, databaseName, cl);
         }
 
         return true;

@@ -22,80 +22,87 @@ package com.orientechnologies.orient.server.distributed.sql;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedStorage;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.util.Map;
 
 /**
- * SQL SYNC DATABASE command: synchronize database form distributed servers.
+ * SQL HA REMOVE SERVER command: removes a server from ha configuration.
  * 
  * @author Luca Garulli
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLSyncDatabase extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String NAME             = "SYNC DATABASE";
-  public static final String KEYWORD_SYNC     = "SYNC";
-  public static final String KEYWORD_DATABASE = "DATABASE";
+public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+  public static final String NAME           = "HA REMOVE SERVER";
+  public static final String KEYWORD_HA     = "HA";
+  public static final String KEYWORD_REMOVE = "REMOVE";
+  public static final String KEYWORD_SERVER = "SERVER";
 
-  enum MODE {
-    FULL_REPLACE, DELTA
-  };
+  private String             serverName;
 
-  private MODE mode = MODE.FULL_REPLACE;
-
-  public OCommandExecutorSQLSyncDatabase parse(final OCommandRequest iRequest) {
+  public OCommandExecutorSQLHARemoveServer parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_SYNC))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_SYNC + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_HA))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_HA + " not found. Use " + getSyntax(), parserText, oldPos);
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_DATABASE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DATABASE + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_REMOVE))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_REMOVE + " not found. Use " + getSyntax(), parserText, oldPos);
+
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_SERVER))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_SERVER + " not found. Use " + getSyntax(), parserText, oldPos);
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-    if (pos != -1) {
-      mode = MODE.valueOf(word.toString());
-    }
+    if (pos == -1)
+      throw new OCommandSQLParsingException("Expected <server-name>. Use " + getSyntax(), parserText, pos);
+
+    serverName = word.toString();
+    if (serverName == null)
+      throw new OCommandSQLParsingException("Server name is null. Use " + getSyntax(), parserText, pos);
 
     return this;
   }
 
   /**
-   * Execute the SYNC DATABASE.
+   * Execute the REMOVE SERVER command.
    */
   public Object execute(final Map<Object, Object> iArgs) {
     final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.DATABASE, "sync", ORole.PERMISSION_UPDATE);
+    database.checkSecurity(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE);
 
-    final OStorage stg = database.getStorage();
-    if (!(stg instanceof ODistributedStorage))
-      throw new ODistributedException("SYNC DATABASE command cannot be executed against a non distributed server");
+    final String dbUrl = database.getURL();
 
-    final ODistributedStorage dStg = (ODistributedStorage) stg;
+    final String path = dbUrl.substring(dbUrl.indexOf(":") + 1);
+    final OServer serverInstance = OServer.getInstanceByPath(path);
 
-    final OHazelcastPlugin dManager = (OHazelcastPlugin) dStg.getDistributedManager();
+    final OHazelcastPlugin dManager = (OHazelcastPlugin) serverInstance.getDistributedManager();
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     final String databaseName = database.getName();
 
-    return dManager.installDatabase(true, databaseName, dStg.getDistributedConfiguration().getDocument());
+    final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
+    if (cfg.removeServer(serverName) != null) {
+      // SERVER REMOVED CORRECTLY
+      dManager.updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -104,17 +111,12 @@ public class OCommandExecutorSQLSyncDatabase extends OCommandExecutorSQLAbstract
   }
 
   @Override
-  public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
-  }
-
-  @Override
   public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.ALL;
+    return QUORUM_TYPE.NONE;
   }
 
   @Override
   public String getSyntax() {
-    return "SYNC DATABASE";
+    return "HA REMOVE SERVER <server-name>";
   }
 }

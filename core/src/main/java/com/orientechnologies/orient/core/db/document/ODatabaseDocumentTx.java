@@ -758,7 +758,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific,
+  public <DB extends ODatabaseDocument> DB checkSecurity(final ORule.ResourceGeneric resourceGeneric, final String resourceSpecific,
       final int iOperation) {
     if (user != null) {
       try {
@@ -766,8 +766,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       } catch (OSecurityAccessException e) {
 
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "[checkSecurity] User '%s' tried to access the reserved resource '%s', operation '%s'",
-              getUser(), resourceGeneric + "." + resourceSpecific, iOperation);
+          OLogManager.instance().debug(this, "User '%s' tried to access the reserved resource '%s.%s', operation '%s'", getUser(),
+              resourceGeneric, resourceSpecific, iOperation);
 
         throw e;
       }

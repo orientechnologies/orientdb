@@ -42,7 +42,7 @@ public class OImmutableUser implements OSecurityUser {
     }
   }
 
-  public OSecurityRole allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
+  public OSecurityRole allow(final ORule.ResourceGeneric resourceGeneric, final String resourceSpecific, final int iOperation) {
     if (roles.isEmpty())
       throw new OSecurityAccessException(getName(), "User '" + getName() + "' has no role defined");
 
@@ -55,7 +55,8 @@ public class OImmutableUser implements OSecurityUser {
     return role;
   }
 
-  public OSecurityRole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
+  public OSecurityRole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, final String resourceSpecific,
+      final int iOperation) {
     for (OImmutableRole r : roles) {
       if (r == null)
         OLogManager.instance().warn(this,

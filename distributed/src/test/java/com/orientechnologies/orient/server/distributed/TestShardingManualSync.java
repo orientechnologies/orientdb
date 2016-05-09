@@ -94,7 +94,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       Assert.assertEquals(1, graphNoTxUsa.countVertices());
 
       log("Manually syncing cluster client of node USA...");
-      graphNoTxUsa.command(new OCommandSQL("sync cluster " + clusterName)).execute();
+      graphNoTxUsa.command(new OCommandSQL("ha sync cluster " + clusterName)).execute();
 
       Assert.assertEquals(2, graphNoTxUsa.countVertices());
 

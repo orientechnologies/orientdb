@@ -12,86 +12,93 @@ import java.util.TreeMap;
 public class ORule implements Serializable {
 
   public static abstract class ResourceGeneric implements Serializable {
-    private static final long                             serialVersionUID   = 1L;
-    private static final TreeMap<String, ResourceGeneric> nameToGenericMap   = new TreeMap<String, ResourceGeneric>();
-    private static final TreeMap<String, ResourceGeneric> legacyToGenericMap = new TreeMap<String, ResourceGeneric>();
-    private static final Map<ResourceGeneric, String>     genericToLegacyMap = new HashMap<ResourceGeneric, String>();
+    private static final long                             serialVersionUID     = 1L;
+    private static final TreeMap<String, ResourceGeneric> nameToGenericMap     = new TreeMap<String, ResourceGeneric>();
+    private static final TreeMap<String, ResourceGeneric> legacyToGenericMap   = new TreeMap<String, ResourceGeneric>();
+    private static final Map<ResourceGeneric, String>     genericToLegacyMap   = new HashMap<ResourceGeneric, String>();
 
-    public static final ResourceGeneric                         FUNCTION           = new ResourceGeneric("FUNCTION",
-                                                                                 ODatabaseSecurityResources.FUNCTION) {
-                                                                               private static final long serialVersionUID = 1L;
-                                                                             };
-    public static final ResourceGeneric                         CLASS              = new ResourceGeneric("CLASS",
-                                                                                 ODatabaseSecurityResources.CLASS) {
-                                                                               private static final long serialVersionUID = 1L;
-                                                                             };
-    public static final ResourceGeneric                         CLUSTER            = new ResourceGeneric("CLUSTER",
-                                                                                 ODatabaseSecurityResources.CLUSTER) {
-                                                                               private static final long serialVersionUID = 1L;
-                                                                             };
-    public static final ResourceGeneric                         BYPASS_RESTRICTED  = new ResourceGeneric("BYPASS_RESTRICTED",
-                                                                                 ODatabaseSecurityResources.BYPASS_RESTRICTED) {
-                                                                               private static final long serialVersionUID = 1L;
-                                                                             };
-    public static final ResourceGeneric                         DATABASE           = new ResourceGeneric("DATABASE",
-                                                                                 ODatabaseSecurityResources.DATABASE) {
-                                                                               private static final long serialVersionUID = 1L;
-                                                                             };
-    public static final ResourceGeneric                         SCHEMA             = new ResourceGeneric("SCHEMA",
-                                                                                 ODatabaseSecurityResources.SCHEMA) {
-                                                                               private static final long serialVersionUID = 1L;
-                                                                             };
-    public static final ResourceGeneric                         COMMAND            = new ResourceGeneric("COMMAND",
-                                                                                 ODatabaseSecurityResources.COMMAND) {
-                                                                               private static final long serialVersionUID = 1L;
-                                                                             };
+    public static final ResourceGeneric                   FUNCTION             = new ResourceGeneric("FUNCTION",
+        ODatabaseSecurityResources.FUNCTION) {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
+    public static final ResourceGeneric                   CLASS                = new ResourceGeneric("CLASS",
+        ODatabaseSecurityResources.CLASS) {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
+    public static final ResourceGeneric                   CLUSTER              = new ResourceGeneric("CLUSTER",
+        ODatabaseSecurityResources.CLUSTER) {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
+    public static final ResourceGeneric                   BYPASS_RESTRICTED    = new ResourceGeneric("BYPASS_RESTRICTED",
+        ODatabaseSecurityResources.BYPASS_RESTRICTED) {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
+    public static final ResourceGeneric                   DATABASE             = new ResourceGeneric("DATABASE",
+        ODatabaseSecurityResources.DATABASE) {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
+    public static final ResourceGeneric                   SCHEMA               = new ResourceGeneric("SCHEMA",
+        ODatabaseSecurityResources.SCHEMA) {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
+    public static final ResourceGeneric                   COMMAND              = new ResourceGeneric("COMMAND",
+        ODatabaseSecurityResources.COMMAND) {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
 
-    public static final ResourceGeneric                         COMMAND_GREMLIN    = new ResourceGeneric("COMMAND_GREMLIN",
-                                                                                ODatabaseSecurityResources.COMMAND_GREMLIN) {
-                                                                              private static final long serialVersionUID = 1L;
-                                                                            };
+    public static final ResourceGeneric                   COMMAND_GREMLIN      = new ResourceGeneric("COMMAND_GREMLIN",
+        ODatabaseSecurityResources.COMMAND_GREMLIN) {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
 
-    public static final ResourceGeneric                         RECORD_HOOK        = new ResourceGeneric("RECORD_HOOK",
-                                                                                 ODatabaseSecurityResources.RECORD_HOOK) {
-                                                                               private static final long serialVersionUID = 1L;
-                                                                             };
+    public static final ResourceGeneric                   RECORD_HOOK          = new ResourceGeneric("RECORD_HOOK",
+        ODatabaseSecurityResources.RECORD_HOOK) {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
 
-    public static final ResourceGeneric                         SYSTEM_CLUSTERS    = new ResourceGeneric("SYSTEM_CLUSTER",
-                                                                                 ODatabaseSecurityResources.SYSTEMCLUSTERS) {
-                                                                               private static final long serialVersionUID = 1L;
-                                                                             };
+    public static final ResourceGeneric                   SYSTEM_CLUSTERS      = new ResourceGeneric("SYSTEM_CLUSTER",
+        ODatabaseSecurityResources.SYSTEMCLUSTERS) {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
 
-    public static final ResourceGeneric                         SERVER               = new ResourceGeneric("SERVER", "server") {
-                                                                                       private static final long serialVersionUID = 1L;
-                                                                                     };
+    public static final ResourceGeneric                   SERVER               = new ResourceGeneric("SERVER", "server") {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
 
-    public static final ResourceGeneric                         DATABASE_COPY        = new ResourceGeneric("DATABASE_COPY", "database.copy") {
-                                                                                       private static final long serialVersionUID = 1L;
-                                                                                     };
+    public static final ResourceGeneric                   DATABASE_COPY        = new ResourceGeneric("DATABASE_COPY",
+        "database.copy") {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
 
-    public static final ResourceGeneric                         DATABASE_CREATE      = new ResourceGeneric("DATABASE_CREATE", "database.create") {
-                                                                                       private static final long serialVersionUID = 1L;
-                                                                                     };
+    public static final ResourceGeneric                   DATABASE_CREATE      = new ResourceGeneric("DATABASE_CREATE",
+        "database.create") {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
 
-    public static final ResourceGeneric                         DATABASE_DROP        = new ResourceGeneric("DATABASE_DROP", "database.drop") {
-                                                                                       private static final long serialVersionUID = 1L;
-                                                                                     };
+    public static final ResourceGeneric                   DATABASE_DROP        = new ResourceGeneric("DATABASE_DROP",
+        "database.drop") {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
 
-    public static final ResourceGeneric                         DATABASE_EXISTS      = new ResourceGeneric("DATABASE_EXISTS", "database.exists") {
-                                                                                       private static final long serialVersionUID = 1L;
-                                                                                     };
+    public static final ResourceGeneric                   DATABASE_EXISTS      = new ResourceGeneric("DATABASE_EXISTS",
+        "database.exists") {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
 
-    public static final ResourceGeneric                         DATABASE_FREEZE      = new ResourceGeneric("DATABASE_FREEZE", "database.freeze") {
-                                                                                       private static final long serialVersionUID = 1L;
-                                                                                     };
+    public static final ResourceGeneric                   DATABASE_FREEZE      = new ResourceGeneric("DATABASE_FREEZE",
+        "database.freeze") {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
 
-    public static final ResourceGeneric                         DATABASE_RELEASE     = new ResourceGeneric("DATABASE_RELEASE", "database.release") {
-                                                                                       private static final long serialVersionUID = 1L;
-                                                                                     };
-                                                                                     
-    public static final ResourceGeneric                         DATABASE_PASSTHROUGH = new ResourceGeneric("DATABASE_PASSTHROUGH", "database.passthrough") {
-                                                                                       private static final long serialVersionUID = 1L;
-                                                                                     };
+    public static final ResourceGeneric                   DATABASE_RELEASE     = new ResourceGeneric("DATABASE_RELEASE",
+        "database.release") {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
+
+    public static final ResourceGeneric                   DATABASE_PASSTHROUGH = new ResourceGeneric("DATABASE_PASSTHROUGH",
+        "database.passthrough") {
+                                                                                 private static final long serialVersionUID = 1L;
+                                                                               };
 
     private final String                                  name;
     private final String                                  legacyName;
@@ -242,7 +249,7 @@ public class ORule implements Serializable {
     return currentValue;
   }
 
-  public Boolean isAllowed(String name, int operation) {
+  public Boolean isAllowed(final String name, final int operation) {
     if (name == null)
       return allowed((byte) operation, access);
 
@@ -257,7 +264,7 @@ public class ORule implements Serializable {
     return allowed;
   }
 
-  private Boolean allowed(byte operation, Byte ac) {
+  private Boolean allowed(final byte operation, final Byte ac) {
     if (ac == null)
       return null;
 
@@ -266,7 +273,7 @@ public class ORule implements Serializable {
     return (ac.byteValue() & mask) == mask;
   }
 
-  public boolean containsSpecificResource(String resource) {
+  public boolean containsSpecificResource(final String resource) {
     if (specificResources.isEmpty())
       return false;
 
