@@ -161,7 +161,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
   /**
    * Returns the current status of database.
+   * deprecated since 2.2
    */
+  @Deprecated
   <DB extends ODatabase> DB setStatus(STATUS iStatus);
 
   /**
@@ -398,6 +400,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    */
   void unregisterListener(ODatabaseListener iListener);
 
+  @Deprecated
   ORecordMetadata getRecordMetadata(final ORID rid);
 
   /**
@@ -693,6 +696,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
+  @Deprecated
   ODatabase<T> begin(OTransaction iTx) throws OTransactionException;
 
   /**
@@ -768,18 +772,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @param iHookImpl ORecordHook implementation
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   * deprecated since 2.2
    */
   <DB extends ODatabase<?>> DB unregisterHook(ORecordHook iHookImpl);
-
-  /**
-   * Invokes the callback on all the configured hooks.
-   *
-   * @param iObject The object passed change based on the Database implementation: records for
-   *                {@link com.orientechnologies.orient.core.db.document.ODatabaseDocument} implementations and POJO for
-   *                {@link com.orientechnologies.orient.core.db.object.ODatabaseObject} implementations.
-   * @return True if the input record is changed, otherwise false
-   */
-  ORecordHook.RESULT callbackHooks(ORecordHook.TYPE iType, OIdentifiable iObject);
 
   /**
    * Returns if the Multi Version Concurrency Control is enabled or not. If enabled the version of the record is checked before each
