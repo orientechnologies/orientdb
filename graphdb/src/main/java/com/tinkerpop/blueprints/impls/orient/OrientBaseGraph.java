@@ -473,8 +473,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           final OIndex index = indexManager.getIndex(indexName);
           ODocument metadata = index.getConfiguration().field("metadata");
 
-          String recordMapIndexName =  null;
-          if(metadata != null){
+          String recordMapIndexName = null;
+          if (metadata != null) {
             recordMapIndexName = metadata.field(OrientIndex.CONFIG_RECORD_MAP_NAME);
           }
 
@@ -1163,7 +1163,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       try {
         if (closeDb) {
           getDatabase().close();
-          if(getDatabase().isPooled()){
+          if (getDatabase().isPooled()) {
             database = null;
           }
         }
@@ -1957,7 +1957,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (pool == null) {
       database = new ODatabaseDocumentTx(url);
 
-      final OStorageRemote.CONNECTION_STRATEGY connMode = settings.getConnectionStrategy();
+      final String connMode = settings.getConnectionStrategy();
       getDatabase().setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
 
       if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
