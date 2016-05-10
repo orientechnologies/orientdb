@@ -289,6 +289,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return result;
   }
 
+  public Map<String, OTransactionIndexChanges> getIndexEntries() {
+    return indexEntries;
+  }
+
   /**
    * Bufferizes index changes to be flushed at commit time.
    * 

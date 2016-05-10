@@ -64,6 +64,7 @@ public class OTransactionIndexChanges {
     cleared = true;
   }
 
+
   public Object getFirstKey() {
     return changesPerKey.firstKey();
   }
