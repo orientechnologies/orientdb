@@ -1723,6 +1723,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected boolean isRelatedToLocalServer(final ODatabaseInternal iDatabase) {
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
+    // Check for the system database.
+    if (iDatabase.getName().equalsIgnoreCase(OServer.SYSTEM_DB_NAME)) return false;
+
     if (dbUrl.startsWith("plocal:")) {
       // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
       final String dbDirectory = serverInstance.getDatabaseDirectory();
