@@ -500,6 +500,23 @@
                     <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+
+                    <doclet>org.umlgraph.doclet.UmlGraphDoc</doclet>
+
+                    <docletArtifact>
+                        <groupId>org.umlgraph</groupId>
+                        <artifactId>umlgraph</artifactId>
+                        <version>5.6.6</version>
+                    </docletArtifact>
+
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -520,13 +537,13 @@
 
                     <doclet>org.umlgraph.doclet.UmlGraphDoc</doclet>
 
-                    <!-- <docletPath>/path/to/UmlGraph.jar</docletPath> -->
                     <docletArtifact>
                         <groupId>org.umlgraph</groupId>
-                        <artifactId>doclet</artifactId>
+                        <artifactId>umlgraph</artifactId>
                         <version>5.6.6</version>
                     </docletArtifact>
-
+                    <additionalparam>-views -all</additionalparam>
+                    <useStandardDocletOptions>true</useStandardDocletOptions>
 
                     <aggregate>true</aggregate>
                     <!-- | Apple's JVM sometimes requires more memory -->
