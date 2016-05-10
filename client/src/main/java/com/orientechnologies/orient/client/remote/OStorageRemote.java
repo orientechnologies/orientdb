@@ -1856,6 +1856,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     OChannelBinaryAsynchClient network = null;
     String currentURL = getCurrentServerURL();
+    int retryCountDown = connectionRetry;
     do {
       do {
         try {
@@ -1918,7 +1919,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             engine.getConnectionManager().remove(network);
             network = null;
           }
-
+          if (retryCountDown <= 0)
+            throw e;
           OLogManager.instance().error(this, "Cannot open database with url " + currentURL, e);
 
         } catch (OException e) {
@@ -1936,9 +1938,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
             network = null;
           }
+          if (retryCountDown <= 0)
+            throw OException.wrapException(new OStorageException("error opening database"), e);
 
           OLogManager.instance().error(this, "Cannot open database url=" + currentURL, e);
         }
+        retryCountDown--;
       } while (engine.getConnectionManager().getReusableConnections(currentURL) > 0);
 
       currentURL = useNewServerURL(currentURL);
