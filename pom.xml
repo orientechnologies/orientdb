@@ -517,6 +517,17 @@
                     <links>
                         <link>http://download.oracle.com/javase/5/docs/api/index.html</link>
                     </links>
+
+                    <doclet>org.umlgraph.doclet.UmlGraphDoc</doclet>
+
+                    <!-- <docletPath>/path/to/UmlGraph.jar</docletPath> -->
+                    <docletArtifact>
+                        <groupId>org.umlgraph</groupId>
+                        <artifactId>doclet</artifactId>
+                        <version>5.6.6</version>
+                    </docletArtifact>
+
+
                     <aggregate>true</aggregate>
                     <!-- | Apple's JVM sometimes requires more memory -->
                     <additionalJOption>-J-Xmx1024m</additionalJOption>
