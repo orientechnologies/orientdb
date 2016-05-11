@@ -107,7 +107,8 @@ public class ODistributedTransactionManager {
           try {
             acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay, eventListener, ctx);
 
-            final List<ORecordOperation> uResult = (List<ORecordOperation>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
+            final List<ORecordOperation> uResult = (List<ORecordOperation>) OScenarioThreadLocal
+                .executeAsDistributed(new Callable() {
               @Override
               public Object call() throws Exception {
                 return storage.commit(iTx, callback);
@@ -143,7 +144,7 @@ public class ODistributedTransactionManager {
               // SYNCHRONOUS, AUTO-RETRY IN CASE RECORDS ARE LOCKED
               ODistributedResponse lastResult = null;
               for (int retry = 1; retry <= maxAutoRetry; ++retry) {
-                boolean isLastRetry =  maxAutoRetry == retry;
+                boolean isLastRetry = maxAutoRetry == retry;
                 // SYNCHRONOUS CALL: REPLICATE IT
                 lastResult = dManager.sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(),
                     EXECUTION_MODE.RESPONSE, localResult, null);
@@ -155,7 +156,7 @@ public class ODistributedTransactionManager {
                 }
 
                 ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                        "Distributed transaction succeeded. Tasks: %s", txTask.getTasks());
+                    "Distributed transaction succeeded. Tasks: %s", txTask.getTasks());
 
                 // OK, DISTRIBUTED COMMIT SUCCEED
                 return null;
@@ -163,7 +164,8 @@ public class ODistributedTransactionManager {
 
               // ONLY CASE: ODistributedRecordLockedException MORE THAN AUTO-RETRY
               ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                  "Distributed transaction retries exceed maximum auto-retries (%d). Task: %s - Payload: %s - Tasks: %s", maxAutoRetry, txTask, txTask.getPayload(), txTask.getTasks());
+                  "Distributed transaction retries exceed maximum auto-retries (%d). Task: %s - Payload: %s - Tasks: %s",
+                  maxAutoRetry, txTask, txTask.getPayload(), txTask.getTasks());
 
               // ROLLBACK TX
               storage.executeUndoOnLocalServer(requestId, txTask);
@@ -215,9 +217,6 @@ public class ODistributedTransactionManager {
 
     // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
     nodes.remove(localNodeName);
-
-    // FILTER ONLY AVAILABLE NODES
-    dManager.getAvailableNodes(nodes, storage.getName());
     return nodes;
   }
 
@@ -491,7 +490,8 @@ public class ODistributedTransactionManager {
 
   protected boolean processCommitResult(final String localNodeName, final OTransaction iTx, final OTxTask txTask,
       final Set<String> involvedClusters, final Iterable<ORecordOperation> tmpEntries, final Collection<String> nodes,
-      final int autoRetryDelay, final ODistributedRequestId reqId, final ODistributedResponse dResponse, final boolean isLastRetry) throws InterruptedException {
+      final int autoRetryDelay, final ODistributedRequestId reqId, final ODistributedResponse dResponse, final boolean isLastRetry)
+          throws InterruptedException {
     final Object result = dResponse.getPayload();
 
     if (result instanceof OTxTaskResult) {

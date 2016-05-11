@@ -892,6 +892,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return iNodes.size();
   }
 
+
   @Override
   public String toString() {
     return nodeName;
@@ -975,7 +976,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers(null, nodeName);
 
-    filterAvailableNodes(nodes, databaseName);
+    getAvailableNodes(nodes, databaseName);
 
     ODistributedServerLog.warn(this, nodeName, nodes.toString(), DIRECTION.OUT,
         "requesting delta database sync for '%s' on local server...", databaseName);
@@ -1699,14 +1700,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         nodes.add(entry.getKey());
     }
     return nodes;
-  }
-
-  public void filterAvailableNodes(Collection<String> iNodes, final String databaseName) {
-    for (Iterator<String> it = iNodes.iterator(); it.hasNext();) {
-      final String nodeName = it.next();
-      if (!isNodeAvailable(nodeName, databaseName))
-        it.remove();
-    }
   }
 
   public long getNextMessageIdCounter() {
