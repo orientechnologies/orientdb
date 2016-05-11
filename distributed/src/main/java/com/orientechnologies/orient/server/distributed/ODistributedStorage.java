@@ -281,19 +281,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
           final Set<String> nodes = dbCfg.getServers(involvedClusters);
-          dManager.getAvailableNodes(nodes, getName());
 
           if (iCommand instanceof ODistributedCommand)
             nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
-
-          if (nodes.isEmpty())
-            // / NO NODE TO REPLICATE
-            return null;
 
           if (executeOnlyLocally(localNodeName, dbCfg, exec, involvedClusters, nodes))
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
             // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
             return wrapped.command(iCommand);
+
+          localDistributedDatabase.checkQuorumBeforeReplicate(task.getQuorumType(), involvedClusters, nodes, dbCfg);
 
           final Object localResult;
 
@@ -319,18 +316,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           } else
             localResult = null;
 
-          if (nodes.isEmpty()) {
-            if (!executedLocally)
-              throw new ODistributedException(
-                  "Cannot execute distributed command '" + iCommand + "' because no nodes are available");
-          } else {
-
+          if (!nodes.isEmpty()) {
             final ODistributedResponse dResponse = dManager.sendRequest(getName(), involvedClusters, nodes, task,
                 dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResult, null);
 
             result = dResponse.getPayload();
-
-          }
+          } else
+            result = localResult;
         }
 
         if (exec.involveSchema())
@@ -348,6 +340,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         throw OException.wrapException(new ODistributedException("Error on execution distributed COMMAND"), (Exception) result);
 
       return result;
+
     } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
@@ -471,7 +464,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final OCommandExecutor exec, final Collection<String> involvedClusters, final Collection<String> nodes) {
     boolean executeLocally = false;
     if (exec.isIdempotent()) {
-      final int availableNodes = dManager.getAvailableNodes(nodes, getName());
+      final int availableNodes = nodes.size();
 
       // IDEMPOTENT: CHECK IF CAN WORK LOCALLY ONLY
       int maxReadQuorum;
@@ -515,17 +508,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       checkNodeIsMaster(localNodeName, dbCfg);
 
       final List<String> nodes = dbCfg.getServers(clusterName, null);
-      dManager.getAvailableNodes(nodes, getName());
 
-      if (nodes.isEmpty()) {
+      if (nodes.isEmpty())
         // DON'T REPLICATE OR DISTRIBUTE
-        return (OStorageOperationResult<OPhysicalPosition>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
-          @Override
-          public Object call() throws Exception {
-            return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
-          }
-        });
-      }
+        throw new ODistributedException(
+            "Cannot execute distributed create record " + iRecordId + " because no nodes are available");
 
       String masterNode = nodes.get(0);
       if (!masterNode.equals(localNodeName)) {
@@ -569,11 +556,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final String finalClusterName = clusterName;
 
+      final Set<String> clusterNames = Collections.singleton(finalClusterName);
+
+      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames, nodes,
+          dbCfg);
+
       // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
       nodes.remove(localNodeName);
-
-      // FILTER ONLY AVAILABLE NODES
-      dManager.getAvailableNodes(nodes, getName());
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(finalClusterName);
       if (executionModeSynch == null)
@@ -602,8 +591,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 if (syncMode) {
 
                   // SYNCHRONOUS CALL: REPLICATE IT
-                  final ODistributedResponse dResponse = dManager.sendRequest(getName(), Collections.singleton(finalClusterName),
-                      nodes, task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localPlaceholder, unlockCallback);
+                  final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
+                      dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localPlaceholder, unlockCallback);
 
                   final Object payload = dResponse.getPayload();
                   if (payload != null) {
@@ -660,7 +649,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final ODistributedConfiguration dbCfg = distributedConfiguration;
       final List<String> nodes = dbCfg.getServers(clusterName, null);
-      final int availableNodes = dManager.getAvailableNodes(nodes, getName());
+      final int availableNodes = nodes.size();
 
       // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
       if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes) <= 1) {
@@ -710,7 +699,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final ODistributedConfiguration dbCfg = distributedConfiguration;
       final List<String> nodes = dbCfg.getServers(clusterName, null);
-      final int availableNodes = dManager.getAvailableNodes(nodes, getName());
+      final int availableNodes = nodes.size();
 
       // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
       if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes) <= 1) {
@@ -778,17 +767,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       checkNodeIsMaster(localNodeName, dbCfg);
 
       final List<String> nodes = dbCfg.getServers(clusterName, null);
-      dManager.getAvailableNodes(nodes, getName());
 
-      if (nodes.isEmpty()) {
-        // DON'T REPLICATE OR DISTRIBUTE
-        return (OStorageOperationResult<Integer>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
-          @Override
-          public Object call() throws Exception {
-            return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
-          }
-        });
-      }
+      if (nodes.isEmpty())
+        throw new ODistributedException(
+            "Cannot execute distributed update record " + iRecordId + " because no nodes are available");
+
+      final Set<String> clusterNames = Collections.singleton(clusterName);
+
+      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames, nodes,
+          dbCfg);
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
       if (executionModeSynch == null)
@@ -840,8 +827,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
                 if (syncMode || localResult == null) {
                   // REPLICATE IT
-                  final ODistributedResponse dResponse = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
-                      task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
+                  final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
+                      dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
 
                   final Object payload = dResponse.getPayload();
 
@@ -912,17 +899,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       checkNodeIsMaster(localNodeName, dbCfg);
 
       final List<String> nodes = dbCfg.getServers(clusterName, null);
-      dManager.getAvailableNodes(nodes, getName());
 
-      if (nodes.isEmpty()) {
-        // DON'T REPLICATE OR DISTRIBUTE
-        return (OStorageOperationResult<Boolean>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
-          @Override
-          public Object call() throws Exception {
-            return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
-          }
-        });
-      }
+      if (nodes.isEmpty())
+        throw new ODistributedException(
+            "Cannot execute distributed delete record " + iRecordId + " because no nodes are available");
+
+      final Set<String> clusterNames = Collections.singleton(clusterName);
+
+      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames, nodes,
+          dbCfg);
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
       if (executionModeSynch == null)
@@ -964,44 +949,33 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               } else
                 localResult = null;
 
-              // FILTER ONLY AVAILABLE NODES
-              dManager.getAvailableNodes(nodes, getName());
+              final Boolean localResultPayload = localResult != null ? localResult.getResult() : null;
 
-              if (nodes.isEmpty()) {
-                unlockCallback.call(null);
+              if (syncMode || localResult == null) {
+                // REPLICATE IT
+                final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
+                    dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
 
-                if (!executedLocally)
-                  throw new ODistributedException(
-                      "Cannot execute distributed update on record " + iRecordId + " because no nodes are available");
+                final Object payload = dResponse.getPayload();
 
-              } else {
-                final Boolean localResultPayload = localResult != null ? localResult.getResult() : null;
+                if (payload instanceof Exception) {
+                  executeUndoOnLocalServer(dResponse.getRequestId(), task);
 
-                if (syncMode || localResult == null) {
-                  // REPLICATE IT
-                  final ODistributedResponse dResponse = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
-                      task, dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
+                  if (payload instanceof ONeedRetryException)
+                    throw (ONeedRetryException) payload;
 
-                  final Object payload = dResponse.getPayload();
-
-                  if (payload instanceof Exception) {
-                    executeUndoOnLocalServer(dResponse.getRequestId(), task);
-
-                    if (payload instanceof ONeedRetryException)
-                      throw (ONeedRetryException) payload;
-
-                    throw OException.wrapException(new ODistributedException("Error on execution distributed DELETE_RECORD"),
-                        (Exception) payload);
-                  }
-
-                  return new OStorageOperationResult<Boolean>(true);
+                  throw OException.wrapException(new ODistributedException("Error on execution distributed DELETE_RECORD"),
+                      (Exception) payload);
                 }
 
-                // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
-                if (!nodes.isEmpty())
-                  asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, task,
-                      dManager.getNextMessageIdCounter(), localResultPayload, unlockCallback, null));
+                return new OStorageOperationResult<Boolean>(true);
               }
+
+              // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
+              if (!nodes.isEmpty())
+                asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, task,
+                    dManager.getNextMessageIdCounter(), localResultPayload, unlockCallback, null));
+
               return localResult;
             }
           });
