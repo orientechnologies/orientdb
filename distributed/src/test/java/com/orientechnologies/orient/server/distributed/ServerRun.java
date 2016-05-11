@@ -85,7 +85,7 @@ public class ServerRun {
     return createDatabase(iName, null);
   }
 
-  protected OrientBaseGraph createDatabase(final String iName, final OCallable<Object, OrientGraphFactory> iCfgCallback) {
+  public OrientBaseGraph createDatabase(final String iName, final OCallable<Object, OrientGraphFactory> iCfgCallback) {
     String dbPath = getDatabasePath(iName);
 
     new File(dbPath).mkdirs();
@@ -104,7 +104,7 @@ public class ServerRun {
     return factory.getNoTx();
   }
 
-  protected void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {
+  public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {
     // COPY THE DATABASE TO OTHER DIRECTORIES
     System.out.println("Dropping any previous database '" + iDatabaseName + "' under: " + iDatabaseName + "...");
     OFileUtils.deleteRecursively(new File(iDestinationDirectory));

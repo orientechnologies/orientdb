@@ -500,6 +500,23 @@
                     <dataFile>${project.basedir}/../target/jacoco.exec</dataFile>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+
+                    <doclet>org.umlgraph.doclet.UmlGraphDoc</doclet>
+
+                    <docletArtifact>
+                        <groupId>org.umlgraph</groupId>
+                        <artifactId>umlgraph</artifactId>
+                        <version>5.6.6</version>
+                    </docletArtifact>
+
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -517,6 +534,17 @@
                     <links>
                         <link>http://download.oracle.com/javase/5/docs/api/index.html</link>
                     </links>
+
+                    <doclet>org.umlgraph.doclet.UmlGraphDoc</doclet>
+
+                    <docletArtifact>
+                        <groupId>org.umlgraph</groupId>
+                        <artifactId>umlgraph</artifactId>
+                        <version>5.6.6</version>
+                    </docletArtifact>
+                    <additionalparam>-views -all</additionalparam>
+                    <useStandardDocletOptions>true</useStandardDocletOptions>
+
                     <aggregate>true</aggregate>
                     <!-- | Apple's JVM sometimes requires more memory -->
                     <additionalJOption>-J-Xmx1024m</additionalJOption>

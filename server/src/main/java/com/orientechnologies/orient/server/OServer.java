@@ -300,7 +300,9 @@ public class OServer {
     databaseDirectory = OFileUtils.getPath(OSystemVariableResolver.resolveSystemVariables(databaseDirectory));
     databaseDirectory = databaseDirectory.replace("//", "/");
 
+    // CONVERT IT TO ABSOLUTE PATH
     databaseDirectory = (new File(databaseDirectory)).getCanonicalPath();
+    databaseDirectory = OFileUtils.getPath(databaseDirectory);
 
     if (!databaseDirectory.endsWith("/"))
       databaseDirectory += "/";
@@ -539,6 +541,9 @@ public class OServer {
           && isStorageOfCurrentServerInstance(storage))
         storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
     }
+
+    if (storages != null && getSecurity() != null && storages.containsKey(getSecurity().getSystemDbName()))
+      storages.remove(getSecurity().getSystemDbName());
 
     return storages;
   }

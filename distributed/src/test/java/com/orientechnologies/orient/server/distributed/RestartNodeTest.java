@@ -137,7 +137,7 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
 
   @Override
   protected void onBeforeChecks() throws InterruptedException {
-    Thread.sleep(2000);
+    Thread.sleep(1000);
 
     // // WAIT UNTIL THE END
     waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {

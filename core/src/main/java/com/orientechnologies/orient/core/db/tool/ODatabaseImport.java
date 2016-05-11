@@ -1446,12 +1446,21 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
         indexManager.dropIndex(indexName);
         indexesToRebuild.remove(indexName.toLowerCase());
+        List<Integer> clusterIds = new ArrayList<Integer>();
 
-        int[] clusterIdsToIndex = new int[clustersToIndex.size()];
+        for (final String clusterName : clustersToIndex) {
+          int id = database.getClusterIdByName(clusterName);
+          if (id != -1)
+            clusterIds.add(id);
+          else
+            listener
+                .onMessage(String.format("found not existent cluster '%s' in index '%s' configuration, skipping", clusterName, indexName));
+        }
+        int[] clusterIdsToIndex = new int[clusterIds.size()];
 
         int i = 0;
-        for (final String clusterName : clustersToIndex) {
-          clusterIdsToIndex[i] = database.getClusterIdByName(clusterName);
+        for (Integer clusterId : clusterIds) {
+          clusterIdsToIndex[i] = clusterId;
           i++;
         }
 

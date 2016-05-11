@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -64,6 +66,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected int                                               id;
   protected int                                               newObjectCounter      = -2;
   protected Map<String, Object>                               userData              = new HashMap<String, Object>();
+
   /**
    * This set is used to track which documents are changed during tx, if documents are changed but not saved all changes are made
    * during tx will be undone.
@@ -273,8 +276,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       indexDoc.field("entries", entries, OType.EMBEDDEDLIST);
 
       // STORE INDEX ENTRIES
-      for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values())
-        entries.add(serializeIndexChangeEntry(entry, indexDoc));
+      for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
+        if (!entry.clientTrackOnly)
+          entries.add(serializeIndexChangeEntry(entry, indexDoc));
+      }
 
       indexDoc.field("nullEntries", serializeIndexChangeEntry(indexEntry.getValue().nullKeyChanges, indexDoc));
     }
@@ -282,6 +287,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     indexEntries.clear();
 
     return result;
+  }
+
+  public Map<String, OTransactionIndexChanges> getIndexEntries() {
+    return indexEntries;
   }
 
   /**
@@ -293,11 +302,17 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return indexEntries.get(iIndexName);
   }
 
+
+  public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
+      final Object key, final OIdentifiable iValue){
+    addIndexEntry(delegate, iIndexName, iOperation, key, iValue, false);
+  }
+
   /**
    * Bufferizes index changes to be flushed at commit time.
    */
   public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
-      final Object key, final OIdentifiable iValue) {
+      final Object key, final OIdentifiable iValue, boolean clientTrackOnly) {
     OTransactionIndexChanges indexEntry = indexEntries.get(iIndexName);
     if (indexEntry == null) {
       indexEntry = new OTransactionIndexChanges();
@@ -319,7 +334,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       }
 
       OTransactionIndexChangesPerKey changes = indexEntry.getChangesPerKey(key);
-
+      changes.clientTrackOnly = clientTrackOnly;
       changes.add(iValue, iOperation);
 
       if (iValue == null)
@@ -411,6 +426,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     // SERIALIZE VALUES
     if (entry.entries != null && !entry.entries.isEmpty()) {
       for (OTransactionIndexEntry e : entry.entries) {
+
         final ODocument changeDoc = new ODocument().setAllowChainedAccess(false);
         ODocumentInternal.addOwner((ODocument) changeDoc, indexDoc);
 

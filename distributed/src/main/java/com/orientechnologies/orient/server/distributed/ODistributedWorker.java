@@ -116,8 +116,6 @@ public class ODistributedWorker extends Thread {
   }
 
   public void initDatabaseInstance() {
-    // OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
-
     if (database == null) {
       database = distributed.getDatabaseInstance();
 
@@ -192,7 +190,19 @@ public class ODistributedWorker extends Thread {
    * Execute the remote call on the local node and send back the result
    */
   protected void onMessage(final ODistributedRequest iRequest) {
-    final String senderNodeName = manager.getNodeNameById(iRequest.getId().getNodeId());
+    String senderNodeName = null;
+    while (true) {
+      senderNodeName = manager.getNodeNameById(iRequest.getId().getNodeId());
+      if (senderNodeName != null)
+        break;
+
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new ODistributedException("Execution has been interrupted");
+      }
+    }
 
     final ORemoteTask task = iRequest.getTask();
 
@@ -248,6 +258,10 @@ public class ODistributedWorker extends Thread {
         }
 
       }
+
+    } catch (RuntimeException e) {
+      sendResponseBack(iRequest, e);
+      throw e;
 
     } finally {
       if (database != null && !database.isClosed()) {

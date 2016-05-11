@@ -472,6 +472,57 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     assertEquals(result.size(), 0);
   }
 
+  @Test
+  public void testGetClassInvolvedIndexesWithNullValues() {
+    String className = "GetClassInvolvedIndexesWithNullValues";
+    final OIndexManager indexManager = database.getMetadata().getIndexManager();
+    final OSchema schema = database.getMetadata().getSchema();
+    final OClass oClass = schema.createClass(className);
+
+
+    oClass.createProperty("one", OType.STRING);
+    oClass.createProperty("two", OType.STRING);
+    oClass.createProperty("three", OType.STRING);
+
+    indexManager.createIndex(className+"_indexOne_notunique", OClass.INDEX_TYPE.NOTUNIQUE.toString(), new OPropertyIndexDefinition(className,
+        "one", OType.STRING), oClass.getClusterIds(), null, null);
+
+    indexManager.createIndex(
+        className+"_indexOneTwo_notunique",
+        OClass.INDEX_TYPE.NOTUNIQUE.toString(),
+        new OCompositeIndexDefinition(className, Arrays.asList(
+            new OPropertyIndexDefinition(className, "one", OType.STRING),
+            new OPropertyIndexDefinition(className, "two", OType.STRING)
+
+        ), -1), oClass.getClusterIds(), null, null);
+
+    indexManager.createIndex(
+        className+"_indexOneTwoThree_notunique",
+        OClass.INDEX_TYPE.NOTUNIQUE.toString(),
+        new OCompositeIndexDefinition(className, Arrays.asList(
+            new OPropertyIndexDefinition(className, "one", OType.STRING),
+            new OPropertyIndexDefinition(className, "two", OType.STRING),
+            new OPropertyIndexDefinition(className, "three", OType.STRING)
+
+        ), -1), oClass.getClusterIds(), null, null);
+
+
+    Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(className, Arrays.asList("one"));
+    assertEquals(result.size(), 3);
+
+    result = indexManager.getClassInvolvedIndexes(className, Arrays.asList("one", "two"));
+    assertEquals(result.size(), 2);
+
+    result = indexManager.getClassInvolvedIndexes(className, Arrays.asList("one", "two", "three"));
+    assertEquals(result.size(), 1);
+
+    result = indexManager.getClassInvolvedIndexes(className, Arrays.asList("two"));
+    assertEquals(result.size(), 0);
+
+    result = indexManager.getClassInvolvedIndexes(className, Arrays.asList("two", "one", "three"));
+    assertEquals(result.size(), 1);
+  }
+
   @Test(dependsOnMethods = { "createCompositeIndexTestWithListener", "createCompositeIndexTestWithoutListener",
       "testCreateOnePropertyIndexTest" })
   public void testGetClassIndexes() {
@@ -484,6 +535,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
 
     compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
     compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
+    compositeIndexOne.setNullValuesIgnored(false);
     expectedIndexDefinitions.add(compositeIndexOne);
 
     final OCompositeIndexDefinition compositeIndexTwo = new OCompositeIndexDefinition(CLASS_NAME);
@@ -491,9 +543,11 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
     compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
     compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fThree", OType.BOOLEAN));
+    compositeIndexTwo.setNullValuesIgnored(false);
     expectedIndexDefinitions.add(compositeIndexTwo);
 
     final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER);
+    propertyIndex.setNullValuesIgnored(false);
     expectedIndexDefinitions.add(propertyIndex);
 
     assertEquals(indexes.size(), 3);
@@ -516,6 +570,7 @@ public class IndexManagerTest extends DocumentDBBaseTest {
 
     compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
     compositeIndexOne.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
+    compositeIndexOne.setNullValuesIgnored(false);
     expectedIndexDefinitions.add(compositeIndexOne);
 
     final OCompositeIndexDefinition compositeIndexTwo = new OCompositeIndexDefinition(CLASS_NAME);
@@ -523,9 +578,11 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER));
     compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fTwo", OType.STRING));
     compositeIndexTwo.addIndex(new OPropertyIndexDefinition(CLASS_NAME, "fThree", OType.BOOLEAN));
+    compositeIndexTwo.setNullValuesIgnored(false);
     expectedIndexDefinitions.add(compositeIndexTwo);
 
     final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition(CLASS_NAME, "fOne", OType.INTEGER);
+    propertyIndex.setNullValuesIgnored(false);
     expectedIndexDefinitions.add(propertyIndex);
 
     assertEquals(indexes.size(), 3);

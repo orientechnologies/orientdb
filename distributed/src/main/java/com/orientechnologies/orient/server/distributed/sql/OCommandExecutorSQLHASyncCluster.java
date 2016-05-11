@@ -50,27 +50,32 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * SQL SYNC CLUSTER command: synchronize a cluster from distributed servers.
+ * SQL HA SYNC CLUSTER command: synchronizes a cluster from distributed servers.
  * 
  * @author Luca Garulli
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String    NAME            = "SYNC CLUSTER";
+public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+  public static final String    NAME            = "HA SYNC CLUSTER";
+  public static final String    KEYWORD_HA      = "HA";
   public static final String    KEYWORD_SYNC    = "SYNC";
   public static final String    KEYWORD_CLUSTER = "CLUSTER";
 
   private String                clusterName;
   private OSyncClusterTask.MODE mode            = OSyncClusterTask.MODE.FULL_REPLACE;
 
-  public OCommandExecutorSQLSyncCluster parse(final OCommandRequest iRequest) {
+  public OCommandExecutorSQLHASyncCluster parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
+    if (pos == -1 || !word.toString().equals(KEYWORD_HA))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_HA + " not found. Use " + getSyntax(), parserText, oldPos);
+
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
     if (pos == -1 || !word.toString().equals(KEYWORD_SYNC))
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_SYNC + " not found. Use " + getSyntax(), parserText, oldPos);
 
@@ -134,8 +139,8 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
     return replaceCluster(dManager, serverInstance, databaseName, clusterName);
   }
 
-  public static Object replaceCluster(final OHazelcastPlugin dManager, final OServer serverInstance, final String databaseName,
-      final String clusterName) {
+  public static Object replaceCluster(final ODistributedAbstractPlugin dManager, final OServer serverInstance,
+      final String databaseName, final String clusterName) {
     final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
     final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
 
@@ -150,7 +155,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
 
     final OSyncClusterTask task = new OSyncClusterTask(clusterName);
     final ODistributedResponse response = dManager.sendRequest(databaseName, null, nodesWhereClusterIsCfg, task,
-        ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
     final Map<String, Object> results = (Map<String, Object>) response.getPayload();
 
@@ -186,7 +191,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
           for (int chunkNum = 2; !chunk.last; chunkNum++) {
             final Object result = dManager.sendRequest(databaseName, null, OMultiValue.getSingletonList(r.getKey()),
                 new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length, false),
-                ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+                dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
             if (result instanceof Boolean)
               continue;
@@ -257,7 +262,7 @@ public class OCommandExecutorSQLSyncCluster extends OCommandExecutorSQLAbstract 
 
   @Override
   public String getSyntax() {
-    return "SYNC CLUSTER <name> [-full_replace|-merge]";
+    return "HA SYNC CLUSTER <cluster-name> [-full_replace|-merge]";
   }
 
   protected static long writeDatabaseChunk(final String iNodeName, final int iChunkId, final ODistributedDatabaseChunk chunk,

@@ -11,7 +11,7 @@ import java.util.concurrent.CountDownLatch;
 
 public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2ServerTest {
 
-  private static final int TOTAL   = 100;
+  private static final int TOTAL   = 50;
   private ORID             vertex1Id;
   CountDownLatch           counter = new CountDownLatch(2);
 
@@ -84,8 +84,6 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
     } finally {
       System.out.println("Shutting down");
       graph.shutdown();
-
-      sleep(1000);
     }
   }
 }

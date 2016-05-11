@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -114,8 +113,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
     switch (recordStatus) {
     case REMOVED:
-      // SKIP IT
-      throw new ORecordNotFoundException(rid);
+      // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
+      ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().recyclePosition(rid, content, version + 1, recordType);
+      return new OPlaceholder(rid, version);
 
     case ALLOCATED:
     case PRESENT:
@@ -154,6 +154,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
         if (!rid.equals(newRid)) {
           ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
               "Record %s has been saved with the RID %s instead of the expected %s reqId=%s", record, newRid, rid, requestId);
+
+          // DELETE THE INVALID RECORD FIRST
+          record.delete();
 
           throw new ODistributedException(
               "Record " + rid + " has been saved with the different RID " + newRid + " on server " + iManager.getLocalNodeName());
@@ -249,7 +252,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
                 dManager.getLocalNodeName());
 
             final ODistributedResponse response = dManager.sendRequest(iRequest.getDatabaseName(), null, nodes,
-                new OReadRecordTask(toUpdateRid), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+                new OReadRecordTask(toUpdateRid), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                null, null);
 
             final ORawBuffer remoteReadRecord = (ORawBuffer) response.getPayload();
 

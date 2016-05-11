@@ -27,14 +27,12 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OContextVariableResolver;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
-import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -48,6 +46,7 @@ import com.orientechnologies.orient.core.sql.parser.OIfStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
@@ -506,7 +505,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
   private Object getValue(final String iValue, final ODatabaseDocument db) {
     Object lastResult = null;
-
+    boolean recordResultSet=true;
     if (iValue.equalsIgnoreCase("NULL"))
       lastResult = null;
     else if (iValue.startsWith("[") && iValue.endsWith("]")) {
@@ -522,6 +521,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         result.add(getValue(item, db));
       }
       lastResult = result;
+      checkIsRecordResultSet(lastResult);
     } else if (iValue.startsWith("{") && iValue.endsWith("}")) {
       // MAP
       final Map<String, String> map = OStringSerializerHelper.getMap(iValue);
@@ -560,15 +560,28 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         result.put(key, value);
       }
       lastResult = result;
-    } else if (iValue.startsWith("\"") && iValue.endsWith("\"") || iValue.startsWith("'") && iValue.endsWith("'"))
+      checkIsRecordResultSet(lastResult);
+    } else if (iValue.startsWith("\"") && iValue.endsWith("\"") || iValue.startsWith("'") && iValue.endsWith("'")) {
       lastResult = new OContextVariableResolver(context).parse(OIOUtils.getStringContent(iValue));
-    else if (iValue.startsWith("(") && iValue.endsWith(")"))
+     checkIsRecordResultSet(lastResult);
+    } else if (iValue.startsWith("(") && iValue.endsWith(")"))
       lastResult = executeCommand(iValue, db);
-    else
+    else {
       lastResult = new OSQLPredicate(iValue).evaluate(context);
 
+    }
     // END OF THE SCRIPT
     return lastResult;
+  }
+
+  private void checkIsRecordResultSet(Object result){
+    if (!(result instanceof OIdentifiable) && !(result instanceof OResultSet) ){
+      if (!OMultiValue.isMultiValue(result)) {
+        request.setRecordResultSet(false);
+      } else if (!(OMultiValue.getFirstValue(result) instanceof OIdentifiable)) {
+        request.setRecordResultSet(false);
+      }
+    }
   }
 
   private void executeSleep(String lastCommand) {

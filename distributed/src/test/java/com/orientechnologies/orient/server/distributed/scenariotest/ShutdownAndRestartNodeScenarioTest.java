@@ -51,6 +51,9 @@ import static org.junit.Assert.*;
  * - restart server3
  * - 5 threads for each running server write 100 records
  * - check consistency
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
@@ -234,7 +237,7 @@ public class ShutdownAndRestartNodeScenarioTest extends AbstractScenarioTest {
         ServerRun server = serverInstance.get(0);
         OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
         ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
-        cfg = databaseConfiguration.serialize();
+        cfg = databaseConfiguration.getDocument();
         cfg.field("writeQuorum", 3);
         cfg.field("version", (Integer) cfg.field("version") + 1);
         manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);

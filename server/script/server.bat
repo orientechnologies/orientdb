@@ -31,12 +31,12 @@ echo                  `
 rem Guess ORIENTDB_HOME if not defined
 set CURRENT_DIR=%cd%
 
-if exist "%JAVA_HOME%\bin\java.exe" goto setJavaHome
+if exist "%JAVA_HOME:"=%\bin\java.exe" goto setJavaHome
 set JAVA=java
 goto okJava
 
 :setJavaHome
-set JAVA="%JAVA_HOME%\bin\java"
+set JAVA="%JAVA_HOME:"=%\bin\java"
 
 :okJava
 if not "%ORIENTDB_HOME%" == "" goto gotHome

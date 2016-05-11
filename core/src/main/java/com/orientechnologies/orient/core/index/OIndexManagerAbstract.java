@@ -284,8 +284,12 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
     final Set<OIndex<?>> rawResult = propertyIndex.get(multiKey);
     final Set<OIndex<?>> transactionalResult = new HashSet<OIndex<?>>(rawResult.size());
-    for (final OIndex<?> index : rawResult)
-      transactionalResult.add(preProcessBeforeReturn(index));
+    for (final OIndex<?> index : rawResult) {
+      //ignore indexes that ignore null values on partial match
+      if (fields.size() == index.getDefinition().getFields().size() || !index.getDefinition().isNullValuesIgnored()) {
+        transactionalResult.add(preProcessBeforeReturn(index));
+      }
+    }
 
     return transactionalResult;
   }
@@ -491,6 +495,11 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       else if (index instanceof OIndexDictionary)
         return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) index);
       else if (index instanceof OIndexOneValue)
+        return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
+    } else {
+      if (index instanceof OIndexRemoteMultiValue)
+        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
+      else if (index instanceof OIndexRemoteOneValue)
         return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
     }
     return index;

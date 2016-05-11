@@ -98,7 +98,7 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
   }
 
   protected boolean returnDistributedResult() {
-    return OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
+    return OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 
   protected String getDistributedStorageId() {

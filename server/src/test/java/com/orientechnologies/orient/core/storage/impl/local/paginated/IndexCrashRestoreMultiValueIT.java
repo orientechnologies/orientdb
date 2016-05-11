@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +82,11 @@ public class IndexCrashRestoreMultiValueIT {
 
     buildDir.mkdirs();
 
+    final File mutexFile = new File(buildDir, "mutex.ct");
+    final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
+    mutex.seek(0);
+    mutex.write(0);
+
     buildDirectory = buildDir.getCanonicalPath();
     buildDir = new File(buildDirectory);
 
@@ -88,14 +94,23 @@ public class IndexCrashRestoreMultiValueIT {
     javaExec = new File(javaExec).getCanonicalPath();
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
-        System.getProperty("java.class.path"), "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
 
     processBuilder.inheritIO();
 
     serverProcess = processBuilder.start();
 
-    System.out.println("OrientDb server started :: " + serverProcess);
-    Thread.sleep(5000);
+    System.out.println(IndexCrashRestoreMultiValueIT.class.getSimpleName() + ": Wait for server start");
+    boolean started = false;
+    do {
+      Thread.sleep(5000);
+      mutex.seek(0);
+      started = mutex.read() == 1;
+    } while (!started);
+
+    mutex.close();
+    mutexFile.delete();
+    System.out.println(IndexCrashRestoreMultiValueIT.class.getSimpleName() + ": Server was started");
   }
 
   @After
@@ -235,6 +250,11 @@ public class IndexCrashRestoreMultiValueIT {
           "/com/orientechnologies/orient/core/storage/impl/local/paginated/index-crash-multivalue-value-config.xml"));
       server.activate();
 
+      final String mutexFile = System.getProperty("mutexFile");
+      final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
+      mutex.seek(0);
+      mutex.write(1);
+      mutex.close();
     }
   }
 

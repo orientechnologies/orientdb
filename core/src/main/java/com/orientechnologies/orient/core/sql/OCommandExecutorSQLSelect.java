@@ -219,7 +219,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (indexDefinition instanceof OIndexDefinitionMultiValue)
         return ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(OSQLHelper.getValue(value));
       else
-        return indexDefinition.createValue(OSQLHelper.getValue(value));
+        return indexDefinition.createValue(OSQLHelper.getValue(value, null, context));
     }
   }
 

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -32,13 +33,12 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
  *
  * @author Luca Garulli
  * @see ODatabasePoolBase
- *
  */
 @SuppressWarnings("unchecked")
 public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatabasePooled {
 
-  private OObjectDatabasePool ownerPool;
-  private final String        userName;
+  private       OObjectDatabasePool ownerPool;
+  private final String              userName;
 
   public OObjectDatabaseTxPooled(final OObjectDatabasePool iOwnerPool, final String iURL, final String iUserName,
       final String iUserPassword) {
@@ -69,7 +69,6 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
         "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a OObjectDatabaseTx instance if you want to manually open the connection");
   }
 
-
   @Override
   public OObjectDatabaseTxPooled open(OToken iToken) {
     throw new UnsupportedOperationException(
@@ -78,6 +77,12 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
 
   @Override
   public OObjectDatabaseTxPooled create() {
+    throw new UnsupportedOperationException(
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a OObjectDatabaseTx instance if you want to manually open the connection");
+  }
+
+  @Override
+  public <THISDB extends ODatabase> THISDB create(String incrementalBackupPath) {
     throw new UnsupportedOperationException(
         "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a OObjectDatabaseTx instance if you want to manually open the connection");
   }

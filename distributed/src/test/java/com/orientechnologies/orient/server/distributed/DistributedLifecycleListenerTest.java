@@ -82,7 +82,7 @@ public class DistributedLifecycleListenerTest extends AbstractServerClusterTest 
 
   @Override
   protected void executeTest() throws Exception {
-    Thread.sleep(2000);
+    Thread.sleep(1000);
   }
 
   @Override

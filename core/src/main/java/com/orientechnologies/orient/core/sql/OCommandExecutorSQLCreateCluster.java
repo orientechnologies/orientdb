@@ -41,9 +41,9 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
   public static final String KEYWORD_CLUSTER = "CLUSTER";
   public static final String KEYWORD_ID      = "ID";
 
-  private String clusterName;
-  private int     requestedId = -1;
-  private boolean blob        = false;
+  private String             clusterName;
+  private int                requestedId     = -1;
+  private boolean            blob            = false;
 
   public OCommandExecutorSQLCreateCluster parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -127,6 +127,11 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
         return database.addCluster(clusterName, requestedId, null);
       }
     }
+  }
+
+  @Override
+  public String getUndoCommand() {
+    return "drop cluster " + clusterName;
   }
 
   @Override

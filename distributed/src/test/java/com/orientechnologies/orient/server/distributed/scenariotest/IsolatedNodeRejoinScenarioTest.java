@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -38,11 +39,14 @@ import static org.junit.Assert.fail;
  * - server3 joins the cluster
  * - server3 receive the delta from the cluster
  * - check consistency
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
 
-
+  @Ignore
   @Test
   public void test() throws Exception {
 
@@ -73,7 +77,7 @@ public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
     ServerRun server = serverInstance.get(2);
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
     ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
-    cfg = databaseConfiguration.serialize();
+    cfg = databaseConfiguration.getDocument();
     cfg.field("writeQuorum", 1);
     cfg.field("autoDeploy", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);

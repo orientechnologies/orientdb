@@ -39,10 +39,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * No operation transaction.
@@ -341,10 +338,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public OTransactionIndexChangesPerKey getIndexEntry(final String iIndexName, final Object iKey) {
-    return null;
-  }
-
   public void addIndexEntry(final OIndex<?> delegate, final String indexName, final OPERATION status, final Object key,
       final OIdentifiable value) {
     switch (status) {
@@ -357,7 +350,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
       break;
 
     case REMOVE:
-      assert key != null;
       delegate.remove(key, value);
       break;
     }

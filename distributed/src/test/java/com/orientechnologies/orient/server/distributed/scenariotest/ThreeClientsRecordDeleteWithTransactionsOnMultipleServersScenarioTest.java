@@ -44,14 +44,14 @@ import static org.junit.Assert.assertTrue;
 
 public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioTest extends AbstractScenarioTest {
 
-  private final String        RECORD_ID   = "R001";
-  private Map<String, Object> hanFields   = new HashMap<String, Object>() {
-                                            {
-                                              put("id", RECORD_ID);
-                                              put("firstName", "Han");
-                                              put("lastName", "Solo");
-                                            }
-                                          };
+  private final String        RECORD_ID = "R001";
+  private Map<String, Object> hanFields = new HashMap<String, Object>() {
+                                          {
+                                            put("id", RECORD_ID);
+                                            put("firstName", "Han");
+                                            put("lastName", "Solo");
+                                          }
+                                        };
 
   @Test
   public void test() throws Exception {
@@ -78,9 +78,9 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioTe
     waitForInsertedRecordPropagation(RECORD_ID);
 
     // sets a delay for operations on distributed storage of all servers
-    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer(DOCUMENT_WRITE_TIMEOUT));
-    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer(DOCUMENT_WRITE_TIMEOUT / 4));
-    ((ODistributedStorage) dbServer3.getStorage()).setEventListener(new AfterRecordLockDelayer(DOCUMENT_WRITE_TIMEOUT / 2));
+    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer("server1", DOCUMENT_WRITE_TIMEOUT));
+    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
+    ((ODistributedStorage) dbServer3.getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
 
     // updates the same record from three different clients, each calling a different server
     List<Callable<Void>> clients = new LinkedList<Callable<Void>>();

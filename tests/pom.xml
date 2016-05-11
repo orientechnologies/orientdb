@@ -127,8 +127,8 @@
                         <index.flushAfterCreate>false</index.flushAfterCreate>
                         <security.userPasswordSaltIterations>10</security.userPasswordSaltIterations>
                         <buildDirectory>${project.build.directory}</buildDirectory>
-                        <url>memory:demo</url>
                         <testPath>${project.basedir}</testPath>
+                        <orientdb.test.keepDatabase>true</orientdb.test.keepDatabase>
                         <orient.server.testMode>${orient.server.testMode}</orient.server.testMode>
                         <orient.server.port>${orient.server.port}</orient.server.port>
                         <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>

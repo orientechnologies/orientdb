@@ -9,6 +9,11 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
+/**
+ * Tests with 2 servers the ability to resync a cluster manually.
+ * 
+ * @author Luca Garulli
+ */
 public class TestShardingManualSync extends AbstractServerClusterTest {
 
   protected final static int SERVERS = 2;
@@ -89,7 +94,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       Assert.assertEquals(1, graphNoTxUsa.countVertices());
 
       log("Manually syncing cluster client of node USA...");
-      graphNoTxUsa.command(new OCommandSQL("sync cluster " + clusterName)).execute();
+      graphNoTxUsa.command(new OCommandSQL("ha sync cluster " + clusterName)).execute();
 
       Assert.assertEquals(2, graphNoTxUsa.countVertices());
 

@@ -25,6 +25,7 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -38,9 +39,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * It checks the consistency in the cluster with the following scenario:
@@ -63,6 +62,9 @@ import static org.junit.Assert.fail;
  *              - r1 and r2 have the same value (when the remote update message arrives on the current server before of the local update message, e.g. due to delay in the stack)
  *      - r1 on server3 has the values set by the client c1 or the values set by the client c2, but not the old one
  *      - r1 has version x+1 on all the servers
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTest {
@@ -79,6 +81,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
     put("lastName", "Vader");
   }};
 
+  @Ignore
   @Test
   public void test() throws Exception {
 
@@ -112,7 +115,7 @@ public class WWConflictAndNodeInDeadlockScenarioTest extends AbstractScenarioTes
     ServerRun server = serverInstance.get(2);
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
     ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
-    cfg = databaseConfiguration.serialize();
+    cfg = databaseConfiguration.getDocument();
     cfg.field("writeQuorum", 1);
     cfg.field("version", (Integer) cfg.field("version") + 1);
     manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);

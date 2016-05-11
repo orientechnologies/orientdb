@@ -55,6 +55,9 @@ import static org.junit.Assert.*;
  * - restart server3
  * - 5 threads on server3 write 100 records
  * - check consistency
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
@@ -144,7 +147,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         // checking distributed configuration
         OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
         ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
-        ODocument cfg = databaseConfiguration.serialize();
+        ODocument cfg = databaseConfiguration.getDocument();
         cfg.field("writeQuorum", 2);
         cfg.field("version", (Integer) cfg.field("version") + 1);
         manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);
@@ -265,7 +268,7 @@ public class IncrementalRestartScenarioTest extends AbstractScenarioTest {
         // checking distributed configuration
         OHazelcastPlugin manager = (OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
         ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
-        ODocument cfg = databaseConfiguration.serialize();
+        ODocument cfg = databaseConfiguration.getDocument();
         cfg.field("writeQuorum", 1);
         cfg.field("version", (Integer) cfg.field("version") + 1);
         manager.updateCachedDatabaseConfiguration(getDatabaseName(), cfg, true, true);

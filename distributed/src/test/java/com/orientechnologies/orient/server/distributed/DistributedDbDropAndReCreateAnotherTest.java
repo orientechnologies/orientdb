@@ -24,7 +24,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
  * Distributed test on drop + recreate database with a different name.
  */
 public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClusterTxTest {
-  final static int SERVERS       = 2;
+  final static int SERVERS       = 3;
   private int      lastServerNum = 0;
 
   @Test
@@ -44,22 +44,29 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
         final ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbName);
         db.open("admin", "admin");
 
-        banner("DROPPING DATABASE ON SERVER " + server.getServerId());
+        banner("DROPPING DATABASE " + dbName + " ON SERVER " + server.getServerId());
         db.drop();
       }
 
-      ServerRun server = serverInstance.get(lastServerNum);
+      Thread.sleep(2000);
 
-      banner("RE-CREATING DATABASE ON SERVER " + server.getServerId());
+      ServerRun server = serverInstance.get(lastServerNum);
 
       ++lastServerNum;
 
       final String dbName = getDatabaseURL(server);
+
+      banner("RE-CREATING DATABASE " + dbName + " ON SERVER " + server.getServerId());
+
       final OrientGraphNoTx db = new OrientGraphNoTx(dbName);
       onAfterDatabaseCreation(db);
       db.shutdown();
 
+      Thread.sleep(2000);
+
     } while (lastServerNum < serverInstance.size());
+
+    Thread.sleep(2000);
 
     executeMultipleTest();
   }

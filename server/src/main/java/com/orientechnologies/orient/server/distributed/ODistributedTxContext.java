@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.util.List;
+
 public interface ODistributedTxContext {
   void lock(final ORID rid);
 
@@ -13,7 +15,11 @@ public interface ODistributedTxContext {
 
   void commit();
 
-  void fix();
+  void fix(ODatabaseDocumentTx database, List<ORemoteTask> fixTasks);
 
   int rollback(final ODatabaseDocumentTx database);
+
+  void destroy();
+
+  void unlock();
 }

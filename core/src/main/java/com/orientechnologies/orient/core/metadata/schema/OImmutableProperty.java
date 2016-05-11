@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.validation.ValidationBi
 import com.orientechnologies.orient.core.metadata.schema.validation.ValidationCollectionComparable;
 import com.orientechnologies.orient.core.metadata.schema.validation.ValidationMapComparable;
 import com.orientechnologies.orient.core.metadata.schema.validation.ValidationStringComparable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Calendar;
 import java.util.Collection;
@@ -289,6 +290,14 @@ public class OImmutableProperty implements OProperty {
 
   @Override
   public OIndex<?> createIndex(String iType) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override public OIndex<?> createIndex(String iType, ODocument metadata) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
     throw new UnsupportedOperationException();
   }
 

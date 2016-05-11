@@ -25,10 +25,9 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * Interface to manage balancing of cluster ownership.
@@ -36,9 +35,9 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwnershipAssignmentStrategy {
-  private final OHazelcastPlugin manager;
+  private final ODistributedAbstractPlugin manager;
 
-  public ODefaultClusterOwnershipAssignmentStrategy(final OHazelcastPlugin manager) {
+  public ODefaultClusterOwnershipAssignmentStrategy(final ODistributedAbstractPlugin manager) {
     this.manager = manager;
   }
 
@@ -88,7 +87,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
     // MOVE THE UNASSIGNED CLUSTERS TO THE ORIGINAL SET TO BE REALLOCATED FROM THE EXTERNAL
     clustersToReassign.addAll(clustersOfClassToReassign);
 
-    final Collection<String> allClusterNames = iDatabase.getClusterNames();
+    Collection<String> allClusterNames = iDatabase.getClusterNames();
 
     // CHECK OWNER AFTER RE-BALANCE AND CREATE NEW CLUSTERS IF NEEDED
     for (String server : availableNodes) {
@@ -103,29 +102,33 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
         }
 
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-            "class '%s', creation of new local cluster '%s' (id=%d)", iClass, newClusterName,
+            "Class '%s', creation of new local cluster '%s' (id=%d)", iClass, newClusterName,
             iDatabase.getClusterIdByName(newClusterName));
 
-        final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
-        if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
-          OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+        final String finalNewClusterName = newClusterName;
 
-        try {
-          iClass.addCluster(newClusterName);
-        } catch (OCommandSQLParsingException e) {
-          if (!e.getMessage().endsWith("already exists"))
-            throw e;
-        } catch (Exception e) {
-          ODistributedServerLog.error(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "error on creating cluster '%s' in class '%s': ", newClusterName, iClass, e);
-          throw OException.wrapException(
-              new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'"), e);
-        } finally {
+        OScenarioThreadLocal.executeAsDefault(new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            try {
+              iClass.addCluster(finalNewClusterName);
+            } catch (Exception e) {
+              if (!iDatabase.getClusterNames().contains(finalNewClusterName)) {
+                // NOT CREATED
+                ODistributedServerLog.error(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                    "Error on creating cluster '%s' in class '%s': ", finalNewClusterName, iClass, e);
+                throw OException.wrapException(
+                    new ODistributedException("Error on creating cluster '" + finalNewClusterName + "' in class '" + iClass + "'"),
+                    e);
+              }
+            }
 
-          if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
-            // RESTORE PREVIOUS MODE
-            OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
-        }
+            return null;
+          }
+        });
+
+        // RELOAD ALL THE CLUSTER NAMES
+        allClusterNames = iDatabase.getClusterNames();
 
         assignClusterOwnership(iDatabase, cfg, iClass, newClusterName, server);
         cfgChanged = true;

@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -195,7 +194,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test
   public void testIndexSQL() {
-    database.command(new OCommandSQL("create index idx unique")).execute();
+    database.command(new OCommandSQL("create index idx unique METADATA { ignoreNullValues: false }")).execute();
     database.getMetadata().getIndexManager().reload();
     Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("idx"));
 
@@ -788,7 +787,7 @@ public class IndexTest extends ObjectDBBaseTest {
     if (!db.getMetadata().getSchema().existsClass("IndexTestTerm")) {
       final OClass termClass = db.getMetadata().getSchema().createClass("IndexTestTerm", 1, null);
       termClass.createProperty("label", OType.STRING);
-      termClass.createIndex("idxTerm", INDEX_TYPE.UNIQUE, "label");
+      termClass.createIndex("idxTerm", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "label"});
 
       db.getMetadata().getSchema().save();
     }
@@ -809,7 +808,7 @@ public class IndexTest extends ObjectDBBaseTest {
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
       final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexTest", 1, null);
       termClass.createProperty("label", OType.STRING);
-      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE, "label");
+      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "label"});
       db.getMetadata().getSchema().save();
     }
 
@@ -845,7 +844,7 @@ public class IndexTest extends ObjectDBBaseTest {
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
       final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexTest", 1, null);
       termClass.createProperty("label", OType.STRING);
-      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE, "label");
+      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "label"});
       db.getMetadata().getSchema().save();
     }
 
@@ -1238,7 +1237,8 @@ public class IndexTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testIndexRebuildDuringDetachAllNonProxiedObjectDelete")
   public void testRestoreUniqueIndex() {
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
-    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").createIndex(OClass.INDEX_TYPE.UNIQUE);
+    database.command(new OCommandSQL("CREATE INDEX Profile.nick on Profile (nick) UNIQUE METADATA {ignoreNullValues: true}")).execute();
+    database.getMetadata().reload();
   }
 
   @Test
@@ -1937,7 +1937,7 @@ public class IndexTest extends ObjectDBBaseTest {
     clazz.createProperty("reg", OType.LONG);
     clazz.createProperty("no", OType.INTEGER);
 
-    clazz.createIndex("MultikeyWithoutFieldIndexNoNullSupport", INDEX_TYPE.UNIQUE, "state", "users", "time", "reg", "no");
+    clazz.createIndex("MultikeyWithoutFieldIndexNoNullSupport", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{  "state", "users", "time", "reg", "no"});
 
     ODocument document = new ODocument("TestMultikeyWithoutFieldNoNullSupport");
     document.field("state", (byte) 1);
@@ -2046,9 +2046,9 @@ public class IndexTest extends ObjectDBBaseTest {
       OrientEdgeType edgeType = graphNoTx.createEdgeType("CustomEdge");
       edgeType.createProperty("out", OType.LINK, vertexType);
       edgeType.createProperty("in", OType.LINK, vertexType);
-      edgeType.createIndex("CustomEdge.in", OClass.INDEX_TYPE.UNIQUE, "in");
-      edgeType.createIndex("CustomEdge.out", OClass.INDEX_TYPE.UNIQUE, "out");
-      edgeType.createIndex("CustomEdge.compositeInOut", OClass.INDEX_TYPE.UNIQUE, "out", "in");
+      edgeType.createIndex("CustomEdge.in", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{  "in"});
+      edgeType.createIndex("CustomEdge.out", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{  "out"});
+      edgeType.createIndex("CustomEdge.compositeInOut", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "out", "in"});
     }
     // graphNoTx.shutdown();
 

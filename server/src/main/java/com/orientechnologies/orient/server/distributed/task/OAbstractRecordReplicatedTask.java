@@ -93,10 +93,12 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
       final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
 
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
-    if (lockRecords)
+    if (lockRecords) {
       // TRY LOCKING RECORD
-      if (!ddb.lockRecord(rid, requestId))
-        throw new ODistributedRecordLockedException(rid);
+      final ODistributedRequestId lockHolder = ddb.lockRecord(rid, requestId);
+      if (lockHolder != null)
+        throw new ODistributedRecordLockedException(rid, lockHolder);
+    }
 
     try {
 

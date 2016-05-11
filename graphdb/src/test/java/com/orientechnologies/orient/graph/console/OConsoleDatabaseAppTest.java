@@ -272,7 +272,7 @@ public class OConsoleDatabaseAppTest {
       c.console().displayRecord("0");
 
       String resultString = c.getConsoleOutput();
-      Assert.assertTrue(resultString.contains("@class: foo"));
+      Assert.assertTrue(resultString.contains("@class:foo"));
       Assert.assertTrue(resultString.contains("barbar"));
     } catch (Exception e) {
       Assert.fail();

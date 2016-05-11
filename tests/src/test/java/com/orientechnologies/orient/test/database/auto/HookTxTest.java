@@ -23,6 +23,7 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -48,14 +49,14 @@ public class HookTxTest extends ORecordHookAbstract {
   private String            url;
 
   @Parameters(value = "url")
-  public HookTxTest(String url) {
-    this.url = url;
+  public HookTxTest(@Optional String url) {
+    this.url = BaseTest.prepareUrl(url);
   }
 
   @BeforeClass
   public void beforeClass() {
     database = new OObjectDatabaseTx(url);
-    if (url.startsWith("memory:") && !database.exists()) {
+    if (!url.startsWith("remote:") && !database.exists()) {
       database.create();
       database.close();
     }

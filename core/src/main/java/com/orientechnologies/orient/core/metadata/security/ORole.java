@@ -43,24 +43,25 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class ORole extends OIdentity implements OSecurityRole {
-  public static final String                ADMIN             = "admin";
-  public static final String                CLASS_NAME        = "ORole";
-  public final static int                   PERMISSION_NONE   = 0;
-  public final static int                   PERMISSION_CREATE = registerPermissionBit(0, "Create");
-  public final static int                   PERMISSION_READ   = registerPermissionBit(1, "Read");
-  public final static int                   PERMISSION_UPDATE = registerPermissionBit(2, "Update");
-  public final static int                   PERMISSION_DELETE = registerPermissionBit(3, "Delete");
-  public final static int                   PERMISSION_ALL    = PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
+  public static final String                ADMIN              = "admin";
+  public static final String                CLASS_NAME         = "ORole";
+  public final static int                   PERMISSION_NONE    = 0;
+  public final static int                   PERMISSION_CREATE  = registerPermissionBit(0, "Create");
+  public final static int                   PERMISSION_READ    = registerPermissionBit(1, "Read");
+  public final static int                   PERMISSION_UPDATE  = registerPermissionBit(2, "Update");
+  public final static int                   PERMISSION_DELETE  = registerPermissionBit(3, "Delete");
+  public final static int                   PERMISSION_EXECUTE = registerPermissionBit(4, "Execute");
+  public final static int                   PERMISSION_ALL     = PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
                                                                   + PERMISSION_DELETE;
-  protected final static byte               STREAM_DENY       = 0;
-  protected final static byte               STREAM_ALLOW      = 1;
-  private static final long                 serialVersionUID  = 1L;
+  protected final static byte               STREAM_DENY        = 0;
+  protected final static byte               STREAM_ALLOW       = 1;
+  private static final long                 serialVersionUID   = 1L;
   // CRUD OPERATIONS
   private static Map<Integer, String>       PERMISSION_BIT_NAMES;
-  protected ALLOW_MODES                     mode              = ALLOW_MODES.DENY_ALL_BUT;
+  protected ALLOW_MODES                     mode               = ALLOW_MODES.DENY_ALL_BUT;
   protected ORole                           parentRole;
 
-  private Map<ORule.ResourceGeneric, ORule> rules             = new HashMap<ORule.ResourceGeneric, ORule>();
+  private Map<ORule.ResourceGeneric, ORule> rules              = new HashMap<ORule.ResourceGeneric, ORule>();
 
   /**
    * Constructor used in unmarshalling.

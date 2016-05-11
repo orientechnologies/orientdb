@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -34,10 +35,14 @@ import static org.junit.Assert.*;
  * - check the new db is present both on server2 and server3
  * - 5 threads write 100 records on server1
  * - check consistency: db with all the records are consistent
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
  */
 
 public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest {
 
+  @Ignore
   @Test
   public void test() throws Exception {
     init(SERVERS);
@@ -56,7 +61,7 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
     // creating new database on server1
     ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(url1);
 
-    Thread.sleep(5000);
+    Thread.sleep(1000);
 
     // checking the db was created both on server2 and server3
     ODatabaseRecordThreadLocal.INSTANCE.set(null);

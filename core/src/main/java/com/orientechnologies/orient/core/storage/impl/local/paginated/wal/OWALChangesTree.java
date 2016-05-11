@@ -828,4 +828,8 @@ public class OWALChangesTree implements OWALChanges {
     }
   }
 
+  @Override
+  public boolean hasChanges() {
+    return root != null;
+  }
 }

@@ -33,10 +33,11 @@ import java.util.concurrent.Future;
 import static org.junit.Assert.assertEquals;
 
 /**
+  @author Andrea Iacono (a.iacono--at--orientdb.com)
  * Checks for consistency on the cluster with these steps:
  * - 2 server (quorum=2)
  * - record1 is inserted on server1
- * - record1 (version 1) is propagated to the other two servers
+ * - record1 (version 1) is propagated to the other server
  * - introduce a delay after record locking for the two servers (different for each one)
  * - the two clients at the same time update the same record on different servers
  * - the server1 immediately commits the transaction and tries to update the record to server2, which has the record locked
@@ -64,7 +65,7 @@ public class TwoClientsRecordUpdateDuringRetryWithTransactionsOnMultipleServersS
   @Test
   public void test() throws Exception {
     OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.setValue(new Integer(2000));
-    OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(new Integer(3));
+    OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(new Integer(1));
     maxRetries = 10;
     init(2);
     prepare(false);
@@ -91,8 +92,8 @@ public class TwoClientsRecordUpdateDuringRetryWithTransactionsOnMultipleServersS
 
     // sets a delay for operations on distributed storage of server1 and server2
     // so that server1 will start to commit after server2 has started the transaction
-    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer(1000));
-    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer(250));
+    ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer("server2", 1000));
+    ((ODistributedStorage) dbServer1.getStorage()).setEventListener(new AfterRecordLockDelayer("server1", 250));
 
     // updates the same record from two different clients, each calling a different node
     ODocument record1Server2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);

@@ -32,8 +32,8 @@ public class SQLDropClassIndexTest {
   private final String        url;
 
   @Parameters(value = "url")
-  public SQLDropClassIndexTest(final String url) {
-    this.url = url;
+  public SQLDropClassIndexTest(@Optional final String url) {
+    this.url = BaseTest.prepareUrl(url);
   }
 
   @BeforeClass

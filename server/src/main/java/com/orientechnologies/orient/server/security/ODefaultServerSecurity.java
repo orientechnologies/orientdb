@@ -21,17 +21,26 @@ package com.orientechnologies.orient.server.security;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityExternal;
+import com.orientechnologies.orient.core.metadata.security.OSystemUser;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 import com.orientechnologies.orient.core.security.OSecurityFactory;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.security.OSecuritySystemException;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.server.OClientConnection;
+import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
@@ -48,15 +57,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-//import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostSecurityReload;
-
 /**
  * Provides an implementation of OServerSecurity.
  * 
  * @author S. Colin Leister
  * 
  */
-
 public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycleListener, OServerSecurity {
   private String                              SYSTEM_DB_NAME         = "OSystem";
 
@@ -113,7 +119,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
     // Checks to see if the OrientDB System Database exists and creates it if not.
     // Make sure this happens after setSecurityFactory() is called.
-//    checkSystemDatabase();
+    checkSystemDatabase();
   }
 
   private Class<?> getClass(final ODocument jsonConfig) {
@@ -272,8 +278,58 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     return null;
   }
 
-  // OSecuritySystem
-  public String getSystemDbName() { return SYSTEM_DB_NAME; }
+  // OServerSecurity
+  public String getSystemDbName() {
+    return SYSTEM_DB_NAME;
+  }
+
+  // OServerSecurity
+  public String getSystemDbPath() {
+    return server.getDatabaseDirectory() + getSystemDbName();
+  }
+
+  // OServerSecurity
+  /**
+   * Returns the "System User" associated with 'username' from the system database. If not found, returns null. dbName is used to
+   * filter the assigned roles. It may be null.
+   */
+  public OUser getSystemUser(final String username, final String dbName) {
+    if (isEnabled()) {
+      ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+
+      try {
+        ODatabase<?> sysDB = openSystemDatabase();
+
+        if (sysDB != null) {
+          try {
+            List<ODocument> result = sysDB
+                .<OCommandRequest> command(
+                    new OSQLSynchQuery<ODocument>("select from OUser where name = ? limit 1").setFetchPlan("roles:1"))
+                .execute(username);
+
+            if (result != null && !result.isEmpty())
+              return new OSystemUser(result.get(0), dbName);
+          } finally {
+            if (sysDB != null)
+              sysDB.close();
+          }
+        } else {
+          OLogManager.instance().error(this, "getSystemUser() System Database is not open");
+        }
+      } catch (Exception ex) {
+        OLogManager.instance().error(this, "getSystemUser() Exception: %s", ex.getMessage());
+      }
+      finally {
+        if(currentDB != null){
+          ODatabaseRecordThreadLocal.INSTANCE.set(currentDB);
+        }else{
+          ODatabaseRecordThreadLocal.INSTANCE.remove();
+        }
+      }
+    }
+
+    return null;
+  }
 
   // OSecuritySystem (via OServerSecurity)
   // This will first look for a user in the security.json "users" array and then check if a resource matches.
@@ -416,6 +472,17 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     return db;
   }
 
+  // OServerSecurity
+  public ODatabase<?> openSystemDatabase() {
+    return openDatabase(getSystemDbName());
+  }
+  
+  // OServerSecurity
+  public boolean systemDbExists() {
+    return new File(getSystemDbPath()).isDirectory();
+  }
+  
+
   @Override
   public OSyslog getSyslog() {
     if (sysLog == null) {
@@ -508,6 +575,47 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     }
   }
 
+  /**
+   * Called each time one of the security classes (OUser, ORole, OServerRole) is modified.
+   */
+  public void securityRecordChange(final String dbURL, final ODocument record) {
+
+    // The point of this is to notify any matching (via URL) active database that its user
+    // needs to be reloaded to pick up any changes that may affect its security permissions.
+
+    // We execute this in a new thread to avoid blocking the caller for too long.
+    Orient.instance().submit(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          OClientConnectionManager ccm = server.getClientConnectionManager();
+
+          if (ccm != null) {
+            for (OClientConnection cc : ccm.getConnections()) {
+              try {
+                ODatabaseDocumentTx ccDB = cc.getDatabase();
+                if(ccDB != null) {
+                  ccDB.activateOnCurrentThread();
+                  if (!ccDB.isClosed() && ccDB.getURL() != null) {
+                    if (ccDB.getURL().equals(dbURL)) {
+                      ccDB.reloadUser();
+                    }
+                  }
+                }
+              } catch (Exception ex) {
+                OLogManager.instance().error(this, "securityRecordChange() Exception: ", ex);
+              }
+            }
+          }
+        } catch (Exception ex) {
+          OLogManager.instance().error(this, "securityRecordChange() Exception: ", ex);
+        }
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
+      }
+    });
+
+  }
+
   private void createSuperUser() {
     if (superUser == null)
       throw new OSecuritySystemException("ODefaultServerSecurity.createSuperUser() SuperUser cannot be null");
@@ -598,7 +706,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     if (ssf != null)
       configFile = ssf;
 
-    configDoc = loadConfig(configFile);   
+    configDoc = loadConfig(configFile);
   }
 
   // OServerLifecycleListener Interface
@@ -797,7 +905,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
       if (serverDoc != null) {
         if (serverDoc.containsField("createDefaultUsers")) {
-        	 OGlobalConfiguration.CREATE_DEFAULT_USERS.setValue(serverDoc.field("createDefaultUsers"));
+          OGlobalConfiguration.CREATE_DEFAULT_USERS.setValue(serverDoc.field("createDefaultUsers"));
         }
 
         if (serverDoc.containsField("storePasswords")) {
@@ -947,24 +1055,30 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
   }
 
   private void checkSystemDatabase() {
-  	 try {
-      final String path = "plocal:" + server.getDatabaseDirectory() + getSystemDbName();
+    ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
-      ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx(path);
-      
-      if(!sysDB.exists()) {
+    try {
+      ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDbPath());
+
+      if (!sysDB.exists()) {
         OLogManager.instance().info(this, "Creating the System Database");
-        
+
         Map<OGlobalConfiguration, Object> settings = new ConcurrentHashMap<OGlobalConfiguration, Object>();
         settings.put(OGlobalConfiguration.CREATE_DEFAULT_USERS, false);
-        
+        settings.put(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1);
+
         sysDB.create(settings);
         sysDB.close();
       }
-    
+
     } catch (Exception ex) {
       OLogManager.instance().error(this, "checkSystemDatabase() Exception: %s", ex.getMessage());
+    }finally{
+      if(oldDbInThread != null){
+        ODatabaseRecordThreadLocal.INSTANCE.set(oldDbInThread);
+      }else{
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
+      }
     }
-    
   }
 }

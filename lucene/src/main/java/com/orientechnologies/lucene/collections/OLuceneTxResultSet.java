@@ -63,7 +63,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
           memoryIndex.addField(field.name(), field.stringValue(), manager.indexAnalyzer());
         } else {
           try {
-            memoryIndex.addField(field.name(), field.tokenStream(manager.indexAnalyzer(), null));
+          memoryIndex.addField(field.name(), field.tokenStream(manager.indexAnalyzer(), null));
           } catch (IOException e) {
             e.printStackTrace();
           }

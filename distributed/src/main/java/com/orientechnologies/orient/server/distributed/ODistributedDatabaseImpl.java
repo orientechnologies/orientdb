@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -45,8 +46,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
- * each others.
+ * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each others.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
@@ -313,11 +313,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public boolean lockRecord(final OIdentifiable iRecord, final ODistributedRequestId iRequestId) {
+  public ODistributedRequestId lockRecord(final OIdentifiable iRecord, final ODistributedRequestId iRequestId) {
     final ORID rid = iRecord.getIdentity();
     if (!rid.isPersistent())
       // TEMPORARY RECORD
-      return true;
+      return null;
 
     final ODistributedRequestId oldReqId = lockManager.putIfAbsent(rid, iRequestId);
 
@@ -327,22 +327,22 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (iRequestId.equals(oldReqId)) {
         // SAME ID, ALREADY LOCKED
         ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "Distributed transaction: %s re=locked record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
+            "Distributed transaction: %s locked record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
             iRequestId);
-        return true;
+        return null;
       }
     }
 
-    // if (ODistributedServerLog.isDebugEnabled())
-    if (locked)
-      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Distributed transaction: %s locked record %s in database '%s'", iRequestId, iRecord, databaseName);
-    else
-      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Distributed transaction: %s cannot lock record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
-          oldReqId);
+    if (ODistributedServerLog.isDebugEnabled())
+      if (locked)
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "Distributed transaction: %s locked record %s in database '%s'", iRequestId, iRecord, databaseName);
+      else
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "Distributed transaction: %s cannot lock record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
+            oldReqId);
 
-    return locked;
+    return oldReqId;
   }
 
   @Override
@@ -352,18 +352,26 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     final ODistributedRequestId owner = lockManager.remove(iRecord.getIdentity());
 
-    // if (ODistributedServerLog.isDebugEnabled())
-    ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-        "Distributed transaction: %s unlocked record %s in database '%s' (owner=%s)", requestId, iRecord, databaseName, owner);
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Distributed transaction: %s unlocked record %s in database '%s' (owner=%s)", requestId, iRecord, databaseName, owner);
   }
 
   @Override
   public ODistributedTxContext registerTxContext(final ODistributedRequestId reqId) {
-    final ODistributedTxContextImpl ctx = new ODistributedTxContextImpl(this, reqId);
-    if (activeTxContexts.put(reqId, ctx) != null)
+    ODistributedTxContextImpl ctx = new ODistributedTxContextImpl(this, reqId);
+
+    final ODistributedTxContextImpl prevCtx = activeTxContexts.putIfAbsent(reqId, ctx);
+    if (prevCtx != null) {
+      // ALREADY EXISTENT
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "Distributed transaction: error on registering request %s in database '%s': request was already registered", reqId,
-          databaseName);
+          "Distributed transaction: repeating request %s in database '%s'", reqId, databaseName);
+      ctx = prevCtx;
+    } else
+      // REGISTERED
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Distributed transaction: registered request %s in database '%s'", reqId, databaseName);
+
     return ctx;
   }
 
@@ -377,6 +385,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public ODistributedServerManager getManager() {
     return manager;
+  }
+
+  public boolean exists() {
+    try {
+      manager.getServerInstance().getStoragePath(databaseName);
+      return true;
+    } catch (OConfigurationException e) {
+      return false;
+    }
   }
 
   public ODistributedSyncConfiguration getSyncConfiguration() {
@@ -395,6 +412,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void handleUnreachableNode(final int iNodeId) {
+    if (iNodeId < 0)
+      return;
+
     int rollbacks = 0;
     int tasks = 0;
 
@@ -418,6 +438,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           rollbacks, tasks, databaseName, manager.getNodeNameById(iNodeId));
   }
 
+  @Override
   public String getDatabaseName() {
     return databaseName;
   }
@@ -535,26 +556,24 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected void checkLocalNodeInConfiguration() {
-    final Lock lock = manager.getLock(databaseName + ".cfg");
-    lock.lock();
-    try {
-      // GET LAST VERSION IN LOCK
-      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+    manager.executeInDistributedDatabaseLock(databaseName, new OCallable<Void, ODistributedConfiguration>() {
+      @Override
+      public Void call(final ODistributedConfiguration cfg) {
+        // GET LAST VERSION IN LOCK
+        final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
+        if (foundPartition != null) {
+          manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-      final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
-      if (foundPartition != null) {
-        // SET THE NODE.DB AS OFFLINE, READY TO BE SYNCHRONIZED
-        manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+          ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Adding node '%s' in partition: db=%s %s",
+              getLocalNodeName(), databaseName, foundPartition);
 
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
-            getLocalNodeName(), databaseName, foundPartition);
-
-        manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+          // ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "\n--------------\n" + databaseName
+          // + "\n--------------\n" + cfg.getDocument().toJSON("prettyPrint") + "\n--------------\n");
+          // System.out.flush();
+        }
+        return null;
       }
-
-    } finally {
-      lock.unlock();
-    }
+    });
   }
 
   protected String getLocalNodeName() {

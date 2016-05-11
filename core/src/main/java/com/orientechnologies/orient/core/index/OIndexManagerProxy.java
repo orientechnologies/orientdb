@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 public class OIndexManagerProxy extends OProxedResource<OIndexManager> implements OIndexManager {
 
@@ -69,13 +68,8 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
       final int[] clusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata) {
 
     if (isDistributedCommand()) {
-      return (OIndex<?>) OScenarioThreadLocal.executeAsDefault(new Callable<OIndex<?>>() {
-        @Override
-        public OIndex<?> call() throws Exception {
-          final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
-          return remoteIndexManager.createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
-        }
-      });
+      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
+      return remoteIndexManager.createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
     }
 
     return delegate.createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
@@ -85,14 +79,9 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
       final int[] iClusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata, final String algorithm) {
     if (isDistributedCommand()) {
-      return (OIndex<?>) OScenarioThreadLocal.executeAsDefault(new Callable<OIndex<?>>() {
-        @Override
-        public OIndex<?> call() throws Exception {
-          final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
-          return remoteIndexManager.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata,
-              algorithm);
-        }
-      });
+      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
+      return remoteIndexManager.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata,
+          algorithm);
     }
 
     return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
@@ -104,14 +93,8 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 
   public OIndexManager dropIndex(final String iIndexName) {
     if (isDistributedCommand()) {
-      OScenarioThreadLocal.executeAsDefault(new Callable<Object>() {
-        @Override
-        public Object call() throws Exception {
-          final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
-          return remoteIndexManager.dropIndex(iIndexName);
-        }
-      });
-      return this;
+      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
+      return remoteIndexManager.dropIndex(iIndexName);
     }
 
     return delegate.dropIndex(iIndexName);
@@ -208,6 +191,6 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 
   private boolean isDistributedCommand() {
     return database.getStorage().isDistributed()
-        && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
+        && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 }

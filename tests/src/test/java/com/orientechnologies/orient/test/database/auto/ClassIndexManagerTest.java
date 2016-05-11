@@ -10,22 +10,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.*;
 import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Test(groups = { "index" })
 public class ClassIndexManagerTest extends DocumentDBBaseTest {
@@ -55,11 +44,11 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
 
     final OClass superClass = schema.createClass("classIndexManagerTestSuperClass");
     final OProperty propertyZero = superClass.createProperty("prop0", OType.STRING);
-    propertyZero.createIndex(OClass.INDEX_TYPE.UNIQUE);
+    superClass.createIndex("classIndexManagerTestSuperClass.prop0", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop0"});
 
     final OClass oClass = schema.createClass("classIndexManagerTestClass", superClass);
     final OProperty propOne = oClass.createProperty("prop1", OType.STRING);
-    propOne.createIndex(OClass.INDEX_TYPE.UNIQUE);
+    oClass.createIndex("classIndexManagerTestClass.prop1", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop1"});
 
     final OProperty propTwo = oClass.createProperty("prop2", OType.INTEGER);
     propTwo.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
@@ -76,7 +65,8 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     final OProperty propSix = oClass.createProperty("prop6", OType.EMBEDDEDSET, OType.STRING);
     propSix.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
-    oClass.createIndex("classIndexManagerComposite", OClass.INDEX_TYPE.UNIQUE, "prop1", "prop2");
+
+    oClass.createIndex("classIndexManagerComposite", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop1", "prop2"});
 
     final OClass oClassTwo = schema.createClass("classIndexManagerTestClassTwo");
     oClassTwo.createProperty("prop1", OType.STRING);
@@ -87,9 +77,9 @@ public class ClassIndexManagerTest extends DocumentDBBaseTest {
     compositeCollectionClass.createProperty("prop2", OType.EMBEDDEDLIST, OType.INTEGER);
 
     compositeCollectionClass
-        .createIndex("classIndexManagerTestIndexValueAndCollection", OClass.INDEX_TYPE.UNIQUE, "prop1", "prop2");
+        .createIndex("classIndexManagerTestIndexValueAndCollection", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop1", "prop2"});
 
-    oClass.createIndex("classIndexManagerTestIndexOnPropertiesFromClassAndSuperclass", OClass.INDEX_TYPE.UNIQUE, "prop0", "prop1");
+    oClass.createIndex("classIndexManagerTestIndexOnPropertiesFromClassAndSuperclass", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{"prop0", "prop1"});
 
     schema.reload();
 

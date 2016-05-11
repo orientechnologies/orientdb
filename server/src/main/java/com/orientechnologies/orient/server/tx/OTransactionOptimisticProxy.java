@@ -115,9 +115,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           int deleteVersion = channel.readVersion();
           if (rec == null)
             toThrow = new OConcurrentModificationException(rid.getIdentity(), -1, deleteVersion, ORecordOperation.DELETED);
-
-          ORecordInternal.setVersion(rec, deleteVersion);
-          entry.setRecord(rec);
+          else {
+            ORecordInternal.setVersion(rec, deleteVersion);
+            entry.setRecord(rec);
+          }
           break;
 
         default:

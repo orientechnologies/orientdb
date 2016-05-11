@@ -297,4 +297,9 @@ public class OWALPageChangesPortion implements OWALChanges {
       }
     }
   }
+
+  @Override
+  public boolean hasChanges() {
+    return pageChunks != null;
+  }
 }
