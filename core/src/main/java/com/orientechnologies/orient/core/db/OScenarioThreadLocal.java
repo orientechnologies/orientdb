@@ -38,7 +38,7 @@ public class OScenarioThreadLocal extends ThreadLocal<OScenarioThreadLocal.RunCo
 
   public static class RunContext {
     public RUN_MODE runMode = RUN_MODE.DEFAULT;
-    public boolean  inDatabaseLock;
+    public boolean inDatabaseLock;
   }
 
   static {

@@ -45,11 +45,11 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
   public static final String KEYWORD_CREATE   = "CREATE";
   public static final String KEYWORD_PROPERTY = "PROPERTY";
 
-  private String             className;
-  private String             fieldName;
-  private OType              type;
-  private String             linked;
-  private boolean            unsafe           = false;
+  private String className;
+  private String fieldName;
+  private OType  type;
+  private String linked;
+  private boolean unsafe = false;
 
   public OCommandExecutorSQLCreateProperty parse(final OCommandRequest iRequest) {
 

@@ -1267,7 +1267,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkLowDiskSpaceAndFullCheckpointRequests();
 
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
-    final Map<String, OIndexInternal<?>> indexesToCommit = getChangedIndexes(clientTx, databaseRecord.getMetadata().getIndexManager());
+    final Map<String, OIndexInternal<?>> indexesToCommit = getChangedIndexes(clientTx,
+        databaseRecord.getMetadata().getIndexManager());
 
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
 
@@ -1408,7 +1409,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkLowDiskSpaceAndFullCheckpointRequests();
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
 
-    final Map<String, OIndexInternal<?>> indexesToCommit = getChangedIndexes(clientTx, databaseRecord.getMetadata().getIndexManager());
+    final Map<String, OIndexInternal<?>> indexesToCommit = getChangedIndexes(clientTx,
+        databaseRecord.getMetadata().getIndexManager());
 
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();

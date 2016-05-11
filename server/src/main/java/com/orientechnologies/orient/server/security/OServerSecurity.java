@@ -49,12 +49,11 @@ public interface OServerSecurity extends OSecuritySystem {
    * Returns the name of the OrientDB System database.
    */
   String getSystemDbName();
-  
+
   /**
    * Returns the complete path to the OrientDB System database.
    */
   String getSystemDbPath();
-
 
   /**
    * Some authenticators support maintaining a list of users and associated resources (and sometimes passwords).
@@ -62,8 +61,8 @@ public interface OServerSecurity extends OSecuritySystem {
   OServerUserConfiguration getUser(final String username);
 
   ODatabase<?> openDatabase(final String dbName);
-  
+
   ODatabase<?> openSystemDatabase();
-  
+
   boolean systemDbExists();
 }

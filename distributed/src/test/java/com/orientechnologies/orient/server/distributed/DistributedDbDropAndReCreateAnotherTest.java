@@ -25,7 +25,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
  */
 public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClusterTxTest {
   final static int SERVERS       = 3;
-  private int      lastServerNum = 0;
+  private      int lastServerNum = 0;
 
   @Test
   public void test() throws Exception {

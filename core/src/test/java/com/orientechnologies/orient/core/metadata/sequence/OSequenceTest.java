@@ -47,7 +47,6 @@ public class OSequenceTest {
     assertThat(sequences.getSequenceCount()).isEqualTo(1);
     assertThat(sequences.getSequenceNames()).contains("MYSEQ");
 
-
     OSequence myseq = sequences.getSequence("MYSEQ");
     assertThat(myseq.getSequenceType()).isEqualTo(OSequence.SEQUENCE_TYPE.ORDERED);
     assertThat(myseq.getMaxRetry()).isEqualTo(100);

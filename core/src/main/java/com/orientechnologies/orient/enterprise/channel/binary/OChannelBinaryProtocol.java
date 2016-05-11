@@ -56,7 +56,7 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_DATASEGMENT_ADD  = 20;                 // NOT USED ANYMORE
   public static final byte REQUEST_DATASEGMENT_DROP = 21;                 // NOT USED ANYMORE
 
-  public static final byte REQUEST_INCREMENTAL_BACKUP  = 27;                 // since 2.2
+  public static final byte REQUEST_INCREMENTAL_BACKUP = 27;                 // since 2.2
 
   public static final byte REQUEST_RECORD_METADATA  = 29;                 // since 1.4.0
   public static final byte REQUEST_RECORD_LOAD      = 30;

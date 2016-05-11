@@ -384,11 +384,12 @@ public class OAtomicOperation {
         while (filePageChangesIterator.hasNext()) {
           Map.Entry<Long, FilePageChanges> filePageChangesEntry = filePageChangesIterator.next();
           //I assume new pages have everytime changes
-          if(filePageChangesEntry.getValue().changes.hasChanges()) {
+          if (filePageChangesEntry.getValue().changes.hasChanges()) {
             final long pageIndex = filePageChangesEntry.getKey();
             final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
 
-            filePageChanges.lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
+            filePageChanges.lsn = writeAheadLog
+                .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
           } else
             filePageChangesIterator.remove();
         }

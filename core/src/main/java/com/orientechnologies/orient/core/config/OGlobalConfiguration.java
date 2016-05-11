@@ -57,10 +57,10 @@ public enum OGlobalConfiguration {
       Boolean.class, true, true),
 
   // SCRIPT
-      SCRIPT_POOL("script.pool.maxSize", "Maximum number of instances in the pool of script engines", Integer.class, 20),
+  SCRIPT_POOL("script.pool.maxSize", "Maximum number of instances in the pool of script engines", Integer.class, 20),
 
   // MEMORY
-      MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used, if it is present", Boolean.class, true),
+  MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used, if it is present", Boolean.class, true),
 
   MEMORY_CHUNK_SIZE("memory.chunk.size", "Size of single memory chunk (in bytes) which will be preallocated by OrientDB",
       Integer.class, Integer.MAX_VALUE),
@@ -160,9 +160,8 @@ public enum OGlobalConfiguration {
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Indicates a force sync should be performed for each update on the storage configuration", Boolean.class, true),
 
-  STORAGE_COMPRESSION_METHOD("storage.compressionMethod",
-      "Record compression method used in storage"
-          + " Possible values : gzip, nothing, snappy, snappy-native. Default is 'nothing' that means no compression",
+  STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method used in storage"
+      + " Possible values : gzip, nothing, snappy, snappy-native. Default is 'nothing' that means no compression",
       String.class, "nothing"),
 
   STORAGE_ENCRYPTION_METHOD("storage.encryptionMethod",
@@ -246,11 +245,11 @@ public enum OGlobalConfiguration {
           Boolean.class, true),
 
   // DATABASE
-          OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only! It saves objects bound to dirty records",
+  OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only! It saves objects bound to dirty records",
               Boolean.class, false, true),
 
   // DATABASE
-              DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
+  DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
 
   DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 100),
 
@@ -283,7 +282,7 @@ public enum OGlobalConfiguration {
 
   // INDEX
       INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
-          "Amount of values, after which the index implementation will use an sbtree as a values container. Set to -1, to disable and force using an sbtree",
+      "Amount of values, after which the index implementation will use an sbtree as a values container. Set to -1, to disable and force using an sbtree",
           Integer.class, 40, true),
 
   INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("index.sbtreeBonsaiToEmbeddedThreshold",
@@ -357,11 +356,11 @@ public enum OGlobalConfiguration {
       Integer.class, -1, true),
 
   // COLLECTIONS
-      PREFER_SBTREE_SET("collections.preferSBTreeSet", "This configuration setting is experimental", Boolean.class, false),
+  PREFER_SBTREE_SET("collections.preferSBTreeSet", "This configuration setting is experimental", Boolean.class, false),
 
   // FILE
       TRACK_FILE_CLOSE("file.trackFileClose",
-          "Log all the cases when files are closed. This is needed only for internal debugging purposes", Boolean.class, false),
+      "Log all the cases when files are closed. This is needed only for internal debugging purposes", Boolean.class, false),
 
   FILE_LOCK("file.lock", "Locks files when used. Default is true", boolean.class, true),
 
@@ -376,7 +375,7 @@ public enum OGlobalConfiguration {
 
   // SECURITY
       SECURITY_USER_PASSWORD_SALT_ITERATIONS("security.userPasswordSaltIterations",
-          "Number of iterations to generate the salt or user password. Changing this setting does not affect stored passwords",
+      "Number of iterations to generate the salt or user password. Changing this setting does not affect stored passwords",
           Integer.class, 65536),
 
   SECURITY_USER_PASSWORD_SALT_CACHE_SIZE("security.userPasswordSaltCacheSize",
@@ -386,8 +385,8 @@ public enum OGlobalConfiguration {
       "Default encryption algorithm used for passwords hashing", String.class, "PBKDF2WithHmacSHA256"),
 
   // NETWORK
-      NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000,
-          true),
+  NETWORK_MAX_CONCURRENT_SESSIONS("network.maxConcurrentSessions", "Maximum number of concurrent sessions", Integer.class, 1000,
+      true),
 
   NETWORK_SOCKET_BUFFER_SIZE("network.socketBufferSize", "TCP/IP Socket buffer size", Integer.class, 32768, true),
 
@@ -442,7 +441,7 @@ public enum OGlobalConfiguration {
       "Timeout, after which a binary session is considered to have expired (in minutes)", Integer.class, 60),
 
   // PROFILER
-      PROFILER_ENABLED("profiler.enabled", "Enables the recording of statistics and counters", Boolean.class, false,
+  PROFILER_ENABLED("profiler.enabled", "Enables the recording of statistics and counters", Boolean.class, false,
           new OConfigurationChangeCallback() {
             public void change(final Object iCurrentValue, final Object iNewValue) {
               final OProfiler prof = Orient.instance().getProfiler();
@@ -487,11 +486,11 @@ public enum OGlobalConfiguration {
       Integer.class, 5000),
 
   // LOG
-      LOG_CONSOLE_LEVEL("log.console.level", "Console logging level", String.class, "info", new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
-        }
-      }),
+  LOG_CONSOLE_LEVEL("log.console.level", "Console logging level", String.class, "info", new OConfigurationChangeCallback() {
+    public void change(final Object iCurrentValue, final Object iNewValue) {
+      OLogManager.instance().setLevel((String) iNewValue, ConsoleHandler.class);
+    }
+  }),
 
   LOG_FILE_LEVEL("log.file.level", "File logging level", String.class, "fine", new OConfigurationChangeCallback() {
     public void change(final Object iCurrentValue, final Object iNewValue) {
@@ -504,16 +503,15 @@ public enum OGlobalConfiguration {
       Integer.class, 0),
 
   // LOG
-      LOG_SUPPORTS_ANSI("log.console.ansi",
-          "ANSI Console support. 'auto' means automatic check if it is supported, 'true' to force using ANSI, 'false' to avoid using ANSI",
-          String.class, "auto"),
+  LOG_SUPPORTS_ANSI("log.console.ansi",
+      "ANSI Console support. 'auto' means automatic check if it is supported, 'true' to force using ANSI, 'false' to avoid using ANSI",
+      String.class, "auto"),
 
   // CACHE
-          CACHE_LOCAL_IMPL("cache.local.impl", "Local Record cache implementation", String.class,
-              ORecordCacheWeakRefs.class.getName()),
+  CACHE_LOCAL_IMPL("cache.local.impl", "Local Record cache implementation", String.class, ORecordCacheWeakRefs.class.getName()),
 
   // COMMAND
-              COMMAND_TIMEOUT("command.timeout", "Default timeout for commands (in ms)", Long.class, 0, true),
+  COMMAND_TIMEOUT("command.timeout", "Default timeout for commands (in ms)", Long.class, 0, true),
 
   COMMAND_CACHE_ENABLED("command.cache.enabled", "Enable command cache", Boolean.class, false),
 
@@ -527,7 +525,7 @@ public enum OGlobalConfiguration {
       Integer.class, 500),
 
   // QUERY
-      QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met", Boolean.class, false),
+  QUERY_PARALLEL_AUTO("query.parallelAuto", "Auto enable parallel query, if requirements are met", Boolean.class, false),
 
   QUERY_PARALLEL_MINIMUM_RECORDS("query.parallelMinimumRecords",
       "Minimum number of records to activate parallel query automatically", Long.class, 300000),
@@ -691,37 +689,37 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_CONFIG("client.krb5.config", "Location of the Kerberos configuration file",
+  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_KRB5_CONFIG("client.krb5.config", "Location of the Kerberos configuration file",
       String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_CCNAME("client.krb5.ccname", "Location of the Kerberos client ticketcache",
+  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_KRB5_CCNAME("client.krb5.ccname", "Location of the Kerberos client ticketcache",
       String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_KTNAME("client.krb5.ktname", "Location of the Kerberos client keytab",
+  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_KRB5_KTNAME("client.krb5.ktname", "Location of the Kerberos client keytab",
       String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_CREDENTIAL_INTERCEPTOR("client.credentialinterceptor",
+  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CREDENTIAL_INTERCEPTOR("client.credentialinterceptor",
       "The name of the CredentialInterceptor class", String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW) CREATE_DEFAULT_USERS("security.createDefaultUsers",
+  @OApi(maturity = OApi.MATURITY.NEW)CREATE_DEFAULT_USERS("security.createDefaultUsers",
       "Indicates whether default database users should be created", Boolean.class, true),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW) SERVER_SECURITY_FILE("server.security.file",
+  @OApi(maturity = OApi.MATURITY.NEW)SERVER_SECURITY_FILE("server.security.file",
       "Location of the OrientDB security.json configuration file", String.class, null),
 
   @Deprecated DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout",
@@ -943,8 +941,7 @@ public enum OGlobalConfiguration {
       final long diskCacheInMB = jvmMaxMemory / 1024 / 1024;
       OLogManager.instance().info(null,
           "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB direct=%,dMB os=%,dMB), assuming maximum direct memory size "
-              + "equals to maximum JVM heap size",
-          diskCacheInMB, diskCacheInMB, diskCacheInMB, osMemory / 1024 / 1024);
+              + "equals to maximum JVM heap size", diskCacheInMB, diskCacheInMB, diskCacheInMB, osMemory / 1024 / 1024);
       DISK_CACHE_SIZE.setValue(diskCacheInMB);
       MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB, MEMORY_CHUNK_SIZE.getValueAsLong()));
       return;
@@ -966,8 +963,8 @@ public enum OGlobalConfiguration {
       diskCacheInMB = Math.min(O2QCache.MIN_CACHE_SIZE, maxDirectMemoryInMB);
       OLogManager.instance().warn(null,
           "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB direct=%,dMB). Set lower Maximum Heap (-Xmx "
-              + "setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + diskCacheInMB + "MB",
-          osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB);
+              + "setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + diskCacheInMB + "MB", osMemory / 1024 / 1024,
+          jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB);
       DISK_CACHE_SIZE.setValue(diskCacheInMB);
       MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB, MEMORY_CHUNK_SIZE.getValueAsLong()));
 

@@ -721,10 +721,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     acquireSharedLock();
     try {
       final IndexTxSnapshot indexTxSnapshot = txSnapshot.get();
-      if(changes.cleared)
+      if (changes.cleared)
         clearSnapshot(indexTxSnapshot);
       final Map<Object, Object> snapshot = indexTxSnapshot.indexSnapshot;
-      for (final OTransactionIndexChangesPerKey entry :changes.changesPerKey.values()){
+      for (final OTransactionIndexChangesPerKey entry : changes.changesPerKey.values()) {
         applyIndexTxEntry(snapshot, entry);
       }
       applyIndexTxEntry(snapshot, changes.nullKeyChanges);
@@ -735,10 +735,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   private void applyIndexTxEntry(Map<Object, Object> snapshot, OTransactionIndexChangesPerKey entry) {
-    for(OTransactionIndexChangesPerKey.OTransactionIndexEntry op :entry.entries){
-      switch (op.operation){
+    for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op : entry.entries) {
+      switch (op.operation) {
       case PUT:
-        putInSnapshot(entry.key,op.value,snapshot);
+        putInSnapshot(entry.key, op.value, snapshot);
         break;
       case REMOVE:
         if (op.value != null)

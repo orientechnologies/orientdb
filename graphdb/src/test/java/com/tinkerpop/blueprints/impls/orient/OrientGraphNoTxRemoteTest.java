@@ -70,6 +70,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
   public static void stopEmbeddedServer() throws Exception {
     server.shutdown();
     Thread.sleep(1000);
+    Orient.instance().closeAllStorages();
 
     if (oldOrientDBHome != null)
       System.setProperty("ORIENTDB_HOME", oldOrientDBHome);

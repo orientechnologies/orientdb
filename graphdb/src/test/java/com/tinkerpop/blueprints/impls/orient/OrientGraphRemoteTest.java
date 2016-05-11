@@ -49,6 +49,7 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
   public static void stopEmbeddedServer() throws Exception {
     server.shutdown();
     Thread.sleep(1000);
+    Orient.instance().closeAllStorages();
 
     if (oldOrientDBHome != null)
       System.setProperty("ORIENTDB_HOME", oldOrientDBHome);

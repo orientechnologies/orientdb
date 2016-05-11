@@ -66,7 +66,8 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
-        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory,
+        RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     process = processBuilder.start();

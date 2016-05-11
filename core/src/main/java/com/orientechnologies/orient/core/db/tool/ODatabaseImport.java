@@ -1453,8 +1453,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           if (id != -1)
             clusterIds.add(id);
           else
-            listener
-                .onMessage(String.format("found not existent cluster '%s' in index '%s' configuration, skipping", clusterName, indexName));
+            listener.onMessage(
+                String.format("found not existent cluster '%s' in index '%s' configuration, skipping", clusterName, indexName));
         }
         int[] clusterIdsToIndex = new int[clusterIds.size()];
 
