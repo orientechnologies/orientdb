@@ -346,7 +346,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     long memory = getOverflowBufferCount();
 
     final long allocatedAreas = (getAllocatedBufferCount() + maxPagesPerSingleArea - 1) / maxPagesPerSingleArea;
-    memory += (allocatedAreas - 1) * maxPagesPerSingleArea;
+    memory += allocatedAreas * maxPagesPerSingleArea;
 
     return memory * pageSize;
   }

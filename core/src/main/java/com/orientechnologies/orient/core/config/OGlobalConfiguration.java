@@ -954,7 +954,7 @@ public enum OGlobalConfiguration {
               + "equals to maximum JVM heap size",
           diskCacheInMB, diskCacheInMB, diskCacheInMB, osMemory / 1024 / 1024);
       DISK_CACHE_SIZE.setValue(diskCacheInMB);
-      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB, MEMORY_CHUNK_SIZE.getValueAsLong()));
+      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB * 1024 * 1024, MEMORY_CHUNK_SIZE.getValueAsLong()));
       return;
     }
 
@@ -968,7 +968,7 @@ public enum OGlobalConfiguration {
           jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB, osMemory / 1024 / 1024);
 
       DISK_CACHE_SIZE.setValue(diskCacheInMB);
-      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB, MEMORY_CHUNK_SIZE.getValueAsLong()));
+      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB * 1024 * 1024, MEMORY_CHUNK_SIZE.getValueAsLong()));
     } else {
       // LOW MEMORY: SET IT TO 256MB ONLY
       diskCacheInMB = Math.min(O2QCache.MIN_CACHE_SIZE, maxDirectMemoryInMB);
@@ -977,7 +977,7 @@ public enum OGlobalConfiguration {
               + "setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + diskCacheInMB + "MB",
           osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB);
       DISK_CACHE_SIZE.setValue(diskCacheInMB);
-      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB, MEMORY_CHUNK_SIZE.getValueAsLong()));
+      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB * 1024 * 1024, MEMORY_CHUNK_SIZE.getValueAsLong()));
 
       OLogManager.instance().info(null, "OrientDB config DISKCACHE=%,dMB (heap=%,dMB direct=%,dMB os=%,dMB)", diskCacheInMB,
           jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB, osMemory / 1024 / 1024);
