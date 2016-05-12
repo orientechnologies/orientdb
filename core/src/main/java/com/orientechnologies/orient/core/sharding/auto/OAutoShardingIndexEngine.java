@@ -306,7 +306,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   private OHashTable<Object, Object> getPartition(final Object iKey) {
-    final int partitionId = strategy.getPartitionsId(iKey, partitionSize);
+    final int partitionId = iKey != null ? strategy.getPartitionsId(iKey, partitionSize) : 0;
     return partitions.get(partitionId);
   }
 }

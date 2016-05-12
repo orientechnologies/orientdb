@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
@@ -61,6 +56,11 @@ import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
+import java.util.concurrent.Callable;
 
 /**
  * Schema Class implementation.
@@ -1971,8 +1971,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public void onPostIndexManagement() {
     final OIndex<?> autoShardingIndex = getAutoShardingIndex();
     if (autoShardingIndex != null) {
-      // OVERRIDE CLUSTER SELECTION
-      this.clusterSelection = new OAutoShardingClusterSelectionStrategy(this, autoShardingIndex);
+      if (!getDatabase().getStorage().isRemote())
+        // OVERRIDE CLUSTER SELECTION
+        this.clusterSelection = new OAutoShardingClusterSelectionStrategy(this, autoShardingIndex);
     } else if (clusterSelection instanceof OAutoShardingClusterSelectionStrategy)
       // REMOVE AUTO SHARDING CLUSTER SELECTION
       this.clusterSelection = new ORoundRobinClusterSelectionStrategy();
