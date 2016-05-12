@@ -22,32 +22,35 @@ import com.orientechnologies.orient.core.db.record.OProxedResource;
 import java.util.Map;
 
 /**
+ * Proxy implementation of the Scheduler.
+ * 
+ * @author Luca Garulli
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
-public class OSchedulerListenerProxy extends OProxedResource<OSchedulerListener> implements OSchedulerListener {
-  public OSchedulerListenerProxy(final OSchedulerListener iDelegate, final ODatabaseDocumentInternal iDatabase) {
+public class OSchedulerProxy extends OProxedResource<OScheduler> implements OScheduler {
+  public OSchedulerProxy(final OScheduler iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 
   @Override
-  public void addScheduler(OScheduler scheduler) {
-    delegate.addScheduler(scheduler);
+  public void scheduleEvent(final OScheduledEvent scheduler) {
+    delegate.scheduleEvent(scheduler);
   }
 
   @Override
-  public void removeScheduler(OScheduler scheduler) {
-    delegate.removeScheduler(scheduler);
+  public void removeEvent(final String eventName) {
+    delegate.removeEvent(eventName);
   }
 
   @Override
-  public Map<String, OScheduler> getSchedulers() {
-    return delegate.getSchedulers();
+  public Map<String, OScheduledEvent> getEvents() {
+    return delegate.getEvents();
   }
 
   @Override
-  public OScheduler getScheduler(String name) {
-    return delegate.getScheduler(name);
+  public OScheduledEvent getEvent(final String name) {
+    return delegate.getEvent(name);
   }
 
   @Override

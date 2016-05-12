@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
-import com.orientechnologies.orient.core.schedule.OSchedulerListener;
+import com.orientechnologies.orient.core.schedule.OScheduler;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -71,5 +71,5 @@ public interface OMetadata {
 
   OSequenceLibrary getSequenceLibrary();
 
-  OSchedulerListener getSchedulerListener();
+  OScheduler getScheduler();
 }
