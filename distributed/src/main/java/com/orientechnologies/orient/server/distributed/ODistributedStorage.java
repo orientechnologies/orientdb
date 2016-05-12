@@ -220,6 +220,17 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     final OCommandExecutor exec = executor instanceof OCommandExecutorSQLDelegate
         ? ((OCommandExecutorSQLDelegate) executor).getDelegate() : executor;
 
+    if (exec.isIdempotent() && !dManager.isNodeAvailable(dManager.getLocalNodeName(), getName())) {
+      // SPECIAL CASE: NODE IS OFFLINE AND THE COMMAND IS IDEMPOTENT, EXECUTE IT LOCALLY ONLY
+      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Node '%s' is offline, the command '%s' against database '%s' will be executed only on local server with the possibility to have partial result",
+          dManager.getLocalNodeName(), iCommand, wrapped.getName());
+
+      return wrapped.command(iCommand);
+    }
+
+    checkLocalNodeIsAvailable();
+
     if (!exec.isIdempotent())
       checkNodeIsMaster(localNodeName, dbCfg);
 
@@ -493,6 +504,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
     }
 
+    checkLocalNodeIsAvailable();
+
     try {
       // ASSIGN DESTINATION NODE
       String clusterName = getClusterNameByRID(iRecordId);
@@ -558,8 +571,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final Set<String> clusterNames = Collections.singleton(finalClusterName);
 
-      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames, nodes,
-          dbCfg);
+      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames,
+          nodes, dbCfg);
 
       // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
       nodes.remove(localNodeName);
@@ -757,6 +770,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
     }
 
+    checkLocalNodeIsAvailable();
+
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
@@ -774,8 +789,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final Set<String> clusterNames = Collections.singleton(clusterName);
 
-      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames, nodes,
-          dbCfg);
+      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames,
+          nodes, dbCfg);
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
       if (executionModeSynch == null)
@@ -889,6 +904,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
     }
 
+    checkLocalNodeIsAvailable();
+
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
@@ -906,8 +923,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final Set<String> clusterNames = Collections.singleton(clusterName);
 
-      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames, nodes,
-          dbCfg);
+      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames,
+          nodes, dbCfg);
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
       if (executionModeSynch == null)
@@ -1199,6 +1216,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
     final String localNodeName = dManager.getLocalNodeName();
 
+    checkLocalNodeIsAvailable();
     checkNodeIsMaster(localNodeName, dbCfg);
 
     try {
@@ -1597,6 +1615,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     final ODistributedConfiguration.ROLES nodeRole = dbCfg.getServerRole(localNodeName);
     if (nodeRole != ODistributedConfiguration.ROLES.MASTER)
       throw new ODistributedException("Cannot execute write operation on node '" + localNodeName + "' because is non master");
+  }
+
+  protected void checkLocalNodeIsAvailable() {
+    if (!dManager.isNodeAvailable(dManager.getLocalNodeName(), getName()))
+      throw new ODistributedException("Cannot execute operation on current node '" + dManager.getLocalNodeName() + "', database '"
+          + getName() + "' because is not available");
   }
 
   public File getLastValidBackup() {

@@ -56,11 +56,11 @@ public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
     case OCompletedTxTask.FACTORYID: // 8
       return new OCompletedTxTask();
 
-    case OStopNodeTask.FACTORYID: // 9
-      return new OStopNodeTask();
+    case OStopServerTask.FACTORYID: // 9
+      return new OStopServerTask();
 
-    case ORestartNodeTask.FACTORYID: // 10
-      return new ORestartNodeTask();
+    case ORestartServerTask.FACTORYID: // 10
+      return new ORestartServerTask();
 
     case OResurrectRecordTask.FACTORYID: // 11
       return new OResurrectRecordTask();
