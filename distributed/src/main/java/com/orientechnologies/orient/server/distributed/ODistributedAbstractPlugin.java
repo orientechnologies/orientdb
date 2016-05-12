@@ -892,6 +892,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return iNodes.size();
   }
 
+
   @Override
   public String toString() {
     return nodeName;
@@ -975,7 +976,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers(null, nodeName);
 
-    filterAvailableNodes(nodes, databaseName);
+    getAvailableNodes(nodes, databaseName);
 
     ODistributedServerLog.warn(this, nodeName, nodes.toString(), DIRECTION.OUT,
         "requesting delta database sync for '%s' on local server...", databaseName);
@@ -1677,7 +1678,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of stopping node '%s'...", iNode);
 
     final ODistributedRequest request = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), null,
-        new OStopNodeTask(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+        new OStopServerTask(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
 
     getRemoteServer(iNode).sendRequest(request, iNode);
   }
@@ -1686,7 +1687,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of restarting node '%s'...", iNode);
 
     final ODistributedRequest request = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), null,
-        new ORestartNodeTask(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+        new ORestartServerTask(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
 
     getRemoteServer(iNode).sendRequest(request, iNode);
   }
@@ -1699,14 +1700,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         nodes.add(entry.getKey());
     }
     return nodes;
-  }
-
-  public void filterAvailableNodes(Collection<String> iNodes, final String databaseName) {
-    for (Iterator<String> it = iNodes.iterator(); it.hasNext();) {
-      final String nodeName = it.next();
-      if (!isNodeAvailable(nodeName, databaseName))
-        it.remove();
-    }
   }
 
   public long getNextMessageIdCounter() {
@@ -1722,6 +1715,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   protected boolean isRelatedToLocalServer(final ODatabaseInternal iDatabase) {
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
+
+    // Check for the system database.
+    if (iDatabase.getName().equalsIgnoreCase(OServer.SYSTEM_DB_NAME)) return false;
 
     if (dbUrl.startsWith("plocal:")) {
       // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM

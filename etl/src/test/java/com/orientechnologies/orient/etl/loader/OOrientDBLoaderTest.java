@@ -1,11 +1,11 @@
 package com.orientechnologies.orient.etl.loader;
 
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.tinkerpop.blueprints.Vertex;
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,6 +15,28 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Created by frank on 9/14/15.
  */
 public class OOrientDBLoaderTest extends OETLBaseTest {
+
+  @Test(expected = OConfigurationException.class)
+  public void shouldFailToManageRemoteServer() throws Exception {
+
+
+    process("{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
+        + "      dbURL: \"remote:sadserver/OETLBaseTest\",\n"
+        + "      dbUser: \"admin\",\n"
+        + "      dbPassword: \"admin\",\n"
+        + "      serverUser: \"admin\",\n"
+        + "      serverPassword: \"admin\",\n"
+        + "      dbAutoCreate: true,\n"
+        + "      tx: false,\n"
+        + "      batchCommit: 1000,\n"
+        + "      wal : true,\n"
+        + "      dbType: \"graph\",\n"
+        + "      classes: [\n"
+        + "        {name:\"Person\", extends: \"V\" },\n"
+        + "      ],\n"
+        + "      indexes: [{class:\"V\" , fields:[\"surname:String\"], \"type\":\"NOTUNIQUE\", \"metadata\": { \"ignoreNullValues\" : \"false\"}} ]  } } }");
+
+  }
 
   @Test
   public void testAddMetadataToIndex() {

@@ -33,16 +33,16 @@ import java.io.ObjectOutput;
 import java.util.TimerTask;
 
 /**
- * Distributed task to stop a node.
+ * Distributed task to stop a server.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public class OStopNodeTask extends OAbstractRemoteTask {
+public class OStopServerTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
   public static final int   FACTORYID        = 9;
 
-  public OStopNodeTask() {
+  public OStopServerTask() {
   }
 
   @Override
@@ -74,7 +74,7 @@ public class OStopNodeTask extends OAbstractRemoteTask {
 
   @Override
   public String getName() {
-    return "stop_node";
+    return "stop_server";
   }
 
   @Override

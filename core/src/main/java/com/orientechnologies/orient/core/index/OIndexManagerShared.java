@@ -164,10 +164,13 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
       final Set<String> clustersToIndex = findClustersByIds(clusterIdsToIndex, database);
       if(indexDefinition != null) {
-        if (metadata != null && Boolean.TRUE.equals(metadata.field("ignoreNullValues"))) {
+        Object ignoreNullValues = metadata == null ? null : metadata.field("ignoreNullValues");
+        if (Boolean.TRUE.equals(ignoreNullValues)) {
           indexDefinition.setNullValuesIgnored(true);
-        } else {
+        } else if (Boolean.FALSE.equals(ignoreNullValues)) {
           indexDefinition.setNullValuesIgnored(false);
+        } else {
+          indexDefinition.setNullValuesIgnored(OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean());
         }
       }
 

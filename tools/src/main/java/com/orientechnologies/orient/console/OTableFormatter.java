@@ -504,6 +504,14 @@ public class OTableFormatter {
     if (!hasClass)
       columns.remove("@CLASS");
 
+    if( footer!=null){
+      footer.setLazyLoad(false);
+      // PARSE ALL THE DOCUMENT'S FIELDS
+      for (String fieldName : footer.fieldNames()) {
+        columns.put(fieldName, getColumnSize(fetched, footer, fieldName, columns.get(fieldName)));
+      }
+    }
+
     // COMPUTE MAXIMUM WIDTH
     int width = 0;
     for (Entry<String, Integer> col : columns.entrySet())

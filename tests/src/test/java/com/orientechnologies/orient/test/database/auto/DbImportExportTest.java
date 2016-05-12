@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -36,8 +37,8 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   public static final String NEW_DB_PATH      = "target/test-import";
   public static final String NEW_DB_URL       = "target/test-import";
 
-  private String testPath;
-  private String exportFilePath;
+  private String             testPath;
+  private String             exportFilePath;
 
   @Parameters(value = { "url", "testPath" })
   public DbImportExportTest(@Optional String url, String testPath) {
@@ -51,6 +52,9 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   public void testDbExport() throws IOException {
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
+
+    // ADD A CUSTOM TO THE CLASS
+    database.command(new OCommandSQL("alter class V custom onBeforeCreate=onBeforeCreateItem")).execute();
 
     ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
     export.exportDatabase();

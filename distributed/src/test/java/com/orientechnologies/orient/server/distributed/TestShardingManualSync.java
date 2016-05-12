@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
@@ -73,7 +74,21 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
     try {
       log("Adding vertex to europe node...");
 
+      try {
+        final OrientVertex v2 = graphNoTxEurope.addVertex("class:Client");
+        Assert.fail("Quorum not respected after shutting down node USA");
+      } catch (Exception e) {
+        // OK
+      }
+
+      // CHANGE THE WRITE QUORUM = 1
+      final ODistributedConfiguration dCfg = serverInstance.get(0).server.getDistributedManager()
+          .getDatabaseConfiguration(getDatabaseName());
+      ODocument newCfg = dCfg.getDocument().field("writeQuorum", 1);
+      serverInstance.get(0).server.getDistributedManager().updateCachedDatabaseConfiguration(getDatabaseName(), newCfg, true, true);
+
       final OrientVertex v2 = graphNoTxEurope.addVertex("class:Client");
+
       clusterName = graphNoTxEurope.getRawGraph().getClusterNameById(v2.getIdentity().getClusterId());
 
       log("Restarting USA server...");

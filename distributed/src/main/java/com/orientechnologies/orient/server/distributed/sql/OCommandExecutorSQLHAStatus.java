@@ -24,33 +24,36 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedOutput;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.util.Map;
 
 /**
- * SQL HA REMOVE SERVER command: removes a server from ha configuration.
+ * SQL HA STATUS command: returns the high availability configuration.
  * 
  * @author Luca Garulli
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String NAME           = "HA REMOVE SERVER";
+public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
+  public static final String NAME           = "HA STATUS";
   public static final String KEYWORD_HA     = "HA";
-  public static final String KEYWORD_REMOVE = "REMOVE";
-  public static final String KEYWORD_SERVER = "SERVER";
+  public static final String KEYWORD_STATUS = "STATUS";
 
-  private String             serverName;
+  private boolean servers    = false;
+  private boolean db         = false;
+  private boolean textOutput = false;
 
-  public OCommandExecutorSQLHARemoveServer parse(final OCommandRequest iRequest) {
+  public OCommandExecutorSQLHAStatus parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
 
     final StringBuilder word = new StringBuilder();
@@ -61,20 +64,27 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
       throw new OCommandSQLParsingException("Keyword " + KEYWORD_HA + " not found. Use " + getSyntax(), parserText, oldPos);
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_REMOVE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_REMOVE + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_STATUS))
+      throw new OCommandSQLParsingException("Keyword " + KEYWORD_STATUS + " not found. Use " + getSyntax(), parserText, oldPos);
 
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_SERVER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_SERVER + " not found. Use " + getSyntax(), parserText, oldPos);
-
-    pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
+    pos = nextWord(parserText, parserTextUpperCase, pos, word, false, " \r\n");
     if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <server-name>. Use " + getSyntax(), parserText, pos);
+      throw new OCommandSQLParsingException("Missing parameter. Use " + getSyntax(), parserText, oldPos);
 
-    serverName = word.toString();
-    if (serverName == null)
-      throw new OCommandSQLParsingException("Server name is null. Use " + getSyntax(), parserText, pos);
+    while (pos > -1) {
+      final String option = word.toString();
+
+      if (option.equalsIgnoreCase("-servers"))
+        servers = true;
+      else if (option.equalsIgnoreCase("-db"))
+        db = true;
+      else if (option.equalsIgnoreCase("-all"))
+        servers = db = true;
+      else if (option.equalsIgnoreCase("-output=text"))
+        textOutput = true;
+
+      pos = nextWord(parserText, parserTextUpperCase, pos, word, false, " \r\n");
+    }
 
     return this;
   }
@@ -84,7 +94,7 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
    */
   public Object execute(final Map<Object, Object> iArgs) {
     final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE);
+    database.checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_READ);
 
     final String dbUrl = database.getURL();
 
@@ -98,16 +108,22 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
     final String databaseName = database.getName();
 
     final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
-    if (cfg.removeServer(serverName) != null) {
-      // SERVER REMOVED CORRECTLY
-      dManager.updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
-      return true;
+
+    if (textOutput) {
+      final StringBuilder output = new StringBuilder();
+      if (servers)
+        output.append(ODistributedOutput.formatServerStatus(dManager, dManager.getClusterConfiguration()));
+      if (db)
+        output.append(ODistributedOutput.formatClusterTable(dManager, databaseName, cfg, dManager.getAvailableNodes(databaseName)));
+      return output.toString();
     }
 
-    // PUT THE DATABASE OFFLINE FOR THAT SERVER
-    dManager.setDatabaseStatus(serverName, databaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
-
-    return false;
+    final ODocument output = new ODocument();
+    if (servers)
+      output.field("servers", dManager.getClusterConfiguration(), OType.EMBEDDED);
+    if (db)
+      output.field("database", cfg.getDocument(), OType.EMBEDDED);
+    return output;
   }
 
   @Override
@@ -122,6 +138,6 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
 
   @Override
   public String getSyntax() {
-    return "HA REMOVE SERVER <server-name>";
+    return "HA STATUS [-servers] [-db] [-output=text]";
   }
 }

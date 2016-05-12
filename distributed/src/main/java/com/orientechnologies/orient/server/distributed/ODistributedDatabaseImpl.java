@@ -179,6 +179,28 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
+  public int checkQuorumBeforeReplicate(final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType,
+      final Collection<String> iClusterNames, final Collection<String> iNodes, final ODistributedConfiguration cfg) {
+    int nodesConcurToTheQuorum = 0;
+    if (quorumType == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE) {
+      // ONLY MASTER NODES CONCUR TO THE MINIMUM QUORUM
+      for (String node : iNodes) {
+        if (cfg.getServerRole(node) == ODistributedConfiguration.ROLES.MASTER)
+          nodesConcurToTheQuorum++;
+      }
+
+    } else {
+
+      // ALL NODES CONCUR TO THE MINIMUM QUORUM
+      nodesConcurToTheQuorum = iNodes.size();
+    }
+
+    // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE NODES
+    final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
+
+    return calculateQuorum(quorumType, iClusterNames, cfg, availableNodes, nodesConcurToTheQuorum, true);
+  }
+
   @Override
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
       Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
@@ -200,8 +222,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final ORemoteTask task = iRequest.getTask();
 
       final boolean checkNodesAreOnline = task.isNodeOnlineRequired();
-
-      final int availableNodes = checkNodesAreOnline ? manager.getAvailableNodes(iNodes, databaseName) : iNodes.size();
 
       final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
       if (iRequest.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE) {
@@ -225,9 +245,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           nodesConcurToTheQuorum.add(getLocalNodeName());
       }
 
+      // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE NODES
+      final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
+
       final int expectedResponses = localResult != null ? availableNodes + 1 : availableNodes;
 
-      final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, expectedResponses, nodesConcurToTheQuorum.size(),
+      final int quorum = calculateQuorum(task.getQuorumType(), iClusterNames, cfg, expectedResponses, nodesConcurToTheQuorum.size(),
           checkNodesAreOnline);
 
       final boolean groupByResponse;
@@ -496,15 +519,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return waitLocalNode;
   }
 
-  protected int calculateQuorum(final ODistributedRequest iRequest, final Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int allAvailableNodes, final int masterAvailableNodes,
-      final boolean checkNodesAreOnline) {
+  protected int calculateQuorum(final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType,
+      final Collection<String> clusterNames, final ODistributedConfiguration cfg, final int allAvailableNodes,
+      final int masterAvailableNodes, final boolean checkNodesAreOnline) {
 
     final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();
 
     int quorum = 1;
-
-    final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType = iRequest.getTask().getQuorumType();
 
     switch (quorumType) {
     case NONE:

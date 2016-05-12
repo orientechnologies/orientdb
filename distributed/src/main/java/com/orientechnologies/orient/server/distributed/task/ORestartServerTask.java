@@ -38,11 +38,11 @@ import java.util.TimerTask;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public class ORestartNodeTask extends OAbstractRemoteTask {
+public class ORestartServerTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
   public static final int   FACTORYID        = 10;
 
-  public ORestartNodeTask() {
+  public ORestartServerTask() {
   }
 
   @Override
@@ -50,7 +50,7 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
       final ODatabaseDocumentTx database) throws Exception {
 
     ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-        "restarting server...");
+        "Restarting server...");
 
     iManager.setNodeStatus(ODistributedServerManager.NODE_STATUS.OFFLINE);
 
@@ -61,7 +61,7 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
           iServer.restart();
         } catch (Exception e) {
           ODistributedServerLog.error(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
-              "error on restarting server", e);
+              "Error on restarting server", e);
         }
       }
     }, 1, 0);
@@ -76,7 +76,7 @@ public class ORestartNodeTask extends OAbstractRemoteTask {
 
   @Override
   public String getName() {
-    return "restart_node";
+    return "restart_server";
   }
 
   @Override
