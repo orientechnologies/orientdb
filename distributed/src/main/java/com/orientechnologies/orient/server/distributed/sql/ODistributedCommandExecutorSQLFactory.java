@@ -42,6 +42,7 @@ public class ODistributedCommandExecutorSQLFactory implements OCommandExecutorSQ
     commands.put(OCommandExecutorSQLHASyncDatabase.NAME, OCommandExecutorSQLHASyncDatabase.class);
     commands.put(OCommandExecutorSQLHASyncCluster.NAME, OCommandExecutorSQLHASyncCluster.class);
     commands.put(OCommandExecutorSQLHARemoveServer.NAME, OCommandExecutorSQLHARemoveServer.class);
+    commands.put(OCommandExecutorSQLHAStatus.NAME, OCommandExecutorSQLHAStatus.class);
 
     COMMANDS = Collections.unmodifiableMap(commands);
   }
