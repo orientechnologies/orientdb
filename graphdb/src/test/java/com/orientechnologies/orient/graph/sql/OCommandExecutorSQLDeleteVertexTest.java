@@ -21,6 +21,7 @@ package com.orientechnologies.orient.graph.sql;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.*;
@@ -91,6 +92,17 @@ public class OCommandExecutorSQLDeleteVertexTest {
     List<?> result = db.query(new OSQLSynchQuery("select from User"));
     Assert.assertEquals(result.size(), 0);
 
+  }
+
+  @Test
+  public void testDeleteVertexWithEdgeRid() throws Exception {
+    List<ODocument> edges = db.command(new OCommandSQL("select from e limit 1")).execute();
+    try {
+      final int res = (Integer) db.command(new OCommandSQL("delete vertex [" + edges.get(0).getIdentity() + "]")).execute();
+      Assert.fail("Error on deleting a vertex with a rid of an edge");
+    } catch (Exception e) {
+      // OK
+    }
   }
 
 

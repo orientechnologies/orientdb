@@ -708,9 +708,12 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (!rid.isValid())
       return null;
 
-    ORecord rec = rid.getRecord();
+    final ORecord rec = rid.getRecord();
     if (rec == null || !(rec instanceof ODocument))
       return null;
+
+    if (((ODocument) rec).getSchemaClass().isEdgeType())
+      throw new IllegalArgumentException("Cannot retrieve a vertex with the RID " + rid + " because it is an edge");
 
     return new OrientVertex(this, rec);
   }
@@ -1080,7 +1083,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (doc == null)
       return null;
 
-    if (!doc.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME))
+    if (doc.getSchemaClass().isVertexType())
+      throw new IllegalArgumentException("Cannot retrieve an edge with the RID " + id + " because it is a vertex");
+
+    if (!doc.getSchemaClass().isEdgeType())
       throw new IllegalArgumentException("Class '" + doc.getClassName() + "' is not an edge class");
 
     return new OrientEdge(this, rec);
