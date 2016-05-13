@@ -421,7 +421,7 @@ public class OSQLEngine {
     boolean found = names.contains(commandName);
     int pos = -1;
     while (!found) {
-      pos = OStringSerializerHelper.getLowerIndexOf(candidate, pos + 1, " ", "\n", "\r");
+      pos = OStringSerializerHelper.getLowerIndexOf(candidate, pos + 1, " ", "\n", "\r", "\t", "(", "[");
       if (pos > -1) {
         commandName = candidate.substring(0, pos);
         found = names.contains(commandName);
