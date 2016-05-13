@@ -1832,4 +1832,17 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   }
 
+  @Test
+  public void testLetWithQuotedValue() {
+    OSchemaProxy schema = database.getMetadata().getSchema();
+    OClass v = schema.getClass("V");
+    final OClass cls = schema.createClass("LetWithQuotedValue", v);
+    database.command(new OCommandSQL("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\"")).execute();
+
+    List<OIdentifiable> result = database.query(
+        new OSQLSynchQuery<OIdentifiable>(" select expand($a) let $a = (select from LetWithQuotedValue where name = \"\\\"foo\\\"\")"));
+    Assert.assertEquals(result.size(), 1);
+
+  }
+
 }
