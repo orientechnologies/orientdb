@@ -20,8 +20,10 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -225,11 +227,19 @@ public class OScheduledEvent extends ODocumentWrapper {
           OLogManager.instance().info(this, "Cannot change the status of the scheduled event '%s' executionId=%d, retry %d",
               getName(), nextExecutionId, retry);
 
+        } catch (ORecordNotFoundException e) {
+          OLogManager.instance().info(this, "Scheduled event '%s' executionId=%d not found on database, removing event", getName(),
+              nextExecutionId);
+
+          timer = null;
+          break;
         } catch (Throwable e) {
           // SUSPEND EXECUTION
           OLogManager.instance().error(this, "Error during starting of scheduled event '%s' executionId=%d", e, getName(),
               nextExecutionId);
-          return null;
+
+          timer = null;
+          break;
         }
       }
 
@@ -265,7 +275,9 @@ public class OScheduledEvent extends ODocumentWrapper {
   }
 
   private void bindDb() {
-    this.db = ((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get()).copy();
+    final ODatabaseDocumentInternal tlDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+    if (tlDb != null && !tlDb.isClosed())
+      this.db = ((ODatabaseDocumentTx) tlDb).copy();
   }
 
   private OFunction getFunctionSafe() {
