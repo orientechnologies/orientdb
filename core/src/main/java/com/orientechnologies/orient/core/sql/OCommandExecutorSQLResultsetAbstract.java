@@ -297,7 +297,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
       parserOptionalKeyword("=");
 
-      parserNextWord(false, " =><,\r\n");
+      parserNextWord(false, " =><,\r\n", true);
 
       // PARSE THE VALUE
       String letValueAsString = parserGetLastWord();
