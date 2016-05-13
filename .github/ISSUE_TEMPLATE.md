@@ -8,7 +8,7 @@
 
 ## Important Questions
 
-### Runningn Mode
+### Runninng Mode
 - [ ] Embedded, using PLOCAL access mode
 - [ ] Embedded, using MEMORY access mode
 - [ ] Remote
