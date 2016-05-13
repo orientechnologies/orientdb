@@ -1,11 +1,14 @@
 ## Expected behavior and actual behavior
 
 
+
 ## Steps to reproduce the problem
 
--------------
+
+
 ## Important Questions
-### Mode
+
+### Runningn Mode
 - [ ] Embedded, using PLOCAL access mode
 - [ ] Embedded, using MEMORY access mode
 - [ ] Remote
