@@ -169,7 +169,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     assertEquals("R001", r1onServer3.field("id"));
     assertEquals("Darth", r1onServer3.field("firstName"));
     assertEquals("Vader", r1onServer3.field("lastName"));
-    assertEquals(initialVersion + 1, r1onServer3.field("@version"));
+    assertEquals(Integer.valueOf(initialVersion + 1), r1onServer3.field("@version"));
 
     // shutdown server1
     System.out.println("Network fault on server1.\n");
