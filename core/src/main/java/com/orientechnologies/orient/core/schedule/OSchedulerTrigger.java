@@ -16,20 +16,20 @@
 
 package com.orientechnologies.orient.core.schedule;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
-import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_STATUS;
+import com.orientechnologies.orient.core.schedule.OScheduler.STATUS;
 
 /**
+ * Keeps synchronized the scheduled events in memory.
+ * 
+ * @author Luca Garulli
  * @author henryzhao81-at-gmail.com
  * @since Mar 28, 2013
  */
@@ -61,48 +61,51 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
-    String name = iDocument.field(OScheduler.PROP_NAME);
-    OScheduler scheduler = database.getMetadata().getSchedulerListener().getScheduler(name);
-    if (scheduler != null) {
-      throw new ODatabaseException("Scheduler with name " + name + " already exists in database");
+    String name = iDocument.field(OScheduledEvent.PROP_NAME);
+    final OScheduledEvent scheduler = database.getMetadata().getScheduler().getEvent(name);
+    if (scheduler != null && scheduler.getDocument() != iDocument) {
+      throw new ODatabaseException("Scheduled event with name '" + name + "' already exists in database");
     }
-    boolean start = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean) iDocument.field(OScheduler.PROP_STARTED));
+
+    final boolean start = iDocument.field(OScheduledEvent.PROP_STARTED) == null ? false
+        : ((Boolean) iDocument.field(OScheduledEvent.PROP_STARTED));
     if (start)
-      iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITING.name());
+      iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.WAITING.name());
     else
-      iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
-    iDocument.field(OScheduler.PROP_STARTED, start);
+      iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.STOPPED.name());
+    iDocument.field(OScheduledEvent.PROP_STARTED, start);
     return RESULT.RECORD_CHANGED;
   }
 
   @Override
   public void onRecordAfterCreate(final ODocument iDocument) {
-    OScheduler scheduler = new OScheduler(iDocument);
-    database.getMetadata().getSchedulerListener().addScheduler(scheduler);
+    database.getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(iDocument));
   }
 
   @Override
   public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
     try {
-      boolean isStart = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean) iDocument
-          .field(OScheduler.PROP_STARTED));
-      String schedulerName = iDocument.field(OScheduler.PROP_NAME);
-      OScheduler scheduler = database.getMetadata().getSchedulerListener().getScheduler(schedulerName);
+      boolean isStart = iDocument.field(OScheduledEvent.PROP_STARTED) == null ? false
+          : ((Boolean) iDocument.field(OScheduledEvent.PROP_STARTED));
+      final String schedulerName = iDocument.field(OScheduledEvent.PROP_NAME);
+      OScheduledEvent event = database.getMetadata().getScheduler().getEvent(schedulerName);
+
       if (isStart) {
-        if (scheduler == null) {
-          scheduler = new OScheduler(iDocument);
-          database.getMetadata().getSchedulerListener().addScheduler(scheduler);
+        if (event == null) {
+          event = new OScheduledEvent(iDocument);
+          database.getMetadata().getScheduler().scheduleEvent(event);
         }
-        String currentStatus = iDocument.field(OScheduler.PROP_STATUS);
-        if (currentStatus.equals(SCHEDULER_STATUS.STOPPED.name())) {
-          iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITING.name());
+        String currentStatus = iDocument.field(OScheduledEvent.PROP_STATUS);
+        if (currentStatus.equals(STATUS.STOPPED.name())) {
+          iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.WAITING.name());
         }
       } else {
-        if (scheduler != null) {
-          iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
+        if (event != null) {
+          iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.STOPPED.name());
         }
       }
-      scheduler.fromStream(iDocument);
+      if (event != null)
+        event.fromStream(iDocument);
     } catch (Exception ex) {
       OLogManager.instance().error(this, "Error when updating scheduler - " + ex.getMessage());
       return RESULT.RECORD_NOT_CHANGED;
@@ -112,11 +115,10 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
-    String schedulerName = iDocument.field(OScheduler.PROP_NAME);
-    OScheduler scheduler = null;
-    scheduler = database.getMetadata().getSchedulerListener().getScheduler(schedulerName);
+    final String eventName = iDocument.field(OScheduledEvent.PROP_NAME);
+    OScheduledEvent scheduler = database.getMetadata().getScheduler().getEvent(eventName);
     if (scheduler != null) {
-      database.getMetadata().getSchedulerListener().removeScheduler(scheduler);
+      database.getMetadata().getScheduler().removeEvent(eventName);
     }
     return RESULT.RECORD_CHANGED;
   }

@@ -29,8 +29,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * ETL abstract component.
  */
@@ -72,8 +70,8 @@ public abstract class OAbstractETLComponent implements OETLComponent {
 
   protected String getCommonConfigurationParameters() {
     return "{log:{optional:true,description:'Can be any of [NONE, ERROR, INFO, DEBUG]. Default is INFO'}},"
-           + "{if:{optional:true,description:'Conditional expression. If true, the block is executed, otherwise is skipped'}},"
-           + "{output:{optional:true,description:'Variable name to store the transformer output. If null, the output will be passed to the pipeline as input for the next component.'}}";
+        + "{if:{optional:true,description:'Conditional expression. If true, the block is executed, otherwise is skipped'}},"
+        + "{output:{optional:true,description:'Variable name to store the transformer output. If null, the output will be passed to the pipeline as input for the next component.'}}";
 
   }
 
@@ -91,8 +89,8 @@ public abstract class OAbstractETLComponent implements OETLComponent {
 
       final Object result = ifFilter.evaluate(doc, null, context);
       if (!(result instanceof Boolean))
-        throw new OConfigurationException("'if' expression in Transformer " + getName() + " returned '" + result
-                                          + "' instead of boolean");
+        throw new OConfigurationException(
+            "'if' expression in Transformer " + getName() + " returned '" + result + "' instead of boolean");
 
       return !(Boolean) result;
     }
@@ -143,13 +141,14 @@ public abstract class OAbstractETLComponent implements OETLComponent {
       if (((String) iContent).startsWith("$") && !((String) iContent).startsWith(OSystemVariableResolver.VAR_BEGIN))
         value = context.getVariable(iContent.toString());
       else
-        value = OVariableParser.resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN,
-                                                 OSystemVariableResolver.VAR_END, new OVariableParserListener() {
-              @Override
-              public Object resolve(final String iVariable) {
-                return context.getVariable(iVariable);
-              }
-            });
+        value = OVariableParser
+            .resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN, OSystemVariableResolver.VAR_END,
+                new OVariableParserListener() {
+                  @Override
+                  public Object resolve(final String iVariable) {
+                    return context.getVariable(iVariable);
+                  }
+                });
     } else
       value = iContent;
 

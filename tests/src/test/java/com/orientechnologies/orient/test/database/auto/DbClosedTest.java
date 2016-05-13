@@ -46,10 +46,10 @@ public class DbClosedTest extends DocumentDBBaseTest {
   }
 
   public void testDoubleDb() {
-    OObjectDatabaseTx db = new OObjectDatabaseTx(pool.acquire());
+    ODatabaseDocumentTx db = pool.acquire();
 
     // now I am getting another db instance
-    OObjectDatabaseTx dbAnother = new OObjectDatabaseTx(pool.acquire());
+    ODatabaseDocumentTx dbAnother = pool.acquire();
     dbAnother.close();
 
     db.activateOnCurrentThread();
@@ -57,10 +57,10 @@ public class DbClosedTest extends DocumentDBBaseTest {
   }
 
   public void testDoubleDbWindowsPath() {
-    OObjectDatabaseTx db = new OObjectDatabaseTx(pool.acquire());
+    ODatabaseDocumentTx db = pool.acquire();
 
     // now I am getting another db instance
-    OObjectDatabaseTx dbAnother = new OObjectDatabaseTx(pool.acquire());
+    ODatabaseDocumentTx dbAnother = pool.acquire();
     dbAnother.close();
 
     db.activateOnCurrentThread();

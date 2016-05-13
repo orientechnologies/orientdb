@@ -16,6 +16,10 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
+import static org.junit.Assert.*;
+
+import org.junit.Test;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -24,26 +28,16 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 servers (writeQuorum=majority)
- * - record r1 (version x) is present in full replica on all the servers
- * - server3 is isolated (simulated by: shutdown + opening plocal db)
- * - update of r1 on server3 succeeds, so we have r1* on server3
- * - server3 joins the cluster (restart)
- * - shutdown server1 (so quorum for CRUD operation on r1 will not be reached)
- * - delete request for r1 on server3:
- * - quorum not reached because r1* on server3 is not consistent with r1 on server2 (different values and versions)
- * - delete operation is aborted on server2 and is rolled back on server3 (resurrection)
- * - restart server1 (so quorum for CRUD operation on r1 will be reached)
- * - check consistency: r1 is still present on server1 and server2, and r1* is present on server3.
- * - delete request for r1 on server1:
- * - quorum reached
- * - check consistency: r1 is not present on server1 and server2, and r1* is not present on server3.
+ * It checks the consistency in the cluster with the following scenario: - 3 servers (writeQuorum=majority) - record r1 (version x)
+ * is present in full replica on all the servers - server3 is isolated (simulated by: shutdown + opening plocal db) - update of r1
+ * on server3 succeeds, so we have r1* on server3 - server3 joins the cluster (restart) - shutdown server1 (so quorum for CRUD
+ * operation on r1 will not be reached) - delete request for r1 on server3: - quorum not reached because r1* on server3 is not
+ * consistent with r1 on server2 (different values and versions) - delete operation is aborted on server2 and is rolled back on
+ * server3 (resurrection) - restart server1 (so quorum for CRUD operation on r1 will be reached) - check consistency: r1 is still
+ * present on server1 and server2, and r1* is present on server3. - delete request for r1 on server1: - quorum reached - check
+ * consistency: r1 is not present on server1 and server2, and r1* is not present on server3.
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
@@ -175,7 +169,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     assertEquals("R001", r1onServer3.field("id"));
     assertEquals("Darth", r1onServer3.field("firstName"));
     assertEquals("Vader", r1onServer3.field("lastName"));
-    assertEquals((Integer) (initialVersion + 1), r1onServer3.field("@version"));
+    assertEquals(initialVersion + 1, r1onServer3.field("@version"));
 
     // shutdown server1
     System.out.println("Network fault on server1.\n");

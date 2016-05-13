@@ -97,6 +97,15 @@ public class OCacheEntry {
     usagesCount++;
   }
 
+  /**
+   * DEBUG only !!
+   *
+   * @return Whether lock acquired on current entry
+   */
+  public boolean isLockAcquiredByCurrentThread() {
+    return dataPointer.isLockAcquiredByCurrentThread();
+  }
+
   public void decrementUsages() {
     usagesCount--;
   }

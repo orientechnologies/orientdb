@@ -41,13 +41,12 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityProxy;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryProxy;
-import com.orientechnologies.orient.core.schedule.OSchedulerListener;
-import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
-import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
+import com.orientechnologies.orient.core.schedule.OScheduler;
+import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
+import com.orientechnologies.orient.core.schedule.OSchedulerProxy;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
@@ -62,12 +61,12 @@ public class OMetadataDefault implements OMetadataInternal {
 
   protected int schemaClusterId;
 
-  protected OSchemaProxy            schema;
-  protected OSecurity               security;
-  protected OIndexManagerProxy      indexManager;
-  protected OFunctionLibraryProxy   functionLibrary;
-  protected OSchedulerListenerProxy scheduler;
-  protected OSequenceLibraryProxy   sequenceLibrary;
+  protected OSchemaProxy          schema;
+  protected OSecurity             security;
+  protected OIndexManagerProxy    indexManager;
+  protected OFunctionLibraryProxy functionLibrary;
+  protected OSchedulerProxy       scheduler;
+  protected OSequenceLibraryProxy sequenceLibrary;
 
   protected OCommandCache          commandCache;
   protected static final OProfiler PROFILER = Orient.instance().getProfiler();
@@ -251,10 +250,10 @@ public class OMetadataDefault implements OMetadataInternal {
             return instance;
           }
         }), database);
-    scheduler = new OSchedulerListenerProxy(
-        database.getStorage().getResource(OSchedulerListener.class.getSimpleName(), new Callable<OSchedulerListener>() {
-          public OSchedulerListener call() {
-            final OSchedulerListenerImpl instance = new OSchedulerListenerImpl();
+    scheduler = new OSchedulerProxy(
+        database.getStorage().getResource(OScheduler.class.getSimpleName(), new Callable<OScheduler>() {
+          public OScheduler call() {
+            final OSchedulerImpl instance = new OSchedulerImpl();
             if (iLoad && !(database.getStorage() instanceof OStorageProxy))
               instance.load();
             return instance;
@@ -281,12 +280,16 @@ public class OMetadataDefault implements OMetadataInternal {
       sequenceLibrary.load();
     if (commandCache != null)
       commandCache.clear();
+    if (scheduler!= null)
+      scheduler.load();
   }
 
   /**
    * Closes internal objects
    */
   public void close() {
+    if (scheduler!= null)
+      scheduler.close();
     if (schema != null)
       schema.close();
     if (security != null)
@@ -310,7 +313,7 @@ public class OMetadataDefault implements OMetadataInternal {
     return sequenceLibrary;
   }
 
-  public OSchedulerListener getSchedulerListener() {
+  public OScheduler getScheduler() {
     return scheduler;
   }
 }

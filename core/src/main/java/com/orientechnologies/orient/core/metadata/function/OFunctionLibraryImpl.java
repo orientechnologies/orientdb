@@ -19,13 +19,8 @@
  */
 package com.orientechnologies.orient.core.metadata.function;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
 import com.orientechnologies.orient.core.command.script.OCommandFunction;
@@ -33,12 +28,14 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages stored functions.
@@ -60,6 +57,13 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
   }
 
   public void load() {
+    // COPY CALLBACK IN RAM
+    final Map<String, OCallable<Object, Map<Object, Object>>> callbacks = new HashMap<String, OCallable<Object, Map<Object, Object>>>();
+    for (Map.Entry<String, OFunction> entry : functions.entrySet()) {
+      if (entry.getValue().getCallback() != null)
+        callbacks.put(entry.getKey(), entry.getValue().getCallback());
+    }
+
     functions.clear();
 
     // LOAD ALL THE FUNCTIONS IN MEMORY
@@ -68,7 +72,12 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction order by name"));
       for (ODocument d : result) {
         d.reload();
-        functions.put(d.field("name").toString().toUpperCase(), new OFunction(d));
+        final OFunction f = new OFunction(d);
+
+        // RESTORE CALLBACK IF ANY
+        f.setCallback(callbacks.get(f.getName()));
+
+        functions.put(d.field("name").toString().toUpperCase(), f);
       }
     }
   }

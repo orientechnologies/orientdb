@@ -1,7 +1,5 @@
 package com.orientechnologies.common.concur.lock;
 
-import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.Orient;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,16 +10,15 @@ import java.util.concurrent.atomic.AtomicLong;
  * * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  */
 @SuppressFBWarnings(value = "VO_VOLATILE_REFERENCE_TO_ARRAY")
-public class ODistributedCounter extends OOrientListenerAbstract {
+public class ODistributedCounter {
   private static final int HASH_INCREMENT = 0x61c88647;
-  private static final int MAX_RETRIES = 8;
+  private static final int MAX_RETRIES    = 8;
 
-  private static final AtomicInteger nextHashCode = new AtomicInteger();
-  private final AtomicBoolean           isBusy         = new AtomicBoolean();
-  private final int maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
+  private static final AtomicInteger nextHashCode  = new AtomicInteger();
+  private final        AtomicBoolean isBusy        = new AtomicBoolean();
+  private final        int           maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
 
-
-  private volatile ThreadLocal<Integer> threadHashCode = new ThreadHashCode();
+  private final ThreadLocal<Integer> threadHashCode = new ThreadHashCode();
   private volatile AtomicLong[] counters;
 
   public ODistributedCounter() {
@@ -31,20 +28,6 @@ public class ODistributedCounter extends OOrientListenerAbstract {
     }
 
     counters = cts;
-
-    Orient.instance().registerWeakOrientStartupListener(this);
-    Orient.instance().registerWeakOrientShutdownListener(this);
-  }
-
-  @Override
-  public void onStartup() {
-    if (threadHashCode == null)
-      threadHashCode = new ThreadHashCode();
-  }
-
-  @Override
-  public void onShutdown() {
-    threadHashCode = null;
   }
 
   public void increment() {

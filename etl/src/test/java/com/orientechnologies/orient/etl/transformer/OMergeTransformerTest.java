@@ -41,7 +41,7 @@ public class OMergeTransformerTest extends OETLBaseTest {
     assertThat(inserted.<Object>getProperty("name")).isEqualTo("FirstName");
     assertThat(inserted.<Object>getProperty("num")).isEqualTo(10000);
 
-    //update graph with CSV: avoid nume to be casted to integer forcing string
+    //update graph with CSV: avoid num to be casted to integer forcing string
     process(" {source: { content: { value: 'num,name\n10000,FirstNameUpdated' } }, "
         + "extractor : { csv: {} }," + " transformers: ["
         + "{merge: {  joinFieldName:'num', lookup:'Person.num'}}, "

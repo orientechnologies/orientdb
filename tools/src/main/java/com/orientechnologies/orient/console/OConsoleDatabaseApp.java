@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.*;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
+
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -85,13 +93,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
-import java.io.*;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH        = 150;
@@ -647,6 +648,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     sqlCommand("update", iCommandText, "\nUpdated record(s) '%s' in %f sec(s).\n", true);
     updateDatabaseInfo();
     currentDatabase.getLocalCache().invalidate();
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "High Availability commands", onlineHelp = "SQL-HA")
+  public void ha(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
+    sqlCommand("ha", iCommandText, "\nExecuted '%s' in %f sec(s).\n", true);
   }
 
   @ConsoleCommand(splitInWords = false, description = "Move vertices to another position (class/cluster)", priority = 8, onlineHelp = "SQL-Move-Vertex")

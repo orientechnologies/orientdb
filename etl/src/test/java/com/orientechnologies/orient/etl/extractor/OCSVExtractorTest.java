@@ -380,12 +380,13 @@ public class OCSVExtractorTest extends OETLBaseTest {
 
   @Test
   public void testLinkType() {
-    String cfgJson = "{source: { content: { value: 'id\r\n#1:1'} }, extractor : { csv : {'columns':['id:Link']} }, loader : { test: {} } }";
+    String cfgJson = "{source: { content: { value: 'id\n#1:1'} }, extractor : { csv : {'columns':['id:LINK']} }, loader : { test: {} } }";
     process(cfgJson);
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(1);
     System.out.println(doc.toJSON());
+
     assertThat(doc.<OIdentifiable>field("id")).isEqualTo("#1:1");
 
 
