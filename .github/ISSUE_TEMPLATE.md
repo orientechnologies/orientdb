@@ -3,15 +3,30 @@
 
 ## Steps to reproduce the problem
 
+-------------
+## Important Questions
+### Mode
+- [ ] Embedded, using PLOCAL access mode
+- [ ] Embedded, using MEMORY access mode
+- [ ] Remote
 
-## OrientDB Version, operating system, or hardware.
-- [ ] v2.0.?
-- [ ] v2.1.?
-- [ ] v2.2.?
+### Misc
+- [ ] I have a distributed setup with multiple servers. How many? 
+- [ ] I'm using the Enterprise Edition
 
-## Operating System
+### OrientDB Version
+- [ ] v2.0.x - Please specify last number: 
+- [ ] v2.1.x - Please specify last number: 
+- [ ] v2.2.x - Please specify last number: 
+
+### Operating System
 - [ ] Linux
 - [ ] MacOSX
 - [ ] Windows
 - [ ] Other Unix
 - [ ] Other, name? 
+
+### Java Version
+- [ ] 6
+- [ ] 7
+- [ ] 8
