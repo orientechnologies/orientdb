@@ -168,11 +168,7 @@ public class OAtomicOperation {
     if (cacheEntry.getCachePointer().getDataPointer() != null)
       readCache.release(cacheEntry, writeCache);
     else {
-      if (cacheEntry.isLockAcquiredByCurrrentThread()) {
-        OLogManager.instance().error(this, "Cache entry was released but lock is still acquired");
-      }
-
-      assert !cacheEntry.isLockAcquiredByCurrrentThread();
+      assert !cacheEntry.isLockAcquiredByCurrentThread();
     }
 
   }

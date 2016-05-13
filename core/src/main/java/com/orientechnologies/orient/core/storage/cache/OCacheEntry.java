@@ -92,7 +92,7 @@ public class OCacheEntry {
    *
    * @return Whether lock acquired on current entry
    */
-  public boolean isLockAcquiredByCurrrentThread() {
+  public boolean isLockAcquiredByCurrentThread() {
     return dataPointer.isLockAcquiredByCurrentThread();
   }
 
