@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -193,6 +194,9 @@ public class OAtomicOperation {
 
     if (cacheEntry.getCachePointer().getSharedBuffer() != null)
       readCache.release(cacheEntry, writeCache);
+    else {
+      assert !cacheEntry.isLockAcquiredByCurrentThread();
+    }
   }
 
   public OWALChanges getChanges(long fileId, long pageIndex) {
@@ -384,11 +388,12 @@ public class OAtomicOperation {
         while (filePageChangesIterator.hasNext()) {
           Map.Entry<Long, FilePageChanges> filePageChangesEntry = filePageChangesIterator.next();
           //I assume new pages have everytime changes
-          if(filePageChangesEntry.getValue().changes.hasChanges()) {
+          if (filePageChangesEntry.getValue().changes.hasChanges()) {
             final long pageIndex = filePageChangesEntry.getKey();
             final FilePageChanges filePageChanges = filePageChangesEntry.getValue();
 
-            filePageChanges.lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
+            filePageChanges.lsn = writeAheadLog
+                .log(new OUpdatePageRecord(pageIndex, fileId, operationUnitId, filePageChanges.changes));
           } else
             filePageChangesIterator.remove();
         }
@@ -432,9 +437,9 @@ public class OAtomicOperation {
             if (filePageChanges.pinPage)
               readCache.pinPage(cacheEntry);
 
-            readCache.release(cacheEntry, writeCache);
           } finally {
             cacheEntry.releaseExclusiveLock();
+            readCache.release(cacheEntry, writeCache);
           }
         }
       }

@@ -37,13 +37,13 @@ import java.util.Map;
  */
 @RunWith(JUnit4.class)
 public class OrientGraphNoTxRemoteTest extends GraphTest {
-  private static final String             serverPort     = System.getProperty("orient.server.port", "3080");
-  private static OServer                  server;
-  private static String                   oldOrientDBHome;
+  private static final String serverPort = System.getProperty("orient.server.port", "3080");
+  private static OServer server;
+  private static String  oldOrientDBHome;
 
-  private static String                   serverHome;
+  private static String serverHome;
 
-  private Map<String, OrientGraphNoTx>    currentGraphs  = new HashMap<String, OrientGraphNoTx>();
+  private Map<String, OrientGraphNoTx> currentGraphs = new HashMap<String, OrientGraphNoTx>();
 
   private Map<String, OrientGraphFactory> graphFactories = new HashMap<String, OrientGraphFactory>();
 
@@ -70,6 +70,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
   public static void stopEmbeddedServer() throws Exception {
     server.shutdown();
     Thread.sleep(1000);
+    Orient.instance().closeAllStorages();
 
     if (oldOrientDBHome != null)
       System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
