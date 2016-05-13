@@ -37,9 +37,7 @@ public class OServerConfigAuthenticator extends OSecurityAuthenticatorAbstract {
   // OSecurityComponent
   // Called once the Server is running.
   public void active() {
-    OLogManager.instance().info(this, "******************************************");
-    OLogManager.instance().info(this, "** OServerConfigAuthenticator Is Active **");
-    OLogManager.instance().info(this, "******************************************");
+    OLogManager.instance().info(this, "OServerConfigAuthenticator is active");
   }
 
   // OSecurityAuthenticator
