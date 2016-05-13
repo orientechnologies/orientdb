@@ -59,7 +59,7 @@ public class OBackupConfig {
     configuration.field("backups", new ArrayList<ODocument>());
   }
 
-  public void load() {
+  public OBackupConfig load() {
 
     final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
 
@@ -85,6 +85,7 @@ public class OBackupConfig {
       }
     }
 
+    return this;
   }
 
   public Collection<ODocument> backups() {

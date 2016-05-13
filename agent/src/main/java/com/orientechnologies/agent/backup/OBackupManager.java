@@ -18,11 +18,16 @@
 
 package com.orientechnologies.agent.backup;
 
+import com.orientechnologies.agent.backup.log.OBackupDBLogger;
 import com.orientechnologies.agent.backup.log.OBackupDiskLogger;
 import com.orientechnologies.agent.backup.log.OBackupLog;
 import com.orientechnologies.agent.backup.log.OBackupLogger;
 import com.orientechnologies.agent.backup.strategy.OBackupStrategy;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerLifecycleListener;
+import com.orientechnologies.orient.server.OServerMain;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,18 +39,20 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by Enrico Risa on 22/03/16.
  */
-public class OBackupManager {
+public class OBackupManager implements OServerLifecycleListener {
 
+  private final OServer              server;
   OBackupConfig                      config;
   OBackupLogger                      logger;
   protected Map<String, OBackupTask> tasks = new ConcurrentHashMap<String, OBackupTask>();
 
   public OBackupManager() {
-    logger = new OBackupDiskLogger();
-    config = new OBackupConfig();
-    config.load();
-    initTasks();
 
+    this(OServerMain.server());
+  }
+
+  public OBackupManager(OServer server) {
+    this(server, new OBackupConfig().load());
   }
 
   private void initTasks() {
@@ -57,9 +64,20 @@ public class OBackupManager {
     }
   }
 
-  public OBackupManager(OBackupConfig config) {
+  private void initLogger() {
+    ODatabase<?> oDatabase = server.getSecurity().openSystemDatabase();
+    if (oDatabase != null) {
+      logger = new OBackupDBLogger();
+    } else {
+      logger = new OBackupDiskLogger();
+    }
+  }
+
+  public OBackupManager(OServer server, OBackupConfig config) {
     this.config = config;
-    initTasks();
+
+    this.server = server;
+    server.registerLifecycleListener(this);
   }
 
   public ODocument getConfiguration() {
@@ -120,5 +138,26 @@ public class OBackupManager {
       e.printStackTrace();
     }
     return history;
+  }
+
+  @Override
+  public void onBeforeActivate() {
+
+  }
+
+  @Override
+  public void onAfterActivate() {
+    initLogger();
+    initTasks();
+  }
+
+  @Override
+  public void onBeforeDeactivate() {
+
+  }
+
+  @Override
+  public void onAfterDeactivate() {
+
   }
 }

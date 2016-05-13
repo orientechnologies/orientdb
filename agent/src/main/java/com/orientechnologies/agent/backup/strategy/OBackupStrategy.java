@@ -79,6 +79,7 @@ public abstract class OBackupStrategy {
       logger.log(end);
     } catch (Exception e) {
       OBackupErrorLog error = new OBackupErrorLog(start.getUnitId(), start.getTxId(), getUUID(), getDbName(), getMode().toString());
+      error.setMessage(e.getMessage());
       logger.log(error);
       listener.onEvent(cfg, error);
       return;
@@ -98,8 +99,8 @@ public abstract class OBackupStrategy {
       String url = "plocal:" + server.getDatabaseDirectory() + databaseName;
       database = new ODatabaseDocumentTx(url);
       if (!database.exists()) {
-        database.create();
-        database.incrementalRestore(finished.getPath());
+        database.create(finished.getPath());
+        // database.incrementalRestore(finished.getPath());
       }
     } catch (Exception e) {
 
@@ -115,6 +116,7 @@ public abstract class OBackupStrategy {
     ODatabaseDocumentTx db = null;
     try {
       db = getDatabase();
+      db.activateOnCurrentThread();
       String path = calculatePath();
       String fName = db.incrementalBackup(path);
       OBackupFinishedLog end = endBackup(start.getUnitId(), start.getTxId());

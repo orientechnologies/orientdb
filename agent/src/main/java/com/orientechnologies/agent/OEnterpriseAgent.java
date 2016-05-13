@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.agent;
 
+import com.orientechnologies.agent.backup.OBackupManager;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
@@ -29,13 +30,13 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
@@ -63,6 +64,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     TOKEN = t;
   }
 
+  private OBackupManager backupManager;
+
   public OEnterpriseAgent() {
   }
 
@@ -85,6 +88,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     if (checkLicense()) {
       enabled = true;
       installProfiler();
+      installBackupManager();
+
       installCommands();
 
       installPlugins();
@@ -128,6 +133,11 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       installer.start();
       Orient.instance().addDbLifecycleListener(this);
     }
+  }
+
+  private void installBackupManager() {
+
+    backupManager = new OBackupManager(server);
   }
 
   private void installPlugins() {
@@ -222,7 +232,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.registerStatelessCommand(new OServerCommandAuditing(server));
     listener.registerStatelessCommand(new OServerCommandGetSecurityConfig(server.getSecurity()));
     listener.registerStatelessCommand(new OServerCommandPostSecurityReload(server.getSecurity()));
-    listener.registerStatelessCommand(new OServerCommandBackupManager());
+    listener.registerStatelessCommand(new OServerCommandBackupManager(backupManager));
   }
 
   private void uninstallCommands() {

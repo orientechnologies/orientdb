@@ -35,9 +35,9 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
   private static final String[] NAMES = { "GET|backupManager", "GET|backupManager/*", "POST|backupManager", "POST|backupManager/*",
       "PUT|backupManager/*" };
 
-  public OServerCommandBackupManager() {
+  public OServerCommandBackupManager(OBackupManager manager) {
     super("server.backup");
-    backupManager = new OBackupManager();
+    backupManager = manager;
   }
 
   @Override
@@ -97,7 +97,7 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
 
         String pagePize = iRequest.getParameter("pageSize");
         String page = iRequest.getParameter("page");
-        int pSize = pagePize != null ? Integer.valueOf(pagePize) : 10;
+        int pSize = pagePize != null ? Integer.valueOf(pagePize) : 5;
         int p = page != null ? Integer.valueOf(page) : 0;
         ODocument history;
         if (parts.length == 4) {

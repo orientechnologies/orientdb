@@ -18,17 +18,38 @@
 
 package com.orientechnologies.agent.backup.log;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 /**
  * Created by Enrico Risa on 25/03/16.
  */
 public class OBackupErrorLog extends OBackupLog {
 
-  public OBackupErrorLog(long unitId,long opsId, String uuid, String dbName, String mode) {
-    super(unitId,opsId, uuid, dbName, mode);
+  protected String message;
+
+  public OBackupErrorLog(long unitId, long opsId, String uuid, String dbName, String mode) {
+    super(unitId, opsId, uuid, dbName, mode);
+  }
+
+  @Override
+  public ODocument toDoc() {
+    ODocument document = super.toDoc();
+    document.field("message", message);
+    return document;
+  }
+
+  @Override
+  public void fromDoc(ODocument doc) {
+    super.fromDoc(doc);
+    this.message = doc.field("message");
   }
 
   @Override
   public OBackupLogType getType() {
     return OBackupLogType.BACKUP_ERROR;
+  }
+
+  public void setMessage(String message) {
+    this.message = message;
   }
 }

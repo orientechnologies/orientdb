@@ -24,7 +24,8 @@ package com.orientechnologies.agent.backup;
 public class OMemoryBackUpConfig extends OBackupConfig {
 
   @Override
-  public void load() {
+  public OBackupConfig load() {
+    return this;
   }
 
   @Override
