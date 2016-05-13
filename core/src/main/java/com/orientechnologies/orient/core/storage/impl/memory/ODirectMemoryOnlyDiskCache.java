@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.memory;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -197,6 +198,13 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   public void release(OCacheEntry cacheEntry, OWriteCache writeCache) {
     synchronized (cacheEntry) {
       cacheEntry.decrementUsages();
+
+      if (cacheEntry.isLockAcquiredByCurrrentThread() && cacheEntry.getUsagesCount() == 0) {
+        OLogManager.instance().error(this, "Cache entry was released but lock is still acquired");
+      }
+
+      assert cacheEntry.getUsagesCount() > 0 || !cacheEntry.isLockAcquiredByCurrrentThread();
+
     }
   }
 

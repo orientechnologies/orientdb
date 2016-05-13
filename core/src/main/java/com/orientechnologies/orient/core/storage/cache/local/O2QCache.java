@@ -472,6 +472,12 @@ public class O2QCache implements OReadCache, O2QCacheMXBean {
 
           assert cacheEntry.getUsagesCount() >= 0;
 
+          if (cacheEntry.isLockAcquiredByCurrrentThread() && cacheEntry.getUsagesCount() == 0) {
+            OLogManager.instance().error(this, "Cache entry was released but lock is still acquired");
+          }
+
+          assert cacheEntry.getUsagesCount() > 0 || !cacheEntry.isLockAcquiredByCurrrentThread();
+
           if (cacheEntry.getUsagesCount() == 0 && cacheEntry.isDirty()) {
             flushFuture = writeCache.store(cacheEntry.getFileId(), cacheEntry.getPageIndex(), cacheEntry.getCachePointer());
             cacheEntry.clearDirty();

@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -95,6 +96,8 @@ public class ODurablePage {
   }
 
   protected int getIntValue(int pageOffset) {
+    checkForLock();
+
     if (changesTree == null)
       return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
 
@@ -102,6 +105,8 @@ public class ODurablePage {
   }
 
   protected long getLongValue(int pageOffset) {
+    checkForLock();
+
     if (changesTree == null)
       return OLongSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
 
@@ -109,6 +114,8 @@ public class ODurablePage {
   }
 
   protected byte[] getBinaryValue(int pageOffset, int valLen) {
+    checkForLock();
+
     if (changesTree == null)
       return pagePointer.get(pageOffset + PAGE_PADDING, valLen);
 
@@ -116,6 +123,8 @@ public class ODurablePage {
   }
 
   protected int getObjectSizeInDirectMemory(OBinarySerializer binarySerializer, long offset) {
+    checkForLock();
+
     if (changesTree == null)
       return binarySerializer.getObjectSizeInDirectMemory(pagePointer, offset + PAGE_PADDING);
 
@@ -123,6 +132,8 @@ public class ODurablePage {
   }
 
   protected <T> T deserializeFromDirectMemory(OBinarySerializer<T> binarySerializer, long offset) {
+    checkForLock();
+
     if (changesTree == null)
       return binarySerializer.deserializeFromDirectMemoryObject(pagePointer, offset + PAGE_PADDING);
 
@@ -130,6 +141,8 @@ public class ODurablePage {
   }
 
   protected byte getByteValue(int pageOffset) {
+    checkForLock();
+
     if (changesTree == null)
       return pagePointer.getByte(pageOffset + PAGE_PADDING);
 
@@ -191,6 +204,8 @@ public class ODurablePage {
   }
 
   protected void moveData(int from, int to, int len) throws IOException {
+    checkForLock();
+
     if (len == 0)
       return;
 
@@ -209,8 +224,18 @@ public class ODurablePage {
   }
 
   public void restoreChanges(OWALChangesTree changesTree) {
+    checkForLock();
+
     changesTree.applyChanges(cacheEntry.getCachePointer().getDataPointer());
     cacheEntry.markDirty();
+  }
+
+  private void checkForLock() {
+    if (!cacheEntry.isLockAcquiredByCurrrentThread()) {
+      OLogManager.instance().error(this, "Data is going to be read from non locked page");
+    }
+
+    assert cacheEntry.isLockAcquiredByCurrrentThread();
   }
 
   public OLogSequenceNumber getLsn() {
