@@ -491,6 +491,10 @@ public abstract class OBaseParser {
    * @param iSeparatorChars
    */
   protected String parserNextWord(final boolean iForceUpperCase, final String iSeparatorChars) {
+    return parserNextWord(iForceUpperCase, iSeparatorChars, false);
+  }
+
+  protected String parserNextWord(final boolean iForceUpperCase, final String iSeparatorChars, boolean preserveEscapes) {
     parserPreviousPos = parserCurrentPos;
     parserLastWord.setLength(0);
     parserEscapeSequenceCount = 0;
@@ -532,31 +536,37 @@ public abstract class OBaseParser {
         if (escapePos == -1 && c == '\\' && ((parserCurrentPos + 1) < text2Use.length())) {
           // ESCAPE CHARS
 
+
           if (openGraph == 0) {
             final char nextChar = text2Use.charAt(parserCurrentPos + 1);
-
-            if (nextChar == 'u') {
-              parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
-              parserEscapeSequenceCount += 5;
-            } else {
-              if (nextChar == 'n')
-                parserLastWord.append('\n');
-              else if (nextChar == 'r')
-                parserLastWord.append('\r');
-              else if (nextChar == 't')
-                parserLastWord.append('\t');
-              else if (nextChar == 'b')
-                parserLastWord.append('\b');
-              else if (nextChar == 'f')
-                parserLastWord.append('\f');
-              else {
-                parserLastWord.append(nextChar);
-                parserEscapeSequenceCount++;
-              }
-
+            if(preserveEscapes){
+              parserLastWord.append(c);
+              parserLastWord.append(nextChar);
               parserCurrentPos++;
-            }
+            }else {
 
+              if (nextChar == 'u') {
+                parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
+                parserEscapeSequenceCount += 5;
+              } else {
+                if (nextChar == 'n')
+                  parserLastWord.append('\n');
+                else if (nextChar == 'r')
+                  parserLastWord.append('\r');
+                else if (nextChar == 't')
+                  parserLastWord.append('\t');
+                else if (nextChar == 'b')
+                  parserLastWord.append('\b');
+                else if (nextChar == 'f')
+                  parserLastWord.append('\f');
+                else {
+                  parserLastWord.append(nextChar);
+                  parserEscapeSequenceCount++;
+                }
+
+                parserCurrentPos++;
+              }
+            }
             continue;
           } else
             escapePos = parserCurrentPos;
