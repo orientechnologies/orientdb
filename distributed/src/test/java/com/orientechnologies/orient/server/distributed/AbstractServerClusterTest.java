@@ -200,6 +200,29 @@ public abstract class AbstractServerClusterTest {
 
   }
 
+  protected void executeOnMultipleThreads(final int numOfThreads, final OCallable<Void, Integer> callback) {
+    final Thread[] threads = new Thread[numOfThreads];
+
+    for (int s = 0; s < numOfThreads; ++s) {
+      final int serverId = s;
+      threads[s] = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          callback.call(serverId);
+        }
+      });
+      threads[s].start();
+    }
+
+    for (int s = 0; s < numOfThreads; ++s) {
+      try {
+        threads[s].join();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
   protected void banner(final String iMessage) {
     OLogManager.instance().flush();
     System.out
