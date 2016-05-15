@@ -17,9 +17,10 @@
   *  * For more information: http://www.orientechnologies.com
   *
   */
-package com.orientechnologies.orient.enterprise.channel.binary;
+package com.orientechnologies.orient.client.binary;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 import java.io.IOException;
 

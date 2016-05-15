@@ -17,7 +17,7 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.enterprise.channel.binary;
+package com.orientechnologies.orient.client.binary;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
+import com.orientechnologies.orient.enterprise.channel.binary.*;
 
 import java.io.*;
 import java.lang.reflect.Constructor;

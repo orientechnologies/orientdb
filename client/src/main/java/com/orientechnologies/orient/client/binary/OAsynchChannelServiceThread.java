@@ -17,10 +17,12 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.enterprise.channel.binary;
+package com.orientechnologies.orient.client.binary;
 
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
 import java.io.IOException;
 
