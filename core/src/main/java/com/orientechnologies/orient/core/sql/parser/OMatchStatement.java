@@ -669,7 +669,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       oWhereClause.toString(ctx.getInputParameters(), builder);
       text = "(select from " + className + " where " + builder.toString() + ")";
     }
-    OSQLTarget target = new OSQLTarget(text, ctx, "where");
+    OSQLTarget target = new OSQLTarget(text, ctx);
 
     Iterable targetResult = (Iterable) target.getTargetRecords();
     if (targetResult == null) {

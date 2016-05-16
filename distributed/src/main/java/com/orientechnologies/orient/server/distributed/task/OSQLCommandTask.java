@@ -22,13 +22,11 @@ package com.orientechnologies.orient.server.distributed.task;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.filter.OSQLTarget;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -40,7 +38,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -95,20 +92,17 @@ public class OSQLCommandTask extends OAbstractCommandTask {
             ? ((OCommandExecutorSQLDelegate) executor).getDelegate() : executor;
 
         if (exec instanceof OCommandExecutorSQLSelect && clusters.size() > 0) {
-          final Iterator<? extends OIdentifiable> target = ((OCommandExecutorSQLSelect) exec).getTarget();
-
-          final int[] clusterIds = new int[clusters.size()];
+          // REWRITE THE TARGET TO USE CLUSTERS
+          final StringBuilder buffer = new StringBuilder("cluster:[");
           int i = 0;
-          for (String c : clusters)
-            clusterIds[i++] = database.getClusterIdByName(c);
+          for (String c : clusters) {
+            if (i++ > 0)
+              buffer.append(',');
+            buffer.append(c);
+          }
+          buffer.append("]");
 
-          final ORecordIteratorClusters<ORecord> filteredTarget = new ORecordIteratorClusters<ORecord>(database, database,
-              clusterIds);
-          if (target instanceof ORecordIteratorClusters)
-            filteredTarget.setRange(((ORecordIteratorClusters) target).getBeginRange(),
-                ((ORecordIteratorClusters) target).getEndRange());
-
-          ((OCommandExecutorSQLSelect) exec).setTarget(filteredTarget);
+          ((OCommandExecutorSQLSelect) exec).setParsedTarget(new OSQLTarget(buffer.toString(), exec.getContext()));
         }
 
         if (params != null)
