@@ -47,10 +47,10 @@ import java.util.Random;
  * @author Luigi Dell'Aquila
  */
 public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect implements OLiveQueryListener {
-  public static final String  KEYWORD_LIVE_SELECT = "LIVE SELECT";
-  private ODatabaseDocument   execDb;
-  private int                 token;
-  private static final Random random              = new Random();
+  public static final String KEYWORD_LIVE_SELECT = "LIVE SELECT";
+  private ODatabaseDocument execDb;
+  private int               token;
+  private static final Random random = new Random();
 
   public OCommandExecutorSQLLiveSelect() {
 
@@ -102,23 +102,31 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
 
   public void onLiveResult(final ORecordOperation iOp) {
 
-    final OIdentifiable value = iOp.getRecord();
+    ODatabaseDocumentInternal oldThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (oldThreadLocal == null) {
+      execDb.activateOnCurrentThread();
+    }
+    try {
+      final OIdentifiable value = iOp.getRecord();
 
-    if (!matchesTarget(value)) {
-      return;
+      if (!matchesTarget(value)) {
+        return;
+      }
+      if (!matchesFilters(value)) {
+        return;
+      }
+      if (!checkSecurity(value)) {
+        return;
+      }
+    } finally {
+      if (oldThreadLocal == null) {
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
+      }
     }
-    if (!matchesFilters(value)) {
-      return;
-    }
-    if (!checkSecurity(value)) {
-      return;
-    }
-
     final OCommandResultListener listener = request.getResultListener();
     if (listener instanceof OLiveResultListener) {
       execInSeparateDatabase(new OCallable() {
-        @Override
-        public Object call(Object iArgument) {
+        @Override public Object call(Object iArgument) {
           execDb.activateOnCurrentThread();
           ((OLiveResultListener) listener).onLiveResult(token, iOp);
           return null;
@@ -191,7 +199,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
       final String clusterName = execDb.getClusterNameById(value.getIdentity().getClusterId());
       if (clusterName != null) {
         for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-          if (clusterName.equals(cluster)) {
+          if (clusterName.equalsIgnoreCase(cluster)) {//make it case insensitive in 3.0?
             return true;
           }
         }
@@ -205,8 +213,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     execDb.close();
   }
 
-  @Override
-  public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
+  @Override public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
     final OCommandRequestText requestText = (OCommandRequestText) iRequest;
     final String originalText = requestText.getText();
     final String remainingText = requestText.getText().trim().substring(5).trim();
@@ -218,8 +225,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     }
   }
 
-  @Override
-  public QUORUM_TYPE getQuorumType() {
+  @Override public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.NONE;
   }
 
