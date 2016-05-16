@@ -33,6 +33,7 @@ public class SBTreeLeafBucketTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, true,
         OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
@@ -45,6 +46,7 @@ public class SBTreeLeafBucketTest {
     Assert.assertEquals(treeBucket.getLeftSibling(), -1);
     Assert.assertEquals(treeBucket.getRightSibling(), -1);
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -63,6 +65,7 @@ public class SBTreeLeafBucketTest {
         .createPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     cachePointer.incrementReferrer();
 
@@ -86,6 +89,7 @@ public class SBTreeLeafBucketTest {
       Assert.assertEquals(bucketIndex, (int) keyIndexEntry.getValue());
     }
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -104,6 +108,7 @@ public class SBTreeLeafBucketTest {
         .createPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     cachePointer.incrementReferrer();
 
@@ -134,6 +139,7 @@ public class SBTreeLeafBucketTest {
       Assert.assertEquals(keyIndexEntry.getKey(), treeBucket.getKey(keyIndexEntry.getValue()));
     }
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -154,6 +160,7 @@ public class SBTreeLeafBucketTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, true,
         OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
@@ -211,6 +218,7 @@ public class SBTreeLeafBucketTest {
     Assert.assertEquals(treeBucket.size(), originalSize);
     Assert.assertEquals(addedKeys, keysToAdd);
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -231,6 +239,7 @@ public class SBTreeLeafBucketTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, true,
         OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
@@ -292,6 +301,7 @@ public class SBTreeLeafBucketTest {
     Assert.assertEquals(treeBucket.size(), originalSize);
     Assert.assertEquals(addedKeys, keysToAdd);
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -302,12 +312,14 @@ public class SBTreeLeafBucketTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, true,
         OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
     treeBucket.setLeftSibling(123);
     Assert.assertEquals(treeBucket.getLeftSibling(), 123);
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -318,12 +330,14 @@ public class SBTreeLeafBucketTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, true,
         OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
     treeBucket.setRightSibling(123);
     Assert.assertEquals(treeBucket.getRightSibling(), 123);
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 }

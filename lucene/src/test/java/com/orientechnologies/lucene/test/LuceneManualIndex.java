@@ -18,13 +18,19 @@
 
 package com.orientechnologies.lucene.test;
 
+import com.orientechnologies.lucene.OLuceneIndexFactory;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import java.util.List;
 
@@ -49,6 +55,7 @@ public class LuceneManualIndex extends BaseLuceneTest {
 
   }
 
+  @Test
   public void testManualIndex() {
 
     OIndex<?> manual = databaseDocumentTx.getMetadata().getIndexManager().getIndex("manual");
@@ -60,6 +67,7 @@ public class LuceneManualIndex extends BaseLuceneTest {
     Assert.assertEquals(docs.size(), 1);
   }
 
+  @Test
   public void testManualIndexWitKeys() {
 
     OIndex<?> manual = databaseDocumentTx.getMetadata().getIndexManager().getIndex("manual");
@@ -74,6 +82,36 @@ public class LuceneManualIndex extends BaseLuceneTest {
     Assert.assertEquals(docs.size(), 1);
 
     docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:manual where key LUCENE '(k1:London)'")).execute();
+    Assert.assertEquals(docs.size(), 1);
+
+  }
+
+  @Test
+  public void shouldCreateManualIndexWithJavaApi() throws Exception {
+
+    ODocument meta = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
+    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager()
+        .createIndex("apiManual", OClass.INDEX_TYPE.FULLTEXT.toString(),
+            new OSimpleKeyIndexDefinition(1, OType.STRING, OType.STRING), null, null, meta, OLuceneIndexFactory.LUCENE_ALGORITHM);
+
+    databaseDocumentTx.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Enrico','London'],#5:0) "))
+        .execute();
+    databaseDocumentTx.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Luca','Rome'],#5:0) ")).execute();
+    databaseDocumentTx.command(new OCommandSQL("insert into index:apiManual (key,rid) values(['Luigi','Rome'],#5:0) ")).execute();
+
+    Assert.assertEquals(index.getSize(), 3);
+
+    List<ODocument> docs = databaseDocumentTx
+        .command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k0:Enrico)'")).execute();
+    Assert.assertEquals(docs.size(), 1);
+
+    docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k0:Luca)'")).execute();
+    Assert.assertEquals(docs.size(), 1);
+
+    docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k1:Rome)'")).execute();
+    Assert.assertEquals(docs.size(), 2);
+
+    docs = databaseDocumentTx.command(new OSQLSynchQuery("select from index:apiManual where key LUCENE '(k1:London)'")).execute();
     Assert.assertEquals(docs.size(), 1);
 
   }

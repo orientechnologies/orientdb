@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
@@ -1374,7 +1375,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // END OF RECORD ENTRIES
           network.writeByte((byte) 0);
 
-          // SEND INDEX ENTRIES
+          // OLD SEND INDEX ENTRIES, NON NEEDED, CALCULATED SERVER SIDE
           network.writeBytes(iTx.getIndexChanges().toStream());
         } finally {
           endRequest(network);
@@ -1855,6 +1856,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     OChannelBinaryAsynchClient network = null;
     String currentURL = getCurrentServerURL();
+    int retryCountDown = connectionRetry;
     do {
       do {
         try {
@@ -1917,7 +1919,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             engine.getConnectionManager().remove(network);
             network = null;
           }
-
+          if (retryCountDown <= 0)
+            throw e;
           OLogManager.instance().error(this, "Cannot open database with url " + currentURL, e);
 
         } catch (OException e) {
@@ -1935,9 +1938,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
             network = null;
           }
+          if (retryCountDown <= 0)
+            throw OException.wrapException(new OStorageException("error opening database"), e);
 
           OLogManager.instance().error(this, "Cannot open database url=" + currentURL, e);
         }
+        retryCountDown--;
       } while (engine.getConnectionManager().getReusableConnections(currentURL) > 0);
 
       currentURL = useNewServerURL(currentURL);
@@ -2129,12 +2135,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         OLogManager.instance().debug(this, "Error during acquiring of connection to URL " + lastURL, e);
         network = null;
         cause = e;
+        if (cause instanceof OInterruptedException)
+          throw (OInterruptedException) cause;
       }
 
       if (network == null) {
         lastURL = useNewServerURL(lastURL);
         if (lastURL == null) {
           parseServerURLs();
+          if (cause instanceof OInterruptedException)
+            throw (OInterruptedException) cause;
           if (cause instanceof IOException)
             throw (IOException) cause;
           throw new OIOException("Cannot open a connection to remote server: " + iCurrentURL, cause);

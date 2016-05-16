@@ -1710,9 +1710,6 @@ OExpression Expression():
         LOOKAHEAD( Rid() )
         jjtThis.value = Rid()
         |
-        LOOKAHEAD( InputParameter() )
-        jjtThis.value = InputParameter()
-        |
         LOOKAHEAD( MathExpression() )
         jjtThis.value = MathExpression()
         |

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -166,6 +167,10 @@ public class OAtomicOperation {
 
     if (cacheEntry.getCachePointer().getDataPointer() != null)
       readCache.release(cacheEntry, writeCache);
+    else {
+      assert !cacheEntry.isLockAcquiredByCurrentThread();
+    }
+
   }
 
   public OWALChangesTree getChangesTree(long fileId, long pageIndex) {

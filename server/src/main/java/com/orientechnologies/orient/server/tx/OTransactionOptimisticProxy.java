@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.tx;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -36,6 +32,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
@@ -48,6 +45,10 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
@@ -111,9 +112,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           if (rec == null)
             toThrow = new OConcurrentModificationException(rid.getIdentity(), new OSimpleVersion(-1), deleteVersion,
                 ORecordOperation.DELETED);
-
-          ORecordInternal.setVersion(rec, deleteVersion.getCounter());
-          entry.setRecord(rec);
+          else {
+            ORecordInternal.setVersion(rec, deleteVersion.getCounter());
+            entry.setRecord(rec);
+          }
           break;
 
         default:
@@ -130,7 +132,6 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       if (lastTxStatus == -1)
         // ABORT TX
         throw new OTransactionAbortedException("Transaction aborted by the client");
-
 
       final ODocument remoteIndexEntries = new ODocument(channel.readBytes());
       fillIndexOperations(remoteIndexEntries);
@@ -156,9 +157,16 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
             entry.getValue().record = loadedRecord;
 
             // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW VERSIONS TO SEND BACK TO THE REQUESTER
-            updatedRecords.put((ORecordId) entry.getKey(), entry.getValue().getRecord());
+
+          } else if (ORecordInternal.getRecordType(loadedRecord) == ORecordBytes.RECORD_TYPE
+              && ORecordInternal.getRecordType(loadedRecord) == ORecordInternal.getRecordType(record)) {
+
+
+            ORecordInternal.fill(loadedRecord, record.getIdentity(), record.getRecordVersion(), record.toStream(), true);
 
           }
+
+          updatedRecords.put((ORecordId) entry.getKey(), entry.getValue().getRecord());
         }
 
         addRecord(entry.getValue().getRecord(), entry.getValue().type, null);

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.memory;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointerFactory;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -47,17 +48,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 6/24/14
  */
 public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements OReadCache, OWriteCache {
-  private final Lock                               metadataLock  = new ReentrantLock();
+  private final Lock metadataLock = new ReentrantLock();
 
-  private final Map<String, Integer>               fileNameIdMap = new HashMap<String, Integer>();
-  private final Map<Integer, String>               fileIdNameMap = new HashMap<Integer, String>();
+  private final Map<String, Integer> fileNameIdMap = new HashMap<String, Integer>();
+  private final Map<Integer, String> fileIdNameMap = new HashMap<Integer, String>();
 
-  private final ConcurrentMap<Integer, MemoryFile> files         = new ConcurrentHashMap<Integer, MemoryFile>();
+  private final ConcurrentMap<Integer, MemoryFile> files = new ConcurrentHashMap<Integer, MemoryFile>();
 
-  private int                                      counter       = 0;
+  private int counter = 0;
 
-  private final int                                pageSize;
-  private final int                                id;
+  private final int pageSize;
+  private final int id;
 
   public ODirectMemoryOnlyDiskCache(int pageSize, int id) {
     this.pageSize = pageSize;
@@ -197,6 +198,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   public void release(OCacheEntry cacheEntry, OWriteCache writeCache) {
     synchronized (cacheEntry) {
       cacheEntry.decrementUsages();
+
+      assert cacheEntry.getUsagesCount() > 0 || !cacheEntry.isLockAcquiredByCurrentThread();
     }
   }
 
@@ -363,13 +366,13 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   private static final class MemoryFile {
-    private final int                                      id;
-    private final int                                      storageId;
+    private final int id;
+    private final int storageId;
 
-    private final int                                      pageSize;
-    private final ReadWriteLock                            clearLock = new ReentrantReadWriteLock();
+    private final int pageSize;
+    private final ReadWriteLock clearLock = new ReentrantReadWriteLock();
 
-    private final ConcurrentSkipListMap<Long, OCacheEntry> content   = new ConcurrentSkipListMap<Long, OCacheEntry>();
+    private final ConcurrentSkipListMap<Long, OCacheEntry> content = new ConcurrentSkipListMap<Long, OCacheEntry>();
 
     private MemoryFile(int storageId, int id, int pageSize) {
       this.storageId = storageId;
@@ -401,8 +404,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
           }
 
           final ODirectMemoryPointer directMemoryPointer = ODirectMemoryPointerFactory.instance()
-              .createPointer(new byte[pageSize + 2
-              * ODurablePage.PAGE_PADDING]);
+              .createPointer(new byte[pageSize + 2 * ODurablePage.PAGE_PADDING]);
           final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1), id, index);
           cachePointer.incrementReferrer();
 

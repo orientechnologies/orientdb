@@ -662,7 +662,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           return record;
         }
       }
-    } else if (link instanceof ORecord) {
+    } else if (link instanceof OIdentifiable) {
+      link = link.getRecord();
       ORID rid = link.getIdentity();
       if (((ORecord) link).isDirty() || (rid.isTemporary())) {
         if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null)

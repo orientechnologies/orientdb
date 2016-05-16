@@ -649,6 +649,13 @@ public class OSelectStatementTest {
 
   }
 
+  @Test
+  public void testParamConcat(){
+    //issue #6049
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? ");
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? + '%'");
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like \"%\" + ? + '%'");
+  }
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

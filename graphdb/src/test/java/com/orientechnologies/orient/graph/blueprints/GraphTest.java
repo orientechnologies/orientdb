@@ -18,25 +18,13 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
-import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.Predicate;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.impls.orient.*;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -48,9 +36,9 @@ import java.util.List;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-public class GraphTests {
+public class GraphTest {
 
-  public static final String URL = "memory:" + GraphTests.class.getSimpleName();
+  public static final String URL = "memory:" + GraphTest.class.getSimpleName();
 
   @BeforeClass
   public static void beforeClass() {
@@ -279,31 +267,6 @@ public class GraphTests {
     }
   }
 
-  @Test
-  public void testPropertyWithDash() {
-    OrientGraphFactory orientGraphFactory = new OrientGraphFactory("memory:GraphTestsTestPropertyWithDash");
-    final OrientGraphNoTx graphDbNoTx = orientGraphFactory.getNoTx();
-    try {
-      graphDbNoTx.addVertex("class:Test");
-      OrientVertexType vertex = graphDbNoTx.getVertexType("Test");
-      if (vertex.getProperty("vdevicedataKey") == null) {
-        vertex.createProperty("vdevicedataKey", OType.STRING);
-      }
-
-      try {
-
-        if (vertex.getProperty("vdevice-dataKey") == null) {
-          vertex.createProperty("vdevice-dataKey", OType.STRING);
-        }
-        fail();
-      } catch (OSchemaException e) {
-
-      }
-    } finally {
-      graphDbNoTx.shutdown();
-      orientGraphFactory.close();
-    }
-  }
 
   @Test
   public void testCustomPredicate() {
@@ -334,6 +297,18 @@ public class GraphTests {
     } finally {
       g.shutdown();
       orientGraphFactory.close();
+    }
+  }
+
+  @Test
+  public void testIndexCreateDropCreate() {
+    OrientGraph g = new OrientGraph(URL, "admin", "admin");
+    try {
+      g.createIndex("IndexCreateDropCreate", Vertex.class);
+      g.dropIndex("IndexCreateDropCreate");
+      g.createIndex("IndexCreateDropCreate", Vertex.class);
+    } finally {
+      g.shutdown();
     }
   }
 }

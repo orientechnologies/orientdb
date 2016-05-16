@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.cache;
 
+import java.util.Stack;
+
 /**
  * @author Andrey Lomakin
  * @since 7/23/13
@@ -27,11 +29,11 @@ package com.orientechnologies.orient.core.storage.cache;
 public class OCacheEntry {
   OCachePointer dataPointer;
 
-  final long    fileId;
-  final long    pageIndex;
+  final long fileId;
+  final long pageIndex;
 
-  boolean       dirty;
-  int           usagesCount;
+  boolean dirty;
+  int     usagesCount;
 
   public OCacheEntry(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
     this.fileId = fileId;
@@ -83,6 +85,15 @@ public class OCacheEntry {
 
   public void acquireSharedLock() {
     dataPointer.acquireSharedLock();
+  }
+
+  /**
+   * DEBUG only !!
+   *
+   * @return Whether lock acquired on current entry
+   */
+  public boolean isLockAcquiredByCurrentThread() {
+    return dataPointer.isLockAcquiredByCurrentThread();
   }
 
   public void releaseSharedLock() {

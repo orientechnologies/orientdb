@@ -1219,6 +1219,12 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 1);
   }
 
+  public void testParamConcat() {
+    //issue #6049
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from TestParams where surname like ? + '%'"), "fo");
+    assertEquals(results.size(), 1);
+  }
+
   public void testEvalLong() {
     //http://www.prjhub.com/#/issues/6472
     List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT EVAL(\"86400000 * 26\") AS value"));

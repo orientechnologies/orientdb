@@ -10,35 +10,21 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  */
-public class ODistributedCounter extends OOrientListenerAbstract {
-  private static final int              HASH_INCREMENT = 0x61c88647;
+public class ODistributedCounter {
+  private static final int HASH_INCREMENT = 0x61c88647;
 
-  private static final AtomicInteger    nextHashCode   = new AtomicInteger();
-  private final AtomicBoolean           poolBusy       = new AtomicBoolean();
-  private final int                     maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
-  private final int                     MAX_RETRIES    = 8;
+  private static final AtomicInteger nextHashCode  = new AtomicInteger();
+  private final        AtomicBoolean poolBusy      = new AtomicBoolean();
+  private final        int           maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
+  private final        int           MAX_RETRIES   = 8;
 
-  private volatile ThreadLocal<Integer> threadHashCode = new ThreadHashCode();
+  private final    ThreadLocal<Integer> threadHashCode = new ThreadHashCode();
   private volatile AtomicLong[]         counters       = new AtomicLong[2];
 
   public ODistributedCounter() {
     for (int i = 0; i < counters.length; i++) {
       counters[i] = new AtomicLong();
     }
-
-    Orient.instance().registerWeakOrientStartupListener(this);
-    Orient.instance().registerWeakOrientShutdownListener(this);
-  }
-
-  @Override
-  public void onStartup() {
-    if (threadHashCode == null)
-      threadHashCode = new ThreadHashCode();
-  }
-
-  @Override
-  public void onShutdown() {
-    threadHashCode = null;
   }
 
   public void increment() {
