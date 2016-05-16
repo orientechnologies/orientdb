@@ -1085,7 +1085,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (doc == null)
       return null;
 
-    final OClass cls = ((ODocument) rec).getSchemaClass();
+    final OClass cls = doc.getSchemaClass();
     if (cls != null) {
       if (cls.isVertexType())
         throw new IllegalArgumentException("Cannot retrieve an edge with the RID " + id + " because it is a vertex");
