@@ -103,6 +103,5 @@ public class OSchedulerImpl implements OScheduler {
     f.createProperty(OScheduledEvent.PROP_FUNC, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME), true)
         .setMandatory(true).setNotNull(true);
     f.createProperty(OScheduledEvent.PROP_STARTTIME, OType.DATETIME, (OType) null, true);
-    f.createProperty(OScheduledEvent.PROP_STARTED, OType.BOOLEAN, (OType) null, true);
   }
 }
