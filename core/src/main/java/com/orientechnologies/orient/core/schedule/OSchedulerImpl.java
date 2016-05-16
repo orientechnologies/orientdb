@@ -40,9 +40,13 @@ public class OSchedulerImpl implements OScheduler {
   }
 
   @Override
-  public void scheduleEvent(final OScheduledEvent scheduler) {
-    if (events.putIfAbsent(scheduler.getName(), scheduler) == null)
-      scheduler.schedule();
+  public void scheduleEvent(final OScheduledEvent event) {
+    if (event.getDocument().getIdentity().isNew())
+      // FIST TIME: SAVE IT
+      event.save();
+
+    if (events.putIfAbsent(event.getName(), event) == null)
+      event.schedule();
   }
 
   @Override
@@ -65,15 +69,15 @@ public class OSchedulerImpl implements OScheduler {
 
   @Override
   public void load() {
-    events.clear();
-
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     if (db.getMetadata().getSchema().existsClass(OScheduledEvent.CLASS_NAME)) {
       final Iterable<ODocument> result = db.browseClass(OScheduledEvent.CLASS_NAME);
       for (ODocument d : result) {
-        d.reload();
-        this.scheduleEvent(new OScheduledEvent(d));
+        final OScheduledEvent event = new OScheduledEvent(d);
+
+        if (events.putIfAbsent(event.getName(), event) == null)
+          this.scheduleEvent(event);
       }
     }
   }

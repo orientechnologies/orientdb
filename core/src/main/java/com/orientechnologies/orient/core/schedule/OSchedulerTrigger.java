@@ -62,8 +62,8 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
   @Override
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
     String name = iDocument.field(OScheduledEvent.PROP_NAME);
-    final OScheduledEvent scheduler = database.getMetadata().getScheduler().getEvent(name);
-    if (scheduler != null && scheduler.getDocument() != iDocument) {
+    final OScheduledEvent event = database.getMetadata().getScheduler().getEvent(name);
+    if (event != null && event.getDocument() != iDocument) {
       throw new ODatabaseException("Scheduled event with name '" + name + "' already exists in database");
     }
 

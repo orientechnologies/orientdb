@@ -20,6 +20,14 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.*;
+import java.util.logging.Level;
+
+import org.apache.commons.configuration.Configuration;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
@@ -60,13 +68,6 @@ import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
-import org.apache.commons.configuration.Configuration;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.*;
-import java.util.logging.Level;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -712,7 +713,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (rec == null || !(rec instanceof ODocument))
       return null;
 
-    if (((ODocument) rec).getSchemaClass().isEdgeType())
+    final OClass cls = ((ODocument) rec).getSchemaClass();
+    if (cls != null && cls.isEdgeType())
       throw new IllegalArgumentException("Cannot retrieve a vertex with the RID " + rid + " because it is an edge");
 
     return new OrientVertex(this, rec);
@@ -1083,11 +1085,14 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (doc == null)
       return null;
 
-    if (doc.getSchemaClass().isVertexType())
-      throw new IllegalArgumentException("Cannot retrieve an edge with the RID " + id + " because it is a vertex");
+    final OClass cls = ((ODocument) rec).getSchemaClass();
+    if (cls != null) {
+      if (cls.isVertexType())
+        throw new IllegalArgumentException("Cannot retrieve an edge with the RID " + id + " because it is a vertex");
 
-    if (!doc.getSchemaClass().isEdgeType())
-      throw new IllegalArgumentException("Class '" + doc.getClassName() + "' is not an edge class");
+      if (!cls.isEdgeType())
+        throw new IllegalArgumentException("Class '" + doc.getClassName() + "' is not an edge class");
+    }
 
     return new OrientEdge(this, rec);
   }
