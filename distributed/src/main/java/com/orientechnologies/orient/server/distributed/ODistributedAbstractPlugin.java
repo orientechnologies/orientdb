@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
@@ -69,6 +60,15 @@ import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHA
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -633,10 +633,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         throw new ODistributedException("Cannot find node '" + rNodeName + "'");
 
       ODocument cfg = getNodeConfigurationByUuid(member.getUuid());
-      while (cfg == null) {
+      while (cfg == null || cfg.field("listeners") == null ) {
         try {
           Thread.sleep(100);
           cfg = getNodeConfigurationByUuid(member.getUuid());
+
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           throw new ODistributedException("Cannot find node '" + rNodeName + "'");
