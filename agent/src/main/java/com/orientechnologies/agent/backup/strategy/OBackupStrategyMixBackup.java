@@ -21,8 +21,8 @@ package com.orientechnologies.agent.backup.strategy;
 import com.orientechnologies.agent.backup.OBackupConfig;
 import com.orientechnologies.agent.backup.log.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.schedule.OCronExpression;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
-import com.orientechnologies.orient.server.schedule.CronExpression;
 
 import java.io.File;
 import java.io.IOException;
@@ -86,8 +86,8 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
       ODocument incremental = (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.INCREMENTAL_BACKUP);
       String whenIncremental = incremental.field(OBackupConfig.WHEN);
       try {
-        CronExpression eFull = new CronExpression(whenFull);
-        CronExpression eIncremental = new CronExpression(whenIncremental);
+        OCronExpression eFull = new OCronExpression(whenFull);
+        OCronExpression eIncremental = new OCronExpression(whenIncremental);
         Date now = new Date();
 
         Date nextFull = eFull.getNextValidTimeAfter(now);

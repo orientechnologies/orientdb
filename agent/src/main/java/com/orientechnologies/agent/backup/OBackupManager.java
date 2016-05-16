@@ -23,7 +23,6 @@ import com.orientechnologies.agent.backup.log.OBackupDiskLogger;
 import com.orientechnologies.agent.backup.log.OBackupLog;
 import com.orientechnologies.agent.backup.log.OBackupLogger;
 import com.orientechnologies.agent.backup.strategy.OBackupStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
@@ -65,8 +64,7 @@ public class OBackupManager implements OServerLifecycleListener {
   }
 
   private void initLogger() {
-    ODatabase<?> oDatabase = server.getSecurity().openSystemDatabase();
-    if (oDatabase != null) {
+    if (server.getSystemDatabase().exists()) {
       logger = new OBackupDBLogger();
     } else {
       logger = new OBackupDiskLogger();

@@ -18,15 +18,14 @@
 
 package com.orientechnologies.agent.backup.log;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.OSystemDatabase;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,40 +50,35 @@ public class OBackupDBLogger implements OBackupLogger {
 
   private void initLogger() {
 
-    ODatabase<?> oDatabase = getDatabase();
+    getDatabase().runBoxed(new OCallable<Void, ODatabase>() {
+      @Override
+      public Void call(ODatabase db) {
 
-    try {
-      OSchema schema = oDatabase.getMetadata().getSchema();
+        OSchema schema = db.getMetadata().getSchema();
 
-      if (!schema.existsClass(CLASS_NAME)) {
-        OClass clazz = schema.createClass(CLASS_NAME);
-        clazz.createProperty("unitId", OType.LONG);
-        clazz.createProperty("mode", OType.STRING);
-        clazz.createProperty("txId", OType.LONG);
-        clazz.createProperty("uuid", OType.STRING);
-        clazz.createProperty("dbName", OType.STRING);
-        clazz.createProperty("timestamp", OType.LONG);
+        if (!schema.existsClass(CLASS_NAME)) {
+          OClass clazz = schema.createClass(CLASS_NAME);
+          clazz.createProperty("unitId", OType.LONG);
+          clazz.createProperty("mode", OType.STRING);
+          clazz.createProperty("txId", OType.LONG);
+          clazz.createProperty("uuid", OType.STRING);
+          clazz.createProperty("dbName", OType.STRING);
+          clazz.createProperty("timestamp", OType.LONG);
 
+        }
+        return null;
       }
-    } finally {
-      oDatabase.close();
-    }
+    }, "");
 
   }
 
   @Override
   public void log(OBackupLog log) {
 
-    ODatabase oDatabase = getDatabase();
-    oDatabase.activateOnCurrentThread();
     ODocument document = log.toDoc();
     document.setClassName(CLASS_NAME);
 
-    try {
-      oDatabase.save(document);
-    } finally {
-      oDatabase.close();
-    }
+    getDatabase().save(document, "");
 
   }
 
@@ -103,19 +97,18 @@ public class OBackupDBLogger implements OBackupLogger {
         put("uuid", uuid);
       }
     };
-    ODatabaseDocumentInternal old = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
-    try {
-      ODatabase database = getDatabase();
-      List<ODocument> results = database.command(new OCommandSQL(query)).execute(params);
-      if (results.size() > 0) {
-        return factory.fromDoc(results.get(0));
+    List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
+      @Override
+      public Object call(Object iArgument) {
+        return iArgument;
       }
-    } finally {
-      if (old != null) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(old);
-      }
+    }, "", query, params);
+
+    if (results.size() > 0) {
+      return factory.fromDoc(results.get(0));
     }
+
     return null;
   }
 
@@ -132,7 +125,8 @@ public class OBackupDBLogger implements OBackupLogger {
   }
 
   @Override
-  public List<OBackupLog> findByUUIDAndUnitId(final String uuid, final Long unitId, int page, final int pageSize) throws IOException {
+  public List<OBackupLog> findByUUIDAndUnitId(final String uuid, final Long unitId, int page, final int pageSize)
+      throws IOException {
     List<OBackupLog> logs = new ArrayList<OBackupLog>();
 
     String query = String.format("select * from %s where uuid = :uuid and unitId = :unitId  order by timestamp desc ", CLASS_NAME);
@@ -142,12 +136,15 @@ public class OBackupDBLogger implements OBackupLogger {
         put("unitId", unitId);
       }
     };
-    List<ODocument> results = getDatabase().command(new OCommandSQL(query)).execute(params);
-
+    List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
+      @Override
+      public Object call(Object iArgument) {
+        return iArgument;
+      }
+    }, "", query, params);
     for (ODocument result : results) {
       logs.add(factory.fromDoc(result));
     }
-
     return logs;
   }
 
@@ -161,8 +158,15 @@ public class OBackupDBLogger implements OBackupLogger {
         put("limit", pageSize);
       }
     };
-    String query = String.format("select * from %s where  uuid = :uuid  group by unitId  order by timestamp desc limit :limit", CLASS_NAME);
-    List<ODocument> results = getDatabase().command(new OCommandSQL(query)).execute(params);
+    String query = String.format("select * from %s where  uuid = :uuid  group by unitId  order by timestamp desc limit :limit",
+        CLASS_NAME);
+
+    final List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
+      @Override
+      public Object call(Object iArgument) {
+        return iArgument;
+      }
+    }, "", query, params);
 
     for (ODocument result : results) {
       logs.add(factory.fromDoc(result));
@@ -171,7 +175,7 @@ public class OBackupDBLogger implements OBackupLogger {
     return logs;
   }
 
-  public ODatabase getDatabase() {
-    return OServerMain.server().getSecurity().openSystemDatabase();
+  public OSystemDatabase getDatabase() {
+    return OServerMain.server().getSystemDatabase();
   }
 }

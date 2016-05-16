@@ -29,8 +29,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.schedule.OCronExpression;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
-import com.orientechnologies.orient.server.schedule.CronExpression;
 
 import java.io.File;
 import java.io.IOException;
@@ -124,7 +124,7 @@ public class OBackupConfig {
     } else {
       String when = doc.field(WHEN);
       try {
-        new CronExpression(when);
+        new OCronExpression(when);
       } catch (ParseException e) {
         throw new OConfigurationException("When is not a valid Cron expression");
       }
