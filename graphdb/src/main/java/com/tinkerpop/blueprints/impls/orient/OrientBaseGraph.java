@@ -833,7 +833,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       }
     }
     if(idx == null){
-      idx = getDatabase().getMetadata().getIndexManager().getIndex(iKey);
+      idx = database.getMetadata().getIndexManager().getIndex(iKey);
     }
 
     if (idx != null) {
