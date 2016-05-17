@@ -23,13 +23,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
-import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -78,13 +72,18 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       else if (inKeyValue instanceof OSQLFilterItem)
         inParams = (Collection<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, null, iContext);
       else
-        throw new IllegalArgumentException("Key '" + inKeyValue + "' is not valid");
+        inParams = Collections.singleton(inKeyValue);
 
       final List<Object> inKeys = new ArrayList<Object>();
 
       boolean containsNotCompatibleKey = false;
       for (final Object keyValue : inParams) {
-        final Object key = indexDefinition.createValue(OSQLHelper.getValue(keyValue));
+        final Object key;
+        if (indexDefinition instanceof OIndexDefinitionMultiValue)
+          key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(OSQLHelper.getValue(keyValue));
+        else
+          key = indexDefinition.createValue(OSQLHelper.getValue(keyValue));
+
         if (key == null) {
           containsNotCompatibleKey = true;
           break;
