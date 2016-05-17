@@ -45,13 +45,13 @@ public class OServerNetworkListener extends Thread {
   private ServerSocket                      serverSocket;
   private InetSocketAddress                 inboundAddr;
   private Class<? extends ONetworkProtocol> protocolType;
-  private volatile boolean                  active            = true;
-  private List<OServerCommandConfiguration> statefulCommands  = new ArrayList<OServerCommandConfiguration>();
-  private List<OServerCommand>              statelessCommands = new ArrayList<OServerCommand>();
-  private int                               socketBufferSize;
-  private OContextConfiguration             configuration;
-  private OServer                           server;
-  private int                               protocolVersion   = -1;
+  private volatile boolean                           active            = true;
+  private          List<OServerCommandConfiguration> statefulCommands  = new ArrayList<OServerCommandConfiguration>();
+  private          List<OServerCommand>              statelessCommands = new ArrayList<OServerCommand>();
+  private int                   socketBufferSize;
+  private OContextConfiguration configuration;
+  private OServer               server;
+  private int protocolVersion = -1;
 
   public OServerNetworkListener(final OServer iServer, final OServerSocketFactory iSocketFactory, final String iHostName,
       final String iHostPortRange, final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
@@ -239,17 +239,46 @@ public class OServerNetworkListener extends Thread {
   }
 
   public String getListeningAddress(final boolean resolveMultiIfcWithLocal) {
-    String address = serverSocket.getInetAddress().getHostAddress().toString();
-    if (resolveMultiIfcWithLocal && address.equals("0.0.0.0"))
+    String address = serverSocket.getInetAddress().getHostAddress();
+    if (resolveMultiIfcWithLocal && address.equals("0.0.0.0")) {
       try {
-        address = InetAddress.getLocalHost().getHostAddress().toString();
-      } catch (UnknownHostException e) {
+        address = OChannel.getLocalIpAddress(true);
+      } catch (Exception ex) {
+        address = null;
+      }
+      if(address == null) {
         try {
-          address = OChannel.getLocalIpAddress(true);
-        } catch (Exception ex) {
+          address = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+          OLogManager.instance().warn(this, "Error resolving current host address", e);
         }
       }
+    }
+
     return address + ":" + serverSocket.getLocalPort();
+  }
+
+  public static void main(String[] args) {
+    System.out.println(OServerNetworkListener.getLocalHostIp());
+  }
+
+  public static String getLocalHostIp() {
+    try {
+      InetAddress host = InetAddress.getLocalHost();
+      InetAddress[] addrs = InetAddress.getAllByName(host.getHostName());
+      for (InetAddress addr : addrs) {
+        if (!addr.isLoopbackAddress()) {
+          return addr.toString();
+        }
+      }
+    } catch (UnknownHostException e) {
+      try {
+        return OChannel.getLocalIpAddress(true);
+      } catch (SocketException e1) {
+
+      }
+    }
+    return null;
   }
 
   @Override
@@ -308,8 +337,8 @@ public class OServerNetworkListener extends Thread {
       }
     }
 
-    OLogManager.instance().error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'",
-        iHostPortRange, iHostName);
+    OLogManager.instance()
+        .error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'", iHostPortRange, iHostName);
     ShutdownHelper.shutdown(1);
   }
 
