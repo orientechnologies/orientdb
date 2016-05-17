@@ -800,8 +800,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     if (iKey.equals("@class"))
       return getVerticesOfClass(iValue.toString());
-
-    String indexName = null;
+    
     int pos = iKey.indexOf('.');
     final String className = pos > -1 ? iKey.substring(0, pos):OrientVertexType.CLASS_NAME;
     final String key = pos > -1 ? iKey.substring(pos + 1) : iKey;
@@ -820,6 +819,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         idx = index;
         break;
       }
+    }
+    if(idx == null){
+      idx = getDatabase().getMetadata().getIndexManager().getIndex(iKey);
     }
 
     if (idx != null) {
