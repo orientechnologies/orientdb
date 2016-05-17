@@ -20,9 +20,9 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClientSynch;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClientSynch;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.config.OServerConfiguration;

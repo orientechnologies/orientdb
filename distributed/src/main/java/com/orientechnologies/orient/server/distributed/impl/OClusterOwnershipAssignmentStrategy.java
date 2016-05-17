@@ -17,18 +17,22 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.client.remote;
+package com.orientechnologies.orient.server.distributed.impl;
 
-import java.io.IOException;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
+import java.util.Set;
 
 /**
- * Created by tglman on 16/12/15.
+ * Interface to manage balancing of cluster ownership.
+ *
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public interface OStorageRemoteOperation<T> {
+public interface OClusterOwnershipAssignmentStrategy {
 
-  T execute(final OChannelBinaryAsynchClient network) throws IOException;
+  boolean assignClusterOwnershipOfClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg, final OClass iClass,
+      final Set<String> availableNodes, final Set<String> clustersToReassign, boolean rebalance);
 
 }
-

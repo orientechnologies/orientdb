@@ -19,7 +19,7 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.ODistributedStorage;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import org.junit.Test;
 
 import java.util.HashMap;
