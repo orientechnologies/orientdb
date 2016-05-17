@@ -100,9 +100,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   public void onLiveResult(final ORecordOperation iOp) {
 
     ODatabaseDocumentInternal oldThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (oldThreadLocal == null) {
-      execDb.activateOnCurrentThread();
-    }
+    execDb.activateOnCurrentThread();
+
     try {
       final OIdentifiable value = iOp.getRecord();
 
@@ -118,6 +117,8 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     } finally {
       if (oldThreadLocal == null) {
         ODatabaseRecordThreadLocal.INSTANCE.remove();
+      }else{
+        ODatabaseRecordThreadLocal.INSTANCE.set(oldThreadLocal);
       }
     }
     final OCommandResultListener listener = request.getResultListener();
