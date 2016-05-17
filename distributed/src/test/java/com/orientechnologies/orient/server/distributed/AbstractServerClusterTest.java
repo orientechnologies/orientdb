@@ -382,6 +382,24 @@ public abstract class AbstractServerClusterTest {
 
   }
 
+  protected void waitForDatabaseIsOnline(final String serverName, final String dbName, final long timeout) {
+    final long startTime = System.currentTimeMillis();
+    while (! serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
+
+      if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
+        OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+        break;
+      }
+
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+
+  }
+
   protected void waitFor(final int serverId, final OCallable<Boolean, ODatabaseDocumentTx> condition, final long timeout) {
     try {
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(serverId))).open("admin", "admin");

@@ -207,7 +207,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
   }
 
   // checks the consistency in the cluster after the writes in a no-replica sharding scenario
-  protected void checkWritesWithShardinNoReplica(List<ServerRun> checkConsistencyOnServers, List<ServerRun> writerServer) {
+  protected void checkAvailabilityOnShardsNoReplica(List<ServerRun> checkConsistencyOnServers, List<ServerRun> writerServer) {
 
     String checkOnServer = "";
     for (ServerRun server : checkConsistencyOnServers) {
