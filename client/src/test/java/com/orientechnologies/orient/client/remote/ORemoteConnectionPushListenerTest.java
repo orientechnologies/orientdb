@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;

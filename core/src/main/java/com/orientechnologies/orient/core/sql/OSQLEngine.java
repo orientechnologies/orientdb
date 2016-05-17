@@ -447,8 +447,8 @@ public class OSQLEngine {
     return new OSQLFilter(iText, iContext, iFilterKeyword);
   }
 
-  public OSQLTarget parseTarget(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
-    return new OSQLTarget(iText, iContext, iFilterKeyword);
+  public OSQLTarget parseTarget(final String iText, final OCommandContext iContext) {
+    return new OSQLTarget(iText, iContext);
   }
 
   public Set<OIdentifiable> parseRIDTarget(final ODatabaseDocument database, String iTarget, final OCommandContext iContext,

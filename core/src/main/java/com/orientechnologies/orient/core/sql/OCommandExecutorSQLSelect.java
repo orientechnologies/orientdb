@@ -268,7 +268,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (parserGetLastWord().equalsIgnoreCase(KEYWORD_FROM)) {
         // FROM
         parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(parserGetCurrentPosition(), endPosition),
-            getContext(), KEYWORD_WHERE);
+            getContext());
         parserSetCurrentPosition(
             parsedTarget.parserIsEnded() ? endPosition : parsedTarget.parserGetCurrentPosition() + parserGetCurrentPosition());
       } else {

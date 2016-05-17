@@ -32,6 +32,7 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.Assert;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -42,7 +43,7 @@ import static org.junit.Assert.*;
  * It represents an abstract scenario test with sharding on the cluster.
  *
  * @author Gabriele Ponzi
- * @email  <gabriele.ponzi--at--gmail.com>
+ * @email <gabriele.ponzi--at--gmail.com>
  */
 
 public class AbstractShardingScenarioTest extends AbstractScenarioTest {
@@ -65,14 +66,15 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       else if (result.size() > 1)
         fail(result.size() + " records found with name = '" + uniqueId + "'!");
 
+      if (result.size() > 0)
+        return result.get(0);
+
     } catch (Exception e) {
+      Assert.fail("Error in loadVertex(): " + e.toString());
       e.printStackTrace();
     }
 
-    if (result.size() == 0)
-      return null;
-
-    return result.get(0);
+    return null;
   }
 
   /*
@@ -156,7 +158,8 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
           int total = result.size();
           assertEquals(count * writerCount, total);
 
-          sqlCommand = "select count(*) from cluster:client_" + server.getServerInstance().getDistributedManager().getLocalNodeName();
+          sqlCommand = "select count(*) from cluster:client_"
+              + server.getServerInstance().getDistributedManager().getLocalNodeName();
           result = new OCommandSQL(sqlCommand).execute();
           total = ((Number) result.get(0).field("count")).intValue();
           assertEquals(count * writerCount, total);
@@ -360,8 +363,8 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
                 // checkIndex(graph, (String) client.getProperty("name"), client.getIdentity());
 
                 if ((i + 1) % 100 == 0)
-                  System.out.println(
-                      "\nDBStartupWriter " + graph.getRawGraph().getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+                  System.out.println("\nDBStartupWriter " + graph.getRawGraph().getURL() + " managed " + (i + 1) + "/" + count
+                      + " records so far");
 
                 if (delayWriter > 0)
                   Thread.sleep(delayWriter);
@@ -410,9 +413,8 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     protected OrientVertex createVertex(OrientBaseGraph graph, int i) {
 
       final String uniqueId = shardName + "-s" + serverId + "-t" + threadId + "-v" + i;
-      OrientVertex client = graph.addVertex("class:Client");
-      client.setProperties("name", uniqueId, "updated", false);
-      client.save();
+      OrientVertex client = graph.addTemporaryVertex("Client", "name", uniqueId, "updated", false);
+      client.save(shardName);
 
       return client;
     }

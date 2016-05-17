@@ -221,7 +221,7 @@ public class ODocument extends ORecordAbstract
 
       if (p.isNotNull() && fieldValue == null)
         // NULLITY
-        throw new OValidationException("The field 'value" + p.getFullName() + "' cannot be null, record: " + iRecord);
+        throw new OValidationException("The field '" + p.getFullName() + "' cannot be null, record: " + iRecord);
 
       if (fieldValue != null && p.getRegexp() != null && p.getType().equals(OType.STRING)) {
         // REGEXP

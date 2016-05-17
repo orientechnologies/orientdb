@@ -20,15 +20,15 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.schedule.OScheduledEventBuilder;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.schedule.OScheduledEventBuilder;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,7 +36,6 @@ import java.util.List;
  */
 public class DistributedSchedulerTest extends AbstractServerClusterTest {
   private final static int SERVERS = 2;
-  private OFunction        func;
 
   @Test
   public void test() throws Exception {
@@ -47,28 +46,71 @@ public class DistributedSchedulerTest extends AbstractServerClusterTest {
 
   @Override
   protected void executeTest() throws Exception {
+//    eventByAPI();
+    eventBySQL();
+  }
 
+  private void eventByAPI() throws InterruptedException {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
     db.open("admin", "admin");
 
-    db.getMetadata().getSchema().createClass("scheduler_log");
-
-    func = db.getMetadata().getFunctionLibrary().createFunction("testFunction");
-    func.setLanguage("SQL");
-    func.setCode("insert into scheduler_log set timestamp = sysdate()");
-    func.save();
+    OFunction func = createFunction(db);
 
     db.getMetadata().getScheduler()
         .scheduleEvent(new OScheduledEventBuilder().setName("test").setRule("0/1 * * * * ?").setFunction(func).build());
 
     Thread.sleep(5000);
 
-    List<ODocument> result = (List<ODocument>) db.command(new OCommandSQL("select count(*) from scheduler_log")).execute();
-    Long count = result.get(0).field("count");
+    Long count = getLogCounter(db);
 
     Assert.assertTrue(count >= 4 && count <= 5);
 
+    db.getMetadata().getScheduler().removeEvent("test");
+
     db.close();
+  }
+
+  public void eventBySQL() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
+    db.open("admin", "admin");
+    try {
+      OFunction func = createFunction(db);
+
+      // CREATE NEW EVENT
+      db.command(new OCommandSQL("insert into oschedule set name = 'test', function = ?, rule = \"0/1 * * * * ?\""))
+          .execute(func.getId());
+
+      Thread.sleep(4000);
+
+      long count = getLogCounter(db);
+
+      Assert.assertTrue(count >= 4);
+
+      db.getLocalCache().invalidate();
+
+      // UPDATE
+      db.command(new OCommandSQL("update oschedule set rule = \"0/2 * * * * ?\" where name = 'test'")).execute(func.getId());
+
+      Thread.sleep(4000);
+
+      long newCount = getLogCounter(db);
+
+      Assert.assertTrue(newCount - count > 1 && newCount - count <= 2);
+
+      // DELETE
+      db.command(new OCommandSQL("delete from oschedule where name = 'test'")).execute(func.getId());
+
+      Thread.sleep(3000);
+
+      count = newCount;
+
+      newCount = getLogCounter(db);
+
+      Assert.assertTrue(newCount - count <= 1);
+
+    } finally {
+      db.drop();
+    }
   }
 
   @Override
@@ -79,5 +121,28 @@ public class DistributedSchedulerTest extends AbstractServerClusterTest {
   @Override
   protected String getDatabaseName() {
     return "testDistributedScheduler";
+  }
+
+  private OFunction createFunction(final ODatabaseDocumentTx db) {
+    if (!db.getMetadata().getSchema().existsClass("scheduler_log"))
+      db.getMetadata().getSchema().createClass("scheduler_log");
+
+    OFunction func = db.getMetadata().getFunctionLibrary().getFunction("logEvent");
+    if (func == null) {
+      func = db.getMetadata().getFunctionLibrary().createFunction("logEvent");
+      func.setLanguage("SQL");
+      func.setCode("insert into scheduler_log set timestamp = sysdate(), note = :note");
+      final List<String> pars = new ArrayList<String>();
+      pars.add("note");
+      func.setParameters(pars);
+      func.save();
+    }
+    return func;
+  }
+
+  private Long getLogCounter(final ODatabaseDocumentTx db) {
+    db.activateOnCurrentThread();
+    List<ODocument> result = (List<ODocument>) db.command(new OCommandSQL("select count(*) from scheduler_log")).execute();
+    return result.get(0).field("count");
   }
 }

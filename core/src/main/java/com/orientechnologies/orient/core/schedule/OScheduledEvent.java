@@ -52,7 +52,6 @@ public class OScheduledEvent extends ODocumentWrapper {
   public static final String  PROP_STATUS    = "status";
   public static final String  PROP_FUNC      = "function";
   public static final String  PROP_STARTTIME = "starttime";
-  public static final String  PROP_STARTED   = "start";
   public static final String  PROP_EXEC_ID   = "nextExecId";
 
   private ODatabaseDocumentTx db;
@@ -143,11 +142,6 @@ public class OScheduledEvent extends ODocumentWrapper {
     return super.save();
   }
 
-  public boolean isStarted() {
-    final Boolean started = document.field(PROP_STARTED);
-    return started == null ? false : started;
-  }
-
   public String getStatus() {
     return document.field(PROP_STATUS);
   }
@@ -178,7 +172,7 @@ public class OScheduledEvent extends ODocumentWrapper {
 
   public String toString() {
     return "OSchedule [name:" + getName() + ",rule:" + getRule() + ",current status:" + getStatus() + ",func:" + getFunctionSafe()
-        + ",start:" + isStarted() + "]";
+        + ",started:" + getStartTime() + "]";
   }
 
   @Override
@@ -264,10 +258,15 @@ public class OScheduledEvent extends ODocumentWrapper {
   }
 
   private boolean isEventAlreadyExecuted() {
-    document.reload();
-    if (getNextExecutionId() >= nextExecutionId) {
+    final ODocument updated = document.getIdentity().getRecord().reload();
+
+    final Long currentExecutionId = updated.field(PROP_EXEC_ID);
+    if( currentExecutionId == null )
+      return false;
+
+    if (currentExecutionId >= nextExecutionId) {
       OLogManager.instance().info(this, "Scheduled event '%s' with id %d is already running (current id=%d)", getName(),
-          nextExecutionId, getNextExecutionId());
+          nextExecutionId, currentExecutionId);
       // ALREADY RUNNING
       return true;
     }

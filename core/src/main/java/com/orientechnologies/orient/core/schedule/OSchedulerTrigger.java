@@ -19,12 +19,17 @@ package com.orientechnologies.orient.core.schedule;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduler.STATUS;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Keeps synchronized the scheduled events in memory.
@@ -46,7 +51,7 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
+    return DISTRIBUTED_EXECUTION_MODE.BOTH;
   }
 
   @Override
@@ -67,13 +72,7 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
       throw new ODatabaseException("Scheduled event with name '" + name + "' already exists in database");
     }
 
-    final boolean start = iDocument.field(OScheduledEvent.PROP_STARTED) == null ? false
-        : ((Boolean) iDocument.field(OScheduledEvent.PROP_STARTED));
-    if (start)
-      iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.WAITING.name());
-    else
-      iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.STOPPED.name());
-    iDocument.field(OScheduledEvent.PROP_STARTED, start);
+    iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.STOPPED.name());
     return RESULT.RECORD_CHANGED;
   }
 
@@ -85,32 +84,32 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
   @Override
   public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
     try {
-      boolean isStart = iDocument.field(OScheduledEvent.PROP_STARTED) == null ? false
-          : ((Boolean) iDocument.field(OScheduledEvent.PROP_STARTED));
       final String schedulerName = iDocument.field(OScheduledEvent.PROP_NAME);
-      OScheduledEvent event = database.getMetadata().getScheduler().getEvent(schedulerName);
+      final OScheduledEvent event = database.getMetadata().getScheduler().getEvent(schedulerName);
 
-      if (isStart) {
-        if (event == null) {
-          event = new OScheduledEvent(iDocument);
-          database.getMetadata().getScheduler().scheduleEvent(event);
+      if (event != null) {
+        // UPDATED EVENT
+        final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iDocument.getDirtyFields()));
+
+        if (dirtyFields.contains(OScheduledEvent.PROP_NAME))
+          throw new OValidationException("Scheduled event cannot change name");
+
+        if (dirtyFields.contains(OScheduledEvent.PROP_RULE)) {
+          // RULE CHANGED, STOP CURRENT EVENT AND RESCHEDULE IT
+          database.getMetadata().getScheduler().removeEvent(event.getName());
+          database.getMetadata().getScheduler().scheduleEvent(new OScheduledEvent(iDocument));
         }
-        String currentStatus = iDocument.field(OScheduledEvent.PROP_STATUS);
-        if (currentStatus.equals(STATUS.STOPPED.name())) {
-          iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.WAITING.name());
-        }
-      } else {
-        if (event != null) {
-          iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.STOPPED.name());
-        }
-      }
-      if (event != null)
+
+        iDocument.field(OScheduledEvent.PROP_STATUS, STATUS.STOPPED.name());
         event.fromStream(iDocument);
+
+        return RESULT.RECORD_CHANGED;
+      }
+
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "Error when updating scheduler - " + ex.getMessage());
-      return RESULT.RECORD_NOT_CHANGED;
+      OLogManager.instance().error(this, "Error on updating scheduled event", ex);
     }
-    return RESULT.RECORD_CHANGED;
+    return RESULT.RECORD_NOT_CHANGED;
   }
 
   @Override

@@ -7,7 +7,10 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Tests cases for the Scheduler component.
@@ -21,6 +24,7 @@ public class OSchedulerTest {
 
     final ODatabaseDocumentTx db = initDatabase();
     try {
+      createLogEvent(db);
 
       Thread.sleep(5000);
 
@@ -36,6 +40,7 @@ public class OSchedulerTest {
   public void scheduleWithDbClosed() throws Exception {
 
     ODatabaseDocumentTx db = initDatabase();
+    createLogEvent(db);
     db.close();
 
     Thread.sleep(5000);
@@ -52,6 +57,8 @@ public class OSchedulerTest {
 
     final ODatabaseDocumentTx db = initDatabase();
     try {
+      createLogEvent(db);
+
       Thread.sleep(2000);
 
       db.getMetadata().getScheduler().removeEvent("test");
@@ -74,6 +81,7 @@ public class OSchedulerTest {
   public void eventSavedAndLoaded() throws Exception {
 
     final ODatabaseDocumentTx db = initDatabase();
+    createLogEvent(db);
     db.close();
 
     Thread.sleep(1000);
@@ -91,21 +99,73 @@ public class OSchedulerTest {
     }
   }
 
+  @Test
+  public void eventBySQL() throws Exception {
+    final ODatabaseDocumentTx db = initDatabase();
+    try {
+      OFunction func = createFunction(db);
+
+      // CREATE NEW EVENT
+      db.command(new OCommandSQL("insert into oschedule set name = 'test', function = ?, rule = \"0/1 * * * * ?\""))
+          .execute(func.getId());
+
+      Thread.sleep(4000);
+
+      long count = getLogCounter(db);
+
+      Assert.assertTrue(count >= 4);
+
+      // UPDATE
+      db.command(new OCommandSQL("update oschedule set rule = \"0/2 * * * * ?\" where name = 'test'")).execute(func.getId());
+
+      Thread.sleep(4000);
+
+      long newCount = getLogCounter(db);
+
+      Assert.assertTrue(newCount - count > 1 && newCount - count <= 2);
+
+      // DELETE
+      db.command(new OCommandSQL("delete from oschedule where name = 'test'")).execute(func.getId());
+
+      Thread.sleep(3000);
+
+      count = newCount;
+
+      newCount = getLogCounter(db);
+
+      Assert.assertTrue(newCount - count <= 1);
+
+    } finally {
+      db.drop();
+    }
+  }
+
   private ODatabaseDocumentTx initDatabase() {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:scheduler");
     db.create();
+    return db;
+  }
 
+  private void createLogEvent(ODatabaseDocumentTx db) {
+    OFunction func = createFunction(db);
+
+    Map<Object, Object> args = new HashMap<Object, Object>();
+    args.put("note", "test");
+    db.getMetadata().getScheduler().scheduleEvent(
+        new OScheduledEventBuilder().setName("test").setRule("0/1 * * * * ?").setFunction(func).setArguments(args).build());
+  }
+
+  private OFunction createFunction(ODatabaseDocumentTx db) {
     db.getMetadata().getSchema().createClass("scheduler_log");
 
-    OFunction func = db.getMetadata().getFunctionLibrary().createFunction("testFunction");
+    OFunction func = db.getMetadata().getFunctionLibrary().createFunction("logEvent");
     func.setLanguage("SQL");
-    func.setCode("insert into scheduler_log set timestamp = sysdate()");
+    func.setCode("insert into scheduler_log set timestamp = sysdate(), note = :note");
+    final List<String> pars = new ArrayList<String>();
+    pars.add("note");
+    func.setParameters(pars);
     func.save();
-
-    db.getMetadata().getScheduler()
-        .scheduleEvent(new OScheduledEventBuilder().setName("test").setRule("0/1 * * * * ?").setFunction(func).build());
-
-    return db;
+    return func;
   }
 
   private ODatabaseDocumentTx openDatabase() {

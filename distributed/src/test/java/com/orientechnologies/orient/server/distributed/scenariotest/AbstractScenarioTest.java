@@ -25,8 +25,8 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterInsertTest;
-import com.orientechnologies.orient.server.distributed.ODistributedStorageEventListener;
 import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedStorageEventListener;
 
 import java.util.*;
 import java.util.concurrent.*;
