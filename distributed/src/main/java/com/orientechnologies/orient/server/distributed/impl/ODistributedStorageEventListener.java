@@ -17,18 +17,17 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.client.remote;
+package com.orientechnologies.orient.server.distributed.impl;
 
-import java.io.IOException;
-
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.core.id.ORecordId;
 
 /**
- * Created by tglman on 16/12/15.
+ * Internal listener interface for distributed tests.
+ *
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public interface OStorageRemoteOperation<T> {
+public interface ODistributedStorageEventListener {
+  void onAfterRecordLock(ORecordId rid);
 
-  T execute(final OChannelBinaryAsynchClient network) throws IOException;
-
+  void onAfterRecordUnlock(ORecordId rid);
 }
-

@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
