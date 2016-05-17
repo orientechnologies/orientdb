@@ -28,7 +28,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.LinkedList;
@@ -37,23 +36,17 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 /**
- * It checks the consistency in the cluster with the following scenario:
- * - 3 server (europe, usa, asia)
- * - 3 shards, one for each server (client_europe, client_usa, client_asia)
- * - writes on each node (5 threads for each running server write 100 records)
- * - check consistency no-replica
- * - shutdown server3
- * - check consistency no-replica (can retry only records in shard1 and shard2)
- * - restart server3
- * - check consistency no-replica
+ * It checks the consistency in the cluster with the following scenario: - 3 server (europe, usa, asia) - 3 shards, one for each
+ * server (client_europe, client_usa, client_asia) - writes on each node (5 threads for each running server write 100 records) -
+ * check consistency no-replica - shutdown server3 - check consistency no-replica (can retry only records in shard1 and shard2) -
+ * restart server3 - check consistency no-replica
  *
  * @author Gabriele Ponzi
- * @email  <gabriele.ponzi--at--gmail.com>
+ * @email <gabriele.ponzi--at--gmail.com>
  */
 
 public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenarioTest {
 
-  @Ignore
   @Test
   public void test() throws Exception {
     init(SERVERS);
@@ -106,11 +99,12 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       checkWritesWithShardinNoReplica(serverInstance, executeWritesOnServers);
 
       // network fault on server3
-      System.out.println("Network fault on server3.\n");
-      simulateServerFault(serverInstance.get(2), "net-fault");
+      System.out.println("Shutdown on server3.\n");
+      simulateServerFault(serverInstance.get(2), "shutdown");
       assertFalse(serverInstance.get(2).isActive());
 
-      Thread.sleep(500);
+      waitForDatabaseIsOffline(executeWritesOnServers.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+          getDatabaseName(), 10000);
 
       // check consistency (no-replica)
       executeWritesOnServers.remove(2);

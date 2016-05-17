@@ -50,25 +50,9 @@ import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import javax.script.*;
+import java.io.*;
+import java.util.*;
 
 /**
  * Executes Script Commands.
@@ -77,8 +61,8 @@ import java.util.Random;
  * @see OCommandScript
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest {
-  private static final int MAX_DELAY = 100;
-  protected OCommandScript request;
+  private static final int             MAX_DELAY     = 100;
+  protected OCommandScript             request;
   protected DISTRIBUTED_EXECUTION_MODE executionMode = DISTRIBUTED_EXECUTION_MODE.LOCAL;
 
   public OCommandExecutorScript() {
@@ -96,6 +80,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
+    if (context == null)
+      context = new OBasicCommandContext();
     return executeInContext(context, iArgs);
   }
 
@@ -134,7 +120,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         result.append("\n");
       }
       return result.toString();
-    }else{
+    } else {
       return parserText;
     }
   }
@@ -142,10 +128,10 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   private String addSemicolons(String parserText) {
     String[] rows = parserText.split("\n");
     StringBuilder builder = new StringBuilder();
-    for(String row:rows){
+    for (String row : rows) {
       row = row.trim();
       builder.append(row);
-      if(!(row.endsWith(";") || row.endsWith("{"))){
+      if (!(row.endsWith(";") || row.endsWith("{"))) {
         builder.append(";");
       }
       builder.append("\n");
@@ -505,7 +491,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
   private Object getValue(final String iValue, final ODatabaseDocument db) {
     Object lastResult = null;
-    boolean recordResultSet=true;
+    boolean recordResultSet = true;
     if (iValue.equalsIgnoreCase("NULL"))
       lastResult = null;
     else if (iValue.startsWith("[") && iValue.endsWith("]")) {
@@ -563,7 +549,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
       checkIsRecordResultSet(lastResult);
     } else if (iValue.startsWith("\"") && iValue.endsWith("\"") || iValue.startsWith("'") && iValue.endsWith("'")) {
       lastResult = new OContextVariableResolver(context).parse(OIOUtils.getStringContent(iValue));
-     checkIsRecordResultSet(lastResult);
+      checkIsRecordResultSet(lastResult);
     } else if (iValue.startsWith("(") && iValue.endsWith(")"))
       lastResult = executeCommand(iValue, db);
     else {
@@ -574,8 +560,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     return lastResult;
   }
 
-  private void checkIsRecordResultSet(Object result){
-    if (!(result instanceof OIdentifiable) && !(result instanceof OResultSet) ){
+  private void checkIsRecordResultSet(Object result) {
+    if (!(result instanceof OIdentifiable) && !(result instanceof OResultSet)) {
       if (!OMultiValue.isMultiValue(result)) {
         request.setRecordResultSet(false);
       } else if (!(OMultiValue.getFirstValue(result) instanceof OIdentifiable)) {

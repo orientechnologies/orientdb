@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.util.Map;
@@ -102,6 +103,10 @@ public class OCommandExecutorSQLHARemoveServer extends OCommandExecutorSQLAbstra
       dManager.updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
       return true;
     }
+
+    // PUT THE DATABASE OFFLINE FOR THAT SERVER
+    dManager.setDatabaseStatus(serverName, databaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
+
     return false;
   }
 

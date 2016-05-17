@@ -28,7 +28,7 @@ public class OConstants {
   public static final boolean SNAPSHOT             = true;
 
   public static final String  ORIENT_URL           = "www.orientdb.com";
-  public static final String  COPYRIGHT            = "Copyrights (c) 2015 Orient Technologies LTD";
+  public static final String  COPYRIGHT            = "Copyrights (c) 2015 OrientDB LTD";
 
   /**
    * Returns the complete text of the current OrientDB version.

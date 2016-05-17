@@ -20,9 +20,9 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 
 import java.util.ArrayList;
 import java.util.List;

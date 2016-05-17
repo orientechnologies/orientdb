@@ -276,7 +276,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
    */
   public OUser getSystemUser(final String username, final String dbName) {
     if (isEnabled()) {
-      return (OUser) server.executeSystemDatabaseCommand(new OCallable<Object, Object>() {
+      return (OUser) server.getSystemDatabase().execute(new OCallable<Object, Object>() {
         @Override
         public Object call(Object iArgument) {
           final List<ODocument> result = (List<ODocument>) iArgument;

@@ -317,8 +317,9 @@ public enum OGlobalConfiguration {
    * @see OIndexDefinition#isNullValuesIgnored()
    * @since 2.2
    */
-  INDEX_IGNORE_NULL_VALUES_DEFAULT("index.ignoreNullValuesDefault", "Controls whether null values will be ignored by default "
-      + "by newly created indexes or not (false by default)", Boolean.class, false),
+  INDEX_IGNORE_NULL_VALUES_DEFAULT("index.ignoreNullValuesDefault",
+      "Controls whether null values will be ignored by default " + "by newly created indexes or not (false by default)",
+      Boolean.class, false),
 
   INDEX_TX_MODE("index.txMode",
       "Indicates the index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
@@ -427,6 +428,12 @@ public enum OGlobalConfiguration {
   NETWORK_BINARY_DEBUG("network.binary.debug", "Debug mode: print all data incoming on the binary channel", Boolean.class, false,
       true),
 
+  // HTTP
+
+  NETWORK_HTTP_SERVER_INFO("network.http.serverInfo",
+      "Server info to send in HTTP responses. Change the default if you want to hide it is a OrientDB Server", String.class,
+      "OrientDB Server v." + OConstants.getVersion(), true),
+
   NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length (in bytes) for HTTP requests", Integer.class,
       1000000, true),
 
@@ -450,17 +457,18 @@ public enum OGlobalConfiguration {
       "Timeout, after which a binary session is considered to have expired (in minutes)", Integer.class, 60),
 
   // PROFILER
-      PROFILER_ENABLED("profiler.enabled", "Enables the recording of statistics and counters", Boolean.class, false,
-          new OConfigurationChangeCallback() {
-            public void change(final Object iCurrentValue, final Object iNewValue) {
-              final OProfiler prof = Orient.instance().getProfiler();
-              if (prof != null)
-                if ((Boolean) iNewValue)
-                  prof.startRecording();
-                else
-                  prof.stopRecording();
-            }
-          }),
+
+  PROFILER_ENABLED("profiler.enabled", "Enables the recording of statistics and counters", Boolean.class, false,
+      new OConfigurationChangeCallback() {
+        public void change(final Object iCurrentValue, final Object iNewValue) {
+          final OProfiler prof = Orient.instance().getProfiler();
+          if (prof != null)
+            if ((Boolean) iNewValue)
+              prof.startRecording();
+            else
+              prof.stopRecording();
+        }
+      }),
 
   PROFILER_CONFIG("profiler.config", "Configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>",
       String.class, null, new OConfigurationChangeCallback() {
@@ -684,7 +692,7 @@ public enum OGlobalConfiguration {
    */
   @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY("distributed.concurrentTxMaxAutoRetry",
       "Maximum attempts the transaction coordinator should execute a transaction automatically, if records are locked. (Minimum is 1 = no attempts)",
-      Integer.class, 1, true),
+      Integer.class, 10, true),
 
   /**
    * @Since 2.1
@@ -954,7 +962,7 @@ public enum OGlobalConfiguration {
               + "equals to maximum JVM heap size",
           diskCacheInMB, diskCacheInMB, diskCacheInMB, osMemory / 1024 / 1024);
       DISK_CACHE_SIZE.setValue(diskCacheInMB);
-      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB, MEMORY_CHUNK_SIZE.getValueAsLong()));
+      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB * 1024 * 1024, MEMORY_CHUNK_SIZE.getValueAsLong()));
       return;
     }
 
@@ -968,7 +976,7 @@ public enum OGlobalConfiguration {
           jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB, osMemory / 1024 / 1024);
 
       DISK_CACHE_SIZE.setValue(diskCacheInMB);
-      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB, MEMORY_CHUNK_SIZE.getValueAsLong()));
+      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB * 1024 * 1024, MEMORY_CHUNK_SIZE.getValueAsLong()));
     } else {
       // LOW MEMORY: SET IT TO 256MB ONLY
       diskCacheInMB = Math.min(O2QCache.MIN_CACHE_SIZE, maxDirectMemoryInMB);
@@ -977,7 +985,7 @@ public enum OGlobalConfiguration {
               + "setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + diskCacheInMB + "MB",
           osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB);
       DISK_CACHE_SIZE.setValue(diskCacheInMB);
-      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB, MEMORY_CHUNK_SIZE.getValueAsLong()));
+      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB * 1024 * 1024, MEMORY_CHUNK_SIZE.getValueAsLong()));
 
       OLogManager.instance().info(null, "OrientDB config DISKCACHE=%,dMB (heap=%,dMB direct=%,dMB os=%,dMB)", diskCacheInMB,
           jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB, osMemory / 1024 / 1024);

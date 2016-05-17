@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibrary;
-import com.orientechnologies.orient.core.schedule.OSchedulerListener;
+import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 
 /**
@@ -120,8 +120,8 @@ public class OMetadataObject implements OMetadataInternal {
   }
 
     @Override
-  public OSchedulerListener getSchedulerListener() {
-    return underlying.getSchedulerListener();
+  public OScheduler getScheduler() {
+    return underlying.getScheduler();
   }
 
   public OMetadata getUnderlying() {

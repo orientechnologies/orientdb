@@ -19,13 +19,11 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -709,10 +707,6 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   ODatabase<T> commit() throws OTransactionException;
 
   ODatabase<T> commit(boolean force) throws OTransactionException;
-
-  OUncompletedCommit<Void> initiateCommit();
-
-  OUncompletedCommit<Void> initiateCommit(boolean force);
 
   /**
    * Aborts the current running transaction. All the pending changed entities will be restored in the datastore. Memory instances

@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.util.concurrent.CountDownLatch;
 

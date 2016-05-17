@@ -19,10 +19,7 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.hazelcast.core.EntryEvent;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
-import com.hazelcast.core.MapEvent;
+import com.hazelcast.core.*;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
@@ -61,7 +58,12 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object> 
     if (res != null)
       return res;
 
-    return hzMap.get(key);
+    try {
+      return hzMap.get(key);
+    } catch (HazelcastInstanceNotActiveException e) {
+      // IGNORE IT
+      return null;
+    }
   }
 
   @Override
