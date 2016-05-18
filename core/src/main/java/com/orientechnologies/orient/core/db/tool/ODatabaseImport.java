@@ -976,6 +976,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     boolean readonly = false;
     boolean notNull = false;
     String collate = null;
+    String regexp = null;
 
     Map<String, String> customFields = null;
 
@@ -1006,6 +1007,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         collate = value;
       else if (attrib.equals("\"customFields\""))
         customFields = importCustomFields();
+      else if (attrib.equals("\"regexp\""))
+        regexp = value;
     }
 
     OPropertyImpl prop = (OPropertyImpl) iClass.getProperty(propName);
@@ -1027,6 +1030,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       prop.setLinkedType(linkedType);
     if (collate != null)
       prop.setCollate(value);
+    if (regexp != null)
+      prop.setRegexp(regexp);
     if (customFields != null) {
       for (Map.Entry<String, String> entry : customFields.entrySet()) {
         prop.setCustom(entry.getKey(), entry.getValue());

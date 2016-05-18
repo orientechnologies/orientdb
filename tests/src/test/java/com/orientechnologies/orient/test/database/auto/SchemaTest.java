@@ -264,6 +264,22 @@ public class SchemaTest extends DocumentDBBaseTest {
   }
 
   @Test(dependsOnMethods = "createSchema")
+  public void regexp() {
+    String regexp = "\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b";
+    database.getMetadata().getSchema().getClass("Profile").createProperty("ip", OType.STRING).setRegexp(regexp);
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("ip").getRegexp(), regexp);
+
+    try {
+      new ODocument("Profile").field("ip", "123.3").save();
+      Assert.fail();
+    } catch (OValidationException e) {
+      // IGNORE
+    }
+
+    new ODocument("Profile").field("ip", "127.0.0.1").save();
+  }
+
+  @Test(dependsOnMethods = "createSchema")
   public void customAttributes() {
 
     // TEST CUSTOM PROPERTY CREATION
@@ -573,7 +589,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     try {
       database.command(new OCommandSQL("create class `Ant@ni`")).execute();
       Assert.fail();
-      //why...? it can be allowed now with backtick quoting...
+      // why...? it can be allowed now with backtick quoting...
     } catch (Exception e) {
       Assert.assertTrue(e instanceof OSchemaException);
     }
@@ -588,7 +604,7 @@ public class SchemaTest extends DocumentDBBaseTest {
       Assert.assertTrue(e instanceof OSchemaException);
     }
   }
-  
+
   public void testWrongClassNameWithComma() {
     try {
       database.getMetadata().getSchema().createClass("Anta,ni");
@@ -603,7 +619,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     try {
       database.command(new OCommandSQL("create class `Ant:ni`")).execute();
       Assert.fail();
-      //why...? it can be allowed now with backtick quoting...
+      // why...? it can be allowed now with backtick quoting...
     } catch (Exception e) {
       Assert.assertTrue(e instanceof OSchemaException);
     }

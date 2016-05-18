@@ -516,6 +516,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
               writer.writeAttribute(0, false, "collate", p.getCollate().getName());
             if (p.getDefaultValue() != null)
               writer.writeAttribute(0, false, "default-value", p.getDefaultValue());
+            if (p.getRegexp() != null)
+              writer.writeAttribute(0, false, "regexp", p.getRegexp());
 
             final Set<String> customKeys = p.getCustomKeys();
             final Map<String, String> custom = new HashMap<String, String>();
