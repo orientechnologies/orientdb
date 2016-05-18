@@ -1164,8 +1164,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
       document.field("min", min);
       document.field("max", max);
-      if (regexp != null)
-        document.field("regexp", regexp);
+      document.field("regexp", regexp);
 
       if (linkedType != null)
         document.field("linkedType", linkedType.id);
@@ -1173,8 +1172,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
 
       document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-      if (collate != null)
-        document.field("collate", collate.getName());
+      document.field("collate", collate.getName());
       document.field("description", description);
 
     } finally {
