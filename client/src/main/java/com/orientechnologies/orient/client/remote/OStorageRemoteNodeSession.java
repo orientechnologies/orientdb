@@ -29,4 +29,8 @@ public class OStorageRemoteNodeSession {
     this.sessionId = sessionId;
     this.token = token;
   }
+
+  public boolean isValid() {
+    return this.sessionId >= 0;
+  }
 }
