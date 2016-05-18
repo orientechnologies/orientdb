@@ -39,6 +39,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -68,7 +69,7 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata){
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties, ODocument metadata){
 
   }
 
@@ -84,10 +85,11 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
   }
 
   @Override
-  public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-                   OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+  public void load(final String indexName, final OBinarySerializer valueSerializer,final  boolean isAutomatic, final OBinarySerializer keySerializer, final OType[] keyTypes, final boolean nullPointerSupport, final int keySize,
+      final Map<String, String> engineProperties) {
     if (delegate != null)
-      delegate.load(indexName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullPointerSupport, keySize);
+      delegate.load(indexName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullPointerSupport, keySize,
+          engineProperties);
   }
 
   @Override

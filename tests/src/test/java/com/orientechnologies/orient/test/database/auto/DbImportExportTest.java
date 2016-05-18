@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
@@ -39,6 +40,7 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
 
   private String             testPath;
   private String             exportFilePath;
+  private boolean            dumpMode         = false;
 
   @Parameters(value = { "url", "testPath" })
   public DbImportExportTest(@Optional String url, String testPath) {
@@ -112,5 +114,11 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
+    if (iText != null && iText.contains("ERR"))
+      // ACTIVATE DUMP MODE
+      dumpMode = true;
+
+    if (dumpMode)
+      OLogManager.instance().error(this, iText);
   }
 }
