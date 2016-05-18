@@ -185,7 +185,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
             if (detachedValue != null) {
               value = detachedValue;
             } else {
-              alreadyDetached.put(handler.doc.getIdentity(), value);
+              ORID identity = handler.doc.getIdentity();
+              if (identity.isValid())
+                alreadyDetached.put(identity, value);
               handler.detachAll(value, nonProxiedInstance, alreadyDetached, lazyObjects);
             }
           }

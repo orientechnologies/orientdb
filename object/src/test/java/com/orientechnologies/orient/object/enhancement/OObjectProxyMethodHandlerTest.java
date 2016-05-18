@@ -5,8 +5,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import javax.persistence.CascadeType;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -19,6 +18,7 @@ import static org.testng.AssertJUnit.fail;
 
 /**
  * @author JN <a href="mailto:jn@brain-activit.com">Julian Neuhaus</a>
+ * @author Nathan Brown (anecdotesoftware--at--gmail.com)
  * @since 18.08.2014
  */
 public class OObjectProxyMethodHandlerTest {
@@ -32,6 +32,9 @@ public class OObjectProxyMethodHandlerTest {
     databaseTx.create();
 
     databaseTx.getEntityManager().registerEntityClass(EntityWithDifferentFieldTypes.class);
+    databaseTx.getEntityManager().registerEntityClass(EmbeddedType1.class);
+    databaseTx.getEntityManager().registerEntityClass(EmbeddedType2.class);
+    databaseTx.getEntityManager().registerEntityClass(EntityWithEmbeddedFields.class);
 
     fieldsAndThereDefaultValue = new HashMap<String, Object>();
     fieldsAndThereDefaultValue.put("byteField", Byte.valueOf("0"));
@@ -315,6 +318,58 @@ public class OObjectProxyMethodHandlerTest {
 
     public void setStringStringMap2(Map<String, String> stringStringMap2) {
       this.stringStringMap2 = stringStringMap2;
+    }
+  }
+
+  @Test
+  public void testEntityWithEmbeddedFieldDetachingAllWithoutError() throws Exception
+  {
+    EntityWithEmbeddedFields entity = new EntityWithEmbeddedFields();
+    entity.setEmbeddedType1(new EmbeddedType1());
+    entity.setEmbeddedType2(new EmbeddedType2());
+    EntityWithEmbeddedFields saved = databaseTx.save(entity);
+    databaseTx.detachAll(saved, true);
+  }
+
+  public static class EmbeddedType1
+  {
+  }
+
+  public static class EmbeddedType2
+  {
+  }
+
+  public static class EntityWithEmbeddedFields
+  {
+    @Embedded
+    private EmbeddedType1 _embeddedType1;
+    @Embedded
+    private EmbeddedType2 _embeddedType2;
+
+    public EntityWithEmbeddedFields()
+    {
+    }
+
+    public EmbeddedType1 getEmbeddedType1()
+    {
+      return _embeddedType1;
+    }
+
+    public void setEmbeddedType1(
+      EmbeddedType1 embeddedType1)
+    {
+      _embeddedType1 = embeddedType1;
+    }
+
+    public EmbeddedType2 getEmbeddedType2()
+    {
+      return _embeddedType2;
+    }
+
+    public void setEmbeddedType2(
+      EmbeddedType2 embeddedType2)
+    {
+      _embeddedType2 = embeddedType2;
     }
   }
 }
