@@ -156,7 +156,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       try {
         // In case i do not have a token or i'm switching between server i've to execute a open operation.
         OStorageRemoteNodeSession nodeSession = session.get(network.getServerURL());
-        if (nodeSession == null) {
+        if (nodeSession == null || !nodeSession.isValid()) {
           openRemoteDatabase(network);
           if (!network.tryLock())
             continue;
@@ -167,10 +167,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         handleDBFreeze();
       } catch (OTokenException e) {
         session.remove(network.getServerURL());
+        if (--retry <= 0)
+          throw OException.wrapException(new OStorageException(errorMessage), e);
       } catch (OTokenSecurityException e) {
         session.remove(network.getServerURL());
+        if (--retry <= 0)
+          throw OException.wrapException(new OStorageException(errorMessage), e);
       } catch (OOfflineNodeException e) {
-        //TODO: Force the jump to another node.
+        //Remove the current url because the node is offline
+        synchronized (serverURLs) {
+          serverURLs.remove(serverUrl);
+        }
       } catch (IOException e) {
         retry = handleIOException(retry, network, e);
       } catch (OIOException e) {
