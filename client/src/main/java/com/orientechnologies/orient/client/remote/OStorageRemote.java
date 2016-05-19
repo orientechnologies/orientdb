@@ -145,13 +145,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     do {
       OChannelBinaryAsynchClient network = null;
       String serverUrl = getNextAvailableServerURL(false, session);
-      try {
-        network = getNetwork(serverUrl);
-      } catch (OException e) {
-        serverUrl = useNewServerURL(serverUrl);
-        if (serverUrl == null)
-          throw e;
-      }
+      do {
+        try {
+          network = getNetwork(serverUrl);
+        } catch (OException e) {
+          serverUrl = useNewServerURL(serverUrl);
+          if (serverUrl == null)
+            throw e;
+        }
+      } while (network == null);
 
       try {
         // In case i do not have a token or i'm switching between server i've to execute a open operation.
