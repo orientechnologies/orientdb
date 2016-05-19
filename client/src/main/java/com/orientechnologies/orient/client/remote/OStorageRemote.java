@@ -1981,13 +1981,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (host.startsWith("localhost"))
       host = "127.0.0.1" + host.substring("localhost".length());
 
+    if (host.contains("/"))
+      host = host.substring(0, host.indexOf("/"));
+
     // REGISTER THE REMOTE SERVER+PORT
     if (!host.contains(":"))
       host += ":"
           + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
-
-    if (host.contains("/"))
-      host = host.substring(0, host.indexOf("/"));
+    else if (host.split(":").length < 2 || host.split(":")[1].trim().length() == 0)
+      host += (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
 
     synchronized (serverURLs) {
       if (!serverURLs.contains(host)) {
