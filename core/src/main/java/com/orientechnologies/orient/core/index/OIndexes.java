@@ -23,11 +23,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
@@ -56,9 +52,9 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
  */
 public final class OIndexes {
 
-  private static       Set<OIndexFactory> FACTORIES         = null;
+  private static Set<OIndexFactory>       FACTORIES         = null;
   private static final Set<OIndexFactory> DYNAMIC_FACTORIES = Collections.synchronizedSet(new HashSet<OIndexFactory>());
-  private static       ClassLoader        orientClassLoader = OIndexes.class.getClassLoader();
+  private static ClassLoader              orientClassLoader = OIndexes.class.getClassLoader();
 
   private OIndexes() {
   }
@@ -137,30 +133,33 @@ public final class OIndexes {
   /**
    * @param database
    * @param name
-   * @param indexType               index type
+   * @param indexType
+   *          index type
    * @param algorithm
    * @param valueContainerAlgorithm
    * @return OIndexInternal
-   * @throws OConfigurationException if index creation failed
-   * @throws OIndexException         if index type does not exist
+   * @throws OConfigurationException
+   *           if index creation failed
+   * @throws OIndexException
+   *           if index type does not exist
    */
   public static OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String name, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException, OIndexException {
-    if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()) || indexType
-        .equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name()) || indexType
-        .equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name()))
+    if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
+        || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name())
+        || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name()))
       algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
 
-    return findFactoryByAlgorithmAndType(algorithm, indexType)
-        .createIndex(name, database, indexType, algorithm, valueContainerAlgorithm, metadata, version);
+    return findFactoryByAlgorithmAndType(algorithm, indexType).createIndex(name, database, indexType, algorithm,
+        valueContainerAlgorithm, metadata, version);
 
   }
 
   public static OIndexFactory findFactoryByAlgorithmAndType(String algorithm, String indexType) {
 
     for (OIndexFactory factory : getFactories()) {
-      if (indexType == null || indexType.isEmpty() || (factory.getTypes().contains(indexType)) && factory.getAlgorithms()
-          .contains(algorithm)) {
+      if (indexType == null || indexType.isEmpty()
+          || (factory.getTypes().contains(indexType)) && factory.getAlgorithms().contains(algorithm)) {
         return factory;
       }
     }
@@ -168,8 +167,9 @@ public final class OIndexes {
         "Index type: " + indexType + " is not supported. Types are " + OCollections.toString(getIndexTypes()));
   }
 
-  public static OIndexEngine createIndexEngine(String name, String algorithm, String type, Boolean durableInNonTxMode,
-      OStorage storage, int version, Map<String, String> indexProperties) {
+  public static OIndexEngine createIndexEngine(final String name, final String algorithm, final String type,
+      final Boolean durableInNonTxMode, final OStorage storage, final int version, final Map<String, String> indexProperties,
+      ODocument metadata) {
 
     final OIndexFactory factory = findFactoryByAlgorithmAndType(algorithm, type);
 
@@ -182,9 +182,9 @@ public final class OIndexes {
     if (OClass.INDEX_TYPE.DICTIONARY.name().equals(type) || OClass.INDEX_TYPE.FULLTEXT.name().equals(type)
         || OClass.INDEX_TYPE.NOTUNIQUE.name().equals(type) || OClass.INDEX_TYPE.UNIQUE.name().equals(type)) {
       algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
-    } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(type) || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name()
-        .equals(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name().equals(type) || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name()
-        .equals(type)) {
+    } else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equals(type)
+        || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.name().equals(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name().equals(type)
+        || OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name().equals(type)) {
       algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
     }
     return algorithm;

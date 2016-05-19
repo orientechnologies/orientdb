@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OSystemDatabase {
   public static final String SYSTEM_DB_NAME = "OSystem";
 
-  private final OServer      server;
+  private final OServer server;
 
   public OSystemDatabase(final OServer server) {
     this.server = server;
@@ -115,4 +115,42 @@ public class OSystemDatabase {
       }
     }
   }
+
+  public void executeInDBScope(OCallable<Void, ODatabase> callback, String serverUser) {
+
+    final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+
+    try {
+      final ODatabase<?> db = server.openDatabase(getSystemDatabaseName(), serverUser, "", null, true);
+      try {
+        callback.call(db);
+      } finally {
+        db.close();
+      }
+    } finally {
+      if (currentDB != null)
+        ODatabaseRecordThreadLocal.INSTANCE.set(currentDB);
+      else
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
+    }
+
+  }
+
+  public boolean exists() {
+    final ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    try {
+
+      ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDatabasePath());
+
+      return sysDB.exists();
+
+    } finally {
+      if (oldDbInThread != null) {
+        ODatabaseRecordThreadLocal.INSTANCE.set(oldDbInThread);
+      } else {
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
+      }
+    }
+  }
+
 }

@@ -6,6 +6,7 @@
   "max_buffered_docs": "-1",
   "max_buffered_delete_terms": "-1",
   "ram_per_thread_MB": "1024",
+  "allowLeadingWildcard": false,
   "default": "org.apache.lucene.analysis.standard.StandardAnalyzer",
   "index": "org.apache.lucene.analysis.core.KeywordAnalyzer",
   "query": "org.apache.lucene.analysis.standard.StandardAnalyzer",

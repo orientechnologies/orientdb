@@ -35,19 +35,19 @@ import java.io.IOException;
  */
 public class QueryContext {
 
-  public final OCommandContext  context;
-  protected final IndexSearcher searcher;
-  public final Query            query;
-  public final Filter           filter;
-  public final Sort             sort;
-  public QueryContextCFG        cfg;
-  public boolean                facet     = false;
-  public boolean                drillDown = false;
-  public TaxonomyReader         reader;
-  private FacetsConfig          facetConfig;
-  private String                facetField;
-  private String                drillDownQuery;
-  protected OLuceneTxChanges    changes;
+  public final    OCommandContext context;
+  public final    Query           query;
+  public final    Filter          filter;
+  public final    Sort            sort;
+  protected final IndexSearcher   searcher;
+  public          QueryContextCFG cfg;
+  public boolean facet     = false;
+  public boolean drillDown = false;
+  public    TaxonomyReader   reader;
+  protected OLuceneTxChanges changes;
+  private   FacetsConfig     facetConfig;
+  private   String           facetField;
+  private   String           drillDownQuery;
 
   public QueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
     this(context, searcher, query, null, null);
@@ -121,10 +121,6 @@ public class QueryContext {
     return changes != null;
   }
 
-  public enum QueryContextCFG {
-    NO_FILTER_NO_SORT, FILTER_SORT, FILTER, SORT
-  }
-
   public QueryContext setChanges(OLuceneTxChanges changes) {
     this.changes = changes;
     return this;
@@ -136,7 +132,12 @@ public class QueryContext {
 
   public IndexSearcher getSearcher() throws IOException {
 
-    return changes == null ? searcher : new IndexSearcher(new MultiReader(searcher.getIndexReader(), changes.searcher()
-        .getIndexReader()));
+    return changes == null ?
+        searcher :
+        new IndexSearcher(new MultiReader(searcher.getIndexReader(), changes.searcher().getIndexReader()));
+  }
+
+  public enum QueryContextCFG {
+    NO_FILTER_NO_SORT, FILTER_SORT, FILTER, SORT
   }
 }

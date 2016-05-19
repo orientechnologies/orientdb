@@ -26,10 +26,7 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManagerProxy;
-import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -41,18 +38,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
@@ -62,12 +49,12 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  public static final int VERSION = 11;
+  public static final int VERSION           = 11;
 
-  protected OJSONWriter writer;
-  protected long        recordExported;
-  protected int         compressionLevel  = Deflater.BEST_SPEED;
-  protected int         compressionBuffer = 16384;              // 16Kb
+  protected OJSONWriter   writer;
+  protected long          recordExported;
+  protected int           compressionLevel  = Deflater.BEST_SPEED;
+  protected int           compressionBuffer = 16384;              // 16Kb
 
   public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -372,7 +359,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         writer.endObject(4, true);
       }
 
-      ODocument metadata = index.getMetadata();
+      final ODocument metadata = index.getMetadata();
       if (metadata != null)
         writer.writeAttribute(4, true, "metadata", metadata);
 

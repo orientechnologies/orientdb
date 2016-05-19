@@ -194,13 +194,17 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
         StringBuilder sb = new StringBuilder();
 
         // Walk through the list of OSecurityAuthenticators.
+        boolean first = true;
         for (OSecurityAuthenticator sa : authenticatorsList) {
           if (sa.isEnabled()) {
             String sah = sa.getAuthenticationHeader(databaseName);
 
-            if (sah != null) {
+            if (sah != null && sah.trim().length() > 0) {
+              if(!first){
+                 sb.append("\n");
+              }
               sb.append(sah);
-              sb.append("\n");
+              first = false;
             }
           }
         }

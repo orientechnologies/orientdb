@@ -1838,24 +1838,22 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       throw new OIndexException("List of fields to index cannot be empty.");
     }
 
-    acquireSchemaReadLock();
-    try {
-      for (final String fieldToIndex : fields) {
-        final String fieldName = decodeClassName(OIndexDefinitionFactory.extractFieldName(fieldToIndex));
+    final String localName = this.name;
+    final int[] localPolymorphicClusterIds = polymorphicClusterIds;
 
-        if (!fieldName.equals("@rid") && !existsProperty(fieldName))
-          throw new OIndexException("Index with name : '" + name + "' cannot be created on class : '" + this.name
-              + "' because field: '" + fieldName + "' is absent in class definition.");
-      }
+    for (final String fieldToIndex : fields) {
+      final String fieldName = decodeClassName(OIndexDefinitionFactory.extractFieldName(fieldToIndex));
 
-      final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
-          extractFieldTypes(fields), null, type, algorithm);
-
-      return getDatabase().getMetadata().getIndexManager().createIndex(name, type, indexDefinition, polymorphicClusterIds,
-          progressListener, metadata, algorithm);
-    } finally {
-      releaseSchemaReadLock();
+      if (!fieldName.equals("@rid") && !existsProperty(fieldName))
+        throw new OIndexException("Index with name '" + name + "' cannot be created on class '" + localName
+            + "' because the field '" + fieldName + "' is absent in class definition");
     }
+
+    final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
+        extractFieldTypes(fields), null, type, algorithm);
+
+    return getDatabase().getMetadata().getIndexManager().createIndex(name, type, indexDefinition, localPolymorphicClusterIds,
+        progressListener, metadata, algorithm);
   }
 
   public boolean areIndexed(final String... fields) {
@@ -1971,12 +1969,24 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public void onPostIndexManagement() {
     final OIndex<?> autoShardingIndex = getAutoShardingIndex();
     if (autoShardingIndex != null) {
-      if (!getDatabase().getStorage().isRemote())
+      if (!getDatabase().getStorage().isRemote()) {
         // OVERRIDE CLUSTER SELECTION
-        this.clusterSelection = new OAutoShardingClusterSelectionStrategy(this, autoShardingIndex);
-    } else if (clusterSelection instanceof OAutoShardingClusterSelectionStrategy)
+        acquireSchemaWriteLock();
+        try {
+          this.clusterSelection = new OAutoShardingClusterSelectionStrategy(this, autoShardingIndex);
+        } finally {
+          releaseSchemaWriteLock();
+        }
+      }
+    } else if (clusterSelection instanceof OAutoShardingClusterSelectionStrategy) {
       // REMOVE AUTO SHARDING CLUSTER SELECTION
-      this.clusterSelection = new ORoundRobinClusterSelectionStrategy();
+      acquireSchemaWriteLock();
+      try {
+        this.clusterSelection = new ORoundRobinClusterSelectionStrategy();
+      } finally {
+        releaseSchemaWriteLock();
+      }
+    }
   }
 
   @Override

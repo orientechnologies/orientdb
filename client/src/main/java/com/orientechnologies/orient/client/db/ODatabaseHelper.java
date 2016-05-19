@@ -138,14 +138,18 @@ public class ODatabaseHelper {
   }
 
   protected static String getServerRootPassword(final String iDirectory) throws IOException {
-    File file = getConfigurationFile(iDirectory);
+    String passwd = System.getProperty("ORIENTDB_ROOT_PASSWORD");
+    if( passwd!=null)
+      return passwd;
 
-    FileReader f = new FileReader(file);
+    final File file = getConfigurationFile(iDirectory);
+
+    final FileReader f = new FileReader(file);
     final char[] buffer = new char[(int) file.length()];
     f.read(buffer);
     f.close();
 
-    String fileContent = new String(buffer);
+    final String fileContent = new String(buffer);
     // TODO search is wrong because if first user is not root tests will fail
     int pos = fileContent.indexOf("password=\"");
     pos += "password=\"".length();

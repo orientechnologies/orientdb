@@ -74,29 +74,29 @@ import java.util.zip.GZIPInputStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseImport extends ODatabaseImpExpAbstract {
-  public static final String EXPORT_IMPORT_MAP_NAME          = "___exportImportRIDMap";
-  public static final int    IMPORT_RECORD_DUMP_LAP_EVERY_MS = 5000;
+  public static final String         EXPORT_IMPORT_MAP_NAME          = "___exportImportRIDMap";
+  public static final int            IMPORT_RECORD_DUMP_LAP_EVERY_MS = 5000;
 
-  private Map<OPropertyImpl, String> linkedClasses = new HashMap<OPropertyImpl, String>();
-  private Map<OClass, List<String>>  superClasses  = new HashMap<OClass, List<String>>();
-  private OJSONReader jsonReader;
-  private ORecord     record;
-  private boolean schemaImported  = false;
-  private int     exporterVersion = -1;
-  private ORID schemaRecordId;
-  private ORID indexMgrRecordId;
+  private Map<OPropertyImpl, String> linkedClasses                   = new HashMap<OPropertyImpl, String>();
+  private Map<OClass, List<String>>  superClasses                    = new HashMap<OClass, List<String>>();
+  private OJSONReader                jsonReader;
+  private ORecord                    record;
+  private boolean                    schemaImported                  = false;
+  private int                        exporterVersion                 = -1;
+  private ORID                       schemaRecordId;
+  private ORID                       indexMgrRecordId;
 
-  private boolean deleteRIDMapping = true;
+  private boolean                    deleteRIDMapping                = true;
 
-  private OIndex<OIdentifiable> exportImportHashTable;
+  private OIndex<OIdentifiable>      exportImportHashTable;
 
-  private boolean preserveClusterIDs = true;
-  private boolean migrateLinks       = true;
-  private boolean merge              = false;
-  private boolean rebuildIndexes     = true;
+  private boolean                    preserveClusterIDs              = true;
+  private boolean                    migrateLinks                    = true;
+  private boolean                    merge                           = false;
+  private boolean                    rebuildIndexes                  = true;
 
-  private Set<String>         indexesToRebuild    = new HashSet<String>();
-  private Map<String, String> convertedClassNames = new HashMap<String, String>();
+  private Set<String>                indexesToRebuild                = new HashSet<String>();
+  private Map<String, String>        convertedClassNames             = new HashMap<String, String>();
 
   private interface ValuesConverter<T> {
     T convert(T value);
@@ -312,7 +312,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private static final class LinkConverter implements ValuesConverter<OIdentifiable> {
     public static final LinkConverter INSTANCE = new LinkConverter();
 
-    private OIndex<OIdentifiable> exportImportHashTable;
+    private OIndex<OIdentifiable>     exportImportHashTable;
 
     @Override
     public OIdentifiable convert(OIdentifiable value) {
@@ -438,8 +438,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     } catch (Exception e) {
       final StringWriter writer = new StringWriter();
-      writer.append("Error on database import happened just before line " + jsonReader.getLineNumber() + ", column " + jsonReader
-          .getColumnNumber() + "\n");
+      writer.append("Error on database import happened just before line " + jsonReader.getLineNumber() + ", column "
+          + jsonReader.getColumnNumber() + "\n");
       final PrintWriter printWriter = new PrintWriter(writer);
       e.printStackTrace(printWriter);
       printWriter.flush();
@@ -552,11 +552,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       super.parseSetting(option, items);
   }
 
-
-  public void setOption(final String option, String value){
+  public void setOption(final String option, String value) {
     parseSetting("-" + option, Arrays.asList(value));
   }
-
 
   protected void removeDefaultClusters() {
     listener.onMessage(
@@ -703,9 +701,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           doc = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(value, doc, null);
           doc.setLazyLoad(false);
 
-          final OIdentifiable oldRid = doc.<OIdentifiable>field("rid");
+          final OIdentifiable oldRid = doc.<OIdentifiable> field("rid");
           final OIdentifiable newRid;
-          if (!doc.<Boolean>field("binary")) {
+          if (!doc.<Boolean> field("binary")) {
             if (exportImportHashTable != null)
               newRid = exportImportHashTable.get(oldRid);
             else
@@ -717,11 +715,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             OBinarySerializer<?> binarySerializer = runtimeKeyIndexDefinition.getSerializer();
 
             if (exportImportHashTable != null)
-              newRid = exportImportHashTable.get(doc.<OIdentifiable>field("rid")).getIdentity();
+              newRid = exportImportHashTable.get(doc.<OIdentifiable> field("rid")).getIdentity();
             else
-              newRid = doc.<OIdentifiable>field("rid");
+              newRid = doc.<OIdentifiable> field("rid");
 
-            index.put(binarySerializer.deserialize(doc.<byte[]>field("key"), 0), newRid != null ? newRid : oldRid);
+            index.put(binarySerializer.deserialize(doc.<byte[]> field("key"), 0), newRid != null ? newRid : oldRid);
           }
           tot++;
         }
@@ -774,7 +772,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       String blobClusterIds = jsonReader.readString(OJSONReader.END_COLLECTION, true).trim();
       blobClusterIds = blobClusterIds.substring(1, blobClusterIds.length() - 1);
 
-      if(!"".equals(blobClusterIds)) {
+      if (!"".equals(blobClusterIds)) {
         // READ BLOB CLUSTER IDS
         for (String i : OStringSerializerHelper.split(blobClusterIds, OStringSerializerHelper.RECORD_SEPARATOR)) {
           Integer cluster = Integer.parseInt(i);
@@ -788,7 +786,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
       jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
     }
-
 
     jsonReader.checkContent("\"classes\"").readNext(OJSONReader.BEGIN_COLLECTION);
 
@@ -1146,9 +1143,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
       }
 
-      if (name != null && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME) || name
-          .equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
-          .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
+      if (name != null && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
+          || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME)
+          || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
         if (!merge)
           database.command(new OCommandSQL("truncate cluster `" + name + "`")).execute();
 
@@ -1222,12 +1219,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     long total = 0;
 
     database.getMetadata().getIndexManager().dropIndex(EXPORT_IMPORT_MAP_NAME);
-    OIndexFactory factory = OIndexes
-        .getFactory(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(), OHashIndexFactory.HASH_INDEX_ALGORITHM);
+    OIndexFactory factory = OIndexes.getFactory(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
+        OHashIndexFactory.HASH_INDEX_ALGORITHM);
 
-    exportImportHashTable = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager()
-        .createIndex(EXPORT_IMPORT_MAP_NAME, OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(),
-            new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK), null, null, null);
+    exportImportHashTable = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager().createIndex(EXPORT_IMPORT_MAP_NAME,
+        OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString(), new OSimpleKeyIndexDefinition(factory.getLastVersion(), OType.LINK),
+        null, null, null);
 
     jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
 
@@ -1257,9 +1254,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           final List<String> sortedClusters = new ArrayList<String>(involvedClusters);
           Collections.sort(sortedClusters);
 
-          listener.onMessage(String
-              .format("\n- Imported %,d records into clusters: %s. Total records imported so far: %,d (%,.2f/sec)", lastLapRecords,
-                  sortedClusters, totalRecords, (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
+          listener.onMessage(String.format(
+              "\n- Imported %,d records into clusters: %s. Total records imported so far: %,d (%,.2f/sec)", lastLapRecords,
+              sortedClusters, totalRecords, (float) lastLapRecords * 1000 / (float) IMPORT_RECORD_DUMP_LAP_EVERY_MS));
 
           // RESET LAP COUNTERS
           last = now;
@@ -1379,9 +1376,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     } catch (Exception t) {
       if (record != null)
-        OLogManager.instance().error(this,
-            "Error importing record " + record.getIdentity() + ". Source line " + jsonReader.getLineNumber() + ", column "
-                + jsonReader.getColumnNumber());
+        OLogManager.instance().error(this, "Error importing record " + record.getIdentity() + ". Source line "
+            + jsonReader.getLineNumber() + ", column " + jsonReader.getColumnNumber());
       else
         OLogManager.instance().error(this,
             "Error importing record. Source line " + jsonReader.getLineNumber() + ", column " + jsonReader.getColumnNumber());
@@ -1413,6 +1409,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       Set<String> clustersToIndex = new HashSet<String>();
       OIndexDefinition indexDefinition = null;
       ODocument metadata = null;
+      Map<String, String> engineProperties = null;
 
       while (jsonReader.lastChar() != '}') {
         final String fieldName = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
@@ -1428,8 +1425,18 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           indexDefinition = importIndexDefinition();
           jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
         } else if (fieldName.equals("metadata")) {
-          String jsonMetadata = jsonReader.readString(OJSONReader.END_OBJECT, true);
+          final String jsonMetadata = jsonReader.readString(OJSONReader.END_OBJECT, true);
           metadata = new ODocument().fromJSON(jsonMetadata);
+          jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+        } else if (fieldName.equals("engineProperties")) {
+          final String jsonEngineProperties = jsonReader.readString(OJSONReader.END_OBJECT, true);
+          Map<String, Object> map = new ODocument().fromJSON(jsonEngineProperties).toMap();
+          if (map != null) {
+            engineProperties = new HashMap<String, String>(map.size());
+            for (Entry<String, Object> entry : map.entrySet()) {
+              map.put(entry.getKey(), entry.getValue());
+            }
+          }
           jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
         } else if (fieldName.equals("blueprintsIndexClass"))
           blueprintsIndexClass = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
@@ -1453,8 +1460,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           if (id != -1)
             clusterIds.add(id);
           else
-            listener
-                .onMessage(String.format("found not existent cluster '%s' in index '%s' configuration, skipping", clusterName, indexName));
+            listener.onMessage(
+                String.format("found not existent cluster '%s' in index '%s' configuration, skipping", clusterName, indexName));
         }
         int[] clusterIdsToIndex = new int[clusterIds.size()];
 
@@ -1464,8 +1471,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           i++;
         }
 
-        OIndex index = indexManager
-            .createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata, indexAlgorithm);
+        final OIndex index = indexManager.createIndex(indexName, indexType, indexDefinition, clusterIdsToIndex, null, metadata,
+            indexAlgorithm);
+
         if (blueprintsIndexClass != null) {
           ODocument configuration = index.getConfiguration();
           configuration.field("blueprintsIndexClass", blueprintsIndexClass);

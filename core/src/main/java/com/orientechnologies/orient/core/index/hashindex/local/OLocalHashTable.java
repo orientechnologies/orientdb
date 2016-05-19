@@ -29,7 +29,7 @@ import java.util.List;
  * according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido Moerkotte April 17, 2002". Which has much less
  * memory consumption in case of nonuniform data distribution.
  * <p>
- * Index itself uses so called "muiltilevel  schema" when first level contains 256 buckets, when bucket is split it is put at the
+ * Index itself uses so called "multilevel schema" when first level contains 256 buckets, when bucket is split it is put at the
  * end of other file which represents second level. So if data which are put has distribution close to uniform (this index was
  * designed to be use as rid index for DHT storage) buckets split will be preformed in append only manner to speed up index write
  * speed.
