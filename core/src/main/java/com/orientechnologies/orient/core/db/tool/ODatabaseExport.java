@@ -26,7 +26,10 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -516,7 +519,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
               writer.writeAttribute(0, false, "collate", p.getCollate().getName());
             if (p.getDefaultValue() != null)
               writer.writeAttribute(0, false, "default-value", p.getDefaultValue());
-
+            if (p.getRegexp() != null)
+              writer.writeAttribute(0, false, "regexp", p.getRegexp());
             final Set<String> customKeys = p.getCustomKeys();
             final Map<String, String> custom = new HashMap<String, String>();
             for (String key : customKeys)

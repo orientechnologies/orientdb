@@ -976,6 +976,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     boolean readonly = false;
     boolean notNull = false;
     String collate = null;
+    String regexp = null;
+    String defaultValue = null;
 
     Map<String, String> customFields = null;
 
@@ -984,7 +986,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       attrib = jsonReader.getValue();
       if (!attrib.equals("\"customFields\""))
-        value = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        value = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT, false, OJSONReader.DEFAULT_JUMP, null, false);
 
       if (attrib.equals("\"min\""))
         min = value;
@@ -1003,9 +1005,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       else if (attrib.equals("\"collate\""))
         collate = value;
       else if (attrib.equals("\"default-value\""))
-        collate = value;
+        defaultValue = value;
       else if (attrib.equals("\"customFields\""))
         customFields = importCustomFields();
+      else if (attrib.equals("\"regexp\""))
+        regexp = value;
     }
 
     OPropertyImpl prop = (OPropertyImpl) iClass.getProperty(propName);
@@ -1026,7 +1030,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     if (linkedType != null)
       prop.setLinkedType(linkedType);
     if (collate != null)
-      prop.setCollate(value);
+      prop.setCollate(collate);
+    if(regexp != null)
+      prop.setRegexp(regexp);
+    if(defaultValue != null){
+      prop.setDefaultValue(value);
+    }
     if (customFields != null) {
       for (Map.Entry<String, String> entry : customFields.entrySet()) {
         prop.setCustom(entry.getKey(), entry.getValue());

@@ -46,7 +46,10 @@ public class OSuffixIdentifier extends SimpleNode {
       if (ctx.getVariable(varName) != null) {
         return ctx.getVariable(varName);
       }
-      return ((ODocument) iCurrentRecord.getRecord()).field(varName);
+      if(iCurrentRecord != null) {
+        return ((ODocument) iCurrentRecord.getRecord()).field(varName);
+      }
+      return null;
     }
     if (recordAttribute != null) {
       return ((ODocument) iCurrentRecord.getRecord()).field(recordAttribute.name);

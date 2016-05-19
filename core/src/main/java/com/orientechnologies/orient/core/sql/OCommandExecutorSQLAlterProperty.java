@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.sql.parser.OAlterPropertyStatement;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -106,13 +108,24 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
             + getSyntax(), parserText, oldPos);
       }
 
-      if (value.equalsIgnoreCase("null")) {
-        value = null;
-      }
-      if (value != null && isQuoted(value)) {
-        value = removeQuotes(value);
-      }
 
+      if(preParsedStatement != null) {
+        OExpression settingExp = ((OAlterPropertyStatement) preParsedStatement).settingValue;
+        if (settingExp != null) {
+          Object expValue = settingExp.execute(null, context);
+          if(expValue == null){
+            expValue = settingExp.toString();
+          }
+          value = expValue == null ? null : expValue.toString();
+        }
+      }else {
+        if (value.equalsIgnoreCase("null")) {
+          value = null;
+        }
+        if (value != null && isQuoted(value)) {
+          value = removeQuotes(value);
+        }
+      }
     } finally {
       textRequest.setText(originalQuery);
     }
@@ -121,7 +134,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
 
   private String removeQuotes(String s) {
     s = s.trim();
-    return s.substring(1, s.length() - 1);
+    return s.substring(1, s.length() - 1).replaceAll("\\\\\"", "\"");
   }
 
 

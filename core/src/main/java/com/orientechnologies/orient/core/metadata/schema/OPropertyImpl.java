@@ -659,11 +659,12 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return this;
   }
 
-  private Object quoteString(String s) {
+  private static Object quoteString(String s) {
     if (s == null) {
       return "null";
     }
-    return "\"" + (s.replaceAll("\"", "\\\\\"")) + "\"";
+    String result = "\"" + (s.replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"")) + "\"";
+    return result;
   }
 
   public String getDefaultValue() {
@@ -1164,15 +1165,18 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
       document.field("min", min);
       document.field("max", max);
-      document.field("regexp", regexp);
-
+      if(regexp!=null) {
+        document.field("regexp", regexp);
+      }
       if (linkedType != null)
         document.field("linkedType", linkedType.id);
       if (linkedClass != null || linkedClassName != null)
         document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
 
       document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-      document.field("collate", collate.getName());
+      if(collate!=null) {
+        document.field("collate", collate.getName());
+      }
       document.field("description", description);
 
     } finally {
