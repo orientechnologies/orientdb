@@ -105,6 +105,12 @@ filterModule.filter('formatDate', function () {
     return moment(input).format('D/M/YY - H:mm:ss');
   }
 })
+
+filterModule.filter('formatDateNS', function () {
+  return function (input) {
+    return moment(input).format('D/M/YY - H:mm');
+  }
+})
 filterModule.filter('operation', function () {
 
   return function (input, args) {

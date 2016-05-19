@@ -677,6 +677,16 @@ ee.factory("BackupService", function (Profiler, $q, $http) {
   return backups;
 })
 
+
+ee.factory("BackupCalendar", function () {
+
+  var calendar = {};
+  calendar.init = function () {
+
+  }
+  return calendar;
+
+})
 ee.factory("SecurityService", function (Profiler, $q, $http) {
   var config = {}
 

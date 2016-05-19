@@ -838,9 +838,9 @@ ee.controller('EEDashboardController', function ($scope, $rootScope, $routeParam
     {name: "stats", title: "Dashboard", template: 'stats', icon: 'fa-dashboard'},
     {name: "general", title: "Servers Management", template: 'general', icon: 'fa-desktop'},
     {name: "cluster", title: "Cluster Management", template: 'distributed', icon: 'fa-sitemap'},
-    //{name: "backup", title: "Backup Management", template: 'backup', icon: 'fa-clock-o'},
+    {name: "backup", title: "Backup Management", template: 'backup', icon: 'fa-clock-o'},
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
-    //{name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
+    {name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
     {name: "auditing", title: "Auditing", template: 'auditing', icon: 'fa-headphones'},
     {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb'},
     {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'}
@@ -858,7 +858,6 @@ ee.controller('EEDashboardController', function ($scope, $rootScope, $routeParam
     } else {
       $scope.activeTab = $scope.menus[0];
     }
-    console.log($scope.activeTab);
   });
 
 })
@@ -1339,12 +1338,12 @@ ee.controller("BackupConfigController", function ($scope, AgentService, $rootSco
   $scope.icon = 'fa-database';
 
   $scope.databases = null;
-  $scope.$on('context:changed', function (evt, context) {
 
-    $timeout(function () {
-      $scope.$broadcast('db-chosen', {name: context, backup: $scope.databases[context]});
-    }, 100)
 
+  $scope.$watch("database", function (db) {
+    if (db) {
+      $scope.$broadcast('db-chosen', {name: db.dbName, backup: db});
+    }
   })
 
   if (AgentService.active) {
@@ -1352,15 +1351,25 @@ ee.controller("BackupConfigController", function ($scope, AgentService, $rootSco
       $scope.servers = data.members;
       $scope.server = $scope.servers[0];
 
+
       $scope.databases = {};
-      $scope.server.databases.forEach(function (db) {
-        $scope.databases[db] = {};
-      });
+
 
       BackupService.get().then(function (d) {
-        d.backups.forEach(function (b) {
+        d.backups.forEach(function (b, idx, arr) {
+          if (idx == 0) {
+            $scope.database = b;
+          }
           $scope.databases[b.dbName] = b;
         });
+
+        $scope.server.databases.forEach(function (db) {
+          if (!$scope.databases[db]) {
+            $scope.databases[db] = {dbName: db};
+          }
+        });
+
+
       })
 
     });
@@ -1370,13 +1379,26 @@ ee.controller("BackupConfigController", function ($scope, AgentService, $rootSco
 /**
  *  Single Backup Controller
  */
-ee.controller("SingleBackupController", function ($scope, BackupService, Notification, $modal, $timeout) {
+ee.controller("SingleBackupController", function ($scope, BackupService, Notification, $modal) {
 
-
+  $scope.eventsType = [
+    {name: "Scheduled", type: "BACKUP_SCHEDULED", clazz: 'log-scheduled-icon'},
+    {name: "Finished", type: "BACKUP_FINISHED", clazz: 'log-finished-icon'},
+    {name: "Error", type: "BACKUP_ERROR", clazz: 'log-error-icon'},
+    {name: "Started", type: "BACKUP_STARTED", clazz: 'log-started-icon'}
+  ]
+  $scope.selectedEvents = ["BACKUP_SCHEDULED", "BACKUP_FINISHED", "BACKUP_ERROR"]
   $scope.mode = "1";
   $scope.modes = {"1": "Incremental Backup", "2": "Full Backup", "3": "Full + Incremental Backup"};
+
+  $scope.getClazz = function (t) {
+    return ($scope.selectedEvents.indexOf(t.type) == -1 ? "fa-circle-thin " : "fa-circle ") + t.clazz;
+  }
   $scope.$on('db-chosen', function (evt, db) {
+
     $scope.backup = db.backup;
+
+
     var incr = undefined;
     var full = undefined;
     if ($scope.backup.modes) {
@@ -1392,6 +1414,43 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
         incr = $scope.backup.modes["INCREMENTAL_BACKUP"].when;
       }
     }
+
+    function initCalendar(data) {
+      $('#calendar').fullCalendar({
+        header: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'month,agendaWeek,agendaDay'
+        },
+        eventClick: function (calEvent, jsEvent, view) {
+
+          var modalScope = $scope.$new(true);
+          modalScope.event = calEvent;
+          var modalPromise = $modal({template: 'views/server/backup/modalBackup.html', scope: modalScope, show: false});
+
+
+          modalPromise.$promise.then(modalPromise.show);
+        },
+        defaultView: 'agendaWeek',
+        editable: true,
+        events: data.logs.filter(function (e) {
+          return $scope.selectedEvents.indexOf(e.op) != -1;
+        }).map(function (e, idx, arr) {
+          var date = new Date(e.timestamp);
+          return {
+            id: idx,
+            title: $scope.info(e),
+            _source: e,
+            _template: '/views/server/backup/' + e.op.toLowerCase() + '.html',
+            start: date,
+            end: date,
+            className: $scope.clazz(e)
+
+          }
+        })
+      })
+    }
+
     function initTimeline(data) {
       var events = data.logs.map(function (e) {
         var date = new Date(e.timestamp);
@@ -1399,7 +1458,7 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
         return {
           "start_date": {
             "year": m.year(),
-            "month": m.month(),
+            "month": m.month() + 1,
             "day": m.date(),
             "hour": m.hour(),
             "minute": m.minute(),
@@ -1431,12 +1490,14 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
     } else {
       BackupService.logs($scope.backup.uuid).then(function (data) {
         $scope.logs = data.logs;
-        $scope.currentUnit = $scope.logs[0];
-
-        BackupService.unitLogs($scope.backup.uuid, $scope.currentUnit.unitId).then(function (data) {
-          $scope.currentUnitLogs = data.logs;
-          initTimeline(data);
-        })
+        if ($scope.logs.length > 0) {
+          $scope.currentUnit = $scope.logs[0];
+          BackupService.unitLogs($scope.backup.uuid, $scope.currentUnit.unitId).then(function (data) {
+            $scope.currentUnitLogs = data.logs;
+            //initTimeline(data);
+            initCalendar(data);
+          })
+        }
       });
     }
 
@@ -1478,18 +1539,47 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
           return "Full backup";
       }
     }
+
+    $scope.clazz = function (event) {
+      var clazz = "basic-log";
+
+      switch (event.op) {
+        case "BACKUP_FINISHED":
+
+          clazz += " log-finished";
+          break;
+        case "BACKUP_SCHEDULED":
+          clazz += " log-scheduled";
+          break;
+        case "BACKUP_STARTED":
+          clazz += " log-started";
+          break;
+        case "BACKUP_ERROR":
+          clazz += " log-error";
+          break;
+      }
+      return clazz;
+    }
     $scope.info = function (event) {
       var info = modeToString(event.mode);
       switch (event.op) {
         case "BACKUP_FINISHED":
-          info += " executed at " + moment(new Date(event.timestamp)).format('MMMM Do YYYY, h:mm:ss') + ".";
+
+          info += " executed";
+          //info += " executed at " + moment(new Date(event.timestamp)).format('MMMM Do YYYY, h:mm:ss') + ".";
+          break;
+        case "BACKUP_ERROR":
+
+          info += " error";
+          //info += " executed at " + moment(new Date(event.timestamp)).format('MMMM Do YYYY, h:mm:ss') + ".";
           break;
         case "BACKUP_SCHEDULED":
-          info += " scheduled at " + moment(new Date(event.nextExecution)).format('MMMM Do YYYY, h:mm:ss') + ".";
+          info += " scheduled.";
+          //info += " scheduled at " + moment(new Date(event.nextExecution)).format('MMMM Do YYYY, h:mm') + ".";
           break;
-
         case "BACKUP_STARTED":
-          info += " started at " + moment(new Date(event.timestamp)).format('MMMM Do YYYY, h:mm:ss') + ".";
+          info += " started";
+          //info += " started at " + moment(new Date(event.timestamp)).format('MMMM Do YYYY, h:mm:ss') + ".";
           break;
       }
       return info;
@@ -1561,10 +1651,10 @@ ee.controller("ServerSecurityController", function ($scope, AgentService) {
 
 
   $scope.agentActive = AgentService.active;
-  $scope.clazz = 'tabs-style-linebox';
-  $scope.icon = 'fa-database';
+  //$scope.icon = 'fa-database';
   $scope.securityTabs = [
-    {"name": "Auditing", "template": "views/server/stats/auditing.html"}
+    {"name": "Auditing", "template": "views/server/stats/auditing.html"},
+    {"name": "Kerberos", "template": "views/server/stats/kerberos.html"}
   ]
 
 

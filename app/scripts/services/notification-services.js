@@ -1,6 +1,6 @@
 var notification = angular.module('notification.services', []);
 
-notification.factory('Notification', function ($timeout, $rootScope) {
+notification.factory('Notification', function ($timeout, $rootScope,$sanitize) {
 
 
   var notiService = {
@@ -25,7 +25,7 @@ notification.factory('Notification', function ($timeout, $rootScope) {
         if (typeof notification.content != 'string') {
           notification.content = notification.content.errors[0].content;
         }
-        n = noty({text: notification.content, layout: 'bottom', type: 'error', theme: 'relax'});
+        n = noty({text: _.escape(notification.content), layout: 'bottom', type: 'error', theme: 'relax'});
       } else if (notification.warning) {
         n = noty({text: notification.content, layout: 'bottom', type: 'warning', theme: 'relax'});
       } else {

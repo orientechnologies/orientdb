@@ -1,126 +1,89 @@
-<div class="col-md-12" ng-controller="SingleBackupController">
-  <div>
-    <div class="row">
-      <div class="col-md-6">
-        <div class="panel panel-default">
-          <div class="panel-heading">Settings</div>
-          <div class="panel-body">
-            <form class="form-horizontal">
-              <div class="form-group">
-                <label class="col-sm-3 control-label">Database</label>
-                <div class="col-sm-9">
-                  <p class="form-control-static">{{backup.dbName}}</p>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-sm-3 control-label">Backup ID</label>
-                <div class="col-sm-9">
-                  <p class="form-control-static">{{backup.uuid}}</p>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-sm-3 control-label">Directory</label>
-                <div class="col-sm-9">
-                  <input type="text" class="form-control" placeholder="Directory" ng-model="backup.directory">
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-sm-3 control-label">Mode</label>
-                <div class="col-sm-9">
-                  <select class="form-control" ng-model="mode">
-                    <option ng-repeat="(key,value) in modes" value="{{key}}">{{value}}</option>
-                  </select>
-                </div>
-              </div>
+<div class="row">
+  <div class="col-md-12" ng-controller="SingleBackupController">
+    <div>
+      <div class="row">
+        <div class="col-md-7">
 
-              <div class="form-group" ng-show="mode == '3' || mode == '2'">
-                <label class="col-sm-3 control-label">Full Backup</label>
-                <div class="col-sm-9">
-                  <div id="full_cron" class="form-control-static"></div>
-                </div>
-              </div>
-              <div class="form-group" ng-show="mode == '3' || mode == '1'">
-                <label class="col-sm-3 control-label">Incremental Backup</label>
-                <div class="col-sm-9">
-                  <div id="incremental_cron" class="form-control-static"></div>
-                </div>
-              </div>
-              <div class="form-group">
-                <div class="col-sm-offset-3 col-sm-9">
-                  <button type="submit" class="btn btn-sm" ng-click="save()">Save</button>
-                </div>
-              </div>
-            </form>
-          </div>
+        </div>
+        <div class="col-md-5">
+          <ul class="list-inline">
+            <li ng-repeat="t in eventsType" class="pointer">
+              <i class="fa" ng-class="getClazz(t)">
+              </i>
+              {{t.name}}
+            </li>
+          </ul>
         </div>
       </div>
-      <div class="col-md-6">
-        <div id="menu" class="panel panel-default list-group">
-          <div class="panel-heading">
-            Backup Logs
-          </div>
+      <div class="row">
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading">Settings</div>
+            <div class="panel-body">
+              <form class="form-horizontal">
+                <div class="form-group">
+                  <label class="col-sm-3 control-label">Database</label>
+                  <div class="col-sm-9">
+                    <p class="form-control-static">{{backup.dbName}}</p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label">Backup ID</label>
+                  <div class="col-sm-9">
+                    <p class="form-control-static">{{backup.uuid}}</p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label">Directory</label>
+                  <div class="col-sm-9">
+                    <input type="text" class="form-control" placeholder="Directory" ng-model="backup.directory">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-3 control-label">Mode</label>
+                  <div class="col-sm-9">
+                    <select class="form-control" ng-model="mode">
+                      <option ng-repeat="(key,value) in modes" value="{{key}}">{{value}}</option>
+                    </select>
+                  </div>
+                </div>
 
-          <table class="table">
-            <thead>
-            <tr>
-              <th>Unit Id</th>
-              <th>Last Log</th>
-              <th>Last Operation</th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat="log in logs" ng-click="setCurrent(log)" class="pointer"
-                ng-class="{ 'active' : currentUnit.unitId == log.unitId}">
-              <td>{{log.unitId}}</td>
-              <td>{{info(log)}}</td>
-              <td><span class="label label-info">{{log.op}}</span></td>
-              <td>
-                <span class="fa fa-chevron-circle-down" ng-show="currentUnit.unitId == log.unitId"></span>
-              </td>
-            </tr>
-            </tbody>
-          </table>
+                <div class="form-group" ng-show="mode == '3' || mode == '2'">
+                  <label class="col-sm-3 control-label">Full Backup</label>
+                  <div class="col-sm-9">
+                    <div id="full_cron" class="form-control-static"></div>
+                  </div>
+                </div>
+                <div class="form-group" ng-show="mode == '3' || mode == '1'">
+                  <label class="col-sm-3 control-label">Incremental Backup</label>
+                  <div class="col-sm-9">
+                    <div id="incremental_cron" class="form-control-static"></div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="col-sm-offset-3 col-sm-9">
+                    <button type="submit" class="btn btn-sm" ng-click="save()">Save</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <div id="calendar"></div>
+
         </div>
       </div>
+      <div class="row">
+        <div class="col-md-12">
 
-      <!--<div class="col-md-6">-->
-        <!--<div class="panel panel-default list-group">-->
-          <!--<div class="panel-heading">-->
-            <!--Backup Unit <b>{{currentUnit.unitId}}</b> Logs-->
-
-            <!--<div class="panel-actions">-->
-              <!--<div class="btn-toolbar">-->
-                <!--<div class="btn-group">-->
-                  <!--<button class="btn btn-sm" ng-click="restore()"><i class="fa fa-history"></i> Restore</button>-->
-                <!--</div>-->
-              <!--</div>-->
-            <!--</div>-->
-          <!--</div>-->
-          <!--<table class="table">-->
-            <!--<thead>-->
-            <!--<tr>-->
-              <!--<th>Log</th>-->
-              <!--<th>Operation</th>-->
-            <!--</tr>-->
-            <!--</thead>-->
-            <!--<tbody>-->
-            <!--<tr ng-repeat="log in currentUnitLogs">-->
-              <!--<td>{{info(log)}}</td>-->
-              <!--<td><span class="label label-info">{{log.op}}</span></td>-->
-            <!--</tr>-->
-            <!--</tbody>-->
-          <!--</table>-->
-        <!--</div>-->
-      <!--</div>-->
-
-    </div>
-    <div class="row">
-      <div class="col-md-12">
-        <div id="timeline"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <div id="timeline"></div>
+        </div>
       </div>
     </div>
   </div>
-
-
 </div>

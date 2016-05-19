@@ -18,8 +18,8 @@
              tabindex="-1"
              ng-repeat="a in warnings">
             <button type="button" class="close" ng-click="clear()">×</button>
-        <span>
-            {{a.content}}
+        <span ng-bind-html="a.content">
+
         </span>
         </div>
     </div>
