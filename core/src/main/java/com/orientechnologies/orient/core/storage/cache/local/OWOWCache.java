@@ -87,7 +87,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       .getValueAsInteger();
   private final List<WeakReference<OLowDiskSpaceListener>> listeners             = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
 
-  private final AtomicLong lastDiskSpaceCheck = new AtomicLong(System.currentTimeMillis());
+  private final AtomicLong lastDiskSpaceCheck = new AtomicLong(0);
   private final String storagePath;
 
   private final ConcurrentSkipListMap<PagedKey, PageGroup> writeCachePages     = new ConcurrentSkipListMap<PagedKey, PageGroup>();
@@ -215,7 +215,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final long newPagesAdded = amountOfNewPagesAdded.incrementAndGet();
     final long lastSpaceCheck = lastDiskSpaceCheck.get();
 
-    if (newPagesAdded - lastSpaceCheck > diskSizeCheckInterval) {
+    if (newPagesAdded - lastSpaceCheck > diskSizeCheckInterval || lastSpaceCheck == 0) {
       final File storageDir = new File(storagePath);
 
       final long freeSpace = storageDir.getFreeSpace();

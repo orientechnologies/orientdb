@@ -246,16 +246,19 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       throw new ONestedRollbackException(writer.toString(), exception);
     }
 
-    final int counter = operation.decrementCounter();
-    assert counter >= 0;
+    final int counter = operation.getCounter();
+    assert counter > 0;
 
-    if (counter == 0) {
+    if (counter == 1) {
       if (!operation.isRollback())
         operation.commitChanges(writeAheadLog);
 
       if (!operation.isRollbackOnlyMode())
         writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
 
+      // We have to decrement the counter after the disk operations, otherwise, if they
+      // fail, we will be unable to rollback the atomic operation later.
+      operation.decrementCounter();
       currentOperation.set(null);
 
       if (trackAtomicOperations) {
@@ -266,7 +269,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
         lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
 
       atomicOperationsCount.decrement();
-    }
+    } else
+      operation.decrementCounter();
 
     return operation;
   }

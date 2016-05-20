@@ -141,7 +141,7 @@ public enum OGlobalConfiguration {
    */
   DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES("storage.diskCache.diskFreeSpaceCheckIntervalInPages",
       "The interval (how many new pages should be added before free space will be checked), after which the storage periodically "
-          + "checks whether the amount of free disk space is enough to work in write mode", Integer.class, 4096),
+          + "checks whether the amount of free disk space is enough to work in write mode", Integer.class, 2048),
 
   /**
    * Keep disk cache state between moment when storage is closed and moment when it is opened again.
