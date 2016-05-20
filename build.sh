@@ -5,4 +5,4 @@ npm install
 bower install
 grunt build
 cd dist/studio
-zip -r ../../bin/$STUDIO plugin.json www
+zip -r ../../$STUDIO plugin.json www
