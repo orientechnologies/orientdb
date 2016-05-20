@@ -94,6 +94,11 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     if (iRecord == null)
       throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved because current record is NULL");
 
+    if (preLoadedFields != null && preLoadedFields.size() == 1) {
+      if ("@rid".equalsIgnoreCase(preLoadedFields.iterator().next()))
+        return iRecord.getIdentity();
+    }
+
     final ODocument doc = (ODocument) iRecord.getRecord();
 
     if (preLoadedFieldsArray == null && preLoadedFields != null && preLoadedFields.size() > 0 && preLoadedFields.size() < 5) {
