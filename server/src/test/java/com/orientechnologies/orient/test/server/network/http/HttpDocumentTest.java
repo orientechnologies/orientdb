@@ -144,7 +144,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(created.field("name"), "Jay");
     Assert.assertEquals(created.field("surname"), "Miner");
-    Assert.assertEquals(created.field("age"), 0);
+    Assert.assertEquals(created.field("age"), (Integer)0);
     Assert.assertEquals(created.getVersion(), 1);
 
     patch("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1)).payload("{age:1,@version:1}", CONTENT.JSON)
@@ -154,7 +154,7 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
 
     Assert.assertEquals(updated.field("name"), "Jay");
     Assert.assertEquals(updated.field("surname"), "Miner");
-    Assert.assertEquals(updated.field("age"), 1);
+    Assert.assertEquals(updated.field("age"), (Integer)1);
     Assert.assertEquals(updated.getVersion(), 2);
   }
 
