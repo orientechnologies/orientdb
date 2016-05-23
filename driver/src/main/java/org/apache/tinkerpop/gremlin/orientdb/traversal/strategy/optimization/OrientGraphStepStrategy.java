@@ -20,9 +20,6 @@ public final class OrientGraphStepStrategy
 
     @Override
     public void apply(final Traversal.Admin<?, ?> traversal) {
-        if (traversal.getEngine().isComputer())
-            return;
-
         final Step<?, ?> startStep = traversal.getStartStep();
         // only apply once
         if (startStep instanceof GraphStep && !(startStep instanceof OrientGraphStep)) {
