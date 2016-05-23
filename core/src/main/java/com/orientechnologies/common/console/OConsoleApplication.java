@@ -228,8 +228,9 @@ public class OConsoleApplication {
 
         } else if (commandBuffer.length() > 0) {
           // BUFFER IT
-          commandBuffer.append(';');
+          commandBuffer.append(' ');
           commandBuffer.append(commandLine);
+          commandBuffer.append(';');
           commandLine = null;
         }
 

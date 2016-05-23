@@ -87,11 +87,11 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     try {
       final Object result = currentDatabase.command(new OCommandGremlin(iScriptText)).execute();
 
-      float elapsedSeconds = (System.currentTimeMillis() - start) / 1000;
+      float elapsed = System.currentTimeMillis() - start;
 
       out.println("\n" + result);
 
-      out.printf("\nScript executed in %f sec(s).", elapsedSeconds);
+      out.printf("\nScript executed in %f ms.", elapsed);
     } catch (OStorageException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof OCommandExecutorNotFoundException)
@@ -117,9 +117,15 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
         final OrientGraph g = new OrientGraph(currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
+
+        final long totalEdges = g.countEdges();
+        final long totalVertices = g.countVertices();
+
         new OGraphMLReader(g).setOptions(opts).inputGraph(g, fileName);
         g.commit();
         currentDatabase.commit();
+
+        message("\nDone: imported %d vertices and %d edges", g.countVertices() - totalVertices, g.countEdges() - totalEdges);
 
       } catch (ODatabaseImportException e) {
         printError(e);
@@ -175,6 +181,6 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
   @Override
   protected boolean isCollectingCommands(final String iLine) {
-    return super.isCollectingCommands(iLine) || iLine.startsWith("gremlin");
+    return super.isCollectingCommands(iLine) || iLine.trim().equalsIgnoreCase("gremlin");
   }
 }

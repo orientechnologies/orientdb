@@ -39,7 +39,6 @@ import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
-import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandAction;
 import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandFunction;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.*;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.*;
@@ -292,7 +291,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             // UNAUTHORIZED
             errorCode = OHttpUtils.STATUS_AUTH_CODE;
             errorReason = OHttpUtils.STATUS_AUTH_DESCRIPTION;
-            responseHeaders = server.getSecurity().getAuthenticationHeader(((OSecurityAccessException)cause).getDatabaseName());
+            responseHeaders = server.getSecurity().getAuthenticationHeader(((OSecurityAccessException) cause).getDatabaseName());
             errorMessage = null;
           } else {
             // USER ACCESS DENIED
@@ -306,7 +305,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         if (cause != null)
           e = cause;
       } while (cause != null);
-    }else if(e instanceof OCommandSQLParsingException){
+    } else if (e instanceof OCommandSQLParsingException) {
       errorMessage = e.getMessage();
       errorCode = OHttpUtils.STATUS_BADREQ_CODE;
     }
@@ -444,13 +443,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
               iRequest.authorization = new String(OBase64Utils.decode(iRequest.authorization));
             } else if (OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_BEARER)) {
               iRequest.bearerTokenRaw = auth.substring(OHttpUtils.AUTHORIZATION_BEARER.length() + 1);
-            }
-            else if (OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_NEGOTIATE))
-            {
+            } else if (OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_NEGOTIATE)) {
               // Retrieves the SPNEGO authorization token.
               iRequest.authorization = "Negotiate:" + auth.substring(OHttpUtils.AUTHORIZATION_NEGOTIATE.length() + 1);
-            }
-            else {
+            } else {
               throw new IllegalArgumentException("Only HTTP Basic and Bearer authorization are supported");
             }
           } else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONNECTION)) {
@@ -742,7 +738,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     cmdManager.registerCommand(new OServerCommandDeleteIndex());
     cmdManager.registerCommand(new OServerCommandOptions());
     cmdManager.registerCommand(new OServerCommandFunction());
-    cmdManager.registerCommand(new OServerCommandAction());
     cmdManager.registerCommand(new OServerCommandPostKillDbConnection());
     cmdManager.registerCommand(new OServerCommandGetSupportedLanguages());
     cmdManager.registerCommand(new OServerCommandPostAuthToken());

@@ -180,6 +180,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.StringsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.RecordReloadTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SequenceTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLSequenceTest"/>
         </classes>
     </test>
     <test name="DbTools">

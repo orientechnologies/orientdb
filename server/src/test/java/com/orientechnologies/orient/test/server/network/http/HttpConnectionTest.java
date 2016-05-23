@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.network.http;
+package com.orientechnologies.orient.test.server.network.http;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;

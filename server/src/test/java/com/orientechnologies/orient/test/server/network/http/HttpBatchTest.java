@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.network.http;
+package com.orientechnologies.orient.test.server.network.http;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.http.HttpResponse;

@@ -132,6 +132,8 @@ public class OConsoleDatabaseAppTest {
 
     builder.append("drop user TestUser;\n");
 
+    builder.append("repair database -v;\n");
+
     OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
 
     try {

@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +32,6 @@ public class LuceneQeuryParserTest extends BaseLuceneTest {
     song.createProperty("title", OType.STRING);
     song.createProperty("author", OType.STRING);
 
-
   }
 
   @After
@@ -55,6 +55,28 @@ public class LuceneQeuryParserTest extends BaseLuceneTest {
         .query(new OSQLSynchQuery<ODocument>("select * from Song where [title] LUCENE \"(title:*tain)\""));
 
     assertThat(docs).hasSize(4);
+  }
+
+  @Test
+  public void shouldSearchWithLowercaseExpandedTerms() {
+
+    //enabling leading wildcard
+    databaseDocumentTx.command(new OCommandSQL(
+        "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE metadata {\"default\": \"" + KeywordAnalyzer.class
+            .getCanonicalName() + "\", \"lowercaseExpandedTerms\": false}")).execute();
+
+    InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
+
+    databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
+    //
+    List<ODocument> docs = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENE \"Hunter\""));
+
+    assertThat(docs).hasSize(97);
+
+    docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENE \"HUNTER\""));
+
+    assertThat(docs).hasSize(0);
   }
 
   @Test

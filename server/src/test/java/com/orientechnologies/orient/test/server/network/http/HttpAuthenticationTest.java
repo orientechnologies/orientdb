@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.network.http;
+package com.orientechnologies.orient.test.server.network.http;
 
 
 import org.junit.Assert;

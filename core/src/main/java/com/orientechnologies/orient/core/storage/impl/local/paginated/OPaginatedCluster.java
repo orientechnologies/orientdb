@@ -63,7 +63,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGI
 public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   public enum RECORD_STATUS {
-    NOT_EXISTENT, PRESENT, ALLOCATED, recordStatus, REMOVED
+    NOT_EXISTENT, PRESENT, ALLOCATED, REMOVED
   }
 
   private static final boolean                  addRidMetadata           = OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
