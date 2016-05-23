@@ -15,7 +15,7 @@ public class OAlterPropertyStatement extends OStatement {
   OExpression customPropertyValue;
 
   OIdentifier settingName;
-  OExpression settingValue;
+  public OExpression settingValue;
 
   public OAlterPropertyStatement(int id) {
     super(id);

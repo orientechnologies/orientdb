@@ -862,6 +862,24 @@ OStatement StatementInternal():
                 |
                 result = InsertStatement()
                 |
+                LOOKAHEAD(2)
+                result = CreateClassStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreatePropertyStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateIndexStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateClusterStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateLinkStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateFunctionStatement()
+                |
                 LOOKAHEAD(CreateVertexStatementNoTarget())
                 result = CreateVertexStatementNoTarget()
                 |
@@ -899,17 +917,11 @@ OStatement StatementInternal():
                 LOOKAHEAD(TruncateRecordStatement())
                 result = TruncateRecordStatement()
                 |
-                LOOKAHEAD(CreateClassStatement())
-                result = CreateClassStatement()
-                |
                 LOOKAHEAD(AlterClassStatement())
                 result = AlterClassStatement()
                 |
                 LOOKAHEAD(DropClassStatement())
                 result = DropClassStatement()
-                |
-                LOOKAHEAD(CreatePropertyStatement())
-                result = CreatePropertyStatement()
                 |
                 LOOKAHEAD(AlterPropertyStatement())
                 result = AlterPropertyStatement()
@@ -917,16 +929,10 @@ OStatement StatementInternal():
                 LOOKAHEAD(DropPropertyStatement())
                 result = DropPropertyStatement()
                 |
-                LOOKAHEAD(CreateIndexStatement())
-                result = CreateIndexStatement()
-                |
                 result = RebuildIndexStatement()
                 |
                 LOOKAHEAD(2)
                 result = DropIndexStatement()
-                |
-                LOOKAHEAD(CreateClusterStatement())
-                result = CreateClusterStatement()
                 |
                 LOOKAHEAD(AlterClusterStatement())
                 result = AlterClusterStatement()
@@ -939,15 +945,9 @@ OStatement StatementInternal():
                 |
                 result = OptimizeDatabaseStatement()
                 |
-                LOOKAHEAD(2)
-                result = CreateLinkStatement()
-                |
                 result = GrantStatement()
                 |
                 result = RevokeStatement()
-                |
-                LOOKAHEAD(2)
-                result = CreateFunctionStatement()
                 |
                 result = BeginStatement()
                 |

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -57,7 +58,6 @@ import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
@@ -140,18 +140,25 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public <T> T networkOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {
+    int retry = connectionRetry;
+    OStorageRemoteSession session = getCurrentSession();
     do {
       OChannelBinaryAsynchClient network = null;
-      try {
-        network = getAvailableNetwork(getNextAvailableServerURL(false));
-      } catch (IOException exception) {
-        throw OException.wrapException(new OStorageException(errorMessage), exception);
-      }
+      String serverUrl = getNextAvailableServerURL(false, session);
+      do {
+        try {
+          network = getNetwork(serverUrl);
+        } catch (OException e) {
+          serverUrl = useNewServerURL(serverUrl);
+          if (serverUrl == null)
+            throw e;
+        }
+      } while (network == null);
+
       try {
         // In case i do not have a token or i'm switching between server i've to execute a open operation.
-        OStorageRemoteSession session = getCurrentSession();
         OStorageRemoteNodeSession nodeSession = session.get(network.getServerURL());
-        if (nodeSession == null) {
+        if (nodeSession == null || !nodeSession.isValid()) {
           openRemoteDatabase(network);
           if (!network.tryLock())
             continue;
@@ -160,11 +167,46 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         return operation.execute(network);
       } catch (OModificationOperationProhibitedException mope) {
         handleDBFreeze();
+      } catch (OTokenException e) {
+        session.remove(network.getServerURL());
+        if (--retry <= 0)
+          throw OException.wrapException(new OStorageException(errorMessage), e);
+      } catch (OTokenSecurityException e) {
+        session.remove(network.getServerURL());
+        if (--retry <= 0)
+          throw OException.wrapException(new OStorageException(errorMessage), e);
+      } catch (OOfflineNodeException e) {
+        //Remove the current url because the node is offline
+        synchronized (serverURLs) {
+          serverURLs.remove(serverUrl);
+        }
+      } catch (IOException e) {
+        retry = handleIOException(retry, network, e);
+      } catch (OIOException e) {
+        retry = handleIOException(retry, network, e);
+      } catch (OException e) {
+        throw e;
       } catch (Exception e) {
-        handleException(network, errorMessage, e);
+        throw OException.wrapException(new OStorageException(errorMessage), e);
       }
     } while (true);
 
+  }
+
+  private int handleIOException(int retry, OChannelBinaryAsynchClient network, Exception e) {
+    OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", e.getMessage());
+    OLogManager.instance().debug(this, "I/O error stack: ", e);
+    engine.getConnectionManager().remove(network);
+    if (--retry <= 0)
+      throw OException.wrapException(new OIOException(e.getMessage()), e);
+    else {
+      try {
+        Thread.sleep(connectionRetryDelay);
+      } catch (InterruptedException e1) {
+        throw OException.wrapException(new OInterruptedException(e1.getMessage()), e);
+      }
+    }
+    return retry;
   }
 
   @Override
@@ -301,7 +343,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         if (!nodes.isEmpty()) {
           for (OStorageRemoteNodeSession nodeSession : nodes) {
             try {
-              network = getAvailableNetwork(nodeSession.getServerURL());
+              network = getNetwork(nodeSession.getServerURL());
               network.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE, session);
               endRequest(network);
               engine.getConnectionManager().release(network);
@@ -324,8 +366,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       status = STATUS.CLOSING;
       // CLOSE ALL THE CONNECTIONS
-      engine.getConnectionManager().closePool(getCurrentServerURL());
-
+      for(String url: serverURLs) {
+        engine.getConnectionManager().closePool(url);
+      }
       sbTreeCollectionManager.close();
 
       super.close(iForce, onDelete);
@@ -1630,118 +1673,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return session.connectionUserName;
   }
 
-  /**
-   * Handles exceptions. In case of IO errors retries to reconnect until the configured retry times has reached.
-   *
-   * @param message
-   *          the detail message
-   * @param exception
-   *          cause of the error
-   */
-  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String message, final Exception exception) {
-
-    final Throwable firstCause = OException.getFirstCause(exception);
-
-    final boolean tokenException = firstCause instanceof OTokenException || firstCause instanceof OTokenSecurityException;
-
-    // CHECK IF THE EXCEPTION SHOULD BE JUST PROPAGATED
-    if (!(firstCause instanceof IOException) && !(firstCause instanceof OIOException)
-        && !(firstCause instanceof IllegalMonitorStateException) && !(firstCause instanceof OOfflineNodeException)
-        && !tokenException) {
-      if (exception instanceof OException)
-        // NOT AN IO CAUSE, JUST PROPAGATE IT
-        throw (OException) exception;
-
-      // WRAP IT
-      throw OException.wrapException(new OStorageException(message), exception);
-    }
-
-    // IO CAUSE: REMOVE THE CONNECTION FROM THE POOL AND TRY TO RECONNECT TRANSPARENTLY
-    if (!tokenException)
-      if (iNetwork != null) {
-        OLogManager.instance().warn(this, "Caught I/O errors from %s (local socket=%s), trying to reconnect (error: %s)", iNetwork,
-            iNetwork.getLocalSocketAddress(), firstCause);
-        OLogManager.instance().debug(this, "I/O error stack: ", firstCause);
-
-        try {
-          engine.getConnectionManager().remove(iNetwork);
-        } catch (Exception e) {
-          OLogManager.instance().debug(this, "Cannot remove connection from connection manager", e);
-        }
-      } else {
-        OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", firstCause.toString());
-        OLogManager.instance().debug(this, "I/O error stack: ", firstCause);
-      }
-
-    final long lostConnectionTime = System.currentTimeMillis();
-
-    final int currentMaxRetry;
-    final int currentRetryDelay;
-
-    final int urlSize;
-    synchronized (serverURLs) {
-      urlSize = serverURLs.size();
-    }
-
-    if (urlSize > 1) {
-      // IN CLUSTER: NO RETRY AND 0 SLEEP TIME BETWEEN NODES
-      currentMaxRetry = 1;
-      currentRetryDelay = 0;
-    } else {
-      currentMaxRetry = connectionRetry;
-      currentRetryDelay = connectionRetryDelay;
-    }
-
-    for (int retry = 0; retry < currentMaxRetry; ++retry) {
-      // WAIT THE DELAY BEFORE TO RETRY (BUT FIRST TRY)
-      if (retry > 0 && currentRetryDelay > 0)
-        try {
-          Thread.sleep(currentRetryDelay);
-        } catch (InterruptedException e) {
-          // THREAD INTERRUPTED: RETURN EXCEPTION
-          Thread.currentThread().interrupt();
-          break;
-        }
-
-      try {
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this,
-              "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
-
-        // FORCE RESET OF THREAD DATA (SERVER URL + SESSION ID)
-        if (tokenException) {
-          OStorageRemoteSession session = getCurrentSession();
-          session.remove(iNetwork.getServerURL());
-        }
-        // REACQUIRE DB SESSION ID
-        final String currentURL = reopenRemoteDatabase();
-
-        if (!tokenException)
-          OLogManager.instance().warn(this,
-              "Connection re-acquired transparently after %dms and %d retries to server '%s': no errors will be thrown at application level",
-              System.currentTimeMillis() - lostConnectionTime, retry + 1, currentURL);
-
-        // RECONNECTED!
-        return;
-
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error during exception handling", t);
-      }
-    }
-
-    // RECONNECTION FAILED: THROW+LOG THE ORIGINAL EXCEPTION
-    throw OException.wrapException(new OStorageException(message), exception);
-  }
 
   protected String reopenRemoteDatabase() throws IOException {
     String currentURL = getCurrentServerURL();
     do {
       do {
-        final OChannelBinaryAsynchClient network = getAvailableNetwork(currentURL);
+        final OChannelBinaryAsynchClient network = getNetwork(currentURL);
         try {
           OStorageRemoteSession session = getCurrentSession();
           OStorageRemoteNodeSession nodeSession = session.getOrCreate(network.getServerURL());
-          if (nodeSession == null) {
+          if (nodeSession == null || !nodeSession.isValid()) {
             openRemoteDatabase(network);
             return network.getServerURL();
           } else {
@@ -1828,7 +1769,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   protected synchronized String openRemoteDatabase() throws IOException {
-    final String currentURL = getNextAvailableServerURL(true);
+    final String currentURL = getNextAvailableServerURL(true, getCurrentSession());
     return openRemoteDatabase(currentURL);
   }
 
@@ -1889,12 +1830,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     do {
       do {
         OChannelBinaryAsynchClient network = null;
-        try {
-          network = getAvailableNetwork(currentURL);
-        } catch (IOException exception) {
-          throw OException.wrapException(
-              new OStorageException("Cannot create a connection to remote server address(es): " + serverURLs), exception);
-        }
+        network = getNetwork(currentURL);
         try {
           openRemoteDatabase(network);
           return currentURL;
@@ -2047,13 +1983,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (host.startsWith("localhost"))
       host = "127.0.0.1" + host.substring("localhost".length());
 
+    if (host.contains("/"))
+      host = host.substring(0, host.indexOf("/"));
+
     // REGISTER THE REMOTE SERVER+PORT
     if (!host.contains(":"))
       host += ":"
           + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
-
-    if (host.contains("/"))
-      host = host.substring(0, host.indexOf("/"));
+    else if (host.split(":").length < 2 || host.split(":")[1].trim().length() == 0)
+      host += (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
 
     synchronized (serverURLs) {
       if (!serverURLs.contains(host)) {
@@ -2087,26 +2025,25 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return network;
   }
 
-  protected String getNextAvailableServerURL(boolean iIsConnectOperation) {
+  protected String getNextAvailableServerURL(boolean iIsConnectOperation, OStorageRemoteSession session) {
     String url = null;
-
     switch (connectionStrategy) {
     case STICKY:
-      url = getServerURL();
+      url = session != null ? session.getServerUrl() : null;
       if (url == null)
-        url = getServerURFromList(false);
+        url = getServerURFromList(false, session);
       break;
 
     case ROUND_ROBIN_CONNECT:
       if (!iIsConnectOperation)
-        url = getServerURL();
+        url = session != null ? session.getServerUrl() : null;
 
       if (url == null)
-        url = getServerURFromList(iIsConnectOperation);
+        url = getServerURFromList(iIsConnectOperation, session);
       break;
 
     case ROUND_ROBIN_REQUEST:
-      url = getServerURFromList(true);
+      url = getServerURFromList(true, session);
       break;
 
     default:
@@ -2117,11 +2054,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   protected String getCurrentServerURL() {
-    return getServerURFromList(false);
+    return getServerURFromList(false, getCurrentSession());
   }
 
-  protected String getServerURFromList(final boolean iNextAvailable) {
-
+  protected String getServerURFromList(final boolean iNextAvailable, OStorageRemoteSession session) {
     synchronized (serverURLs) {
       if (serverURLs.isEmpty()) {
         parseServerURLs();
@@ -2130,10 +2066,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
 
       // GET CURRENT THREAD INDEX
-      OStorageRemoteSession currentSession = getCurrentSession();
       int serverURLIndex;
-      if (currentSession != null)
-        serverURLIndex = currentSession.serverURLIndex;
+      if (session != null)
+        serverURLIndex = session.serverURLIndex;
       else
         serverURLIndex = 0;
 
@@ -2146,47 +2081,27 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       final String serverURL = serverURLs.get(serverURLIndex) + "/" + getName();
 
-      if (currentSession != null)
-        currentSession.serverURLIndex = serverURLIndex;
+      if (session != null)
+        session.serverURLIndex = serverURLIndex;
 
       return serverURL;
     }
   }
 
-  public OChannelBinaryAsynchClient getAvailableNetwork(final String iCurrentURL) throws IOException {
+  public OChannelBinaryAsynchClient getNetwork(final String iCurrentURL) {
     OChannelBinaryAsynchClient network;
-
-    String lastURL = iCurrentURL;
     do {
-      Exception cause = null;
       try {
-        network = engine.getConnectionManager().acquire(lastURL, clientConfiguration, connectionOptions, asynchEventListener);
-      } catch (Exception e) {
-        OLogManager.instance().debug(this, "Error during acquiring of connection to URL " + lastURL, e);
-        network = null;
-        cause = e;
+        network = engine.getConnectionManager().acquire(iCurrentURL, clientConfiguration, connectionOptions, asynchEventListener);
+      } catch (Exception cause) {
+        throw OException.wrapException(new OStorageException("Cannot open a connection to remote server: " + iCurrentURL), cause);
       }
-
-      if (network == null) {
-        lastURL = useNewServerURL(lastURL);
-        if (lastURL == null) {
-          parseServerURLs();
-          if (cause instanceof IOException)
-            throw (IOException) cause;
-          throw OException.wrapException(new OStorageException("Cannot open a connection to remote server: " + iCurrentURL), cause);
-        }
-      } else if (!network.isConnected()) {
-        // DISCONNECTED NETWORK, GET ANOTHER ONE
-        OLogManager.instance().error(this, "Removing disconnected network channel '%s'...", lastURL);
-        engine.getConnectionManager().remove(network);
-        network = null;
-      } else if (!network.tryLock()) {
+      if (!network.tryLock()) {
         // CANNOT LOCK IT, MAYBE HASN'T BE CORRECTLY UNLOCKED BY PREVIOUS USER
-        OLogManager.instance().error(this, "Removing locked network channel '%s'...", lastURL);
+        OLogManager.instance().error(this, "Removing locked network channel '%s'...", iCurrentURL);
         engine.getConnectionManager().remove(network);
         network = null;
       }
-
     } while (network == null);
     return network;
   }

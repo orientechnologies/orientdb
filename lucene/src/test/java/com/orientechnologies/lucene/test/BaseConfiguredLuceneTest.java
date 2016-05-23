@@ -30,10 +30,6 @@ public abstract class BaseConfiguredLuceneTest extends BaseLuceneTest {
 
   }
 
-  public BaseConfiguredLuceneTest(boolean remote) {
-    //    super(remote);
-  }
-
   @Before
   public void init() {
     initDB();

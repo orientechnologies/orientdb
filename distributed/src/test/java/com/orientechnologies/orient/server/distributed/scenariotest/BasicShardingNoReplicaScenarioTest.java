@@ -36,10 +36,15 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 /**
- * It checks the consistency in the cluster with the following scenario: - 3 server (europe, usa, asia) - 3 shards, one for each
- * server (client_europe, client_usa, client_asia) - writes on each node (5 threads for each running server write 100 records) -
- * check consistency no-replica - shutdown server3 - check consistency no-replica (can retry only records in shard1 and shard2) -
- * restart server3 - check consistency no-replica
+ * It checks the consistency in the cluster with the following scenario:
+ * - 3 server (europe, usa, asia)
+ * - 3 shards, one for each server (client_europe, client_usa, client_asia)
+ * - writes on each node (5 threads for each running server write 100 records)
+ * - check availability no-replica (you can retry records of all the shards)
+ * - shutdown server3
+ * - check availability no-replica (you can retry only records in shard1 and shard2)
+ * - restart server3
+ * - check availability no-replica (you can retry records of all the shards)
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
@@ -96,7 +101,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       executeMultipleWritesOnShards(executeWritesOnServers, "plocal");
 
       // check consistency (no-replica)
-      checkWritesWithShardinNoReplica(serverInstance, executeWritesOnServers);
+      checkAvailabilityOnShardsNoReplica(serverInstance, executeWritesOnServers);
 
       // network fault on server3
       System.out.println("Shutdown on server3.\n");
@@ -108,7 +113,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
       // check consistency (no-replica)
       executeWritesOnServers.remove(2);
-      checkWritesWithShardinNoReplica(executeWritesOnServers, executeWritesOnServers);
+      checkAvailabilityOnShardsNoReplica(executeWritesOnServers, executeWritesOnServers);
 
       // this query doesn't return any result
       try {
@@ -132,7 +137,8 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
       System.out.println("Server 3 restarted.");
       assertTrue(serverInstance.get(2).isActive());
 
-      Thread.sleep(500);
+      waitForDatabaseIsOnline(serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+          getDatabaseName(), 10000);
 
       // checking server3 status by querying a record inserted on it
       try {
@@ -156,7 +162,7 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
 
       // check consistency (no-replica)
       executeWritesOnServers.add(serverInstance.get(2));
-      checkWritesWithShardinNoReplica(serverInstance, executeWritesOnServers);
+      checkAvailabilityOnShardsNoReplica(serverInstance, executeWritesOnServers);
 
     } catch (Exception e) {
       e.printStackTrace();

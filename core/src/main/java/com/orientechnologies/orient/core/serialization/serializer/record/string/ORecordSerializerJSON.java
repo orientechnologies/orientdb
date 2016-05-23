@@ -431,7 +431,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       return getValueAsCollection(iRecord, iFieldValue, iType, iLinkedType, iFieldTypes, iNoMap, iOptions);
     }
 
-    if (iType == null)
+    if (iType == null || iType == OType.ANY)
       // TRY TO DETERMINE THE CONTAINED TYPE from THE FIRST VALUE
       if (iFieldValue.charAt(0) != '\"' && iFieldValue.charAt(0) != '\'') {
         if (iFieldValue.equalsIgnoreCase("false") || iFieldValue.equalsIgnoreCase("true"))

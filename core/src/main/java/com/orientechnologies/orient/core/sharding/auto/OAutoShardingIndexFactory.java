@@ -15,24 +15,19 @@
  */
 package com.orientechnologies.orient.core.sharding.auto;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexUnique;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Auto-sharding index factory.<br>
@@ -46,8 +41,8 @@ import java.util.Set;
  */
 public class OAutoShardingIndexFactory implements OIndexFactory {
 
-  public static final String AUTOSHARDING_ALGORITHM = "AUTOSHARDING";
-  public static final String NONE_VALUE_CONTAINER   = "NONE";
+  public static final String       AUTOSHARDING_ALGORITHM = "AUTOSHARDING";
+  public static final String       NONE_VALUE_CONTAINER   = "NONE";
 
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
@@ -137,10 +132,9 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
       indexEngine = new OAutoShardingIndexEngine(name, durableInNonTxMode, (OAbstractPaginatedStorage) storage.getUnderlying(),
           version);
-    else
-      if (storageType.equals("remote"))
-        // MANAGE REMOTE SHARDED INDEX TO CALL THE INTERESTED SERVER
-        indexEngine = new ORemoteIndexEngine(name);
+    else if (storageType.equals("remote"))
+      // MANAGE REMOTE SHARDED INDEX TO CALL THE INTERESTED SERVER
+      indexEngine = new ORemoteIndexEngine(name);
     else
       throw new OIndexException("Unsupported storage type: " + storageType);
 

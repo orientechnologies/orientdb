@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.network.http;
+package com.orientechnologies.orient.test.server.network.http;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Assert;
@@ -133,6 +133,28 @@ public class HttpDocumentTest extends BaseHttpDatabaseTest {
     Assert.assertEquals(updated.field("name"), "Jay");
     Assert.assertEquals(updated.field("surname"), "Miner");
     Assert.assertEquals(updated.<Object>field("age"), 1);
+    Assert.assertEquals(updated.getVersion(), 2);
+  }
+
+  @Test
+  public void patchPartial() throws IOException {
+    post("document/" + getDatabaseName()).payload("{name:'Jay', surname:'Miner',age:0}", CONTENT.JSON).exec();
+    Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 201);
+    final ODocument created = new ODocument().fromJSON(getResponse().getEntity().getContent());
+
+    Assert.assertEquals(created.field("name"), "Jay");
+    Assert.assertEquals(created.field("surname"), "Miner");
+    Assert.assertEquals(created.field("age"), 0);
+    Assert.assertEquals(created.getVersion(), 1);
+
+    patch("document/" + getDatabaseName() + "/" + created.getIdentity().toString().substring(1)).payload("{age:1,@version:1}", CONTENT.JSON)
+        .exec();
+    Assert.assertEquals(getResponse().getStatusLine().getStatusCode(), 200);
+    final ODocument updated = new ODocument().fromJSON(getResponse().getEntity().getContent());
+
+    Assert.assertEquals(updated.field("name"), "Jay");
+    Assert.assertEquals(updated.field("surname"), "Miner");
+    Assert.assertEquals(updated.field("age"), 1);
     Assert.assertEquals(updated.getVersion(), 2);
   }
 

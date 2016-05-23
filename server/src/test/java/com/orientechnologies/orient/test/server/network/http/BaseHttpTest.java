@@ -1,7 +1,6 @@
-package com.orientechnologies.orient.server.network.http;
+package com.orientechnologies.orient.test.server.network.http;
 
-import java.io.IOException;
-
+import com.orientechnologies.orient.server.OServer;
 import org.apache.http.Consts;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -9,12 +8,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.entity.ContentType;
@@ -25,7 +19,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import com.orientechnologies.orient.server.OServer;
+import java.io.IOException;
 
 /**
  * Base test class for HTTP protocol.
@@ -137,6 +131,14 @@ public abstract class BaseHttpTest {
     response = null;
     return this;
   }
+
+
+  protected BaseHttpTest patch(final String url) throws IOException {
+    request = new HttpPatch(getBaseURL() + "/" + url);
+    response = null;
+    return this;
+  }
+
 
   protected HttpResponse getResponse() throws IOException {
     if (response == null)

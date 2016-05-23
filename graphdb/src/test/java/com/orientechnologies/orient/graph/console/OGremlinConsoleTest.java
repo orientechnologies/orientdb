@@ -58,7 +58,7 @@ public class OGremlinConsoleTest {
         List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from V"));
         Assert.assertFalse(result.isEmpty());
         result = db.query(new OSQLSynchQuery<ODocument>("select from V where name is null"));
-        Assert.assertEquals(1,result.size());
+        Assert.assertEquals(1, result.size());
 
       } finally {
         db.close();
@@ -67,7 +67,6 @@ public class OGremlinConsoleTest {
       console.close();
     }
   }
-
 
   @Test
   public void testMoveVertexCommand() {
@@ -98,6 +97,37 @@ public class OGremlinConsoleTest {
 
   }
 
+  @Test
+  public void testGremlin() {
+    final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
+    String dbUrl = "memory:testGremlin";
+    StringBuilder builder = new StringBuilder();
+    builder.append("create database " + dbUrl + ";\n");
+    builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
+    builder.append("gremlin g.V;\n");
+    OConsoleDatabaseApp console = new OGremlinConsole(new String[] { builder.toString() });
+
+    try {
+      console.run();
+
+      ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+      db.open("admin", "admin");
+      try {
+        long totalVertices = db.countClass("V");
+        Assert.assertTrue(totalVertices > 0);
+
+        long totalEdges = db.countClass("E");
+        Assert.assertTrue(totalEdges > 0);
+
+      } finally {
+        db.close();
+      }
+
+    } finally {
+      console.close();
+    }
+
+  }
 
   @Test
   public void testGraphMLImportWithSmallBatch() {
@@ -130,8 +160,8 @@ public class OGremlinConsoleTest {
     final String INPUT_FILE = "src/test/resources/graph-example-fromexport.xml";
     String dbUrl = "memory:testGraphMLImportIgnoreVAttribute";
 
-    final OGraphMLReader graphml = new OGraphMLReader(new OrientGraphNoTx(dbUrl)).defineVertexAttributeStrategy("__type__",
-        new OIgnoreGraphMLImportStrategy()).inputGraph(INPUT_FILE);
+    final OGraphMLReader graphml = new OGraphMLReader(new OrientGraphNoTx(dbUrl))
+        .defineVertexAttributeStrategy("__type__", new OIgnoreGraphMLImportStrategy()).inputGraph(INPUT_FILE);
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
     db.open("admin", "admin");
@@ -211,8 +241,8 @@ public class OGremlinConsoleTest {
 
     final OrientGraphNoTx graph = new OrientGraphNoTx(dbUrl);
     try {
-      new OGraphMLReader(graph).defineVertexAttributeStrategy("__type__", new ORenameGraphMLImportStrategy("t")).inputGraph(
-          INPUT_FILE);
+      new OGraphMLReader(graph).defineVertexAttributeStrategy("__type__", new ORenameGraphMLImportStrategy("t"))
+          .inputGraph(INPUT_FILE);
 
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
       db.open("admin", "admin");

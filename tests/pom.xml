@@ -27,6 +27,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-Xmx3072m -XX:MaxDirectMemorySize=512g</argLine>
     </properties>
 
     <dependencies>
@@ -115,7 +116,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.17</version>
                 <configuration>
                     <systemPropertyVariables>
                         <storage.lockTimeout>60000</storage.lockTimeout>
@@ -134,7 +134,7 @@
                         <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>
                         <memory.directMemory.trackMode>true</memory.directMemory.trackMode>
                     </systemPropertyVariables>
-                    <argLine>-Xmx3072m -XX:MaxDirectMemorySize=512g</argLine>
+
                 </configuration>
                 <executions>
                     <execution>

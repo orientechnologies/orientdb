@@ -1,11 +1,8 @@
-package com.orientechnologies.orient.server.network.http;
+package com.orientechnologies.orient.test.server.network.http;
 
 import org.apache.http.HttpResponse;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.internal.util.io.IOUtil;
-import sun.misc.IOUtils;
 
 import java.io.IOException;
 

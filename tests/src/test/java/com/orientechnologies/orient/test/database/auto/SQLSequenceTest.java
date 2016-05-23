@@ -28,8 +28,8 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
 
   @Test
   public void trivialTest() {
-    testSequence("seq1", OSequence.SEQUENCE_TYPE.ORDERED);
-    testSequence("seq2", OSequence.SEQUENCE_TYPE.CACHED);
+    testSequence("seqSQL1", OSequence.SEQUENCE_TYPE.ORDERED);
+    testSequence("seqSQL2", OSequence.SEQUENCE_TYPE.CACHED);
   }
 
   private void testSequence(String sequenceName, OSequence.SEQUENCE_TYPE sequenceType) {
@@ -81,18 +81,18 @@ public class SQLSequenceTest extends DocumentDBBaseTest {
   public void testFree() {
     OSequenceLibrary sequenceManager = database.getMetadata().getSequenceLibrary();
 
-    OSequence seq = sequenceManager.createSequence("seqOrdered", OSequence.SEQUENCE_TYPE.ORDERED, null);
+    OSequence seq = sequenceManager.createSequence("seqSQLOrdered", OSequence.SEQUENCE_TYPE.ORDERED, null);
 
     OSequenceException err = null;
     try {
-      sequenceManager.createSequence("seqOrdered", OSequence.SEQUENCE_TYPE.ORDERED, null);
+      sequenceManager.createSequence("seqSQLOrdered", OSequence.SEQUENCE_TYPE.ORDERED, null);
     } catch (OSequenceException se) {
       err = se;
     }
     Assert.assertTrue(err == null || err.getMessage().toLowerCase().contains("already exists"),
         "Creating two ordered sequences with same name doesn't throw an exception");
 
-    OSequence seqSame = sequenceManager.getSequence("seqOrdered");
+    OSequence seqSame = sequenceManager.getSequence("seqSQLOrdered");
     Assert.assertEquals(seqSame, seq);
 
     testUsage(seq, FIRST_START);

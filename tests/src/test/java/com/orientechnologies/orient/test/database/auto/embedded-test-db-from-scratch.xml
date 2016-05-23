@@ -99,6 +99,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.OrderByIndexReuseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.LinkSetIndexTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CompositeIndexWithNullTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.AutoShardingTest"/>
         </classes>
     </test>
     <test name="Dictionary">
@@ -179,6 +180,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.StringsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.RecordReloadTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SequenceTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLSequenceTest"/>
         </classes>
     </test>
     <test name="DbTools">

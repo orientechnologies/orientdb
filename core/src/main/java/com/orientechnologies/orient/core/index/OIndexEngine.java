@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -38,14 +39,14 @@ public interface OIndexEngine {
   void flush();
 
   void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-                 OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata);
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties, ODocument metadata);
 
   void delete();
 
   void deleteWithoutLoad(String indexName);
 
   void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize);
+      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties);
 
   boolean contains(Object key);
 

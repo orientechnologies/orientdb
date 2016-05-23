@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 import java.util.Map;
 
@@ -66,7 +67,7 @@ public class OBaseExpression extends OMathExpression {
       result = identifier.execute(iCurrentRecord, ctx);
     }
     if (string != null && string.length() > 1) {
-      result = string.substring(1, string.length() - 1);
+      result = OStringSerializerHelper.decode(string.substring(1, string.length() - 1));
     }
     if (modifier != null) {
       result = modifier.execute(iCurrentRecord, result, ctx);

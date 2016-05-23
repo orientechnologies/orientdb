@@ -89,6 +89,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   private volatile OIndexDefinition             indexDefinition;
   private volatile boolean                      rebuilding      = false;
   private volatile ThreadLocal<IndexTxSnapshot> txSnapshot      = new IndexTxSnapshotThreadLocal();
+  private Map<String, String>                   engineProperties = new HashMap<String, String>();
 
   public OIndexAbstract(String name, final String type, final String algorithm, final String valueContainerAlgorithm,
       final ODocument metadata, final int version, final OStorage storage) {
@@ -338,7 +339,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   protected Map<String, String> getEngineProperties() {
-    return Collections.emptyMap();
+    return engineProperties;
   }
 
   @Override
@@ -747,7 +748,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
           removeFromSnapshot(entry.key, snapshot);
         break;
       case CLEAR:
-        //SHOULD NEVER BE THE CASE HANDLE BY cleared FLAG
+        // SHOULD NEVER BE THE CASE HANDLE BY cleared FLAG
         break;
       }
     }
@@ -780,7 +781,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
   @Override
   public ODocument getMetadata() {
-    // return getConfiguration().field("metadata", OType.EMBEDDED);
     return metadata;
   }
 

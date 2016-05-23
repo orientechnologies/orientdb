@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.io.*;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -93,6 +85,13 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginated
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedClusterDebug;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
+import java.io.*;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH        = 150;
@@ -213,7 +212,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "url", description = "The url of the remote server or the database to connect to in the format '<mode>:<path>'") String iURL,
       @ConsoleParameter(name = "user", description = "User name") String iUserName,
       @ConsoleParameter(name = "password", description = "User password", optional = true) String iUserPassword)
-          throws IOException {
+      throws IOException {
     disconnect();
 
     if (iUserPassword == null) {
@@ -290,7 +289,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "storage-type", optional = true, description = "The type of the storage: 'plocal' for disk-based databases and 'memory' for in-memory database") String storageType,
       @ConsoleParameter(name = "db-type", optional = true, description = "The type of the database used between 'document' and 'graph'. By default is graph.") String databaseType,
       @ConsoleParameter(name = "[options]", optional = true, description = "Additional options, example: -encryption=aes -compression=snappy") final String options)
-          throws IOException {
+      throws IOException {
 
     if (userName == null)
       userName = OUser.ADMIN;
@@ -712,7 +711,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Freeze database and flush on the disk", onlineHelp = "Console-Command-Freeze-Database")
   public void freezeDatabase(
       @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -734,7 +733,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Release database after freeze", onlineHelp = "Console-Command-Release-Db")
   public void releaseDatabase(
       @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -756,7 +755,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Flushes all database content to the disk")
   public void flushDatabase(
       @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
+      throws IOException {
     freezeDatabase(storageType);
     releaseDatabase(storageType);
   }
@@ -1110,7 +1109,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Delete the current database", onlineHelp = "Console-Command-Drop-Database")
   public void dropDatabase(
       @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
+      throws IOException {
     checkForDatabase();
 
     final String dbName = currentDatabase.getName();
@@ -1143,7 +1142,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "user", description = "Server administrator name") String iUserName,
       @ConsoleParameter(name = "password", description = "Server administrator password") String iUserPassword,
       @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
-          throws IOException {
+      throws IOException {
 
     if (iDatabaseURL.startsWith(OEngineRemote.NAME)) {
       // REMOTE CONNECTION
@@ -1184,7 +1183,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Rebuild an index if it is automatic", onlineHelp = "SQL-Rebuild-Index")
   public void rebuildIndex(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
-          throws IOException {
+      throws IOException {
     message("\n\nRebuilding index(es)...");
 
     sqlCommand("rebuild", iCommandText, "\nRebuilt index(es). Found %d link(s) in %f sec(s).\n", true);
@@ -1202,7 +1201,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Remove a property from a class", onlineHelp = "SQL-Drop-Property")
   public void dropProperty(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText)
-          throws IOException {
+      throws IOException {
     sqlCommand("drop", iCommandText, "\nRemoved class property in %f sec(s).\n", false);
     updateDatabaseInfo();
   }
@@ -1988,7 +1987,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "db-password", description = "Database password") String iDatabaseUserPassword,
       @ConsoleParameter(name = "server-name", description = "Remote server's name as <address>:<port>") final String iRemoteName,
       @ConsoleParameter(name = "engine-name", description = "Remote server's engine to use between 'local' or 'memory'") final String iRemoteEngine)
-          throws IOException {
+      throws IOException {
 
     try {
       if (serverAdmin == null)
@@ -2063,7 +2062,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       @ConsoleParameter(name = "username", description = "User name", optional = false) final String iUserName,
       @ConsoleParameter(name = "password", description = "User password", optional = false) final String iUserPassword,
       @ConsoleParameter(name = "detect-mapping-data", description = "Whether RID mapping data after DB import should be tried to found on the disk", optional = true) String autoDiscoveringMappingData)
-          throws IOException {
+      throws IOException {
     try {
       final ODatabaseCompare compare = new ODatabaseCompare(iDb1URL, iDb2URL, iUserName, iUserPassword, this);
 
@@ -2177,6 +2176,41 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       printError(e);
     }
   }
+
+  @ConsoleCommand(description = "Restore a database into the current one", splitInWords = false, onlineHelp = "Console-Command-Restore")
+  public void restoreDatabase(@ConsoleParameter(name = "options", description = "Restore options") final String text)
+      throws IOException {
+    checkForDatabase();
+
+    final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
+
+    if (items.size() < 2)
+      try {
+        syntaxError("restoreDatabase", getClass().getMethod("restoreDatabase", String.class));
+        return;
+      } catch (NoSuchMethodException e) {
+      }
+
+    final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
+
+    final long startTime = System.currentTimeMillis();
+    try {
+
+      // FULL RESTORE
+      message("\nRestoring database '%s' from full backup...", text);
+      final FileInputStream f = new FileInputStream(fileName);
+      try {
+        currentDatabase.restore(f, null, null, this);
+      } finally {
+        f.close();
+      }
+    } catch (ODatabaseImportException e) {
+      printError(e);
+    } finally {
+      message("\nDatabase restored in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
+    }
+  }
+
 
   @ConsoleCommand(description = "Export a database", splitInWords = false, onlineHelp = "Console-Command-Export")
   public void exportDatabase(@ConsoleParameter(name = "options", description = "Export options") final String iText)
