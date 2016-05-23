@@ -16,7 +16,7 @@
  *   For more information: http://www.orientdb.com
  */
 
-package incrementalbackup;
+package com.orientechnologies.orient.incrementalbackup;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.metadata.schema.OClass;

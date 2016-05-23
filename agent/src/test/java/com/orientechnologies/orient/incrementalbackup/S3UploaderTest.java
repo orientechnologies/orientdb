@@ -16,7 +16,7 @@
  *   For more information: http://www.orientdb.com
  */
 
-package incrementalbackup;
+package com.orientechnologies.orient.incrementalbackup;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
