@@ -21,6 +21,7 @@ package com.orientechnologies.lucene.builder;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
@@ -35,9 +36,27 @@ import java.util.Map;
 public class OQueryBuilderImpl implements OQueryBuilder {
 
   private final boolean allowLeadingWildcard;
+  private final boolean lowercaseExpandedTerms;
 
-  public OQueryBuilderImpl(boolean allowLeadingWildcard) {
+  public OQueryBuilderImpl(ODocument metadata) {
+
+    Boolean allowLeadingWildcard = false;
+    if (metadata.containsField("allowLeadingWildcard")) {
+      allowLeadingWildcard = metadata.<Boolean>field("allowLeadingWildcard");
+    }
+
+    Boolean lowercaseExpandedTerms = true;
+    if (metadata.containsField("lowercaseExpandedTerms")) {
+      lowercaseExpandedTerms = metadata.<Boolean>field("lowercaseExpandedTerms");
+    }
     this.allowLeadingWildcard = allowLeadingWildcard;
+    this.lowercaseExpandedTerms = lowercaseExpandedTerms;
+
+  }
+
+  public OQueryBuilderImpl(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms) {
+    this.allowLeadingWildcard = allowLeadingWildcard;
+    this.lowercaseExpandedTerms = lowercaseExpandedTerms;
 
     OLogManager.instance().info(this, "allowLeadingWildcard::  " + allowLeadingWildcard);
   }
@@ -85,6 +104,8 @@ public class OQueryBuilderImpl implements OQueryBuilder {
     }
 
     queryParser.setAllowLeadingWildcard(allowLeadingWildcard);
+
+    queryParser.setLowercaseExpandedTerms(lowercaseExpandedTerms);
 
     try {
       return queryParser.parse(key);

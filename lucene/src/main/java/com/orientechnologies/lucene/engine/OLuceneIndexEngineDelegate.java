@@ -195,11 +195,7 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
     if (delegate == null) {
       if (FULLTEXT.name().equalsIgnoreCase(indexType)) {
 
-        Boolean allowLeadingWildcard = false;
-        if (metadata.containsField("allowLeadingWildcard")) {
-          allowLeadingWildcard = metadata.<Boolean>field("allowLeadingWildcard");
-        }
-        delegate = new OLuceneFullTextIndexEngine(indexName, new ODocBuilder(), new OQueryBuilderImpl(allowLeadingWildcard));
+        delegate = new OLuceneFullTextIndexEngine(indexName, new ODocBuilder(), new OQueryBuilderImpl(metadata));
       }
 
       delegate.init(indexName, indexType, indexDefinition, isAutomatic, metadata);
