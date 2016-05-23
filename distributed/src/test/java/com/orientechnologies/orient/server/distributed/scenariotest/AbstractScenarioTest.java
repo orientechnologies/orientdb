@@ -339,6 +339,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         for (ServerRun server : serverInstance) {
 
           ODocument document = retrieveRecordOrReturnMissing(getDatabaseURL(server), recordId);
+          OLogManager.instance().debug(this, "Readed record [%s] from server%s - %s: %s ", recordId, server.getServerId(), fieldName, document.field(fieldName));
+
           if (document == MISSING_DOCUMENT) {
             return false;
           }
@@ -357,6 +359,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {
     ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
+    //dbServer.getLocalCache().invalidate();
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
     try {
       List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Person where id = '" + uniqueId + "'"));
