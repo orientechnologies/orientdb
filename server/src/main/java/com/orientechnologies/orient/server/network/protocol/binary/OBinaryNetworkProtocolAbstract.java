@@ -214,7 +214,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
         onBeforeRequest();
       } catch (Exception e) {
         sendError(clientTxId, e);
-        handleConnectionError(channel, e);
+        try {
+          channel.flush();
+        } catch (IOException e1) {
+          OLogManager.instance().debug(this, "Error during channel flush", e1);
+        }
         sendShutdown();
         return;
       }
