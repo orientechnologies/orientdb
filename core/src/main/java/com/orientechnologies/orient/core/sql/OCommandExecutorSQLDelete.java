@@ -131,7 +131,24 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       } else if (subjectName.startsWith("(")) {
         subjectName = subjectName.trim();
         query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this));
+        parserNextWord(true);
+        if (!parserIsEnded()) {
+          while (!parserIsEnded()) {
+            final String word = parserGetLastWord();
 
+            if (word.equals(KEYWORD_LOCK))
+              lockStrategy = parseLock();
+            else if (word.equals(KEYWORD_RETURN))
+              returning = parseReturn();
+            else if (word.equals(KEYWORD_UNSAFE))
+              unsafe = true;
+            else if (word.equalsIgnoreCase(KEYWORD_WHERE))
+              compiledFilter = OSQLEngine.getInstance()
+                  .parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(), KEYWORD_WHERE);
+
+            parserNextWord(true);
+          }
+        }
       } else {
         parserNextWord(true);
 
@@ -278,6 +295,9 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   public boolean result(final Object iRecord) {
     final ORecordAbstract record = ((OIdentifiable) iRecord).getRecord();
 
+    if(record instanceof ODocument && compiledFilter!=null && !Boolean.TRUE.equals(this.compiledFilter.evaluate(record, (ODocument)record, getContext()))){
+      return true;
+    }
     try {
       if (record.getIdentity().isValid()) {
         if (returning.equalsIgnoreCase("BEFORE"))
