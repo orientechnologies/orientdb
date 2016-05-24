@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -863,8 +864,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         //IGNORE IT WILL FAIL THE ASSERT IN CASE
       }
     }
-    assert link.getIdentity().getClusterId() >= 0 || ORecordSerializationContext.getContext() == null :
-        "Impossible to serialize invalid link " + link.getIdentity();
+    if(link.getIdentity().getClusterId() < 0 && ORecordSerializationContext.getContext() != null )
+      throw new ODatabaseException("Impossible to serialize invalid link " + link.getIdentity());
+
     final int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition());
     return pos;

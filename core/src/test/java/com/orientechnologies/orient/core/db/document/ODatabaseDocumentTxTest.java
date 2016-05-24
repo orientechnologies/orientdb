@@ -115,7 +115,7 @@ public class ODatabaseDocumentTxTest {
     }
   }
 
-  @Test(expectedExceptions = AssertionError.class)
+  @Test(expectedExceptions = ODatabaseException.class)
   public void testSaveInvalidRid() {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory: rid_" + ODatabaseDocumentTxTest.class.getSimpleName());
     db.create();
