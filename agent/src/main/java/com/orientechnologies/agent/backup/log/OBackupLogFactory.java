@@ -53,6 +53,18 @@ public class OBackupLogFactory {
       log = new OBackupScheduledLog(unitId, txId, uuid, dbName, mode);
       log.fromDoc(doc);
       break;
+    case RESTORE_ERROR:
+      log = new ORestoreErrorLog(unitId, txId, uuid, dbName, mode);
+      log.fromDoc(doc);
+      break;
+    case RESTORE_FINISHED:
+      log = new ORestoreFinishedLog(unitId, txId, uuid, dbName, mode);
+      log.fromDoc(doc);
+      break;
+    case RESTORE_STARTED:
+      log = new ORestoreStartedLog(unitId, txId, uuid, dbName, mode);
+      log.fromDoc(doc);
+      break;
     default:
       throw new IllegalStateException("Cannot deserialize passed in log record.");
     }

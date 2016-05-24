@@ -123,10 +123,10 @@ public class OBackupManager implements OServerLifecycleListener {
     return history;
   }
 
-  public ODocument logs(String uuid, Long unitId, int page, int pageSize) {
+  public ODocument logs(String uuid, Long unitId, int page, int pageSize, Map<String, String> params) {
     ODocument history = new ODocument();
     try {
-      List<OBackupLog> byUUID = logger.findByUUIDAndUnitId(uuid, unitId, page, pageSize);
+      List<OBackupLog> byUUID = logger.findByUUIDAndUnitId(uuid, unitId, page, pageSize, params);
       List<ODocument> docs = new ArrayList<ODocument>();
       for (OBackupLog oBackupLog : byUUID) {
         docs.add(oBackupLog.toDoc());
@@ -157,5 +157,11 @@ public class OBackupManager implements OServerLifecycleListener {
   @Override
   public void onAfterDeactivate() {
 
+  }
+
+  public void deleteBackup(String uuid, Long unitId, Long timestamp) {
+    OBackupTask oBackupTask = tasks.get(uuid);
+
+    oBackupTask.deleteBackup(unitId, timestamp);
   }
 }

@@ -20,6 +20,7 @@ package com.orientechnologies.agent.backup.log;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Enrico Risa on 25/03/16.
@@ -36,7 +37,10 @@ public interface OBackupLogger {
 
   public List<OBackupLog> findByUUID(String uuid, int page, int pageSize) throws IOException;
 
-  public List<OBackupLog> findByUUIDAndUnitId(String uuid, Long unitId, int page, int pageSize) throws IOException;
+  public List<OBackupLog> findByUUIDAndUnitId(String uuid, Long unitId, int page, int pageSize, Map<String, String> params)
+      throws IOException;
+
+  public void deleteByUUIDAndUnitIdAndTimestamp(String uuid, Long unitId, Long timestamp) throws IOException;
 
   public List<OBackupLog> findAllLatestByUUID(String uuid, int page, int pageSize) throws IOException;
 }

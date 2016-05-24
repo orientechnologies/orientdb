@@ -20,7 +20,9 @@ package com.orientechnologies.agent.backup.strategy;
 
 import com.orientechnologies.agent.backup.OBackupConfig;
 import com.orientechnologies.agent.backup.OBackupListener;
+import com.orientechnologies.agent.backup.OBackupTask;
 import com.orientechnologies.agent.backup.log.*;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
@@ -92,18 +94,32 @@ public abstract class OBackupStrategy {
     String databaseName = doc.field("target");
     Long unitId = doc.field("unitId");
     OServer server = OServerMain.server();
-
     ODatabaseDocumentTx database = null;
+    ORestoreStartedLog restoreStartedLog = null;
     try {
       OBackupFinishedLog finished = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID(), unitId);
+      restoreStartedLog = new ORestoreStartedLog(finished.getUnitId(), logger.nextOpId(), getUUID(), getDbName(),
+          finished.getMode());
+      logger.log(restoreStartedLog);
       String url = "plocal:" + server.getDatabaseDirectory() + databaseName;
       database = new ODatabaseDocumentTx(url);
       if (!database.exists()) {
         database.create(finished.getPath());
-        // database.incrementalRestore(finished.getPath());
       }
+
+      ORestoreFinishedLog finishedLog = new ORestoreFinishedLog(restoreStartedLog.getUnitId(), restoreStartedLog.getTxId(),
+          getUUID(), getDbName(), restoreStartedLog.getMode());
+      finishedLog.elapsedTime = finishedLog.getTimestamp() - restoreStartedLog.getTimestamp();
+      logger.log(finishedLog);
     } catch (Exception e) {
 
+      if (restoreStartedLog != null) {
+        ORestoreErrorLog error = new ORestoreErrorLog(restoreStartedLog.getUnitId(), restoreStartedLog.getTxId(), getUUID(),
+            getDbName(), getMode().toString());
+        error.setMessage(e.getMessage());
+        logger.log(error);
+        listener.onEvent(cfg, error);
+      }
     } finally {
       if (database != null) {
         database.close();
@@ -185,4 +201,13 @@ public abstract class OBackupStrategy {
     }
     return (OBackupScheduledLog) lastSchedule;
   }
+
+  public void doDeleteBackup(OBackupTask oBackupTask, Long unitId, Long timestamp) {
+    try {
+      logger.deleteByUUIDAndUnitIdAndTimestamp(getUUID(), unitId, timestamp);
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error deleting backups for UUID : " + getUUID(), e);
+    }
+  }
+
 }

@@ -152,7 +152,8 @@ public class OBackupDiskLogger implements OBackupLogger {
   }
 
   @Override
-  public List<OBackupLog> findByUUIDAndUnitId(String uuid, Long unitId, int page, int pageSize) throws IOException {
+  public List<OBackupLog> findByUUIDAndUnitId(String uuid, Long unitId, int page, int pageSize, Map<String, String> params)
+      throws IOException {
     List<OBackupLog> logs = new ArrayList<OBackupLog>();
 
     OReverseLoggerIterator iterator = new OReverseLoggerIterator(randomAccessFile);
@@ -171,6 +172,11 @@ public class OBackupDiskLogger implements OBackupLogger {
       }
     }
     return logs;
+  }
+
+  @Override
+  public void deleteByUUIDAndUnitIdAndTimestamp(String uuid, Long unitId, Long timestamp) throws IOException {
+    throw new UnsupportedOperationException();
   }
 
   @Override

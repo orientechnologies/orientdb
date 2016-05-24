@@ -18,15 +18,20 @@
 
 package com.orientechnologies.agent.backup.log;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.OSystemDatabase;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,7 +55,7 @@ public class OBackupDBLogger implements OBackupLogger {
 
   private void initLogger() {
 
-    getDatabase().runBoxed(new OCallable<Void, ODatabase>() {
+    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
       @Override
       public Void call(ODatabase db) {
 
@@ -73,12 +78,17 @@ public class OBackupDBLogger implements OBackupLogger {
   }
 
   @Override
-  public void log(OBackupLog log) {
+  public void log(final OBackupLog log) {
 
-    ODocument document = log.toDoc();
-    document.setClassName(CLASS_NAME);
-
-    getDatabase().save(document, "");
+    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
+      @Override
+      public Void call(ODatabase iArgument) {
+        ODocument document = log.toDoc();
+        document.setClassName(CLASS_NAME);
+        iArgument.save(document);
+        return null;
+      }
+    }, "");
 
   }
 
@@ -114,6 +124,26 @@ public class OBackupDBLogger implements OBackupLogger {
 
   @Override
   public OBackupLog findLast(final OBackupLogType op, final String uuid, final Long unitId) throws IOException {
+    String query = String
+        .format("select from %s where op = :op and uuid = :uuid and unitId = :unitId order by timestamp desc limit 1", CLASS_NAME);
+    Map<String, Object> params = new HashMap<String, Object>() {
+      {
+        put("op", op.toString());
+        put("uuid", uuid);
+        put("unitId", unitId);
+      }
+    };
+
+    List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
+      @Override
+      public Object call(Object iArgument) {
+        return iArgument;
+      }
+    }, "", query, params);
+
+    if (results.size() > 0) {
+      return factory.fromDoc(results.get(0));
+    }
     return null;
   }
 
@@ -125,27 +155,99 @@ public class OBackupDBLogger implements OBackupLogger {
   }
 
   @Override
-  public List<OBackupLog> findByUUIDAndUnitId(final String uuid, final Long unitId, int page, final int pageSize)
-      throws IOException {
+  public List<OBackupLog> findByUUIDAndUnitId(final String uuid, final Long unitId, int page, final int pageSize,
+      Map<String, String> params) throws IOException {
     List<OBackupLog> logs = new ArrayList<OBackupLog>();
 
-    String query = String.format("select * from %s where uuid = :uuid and unitId = :unitId  order by timestamp desc ", CLASS_NAME);
-    Map<String, Object> params = new HashMap<String, Object>() {
+    String query;
+    Map<String, Object> queryParams = new HashMap<String, Object>() {
       {
         put("uuid", uuid);
         put("unitId", unitId);
       }
     };
+    if (params != null && params.size() > 0) {
+      query = String.format("select * from %s where uuid = :uuid and unitId = :unitId and op= :op order by timestamp desc ",
+          CLASS_NAME);
+      for (Map.Entry<String, String> entry : params.entrySet()) {
+        queryParams.put(entry.getKey(), entry.getValue());
+      }
+    } else {
+      query = String.format("select * from %s where uuid = :uuid and unitId = :unitId  order by timestamp desc ", CLASS_NAME);
+    }
     List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
       @Override
       public Object call(Object iArgument) {
         return iArgument;
       }
-    }, "", query, params);
+    }, "", query, queryParams);
     for (ODocument result : results) {
       logs.add(factory.fromDoc(result));
     }
     return logs;
+  }
+
+  @Override
+  public void deleteByUUIDAndUnitIdAndTimestamp(final String uuid, final Long unitId, final Long txId) throws IOException {
+
+    final String selectQuery = String.format("select from %s where uuid = :uuid and unitId = :unitId and txId >= :txId",
+        CLASS_NAME);
+
+    final String query = String.format("delete from %s where uuid = :uuid and unitId = :unitId and txId >= :txId", CLASS_NAME);
+    final Map<String, Object> queryParams = new HashMap<String, Object>() {
+      {
+        put("uuid", uuid);
+        put("unitId", unitId);
+        put("txId", txId);
+      }
+    };
+
+    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
+      @Override
+      public Void call(ODatabase iArgument) {
+
+        iArgument.command(new OSQLAsynchQuery(selectQuery, new OCommandResultListener() {
+          @Override
+          public boolean result(Object iRecord) {
+
+            ODocument doc = (ODocument) iRecord;
+            dropFile(doc);
+            return false;
+          }
+
+          @Override
+          public void end() {
+
+          }
+
+          @Override
+          public Object getResult() {
+            return null;
+          }
+        })).execute(queryParams);
+        Object execute = iArgument.command(new OCommandSQL(query)).execute(queryParams);
+        System.out.println(execute);
+        return null;
+      }
+    }, "");
+
+  }
+
+  private void dropFile(ODocument doc) {
+
+    OBackupLog oBackupLog = factory.fromDoc(doc);
+
+    if (oBackupLog instanceof OBackupFinishedLog) {
+
+      String path = "";
+      try {
+        path = ((OBackupFinishedLog) oBackupLog).getPath() + File.separator + ((OBackupFinishedLog) oBackupLog).fileName;
+        File f = new File(path);
+        f.delete();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error deleting file " + path, e);
+      }
+    }
   }
 
   @Override

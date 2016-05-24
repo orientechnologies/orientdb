@@ -79,4 +79,8 @@ public class OBackupTask implements OBackupListener {
   public void restore(ODocument doc) {
     strategy.doRestore(this, doc);
   }
+
+  public void deleteBackup(Long unitId, Long timestamp) {
+    strategy.doDeleteBackup(this, unitId, timestamp);
+  }
 }

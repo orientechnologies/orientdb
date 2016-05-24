@@ -33,7 +33,7 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
 
   OBackupManager                backupManager;
   private static final String[] NAMES = { "GET|backupManager", "GET|backupManager/*", "POST|backupManager", "POST|backupManager/*",
-      "PUT|backupManager/*" };
+      "PUT|backupManager/*", "DELETE|backupManager/*" };
 
   public OServerCommandBackupManager(OBackupManager manager) {
     super("server.backup");
@@ -60,13 +60,13 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
       if (command.equals("restore")) {
         ODocument body = new ODocument().fromJSON(iRequest.content, "noMap");
         backupManager.restoreBackup(uuid, body);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
       } else {
         throw new IllegalArgumentException("cannot execute post request ");
       }
     } else {
       throw new IllegalArgumentException("cannot execute post request ");
     }
-
   }
 
   @Override
@@ -102,19 +102,44 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
         ODocument history;
         if (parts.length == 4) {
           Long unitId = Long.parseLong(parts[3]);
-          history = backupManager.logs(uuid, unitId, p, pSize);
+          history = backupManager.logs(uuid, unitId, p, pSize, iRequest.getParameters());
         } else {
-
           history = backupManager.logs(uuid, p, pSize);
-
         }
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, history.toJSON(""), null);
       } else {
         throw new IllegalArgumentException("cannot find executor for command:" + command);
       }
-
     }
+  }
 
+  @Override
+  protected void doDelete(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+
+    final String[] parts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: backupManager");
+
+    if (parts.length >= 3) {
+
+      String uuid = parts[1];
+      String command = parts[2];
+
+      if (command.equalsIgnoreCase("remove")) {
+
+        try {
+          Long unitId = Long.parseLong(iRequest.getParameter("unitId"));
+          Long timestamp = Long.parseLong(iRequest.getParameter("txId"));
+          backupManager.deleteBackup(uuid, unitId, timestamp);
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+
+      } else {
+        throw new IllegalArgumentException("cannot find executor for command:" + command);
+      }
+    } else {
+      throw new IllegalArgumentException("cannot find executor for command:" + parts[0]);
+    }
   }
 
   @Override

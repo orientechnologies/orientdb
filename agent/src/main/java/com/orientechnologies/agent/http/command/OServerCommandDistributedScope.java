@@ -75,11 +75,17 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
       doPost(iRequest, iResponse);
     } else if ("PUT".equalsIgnoreCase(iRequest.httpMethod)) {
       doPut(iRequest, iResponse);
+    } else if ("DELETE".equalsIgnoreCase(iRequest.httpMethod)) {
+      doDelete(iRequest, iResponse);
     }
     return false;
   }
 
   protected void doGet(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
+
+  }
+
+  protected void doDelete(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
 
   }
 
