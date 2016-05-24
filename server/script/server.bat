@@ -64,12 +64,21 @@ goto setArgs
 
 :doneSetArgs
 
+
+if "%PROCESSOR_ARCHITECTURE%"=="AMD64" goto 64BIT
+set JAVA_MAX_DIRECT=-XX:MaxDirectMemorySize=2g
+goto END
+:64BIT
+set JAVA_MAX_DIRECT=-XX:MaxDirectMemorySize=512g
+
+:END
+
 if NOT exist "%CONFIG_FILE%" set CONFIG_FILE=%ORIENTDB_HOME%/config/orientdb-server-config.xml
 
 set LOG_FILE=%ORIENTDB_HOME%/config/orientdb-server-log.properties
 set WWW_PATH=%ORIENTDB_HOME%/www
 set ORIENTDB_SETTINGS=-Dprofiler.enabled=true
-set JAVA_OPTS_SCRIPT=-Xmx512m -Djna.nosys=true -XX:MaxDirectMemorySize=512g -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9
+set JAVA_OPTS_SCRIPT= -Djna.nosys=true %JAVA_MAX_DIRECT% -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9
 
 rem TO DEBUG ORIENTDB SERVER RUN IT WITH THESE OPTIONS:
 rem -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=1044
