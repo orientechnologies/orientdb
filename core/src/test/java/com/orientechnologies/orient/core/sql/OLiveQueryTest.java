@@ -63,7 +63,8 @@ import java.util.List;
     }
   }
 
-  @Test public void testLiveInsertOnCluster() {
+  @Test(enabled = false)
+  public void testLiveInsertOnCluster() {
     OLiveCommandExecutorSQLFactory.init();
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OLiveQueryTest");
