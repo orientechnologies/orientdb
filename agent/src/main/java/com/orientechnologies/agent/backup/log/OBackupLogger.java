@@ -35,7 +35,7 @@ public interface OBackupLogger {
 
   public OBackupLog findLast(OBackupLogType op, String uuid, Long unitId) throws IOException;
 
-  public List<OBackupLog> findByUUID(String uuid, int page, int pageSize) throws IOException;
+  public List<OBackupLog> findByUUID(String uuid, int page, int pageSize, Map<String, String> params) throws IOException;
 
   public List<OBackupLog> findByUUIDAndUnitId(String uuid, Long unitId, int page, int pageSize, Map<String, String> params)
       throws IOException;

@@ -108,10 +108,11 @@ public class OBackupManager implements OServerLifecycleListener {
     config.removeBackup(uuid, doc);
   }
 
-  public ODocument logs(String uuid, int page, int pageSize) {
+  public ODocument logs(String uuid, int page, int pageSize, Map<String, String> params) {
     ODocument history = new ODocument();
     try {
-      List<OBackupLog> byUUID = logger.findAllLatestByUUID(uuid, page, pageSize);
+
+      List<OBackupLog> byUUID = logger.findByUUID(uuid, page, pageSize, params);
       List<ODocument> docs = new ArrayList<ODocument>();
       for (OBackupLog oBackupLog : byUUID) {
         docs.add(oBackupLog.toDoc());

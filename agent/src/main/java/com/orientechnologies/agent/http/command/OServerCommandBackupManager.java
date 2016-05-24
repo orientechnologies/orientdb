@@ -91,20 +91,20 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
       String command = parts[2];
 
       if (command.equalsIgnoreCase("status")) {
-        ODocument status = backupManager.logs(uuid, 0, 1);
+        ODocument status = backupManager.logs(uuid, 0, 1, iRequest.getParameters());
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, status.toJSON(""), null);
       } else if (command.equalsIgnoreCase("log")) {
 
         String pagePize = iRequest.getParameter("pageSize");
         String page = iRequest.getParameter("page");
-        int pSize = pagePize != null ? Integer.valueOf(pagePize) : 5;
+        int pSize = pagePize != null ? Integer.valueOf(pagePize) : -1;
         int p = page != null ? Integer.valueOf(page) : 0;
         ODocument history;
         if (parts.length == 4) {
           Long unitId = Long.parseLong(parts[3]);
           history = backupManager.logs(uuid, unitId, p, pSize, iRequest.getParameters());
         } else {
-          history = backupManager.logs(uuid, p, pSize);
+          history = backupManager.logs(uuid, p, pSize, iRequest.getParameters());
         }
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, history.toJSON(""), null);
       } else {

@@ -129,7 +129,7 @@ public class OBackupDiskLogger implements OBackupLogger {
   }
 
   @Override
-  public List<OBackupLog> findByUUID(String uuid, int page, int pageSize) throws IOException {
+  public List<OBackupLog> findByUUID(String uuid, int page, int pageSize, Map<String, String> params) throws IOException {
 
     List<OBackupLog> logs = new ArrayList<OBackupLog>();
 

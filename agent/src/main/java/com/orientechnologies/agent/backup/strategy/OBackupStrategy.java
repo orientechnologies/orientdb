@@ -198,6 +198,7 @@ public abstract class OBackupStrategy {
         }
       }
     } catch (Exception e) {
+      OLogManager.instance().error(this, "Error finding last unfired schedule for UUID : " + getUUID(), e);
     }
     return (OBackupScheduledLog) lastSchedule;
   }

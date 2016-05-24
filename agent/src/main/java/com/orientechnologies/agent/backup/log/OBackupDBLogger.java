@@ -148,9 +148,46 @@ public class OBackupDBLogger implements OBackupLogger {
   }
 
   @Override
-  public List<OBackupLog> findByUUID(String uuid, int page, int pageSize) throws IOException {
+  public List<OBackupLog> findByUUID(final String uuid, int page, final int pageSize, Map<String, String> params)
+      throws IOException {
 
     List<OBackupLog> logs = new ArrayList<OBackupLog>();
+
+    String query = "";
+    Map<String, Object> queryParams = new HashMap<String, Object>() {
+      {
+        put("uuid", uuid);
+        put("limit", pageSize);
+      }
+    };
+    if (params != null && params.size() > 0) {
+
+      String from = params.get("from");
+      String to = params.get("to");
+
+      if (from != null && to != null) {
+        queryParams.put("tsFrom", Long.parseLong(from));
+        queryParams.put("tsTo", Long.parseLong(to));
+        query = String.format(
+            "select * from %s where uuid = :uuid and timestamp >= :tsFrom and timestamp <= :tsTo order by timestamp desc limit :limit",
+            CLASS_NAME);
+      }
+
+    } else {
+      query = String.format("select * from %s where  uuid = :uuid  order by timestamp desc limit :limit", CLASS_NAME);
+    }
+
+    final List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
+      @Override
+      public Object call(Object iArgument) {
+        return iArgument;
+      }
+    }, "", query, queryParams);
+
+    for (ODocument result : results) {
+      logs.add(factory.fromDoc(result));
+    }
+
     return logs;
   }
 
