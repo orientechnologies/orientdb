@@ -66,6 +66,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     @Override
     public void run() {
       try {
+        writeAheadLog.checkFreeSpace();
         OLogSegment.this.commitLog();
       } catch (Throwable e) {
         OLogManager.instance().error(this, "Error during WAL background flush", e);

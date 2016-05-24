@@ -212,6 +212,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
+  public void close(boolean force, boolean onDelete) {
+    super.close(force, onDelete);
+    if (writeAheadLog != null)
+      ((ODiskWriteAheadLog) writeAheadLog).removeLowDiskSpaceListener(this);
+  }
+
+  @Override
   protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
 
     File[] nonActiveSegments;
@@ -427,7 +434,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       checkpointExecutor = Executors.newSingleThreadExecutor(new FullCheckpointThreadFactory());
 
-      writeAheadLog = new ODiskWriteAheadLog(this);
+      final ODiskWriteAheadLog diskWriteAheadLog = new ODiskWriteAheadLog(this);
+      diskWriteAheadLog.addLowDiskSpaceListener(this);
+      diskWriteAheadLog.checkFreeSpace();
+      writeAheadLog = diskWriteAheadLog;
       writeAheadLog.addFullCheckpointListener(this);
     } else
       writeAheadLog = null;
