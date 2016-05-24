@@ -620,6 +620,17 @@ ee.factory("BackupService", function (Profiler, $q, $http) {
     });
     return deferred.promise;
   }
+
+  backups.remove = function (uuid, restored) {
+    var deferred = $q.defer();
+    var url = API + 'backupManager/' + uuid + "/remove?unitId=" + restored.unitId + '&txId=' + restored.log.txId;
+    $http.delete(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
   backups.get = function () {
     var deferred = $q.defer();
     var url = API + 'backupManager';
@@ -643,9 +654,13 @@ ee.factory("BackupService", function (Profiler, $q, $http) {
 
     return deferred.promise;
   }
-  backups.unitLogs = function (uuid, unitId) {
+  backups.unitLogs = function (uuid, unitId, params) {
     var deferred = $q.defer();
     var url = API + 'backupManager/' + uuid + "/log/" + unitId;
+
+    if (params) {
+      url += serialize(params);
+    }
     $http.get(url).success(function (data) {
       deferred.resolve(data)
     }).error(function (data, status, headers, config) {
@@ -654,6 +669,13 @@ ee.factory("BackupService", function (Profiler, $q, $http) {
 
     return deferred.promise;
   }
+  function serialize(obj) {
+    return '?' + Object.keys(obj).reduce(function (a, k) {
+        a.push(k + '=' + encodeURIComponent(obj[k]));
+        return a
+      }, []).join('&')
+  }
+
   backups.save = function (backup) {
     var deferred = $q.defer();
     var url = API + 'backupManager';

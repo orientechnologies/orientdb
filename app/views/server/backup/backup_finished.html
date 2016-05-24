@@ -25,6 +25,11 @@
         <li>
           <i class="fa fa-angle-right">
           </i>
+          <b>File size:</b> {{ event._source.fileSize | sizeFormat }}
+        </li>
+        <li>
+          <i class="fa fa-angle-right">
+          </i>
           <b>Execution time:</b> {{ event._source.elapsedTime }}
         </li>
       </ul>
@@ -34,6 +39,6 @@
 </div>
 <div class="modal-footer">
   <button type="button" class="btn" ng-click="$hide()">Close</button>
-  <!--<button class="btn btn-primary" ng-disabled="!sso && newDB.$invalid" ng-click="createNew()">Create database-->
-  <!--</button>-->
+  <button class="btn btn-primary" ng-click="$hide();restoreBackup(event)">Restore database</button>
+  <button class="btn btn-danger" ng-click="$hide();removeBackup(event)">Remove Backup</button>
 </div>

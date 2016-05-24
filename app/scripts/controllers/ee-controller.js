@@ -1384,20 +1384,77 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
   $scope.eventsType = [
     {name: "Scheduled", type: "BACKUP_SCHEDULED", clazz: 'log-scheduled-icon'},
     {name: "Finished", type: "BACKUP_FINISHED", clazz: 'log-finished-icon'},
+    {name: "Restore Finished", type: "RESTORE_FINISHED", clazz: 'log-restore-finished-icon'},
     {name: "Error", type: "BACKUP_ERROR", clazz: 'log-error-icon'},
-    {name: "Started", type: "BACKUP_STARTED", clazz: 'log-started-icon'}
+    {name: "Started", type: "BACKUP_STARTED", clazz: 'log-started-icon'},
+    {name: "Restore Started", type: "RESTORE_STARTED", clazz: 'log-restore-started-icon'}
   ]
-  $scope.selectedEvents = ["BACKUP_SCHEDULED", "BACKUP_FINISHED", "BACKUP_ERROR"]
+  $scope.selectedEvents = ["BACKUP_FINISHED", "BACKUP_ERROR", "RESTORE_FINISHED"]
   $scope.mode = "1";
   $scope.modes = {"1": "Incremental Backup", "2": "Full Backup", "3": "Full + Incremental Backup"};
+
+
+  // CRON Expression
+
+  $scope.incremental_cron = $('#incremental_cron').cron({
+    onChange: function () {
+      if ($scope.backup && $scope.backup.modes["INCREMENTAL_BACKUP"]) {
+        $scope.backup.modes["INCREMENTAL_BACKUP"].when = $(this).cron("value");
+      }
+    }
+  });
+  $scope.full_cron = $('#full_cron').cron({
+    onChange: function () {
+      if ($scope.backup && $scope.backup.modes["FULL_BACKUP"]) {
+        $scope.backup.modes["FULL_BACKUP"].when = $(this).cron("value");
+      }
+    }
+  });
+
+
+  $scope.onEventClick = function (t) {
+
+    var idx = $scope.selectedEvents.indexOf(t.type);
+    if (idx == -1) {
+      $scope.selectedEvents.push(t.type);
+    } else {
+      $scope.selectedEvents.splice(idx, 1);
+    }
+
+    $('#calendar').fullCalendar('removeEvents');
+
+
+    $('#calendar').fullCalendar('addEventSource', formatLogs($scope.currentUnitLogs))
+
+  }
+
+  function formatLogs(logs) {
+    return logs.filter(function (e) {
+      return $scope.selectedEvents.indexOf(e.op) != -1;
+    }).map(function (e, idx, arr) {
+      var date = new Date(e.timestamp);
+      return {
+        id: idx,
+        title: $scope.info(e),
+        _source: e,
+        _template: '/views/server/backup/' + e.op.toLowerCase() + '.html',
+        start: date,
+        end: date,
+        className: $scope.clazz(e)
+
+      }
+    })
+  }
+
 
   $scope.getClazz = function (t) {
     return ($scope.selectedEvents.indexOf(t.type) == -1 ? "fa-circle-thin " : "fa-circle ") + t.clazz;
   }
+
+
   $scope.$on('db-chosen', function (evt, db) {
 
     $scope.backup = db.backup;
-
 
     var incr = undefined;
     var full = undefined;
@@ -1415,6 +1472,9 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
       }
     }
 
+
+    $scope.incremental_cron.cron('value', incr);
+    $scope.full_cron.cron('value', full);
     function initCalendar(data) {
       $('#calendar').fullCalendar({
         header: {
@@ -1428,60 +1488,19 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
           modalScope.event = calEvent;
           var modalPromise = $modal({template: 'views/server/backup/modalBackup.html', scope: modalScope, show: false});
 
+          modalScope.restoreBackup = function (evt) {
+            $scope.restore(evt._source);
+          }
 
+          modalScope.removeBackup = function (evt) {
+            $scope.removeBkp(evt._source);
+          }
           modalPromise.$promise.then(modalPromise.show);
         },
         defaultView: 'agendaWeek',
         editable: true,
-        events: data.logs.filter(function (e) {
-          return $scope.selectedEvents.indexOf(e.op) != -1;
-        }).map(function (e, idx, arr) {
-          var date = new Date(e.timestamp);
-          return {
-            id: idx,
-            title: $scope.info(e),
-            _source: e,
-            _template: '/views/server/backup/' + e.op.toLowerCase() + '.html',
-            start: date,
-            end: date,
-            className: $scope.clazz(e)
-
-          }
-        })
+        events: formatLogs(data.logs)
       })
-    }
-
-    function initTimeline(data) {
-      var events = data.logs.map(function (e) {
-        var date = new Date(e.timestamp);
-        var m = moment(date);
-        return {
-          "start_date": {
-            "year": m.year(),
-            "month": m.month() + 1,
-            "day": m.date(),
-            "hour": m.hour(),
-            "minute": m.minute(),
-            "second": m.second(),
-            "millisecond": m.millisecond()
-          },
-          media: {
-            "caption": "Illustration of evolution of the universe from the Big Bang",
-            "credit": "Kaldari (Wikipedia)",
-            "url": ""
-          },
-          "text": {
-            "headline": e.op,
-            "text": $scope.info(e)
-          }
-
-        }
-      })
-
-      $scope.timeline = new TL.Timeline("timeline", {"scale": "human", events: events}, {
-        "scale": "human",
-        "start_at_slide": (events.length - 1)
-      });
     }
 
     if (!$scope.backup.uuid) {
@@ -1494,41 +1513,61 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
           $scope.currentUnit = $scope.logs[0];
           BackupService.unitLogs($scope.backup.uuid, $scope.currentUnit.unitId).then(function (data) {
             $scope.currentUnitLogs = data.logs;
-            //initTimeline(data);
             initCalendar(data);
           })
         }
       });
     }
 
-    $scope.restore = function () {
+    $scope.removeBkp = function (evt) {
+
       var modalScope = $scope.$new(true);
-      modalScope.unit = $scope.currentUnit;
-      modalScope.restored = {unitId: $scope.currentUnit.unitId};
-      modalScope.onRestore = function (obj) {
-        BackupService.restore($scope.backup.uuid, obj).then(function (data) {
-          console.log(data);
+      modalScope.restored = {unitId: evt.unitId};
+
+      modalScope.onRemove = function (obj, callback) {
+
+
+        BackupService.remove($scope.backup.uuid, obj).then(function (data) {
+          callback();
+          Notification.push({content: "Bakcup files removed", autoHide: true});
         }).catch(function (err) {
+          callback();
           Notification.push({content: err.data, error: true, autoHide: true});
         })
       }
-      var modalPromise = $modal({template: 'views/server/backup/restore.html', scope: modalScope, show: false});
-      modalPromise.$promise.then(modalPromise.show);
-
-
-    }
-    $scope.setCurrent = function (log) {
-      $scope.currentUnit = log;
-      BackupService.unitLogs($scope.backup.uuid, $scope.currentUnit.unitId).then(function (data) {
-        $scope.currentUnitLogs = data.logs;
-        initTimeline(data);
+      BackupService.unitLogs($scope.backup.uuid, evt.unitId, {op: evt.op}).then(function (data) {
+        modalScope.unitLogs = data.logs;
+        modalScope.restored.log = evt;
+        var modalPromise = $modal({template: 'views/server/backup/remove.html', scope: modalScope, show: false});
+        modalPromise.$promise.then(modalPromise.show);
       })
     }
-    $scope.status = function (events) {
-      var keys = Object.keys(events);
-      var last = events[keys[0]];
-      return last[0];
+    $scope.restore = function (evt) {
+      var modalScope = $scope.$new(true);
+      modalScope.restored = {unitId: evt.unitId};
+      modalScope.onRestore = function (obj, callback) {
+
+        BackupService.restore($scope.backup.uuid, obj).then(function (data) {
+
+          callback();
+          Notification.push({content: "Restore procedure in progress into database " + obj.target, autoHide: true});
+        }).catch(function (err) {
+          callback();
+          Notification.push({content: err.data, error: true, autoHide: true});
+        })
+      }
+
+
+      BackupService.unitLogs($scope.backup.uuid, evt.unitId, {op: evt.op}).then(function (data) {
+        modalScope.unitLogs = data.logs;
+        modalScope.restored.log = evt;
+
+        var modalPromise = $modal({template: 'views/server/backup/restore.html', scope: modalScope, show: false});
+        modalPromise.$promise.then(modalPromise.show);
+      })
+
     }
+
 
     var modeToString = function (mode) {
 
@@ -1545,7 +1584,6 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
 
       switch (event.op) {
         case "BACKUP_FINISHED":
-
           clazz += " log-finished";
           break;
         case "BACKUP_SCHEDULED":
@@ -1557,6 +1595,9 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
         case "BACKUP_ERROR":
           clazz += " log-error";
           break;
+        case "RESTORE_FINISHED":
+          clazz += " log-restore-finished";
+          break;
       }
       return clazz;
     }
@@ -1564,22 +1605,17 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
       var info = modeToString(event.mode);
       switch (event.op) {
         case "BACKUP_FINISHED":
-
           info += " executed";
-          //info += " executed at " + moment(new Date(event.timestamp)).format('MMMM Do YYYY, h:mm:ss') + ".";
           break;
         case "BACKUP_ERROR":
 
           info += " error";
-          //info += " executed at " + moment(new Date(event.timestamp)).format('MMMM Do YYYY, h:mm:ss') + ".";
           break;
         case "BACKUP_SCHEDULED":
           info += " scheduled.";
-          //info += " scheduled at " + moment(new Date(event.nextExecution)).format('MMMM Do YYYY, h:mm') + ".";
           break;
         case "BACKUP_STARTED":
           info += " started";
-          //info += " started at " + moment(new Date(event.timestamp)).format('MMMM Do YYYY, h:mm:ss') + ".";
           break;
       }
       return info;
@@ -1611,22 +1647,8 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
 
       }
     })
-    $('#incremental_cron').cron({
-      initial: incr,
-      onChange: function () {
-        if ($scope.backup.modes["INCREMENTAL_BACKUP"]) {
-          $scope.backup.modes["INCREMENTAL_BACKUP"].when = $(this).cron("value");
-        }
-      }
-    });
-    $('#full_cron').cron({
-      initial: full,
-      onChange: function () {
-        if ($scope.backup.modes["FULL_BACKUP"]) {
-          $scope.backup.modes["FULL_BACKUP"].when = $(this).cron("value");
-        }
-      }
-    });
+
+
   })
 
 

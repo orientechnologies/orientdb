@@ -4,31 +4,12 @@
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
         </button>
-        <h3>Restore Backup to <b>{{restored.target}}</b></h3>
+        <h3>Remove Backup </h3>
       </div>
       <div class="modal-body edge">
 
         <div class="row">
-
           <div class="col-md-12">
-            <form id="signin" name="newDB" class="form-horizontal" novalidate="">
-              <fieldset>
-                <div class="form-group">
-                  <label class="control-label col-md-2">Database name</label>
-                  <div class="col-md-10">
-                    <input type="text" class="form-control" required ng-model="restored.target"
-                           placeholder="Database name" focus="true"/>
-                  </div>
-                </div>
-              </fieldset>
-            </form>
-          </div>
-        </div>
-
-        <div class="row">
-
-          <div class="col-md-12">
-
             <div class="studio-well">
               <p>
                 The selected backup event (<b>{{restored.log.mode}}</b>) is part of an incremental backup.
@@ -52,7 +33,7 @@
               </tr>
               </thead>
               <tbody>
-              <tr ng-repeat="u in unitLogs">
+              <tr ng-repeat="u in unitLogs" ng-class="{ 'danger' : u.timestamp >= restored.log.timestamp}">
                 <td>{{ u.mode }}</td>
                 <td>{{ u.timestamp | formatDateNS}}</td>
                 <td>{{ u.fileName }}</td>
@@ -65,7 +46,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn" ng-click="$hide()">Cancel</button>
-        <button class="btn btn-primary" ng-disabled="newDB.$invalid" ng-click="onRestore(restored,$hide)">Restore
+        <button class="btn btn-danger" ng-disabled="newDB.$invalid" ng-click="onRemove(restored,$hide)">Remove
         </button>
       </div>
     </div>

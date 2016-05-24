@@ -7,7 +7,7 @@
         </div>
         <div class="col-md-5">
           <ul class="list-inline">
-            <li ng-repeat="t in eventsType" class="pointer">
+            <li ng-click="onEventClick(t)" ng-repeat="t in eventsType" class="pointer">
               <i class="fa" ng-class="getClazz(t)">
               </i>
               {{t.name}}

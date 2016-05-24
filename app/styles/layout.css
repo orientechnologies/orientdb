@@ -1181,3 +1181,75 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 .log-started-icon, .log-scheduled-icon {
   color: #5bc0de;
 }
+
+.log-restore-finished  {
+  background-color: #f0ad4e;
+  border-color: #f0ad4e;
+}
+.log-restore-finished-icon, .log-restore-started-icon  {
+  color: #f0ad4e;
+}
+
+
+
+
+table.table-fixed-header {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: 500px; /* this can vary */
+}
+
+table.table-fixed-header * {
+  box-sizing: inherit;
+  -moz-box-sizing: inherit;
+}
+
+.table-fixed-header thead {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.table-fixed-header tbody {
+  overflow-y: scroll;
+  display: inline-block;
+}
+
+.table-fixed-header thead > tr, .table-fixed-header tbody > tr, .table-fixed-header tfoot > tr {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.table-fixed-header thead,.table-fixed-header tfoot {
+  flex-shrink: 0;
+}
+
+
+.table-fixed-header th, .table-fixed-header tbody td {
+  width: 20%; /* this can vary */
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+}
+
+.table-fixed-header tfoot {
+  display: inline-block;
+}
+
+.table-fixed-header tfoot td {
+  width: 100%;
+  display: inline-block;
+}
+
+table.table-backup {
+  height: 300px;
+}
+
+.table-backup th, .table-backup tbody td {
+  width: 25%;
+}
+
