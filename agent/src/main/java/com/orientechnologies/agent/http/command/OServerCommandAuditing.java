@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.security.OServerSecurity;
+import com.orientechnologies.orient.server.OServer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,11 +32,11 @@ import java.util.List;
 
 public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private static final String[] NAMES = { "GET|auditing/*", "POST|auditing/*" };
-  private OServerSecurity       security;
+  private OServer server;
 
-  public OServerCommandAuditing(OServerSecurity security) {
+  public OServerCommandAuditing(OServer server) {
     super("server.profiler");
-    this.security = security;
+    this.server = server;
   }
 
   @Override
@@ -74,28 +74,26 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     iRequest.databaseName = db;
     ODatabaseDocumentTx databaseDocumentTx = getProfiledDatabaseInstance(iRequest);
 
-    String clazz = params.field("clazz");
     Collection<ODocument> documents = new ArrayList<ODocument>();
-    if (databaseDocumentTx.getMetadata().getSchema().existsClass(clazz)) {
-      documents = databaseDocumentTx.command(new OSQLSynchQuery<ODocument>(buildQuery(params))).execute(params.toMap());
-    }
+    
+    String query = buildQuery(databaseDocumentTx.getName(), params);
+    
+    documents = (Collection<ODocument>)server.getSystemDatabase().execute(null, query, params.toMap());
+
     iResponse.writeResult(documents);
   }
 
-  private String buildQuery(ODocument params) {
-    String query = "select user.name as username,* from :clazz :where order by date desc limit :limit";
+  private String buildQuery(final String dbName, ODocument params) {
+    String query = String.format("select user as username,* from cluster:%s_auditing :where order by date desc limit :limit", dbName);
 
     List<String> whereConditions = new ArrayList<String>();
-    String clazz = params.field("clazz");
     Integer limit = params.field("limit");
-
-    query = query.replace(":clazz", clazz);
 
     if (isNotNullNotEmpty(params, "operation")) {
       whereConditions.add("operation = :operation");
     }
     if (isNotNullNotEmpty(params, "user")) {
-      whereConditions.add("user.name = :user");
+      whereConditions.add("user = :user");
     }
     if (isNotNullNotEmpty(params, "record")) {
       whereConditions.add("record = :record");
@@ -152,8 +150,8 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     iRequest.databaseName = db;
     getProfiledDatabaseInstance(iRequest);
 
-    if (security.getAuditing() != null)
-      security.getAuditing().changeConfig(db, config);
+    if (server.getSecurity().getAuditing() != null)
+      server.getSecurity().getAuditing().changeConfig(db, config);
 
     iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, config.toJSON("prettyPrint"), null);
   }
@@ -163,8 +161,8 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     getProfiledDatabaseInstance(iRequest);
 
     ODocument config = null;
-    if (security.getAuditing() != null) {
-      config = security.getAuditing().getConfig(db);
+    if (server.getSecurity().getAuditing() != null) {
+      config = server.getSecurity().getAuditing().getConfig(db);
     } else {
       config = new ODocument();
     }

@@ -234,7 +234,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     listener.registerStatelessCommand(new OServerCommandPluginManager());
     listener.registerStatelessCommand(new OServerCommandGetNode());
     listener.registerStatelessCommand(new OServerCommandQueryCacheManager());
-    listener.registerStatelessCommand(new OServerCommandAuditing(server.getSecurity()));
+    listener.registerStatelessCommand(new OServerCommandAuditing(server));
     listener.registerStatelessCommand(new OServerCommandGetSecurityConfig(server.getSecurity()));
     listener.registerStatelessCommand(new OServerCommandPostSecurityReload(server.getSecurity()));
 
