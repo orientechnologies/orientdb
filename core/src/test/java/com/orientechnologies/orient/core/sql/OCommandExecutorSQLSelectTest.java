@@ -1199,6 +1199,7 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  @Test
   public void testCollateOnCollections() {
     //issue #4851
     db.command(new OCommandSQL("create class OCommandExecutorSqlSelectTest_collateOnCollections")).execute();
@@ -1225,6 +1226,7 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  @Test
   public void testEvalLong() {
     //http://www.prjhub.com/#/issues/6472
     List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT EVAL(\"86400000 * 26\") AS value"));
@@ -1232,6 +1234,7 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.get(0).field("value"), 86400000l*26);
   }
 
+  @Test
   public void testCollateOnLinked() {
     List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from CollateOnLinked2 where linked.name = 'foo' "));
     assertEquals(results.size(), 1);
@@ -1269,6 +1272,13 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 2);
     results = db.query(new OSQLSynchQuery<ODocument>("select from CompositeIndexWithoutNullValues where one = ? and two = ?"), "foo", "bar");
     assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void testDateFormat(){
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select date('2015-07-20', 'yyyy-MM-dd').format('dd.MM.yyyy') as dd"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.get(0).field("dd"), "20.07.2015");
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {
