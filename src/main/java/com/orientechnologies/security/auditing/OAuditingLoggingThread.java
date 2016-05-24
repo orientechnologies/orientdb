@@ -21,33 +21,34 @@ package com.orientechnologies.security.auditing;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OAuditingOperation;
+import com.orientechnologies.orient.server.OServer;
 
 import java.util.concurrent.BlockingQueue;
 
 /**
- * Thread that log asynchronously.
+ * Thread that logs asynchronously.
  *
  * @author Luca Garulli
  */
 public class OAuditingLoggingThread extends Thread {
-  public static final String             FROM_AUDITING  = "FROM_AUDITING";
-  private final String                   databaseURL;
+  private final String                   databaseName;
   private final BlockingQueue<ODocument> auditingQueue;
-  private ODatabaseDocumentTx            db;
   private volatile boolean               running        = true;
   private volatile boolean               waitForAllLogs = true;
-  private boolean                        isOpened       = false;
+  private OServer                        server;
 
-  public OAuditingLoggingThread(final String iDatabaseURL, final String iDatabaseName, final BlockingQueue auditingQueue) {
+  public OAuditingLoggingThread(final String iDatabaseName, final BlockingQueue auditingQueue, final OServer server) {
     super(Orient.instance().getThreadGroup(), "OrientDB Auditing Logging Thread - " + iDatabaseName);
 
-    this.databaseURL = iDatabaseURL;
+    this.databaseName = iDatabaseName;
     this.auditingQueue = auditingQueue;
+    this.server = server;
     setDaemon(true);
+    
+    // This will create a cluster in the system database for logging auditing events for "databaseName", if it doesn't already exist.
+    server.getSystemDatabase().createCluster(ODefaultAuditing.AUDITING_LOG_CLASSNAME, ODefaultAuditing.getClusterName(databaseName));
   }
 
   @Override
@@ -60,14 +61,21 @@ public class OAuditingLoggingThread extends Thread {
         }
 
         final ODocument log = auditingQueue.take();
+        
+        server.getSystemDatabase().save(log, databaseName + "_auditing");
+        
+        if (server.getSecurity().getSyslog() != null) {
+        	 byte byteOp = OAuditingOperation.UNSPECIFIED.getByte();
+        	 
+        	 if(log.containsField("operation"))
+        	   byteOp = log.field("operation");
+        	   
+        	 String username = log.field("user");
+        	 String message  = log.field("note");
+        	 String dbName   = log.field("database");
 
-        if (!isOpened) {
-          db = new ODatabaseDocumentTx(databaseURL);
-          openDatabase();
-          isOpened = true;
-        }
-        db.activateOnCurrentThread();
-        db.save(log);
+          server.getSecurity().getSyslog().log(OAuditingOperation.getByByte(byteOp).toString(), dbName, username, message);
+        }        
 
       } catch (InterruptedException e) {
         // IGNORE AND SOFTLY EXIT
@@ -76,26 +84,11 @@ public class OAuditingLoggingThread extends Thread {
         e.printStackTrace();
       }
     }
-
-    if (db != null) {
-      db.activateOnCurrentThread();
-      db.close();
-    }
   }
 
   public void sendShutdown(final boolean iWaitForAllLogs) {
     this.waitForAllLogs = iWaitForAllLogs;
     running = false;
     interrupt();
-  }
-
-  protected void openDatabase() {
-    db.setProperty(FROM_AUDITING, true);
-    db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
-    try {
-      db.open("admin", "any");
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot open database '%s'", e, databaseURL);
-    }
   }
 }
