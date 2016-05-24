@@ -25,6 +25,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -196,7 +197,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       if (iValue instanceof ORecordId)
         ((ORecordId) iValue).toString(iBuffer);
       else
-        ((ORecord) iValue).getIdentity().toString(iBuffer);
+        ((OIdentifiable) iValue).getIdentity().toString(iBuffer);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.link2string"), "Serialize link to string", timer);
       break;
 
