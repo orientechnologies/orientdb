@@ -409,6 +409,10 @@ public class OAtomicOperation {
     return startCounter;
   }
 
+  int getCounter() {
+    return startCounter;
+  }
+
   void rollback(Exception e) {
     rollback = true;
     rollbackException = e;

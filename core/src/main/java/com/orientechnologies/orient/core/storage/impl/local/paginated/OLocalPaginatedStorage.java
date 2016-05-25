@@ -178,6 +178,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
+  public void close(boolean force, boolean onDelete) {
+    super.close(force, onDelete);
+    if (writeAheadLog != null)
+      ((ODiskWriteAheadLog) writeAheadLog).removeLowDiskSpaceListener(this);
+  }
+
+  @Override
   protected void preOpenSteps() throws IOException {
     if (configuration.binaryFormatVersion >= 11) {
       if (dirtyFlag.exists())
@@ -289,8 +296,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       checkpointExecutor = Executors.newSingleThreadExecutor(new FullCheckpointThreadFactory());
 
-      writeAheadLog = new ODiskWriteAheadLog(this);
-      writeAheadLog.addFullCheckpointListener(this);
+      final ODiskWriteAheadLog diskWriteAheadLog = new ODiskWriteAheadLog(this);
+      diskWriteAheadLog.addLowDiskSpaceListener(this);
+      diskWriteAheadLog.checkFreeSpace();
+      writeAheadLog = diskWriteAheadLog;
     } else
       writeAheadLog = null;
 

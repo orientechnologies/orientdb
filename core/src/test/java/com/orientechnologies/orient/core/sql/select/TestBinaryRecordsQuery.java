@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.select;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -20,47 +21,87 @@ import static org.junit.Assert.assertNull;
  */
 public class TestBinaryRecordsQuery {
 
-  private ODatabaseDocument document;
+  private ODatabaseDocument database;
 
   @Before
   public void before() {
-    document = new ODatabaseDocumentTx("memory:test");
-    document.create();
-    document.addCluster("BlobCluster");
+    database = new ODatabaseDocumentTx("memory:test");
+    database.create();
+    database.addCluster("BlobCluster");
   }
 
   @After
   public void after() {
-    document.drop();
+    database.drop();
   }
 
   @Test
   public void testSelectBinary() {
-    document.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
+    database.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
 
-    List<ORecord> res = document.query(new OSQLSynchQuery<Object>("select from cluster:BlobCluster"));
+    List<ORecord> res = database.query(new OSQLSynchQuery<Object>("select from cluster:BlobCluster"));
 
     assertEquals(1, res.size());
   }
 
   @Test
   public void testSelectRidBinary() {
-    ORecord rec = document.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
+    ORecord rec = database.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
 
-    List<ORecord> res = document.query(new OSQLSynchQuery<Object>("select @rid from cluster:BlobCluster"));
+    List<ORecord> res = database.query(new OSQLSynchQuery<Object>("select @rid from cluster:BlobCluster"));
     assertEquals(1, res.size());
   }
 
   @Test
   public void testDeleteBinary() {
-    ORecord rec = document.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
+    ORecord rec = database.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
 
-    Integer res = document.command(new OCommandSQL("delete from (select from cluster:BlobCluster)")).execute();
-    document.getLocalCache().clear();
+    Integer res = database.command(new OCommandSQL("delete from (select from cluster:BlobCluster)")).execute();
+    database.getLocalCache().clear();
     assertEquals(1, res.intValue());
-    rec = document.load(rec.getIdentity());
+    rec = database.load(rec.getIdentity());
     assertNull(rec);
   }
 
+  @Test
+  public void testSelectDeleteBinary() {
+    ORecord rec = database.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
+
+    database.getMetadata().getSchema().createClass("RecordPointer");
+    ODocument doc = new ODocument("RecordPointer");
+    doc.field("ref", rec);
+    database.save(doc);
+
+    Integer res = database.command(new OCommandSQL("delete from cluster:BlobCluster where @rid in (select ref from RecordPointer)"))
+        .execute();
+    database.getLocalCache().clear();
+    assertEquals(1, res.intValue());
+    rec = database.load(rec.getIdentity());
+    assertNull(rec);
+  }
+
+  @Test
+  public void testDeleteFromSelectBinary() {
+    ORecord rec = database.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
+    ORecord rec1 = database.save(new ORecordBytes("blabla".getBytes()), "BlobCluster");
+
+    database.getMetadata().getSchema().createClass("RecordPointer");
+    ODocument doc = new ODocument("RecordPointer");
+    doc.field("ref", rec);
+    database.save(doc);
+
+    ODocument doc1 = new ODocument("RecordPointer");
+    doc1.field("ref", rec1);
+    database.save(doc1);
+
+
+    Integer res = database.command(new OCommandSQL("delete from (select expand(ref) from RecordPointer)")).execute();
+    database.getLocalCache().clear();
+    assertEquals(2, res.intValue());
+    rec = database.load(rec.getIdentity());
+    assertNull(rec);
+    rec = database.load(rec1.getIdentity());
+    assertNull(rec);
+  }
 
 }
