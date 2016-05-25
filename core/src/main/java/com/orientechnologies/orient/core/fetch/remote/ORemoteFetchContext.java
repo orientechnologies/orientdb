@@ -19,6 +19,7 @@ package com.orientechnologies.orient.core.fetch.remote;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -28,10 +29,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class ORemoteFetchContext implements OFetchContext {
-  public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
+  public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {
   }
 
-  public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
+  public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {
   }
 
   public void onBeforeMap(ODocument iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
