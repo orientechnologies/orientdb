@@ -261,7 +261,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         indexEngines.add(engine);
       } catch (RuntimeException e) {
         OLogManager.instance()
-            .error(this, "Index '" + engineData.getName() + "' cannot be created and will be removed from configuration");
+            .error(this, "Index '" + engineData.getName() + "' cannot be created and will be removed from configuration", e);
 
         engine.deleteWithoutLoad(engineData.getName());
       }
