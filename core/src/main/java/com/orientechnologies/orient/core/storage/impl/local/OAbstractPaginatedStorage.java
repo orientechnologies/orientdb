@@ -368,7 +368,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       dataLock.acquireExclusiveLock();
       try {
         // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-        doClose(true, true);
+        close(true, true);
 
         try {
           Orient.instance().unregisterStorage(this);
