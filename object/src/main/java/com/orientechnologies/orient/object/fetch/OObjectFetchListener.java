@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
@@ -43,7 +44,7 @@ public class OObjectFetchListener implements OFetchListener {
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public void processStandardField(final ODocument iRecord, final Object iFieldValue, final String iFieldName,
-      final OFetchContext iContext, final Object iUserObject, final String iFormat) throws OFetchException {
+      final OFetchContext iContext, final Object iUserObject, final String iFormat, OType filedType) throws OFetchException {
     if (iFieldValue instanceof ORecordLazyList)
       OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OObjectLazyList(iRecord, (ORecordLazyList) iFieldValue,
           OObjectEntitySerializer.isCascadeDeleteField(iUserObject.getClass(), iFieldName)));

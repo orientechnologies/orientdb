@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.fetch;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -54,9 +55,9 @@ public interface OFetchContext {
   public void onAfterDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName,
       final Object iUserObject) throws OFetchException;
 
-  public void onBeforeStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject);
+  public void onBeforeStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject, OType fieldType);
 
-  public void onAfterStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject);
+  public void onAfterStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject, OType fieldType);
 
   public boolean fetchEmbeddedDocuments();
 }

@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
@@ -31,9 +32,10 @@ import java.io.IOException;
  */
 public class OJSONFetchListener implements OFetchListener {
 
-  public void processStandardField(final ODocument iRecord, final Object iFieldValue, final String iFieldName, final OFetchContext iContext, final Object iusObject, final String iFormat) {
+  public void processStandardField(final ODocument iRecord, final Object iFieldValue, final String iFieldName, final OFetchContext iContext, final Object iusObject, final String iFormat,
+      OType filedType) {
     try {
-      ((OJSONFetchContext) iContext).getJsonWriter().writeAttribute(((OJSONFetchContext) iContext).getIndentLevel() + 1, true, iFieldName, iFieldValue);
+      ((OJSONFetchContext) iContext).getJsonWriter().writeAttribute(((OJSONFetchContext) iContext).getIndentLevel() + 1, true, iFieldName, iFieldValue,iFormat,filedType);
     } catch (IOException e) {
       throw new OFetchException("Error processing field '" + iFieldValue + " of record " + iRecord.getIdentity(), e);
     }

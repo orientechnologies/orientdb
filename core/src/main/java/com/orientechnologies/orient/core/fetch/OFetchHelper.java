@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -300,6 +301,7 @@ public class OFetchHelper {
         depthLevel = iFieldDepthLevel;
 
       fieldValue = record.rawField(fieldName);
+      OType fieldType = record.fieldType(fieldName);
 
       boolean fetch = !iFormat.contains("shallow")
           && (!(fieldValue instanceof OIdentifiable) || depthLevel == -1 || iCurrentLevel <= depthLevel || (iFetchPlan != null && iFetchPlan
@@ -321,9 +323,9 @@ public class OFetchHelper {
           && (!(OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable
               || OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue)) instanceof OIdentifiable || OMultiValue
                 .getFirstValue(OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue))) instanceof OIdentifiable))) {
-        iContext.onBeforeStandardField(fieldValue, fieldName, iUserObject);
-        iListener.processStandardField(record, fieldValue, fieldName, iContext, iUserObject, iFormat);
-        iContext.onAfterStandardField(fieldValue, fieldName, iUserObject);
+        iContext.onBeforeStandardField(fieldValue, fieldName, iUserObject, fieldType);
+        iListener.processStandardField(record, fieldValue, fieldName, iContext, iUserObject, iFormat, fieldType);
+        iContext.onAfterStandardField(fieldValue, fieldName, iUserObject, fieldType);
       } else {
         try {
           if (fetch) {
@@ -376,7 +378,7 @@ public class OFetchHelper {
     }
 
     if (fieldValue == null) {
-      iListener.processStandardField(iRootRecord, null, fieldName, iContext, iUserObject, "");
+      iListener.processStandardField(iRootRecord, null, fieldName, iContext, iUserObject, "", null);
     } else if (fieldValue instanceof OIdentifiable) {
       if (fieldValue instanceof ODocument && ((ODocument) fieldValue).getClassName() != null
           && ((ODocument) fieldValue).getClassName().equals(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME)) {
@@ -438,7 +440,7 @@ public class OFetchHelper {
         fetchCollection(iRootRecord, iUserObject, iFetchPlan, o, key.toString(), iCurrentLevel + 1, iLevelFromRoot,
             iFieldDepthLevel, parsedRecords, iFieldPathFromRoot, iListener, iContext);
       } else
-        iListener.processStandardField(iRootRecord, o, key.toString(), iContext, iUserObject, "");
+        iListener.processStandardField(iRootRecord, o, key.toString(), iContext, iUserObject, "", null);
     }
     iContext.onAfterMap(iRootRecord, fieldName, iUserObject);
   }
@@ -466,7 +468,7 @@ public class OFetchHelper {
       }
       iContext.onAfterArray(iRootRecord, fieldName, iUserObject);
     } else {
-      iListener.processStandardField(iRootRecord, fieldValue, fieldName, iContext, iUserObject, "");
+      iListener.processStandardField(iRootRecord, fieldValue, fieldName, iContext, iUserObject, "", null);
     }
   }
 
@@ -512,9 +514,9 @@ public class OFetchHelper {
             d = d.getRecord();
 
             if (d == null)
-              iListener.processStandardField(null, d, null, iContext, iUserObject, "");
+              iListener.processStandardField(null, d, null, iContext, iUserObject, "", null);
             else if (!(d instanceof ODocument)) {
-              iListener.processStandardField(null, d, fieldName, iContext, iUserObject, "");
+              iListener.processStandardField(null, d, fieldName, iContext, iUserObject, "", null);
             } else {
               iContext.onBeforeDocument(iRootRecord, (ODocument) d, fieldName, iUserObject);
               final Object userObject = iListener.fetchLinkedCollectionValue(iRootRecord, iUserObject, fieldName, (ODocument) d,
@@ -550,9 +552,9 @@ public class OFetchHelper {
       final OFetchListener iListener, final OFetchContext iContext) throws IOException {
     if (fieldValue instanceof ORID && !((ORID) fieldValue).isValid()) {
       // RID NULL: TREAT AS "NULL" VALUE
-      iContext.onBeforeStandardField(fieldValue, fieldName, iRootRecord);
+      iContext.onBeforeStandardField(fieldValue, fieldName, iRootRecord, null);
       iListener.parseLinked(iRootRecord, fieldValue, iUserObject, fieldName, iContext);
-      iContext.onAfterStandardField(fieldValue, fieldName, iRootRecord);
+      iContext.onAfterStandardField(fieldValue, fieldName, iRootRecord, null);
       return;
     }
 
@@ -569,9 +571,9 @@ public class OFetchHelper {
           iFieldPathFromRoot, iListener, iContext, "");
       iContext.onAfterDocument(iRootRecord, linked, fieldName, iUserObject);
     } else {
-      iContext.onBeforeStandardField(fieldValue, fieldName, iRootRecord);
+      iContext.onBeforeStandardField(fieldValue, fieldName, iRootRecord, null);
       iListener.parseLinked(iRootRecord, fieldValue, iUserObject, fieldName, iContext);
-      iContext.onAfterStandardField(fieldValue, fieldName, iRootRecord);
+      iContext.onAfterStandardField(fieldValue, fieldName, iRootRecord, null);
     }
   }
 

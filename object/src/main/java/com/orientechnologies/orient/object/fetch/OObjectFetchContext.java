@@ -175,10 +175,10 @@ public class OObjectFetchContext implements OFetchContext {
   public void onBeforeFetch(ODocument iRootRecord) throws OFetchException {
   }
 
-  public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
+  public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {
   }
 
-  public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
+  public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {
   }
 
   public OUserObject2RecordHandler getObj2RecHandler() {
