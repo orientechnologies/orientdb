@@ -33,6 +33,9 @@ import com.orientechnologies.orient.server.handler.OAutomaticBackup;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -81,7 +84,11 @@ public abstract class OBackupStrategy {
       logger.log(end);
     } catch (Exception e) {
       OBackupErrorLog error = new OBackupErrorLog(start.getUnitId(), start.getTxId(), getUUID(), getDbName(), getMode().toString());
+      StringWriter sw = new StringWriter();
+      PrintWriter pw = new PrintWriter(sw);
+      e.printStackTrace(pw);
       error.setMessage(e.getMessage());
+      error.setStackTrace(sw.toString());
       logger.log(error);
       listener.onEvent(cfg, error);
       return;
@@ -91,17 +98,21 @@ public abstract class OBackupStrategy {
   }
 
   public void doRestore(OBackupListener listener, ODocument doc) {
+
     String databaseName = doc.field("target");
     Long unitId = doc.field("unitId");
     OServer server = OServerMain.server();
     ODatabaseDocumentTx database = null;
     ORestoreStartedLog restoreStartedLog = null;
+
     try {
+
       OBackupFinishedLog finished = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID(), unitId);
       restoreStartedLog = new ORestoreStartedLog(finished.getUnitId(), logger.nextOpId(), getUUID(), getDbName(),
           finished.getMode());
       logger.log(restoreStartedLog);
       String url = "plocal:" + server.getDatabaseDirectory() + databaseName;
+
       database = new ODatabaseDocumentTx(url);
       if (!database.exists()) {
         database.create(finished.getPath());
@@ -109,8 +120,14 @@ public abstract class OBackupStrategy {
 
       ORestoreFinishedLog finishedLog = new ORestoreFinishedLog(restoreStartedLog.getUnitId(), restoreStartedLog.getTxId(),
           getUUID(), getDbName(), restoreStartedLog.getMode());
-      finishedLog.elapsedTime = finishedLog.getTimestamp() - restoreStartedLog.getTimestamp();
+
+      finishedLog.elapsedTime = finishedLog.getTimestamp().getTime() - restoreStartedLog.getTimestamp().getTime();
+      finishedLog.setTargetDB(databaseName);
+      finishedLog.path = finished.path;
+      finishedLog.restoreUnitId = finished.getUnitId();
+
       logger.log(finishedLog);
+
     } catch (Exception e) {
 
       if (restoreStartedLog != null) {
@@ -139,7 +156,7 @@ public abstract class OBackupStrategy {
       end.setFileName(fName);
       end.setPath(path);
       end.fileSize = calculateFileSize(path + File.separator + fName);
-      end.elapsedTime = end.getTimestamp() - start.getTimestamp();
+      end.elapsedTime = end.getTimestamp().getTime() - start.getTimestamp().getTime();
       return end;
     } finally {
       if (db != null) {
@@ -187,6 +204,14 @@ public abstract class OBackupStrategy {
     return cfg.field(OBackupConfig.DBNAME);
   }
 
+  public Boolean isEnabled() {
+    return cfg.field(OBackupConfig.ENABLED);
+  }
+
+  public Integer getRetentionDays() {
+    return cfg.field(OBackupConfig.RETENTION_DAYS);
+  }
+
   protected OBackupScheduledLog lastUnfiredSchedule() {
     OBackupLog lastSchedule = null;
     try {
@@ -211,4 +236,21 @@ public abstract class OBackupStrategy {
     }
   }
 
+  public void retainLogs() {
+
+    Integer retentionDays = getRetentionDays();
+
+    if (retentionDays != null && retentionDays > 0) {
+      Calendar c = Calendar.getInstance();
+      c.setTime(new Date());
+      c.add(Calendar.DATE, (-1) * retentionDays);
+
+      Long time = c.getTime().getTime();
+      try {
+        logger.deleteByUUIDAndTimestamp(getUUID(), time);
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error deleting backups for UUID : " + getUUID(), e);
+      }
+    }
+  }
 }

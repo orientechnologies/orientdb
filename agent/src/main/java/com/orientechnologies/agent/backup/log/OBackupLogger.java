@@ -42,5 +42,7 @@ public interface OBackupLogger {
 
   public void deleteByUUIDAndUnitIdAndTimestamp(String uuid, Long unitId, Long timestamp) throws IOException;
 
+  public void deleteByUUIDAndTimestamp(String uuid, Long timestamp) throws IOException;
+
   public List<OBackupLog> findAllLatestByUUID(String uuid, int page, int pageSize) throws IOException;
 }

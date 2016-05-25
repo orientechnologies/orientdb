@@ -180,6 +180,11 @@ public class OBackupDiskLogger implements OBackupLogger {
   }
 
   @Override
+  public void deleteByUUIDAndTimestamp(String uuid, Long timestamp) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public List<OBackupLog> findAllLatestByUUID(String uuid, int page, int pageSize) throws IOException {
     List<OBackupLog> logs = new ArrayList<OBackupLog>();
 

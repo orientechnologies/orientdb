@@ -47,6 +47,8 @@ public class OBackupConfig {
   private Map<String, ODocument> configs    = new HashMap<String, ODocument>();
 
   public static final String     DBNAME     = "dbName";
+  public static final String     RETENTION_DAYS     = "retentionDays";
+  public static final String     ENABLED     = "enabled";
   public static final String     WHEN       = "when";
   public static final String     DIRECTORY  = "directory";
   public static final String     MODES      = "modes";
@@ -168,12 +170,12 @@ public class OBackupConfig {
 
   public ODocument changeBackup(String uuid, ODocument doc) {
     validateBackup(doc);
-    removeBackup(uuid, doc);
+    removeBackup(uuid);
     pushBackup(doc);
     return doc;
   }
 
-  public void removeBackup(String uuid, ODocument doc) {
+  public void removeBackup(String uuid) {
     synchronized (this) {
       Collection<ODocument> backups = configuration.field(BACKUPS);
       ODocument toRemove = null;

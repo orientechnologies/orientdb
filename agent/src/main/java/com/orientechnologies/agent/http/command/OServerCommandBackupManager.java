@@ -118,6 +118,11 @@ public class OServerCommandBackupManager extends OServerCommandDistributedScope 
 
     final String[] parts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: backupManager");
 
+    if (parts.length == 2) {
+      String uuid = parts[1];
+      backupManager.removeAndStopBackup(uuid);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
+    }
     if (parts.length >= 3) {
 
       String uuid = parts[1];

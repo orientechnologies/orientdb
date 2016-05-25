@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OBackupErrorLog extends OBackupLog {
 
   protected String message;
+  protected String stackTrace;
 
   public OBackupErrorLog(long unitId, long opsId, String uuid, String dbName, String mode) {
     super(unitId, opsId, uuid, dbName, mode);
@@ -35,6 +36,7 @@ public class OBackupErrorLog extends OBackupLog {
   public ODocument toDoc() {
     ODocument document = super.toDoc();
     document.field("message", message);
+    document.field("stackTrace", stackTrace);
     return document;
   }
 
@@ -42,6 +44,7 @@ public class OBackupErrorLog extends OBackupLog {
   public void fromDoc(ODocument doc) {
     super.fromDoc(doc);
     this.message = doc.field("message");
+    this.stackTrace = doc.field("stackTrace");
   }
 
   @Override
@@ -51,5 +54,9 @@ public class OBackupErrorLog extends OBackupLog {
 
   public void setMessage(String message) {
     this.message = message;
+  }
+
+  public void setStackTrace(String stackTrace) {
+    this.stackTrace = stackTrace;
   }
 }

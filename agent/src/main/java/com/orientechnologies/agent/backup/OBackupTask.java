@@ -44,27 +44,36 @@ public class OBackupTask implements OBackupListener {
 
   protected void schedule() {
 
-    Date nextExecution = strategy.scheduleNextExecution();
+    if (strategy.isEnabled()) {
+      Date nextExecution = strategy.scheduleNextExecution();
 
-    task = new TimerTask() {
-      @Override
-      public void run() {
-        try {
-          strategy.doBackup(OBackupTask.this);
-        } catch (IOException e) {
-          e.printStackTrace();
+      task = new TimerTask() {
+        @Override
+        public void run() {
+          try {
+            strategy.doBackup(OBackupTask.this);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
         }
-      }
-    };
-    Orient.instance().scheduleTask(task, nextExecution, 0);
+      };
+      Orient.instance().scheduleTask(task, nextExecution, 0);
 
-    OLogManager.instance().info(this,
-        "Scheduled [" + strategy.getMode() + "] task : " + strategy.getUUID() + ". Next execution will be " + nextExecution);
+      OLogManager.instance().info(this,
+          "Scheduled [" + strategy.getMode() + "] task : " + strategy.getUUID() + ". Next execution will be " + nextExecution);
+    }
+
+
+    strategy.retainLogs();
+
   }
 
   public void changeConfig(OBackupConfig config, ODocument doc) {
-    task.cancel();
+    if (task != null) {
+      task.cancel();
+    }
     strategy = config.strategy(doc, strategy.getLogger());
+
     schedule();
   }
 
@@ -73,6 +82,13 @@ public class OBackupTask implements OBackupListener {
 
     if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
       schedule();
+    }
+  }
+
+  public void stop() {
+    if (task != null) {
+      task.cancel();
+      OLogManager.instance().info(this, "Cancelled schedule backup on database  [" + strategy.getDbName() + "] ");
     }
   }
 

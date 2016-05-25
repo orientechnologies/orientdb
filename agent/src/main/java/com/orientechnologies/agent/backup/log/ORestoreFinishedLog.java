@@ -25,7 +25,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class ORestoreFinishedLog extends OBackupLog {
 
-  public long elapsedTime = 0;
+  public long   elapsedTime = 0;
+  public String targetDB;
+  public Long   restoreUnitId;
+  public String path;
 
   public ORestoreFinishedLog(long unitId, long opsId, String uuid, String dbName, String mode) {
     super(unitId, opsId, uuid, dbName, mode);
@@ -40,12 +43,22 @@ public class ORestoreFinishedLog extends OBackupLog {
   public ODocument toDoc() {
     ODocument doc = super.toDoc();
     doc.field("elapsedTime", elapsedTime);
+    doc.field("targetDB", targetDB);
+    doc.field("unitId", restoreUnitId);
+    doc.field("path", path);
     return doc;
+  }
+
+  public void setTargetDB(String targetDB) {
+    this.targetDB = targetDB;
   }
 
   @Override
   public void fromDoc(ODocument doc) {
     super.fromDoc(doc);
     elapsedTime = doc.field("elapsedTime");
+    targetDB = doc.field("targetDB");
+    restoreUnitId = doc.field("unitId");
+    path = doc.field("path");
   }
 }

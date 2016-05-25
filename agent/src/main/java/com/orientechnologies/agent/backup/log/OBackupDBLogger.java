@@ -225,6 +225,104 @@ public class OBackupDBLogger implements OBackupLogger {
   }
 
   @Override
+  public void deleteByUUIDAndTimestamp(final String uuid, final Long timestamp) throws IOException {
+
+    final String selectQuery = String
+        .format("select from %s where uuid = :uuid and timestamp <= :timestamp group by unitId order by timestamp asc", CLASS_NAME);
+
+    final Map<String, Object> queryParams = new HashMap<String, Object>() {
+      {
+        put("uuid", uuid);
+        put("timestamp", timestamp);
+      }
+    };
+
+    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
+      @Override
+      public Void call(ODatabase iArgument) {
+
+        final List<Long> units = new ArrayList<Long>();
+
+        iArgument.command(new OSQLAsynchQuery(selectQuery, new OCommandResultListener() {
+          @Override
+          public boolean result(Object iRecord) {
+
+            ODocument doc = (ODocument) iRecord;
+
+            Long unitId = doc.field("unitId");
+            units.add(unitId);
+            return false;
+          }
+
+          @Override
+          public void end() {
+
+          }
+
+          @Override
+          public Object getResult() {
+            return null;
+          }
+        })).execute(queryParams);
+
+        for (Long unit : units) {
+          try {
+            deleteByUUIDAndUnitId(uuid, unit);
+          } catch (IOException e) {
+            OLogManager.instance().error(this, "Error deleting backup unit " + uuid, e);
+          }
+        }
+        return null;
+      }
+    }, "");
+
+    final String query = String.format("delete from %s where uuid = :uuid and unitId = :unitId", CLASS_NAME);
+
+  }
+
+  public void deleteByUUIDAndUnitId(final String uuid, final Long unitId) throws IOException {
+
+    final String selectQuery = String.format("select from %s where uuid = :uuid and unitId = :unitId ", CLASS_NAME);
+
+    final String query = String.format("delete from %s where uuid = :uuid and unitId = :unitId ", CLASS_NAME);
+    final Map<String, Object> queryParams = new HashMap<String, Object>() {
+      {
+        put("uuid", uuid);
+        put("unitId", unitId);
+      }
+    };
+
+    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
+      @Override
+      public Void call(ODatabase iArgument) {
+
+        iArgument.command(new OSQLAsynchQuery(selectQuery, new OCommandResultListener() {
+          @Override
+          public boolean result(Object iRecord) {
+
+            ODocument doc = (ODocument) iRecord;
+            dropFile(doc);
+            return false;
+          }
+
+          @Override
+          public void end() {
+
+          }
+
+          @Override
+          public Object getResult() {
+            return null;
+          }
+        })).execute(queryParams);
+        iArgument.command(new OCommandSQL(query)).execute(queryParams);
+        return null;
+      }
+    }, "");
+
+  }
+
+  @Override
   public void deleteByUUIDAndUnitIdAndTimestamp(final String uuid, final Long unitId, final Long txId) throws IOException {
 
     final String selectQuery = String.format("select from %s where uuid = :uuid and unitId = :unitId and txId >= :txId",
@@ -262,8 +360,7 @@ public class OBackupDBLogger implements OBackupLogger {
             return null;
           }
         })).execute(queryParams);
-        Object execute = iArgument.command(new OCommandSQL(query)).execute(queryParams);
-        System.out.println(execute);
+        iArgument.command(new OCommandSQL(query)).execute(queryParams);
         return null;
       }
     }, "");

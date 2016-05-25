@@ -20,6 +20,8 @@ package com.orientechnologies.agent.backup.log;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.Date;
+
 /**
  * Created by Enrico Risa on 25/03/16.
  */
@@ -32,17 +34,17 @@ public abstract class OBackupLog {
   public static final String DBNAME    = "dbName";
   public static final String MODE      = "mode";
   public static final String TIMESTAMP = "timestamp";
-  private long               unitId;
-  private String             mode;
-  private long               txId;
-  private String             uuid;
-  private String             dbName;
-  private long               timestamp;
+  private long   unitId;
+  private String mode;
+  private long   txId;
+  private String uuid;
+  private String dbName;
+  private Date   timestamp;
 
   public OBackupLog(long unitId, long txId, String uuid, String dbName, String mode) {
     this.txId = txId;
     this.unitId = unitId;
-    this.timestamp = System.currentTimeMillis();
+    this.timestamp = new Date();
     this.uuid = uuid;
     this.dbName = dbName;
     this.mode = mode;
@@ -79,7 +81,7 @@ public abstract class OBackupLog {
     return txId;
   }
 
-  public long getTimestamp() {
+  public Date getTimestamp() {
     return timestamp;
   }
 
