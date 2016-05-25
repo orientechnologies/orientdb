@@ -683,6 +683,11 @@ public class OSelectStatementTest {
     checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like \"%\" + ? + '%'");
   }
 
+  public void testAppendParams(){
+    checkRightSyntax("select from User where Account.Name like :name + '%'");
+
+  }
+
 
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());
