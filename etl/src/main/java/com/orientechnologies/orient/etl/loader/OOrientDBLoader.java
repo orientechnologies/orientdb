@@ -424,7 +424,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   private void manageRemoteDatabase() {
-    if (!dbAutoCreate || !dbAutoDropIfExists) {
+    if (!dbAutoCreate && !dbAutoDropIfExists) {
       log(INFO, "nothing setup  on remote database " + dbURL);
       return;
     }

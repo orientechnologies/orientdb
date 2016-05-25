@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -57,6 +58,11 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
       database.getStorage().recyclePosition(rid, content, version, recordType);
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
           "+-> resurrected deleted record");
+      return Boolean.TRUE;
+
+    } catch (OPaginatedClusterException e) {
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "+-> no resurrection, because the record was not deleted");
       return Boolean.TRUE;
 
     } catch (Exception e) {

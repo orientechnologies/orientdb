@@ -64,6 +64,14 @@ public interface OSecuritySystem
 	
 	// Indicates if the primary security mechanism supports single sign-on.
 	boolean isSingleSignOnSupported();
+	
+	/**
+	 * Logs to the auditing service, if installed.
+	 * 
+	 * @param dbName   May be null or empty.
+	 * @param username May be null or empty.
+	 */
+	void log(final OAuditingOperation operation, final String dbName, final String username, final String message);
 
 	void registerSecurityClass(final Class<?> cls);
 

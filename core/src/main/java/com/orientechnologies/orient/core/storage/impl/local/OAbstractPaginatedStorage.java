@@ -227,7 +227,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       try {
         status = STATUS.OPEN;
-        doClose(true, false);
+        close(true, false);
       } catch (RuntimeException re) {
         OLogManager.instance().error(this, "Error during storage close", e);
       }
@@ -444,7 +444,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       try {
         // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-        doClose(true, true);
+        close(true, true);
 
         try {
           Orient.instance().unregisterStorage(this);

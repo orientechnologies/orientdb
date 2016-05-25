@@ -11,7 +11,14 @@ for %%i in (%LIBDIR%\*.jar) do call :concatsep %%i
 
 set JAVA_OPTIONS=-Xms32M -Xmx512M
 
-set ORIENTDB_SETTINGS=-XX:MaxDirectMemorySize=512g
+if "%PROCESSOR_ARCHITECTURE%"=="AMD64" goto 64BIT
+set JAVA_MAX_DIRECT=-XX:MaxDirectMemorySize=2g
+goto END
+:64BIT
+set JAVA_MAX_DIRECT=-XX:MaxDirectMemorySize=512g
+:END
+
+set ORIENTDB_SETTINGS=%JAVA_MAX_DIRECT%
 
 :: Launch the application
 

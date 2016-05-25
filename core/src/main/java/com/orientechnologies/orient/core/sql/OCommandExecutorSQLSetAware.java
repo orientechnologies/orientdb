@@ -102,15 +102,14 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
             return null;
           }
           OClass aClass = db.getMetadata().getSchema().getClassByClusterId(aCluster.getId());
-          if(aClass==null){
+          if(aClass == null){
             return null;
           }
           if(candidateClass == null || candidateClass.equals(aClass) || candidateClass.isSubClassOf(aClass)){
             candidateClass = aClass;
-          }else {
+          }else if(!candidateClass.isSuperClassOf(aClass)){
             return null;
           }
-
         }
         return candidateClass;
       } else {

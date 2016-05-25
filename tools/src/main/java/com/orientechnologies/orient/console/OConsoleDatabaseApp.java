@@ -1028,9 +1028,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     try {
       final OServerConfigurationManager serverCfg = new OServerConfigurationManager(serverCfgFile);
 
-      // AUTO GENERATE PASSWORD
-      final String hashedPassword = OSecurityManager.instance().createHash(iServerUserPasswd,
-          OSecurityManager.PBKDF2_ALGORITHM_PREFIX, true);
+      final String defAlgo = OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString();
+
+      final String hashedPassword = OSecurityManager.instance().createHash(iServerUserPasswd, defAlgo, true);
 
       serverCfg.setUser(iServerUserName, hashedPassword, iPermissions);
       serverCfg.saveConfiguration();

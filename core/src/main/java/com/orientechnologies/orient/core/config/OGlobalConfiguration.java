@@ -132,11 +132,7 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time the write cache will wait before a page flushes (in ms, -1 to disable)", Integer.class, -1),
 
-  DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit", "Minimum amount of space on disk, which, when exceeded, "
-      + "will cause the database to switch to read-only mode (in megabytes)", Long.class, 100),
-
   @Deprecated
-
   DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
       "The interval (in seconds), after which the storage periodically "
           + "checks whether the amount of free disk space is enough to work in write mode",
@@ -229,6 +225,9 @@ public enum OGlobalConfiguration {
 
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer (in kilobytes). !!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
+
+  DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit", "Minimum amount of space on disk, which, when exceeded, "
+      + "will cause the database to switch to read-only mode (in megabytes)", Long.class, 2 * WAL_MAX_SEGMENT_SIZE.getValueAsLong()),
 
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound",
       "The least amount of free space (in kb) in a page, which is tracked in paginated storage", Integer.class, 16),
