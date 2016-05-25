@@ -643,15 +643,18 @@ ee.factory("BackupService", function (Profiler, $q, $http) {
   }
 
 
-  backups.logs = function (uuid) {
+  backups.logs = function (uuid,params) {
     var deferred = $q.defer();
     var url = API + 'backupManager/' + uuid + "/log";
+
+    if (params) {
+      url += serialize(params);
+    }
     $http.get(url).success(function (data) {
       deferred.resolve(data)
     }).error(function (data, status, headers, config) {
       deferred.reject({data: data, status: status});
     });
-
     return deferred.promise;
   }
   backups.unitLogs = function (uuid, unitId, params) {

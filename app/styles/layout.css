@@ -1186,6 +1186,10 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   background-color: #f0ad4e;
   border-color: #f0ad4e;
 }
+.log-restore-started  {
+  background-color: #f0ad4e;
+  border-color: #f0ad4e;
+}
 .log-restore-finished-icon, .log-restore-started-icon  {
   color: #f0ad4e;
 }

@@ -1,0 +1,23 @@
+<div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
+  </button>
+  <h3>Backup Event</h3>
+</div>
+<div class="modal-body ">
+  <div class="row">
+    <div class="col-md-12 ">
+      <ul class="list-unstyled">
+        <li>
+          <i class="fa fa-angle-right">
+          </i>
+          <b>Info:</b> {{event.title}} at {{ event._source.timestamp | formatDateNS }}
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn" ng-click="$hide()">Close</button>
+  <!--<button class="btn btn-primary" ng-disabled="!sso && newDB.$invalid" ng-click="createNew()">Create database-->
+  <!--</button>-->
+</div>
