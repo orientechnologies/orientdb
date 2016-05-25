@@ -1,6 +1,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Vertex;
@@ -53,6 +54,11 @@ public class OrientGraphHookCall {
       @Override
       public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
         return null;
+      }
+      
+      @Override
+      public HOOK_POSITION getDefaultHookPosition() {
+    	return HOOK_POSITION.REGULAR;
       }
     });
     try {

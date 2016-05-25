@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed.asynch;
 
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -37,6 +38,11 @@ public class UpdateHook implements ORecordHook {
   @Override
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE;
+  }
+
+  @Override
+  public HOOK_POSITION getDefaultHookPosition() {
+	return HOOK_POSITION.REGULAR;
   }
 
 }

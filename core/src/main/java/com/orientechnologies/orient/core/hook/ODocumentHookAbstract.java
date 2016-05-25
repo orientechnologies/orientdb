@@ -345,4 +345,10 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
 
     return true;
   }
+
+  @Override
+  public HOOK_POSITION getDefaultHookPosition() {
+	return HOOK_POSITION.REGULAR;
+  }
+  
 }

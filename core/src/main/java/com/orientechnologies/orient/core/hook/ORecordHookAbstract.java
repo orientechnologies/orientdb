@@ -248,4 +248,10 @@ public abstract class ORecordHookAbstract implements ORecordHook {
     }
     return RESULT.RECORD_NOT_CHANGED;
   }
+
+  @Override
+  public HOOK_POSITION getDefaultHookPosition() {
+	return HOOK_POSITION.REGULAR;
+  }
+  
 }

@@ -9,6 +9,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.hook.ORecordHook.HOOK_POSITION;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
@@ -37,6 +38,11 @@ public class HookRegisterRemoveTest {
       @Override
       public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
         return null;
+      }
+      
+      @Override
+      public HOOK_POSITION getDefaultHookPosition() {
+    	return HOOK_POSITION.REGULAR;
       }
     };
     db.registerHook(iHookImpl);

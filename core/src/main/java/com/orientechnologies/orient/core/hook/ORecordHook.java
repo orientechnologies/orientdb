@@ -54,4 +54,6 @@ public interface ORecordHook {
   RESULT onTrigger(TYPE iType, ORecord iRecord);
 
   DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode();
+  
+  HOOK_POSITION getDefaultHookPosition();
 }
