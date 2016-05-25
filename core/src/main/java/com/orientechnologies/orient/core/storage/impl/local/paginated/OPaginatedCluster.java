@@ -1121,8 +1121,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition, 1);
         if (positionEntry != null) {
           // NOT DELETED
-          return;
-//          throw new OPaginatedClusterException("Record with rid " + new ORecordId(id, clusterPosition) + " was not deleted", this);
+          throw new OPaginatedClusterException("Record with rid " + new ORecordId(id, clusterPosition) + " was not deleted", this);
         }
 
         content = compression.compress(content);
