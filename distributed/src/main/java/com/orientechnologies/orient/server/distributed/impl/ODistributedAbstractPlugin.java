@@ -489,7 +489,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     nodeCfg.field("status", getNodeStatus());
     nodeCfg.field("connections", serverInstance.getClientConnectionManager().getTotal());
 
-    List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
+    final List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
     nodeCfg.field("listeners", listeners, OType.EMBEDDEDLIST);
 
     for (OServerNetworkListener listener : serverInstance.getNetworkListeners()) {

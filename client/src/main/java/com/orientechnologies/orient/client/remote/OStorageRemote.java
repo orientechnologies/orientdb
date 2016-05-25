@@ -19,6 +19,19 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -67,18 +80,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -176,7 +177,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         if (--retry <= 0)
           throw OException.wrapException(new OStorageException(errorMessage), e);
       } catch (OOfflineNodeException e) {
-        //Remove the current url because the node is offline
+        // Remove the current url because the node is offline
         synchronized (serverURLs) {
           serverURLs.remove(serverUrl);
         }
@@ -366,7 +367,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       status = STATUS.CLOSING;
       // CLOSE ALL THE CONNECTIONS
-      for(String url: serverURLs) {
+      for (String url : serverURLs) {
         engine.getConnectionManager().closePool(url);
       }
       sbTreeCollectionManager.close();
@@ -1260,7 +1261,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       break;
     case 'w':
       final OIdentifiable record = OChannelBinaryProtocol.readIdentifiable(network);
-      //((ODocument) record).setLazyLoad(false);
+      // ((ODocument) record).setLazyLoad(false);
       result = ((ODocument) record).field("result");
       break;
 
@@ -1611,16 +1612,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
           if (m != null && !"OFFLINE".equals(nodeStatus)) {
             final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
-            if (listeners == null)
-              throw new ODatabaseException("Received bad distributed configuration: missing 'listeners' array field");
-
-            for (Map<String, Object> listener : listeners) {
-              if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-                String url = (String) listener.get("listen");
-                if (!serverURLs.contains(url))
-                  addHost(url);
+            if (listeners != null)
+              for (Map<String, Object> listener : listeners) {
+                if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+                  String url = (String) listener.get("listen");
+                  if (!serverURLs.contains(url))
+                    addHost(url);
+                }
               }
-            }
           }
         }
       }
@@ -1672,7 +1671,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       return null;
     return session.connectionUserName;
   }
-
 
   protected String reopenRemoteDatabase() throws IOException {
     String currentURL = getCurrentServerURL();

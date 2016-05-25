@@ -1281,6 +1281,17 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.get(0).field("dd"), "20.07.2015");
   }
 
+
+  @Test
+  public void testConcatenateNamedParams(){
+    //issue #5572
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from TestMultipleClusters where name like :p1 + '%'"), "fo");
+    assertEquals(results.size(), 1);
+    
+    results =db.query(new OSQLSynchQuery<ODocument>("select from TestMultipleClusters where name like :p1 "), "fo");
+    assertEquals(results.size(), 0);
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {
