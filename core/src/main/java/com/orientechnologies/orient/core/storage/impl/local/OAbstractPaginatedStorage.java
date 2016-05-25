@@ -2393,6 +2393,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       else
         freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
 
+      final List<OFreezableStorage> frozenIndexes = new ArrayList<OFreezableStorage>(indexEngines.size());
+      try {
+        for (OIndexEngine indexEngine : indexEngines)
+          if (indexEngine != null && indexEngine instanceof OFreezableStorage) {
+            ((OFreezableStorage)indexEngine).freeze(false);
+            frozenIndexes.add((OFreezableStorage) indexEngine);
+          }
+      }catch (Exception e ){
+        // RELEASE ALL THE FROZEN INDEXES
+        for (OFreezableStorage indexEngine : frozenIndexes)
+          indexEngine.release();
+
+        throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
+      }
+
       synch();
       try {
         unlock();
@@ -2416,6 +2431,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public void release() {
     try {
       lock();
+
+      for (OIndexEngine indexEngine : indexEngines)
+        if (indexEngine != null && indexEngine instanceof OFreezableStorage)
+          ((OFreezableStorage)indexEngine).release();
 
       if (configuration != null)
         configuration.setSoftlyClosed(false);
