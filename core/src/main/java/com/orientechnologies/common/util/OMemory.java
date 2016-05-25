@@ -91,7 +91,7 @@ public class OMemory {
   /**
    * Calculates the total configured maximum size of all OrientDB caches.
    *
-   * @return the total maximum size of all OrientDB caches.
+   * @return the total maximum size of all OrientDB caches in bytes.
    */
   public static long getMaxCacheMemorySize() {
     return OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
@@ -139,6 +139,63 @@ public class OMemory {
               + " bytes). That may cause out of memory errors, please tune the configuration up. Use the "
               + "-Xmx JVM option to lower the JVM maximum heap memory size or storage.diskCache.bufferSize OrientDB option to lower "
               + "memory requirements of the cache.");
+  }
+
+  /**
+   * Checks the {@link com.orientechnologies.common.directmemory.OByteBufferPool} configuration and emits a warning
+   * if configuration is invalid.
+   *
+   * @param checkCacheConfiguration {@code false} to check only basic byte buffer pool configuration settings,
+   *                                {@code true} to also check the pool configuration for compatibility with OrientDB cache
+   *                                configuration.
+   */
+  public static void checkByteBufferPoolConfiguration(boolean checkCacheConfiguration) {
+    final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
+    final long memoryChunkSize = OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsLong();
+    final long maxCacheSize = getMaxCacheMemorySize();
+
+    if (maxDirectMemory != -1 && memoryChunkSize > maxDirectMemory)
+      OLogManager.instance().warn(OMemory.class,
+          "The configured memory chunk size (" + memoryChunkSize + " bytes) is larger than the configured maximum amount of "
+              + "JVM direct memory (" + maxDirectMemory + " bytes). That may cause out of memory errors, please tune the "
+              + "configuration up. Use the -XX:MaxDirectMemorySize JVM option to raise the JVM maximum direct memory size "
+              + "or memory.chunk.size OrientDB option to lower memory chunk size.");
+
+    if (checkCacheConfiguration && memoryChunkSize > maxCacheSize)
+      OLogManager.instance().warn(OMemory.class,
+          "The configured memory chunk size (" + memoryChunkSize + " bytes) is larger than the configured maximum cache size ("
+              + maxCacheSize + " bytes). That may cause overallocation of a memory which will be wasted, please tune the "
+              + "configuration up. Use the storage.diskCache.bufferSize OrientDB option to raise the cache memory size "
+              + "or memory.chunk.size OrientDB option to lower memory chunk size.");
+  }
+
+  /**
+   * Tries to fix some common memory configuration problems:
+   * <ul>
+   * <li>Cache size is larger than direct memory size.</li>
+   * <li>Memory chunk size is larger than cache size.</li>
+   * <ul/>
+   */
+  public static void fixCommonConfigurationProblems() {
+    final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
+
+    if (maxDirectMemory != -1) {
+      final long maxDiskCacheSize = Math.min(maxDirectMemory / 1024 / 1024, Integer.MAX_VALUE);
+      final long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
+      if (diskCacheSize > maxDiskCacheSize) {
+        OLogManager.instance()
+            .info(OGlobalConfiguration.class, "Lowering disk cache size from %,dMB to %,dMB.", diskCacheSize, maxDiskCacheSize);
+        OGlobalConfiguration.DISK_CACHE_SIZE.setValue(maxDiskCacheSize);
+      }
+    }
+
+    if (OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsLong()
+        > OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024) {
+      final long newChunkSize = Math.min(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024, Integer.MAX_VALUE);
+      OLogManager.instance().info(OGlobalConfiguration.class, "Lowering memory chunk size from %,dB to %,dB.",
+          OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsLong(), newChunkSize);
+      OGlobalConfiguration.MEMORY_CHUNK_SIZE.setValue(newChunkSize);
+    }
   }
 
   /**

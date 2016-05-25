@@ -835,6 +835,7 @@ public enum OGlobalConfiguration {
   static {
     readConfiguration();
     autoConfig();
+    fixCommonConfigurationProblems();
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
@@ -989,6 +990,10 @@ public enum OGlobalConfiguration {
       OLogManager.instance().info(null, "OrientDB config DISKCACHE=%,dMB (heap=%,dMB direct=%,dMB os=%,dMB)", diskCacheInMB,
           jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB, osMemory / 1024 / 1024);
     }
+  }
+
+  private static void fixCommonConfigurationProblems() {
+    OMemory.fixCommonConfigurationProblems();
   }
 
   public Object getValue() {
