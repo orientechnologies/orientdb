@@ -195,14 +195,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
     final OImmutableClass clz = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (clz != null && clz.isTriggered()) {
       OFunction func = null;
-      String fieldName = clz.getCustom(attr);
-      OClass superClz = clz.getSuperClass();
-      while (fieldName == null || fieldName.length() == 0) {
-        if (superClz == null || superClz.getName().equals(CLASSNAME))
-          break;
-        fieldName = superClz.getCustom(attr);
-        superClz = superClz.getSuperClass();
-      }
+      String fieldName = clz.getCustomHierarchical(attr, CLASSNAME);
       if (fieldName != null && fieldName.length() > 0) {
         // check if it is reflection or not
         final Object[] clzMethod = this.checkMethod(fieldName);

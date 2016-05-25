@@ -301,6 +301,26 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       releaseSchemaReadLock();
     }
   }
+  
+  public String getCustomHierarchical(String iName) {
+	  return getCustomHierarchical(iName, (String) null);
+  }
+  
+  public String getCustomHierarchical(String iName, OClass requiredClass) {
+	return getCustomHierarchical(iName, requiredClass!=null?requiredClass.getName():null);
+  }
+  
+  
+  public String getCustomHierarchical(String iName, String requiredClass) {
+    if(requiredClass!=null && !isSubClassOf(requiredClass)) return null;
+    String ret = getCustom(iName);
+	if(ret==null) {
+		for(OClass superClass : getSuperClasses()) {
+			if((ret=superClass.getCustomHierarchical(iName, requiredClass))!=null) break;
+		}
+	}
+	return ret;
+  }
 
   @Override
   public boolean hasClusterId(final int clusterId) {

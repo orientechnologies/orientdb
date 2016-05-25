@@ -465,6 +465,29 @@ public interface OClass extends Comparable<OClass> {
   String getCustom(String iName);
 
   OClass setCustom(String iName, String iValue);
+  
+  /**
+   * Returns value of a custom field taking into account class hierarchical structure 
+   * @param iName name of a custom field of a class
+   * @return value of custom field
+   */
+  String getCustomHierarchical(String iName);
+  
+  /**
+   * Returns value of a custom field taking into account class hierarchical structure 
+   * @param iName name of a custom field of a class
+   * @param requiredClass limit hierarchical structure by requiredClass subbranch
+   * @return value of custom field
+   */
+  String getCustomHierarchical(String iName, OClass requiredClass);
+  
+  /**
+   * Returns value of a custom field taking into account class hierarchical structure 
+   * @param iName name of a custom field of a class
+   * @param requiredClass limit hierarchical structure by requiredClass subbranch
+   * @return value of custom field
+   */
+  String getCustomHierarchical(String iName, String requiredClass);
 
   void removeCustom(String iName);
 

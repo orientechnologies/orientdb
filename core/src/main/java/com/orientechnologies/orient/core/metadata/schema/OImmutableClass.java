@@ -743,8 +743,32 @@ public class OImmutableClass implements OClass {
   public Set<String> getCustomKeys() {
     return Collections.unmodifiableSet(customFields.keySet());
   }
+  
+  
 
   @Override
+  public String getCustomHierarchical(String iName) {
+	return getCustomHierarchical(iName, (String)null);
+  }
+  
+  @Override
+  public String getCustomHierarchical(String iName, OClass requiredClass) {
+	  return getCustomHierarchical(iName, requiredClass!=null?requiredClass.getName():null);
+  }
+
+  @Override
+  public String getCustomHierarchical(String iName, String requiredClass) {
+	  if(requiredClass!=null && !isSubClassOf(requiredClass)) return null;
+	  String ret = getCustom(iName);
+	  if(ret==null) {
+		for(OClass superClass : getSuperClasses()) {
+			if((ret=superClass.getCustomHierarchical(iName, requiredClass))!=null) break;
+		}
+	  }
+	  return ret;
+  }
+
+@Override
   public boolean hasClusterId(final int clusterId) {
     return Arrays.binarySearch(clusterIds, clusterId) >= 0;
   }

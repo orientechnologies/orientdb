@@ -472,8 +472,25 @@ public abstract class OClassAbstractDelegate implements OClass {
   public Set<String> getCustomKeys() {
     return delegate.getCustomKeys();
   }
+  
+  
 
   @Override
+  public String getCustomHierarchical(String iName) {
+	return delegate.getCustomHierarchical(iName);
+  }
+
+  @Override
+  public String getCustomHierarchical(String iName, OClass requiredClass) {
+	return delegate.getCustomHierarchical(iName, requiredClass);
+  }
+  
+  @Override
+  public String getCustomHierarchical(String iName, String requiredClass) {
+	return delegate.getCustomHierarchical(iName, requiredClass);
+  }
+
+@Override
   public boolean hasClusterId(final int clusterId) {
     return delegate.hasClusterId(clusterId);
   }
