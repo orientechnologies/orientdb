@@ -50,6 +50,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     final String accept = iRequest.getHeader("accept");
 
     Object params = null;
+    String mode = "resultset";
 
     if (iRequest.content != null && !iRequest.content.isEmpty()) {
       // CONTENT REPLACES TEXT
@@ -58,6 +59,8 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         final ODocument doc = new ODocument().fromJSON(iRequest.content);
         text = doc.field("command");
         params = doc.field("parameters");
+        if (doc.containsField("mode"))
+          mode = doc.field("mode");
 
         if (params instanceof Collection) {
           final Object[] paramArray = new Object[((Collection) params).size()];
@@ -99,9 +102,9 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
       cmd.setCacheableResult(true);
 
-      if(params==null){
+      if (params == null) {
         response = db.command(cmd).execute();
-      }else {
+      } else {
         response = db.command(cmd).execute(params);
       }
 
@@ -125,7 +128,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         additionalContent.put("warnings", tips);
       }
 
-      iResponse.writeResult(response, format, accept, additionalContent);
+      iResponse.writeResult(response, format, accept, additionalContent, mode);
 
     } finally {
       if (db != null)
