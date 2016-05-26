@@ -1172,7 +1172,7 @@ public class OSessionStoragePerformanceStatistic {
   }
 
   private void checkComponentType(Component component, ComponentType expected) {
-    if (component.type.equals(expected))
+    if (!component.type.equals(expected))
       throw new IllegalStateException("Invalid component type , required " + expected + " but found " + component.type);
   }
 
