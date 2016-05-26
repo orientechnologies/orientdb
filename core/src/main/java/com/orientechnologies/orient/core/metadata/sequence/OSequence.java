@@ -55,6 +55,7 @@ public abstract class OSequence extends ODocumentWrapper {
     }
 
     public CreateParams() {
+      setDefaults();
     }
 
     public CreateParams setDefaults() {
