@@ -27,6 +27,7 @@ import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -96,7 +97,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
       @Override
       public Object callEngine(OIndexEngine engine) {
         OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
-        oIndexEngine.init( getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
+        oIndexEngine.init(getName(), getType(), getDefinition(), isAutomatic(), getMetadata());
         return null;
       }
     });
@@ -192,8 +193,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
   @Override
   public OLuceneIndexNotUnique create(String name, OIndexDefinition indexDefinition, String clusterIndexName,
       Set<String> clustersToIndex, boolean rebuild, OProgressListener progressListener) {
-    return (OLuceneIndexNotUnique) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
-        determineValueSerializer());
+    return (OLuceneIndexNotUnique) super
+        .create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, determineValueSerializer());
   }
 
   @Override
@@ -276,29 +277,8 @@ public class OLuceneIndexNotUnique extends OIndexAbstract<Set<OIdentifiable>> im
 
   @Override
   protected OBinarySerializer determineValueSerializer() {
-    return null;
+    return storage.getComponentsFactory().binarySerializerFactory.getObjectSerializer(OStreamSerializerSBTreeIndexRIDContainer.ID);
   }
-
-  // @Override
-  // public Set<OIdentifiable> get(Object key) {
-  // checkForRebuild();
-  //
-  // key = getCollatingValue(key);
-  //
-  // acquireSharedLock();
-  // try {
-  //
-  // final Set<OIdentifiable> values = indexEngine.get(key);
-  //
-  // if (values == null)
-  // return Collections.emptySet();
-  //
-  // return values;
-  //
-  // } finally {
-  // releaseSharedLock();
-  // }
-  // }
 
   @Override
   protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {

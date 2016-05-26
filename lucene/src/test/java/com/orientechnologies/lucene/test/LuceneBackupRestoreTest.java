@@ -19,90 +19,99 @@
 package com.orientechnologies.lucene.test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
+import org.junit.rules.TemporaryFolder;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Enrico Risa on 07/07/15.
  */
 public class LuceneBackupRestoreTest {
 
-  @Test
-  public void testExportImport() {
+  @Rule
+  public TemporaryFolder tempFolder = new TemporaryFolder();
 
-    String property = "java.io.tmpdir";
+  private ODatabaseDocumentTx databaseDocumentTx;
 
-    String file = System.getProperty(property) + "backupRestore.gz";
+  @Before
+  public void setUp() throws Exception {
 
-    String buildDirectory = System.getProperty("buildDirectory", ".");
-    String url = OEngineLocalPaginated.NAME + ":" + buildDirectory + "/databases/restoreTest";
+    String url = "plocal:./target/" + getClass().getName();
 
-    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(url);
-    try {
-      if (databaseDocumentTx.exists()) {
+    databaseDocumentTx = new ODatabaseDocumentTx(url);
+
+    dropIfExists();
+
+    databaseDocumentTx.create();
+
+    databaseDocumentTx.command(new OCommandSQL("create class City ")).execute();
+    databaseDocumentTx.command(new OCommandSQL("create property City.name string")).execute();
+    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+
+    ODocument doc = new ODocument("City");
+    doc.field("name", "Rome");
+    databaseDocumentTx.save(doc);
+  }
+
+  private void dropIfExists() {
+    if (databaseDocumentTx.exists()) {
+      if (databaseDocumentTx.isClosed())
         databaseDocumentTx.open("admin", "admin");
-        databaseDocumentTx.drop();
-      }
-      databaseDocumentTx.create();
-
-      OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-      OClass oClass = schema.createClass("City");
-
-      oClass.createProperty("name", OType.STRING);
-      databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
-
-      ODocument doc = new ODocument("City");
-      doc.field("name", "Rome");
-      databaseDocumentTx.save(doc);
-
-      List<?> query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
-
-      Assert.assertEquals(query.size(), 1);
-
-      databaseDocumentTx.backup(new FileOutputStream(new File(file)), null, null, null, 9, 1048576);
-
       databaseDocumentTx.drop();
-
-      databaseDocumentTx.create();
-      FileInputStream stream = new FileInputStream(file);
-
-      databaseDocumentTx.restore(stream, null, null, null);
-
-      databaseDocumentTx.close();
-      databaseDocumentTx.open("admin", "admin");
-      long city = databaseDocumentTx.countClass("City");
-
-      Assert.assertEquals(city, 1);
-
-      OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("City.name");
-
-      Assert.assertNotNull(index);
-      Assert.assertEquals(index.getType(), "FULLTEXT");
-
-      query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
-      Assert.assertEquals(query.size(), 1);
-
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
-    } finally {
-      databaseDocumentTx.drop();
-      File f = new File(file);
-      f.delete();
     }
+  }
 
+  @After
+  public void tearDown() throws Exception {
+    dropIfExists();
+
+  }
+
+  @Test
+  public void shouldBackupAndRestore() throws IOException {
+
+    File backupFile = tempFolder.newFile("backupRestore.gz");
+
+    List<?> query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
+
+    Assert.assertEquals(query.size(), 1);
+
+    databaseDocumentTx.backup(new FileOutputStream(backupFile), null, null, null, 9, 1048576);
+
+    //RESTORE
+    databaseDocumentTx.drop();
+
+    databaseDocumentTx.create();
+
+    FileInputStream stream = new FileInputStream(backupFile);
+
+    databaseDocumentTx.restore(stream, null, null, null);
+
+    databaseDocumentTx.close();
+
+    //VERIFY
+    databaseDocumentTx.open("admin", "admin");
+
+    assertThat(databaseDocumentTx.countClass("City")).isEqualTo(1);
+
+    OIndex<?> index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("City.name");
+
+    assertThat(index).isNotNull();
+    assertThat(index.getType()).isEqualTo(OClass.INDEX_TYPE.FULLTEXT.name());
+
+    assertThat(databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"))).hasSize(1);
   }
 
 }

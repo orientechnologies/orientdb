@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
@@ -46,7 +47,7 @@ import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYP
 /**
  * Created by Enrico Risa on 04/09/15.
  */
-public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
+public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezableStorageComponent {
 
   //  private final String             name;
   private final Boolean            durableInNonTxMode;
@@ -262,4 +263,15 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine {
     return delegate.deleteQuery(key, value);
   }
 
+  @Override
+  public void freeze(boolean throwException) {
+
+    delegate.freeze(throwException);
+  }
+
+  @Override
+  public void release() {
+
+    delegate.release();
+  }
 }
