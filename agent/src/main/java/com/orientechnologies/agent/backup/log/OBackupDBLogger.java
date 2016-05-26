@@ -68,7 +68,7 @@ public class OBackupDBLogger implements OBackupLogger {
           clazz.createProperty("txId", OType.LONG);
           clazz.createProperty("uuid", OType.STRING);
           clazz.createProperty("dbName", OType.STRING);
-          clazz.createProperty("timestamp", OType.LONG);
+          clazz.createProperty("timestamp", OType.DATETIME);
 
         }
         return null;
