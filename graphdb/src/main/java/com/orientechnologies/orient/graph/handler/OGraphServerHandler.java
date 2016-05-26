@@ -24,11 +24,15 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.orientechnologies.orient.graph.script.OScriptGraphOrientWrapper;
+import com.orientechnologies.orient.graph.server.command.OServerCommandPostCommandGraph;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
@@ -37,9 +41,10 @@ import javax.script.Bindings;
 public class OGraphServerHandler extends OServerPluginAbstract implements OScriptInjection {
   private boolean enabled      = true;
   private int     graphPoolMax = OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger();
+  private OServer server;
 
   @Override
-  public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+  public void config(final OServer server, OServerParameterConfiguration[] iParams) {
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
         if (!Boolean.parseBoolean(param.value))
@@ -57,6 +62,8 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
       Orient.instance().getScriptManager().registerInjection(this);
     } else
       enabled = false;
+
+    this.server = server;
   }
 
   @Override
@@ -70,6 +77,12 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
       return;
 
     OGremlinHelper.global().setMaxGraphPool(graphPoolMax).create();
+
+    final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+    if (listener == null)
+      throw new OConfigurationException("HTTP listener not found");
+
+    listener.registerStatelessCommand(new OServerCommandPostCommandGraph());
   }
 
   @Override
