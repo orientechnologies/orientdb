@@ -93,6 +93,7 @@ public class OConsoleDatabaseAppTest {
     String dbUrl = "memory:OConsoleDatabaseAppTest";
     StringBuilder builder = new StringBuilder();
     builder.append("create database " + dbUrl + ";\n");
+    builder.append("profile storage on;\n");
     builder.append("create class foo;\n");
     builder.append("config;\n");
     builder.append("list classes;\n");
@@ -128,9 +129,11 @@ public class OConsoleDatabaseAppTest {
 
     builder.append("traverse out() from V;\n");
 
-    builder.append("create user TestUser identified by passwd ROLE ['reader','writer'];\n");
+//    builder.append("create user TestUser identified by password ROLE ['reader','writer'];\n");
 
     builder.append("drop user TestUser;\n");
+
+    builder.append("profile storage off;\n");
 
     builder.append("repair database -v;\n");
 
