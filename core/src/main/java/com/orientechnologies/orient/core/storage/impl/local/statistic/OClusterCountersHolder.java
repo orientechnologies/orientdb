@@ -277,29 +277,29 @@ public class OClusterCountersHolder extends OSessionStoragePerformanceStatistic.
   public ODocument toDocument() {
     final ODocument document = super.toDocument();
 
-    document.field("recordCreationTime", getRecordCreationTime());
-    document.field("recordCreationPages", getRecordCreationPages());
-    document.field("recordCreationHitRate", getRecordCreationHitRate());
-    document.field("recordCreationPageTime", getRecordCreationPageTime());
-    document.field("recordCreationFilePageTime", getRecordCreationFilePageTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordCreationTime", getRecordCreationTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordCreationPages", getRecordCreationPages());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordCreationHitRate", getRecordCreationHitRate());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordCreationPageTime", getRecordCreationPageTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordCreationFilePageTime", getRecordCreationFilePageTime());
 
-    document.field("recordDeletionTime", getRecordDeletionTime());
-    document.field("recordDeletionPages", getRecordDeletionPages());
-    document.field("recordDeletionHitRate", getRecordDeletionHitRate());
-    document.field("recordDeletionPageTime", getRecordDeletionPageTime());
-    document.field("recordDeletionFilePageTime", getRecordDeletionFilePageTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordDeletionTime", getRecordDeletionTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordDeletionPages", getRecordDeletionPages());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordDeletionHitRate", getRecordDeletionHitRate());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordDeletionPageTime", getRecordDeletionPageTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordDeletionFilePageTime", getRecordDeletionFilePageTime());
 
-    document.field("recordUpdateTime", getRecordUpdateTime());
-    document.field("recordUpdatePages", getRecordUpdatePages());
-    document.field("recordUpdateHitRate", getRecordUpdateHitRate());
-    document.field("recordUpdatePageTime", getRecordUpdatePageTime());
-    document.field("recordUpdateFilePageTime", getRecordUpdateFilePageTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordUpdateTime", getRecordUpdateTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordUpdatePages", getRecordUpdatePages());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordUpdateHitRate", getRecordUpdateHitRate());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordUpdatePageTime", getRecordUpdatePageTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordUpdateFilePageTime", getRecordUpdateFilePageTime());
 
-    document.field("recordReadTime", getRecordReadTime());
-    document.field("recordReadPages", getRecordReadPages());
-    document.field("recordReadHitRate", getRecordReadHitRate());
-    document.field("recordReadPageTime", getRecordReadPageTime());
-    document.field("recordReadFilePageTime", getRecordReadFilePageTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordReadTime", getRecordReadTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordReadPages", getRecordReadPages());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordReadHitRate", getRecordReadHitRate());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordReadPageTime", getRecordReadPageTime());
+    OSessionStoragePerformanceStatistic.writeMetric(document,"recordReadFilePageTime", getRecordReadFilePageTime());
 
     return document;
   }
