@@ -1245,13 +1245,19 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
           } catch (RuntimeException e) {
             endAtomicOperation(true, e);
-            throw OException.wrapException(new OPaginatedClusterException("Error during record recycling", this), e);
+            if (e instanceof OPaginatedClusterException)
+              throw e;
+            else
+              throw OException.wrapException(new OPaginatedClusterException("Error during record recycling", this), e);
           }
         }
 
       } catch (RuntimeException e) {
         endAtomicOperation(true, e);
-        throw OException.wrapException(new OPaginatedClusterException("Error during record recycling", this), e);
+        if (e instanceof OPaginatedClusterException)
+          throw e;
+        else
+          throw OException.wrapException(new OPaginatedClusterException("Error during record recycling", this), e);
       } finally {
         releaseExclusiveLock();
       }
