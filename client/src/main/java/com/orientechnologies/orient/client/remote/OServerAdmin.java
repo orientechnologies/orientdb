@@ -61,7 +61,7 @@ public class OServerAdmin {
     if (!iURL.contains("/"))
       iURL += "/";
 
-    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN, false) {
+    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN, true) {
       @Override
       protected OStorageRemoteSession getCurrentSession() {
         return session;
