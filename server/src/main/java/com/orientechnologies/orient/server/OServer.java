@@ -347,6 +347,8 @@ public class OServer {
 
       final OServerConfiguration configuration = serverCfg.getConfiguration();
 
+      tokenHandler = new OTokenHandlerImpl(this);
+
       if (configuration.network != null) {
         // REGISTER/CREATE SOCKET FACTORIES
         if (configuration.network.sockets != null) {
@@ -384,8 +386,6 @@ public class OServer {
 
         throw OException.wrapException(new OConfigurationException(message), e);
       }
-
-      tokenHandler = new OTokenHandlerImpl(this);
 
       registerPlugins();
 
