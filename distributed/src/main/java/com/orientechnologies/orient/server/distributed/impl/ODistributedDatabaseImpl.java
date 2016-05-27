@@ -450,6 +450,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         if (pReq != null) {
           tasks += pReq.rollback(database);
           rollbacks++;
+          pReq.destroy();
         }
       }
     } finally {
