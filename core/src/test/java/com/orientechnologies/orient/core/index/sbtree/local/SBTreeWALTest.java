@@ -311,6 +311,9 @@ public class SBTreeWALTest extends SBTreeTest {
             OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
             if (cacheEntry == null) {
               do {
+                if (cacheEntry != null)
+                  expectedReadCache.release(cacheEntry, expectedWriteCache);
+
                 cacheEntry = expectedReadCache.allocateNewPage(fileId, expectedWriteCache);
               } while (cacheEntry.getPageIndex() != pageIndex);
             }

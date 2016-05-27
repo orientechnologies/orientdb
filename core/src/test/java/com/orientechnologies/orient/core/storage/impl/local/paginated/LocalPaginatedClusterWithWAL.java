@@ -41,6 +41,9 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
 
   private OPaginatedCluster testCluster;
 
+  private OReadCache  readCache;
+  private OWriteCache writeCache;
+
   private OReadCache  testReadCache;
   private OWriteCache testWriteCache;
 
@@ -360,18 +363,6 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   @Test(enabled = false)
   public void testGetPhysicalPosition() throws IOException {
     super.testGetPhysicalPosition();
-  }
-
-  @Override
-  @Test(enabled = false)
-  public void testRecordGrowFactor() throws Exception {
-    super.testRecordGrowFactor();
-  }
-
-  @Override
-  @Test(enabled = false)
-  public void testRecordOverflowGrowFactor() throws Exception {
-    super.testRecordOverflowGrowFactor();
   }
 
   private void assertFileRestoreFromWAL() throws IOException {
