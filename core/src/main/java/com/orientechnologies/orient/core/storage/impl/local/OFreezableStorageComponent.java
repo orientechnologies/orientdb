@@ -20,12 +20,12 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 /**
- * Storage that supports freeze operation.
+ * Interface for storage components that support freeze/release operations.
  * 
  * @author Artem Orobets (enisher-at-gmail.com)
  * @since 1.5.1
  */
-public interface OFreezableStorage {
+public interface OFreezableStorageComponent {
 
   /**
    * After this method finished it's execution, all threads that are going to perform data modifications in storage should wait till

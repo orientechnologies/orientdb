@@ -51,8 +51,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   public static final  String WAL_SEGMENT_EXTENSION   = ".wal";
   private static final long   ONE_KB                  = 1024L;
 
-  private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024L * 1024L;
-  private final long walSizeLimit   = OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024L * 1024L;
+  private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * ONE_KB * ONE_KB;
+  private final long walSizeLimit   = OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * ONE_KB * ONE_KB;
 
   private final List<OLogSegment> logSegments = new ArrayList<OLogSegment>();
   private final int              maxPagesCacheSize;

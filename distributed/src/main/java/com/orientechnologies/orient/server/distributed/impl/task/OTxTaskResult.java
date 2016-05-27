@@ -78,8 +78,23 @@ public class OTxTaskResult implements Externalizable {
       results.add(in.readObject());
   }
 
+  /**
+   * Prints the transaction content. This is useful in case of conflict to see what is different.
+   */
   @Override
   public String toString() {
-    return "TX[result=" + results.size() + "]";
+    final StringBuilder buffer = new StringBuilder(4192);
+    buffer.append("TX[");
+    buffer.append(results.size());
+    buffer.append("]{");
+    int i = 0;
+    for (Object o : results) {
+      if (i++ > 0)
+        buffer.append(',');
+      buffer.append(o);
+    }
+    buffer.append("}");
+
+    return buffer.toString();
   }
 }

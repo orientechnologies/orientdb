@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -52,6 +50,8 @@ import com.orientechnologies.orient.core.sql.parser.OUpdateStatement;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
 
 /**
  * SQL UPDATE command.
@@ -529,33 +529,33 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
     boolean updated = false;
     if (content != null) {
       // REPLACE ALL THE CONTENT
+      final ODocument fieldsToPreserve = new ODocument();
 
       final OClass restricted = getDatabase().getMetadata().getSchema().getClass(OSecurity.RESTRICTED_CLASSNAME);
 
-      final ODocument restrictedFields = new ODocument();
-      if (restricted != null) {
+      if (restricted != null && restricted.isSuperClassOf(record.getSchemaClass())) {
         for (OProperty prop : restricted.properties()) {
-          restrictedFields.field(prop.getName(), record.<Object>field(prop.getName()));
-        }
-
-        OClass recordClass = ODocumentInternal.getImmutableSchemaClass(record);
-        if (recordClass != null && recordClass.isSubClassOf("V")) {
-          for (String fieldName : record.fieldNames()) {
-            if (fieldName.startsWith("in_") || fieldName.startsWith("out_")) {
-              restrictedFields.field(fieldName, record.<Object>field(fieldName));
-            }
-          }
-        } else if (recordClass != null && recordClass.isSubClassOf("E")) {
-          for (String fieldName : record.fieldNames()) {
-            if (fieldName.equals("in") || fieldName.equals("out")) {
-              restrictedFields.field(fieldName, record.<Object>field(fieldName));
-            }
-          }
+          fieldsToPreserve.field(prop.getName(), record.field(prop.getName()));
         }
       }
 
-      record.merge(restrictedFields, false, false);
+      OClass recordClass = ODocumentInternal.getImmutableSchemaClass(record);
+      if (recordClass != null && recordClass.isSubClassOf("V")) {
+        for (String fieldName : record.fieldNames()) {
+          if (fieldName.startsWith("in_") || fieldName.startsWith("out_")) {
+            fieldsToPreserve.field(fieldName, record.field(fieldName));
+          }
+        }
+      } else if (recordClass != null && recordClass.isSubClassOf("E")) {
+        for (String fieldName : record.fieldNames()) {
+          if (fieldName.equals("in") || fieldName.equals("out")) {
+            fieldsToPreserve.field(fieldName, record.field(fieldName));
+          }
+        }
+      }
+      record.merge(fieldsToPreserve, false, false);
       record.merge(content, true, false);
+
       updated = true;
     }
     return updated;

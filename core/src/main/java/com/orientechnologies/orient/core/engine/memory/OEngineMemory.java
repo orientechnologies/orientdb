@@ -60,6 +60,7 @@ public class OEngineMemory extends OEngineAbstract {
   @Override
   public void startup() {
     OMemory.checkDirectMemoryConfiguration();
+    OMemory.checkByteBufferPoolConfiguration(false);
 
     try {
       if (OByteBufferPool.instance() != null)

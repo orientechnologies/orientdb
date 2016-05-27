@@ -564,8 +564,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     if (!(result instanceof OIdentifiable) && !(result instanceof OResultSet)) {
       if (!OMultiValue.isMultiValue(result)) {
         request.setRecordResultSet(false);
-      } else if (!(OMultiValue.getFirstValue(result) instanceof OIdentifiable)) {
-        request.setRecordResultSet(false);
+      } else  {
+        for (Object val : OMultiValue.getMultiValueIterable(result)) {
+          if (!(val instanceof OIdentifiable))
+            request.setRecordResultSet(false);
+        }
       }
     }
   }

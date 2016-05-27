@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.fetch;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -59,7 +60,7 @@ public interface OFetchListener {
       final ODocument iLinked, final OFetchContext iContext) throws OFetchException;
 
   void processStandardField(final ODocument iRecord, final Object iFieldValue, final String iFieldName,
-      final OFetchContext iContext, final Object iUserObject, String iFormat) throws OFetchException;
+      final OFetchContext iContext, final Object iUserObject, String iFormat, OType filedType) throws OFetchException;
 
   void skipStandardField(final ODocument iRecord, final String iFieldName, final OFetchContext iContext, final Object iUserObject,
       String iFormat) throws OFetchException;

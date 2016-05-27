@@ -227,7 +227,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       try {
         status = STATUS.OPEN;
-        doClose(true, false);
+        close(true, false);
       } catch (RuntimeException re) {
         OLogManager.instance().error(this, "Error during storage close", e);
       }
@@ -261,7 +261,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         indexEngines.add(engine);
       } catch (RuntimeException e) {
         OLogManager.instance()
-            .error(this, "Index '" + engineData.getName() + "' cannot be created and will be removed from configuration");
+            .error(this, "Index '" + engineData.getName() + "' cannot be created and will be removed from configuration", e);
 
         engine.deleteWithoutLoad(engineData.getName());
       }
@@ -444,7 +444,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       try {
         // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-        doClose(true, true);
+        close(true, true);
 
         try {
           Orient.instance().unregisterStorage(this);
@@ -2395,6 +2395,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       else
         freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
 
+      final List<OFreezableStorageComponent> frozenIndexes = new ArrayList<OFreezableStorageComponent>(indexEngines.size());
+      try {
+        for (OIndexEngine indexEngine : indexEngines)
+          if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent) {
+            ((OFreezableStorageComponent)indexEngine).freeze(false);
+            frozenIndexes.add((OFreezableStorageComponent) indexEngine);
+          }
+      }catch (Exception e ){
+        // RELEASE ALL THE FROZEN INDEXES
+        for (OFreezableStorageComponent indexEngine : frozenIndexes)
+          indexEngine.release();
+
+        throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
+      }
+
       synch();
       try {
         unlock();
@@ -2418,6 +2433,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public void release() {
     try {
       lock();
+
+      for (OIndexEngine indexEngine : indexEngines)
+        if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
+          ((OFreezableStorageComponent)indexEngine).release();
 
       if (configuration != null)
         configuration.setSoftlyClosed(false);

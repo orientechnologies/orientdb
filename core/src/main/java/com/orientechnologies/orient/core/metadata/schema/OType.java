@@ -23,8 +23,10 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -297,7 +299,7 @@ public enum OType {
   }
 
   /**
-   * Convert types between numbers based on the iTargetClass parameter.
+   * Convert types based on the iTargetClass parameter.
    * 
    * @param iValue
    *          Value to convert
@@ -372,9 +374,7 @@ public enum OType {
           return ((Number) iValue).floatValue();
 
       } else if (iTargetClass.equals(BigDecimal.class)) {
-        if (iValue instanceof BigDecimal)
-          return iValue;
-        else if (iValue instanceof String)
+        if (iValue instanceof String)
           return new BigDecimal((String) iValue);
         else if (iValue instanceof Number)
           return new BigDecimal(iValue.toString());
@@ -402,16 +402,42 @@ public enum OType {
         } else if (iValue instanceof Number)
           return ((Number) iValue).intValue() != 0;
 
-      } else if (iValue instanceof Collection<?> && !(iValue instanceof Set<?>) && Set.class.isAssignableFrom(iTargetClass)) {
-        final Set<Object> set = new HashSet<Object>();
-        set.addAll((Collection<? extends Object>) iValue);
-        return set;
-
-      } else if (!(iValue instanceof Collection<?>) && Collection.class.isAssignableFrom(iTargetClass)) {
-        final Set<Object> set = new HashSet<Object>();
-        set.add(iValue);
-        return set;
-
+      } else if (Set.class.isAssignableFrom(iTargetClass)) {
+        // The caller specifically wants a Set.  If the value is a collection
+        // we will add all of the items in the collection to a set.  Otherwise
+        // we will create a singleton set with only the value in it.
+        if (iValue instanceof Collection<?>) {
+          final Set<Object> set = new HashSet<Object>();
+          set.addAll((Collection<? extends Object>) iValue);
+          return set;
+        } else {
+          return Collections.singleton(iValue);
+        }
+        
+      } else if (List.class.isAssignableFrom(iTargetClass)) {
+        // The caller specifically wants a List.  If the value is a collection
+        // we will add all of the items in the collection to a List.  Otherwise
+        // we will create a singleton List with only the value in it.
+        if (iValue instanceof Collection<?>) {
+          final List<Object> list = new ArrayList<Object>();
+          list.addAll((Collection<? extends Object>) iValue);
+          return list;
+        } else {
+          return Collections.singletonList(iValue);
+        }
+        
+      } else if (Collection.class.equals(iTargetClass)) {
+        // The caller specifically wants a Collection of any type.
+        // we will return a list if the value is a collection or
+        // a singleton set if the value is not a collection.
+        if (iValue instanceof Collection<?>) {
+          final List<Object> set = new ArrayList<Object>();
+          set.addAll((Collection<? extends Object>) iValue);
+          return set;
+        } else {
+          return Collections.singleton(iValue);
+        }
+        
       } else if (iTargetClass.equals(Date.class)) {
         if (iValue instanceof Number)
           return new Date(((Number) iValue).longValue());

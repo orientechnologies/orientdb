@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.db.document;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -113,4 +114,21 @@ public class ODatabaseDocumentTxTest {
       db.close();
     }
   }
+
+  @Test(expectedExceptions = ODatabaseException.class)
+  public void testSaveInvalidRid() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory: rid_" + ODatabaseDocumentTxTest.class.getSimpleName());
+    db.create();
+    try {
+      ODocument doc = new ODocument();
+
+      doc.field("test", new ORecordId(-2, 10));
+
+      db.save(doc);
+
+    } finally {
+      db.drop();
+    }
+  }
+
 }

@@ -29,7 +29,7 @@ import java.util.List;
  * @since 5/19/14
  */
 @Test
-public class OLocalHashTableWAL extends OLocalHashTableTest {
+public class OLocalHashTableWALTest extends OLocalHashTableTest {
   static {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }

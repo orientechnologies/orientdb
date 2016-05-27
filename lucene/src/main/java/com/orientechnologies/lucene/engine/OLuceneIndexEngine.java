@@ -22,9 +22,8 @@ import com.orientechnologies.lucene.query.QueryContext;
 import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.IndexSearcher;
@@ -36,7 +35,7 @@ import java.io.IOException;
 /**
  * Created by Enrico Risa on 04/09/15.
  */
-public interface OLuceneIndexEngine extends OIndexEngine {
+public interface OLuceneIndexEngine extends OIndexEngine, OFreezableStorageComponent {
 
   String indexName();
 

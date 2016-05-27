@@ -55,7 +55,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.server.OServer;
@@ -82,7 +82,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODistributedStorage implements OStorage, OFreezableStorage, OAutoshardedStorage {
+public class ODistributedStorage implements OStorage, OFreezableStorageComponent, OAutoshardedStorage {
   protected final OServer                              serverInstance;
   protected final ODistributedServerManager            dManager;
   protected OAbstractPaginatedStorage                  wrapped;
@@ -1677,9 +1677,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     throw OException.wrapException(new OStorageException(String.format(iMessage, iParams)), e);
   }
 
-  private OFreezableStorage getFreezableStorage() {
-    if (wrapped instanceof OFreezableStorage)
-      return ((OFreezableStorage) wrapped);
+  private OFreezableStorageComponent getFreezableStorage() {
+    if (wrapped instanceof OFreezableStorageComponent)
+      return ((OFreezableStorageComponent) wrapped);
     else
       throw new UnsupportedOperationException("Storage engine " + wrapped.getType() + " does not support freeze operation");
   }

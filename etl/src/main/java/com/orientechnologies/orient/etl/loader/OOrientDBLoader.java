@@ -375,7 +375,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
     if (dbURL.startsWith("remote")) {
 
-      dropAndCreateDbOnRemote();
+      manageRemoteDatabase();
+
     } else {
 
       switch (dbType) {
@@ -422,7 +423,12 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     documentDatabase.close();
   }
 
-  private void dropAndCreateDbOnRemote() {
+  private void manageRemoteDatabase() {
+    if (!dbAutoCreate && !dbAutoDropIfExists) {
+      log(INFO, "nothing setup  on remote database " + dbURL);
+      return;
+    }
+
     if (NOT_DEF.equals(serverPassword) || NOT_DEF.equals(serverUser)) {
       log(ERROR, "please provide server administrator credentials");
       throw new OLoaderException("unable to manage remote db without server admin credentials");

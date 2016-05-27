@@ -76,7 +76,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -2256,7 +2256,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @Override
   public void freeze(final boolean throwException) {
     checkOpeness();
-    if (!(getStorage() instanceof OFreezableStorage)) {
+    if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
           "Only local paginated storage supports freeze. If you are using remote client please use OServerAdmin instead");
 
@@ -2265,7 +2265,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     final long startTime = Orient.instance().getProfiler().startChrono();
 
-    final OFreezableStorage storage = getFreezableStorage();
+    final OFreezableStorageComponent storage = getFreezableStorage();
     if (storage != null) {
       storage.freeze(throwException);
     }
@@ -2280,7 +2280,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @Override
   public void freeze() {
     checkOpeness();
-    if (!(getStorage() instanceof OFreezableStorage)) {
+    if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
           "Only local paginated storage supports freeze. " + "If you use remote client please use OServerAdmin instead");
 
@@ -2289,7 +2289,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     final long startTime = Orient.instance().getProfiler().startChrono();
 
-    final OFreezableStorage storage = getFreezableStorage();
+    final OFreezableStorageComponent storage = getFreezableStorage();
     if (storage != null) {
       storage.freeze(false);
     }
@@ -2304,7 +2304,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @Override
   public void release() {
     checkOpeness();
-    if (!(getStorage() instanceof OFreezableStorage)) {
+    if (!(getStorage() instanceof OFreezableStorageComponent)) {
       OLogManager.instance().error(this,
           "Only local paginated storage supports release. If you are using remote client please use OServerAdmin instead");
       return;
@@ -2312,7 +2312,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     final long startTime = Orient.instance().getProfiler().startChrono();
 
-    final OFreezableStorage storage = getFreezableStorage();
+    final OFreezableStorageComponent storage = getFreezableStorage();
     if (storage != null) {
       storage.release();
     }
@@ -3152,10 +3152,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     currentTx = new OTransactionNoTx(this);
   }
 
-  private OFreezableStorage getFreezableStorage() {
+  private OFreezableStorageComponent getFreezableStorage() {
     OStorage s = getStorage();
-    if (s instanceof OFreezableStorage)
-      return (OFreezableStorage) s;
+    if (s instanceof OFreezableStorageComponent)
+      return (OFreezableStorageComponent) s;
     else {
       OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation");
       return null;
