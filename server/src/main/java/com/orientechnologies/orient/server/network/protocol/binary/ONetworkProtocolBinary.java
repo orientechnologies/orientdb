@@ -113,6 +113,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected volatile int                  requestType;
   protected          int                  clientTxId;
   protected          boolean              okSent;
+  private            boolean              tokenConnection=false;
   private long distributedRequests  = 0;
   private long distributedResponses = 0;
 
@@ -258,6 +259,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           connection.acquire();
         }
       } else {
+        tokenConnection = true;
         byte[] bytes = channel.readBytes();
         if (connection == null && bytes != null && bytes.length > 0) {
           // THIS IS THE CASE OF A TOKEN OPERATION WITHOUT HANDSHAKE ON THIS CONNECTION.
@@ -878,8 +880,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
-      if ((connection != null && connection.getTokenBased() != null) && (connection != null && Boolean.TRUE
-          .equals(connection.getTokenBased())) && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && (
+      if (tokenConnection && requestType != OChannelBinaryProtocol.REQUEST_CONNECT && (
           requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN || (
               connection != null && connection.getData() != null
                   && connection.getData().protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_32))
