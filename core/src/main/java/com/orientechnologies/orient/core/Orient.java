@@ -329,9 +329,9 @@ public class Orient extends OListenerManger<OOrientListener> {
       OLogManager.instance().info(this, "Orient Engine is shutting down...");
       for (OShutdownHandler handler : shutdownHandlers) {
         try {
-          OLogManager.instance().info(this, "Shutdown handler %s is going to be called", handler);
+          OLogManager.instance().debug(this, "Shutdown handler %s is going to be called", handler);
           handler.shutdown();
-          OLogManager.instance().info(this, "Shutdown handler %s completed", handler);
+          OLogManager.instance().debug(this, "Shutdown handler %s completed", handler);
         } catch (Exception e) {
           OLogManager.instance().error(this, "Exception during calling of shutdown handler %s", handler);
         }
