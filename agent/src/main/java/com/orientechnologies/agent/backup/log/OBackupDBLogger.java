@@ -73,7 +73,7 @@ public class OBackupDBLogger implements OBackupLogger {
         }
         return null;
       }
-    }, "");
+    });
 
   }
 
@@ -88,7 +88,7 @@ public class OBackupDBLogger implements OBackupLogger {
         iArgument.save(document);
         return null;
       }
-    }, "");
+    });
 
   }
 
@@ -113,7 +113,7 @@ public class OBackupDBLogger implements OBackupLogger {
       public Object call(Object iArgument) {
         return iArgument;
       }
-    }, "", query, params);
+    }, query, params);
 
     if (results.size() > 0) {
       return factory.fromDoc(results.get(0));
@@ -139,7 +139,7 @@ public class OBackupDBLogger implements OBackupLogger {
       public Object call(Object iArgument) {
         return iArgument;
       }
-    }, "", query, params);
+    }, query, params);
 
     if (results.size() > 0) {
       return factory.fromDoc(results.get(0));
@@ -182,7 +182,7 @@ public class OBackupDBLogger implements OBackupLogger {
       public Object call(Object iArgument) {
         return iArgument;
       }
-    }, "", query, queryParams);
+    }, query, queryParams);
 
     for (ODocument result : results) {
       logs.add(factory.fromDoc(result));
@@ -217,7 +217,7 @@ public class OBackupDBLogger implements OBackupLogger {
       public Object call(Object iArgument) {
         return iArgument;
       }
-    }, "", query, queryParams);
+    }, query, queryParams);
     for (ODocument result : results) {
       logs.add(factory.fromDoc(result));
     }
@@ -274,7 +274,7 @@ public class OBackupDBLogger implements OBackupLogger {
         }
         return null;
       }
-    }, "");
+    });
 
     final String query = String.format("delete from %s where uuid = :uuid and unitId = :unitId", CLASS_NAME);
 
@@ -318,7 +318,7 @@ public class OBackupDBLogger implements OBackupLogger {
         iArgument.command(new OCommandSQL(query)).execute(queryParams);
         return null;
       }
-    }, "");
+    });
 
   }
 
@@ -363,7 +363,7 @@ public class OBackupDBLogger implements OBackupLogger {
         iArgument.command(new OCommandSQL(query)).execute(queryParams);
         return null;
       }
-    }, "");
+    });
 
   }
 
@@ -402,7 +402,7 @@ public class OBackupDBLogger implements OBackupLogger {
       public Object call(Object iArgument) {
         return iArgument;
       }
-    }, "", query, params);
+    }, query, params);
 
     for (ODocument result : results) {
       logs.add(factory.fromDoc(result));
