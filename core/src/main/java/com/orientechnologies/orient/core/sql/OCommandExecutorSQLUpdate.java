@@ -535,7 +535,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
 
       if (restricted != null && restricted.isSuperClassOf(record.getSchemaClass())) {
         for (OProperty prop : restricted.properties()) {
-          fieldsToPreserve.field(prop.getName(), record.field(prop.getName()));
+          fieldsToPreserve.field(prop.getName(), record.<Object>field(prop.getName()));
         }
       }
 
@@ -543,13 +543,13 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       if (recordClass != null && recordClass.isSubClassOf("V")) {
         for (String fieldName : record.fieldNames()) {
           if (fieldName.startsWith("in_") || fieldName.startsWith("out_")) {
-            fieldsToPreserve.field(fieldName, record.field(fieldName));
+            fieldsToPreserve.field(fieldName, record.<Object>field(fieldName));
           }
         }
       } else if (recordClass != null && recordClass.isSubClassOf("E")) {
         for (String fieldName : record.fieldNames()) {
           if (fieldName.equals("in") || fieldName.equals("out")) {
-            fieldsToPreserve.field(fieldName, record.field(fieldName));
+            fieldsToPreserve.field(fieldName, record.<Object>field(fieldName));
           }
         }
       }
