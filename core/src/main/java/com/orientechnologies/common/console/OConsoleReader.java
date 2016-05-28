@@ -23,9 +23,11 @@ package com.orientechnologies.common.console;
 import java.io.IOException;
 
 public interface OConsoleReader {
-  public String readLine() throws IOException;
+  int FALLBACK_CONSOLE_WIDTH = 150;
 
-  public void setConsole(OConsoleApplication console);
+  String readLine() throws IOException;
 
-  public OConsoleApplication getConsole();
+  void setConsole(OConsoleApplication console);
+
+  int getConsoleWidth();
 }

@@ -49,19 +49,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OConsoleApplication {
-  protected static final String[]   COMMENT_PREFIXS = new String[] { "#", "--", "//" };
-  public static final String        ONLINE_HELP_URL = "https://raw.githubusercontent.com/orientechnologies/orientdb-docs/master/";
-  public static final String        ONLINE_HELP_EXT = ".md";
-  protected final StringBuilder     commandBuffer   = new StringBuilder(2048);
-  protected InputStream             in              = System.in;                                                                  // System.in;
-  protected PrintStream             out             = System.out;
-  protected PrintStream             err             = System.err;
-  protected String                  wordSeparator   = " ";
-  protected String[]                helpCommands    = { "help", "?" };
-  protected String[]                exitCommands    = { "exit", "bye", "quit" };
-  protected Map<String, String>     properties      = new HashMap<String, String>();
-  // protected OConsoleReader reader = new TTYConsoleReader();
-  protected OConsoleReader          reader          = new DefaultConsoleReader();
+  protected static final String[]            COMMENT_PREFIXS = new String[] { "#", "--", "//" };
+  public static final    String              ONLINE_HELP_URL = "https://raw.githubusercontent.com/orientechnologies/orientdb-docs/master/";
+  public static final    String              ONLINE_HELP_EXT = ".md";
+  protected final        StringBuilder       commandBuffer   = new StringBuilder(2048);
+  protected              InputStream         in              = System.in;                                                                  // System.in;
+  protected              PrintStream         out             = System.out;
+  protected              PrintStream         err             = System.err;
+  protected              String              wordSeparator   = " ";
+  protected              String[]            helpCommands    = { "help", "?" };
+  protected              String[]            exitCommands    = { "exit", "bye", "quit" };
+  protected              Map<String, String> properties      = new HashMap<String, String>();
+  protected              OConsoleReader      reader          = new ODefaultConsoleReader();
   protected boolean                 interactiveMode;
   protected String[]                args;
   protected TreeMap<Method, Object> methods;
@@ -172,6 +171,11 @@ public class OConsoleApplication {
     final String v = properties.get("verbose");
     final int verboseLevel = v != null ? Integer.parseInt(v) : 2;
     return verboseLevel;
+  }
+
+  protected int getConsoleWidth() {
+    final String width = properties.get("width");
+    return width == null ? reader.getConsoleWidth() : Integer.parseInt(width);
   }
 
   public boolean isEchoEnabled() {

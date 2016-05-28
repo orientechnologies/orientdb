@@ -35,8 +35,8 @@ import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
 
-import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
+import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -929,7 +929,7 @@ public class OServer {
       System.out.println("+---------------------------------------------------------------+");
       System.out.print("\nRoot password [BLANK=auto generate it]: ");
 
-      OConsoleReader reader = new DefaultConsoleReader();
+      OConsoleReader reader = new ODefaultConsoleReader();
       rootPassword = reader.readLine();
       if (rootPassword != null) {
         rootPassword = rootPassword.trim();

@@ -113,8 +113,6 @@ import java.util.Scanner;
 import java.util.Set;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-  protected static final int    DEFAULT_WIDTH      = 150;
-
   protected ODatabaseDocumentTx currentDatabase;
   protected String              currentDatabaseName;
   protected ORecord             currentRecord;
@@ -122,7 +120,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected List<OIdentifiable> currentResultSet;
   protected Object              currentResult;
   protected OServerAdmin        serverAdmin;
-  private int                   windowSize         = DEFAULT_WIDTH;
   private int                   lastPercentStep;
   private String                currentDatabaseUserName;
   private String                currentDatabaseUserPassword;
@@ -2283,7 +2280,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     // DISABLE THE NETWORK AND STORAGE TIMEOUTS
     properties.put("limit", "20");
-    properties.put("width", "150");
     properties.put("debug", "false");
     properties.put("collectionMaxItems", "10");
     properties.put("maxBinaryDisplay", "150");
@@ -2308,7 +2304,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   protected void dumpResultSet(final int limit) {
-    new OTableFormatter(this).setMaxWidthSize(getWindowSize()).writeRecords(currentResultSet, limit);
+    new OTableFormatter(this).setMaxWidthSize(getConsoleWidth()).writeRecords(currentResultSet, limit);
   }
 
   protected float getElapsedSecs(final long start) {
@@ -2439,12 +2435,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return options;
   }
 
-  protected int getWindowSize() {
-    if (properties.containsKey("width"))
-      return Integer.parseInt(properties.get("width"));
-    return windowSize;
-  }
-
   protected int getCollectionMaxItems() {
     if (properties.containsKey("collectionMaxItems"))
       return Integer.parseInt(properties.get("collectionMaxItems"));
@@ -2526,7 +2516,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   private void browseRecords(final int limit, final OIdentifiableIterator<?> it) {
-    final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(getWindowSize());
+    final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(getConsoleWidth());
 
     setResultset(new ArrayList<OIdentifiable>());
     while (it.hasNext() && currentResultSet.size() <= limit)
