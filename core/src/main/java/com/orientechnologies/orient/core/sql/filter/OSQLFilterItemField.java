@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
@@ -49,7 +49,8 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   protected String[]    preLoadedFieldsArray;
   protected String      name;
   protected OCollate    collate;
-  private   boolean     collatePreset = false;
+  private boolean       collatePreset = false;
+  private String        stringValue;
 
   /**
    * Represents filter item as chain of fields. Provide interface to work with this chain like with sequence of field names.
@@ -125,11 +126,11 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     if (preLoadedFieldsArray != null && !doc.deserializeFields(preLoadedFieldsArray))
       return null;
 
-    final Object v = doc.rawField(name);
+    final Object v = stringValue == null ? doc.rawField(name) : stringValue;
 
     if (!collatePreset && doc != null) {
       OClass schemaClass = doc.getSchemaClass();
-      if(schemaClass!=null) {
+      if (schemaClass != null) {
         collate = getCollateForField(schemaClass, name);
       }
     }
@@ -156,7 +157,21 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   }
 
   public void setRoot(final OBaseParser iQueryToParse, final String iRoot) {
+    if (isStringLiteral(iRoot)) {
+      this.stringValue = OIOUtils.getStringContent(iRoot);
+    }
+    //TODO support all the basic types
     this.name = OIOUtils.getStringContent(iRoot);
+  }
+
+  private boolean isStringLiteral(String iRoot) {
+    if (iRoot.startsWith("'") && iRoot.endsWith("'")) {
+      return true;
+    }
+    if (iRoot.startsWith("\"") && iRoot.endsWith("\"")) {
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -204,6 +219,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   /**
    * get the collate of this expression, based on the fully evaluated field chain starting from the passed object.
+   *
    * @param doc the root element (document?) of this field chain
    * @return the collate, null if no collate is defined
    */

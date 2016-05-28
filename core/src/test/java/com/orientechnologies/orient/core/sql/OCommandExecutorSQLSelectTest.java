@@ -1292,6 +1292,15 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 0);
   }
 
+  @Test
+  public void testMethodsOnStrings(){
+    //issue #5671
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select '1'.asLong() as long"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.get(0).field("long"), 1L);
+  }
+
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {
