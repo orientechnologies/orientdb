@@ -418,8 +418,10 @@ public class TTYConsoleReader implements OConsoleReader {
 
     outStream.print("\r");
     if (newTotalLength > oldTotalLength) {
-      if (newTotalLength > maxTotalLength && newTotalLength % consoleWidth == 0 && cursorPosition == newText.length())
-        outStream.print('\n'); // wrap the cursor to a new line if it placed at the line end
+      if (newTotalLength > maxTotalLength && newTotalLength % consoleWidth == 0) {
+        outStream.print('\n'); // make room for the cursor
+        moveCursorVertically(-1);
+      }
       moveCursorVertically(-getWraps(newPrompt.length(), newText.length() - 1, consoleWidth));
     } else
       moveCursorVertically(-getWraps(oldPromptLength, oldTextLength - 1, consoleWidth));
