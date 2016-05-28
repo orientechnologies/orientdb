@@ -49,15 +49,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Asynchronous command result manager. As soon as a record is returned by the command is sent over the wire.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class OLiveCommandResultListener extends OAbstractCommandResultListener implements OLiveResultListener {
 
-  private OClientConnection      connection;
-  private final AtomicBoolean    empty       = new AtomicBoolean(true);
-  private final int              txId;
-  private final Set<ORID>        alreadySent = new HashSet<ORID>();
-  private OClientSessions        session;
+  private OClientConnection connection;
+  private final AtomicBoolean empty = new AtomicBoolean(true);
+  private final int txId;
+  private final Set<ORID> alreadySent = new HashSet<ORID>();
+  private OClientSessions session;
 
   public OLiveCommandResultListener(final OClientConnection connection, final int txId,
       OCommandResultListener wrappedResultListener) {
@@ -67,8 +66,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     this.txId = txId;
   }
 
-  @Override
-  public boolean result(final Object iRecord) {
+  @Override public boolean result(final Object iRecord) {
     final ONetworkProtocolBinary protocol = ((ONetworkProtocolBinary) connection.getProtocol());
     if (empty.compareAndSet(true, false))
       try {
@@ -77,8 +75,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
       }
     try {
       fetchRecord(iRecord, new ORemoteFetchListener() {
-        @Override
-        protected void sendRecord(ORecord iLinked) {
+        @Override protected void sendRecord(ORecord iLinked) {
           if (!alreadySent.contains(iLinked.getIdentity())) {
             alreadySent.add(iLinked.getIdentity());
             try {
@@ -108,6 +105,15 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     boolean sendFail = true;
     do {
       List<OClientConnection> connections = session.getConnections();
+      if (connections.size() == 0) {
+        try {
+          OLogManager.instance().warn(this, "Unsubscribing live query for connection " + connection);
+          OLiveQueryHook.unsubscribe(iToken, connection.getDatabase());
+        } catch (Exception e) {
+          OLogManager.instance().warn(this, "Unsubscribing live query for connection " + connection, e);
+        }
+        break;
+      }
       ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
 
       OChannelBinaryServer channel = (OChannelBinaryServer) protocol.getChannel();
@@ -143,8 +149,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
           break;
         }
       } catch (Exception e) {
-        OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e,
-            protocol.getRemoteAddress());
+        OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, protocol.getRemoteAddress());
         protocol.getServer().getClientConnectionManager().disconnect(protocol.getServer(), connection);
         OLiveQueryHook.unsubscribe(iToken, connection.getDatabase());
         break;
@@ -153,13 +158,11 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     } while (sendFail);
   }
 
-  @Override
-  public void onError(int iLiveToken) {
+  @Override public void onError(int iLiveToken) {
 
   }
 
-  @Override
-  public void onUnsubscribe(int iLiveToken) {
+  @Override public void onUnsubscribe(int iLiveToken) {
     boolean sendFail = true;
     do {
       List<OClientConnection> connections = session.getConnections();
