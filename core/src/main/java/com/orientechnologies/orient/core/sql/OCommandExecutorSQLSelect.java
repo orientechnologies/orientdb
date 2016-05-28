@@ -319,7 +319,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             } else if (w.equals(KEYWORD_PARALLEL)) {
               parallel = parseParallel(w);
             } else {
-              throwParsingException("Invalid keyword '" + w + "'");
+              if(preParsedStatement == null) {
+                throwParsingException("Invalid keyword '" + w + "'");
+              }//if the pre-parsed statement is OK, then you can go on with the rest, the SQL is valid and this is probably a space in a backtick
             }
           }
         }
