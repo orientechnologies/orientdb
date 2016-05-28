@@ -48,7 +48,6 @@ public class OConsoleApplication {
   protected              String[]            helpCommands    = { "help", "?" };
   protected              String[]            exitCommands    = { "exit", "bye", "quit" };
   protected              Map<String, String> properties      = new HashMap<String, String>();
-  // protected OConsoleReader reader = new TTYConsoleReader();
   protected              OConsoleReader      reader          = new ODefaultConsoleReader();
   protected boolean                 interactiveMode;
   protected String[]                args;
@@ -160,6 +159,11 @@ public class OConsoleApplication {
     final String v = properties.get("verbose");
     final int verboseLevel = v != null ? Integer.parseInt(v) : 2;
     return verboseLevel;
+  }
+
+  protected int getConsoleWidth() {
+    final String width = properties.get("width");
+    return width == null ? reader.getConsoleWidth() : Integer.parseInt(width);
   }
 
   public boolean isEchoEnabled() {
@@ -615,8 +619,8 @@ public class OConsoleApplication {
     return commandsTree;
   }
 
-  @ConsoleCommand(splitInWords = false, description = "Receives help on available commands or a specific one. Use 'help -online <cmd>' to fetch online documentation") public void help(
-      @ConsoleParameter(name = "command", description = "Command to receive help") String iCommand) {
+  @ConsoleCommand(splitInWords = false, description = "Receives help on available commands or a specific one. Use 'help -online <cmd>' to fetch online documentation")
+  public void help(@ConsoleParameter(name = "command", description = "Command to receive help") String iCommand) {
     if (iCommand == null || iCommand.trim().isEmpty()) {
       // GENERIC HELP
       message("\nAVAILABLE COMMANDS:\n");
