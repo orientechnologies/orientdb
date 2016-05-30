@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -79,7 +80,7 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
     stmt.close();
 
     // double value test pattern?
-    ODatabaseDocumentTx database = conn.getDatabase();
+    ODatabaseDocument database = conn.getDatabase();
     assertThat(database.getClusterIdByName("account")).isNotNull();
     OClass account = database.getMetadata().getSchema().getClass("Account");
     assertThat(account).isNotNull();
@@ -102,7 +103,7 @@ public class OrientJdbcStatementDMLtest extends OrientJdbcBaseTest {
     stmt.close();
 
     // double value test pattern?
-    ODatabaseDocumentTx database = conn.getDatabase();
+    ODatabaseDocument database = conn.getDatabase();
     assertThat(database.getClusterIdByName("account")).isNotNull();
     OClass account = database.getMetadata().getSchema().getClass("Account");
     assertThat(account).isNotNull();

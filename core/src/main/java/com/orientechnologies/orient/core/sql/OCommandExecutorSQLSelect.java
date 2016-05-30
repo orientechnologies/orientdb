@@ -1664,7 +1664,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return res;
   }
 
-  protected void storageScan(final ODatabaseDocumentTx localDatabase, final OCommandContext iContext, final String iClusterName,
+  protected void storageScan(final ODatabaseDocumentInternal localDatabase, final OCommandContext iContext, final String iClusterName,
       final int current, final boolean[] results) {
 
     final int clusterId = localDatabase.getClusterIdByName(iClusterName);
@@ -1728,7 +1728,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         @Override
         public void run() {
           try {
-            ODatabaseDocumentTx localDatabase = null;
+            ODatabaseDocumentInternal localDatabase = null;
             try {
               exceptions[current] = null;
               results[current] = true;

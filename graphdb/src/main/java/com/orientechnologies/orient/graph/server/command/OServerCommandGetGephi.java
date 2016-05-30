@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.common.types.OModifiableBoolean;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -66,7 +67,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     iRequest.data.commandInfo = "Gephi";
     iRequest.data.commandDetail = text;
 
-    final ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+    final ODatabaseDocument db = getProfiledDatabaseInstance(iRequest);
 
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getAnyGraph(shutdownFlag);

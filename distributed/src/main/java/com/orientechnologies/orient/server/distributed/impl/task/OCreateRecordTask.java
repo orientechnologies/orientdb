@@ -102,7 +102,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public Object executeRecordTask(final ODistributedRequestId requestId, final OServer iServer,
-      final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
+      final ODistributedServerManager iManager, final ODatabaseDocumentInternal database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
         "Creating record %s/%s v.%d reqId=%s...", database.getName(), rid.toString(), version, requestId);
 
@@ -191,7 +191,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   protected ORecord forceUpdate(final ODistributedRequestId requestId, final ODistributedServerManager iManager,
-      final ODatabaseDocumentTx database, final OStorageOperationResult<ORawBuffer> loadedRecord) {
+      final ODatabaseDocumentInternal database, final OStorageOperationResult<ORawBuffer> loadedRecord) {
     // LOAD IT AS RECORD
     final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager()
         .newInstance(loadedRecord.getResult().recordType);

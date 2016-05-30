@@ -27,6 +27,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 import com.orientechnologies.orient.etl.loader.OLoader;
@@ -39,15 +40,15 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLPipeline {
-  protected final OETLProcessor       processor;
-  protected final List<OTransformer>  transformers;
-  protected final OLoader             loader;
-  protected final OCommandContext     context;
-  protected final LOG_LEVELS          logLevel;
-  protected final int                 maxRetries;
-  protected       boolean             haltOnError;
-  protected       ODatabaseDocumentTx db;
-  protected       OrientBaseGraph     graph;
+  protected final OETLProcessor      processor;
+  protected final List<OTransformer> transformers;
+  protected final OLoader            loader;
+  protected final OCommandContext    context;
+  protected final LOG_LEVELS         logLevel;
+  protected final int                maxRetries;
+  protected       boolean            haltOnError;
+  protected       ODatabaseDocument  db;
+  protected       OrientBaseGraph    graph;
 
   public OETLPipeline(final OETLProcessor processor, final List<OTransformer> transformers, final OLoader loader,
       final LOG_LEVELS logLevel, final int maxRetries, final boolean haltOnError) {
@@ -71,13 +72,13 @@ public class OETLPipeline {
       t.begin();
   }
 
-  public ODatabaseDocumentTx getDocumentDatabase() {
+  public ODatabaseDocument getDocumentDatabase() {
     if (db != null)
       db.activateOnCurrentThread();
     return db;
   }
 
-  public OETLPipeline setDocumentDatabase(final ODatabaseDocumentTx iDb) {
+  public OETLPipeline setDocumentDatabase(final ODatabaseDocument iDb) {
     db = iDb;
     return this;
   }

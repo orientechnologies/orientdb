@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.common.util.OPatternConst;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -46,7 +47,7 @@ import java.util.Map.Entry;
    private static final String[] NAMES = { "POST|studio/*" };
 
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-     ODatabaseDocumentTx db = null;
+     ODatabaseDocument db = null;
 
      try {
        final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: studio/<database>/<context>");
@@ -103,7 +104,7 @@ import java.util.Map.Entry;
      return false;
    }
 
-   private void executeClassProperties(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentTx db,
+   private void executeClassProperties(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocument db,
        final String operation, final String rid, final String className, final Map<String, String> fields) throws IOException {
      // GET THE TARGET CLASS
      final OClass cls = db.getMetadata().getSchema().getClass(rid);
@@ -156,7 +157,7 @@ import java.util.Map.Entry;
      }
    }
 
-   private void executeClasses(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentTx db,
+   private void executeClasses(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocument db,
        final String operation, final String rid, final String className, final Map<String, String> fields) throws IOException {
      if ("add".equals(operation)) {
        iRequest.data.commandInfo = "Studio add class";
@@ -195,7 +196,7 @@ import java.util.Map.Entry;
      }
    }
 
-   private void executeClusters(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentTx db,
+   private void executeClusters(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocument db,
        final String operation, final String rid, final String iClusterName, final Map<String, String> fields) throws IOException {
      if ("add".equals(operation)) {
        iRequest.data.commandInfo = "Studio add cluster";
@@ -215,7 +216,7 @@ import java.util.Map.Entry;
      }
    }
 
-   private void executeDocument(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentTx db,
+   private void executeDocument(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocument db,
        final String operation, final String rid, final String className, final Map<String, String> fields) throws IOException {
      if ("edit".equals(operation)) {
        iRequest.data.commandInfo = "Studio edit document";
@@ -286,7 +287,7 @@ import java.util.Map.Entry;
        iResponse.send(500, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);
    }
 
-   private void executeClassIndexes(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentTx db,
+   private void executeClassIndexes(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocument db,
        final String operation, final String rid, final String className, final Map<String, String> fields) throws IOException {
      // GET THE TARGET CLASS
      final OClass cls = db.getMetadata().getSchema().getClass(rid);

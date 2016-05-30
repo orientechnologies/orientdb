@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.listener;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -40,17 +41,17 @@ public class OScriptImporterListener implements OImporterListener {
   }
 
   @Override
-  public void onBeforeFile(final ODatabaseDocumentTx db, final OCommandContext iContext) {
+  public void onBeforeFile(final ODatabaseDocument db, final OCommandContext iContext) {
     executeEvent(db, "onBeforeFile", iContext);
   }
 
   @Override
-  public void onAfterFile(final ODatabaseDocumentTx db, final OCommandContext iContext) {
+  public void onAfterFile(final ODatabaseDocument db, final OCommandContext iContext) {
     executeEvent(db, "onAfterFile", iContext);
   }
 
   @Override
-  public boolean onBeforeLine(final ODatabaseDocumentTx db, final OCommandContext iContext) {
+  public boolean onBeforeLine(final ODatabaseDocument db, final OCommandContext iContext) {
     final Object ret = executeEvent(db, "onBeforeLine", iContext);
     if (ret != null && ret instanceof Boolean)
       return (Boolean) ret;
@@ -58,25 +59,25 @@ public class OScriptImporterListener implements OImporterListener {
   }
 
   @Override
-  public void onAfterLine(final ODatabaseDocumentTx db, final OCommandContext iContext) {
+  public void onAfterLine(final ODatabaseDocument db, final OCommandContext iContext) {
     executeEvent(db, "onAfterLine", iContext);
   }
 
   @Override
-  public void onDump(final ODatabaseDocumentTx db, final OCommandContext iContext) {
+  public void onDump(final ODatabaseDocument db, final OCommandContext iContext) {
     executeEvent(db, "onDump", iContext);
   }
 
   @Override
-  public void onJoinNotFound(ODatabaseDocumentTx db, OCommandContext iContext, OIndex<?> iIndex, Object iKey) {
+  public void onJoinNotFound(ODatabaseDocument db, OCommandContext iContext, OIndex<?> iIndex, Object iKey) {
     executeEvent(db, "onJoinNotFound", iContext);
   }
 
   @Override
-  public void validate(ODatabaseDocumentTx db, OCommandContext iContext, ODocument iRecord) {
+  public void validate(ODatabaseDocument db, OCommandContext iContext, ODocument iRecord) {
   }
 
-  private Object executeEvent(final ODatabaseDocumentTx db, final String iEventName, final OCommandContext iContext) {
+  private Object executeEvent(final ODatabaseDocument db, final String iEventName, final OCommandContext iContext) {
     if (events == null)
       return null;
 

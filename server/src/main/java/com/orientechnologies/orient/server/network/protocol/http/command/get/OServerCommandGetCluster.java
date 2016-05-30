@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -43,7 +44,7 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
     iRequest.data.commandInfo = "Browse cluster";
     iRequest.data.commandDetail = urlParts[2];
 
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
 
     try {
       db = getProfiledDatabaseInstance(iRequest);

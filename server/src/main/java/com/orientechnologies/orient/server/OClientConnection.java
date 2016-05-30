@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -41,18 +42,18 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class OClientConnection {
-  private final int                         id;
-  private final long                        since;
-  private Set<ONetworkProtocol>             protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
-  private volatile ONetworkProtocol         protocol;
-  private volatile ODatabaseDocumentTx      database;
-  private volatile OServerUserConfiguration serverUser;
-  private ONetworkProtocolData              data      = new ONetworkProtocolData();
-  private OClientConnectionStats            stats     = new OClientConnectionStats();
-  private Lock                              lock      = new ReentrantLock();
-  private Boolean                           tokenBased;
-  private byte[]                            tokenBytes;
-  private OToken                            token;
+  private final int                            id;
+  private final long                           since;
+  private Set<ONetworkProtocol>                protocols = Collections.newSetFromMap(new WeakHashMap<ONetworkProtocol, Boolean>());
+  private volatile ONetworkProtocol            protocol;
+  private volatile ODatabaseDocumentInternal   database;
+  private volatile OServerUserConfiguration    serverUser;
+  private ONetworkProtocolData                 data      = new ONetworkProtocolData();
+  private OClientConnectionStats               stats     = new OClientConnectionStats();
+  private Lock                                 lock      = new ReentrantLock();
+  private Boolean                              tokenBased;
+  private byte[]                               tokenBytes;
+  private OToken                               token;
 
   public OClientConnection(final int id, final ONetworkProtocol protocol) throws IOException {
     this.id = id;
@@ -253,11 +254,11 @@ public class OClientConnection {
     this.protocol = protocol;
   }
 
-  public ODatabaseDocumentTx getDatabase() {
+  public ODatabaseDocumentInternal getDatabase() {
     return database;
   }
 
-  public void setDatabase(ODatabaseDocumentTx database) {
+  public void setDatabase(ODatabaseDocumentInternal database) {
     this.database = database;
   }
 

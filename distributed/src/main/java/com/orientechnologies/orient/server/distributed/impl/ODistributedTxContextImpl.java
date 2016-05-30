@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.distributed.*;
@@ -67,7 +68,7 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
         "Distributed transaction %s: committing transaction", reqId);
   }
 
-  public synchronized void fix(final ODatabaseDocumentTx database, final List<ORemoteTask> fixTasks) {
+  public synchronized void fix(final ODatabaseDocumentInternal database, final List<ORemoteTask> fixTasks) {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
         "Distributed transaction %s: fixing transaction (db=%s tasks=%d)", reqId, db.getDatabaseName(), fixTasks.size());
 
@@ -85,7 +86,7 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     }
   }
 
-  public synchronized int rollback(final ODatabaseDocumentTx database) {
+  public synchronized int rollback(final ODatabaseDocumentInternal database) {
     ODistributedServerLog.debug(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
         "Distributed transaction %s: rolling back transaction (%d ops)", reqId, undoTasks.size());
 

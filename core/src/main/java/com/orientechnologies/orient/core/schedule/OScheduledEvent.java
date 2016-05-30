@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -54,7 +55,7 @@ public class OScheduledEvent extends ODocumentWrapper {
   public static final String  PROP_STARTTIME = "starttime";
   public static final String  PROP_EXEC_ID   = "nextExecId";
 
-  private ODatabaseDocumentTx db;
+  private ODatabaseDocument db;
 
   private OFunction           function;
   private boolean             isRunning      = false;
@@ -137,7 +138,7 @@ public class OScheduledEvent extends ODocumentWrapper {
     if (db == null)
       bindDb();
     else
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
+      db.activateOnCurrentThread();
 
     return super.save();
   }
@@ -195,7 +196,7 @@ public class OScheduledEvent extends ODocumentWrapper {
     Object result = null;
     try {
       if (db != null)
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        db.activateOnCurrentThread();
 
       boolean executeEvent = false;
       for (int retry = 0; retry < 10; ++retry) {
