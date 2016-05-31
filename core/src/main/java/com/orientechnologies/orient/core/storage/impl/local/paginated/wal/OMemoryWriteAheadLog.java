@@ -131,4 +131,9 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
   public void newSegment() throws IOException {
   }
+
+  @Override
+  public long getPreferredSegmentCount() {
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
+  }
 }
