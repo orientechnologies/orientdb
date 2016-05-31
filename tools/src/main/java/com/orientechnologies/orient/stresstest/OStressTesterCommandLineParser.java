@@ -1,0 +1,108 @@
+package com.orientechnologies.orient.stresstest;
+
+import com.orientechnologies.orient.stresstest.operations.OOperationsSet;
+import com.orientechnologies.orient.stresstest.util.OConstants;
+import com.orientechnologies.orient.stresstest.util.OErrorMessages;
+import com.orientechnologies.orient.stresstest.util.OInitException;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * This is the parser of the command line arguments passed with the invocation of OStressTester.
+ * It contains a static method that - given the arguments - returns a OStressTester object.
+ */
+public class OStressTesterCommandLineParser {
+
+    public static OStressTester getStressTester(String[] args) throws Exception {
+
+        Map<String, String> options = checkOptions(readOptions(args));
+        int iterationsNumber = getNumber(options.get(OConstants.OPTION_ITERATIONS), "iterations");
+        int threadsNumber = getNumber(options.get(OConstants.OPTION_THREADS), "threads");
+        OMode mode = com.orientechnologies.orient.stresstest.OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());
+        if (mode != com.orientechnologies.orient.stresstest.OMode.PLOCAL) {
+            throw new OInitException("OMode [" + mode + "] not yet supported. Use PLOCAL.");
+        }
+        OOperationsSet operationsSet = new OOperationsSet(options.get(OConstants.OPTION_OPERATIONS));
+        String rootPassword = options.get(OConstants.OPTION_ROOT_PASSWORD);
+        return new OStressTester(mode, operationsSet, iterationsNumber, threadsNumber, rootPassword);
+    }
+
+    private static int getNumber(String value, String option) throws OInitException {
+        try {
+            int val = Integer.parseInt(value);
+            if (val < 0) {
+                throw new NumberFormatException();
+            }
+            return val;
+        }
+        catch (NumberFormatException ex) {
+            throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_INVALID_NUMBER, option, value));
+        }
+    }
+
+    private static Map<String, String> checkOptions(Map<String, String> options) throws OInitException {
+
+        options = setDefaultIfNotPresent(options, OConstants.OPTION_MODE, com.orientechnologies.orient.stresstest.OMode.PLOCAL.name());
+        options = setDefaultIfNotPresent(options, OConstants.OPTION_ITERATIONS, "10");
+        options = setDefaultIfNotPresent(options, OConstants.OPTION_THREADS, "4");
+        options = setDefaultIfNotPresent(options, OConstants.OPTION_OPERATIONS, "C1000R1000U500D500");
+
+        try {
+            com.orientechnologies.orient.stresstest.OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());
+        }
+        catch (IllegalArgumentException ex) {
+            throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_INVALID_MODE, options.get(OConstants.OPTION_MODE)));
+        }
+
+        return options;
+    }
+
+    private static Map<String, String> setDefaultIfNotPresent(Map<String, String> options, String option, String value) throws OInitException {
+        if (!options.containsKey(option)) {
+            System.out.println(String.format("WARNING: '%s' option not found. Defaulting to %s.", option, value));
+            options.put(option, value);
+        }
+        return options;
+    }
+
+    private static Map<String, String> readOptions(String[] args) throws OInitException {
+
+        Map<String, String> options = new HashMap<>();
+
+        // reads arguments from command line
+        for (int i = 0; i < args.length; i++) {
+
+            // an argument cannot be shorter than one char
+            if (args[i].length() < 2) {
+                throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_INVALID_OPTION, args[i]));
+            }
+
+            switch (args[i].charAt(0)) {
+                case '-':
+                    if (args.length - 1 == i) {
+                        throw new OInitException((String.format(OErrorMessages.COMMAND_LINE_PARSER_EXPECTED_VALUE, args[i])));
+                    }
+
+                    String option = args[i].substring(1);
+                    if (option.startsWith("-")) {
+                        option = option.substring(1);
+                    }
+                    else {
+                        if (!OConstants.AVAILABLE_OPTIONS.contains(option)) {
+                            throw new OInitException((String.format(OErrorMessages.COMMAND_LINE_PARSER_INVALID_OPTION, args[i])));
+                        }
+                    }
+                    options.put(option, args[i + 1]);
+
+                    // jumps to the next switch
+                    i++;
+
+                    break;
+            }
+        }
+
+        return options;
+    }
+
+}
