@@ -31,6 +31,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -66,7 +67,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
   @Override
   public Object execute(final ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentTx database) throws Exception {
+      final ODatabaseDocumentInternal database) throws Exception {
 
     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
       if (database == null)
@@ -90,7 +91,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   protected Object deltaBackup(final ODistributedRequestId requestId, final ODistributedServerManager iManager,
-      final ODatabaseDocumentTx database, final String databaseName) throws IOException, InterruptedException {
+      final ODatabaseDocumentInternal database, final String databaseName) throws IOException, InterruptedException {
 
     try {
 

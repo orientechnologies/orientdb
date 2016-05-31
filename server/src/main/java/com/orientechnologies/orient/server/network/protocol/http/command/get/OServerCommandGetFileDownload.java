@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Date;
 
 import com.orientechnologies.common.util.OPatternConst;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -55,7 +56,7 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
     iRequest.data.commandDetail = rid;
 
     final ORecordAbstract response;
-    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+    ODatabaseDocument db = getProfiledDatabaseInstance(iRequest);
     try {
 
       response = db.load(new ORecordId(rid));

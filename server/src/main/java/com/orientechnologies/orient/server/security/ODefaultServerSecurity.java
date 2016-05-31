@@ -25,6 +25,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -547,7 +548,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
           if (ccm != null) {
             for (OClientConnection cc : ccm.getConnections()) {
               try {
-                ODatabaseDocumentTx ccDB = cc.getDatabase();
+                ODatabaseDocumentInternal ccDB = cc.getDatabase();
                 if (ccDB != null) {
                   ccDB.activateOnCurrentThread();
                   if (!ccDB.isClosed() && ccDB.getURL() != null) {

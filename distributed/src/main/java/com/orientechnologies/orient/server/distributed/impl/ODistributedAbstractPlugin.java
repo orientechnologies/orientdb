@@ -577,7 +577,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
    */
   @Override
   public Serializable executeOnLocalNode(final ODistributedRequestId reqId, final ORemoteTask task,
-      final ODatabaseDocumentTx database) {
+      final ODatabaseDocumentInternal database) {
     if (database != null && !(database.getStorage() instanceof ODistributedStorage))
       throw new ODistributedException("Distributed storage was not installed for database '" + database.getName()
           + "'. Implementation found: " + database.getStorage().getClass().getName());

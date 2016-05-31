@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -62,7 +63,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
     }
   }
 
-  public OLiveQueryHook(ODatabaseDocumentTx db) {
+  public OLiveQueryHook(ODatabaseDocumentInternal db) {
     super(db);
     getOpsReference(db);
     db.registerListener(this);

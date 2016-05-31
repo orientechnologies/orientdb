@@ -29,6 +29,8 @@ import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -167,7 +169,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
             include = false;
 
           if (include) {
-            ODatabaseDocumentTx db = null;
+            ODatabaseDocumentInternal db = null;
             try {
 
               db = new ODatabaseDocumentTx(dbURL);
@@ -294,7 +296,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     }
   }
 
-  protected void incrementalBackupDatabase(final String dbURL, String iPath, final ODatabaseDocumentTx db) throws IOException {
+  protected void incrementalBackupDatabase(final String dbURL, String iPath, final ODatabaseDocumentInternal db) throws IOException {
     // APPEND DB NAME TO THE DIRECTORY NAME
     if (!iPath.endsWith("/"))
       iPath += "/";
@@ -305,7 +307,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     db.incrementalBackup(iPath);
   }
 
-  protected void fullBackupDatabase(final String dbURL, final String iPath, final ODatabaseDocumentTx db) throws IOException {
+  protected void fullBackupDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {
     OLogManager.instance().info(this, "AutomaticBackup: executing full backup of database '%s' to %s", dbURL, iPath);
 
     db.backup(new FileOutputStream(iPath), null, null, new OCommandOutputListener() {
@@ -316,7 +318,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     }, compressionLevel, bufferSize);
   }
 
-  protected void exportDatabase(final String dbURL, final String iPath, final ODatabaseDocumentTx db) throws IOException {
+  protected void exportDatabase(final String dbURL, final String iPath, final ODatabaseDocumentInternal db) throws IOException {
 
     OLogManager.instance().info(this, "AutomaticBackup: executing export of database '%s' to %s", dbURL, iPath);
 

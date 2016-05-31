@@ -22,6 +22,8 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -54,7 +56,7 @@ import java.util.Set;
 public class OServerCommandGetDatabase extends OServerCommandGetConnect {
   private static final String[] NAMES = { "GET|database/*" };
 
-  public static void exportClass(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {
+  public static void exportClass(final ODatabaseDocument db, final OJSONWriter json, final OClass cls) throws IOException {
     json.beginObject();
     json.writeAttribute("name", cls.getName());
     json.writeAttribute("superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
@@ -161,7 +163,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
   protected void exec(final OHttpRequest iRequest, final OHttpResponse iResponse, final String[] urlParts)
       throws InterruptedException, IOException {
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocumentInternal db = null;
     try {
       if (urlParts.length > 2) {
         db = server.getDatabasePoolFactory().get(urlParts[1], urlParts[2], urlParts[3]).acquire();
@@ -294,7 +296,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
     }
   }
 
-  private void exportSecurityInfo(ODatabaseDocumentTx db, OJSONWriter json) throws IOException {
+  private void exportSecurityInfo(ODatabaseDocument db, OJSONWriter json) throws IOException {
     json.beginCollection("users");
     for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {
       OUser user = new OUser(doc);

@@ -23,6 +23,9 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
@@ -31,6 +34,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
@@ -107,8 +111,9 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
       List<OClientConnection> connections = session.getConnections();
       if (connections.size() == 0) {
         try {
+          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
           OLogManager.instance().warn(this, "Unsubscribing live query for connection " + connection);
-          OLiveQueryHook.unsubscribe(iToken, connection.getDatabase());
+          OLiveQueryHook.unsubscribe(iToken, db);
         } catch (Exception e) {
           OLogManager.instance().warn(this, "Unsubscribing live query for connection " + connection, e);
         }
@@ -131,7 +136,6 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
           writeVersion(out, iOp.getRecord().getVersion());
           writeRID(out, (ORecordId) iOp.getRecord().getIdentity());
           writeBytes(out, protocol.getRecordBytes(connection, iOp.getRecord()));
-
           channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
           channel.writeInt(Integer.MIN_VALUE);
           channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY);

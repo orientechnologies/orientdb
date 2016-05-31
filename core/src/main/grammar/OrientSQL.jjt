@@ -901,8 +901,6 @@ OStatement StatementInternal():
                 LOOKAHEAD(UpdateStatement())
                 result = UpdateStatement()
                 |
-                result = MatchStatement()
-                |
                 result = ProfileStorageStatement()
                 |
                 LOOKAHEAD(TruncateClassStatement())
@@ -910,9 +908,6 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(TruncateClusterStatement())
                 result = TruncateClusterStatement()
-                |
-                LOOKAHEAD(FindReferencesStatement())
-                result = FindReferencesStatement()
                 |
                 LOOKAHEAD(TruncateRecordStatement())
                 result = TruncateRecordStatement()
@@ -985,6 +980,10 @@ OStatement QueryStatement():
         result = SelectWithoutTargetStatement()
         |
         result = TraverseStatement()
+        |
+        result = MatchStatement()
+        |
+        result = FindReferencesStatement()
     ){ return result; }
 }
 
@@ -2271,13 +2270,7 @@ OLetItem LetItem():
     	    (
     	        <LPAREN>
     	        (
-    	            LOOKAHEAD( SelectStatement() )
-    	            jjtThis.query = SelectStatement()
-    	            |
-    	            LOOKAHEAD( SelectWithoutTargetStatement() )
-    	            jjtThis.query = SelectWithoutTargetStatement()
-    	            |
-    	            jjtThis.query = TraverseStatement()
+    	            jjtThis.query = QueryStatement()
     	        )
     	        <RPAREN>
     	    )
@@ -2312,17 +2305,7 @@ OFromItem FromItem():
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	<LPAREN> (
-    	            LOOKAHEAD(SelectStatement()) jjtThis.statement = SelectStatement()
-    	            |
-    	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.statement = SelectWithoutTargetStatement()
-    	            |
-    	            jjtThis.statement = TraverseStatement()
-    	            |
-                    jjtThis.statement = MatchStatement()
-					|
-					jjtThis.statement = FindReferencesStatement()
-    	) <RPAREN>
+    	<LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
     	|
     	jjtThis.inputParam = InputParameter()
     	|

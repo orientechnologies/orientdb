@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -113,7 +114,7 @@ public class OFieldTransformer extends OAbstractTransformer {
 
         if (save) {
           log(OETLProcessor.LOG_LEVELS.DEBUG, "saving record %s", doc);
-          final ODatabaseDocumentTx db = super.pipeline.getDocumentDatabase();
+          final ODatabaseDocument db = super.pipeline.getDocumentDatabase();
           db.save(doc);
         }
       }

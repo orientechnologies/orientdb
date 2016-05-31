@@ -688,6 +688,11 @@ public class OSelectStatementTest {
 
   }
 
+  public void testLetMatch(){
+    checkRightSyntax("select $a let $a = (MATCH {class:Foo, as:bar, where:(name = 'foo')} return $elements)");
+
+  }
+
 
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());
