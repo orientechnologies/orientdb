@@ -1,3 +1,22 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.stresstest;
 
 import com.orientechnologies.orient.stresstest.operations.OOperationsSet;
@@ -11,6 +30,8 @@ import java.util.Map;
 /**
  * This is the parser of the command line arguments passed with the invocation of OStressTester.
  * It contains a static method that - given the arguments - returns a OStressTester object.
+ *
+ * @author Andrea Iacono
  */
 public class OStressTesterCommandLineParser {
 
@@ -35,8 +56,7 @@ public class OStressTesterCommandLineParser {
                 throw new NumberFormatException();
             }
             return val;
-        }
-        catch (NumberFormatException ex) {
+        } catch (NumberFormatException ex) {
             throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_INVALID_NUMBER, option, value));
         }
     }
@@ -49,9 +69,8 @@ public class OStressTesterCommandLineParser {
         options = setDefaultIfNotPresent(options, OConstants.OPTION_OPERATIONS, "C1000R1000U500D500");
 
         try {
-            com.orientechnologies.orient.stresstest.OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());
-        }
-        catch (IllegalArgumentException ex) {
+            OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());
+        } catch (IllegalArgumentException ex) {
             throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_INVALID_MODE, options.get(OConstants.OPTION_MODE)));
         }
 
@@ -68,7 +87,7 @@ public class OStressTesterCommandLineParser {
 
     private static Map<String, String> readOptions(String[] args) throws OInitException {
 
-        Map<String, String> options = new HashMap<>();
+        Map<String, String> options = new HashMap<String, String>();
 
         // reads arguments from command line
         for (int i = 0; i < args.length; i++) {
@@ -87,8 +106,7 @@ public class OStressTesterCommandLineParser {
                     String option = args[i].substring(1);
                     if (option.startsWith("-")) {
                         option = option.substring(1);
-                    }
-                    else {
+                    } else {
                         if (!OConstants.AVAILABLE_OPTIONS.contains(option)) {
                             throw new OInitException((String.format(OErrorMessages.COMMAND_LINE_PARSER_INVALID_OPTION, args[i])));
                         }

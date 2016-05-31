@@ -1,3 +1,22 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.stresstest.operations;
 
 import com.orientechnologies.orient.stresstest.util.OErrorMessages;
@@ -5,6 +24,8 @@ import com.orientechnologies.orient.stresstest.util.OInitException;
 
 /**
  * This class represents the operation set parameter. Its format is specified in docs.
+ *
+ * @author Andrea Iacono
  */
 public class OOperationsSet {
 
@@ -15,6 +36,7 @@ public class OOperationsSet {
 
     /**
      * creates an OperationSet
+     *
      * @param ops
      * @throws Exception if the param format is not correct
      */
@@ -68,8 +90,7 @@ public class OOperationsSet {
         String value = ops.substring(pos, pos + valueLength);
         try {
             return new ValuePosition(Integer.parseInt(value), valueLength);
-        }
-        catch (NumberFormatException nfe) {
+        } catch (NumberFormatException nfe) {
             throw new OInitException(OErrorMessages.OPERATION_SET_INVALID_FORM_MESSAGE);
         }
     }
@@ -95,7 +116,9 @@ public class OOperationsSet {
         return deletes;
     }
 
-    /** when Java will support tuples I'll be an happy guy **/
+    /**
+     * when Java will support tuples I'll be an happy guy
+     **/
     private class ValuePosition {
         int value;
         int position;

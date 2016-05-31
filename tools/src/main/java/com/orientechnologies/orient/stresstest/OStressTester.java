@@ -1,3 +1,22 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.stresstest;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -9,25 +28,28 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.stresstest.operations.OOperationsExecutor;
 import com.orientechnologies.orient.stresstest.operations.OOperationsSet;
+import com.orientechnologies.orient.stresstest.output.OConsoleWriter;
 import com.orientechnologies.orient.stresstest.output.OOperationsExecutorResults;
 import com.orientechnologies.orient.stresstest.output.OStressTestResults;
-import com.orientechnologies.orient.stresstest.output.OConsoleWriter;
 import com.orientechnologies.orient.stresstest.util.OConstants;
 import com.orientechnologies.orient.stresstest.util.ODatabaseUtils;
-
 
 import java.io.Console;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * The main class of the OStressTester.
  * It is instantiated from the OStressTesterCommandLineParser and takes care of
  * launching the needed threads (OOperationsExecutor) for executing the operations
  * of the test.
+ *
+ * @author Andrea Iacono
  */
 public class OStressTester {
 
@@ -74,7 +96,8 @@ public class OStressTester {
         ODatabaseUtils.createDatabase(dbName, mode, password);
 
         // opens the newly created db and creates an index on the class we're going to use
-        try (ODatabase database = ODatabaseUtils.openDatabase(dbName, password)) {
+        ODatabase database = ODatabaseUtils.openDatabase(dbName, password);
+        try {
 
             final OSchema schema = database.getMetadata().getSchema();
             final OClass oClass = schema.createClass(OConstants.CLASS_NAME);
@@ -91,6 +114,8 @@ public class OStressTester {
                     oClass.getClusterIds(),
                     null,
                     null);
+        } finally {
+            database.close();
         }
 
         // starts the test
