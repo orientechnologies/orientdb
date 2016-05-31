@@ -105,6 +105,8 @@ public class OLogFormatter extends Formatter {
   }
 
   protected String getSourceClassSimpleName(final String iSourceClassName) {
+    if(iSourceClassName==null)
+      return null;
     return iSourceClassName.substring(iSourceClassName.lastIndexOf(".") + 1);
   }
 }
