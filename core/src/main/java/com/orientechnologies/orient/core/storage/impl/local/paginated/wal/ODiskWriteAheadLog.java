@@ -748,7 +748,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public long getPreferredSegmentCount() {
-    return walSizeLimit / maxSegmentSize;
+    return preferredSegmentCount;
   }
 
   private OLogSegment removeHeadSegmentFromList() {
