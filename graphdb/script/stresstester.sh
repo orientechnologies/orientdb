@@ -32,4 +32,4 @@ export JAVA
 echo "orient $ORIENTDB_HOME"
 
 exec "$JAVA" -cp "$ORIENTDB_HOME/lib/*" \
-    com.orientechnologies.orient.stresstest.StressTester $*
+    com.orientechnologies.orient.stresstest.OStressTester $*
