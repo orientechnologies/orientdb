@@ -337,6 +337,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         }
       }
 
+      shutdownHandlers.clear();
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
     } finally {
