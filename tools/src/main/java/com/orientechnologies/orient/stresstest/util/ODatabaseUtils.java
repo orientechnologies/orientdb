@@ -62,7 +62,7 @@ public class ODatabaseUtils {
 
     public static void readOperation(ODatabase database, int n) throws Exception {
         String query = String.format("SELECT FROM %s WHERE name = ?", OConstants.CLASS_NAME);
-        List<ODocument> result = database.command(new OSQLSynchQuery<>(query)).execute(getThreadValue(n));
+        List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(query)).execute(getThreadValue(n));
         if (result.size() != 1) {
             throw new Exception(String.format("The query [%s] result size is %d. Expected size is 1.", query, result.size()));
         }

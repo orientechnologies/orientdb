@@ -125,7 +125,7 @@ public class OStressTester {
             for (int i = 0; i < iterationsNumber; i++) {
 
                 // creates the operations executors
-                List<Callable<OOperationsExecutorResults>> operationsExecutors = new ArrayList<>();
+                List<Callable<OOperationsExecutorResults>> operationsExecutors = new ArrayList<Callable<OOperationsExecutorResults>>();
                 for (int j = 0; j < threadsNumber; j++) {
                     operationsExecutors.add(new OOperationsExecutor(dbName, password, operationsSet, consoleProgressWriter));
                 }
