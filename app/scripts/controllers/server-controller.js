@@ -270,9 +270,11 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
 
 
   function initParamenters(realtime) {
-    if (realtime) {
+    if (realtime && realtime['statistics']['process.runtime.maxMemory']) {
 
       // RAM
+
+
       var maxMemory = realtime['statistics']['process.runtime.maxMemory'].last;
       var totalMemory = realtime['statistics']['process.runtime.totalMemory'].last;
       var availableMemory = realtime['statistics']['process.runtime.availableMemory'].last;

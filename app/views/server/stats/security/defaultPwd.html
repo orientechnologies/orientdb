@@ -1,0 +1,49 @@
+<div ng-controller="ODefaultPasswordController">
+
+
+  <form class="form-horizontal">
+    <div class="form-group">
+      <label class="col-md-4 control-label">
+        Enabled
+      </label>
+      <div class="col-md-8">
+        <input type="checkbox" ng-model="password.enabled">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-md-4 control-label">
+        Users
+      </label>
+      <div class="col-md-8">
+
+        <table class="table">
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th>Permission</th>
+            <th>
+              <button class="btn btn-xs" ng-click="addUser()"><i class="fa fa-plus-circle"></i>
+              </button>
+            </th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="u in password.users">
+            <td>
+              <input type="text" class="form-control" ng-model="u.username"/></td>
+            </td>
+            <td>
+              <input type="text" class="form-control" ng-model="u.resources"/></td>
+            </td>
+            <td>
+              <button class="btn btn-xs btn-danger" ng-click="removeUser($index)"><i class="fa fa-remove"></i>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </form>
+
+</div>

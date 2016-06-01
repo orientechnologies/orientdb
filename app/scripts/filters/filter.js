@@ -136,6 +136,22 @@ filterModule.filter('operation', function () {
       case 6:
         return "Drop Class"
         break;
+      case 7:
+        return "Config Changed"
+        break;
+      case 8:
+        return "Node Joined"
+        break;
+      case 9:
+        return "Node Left"
+        break;
+      case 10:
+        return "Security Module"
+        break;
+      case 11:
+        return "Security component reloaded"
+        break;
+
     }
     return input;
   };

@@ -1,0 +1,252 @@
+<div ng-controller="OLdapController" class="col-md-12">
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b>Settings</b>
+          <div class="panel-actions">
+            <div class="btn-group">
+              <button class="btn btn-sm btn-primary" ng-click="saveLdap()">
+                <i class="fa fa-save"></i> Save
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <form class="form-horizontal">
+            <div class="form-group">
+              <label class="col-md-3 control-label">
+                Enabled
+              </label>
+              <div class="col-md-9">
+                <input type="checkbox" ng-model="ldap.enabled">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-3 control-label">
+                Debug
+              </label>
+              <div class="col-md-9">
+                <input type="checkbox" ng-model="ldap.debug">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-3 control-label">
+                Period (seconds)
+              </label>
+              <div class="col-md-9">
+                <input type="number" class="form-control" ng-model="ldap.period">
+              </div>
+            </div>
+
+            <!--SERVICE-->
+            <div class="form-group">
+              <label class="col-md-3 control-label">
+                Databases
+              </label>
+              <div class="col-md-9">
+                <table class="table table-hover">
+                  <thead>
+                  <th>Name</th>
+                  <th>Ignore Local</th>
+                  <th>
+                    <button class="btn btn-xs" ng-click="addDatabase()"><i class="fa fa-plus-circle"></i>
+                    </button>
+                  </th>
+                  </thead>
+                  <tbody>
+                  <tr ng-repeat="a in ldap.databases">
+                    <td>{{a.database}}</td>
+                    <td>
+                      <input type="checkbox" ng-model="a.ignoreLocal"></td>
+                    <td>
+
+                      <button href="javascript:void(0)" class="btn btn-xs btn-danger" ng-click="removeDatabase($index)">
+                        <i
+                          class="fa fa-remove"></i></button>
+                      <button class="btn btn-xs" ng-click="setSelected(a)"><i
+                        class="fa fa-gear"></i></button>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="panel panel-default" ng-show="currentSelected">
+
+            <div class="panel-heading">
+              <b>Database</b>
+            </div>
+            <div class="panel-body">
+              <form class="form-horizontal">
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Name
+                  </label>
+                  <div class="col-md-9">
+                    <input type="text" class="form-control" ng-model="currentSelected.database">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Ignore Local
+                  </label>
+                  <div class="col-md-9">
+                    <input type="checkbox" ng-model="currentSelected.ignoreLocal">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Domains
+                  </label>
+                  <div class="col-md-9">
+
+                    <table class="table table-hover">
+                      <thead>
+                      <th>Domain</th>
+                      <th>Authenticator</th>
+                      <th>
+                        <button class="btn btn-xs" ng-click="addDomain()"><i class="fa fa-plus-circle"></i>
+                        </button>
+                      </th>
+                      </thead>
+                      <tbody>
+                      <tr ng-repeat="domain in currentSelected.domains">
+                        <td>{{domain.domain}}</td>
+                        <td>
+                          {{domain.authenticator}}
+                        </td>
+                        <td>
+
+                          <button href="javascript:void(0)" class="btn btn-xs btn-danger"
+                                  ng-click="removeDomain($index)">
+                            <i
+                              class="fa fa-remove"></i></button>
+                          <button class="btn btn-xs" ng-click="setCurrentDomain(domain)"><i
+                            class="fa fa-gear"></i></button>
+                        </td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-12">
+          <div class="panel panel-default" ng-show="currentDomain">
+            <div class="panel-heading">
+              <b>Domain</b>
+            </div>
+            <div class="panel-body">
+              <form class="form-horizontal">
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Domain
+                  </label>
+                  <div class="col-md-9">
+                    <input type="text" class="form-control" ng-model="currentDomain.domain">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Authenticator
+                  </label>
+                  <div class="col-md-9">
+                    <select class="form-control" ng-options="a.name as a.name for a in authenticators"
+                            ng-model="currentDomain.authenticator"></select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Servers
+                  </label>
+                  <div class="col-md-9">
+                    <table class="table table-hover">
+                      <thead>
+                      <th>Url</th>
+                      <th>isAlias</th>
+                      <th>
+                        <button class="btn btn-xs" ng-click="addServer()"><i class="fa fa-plus-circle"></i>
+                        </button>
+                      </th>
+                      </thead>
+                      <tbody>
+                      <tr ng-repeat="server in currentDomain.servers">
+                        <td>
+                          <input type="text" class="form-control" ng-model="server.url"/></td>
+                        <td>
+                          <input type="checkbox" ng-model="server.isAlias"/>
+                        </td>
+                        <td>
+
+                          <button href="javascript:void(0)" class="btn btn-xs btn-danger"
+                                  ng-click="removeServer($index)">
+                            <i
+                              class="fa fa-remove"></i></button>
+                        </td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    Users
+                  </label>
+                  <div class="col-md-9">
+                    <table class="table table-hover">
+                      <thead>
+                      <th>BaseDN</th>
+                      <th>Filter</th>
+                      <th>Roles (comma separated)</th>
+                      <th>
+                        <button class="btn btn-xs" ng-click="addUser()"><i class="fa fa-plus-circle"></i>
+                        </button>
+                      </th>
+                      </thead>
+                      <tbody>
+                      <tr ng-repeat="user in currentDomain.users">
+                        <td>
+                          <input type="text" class="form-control" ng-model="user.baseDN"/></td>
+                        <td>
+                          <input type="text" class="form-control" ng-model="user.filter"/></td>
+                        </td>
+                        <td>
+
+                          <!--<tags-input ng-model="user.roles"></tags-input>-->
+                          <input type="text" class="form-control" ng-list ng-model="user.roles"/></td>
+                        </td>
+                        <td>
+                          <button href="javascript:void(0)" class="btn btn-xs btn-danger"
+                                  ng-click="removeUser($index)">
+                            <i class="fa fa-remove"></i></button>
+                        </td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

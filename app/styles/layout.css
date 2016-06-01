@@ -993,7 +993,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
   color: #fff;
 }
 
-.tabs-style-linebox nav a::after {
+.tabs-style-linebox > nav ul li a::after {
   position: absolute;
   top: 0;
   left: 0;

@@ -514,11 +514,11 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
 }]);
 
 
-ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'ngTableParams', 'AgentService', 'SecurityService', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams, AgentService, SecurityService) {
+ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'ngTableParams', 'AgentService', 'SecurityService', 'DatabaseApi', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams, AgentService, SecurityService, DatabaseApi) {
 
 
   $scope.enabled = false;
-  $scope.clazz = "tabs-style-line";
+  $scope.clazz = 'tabs-style-linebox';
   $scope.links = {
     ee: "http://www.orientdb.com/orientdb-enterprise"
   }
@@ -546,17 +546,45 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
 
   $scope.template = 'views/server/stats/auditing/log.html';
 
+
+  $scope.saveAuditing = function () {
+
+
+    SecurityService.reload({"module": "auditing", "config": $scope.auditingCfg})
+      .then(function () {
+        return $scope.save();
+      }).then(function () {
+      Notification.push({content: "Auditing configuration saved correctly.", autoHide: true});
+      initConfig();
+    }).catch(function (error) {
+      Notification.push({content: error.data, error: true, autoHide: true});
+    });
+
+  }
   var initConfig = function () {
 
     SecurityService.get().then(function (security) {
       try {
         $scope.auditingCfg = security.auditing;
+        if (!$scope.auditingCfg.distributed) {
+          $scope.auditingCfg.distributed = {
+            "onNodeJoinedEnabled": false,
+            "onNodeJoinedMessage": "Node ${node} has joined...",
+            "onNodeLeftEnabled": false,
+            "onNodeLeftMessage": "Node ${node} has left..."
+          }
+        }
+        $scope.oldauditingCfg = angular.copy($scope.auditingCfg);
         $scope.enabled = security.auditing.enabled
       } catch (e) {
       }
       if ($scope.enabled) {
         Auditing.getConfig({db: $scope.db}).then(function (data) {
           $scope.config = data;
+
+          if ($scope.config && !$scope.config.schema) {
+            $scope.config.schema = {}
+          }
           var cls = $scope.config.classes;
           $scope.classes = Object.keys(cls).filter(function (k) {
             return (k != "@type" && k != "@version")
@@ -570,27 +598,24 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
           })
           $scope.query.clazz = $scope.config.auditClassName;
           Spinner.start();
-          Auditing.query({db: $scope.db, query: $scope.query}).then(function (data) {
+          Auditing.query({query: $scope.query}).then(function (data) {
             $scope.logs = data.result;
             Spinner.stopSpinner();
           }).catch(function (error) {
             Spinner.stopSpinner();
+            Notification.push({content: error.data, error: true, autoHide: true});
           })
         });
       }
     })
 
   }
-  $scope.enableAuditing = function () {
 
-    var config = angular.copy($scope.auditingCfg);
-    config.enabled = !config.enabled;
-    SecurityService.reload({"module": "auditing", "config": config}).then(function (c) {
-      $scope.enabled = security.auditing.enabled
+  $scope.changeDB = function (db) {
+    if (db) {
+      $scope.db = db;
       initConfig();
-    }).catch(function (e) {
-      console.log(e);
-    });
+    }
   }
   $scope.$watch("db", function (db) {
     if (db) {
@@ -605,11 +630,9 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
   }
   $scope.save = function () {
 
-    Auditing.saveConfig({db: $scope.db}, $scope.config).then(function () {
-      Notification.push({content: "Auditing configuration saved.", autoHide: true});
-    }).catch(function (error) {
 
-    })
+    return Auditing.saveConfig({db: $scope.db}, $scope.config);
+
   }
 
   $scope.filter = function () {
@@ -621,6 +644,7 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
       //$scope.tableParams.reload();
       Spinner.stopSpinner();
     }).catch(function (error) {
+      Notification.push({content: error.data, error: true, autoHide: true});
       Spinner.stopSpinner();
     })
   }
@@ -651,7 +675,8 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
   }
   $scope.addClass = function () {
     var modalScope = $scope.$new(true);
-    modalScope.classes = Database.listClasses();
+
+
     var modalPromise = $modal({template: 'views/database/auditing/newClass.html', scope: modalScope, show: false});
 
     modalScope.save = function () {
@@ -671,7 +696,14 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
 
       }
     }
-    modalPromise.$promise.then(modalPromise.show);
+    var db = DatabaseApi.get({database: $scope.db}, function (data) {
+      console.log(data);
+      //modalScope.classes = Database.listClasses();
+    })
+    db.$promise.then(function (data) {
+      modalScope.classes = data['classes'];
+      modalPromise.$promise.then(modalPromise.show);
+    });
   }
 }]);
 
@@ -841,7 +873,7 @@ ee.controller('EEDashboardController', function ($scope, $rootScope, $routeParam
     {name: "backup", title: "Backup Management", template: 'backup', icon: 'fa-clock-o'},
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
-    {name: "auditing", title: "Auditing", template: 'auditing', icon: 'fa-headphones'},
+    //{name: "auditing", title: "Auditing", template: 'auditing', icon: 'fa-headphones'},
     {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb'},
     {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'}
 
@@ -1448,7 +1480,7 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
         id: idx,
         title: $scope.info(e),
         _source: e,
-        _template: '/views/server/backup/' + e.op.toLowerCase() + '.html',
+        _template: 'views/server/backup/' + e.op.toLowerCase() + '.html',
         start: date,
         end: date,
         className: $scope.clazz(e)
@@ -1708,15 +1740,366 @@ ee.controller("RestoreController", function ($scope) {
 /**
  * Security Controller Auditing + Authenticator
  */
-ee.controller("ServerSecurityController", function ($scope, AgentService) {
+ee.controller("ServerSecurityController", function ($scope, AgentService, SecurityService, Cluster) {
 
 
   $scope.agentActive = AgentService.active;
-  //$scope.icon = 'fa-database';
+
+
+  if ($scope.agentActive) {
+
+    Cluster.node().then(function (data) {
+      $scope.servers = data.members;
+      $scope.server = $scope.servers[0];
+      if ($scope.server.databases.length > 0) {
+        $scope.db = $scope.server.databases[0];
+      }
+      SecurityService.get().then(function (security) {
+        $scope.security = security;
+
+        $scope.securityOld = angular.copy(security);
+        $scope.$broadcast('security-loaded', security);
+      });
+    });
+  }
+
+  $scope.$watch("security.enabled", function (enabled, old) {
+
+    if (enabled != undefined && old != undefined) {
+
+
+    }
+  })
   $scope.securityTabs = [
+
     {"name": "Auditing", "template": "views/server/stats/auditing.html"},
-    {"name": "Kerberos", "template": "views/server/stats/kerberos.html"}
+    {"name": "Authentication ", "template": "views/server/stats/security/authentication.html"},
+    {"name": "LDAP Importer", "template": "views/server/stats/security/ldap.html"},
+    {"name": "Misc", "template": "views/server/stats/security/serverSecurity.html"},
+
   ]
+
+
+});
+
+
+ee.controller('ServerAuthTabController', function ($scope, SecurityService, Notification, $modal) {
+
+
+  $scope.authentication = $scope.security.authentication;
+
+
+  var setDefault = function () {
+    $scope.currentAuthenticator = null;
+    if ($scope.authentication.authenticators.length > 0) {
+      for (var i in $scope.authentication.authenticators) {
+        if ($scope.authentication.authenticators[i].template) {
+          $scope.currentAuthenticator = $scope.authentication.authenticators[i];
+        }
+      }
+    }
+
+  }
+  $scope.suppertedAuthenticators = {
+    "com.orientechnologies.orient.server.security.authenticator.ODefaultPasswordAuthenticator": {
+      template: "views/server/stats/security/defaultPwd.html",
+
+      defaultVal: {
+        name: "Password",
+        class: "com.orientechnologies.orient.server.security.authenticator.ODefaultPasswordAuthenticator",
+        enabled: true
+      }
+    },
+    "com.orientechnologies.security.kerberos.OKerberosAuthenticator": {
+      template: "views/server/stats/security/kerberos.html",
+
+      defaultVal: {
+        name: "Kerberos",
+        class: "com.orientechnologies.security.kerberos.OKerberosAuthenticator",
+        enabled: true,
+        "debug": false,
+
+        "krb5_config": "/etc/krb5.conf",
+
+        "service": {
+          "ktname": "/etc/keytab/kerberosuser",
+          "principal": "kerberosuser/kerberos.domain.com@REALM.COM"
+        },
+
+        "spnego": {
+          "ktname": "/etc/keytab/kerberosuser",
+          "principal": "HTTP/kerberos.domain.com@REALM.COM"
+        },
+
+        "client": {
+          "ccname": null,
+          "ktname": null,
+          "useTicketCache": true,
+          "principal": "kerberosuser@REALM.COM",
+          "renewalPeriod": 300
+        }
+      }
+    },
+    "com.orientechnologies.orient.server.security.authenticator.OServerConfigAuthenticator": {
+      defaultVal: {
+        name: "ServerConfig",
+        class: "com.orientechnologies.orient.server.security.authenticator.OServerConfigAuthenticator",
+        enabled: true
+      }
+    },
+    "com.orientechnologies.orient.server.security.authenticator.OSystemUserAuthenticator": {
+      defaultVal: {
+        name: "SystemAuthenticator",
+        class: "com.orientechnologies.orient.server.security.authenticator.OSystemUserAuthenticator",
+        enabled: true
+      }
+    }
+  };
+
+
+  $scope.moveUp = function (a, $index) {
+    $scope.authentication.authenticators.splice($index, 1);
+    $scope.authentication.authenticators.splice($index - 1, 0, a);
+  }
+  $scope.moveDown = function (a, $index) {
+    $scope.authentication.authenticators.splice($index, 1);
+    $scope.authentication.authenticators.splice($index + 1, 0, a);
+  }
+  $scope.addAuthenticator = function () {
+
+    var modalScope = $scope.$new(true);
+
+
+    modalScope.auths = Object.keys($scope.suppertedAuthenticators).filter(function (e) {
+      var found = $scope.authentication.authenticators.filter(function (ev) {
+        return ev.class == e;
+      })
+      return found.length == 0;
+    }).map(function (e) {
+      return $scope.suppertedAuthenticators[e].defaultVal;
+    });
+
+    modalScope.addToAuth = function (a) {
+      $scope.authentication.authenticators.push(a);
+
+      if ($scope.suppertedAuthenticators[a.class].template) {
+        $scope.currentAuthenticator = a;
+      }
+    }
+    var modalPromise = $modal({template: 'views/server/stats/security/newAuth.html', scope: modalScope, show: false});
+
+
+    modalPromise.$promise.then(modalPromise.show);
+
+  }
+
+  $scope.getAuthTemplate = function (a) {
+    if (!a) return a;
+    return $scope.suppertedAuthenticators [a.class].template;
+  }
+
+
+  $scope.hasTemplate = function (a) {
+
+    return $scope.suppertedAuthenticators[a.class].template;
+  }
+  $scope.setCurrent = function (a) {
+    $scope.currentAuthenticator = a;
+  }
+  $scope.removeAuth = function (idx) {
+    $scope.authentication.authenticators.splice(idx, 1);
+
+    setDefault();
+  }
+  $scope.getValue = function (k) {
+
+    return $scope.authentication.authenticators.filter(function (r) {
+      return r.class == k;
+    })[0];
+  }
+
+  $scope.getValues = function (k) {
+
+    return $scope.authentication.authenticators.filter(function (r) {
+      return r.class == k;
+    });
+  }
+  $scope.saveAuthentication = function () {
+
+    SecurityService.reload({"module": "authentication", "config": $scope.authentication}).then(function () {
+      Notification.push({content: "Module Authentication reloaded", autoHide: true});
+    }).catch(function (err) {
+      Notification.push({content: err.data, error: true, autoHide: true});
+    });
+  }
+
+  setDefault();
+});
+
+ee.controller('ServerSecurityTabController', function ($scope, SecurityService, Notification) {
+
+
+  $scope.serverSecurity = $scope.security.server;
+
+
+  $scope.passwordValidator = $scope.security.passwordValidator;
+
+
+  $scope.saveServer = function () {
+
+    SecurityService.reload({"module": "server", "config": $scope.serverSecurity}).then(function () {
+      Notification.push({content: "Module Server reloaded", autoHide: true});
+    }).catch(function (err) {
+      Notification.push({content: err.data, error: true, autoHide: true});
+    });
+  }
+
+  $scope.savePasswordValidator = function () {
+    SecurityService.reload({"module": "passwordValidator", "config": $scope.passwordValidator}).then(function () {
+      Notification.push({content: "Module password validator reloaded", autoHide: true});
+    }).catch(function (err) {
+      Notification.push({content: err.data, error: true, autoHide: true});
+    });
+  }
+
+});
+
+
+ee.controller('OKerberosController', function ($scope, SecurityService, Notification) {
+
+
+  $scope.kerberos = $scope.getValue('com.orientechnologies.security.kerberos.OKerberosAuthenticator');
+
+
+});
+
+
+ee.controller('OLdapController', function ($scope, SecurityService, Notification) {
+
+
+  $scope.ldap = $scope.security.ldapImporter || {
+      enabled: false,
+      class: 'com.orientechnologies.security.ldap.OLDAPImporter',
+      debug: false,
+      period: 60,
+      databases: []
+    };
+
+
+  $scope.getValues = function (k) {
+
+    return $scope.security.authentication.authenticators.filter(function (r) {
+      return r.class == k;
+    });
+  }
+  $scope.authenticators = $scope.getValues('com.orientechnologies.security.kerberos.OKerberosAuthenticator');
+
+  if ($scope.ldap.databases.length > 0) {
+    $scope.currentSelected = $scope.ldap.databases[0];
+
+
+    if ($scope.currentSelected.domains.length > 0) {
+      $scope.currentDomain = $scope.currentSelected.domains[0];
+    }
+  }
+  $scope.saveLdap = function () {
+
+    SecurityService.reload({"module": "ldapImporter", "config": $scope.ldap}).then(function () {
+      Notification.push({content: "Module Ldap importer reloaded", autoHide: true});
+    }).catch(function (err) {
+      Notification.push({content: err.data, error: true, autoHide: true});
+    });
+  }
+
+
+  $scope.setSelected = function (a) {
+    $scope.currentSelected = a;
+  }
+
+  $scope.addDomain = function () {
+
+    if ($scope.currentSelected) {
+      if (!$scope.currentSelected.domains) {
+        $scope.currentSelected.domains = [];
+      }
+      $scope.currentSelected.domains.push({
+        domain: "",
+        authenticator: "",
+      })
+    }
+  }
+
+  $scope.removeDomain = function (idx) {
+    $scope.currentSelected.domains.splice(idx, 1);
+  }
+  $scope.removeDatabase = function (idx) {
+    $scope.ldap.databases.splice(idx, 1);
+    $scope.currentSelected = null;
+  }
+
+
+  $scope.addServer = function () {
+    if (!$scope.currentDomain.servers) {
+      $scope.currentDomain.servers = [];
+    }
+    $scope.currentDomain.servers.push({
+      url: "ldap://alias.ad.domain.com:389",
+      isAlias: true
+    })
+  }
+
+  $scope.addUser = function () {
+    if (!$scope.currentDomain.users) {
+      $scope.currentDomain.users = [];
+    }
+    $scope.currentDomain.users.push({
+      baseDN: "CN=Users,DC=ad,DC=domain,DC=com",
+      "filter": "(&(objectCategory=person)(objectclass=user)(memberOf=CN=ODBUser,CN=Users,DC=ad,DC=domain,DC=com))",
+      "roles": ["reader", "writer"]
+    });
+  }
+  $scope.removeUser = function (idx) {
+    $scope.currentDomain.users.splice(idx, 1);
+  }
+  $scope.removeServer = function (idx) {
+    $scope.currentDomain.servers.splice(idx, 1);
+  }
+  $scope.setCurrentDomain = function (d) {
+    $scope.currentDomain = d;
+  }
+  $scope.addDatabase = function () {
+    $scope.currentSelected = {
+      name: "",
+      ignoreLocal: true,
+    };
+    $scope.ldap.databases.push($scope.currentSelected)
+  }
+});
+ee.controller('ODefaultPasswordController', function ($scope, SecurityService, Notification) {
+
+
+  $scope.password = $scope.getValue('com.orientechnologies.orient.server.security.authenticator.ODefaultPasswordAuthenticator');
+
+
+  $scope.addUser = function () {
+    if (!$scope.password.users) {
+      $scope.password.users = []
+    }
+    $scope.password.users.push({
+      username: 'guest',
+      resources: 'connect,server.listDatabases,server.dblist'
+    })
+  }
+
+  $scope.removeUser = function (idx) {
+    $scope.password.users.splice(idx, 1);
+  }
+
+});
+
+ee.controller('OServerConfigController', function ($scope, SecurityService, Notification) {
+
+  $scope.serverConfig = $scope.getValue('com.orientechnologies.orient.server.security.authenticator.OServerConfigAuthenticator');
 
 
 });

@@ -1,0 +1,92 @@
+<div ng-controller="ServerAuthTabController" class="col-md-12">
+
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b>Settings</b>
+
+          <div class="panel-actions">
+            <div class="btn-group">
+              <button class="btn btn-primary btn-sm" ng-click="saveAuthentication()">
+                <i class="fa fa-save"></i>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <form class="form-horizontal">
+            <div class="form-group">
+              <label class="col-md-3 control-label">
+                Enabled
+              </label>
+              <div class="col-md-9">
+                <input type="checkbox" ng-model="authentication.enabled">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-3 control-label">
+                Allow Default
+              </label>
+              <div class="col-md-9">
+                <input type="checkbox" ng-model="authentication.allowDefault">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-3 control-label">
+                Authenticators
+              </label>
+              <div class="col-md-9">
+                <table class="table table-hover">
+                  <thead>
+                  <th>Name</th>
+                  <th>Enabled</th>
+                  <th>
+                    <button class="btn btn-xs" ng-click="addAuthenticator()"><i class="fa fa-plus-circle"></i>
+                    </button>
+                  </th>
+                  </thead>
+                  <tbody>
+                  <tr ng-click="currentSelected = a.class" ng-repeat="a in authentication.authenticators"
+                      ng-class="{ 'active' : (a.class == currentSelected)}">
+                    <td>{{a.name}}</td>
+                    <td>
+                      <input type="checkbox" ng-model="a.enabled"></td>
+                    <td>
+
+                      <button ng-disabled="$index == authentication.authenticators.length-1"
+                              class="btn btn-xs btn-primary"
+                              ng-click="moveDown(a,$index)"><i
+                        class="fa fa-arrow-down"></i></button>
+
+                      <button ng-disabled="$index == 0" class="btn btn-xs btn-primary" ng-click="moveUp(a,$index)"><i
+                        class="fa fa-arrow-up"></i></button>
+
+                      <button href="javascript:void(0)" class="btn btn-xs btn-danger" ng-click="removeAuth($index)"><i
+                        class="fa fa-remove"></i></button>
+                      <button ng-show="hasTemplate(a)" class="btn btn-xs" ng-click="setCurrent(a)"><i
+                        class="fa fa-gear"></i></button>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel panel-default" ng-show="currentAuthenticator">
+        <div class="panel-heading">
+          <b>{{currentAuthenticator.name }}</b>
+        </div>
+        <div class="panel-body">
+          <ng-include src="getAuthTemplate(currentAuthenticator)"></ng-include>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

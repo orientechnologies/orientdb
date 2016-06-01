@@ -5,31 +5,8 @@
       <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
     </div>
   </div>
+
   <div class="col-md-12" ng-show="agentActive">
-    <div class="row row-space">
-      <div class="col-md-12">
-        <form class="form-inline studio-well">
-          <div class="form-group">
-            <label>Server </label>
-            <select id="serverOnline" ng-model="server" class="form-control " ng-options="s.name for s in servers"
-                    data-placeholder="Pick a Server"></select>
-          </div>
-          <div  class="form-group">
-            <label>Database </label>
-            <select id="databasesOnline" ng-model="db" class="form-control" ng-options="db for db in server.databases"
-                    data-placeholder="Pick a Server"></select>
-          </div>
-
-          <div class="form-group">
-            <label>Enabled </label>
-            <input type="checkbox" ng-model="enabled" ng-change="enableAuditing()">
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-12" ng-show="agentActive && enabled">
     <div class="row row-space">
       <div class="col-md-12">
         <tabset clazz="clazz">

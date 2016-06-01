@@ -1,0 +1,119 @@
+<div ng-controller="ServerSecurityTabController" class="col-md-12">
+
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b>Server</b>
+
+          <div class="panel-actions">
+            <div class="btn-group">
+              <button class="btn btn-primary btn-sm" ng-click="saveServer()">
+                <i class="fa fa-save"></i>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <form class="form-horizontal">
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Enabled
+              </label>
+              <div class="col-md-8">
+                <input type="checkbox" ng-model="serverSecurity.enabled">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                createDefaultUsers
+              </label>
+              <div class="col-md-8">
+                <input type="checkbox" ng-model="serverSecurity.createDefaultUsers">
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b> Password Validator </b>
+          <div class="panel-actions">
+            <div class="btn-group">
+              <button class="btn btn-primary btn-sm" ng-click="savePasswordValidator()">
+                <i class="fa fa-save"></i>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <form class="form-horizontal">
+
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Enabled
+              </label>
+              <div class="col-md-8">
+                <input type="checkbox" ng-model="passwordValidator.enabled">
+              </div>
+            </div>
+            <!--<div class="form-group">-->
+              <!--<label class="col-md-4 control-label">-->
+                <!--Implementation-->
+              <!--</label>-->
+              <!--<div class="col-md-8">-->
+                <!--<p class="form-control-static">{{passwordValidator.class}}</p>-->
+              <!--</div>-->
+            <!--</div>-->
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Ignore UUID
+              </label>
+              <div class="col-md-8">
+                <input type="checkbox" ng-model="passwordValidator.ignoreUUID">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Minimum Length
+              </label>
+              <div class="col-md-8">
+                <input type="number" ng-model="passwordValidator.minimumLength">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Number Regex
+              </label>
+              <div class="col-md-8">
+                <input type="text" ng-model="passwordValidator.numberRegEx">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Upper Case Regex
+              </label>
+              <div class="col-md-8">
+                <input type="text" ng-model="passwordValidator.uppercaseRegEx">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label">
+                Special Regex
+              </label>
+              <div class="col-md-8">
+                <input type="text" ng-model="passwordValidator.specialRegEx">
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

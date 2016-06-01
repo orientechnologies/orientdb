@@ -451,7 +451,7 @@ ee.factory('Auditing', function ($http, $resource, $q, CommandApi) {
     var deferred = $q.defer();
 
 
-    var text = API + 'auditing/' + params.db + "/query";
+    var text = API + 'auditing/logs/query';
     $http.post(text, params.query).success(function (data) {
       deferred.resolve(data)
     }).error(function (data, status, headers, config) {
@@ -643,7 +643,7 @@ ee.factory("BackupService", function (Profiler, $q, $http) {
   }
 
 
-  backups.logs = function (uuid,params) {
+  backups.logs = function (uuid, params) {
     var deferred = $q.defer();
     var url = API + 'backupManager/' + uuid + "/log";
 

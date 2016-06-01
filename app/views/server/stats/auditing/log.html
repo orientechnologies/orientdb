@@ -1,45 +1,63 @@
 <div class="col-md-12">
   <div class="row row-space">
     <div class="col-md-12 ">
-      <form name="form" class="studio-well" ng-submit="filter()">
-        <div class="form-group">
-          <div class="row">
-            <div class="col-md-3">
-              <label>User</label>
-              <input type="text" class="form-control" ng-model="query.user">
-            </div>
-            <div class="col-md-3">
-              <label>Operation</label>
-              <select class="form-control" ng-model="query.operation">
-                <option>--Select Operation--</option>
-                <option value="3">Create</option>
-                <option value="0">Read</option>
-                <option value="1">Update</option>
-                <option value="2">Delete</option>
-                <option value="4">Command</option>
-              </select>
-            </div>
+      <div class="panel panel-default">
 
-            <div class="col-md-3">
-              <label>Note</label>
-              <input type="text" class="form-control" ng-model="query.note">
-            </div>
-            <div class="col-md-3">
-              <label>Record</label>
-              <input type="text" class="form-control" ng-model="query.record">
-            </div>
+        <div class="panel-heading">Auditing Filters</div>
 
 
-          </div>
-          <div class="row row-space">
+        <div class="panel-body">
+          <form name="form" ng-submit="filter()">
+            <div class="form-group">
+              <div class="row">
+                <div class="col-md-3">
+                  <label>User</label>
+                  <input type="text" class="form-control" ng-model="query.user">
+                </div>
+                <div class="col-md-3">
+                  <label>Operation</label>
+                  <select class="form-control" ng-model="query.operation">
+                    <option value="-2">--Select Operation--</option>
+                    <option value="3">Create</option>
+                    <option value="0">Read</option>
+                    <option value="1">Update</option>
+                    <option value="2">Delete</option>
+                    <option value="4">Command</option>
+                    <option value="5">Create class</option>
+                    <option value="6">Drop class</option>
+                    <option value="7">Config Changed</option>
+                    <option value="8">Node Joined</option>
+                    <option value="9">Node Left</option>
+                    <option value="10">Security Module</option>
+                    <option value="11">Security component reloaded</option>
+                  </select>
+                </div>
 
-            <div class="col-md-3">
-              <label>Date from</label>
+                <div class="col-md-3">
+                  <label>Database </label>
+                  <select id="databasesOnline" ng-model="query.db" class="form-control"
+                          ng-options="db for db in server.databases"
+                          data-placeholder="Pick a Database">
+                  </select>
+                </div>
 
-              <div class="input-group date">
-                <input type="text" class="form-control" ng-model="query.fromDate"
-                       data-date-format="dd/MM/yyyy" data-autoclose="1" data-date-type="number" data-max-date="today"
-                       name="date1" bs-datepicker>
+                <div class="col-md-3">
+                  <label>Record</label>
+                  <input type="text" class="form-control" ng-model="query.record">
+                </div>
+
+
+              </div>
+              <div class="row row-space">
+
+                <div class="col-md-3">
+                  <label>Date from</label>
+
+                  <div class="input-group date">
+                    <input type="text" class="form-control" ng-model="query.fromDate"
+                           data-date-format="dd/MM/yyyy" data-autoclose="1" data-date-type="number"
+                           data-max-date="today"
+                           name="date1" bs-datepicker>
 
                 <span class="input-group-btn">
                     <button class="btn">
@@ -47,61 +65,71 @@
                       </i>
                     </button>
                 </span>
-                <input data-time-format="HH:mm" class="form-control" data-time-type="number" bs-timepicker
-                       ng-model='query.fromDate' type="text"/>
+                    <input data-time-format="HH:mm" class="form-control" data-time-type="number" bs-timepicker
+                           ng-model='query.fromDate' type="text"/>
               <span class="input-group-btn">
                   <button class="btn">
                     <i class="fa fa-clock-o">
                     </i>
                   </button>
               </span>
-              </div>
+                  </div>
 
-            </div>
-            <div class="col-md-3">
-              <label>Date To</label>
+                </div>
+                <div class="col-md-3">
+                  <label>Note</label>
+                  <input type="text" class="form-control" ng-model="query.note">
+                </div>
+                <div class="col-md-3">
+                  <label>Date To</label>
 
 
-              <div class="input-group date">
+                  <div class="input-group date">
 
-                <input type="text" class="form-control" ng-model="query.toDate"
-                       data-date-format="dd/MM/yyyy" data-autoclose="1" data-date-type="number" data-max-date="today"
-                       name="date2" bs-datepicker>
+                    <input type="text" class="form-control" ng-model="query.toDate"
+                           data-date-format="dd/MM/yyyy" data-autoclose="1" data-date-type="number"
+                           data-max-date="today"
+                           name="date2" bs-datepicker>
                 <span class="input-group-btn">
                     <button class="btn">
                       <i class="fa fa-calendar">
                       </i>
                     </button>
                 </span>
-                <input data-time-format="HH:mm" class="form-control" data-time-type="number" bs-timepicker
-                       ng-model='query.toDate' type="text"/>
+                    <input data-time-format="HH:mm" class="form-control" data-time-type="number" bs-timepicker
+                           ng-model='query.toDate' type="text"/>
                 <span class="input-group-btn">
                 <button class="btn">
                   <i class="fa fa-clock-o">
                   </i>
                 </button>
                 </span>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <label>Limit</label>
+                  <input type="number" class="form-control" ng-model="query.limit">
+                </div>
+                <div class="col-md-4 col-md-offset-8">
+                  <br/>
+                  <div class="pull-right">
+                    <div class="btn-group">
+                      <button class="btn btn-sm btn-default" ng-click="resetFilter()"><i class="fa fa-eraser"> </i>
+                        Clear
+                      </button>
+                    </div>
+                    <div class="btn-group">
+                      <button class="btn btn-sm btn-default" type="submit"><i class="fa fa-search"> </i>
+                        Search
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-md-3">
-              <label>Limit</label>
-              <input type="number" class="form-control" ng-model="query.limit">
-            </div>
-            <div class="col-md-3">
-              <div class="btn-group">
-                <button class="btn btn-sm btn-default" ng-click="resetFilter()"><i class="fa fa-eraser"> </i>
-                  Clear
-                </button>
-              </div>
-              <div class="btn-group">
-                <button class="btn btn-sm btn-default" type="submit"><i class="fa fa-search"> </i>
-                  Search
-                </button>
-              </div>
-            </div>
-          </div>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   </div>
   <div class="row row-space">
@@ -109,7 +137,6 @@
       <table st-table="displayedLogs" st-safe-src="logs" class="table">
         <thead>
         <tr>
-
           <th>
             User
           </th>
@@ -118,6 +145,9 @@
           </th>
           <th>
             Operation
+          </th>
+          <th>
+            Database
           </th>
           <th>
             Record
@@ -143,6 +173,9 @@
             {{log.operation | operation}}
           </td>
           <td>
+            {{log.database}}
+          </td>
+          <td>
             {{log.record}}
           </td>
           <td>
@@ -155,7 +188,7 @@
         </tbody>
         <tfoot>
         <tr>
-          <td colspan="6" class="text-center">
+          <td colspan="7" class="text-center">
             <div st-pagination="" st-items-by-page="itemsByPage" st-displayed-pages=""></div>
           </td>
         </tr>
