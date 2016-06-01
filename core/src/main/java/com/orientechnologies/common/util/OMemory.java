@@ -40,6 +40,16 @@ public class OMemory {
   private static final String XX_MAX_DIRECT_MEMORY_SIZE = "-XX:MaxDirectMemorySize=";
 
   /**
+   * @param unlimitedCap the upper limit on reported memory, if JVM reports unlimited memory.
+   * @return same as {@link Runtime#maxMemory()} except that {@code unlimitedCap} limit is applied if JVM reports
+   * {@link Long#MAX_VALUE unlimited memory}.
+   */
+  public static long getCappedRuntimeMaxMemory(long unlimitedCap) {
+    final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
+    return jvmMaxMemory == Long.MAX_VALUE ? unlimitedCap : jvmMaxMemory;
+  }
+
+  /**
    * Obtains the total size in bytes of the installed physical memory on this machine.
    * Note that on some VMs it's impossible to obtain the physical memory size, in this
    * case the return value will {@code -1}.

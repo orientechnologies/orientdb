@@ -84,7 +84,7 @@ public class OStressTestResults {
 
         if (totalTime != 0) {
             results.append("\nTotal execution time: ")
-                    .append(String.format("%.2f", totalTime / (float) 1000))
+                    .append(String.format("%.2f", totalTime / 1000f))
                     .append(" seconds.");
         }
 
