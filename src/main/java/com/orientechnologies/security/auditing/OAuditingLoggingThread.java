@@ -19,8 +19,11 @@
  */
 package com.orientechnologies.security.auditing;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
 import com.orientechnologies.orient.server.OServer;
@@ -39,6 +42,8 @@ public class OAuditingLoggingThread extends Thread {
   private volatile boolean               waitForAllLogs = true;
   private OServer                        server;
 
+  private String                         className;
+
   public OAuditingLoggingThread(final String iDatabaseName, final BlockingQueue auditingQueue, final OServer server) {
     super(Orient.instance().getThreadGroup(), "OrientDB Auditing Logging Thread - " + iDatabaseName);
 
@@ -46,9 +51,27 @@ public class OAuditingLoggingThread extends Thread {
     this.auditingQueue = auditingQueue;
     this.server = server;
     setDaemon(true);
-    
-    // This will create a cluster in the system database for logging auditing events for "databaseName", if it doesn't already exist.
-    server.getSystemDatabase().createCluster(ODefaultAuditing.AUDITING_LOG_CLASSNAME, ODefaultAuditing.getClusterName(databaseName));
+
+    // This will create a cluster in the system database for logging auditing events for "databaseName", if it doesn't already
+    // exist.
+    // server.getSystemDatabase().createCluster(ODefaultAuditing.AUDITING_LOG_CLASSNAME,
+    // ODefaultAuditing.getClusterName(databaseName));
+
+    className = ODefaultAuditing.getClassName(databaseName);
+
+    server.getSystemDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
+      @Override
+      public Void call(ODatabase iArgument) {
+        OSchema schema = iArgument.getMetadata().getSchema();
+        if (!schema.existsClass(className)) {
+          OClass clazz = schema.getClass(ODefaultAuditing.AUDITING_LOG_CLASSNAME);
+          OClass cls = schema.createClass(className, clazz);
+          cls.createIndex(className + ".date", OClass.INDEX_TYPE.NOTUNIQUE, new String[] { "date" });
+        }
+        return null;
+      }
+
+    });
   }
 
   @Override
@@ -61,21 +84,23 @@ public class OAuditingLoggingThread extends Thread {
         }
 
         final ODocument log = auditingQueue.take();
-        
-        server.getSystemDatabase().save(log, databaseName + "_auditing");
-        
+
+        log.setClassName(className);
+
+        server.getSystemDatabase().save(log);
+
         if (server.getSecurity().getSyslog() != null) {
-        	 byte byteOp = OAuditingOperation.UNSPECIFIED.getByte();
-        	 
-        	 if(log.containsField("operation"))
-        	   byteOp = log.field("operation");
-        	   
-        	 String username = log.field("user");
-        	 String message  = log.field("note");
-        	 String dbName   = log.field("database");
+          byte byteOp = OAuditingOperation.UNSPECIFIED.getByte();
+
+          if (log.containsField("operation"))
+            byteOp = log.field("operation");
+
+          String username = log.field("user");
+          String message = log.field("note");
+          String dbName = log.field("database");
 
           server.getSecurity().getSyslog().log(OAuditingOperation.getByByte(byteOp).toString(), dbName, username, message);
-        }        
+        }
 
       } catch (InterruptedException e) {
         // IGNORE AND SOFTLY EXIT

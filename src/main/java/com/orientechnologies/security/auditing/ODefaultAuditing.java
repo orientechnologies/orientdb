@@ -50,11 +50,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created by Enrico Risa on 10/04/15.
  */
 public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleListener, ODistributedLifecycleListener {
-  public static final String         AUDITING_LOG_CLASSNAME          = "AuditingLog";
+  public static final String         AUDITING_LOG_CLASSNAME          = "OAuditingLog";
 
   private boolean                    enabled                         = true;
   private OServer                    server;
-  
+
   private OAuditingHook              globalHook;
 
   private Map<String, OAuditingHook> hooks;
@@ -67,51 +67,47 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   private OSystemDBImporter          systemDbImporter;
   private static final String        IMPORTER_FLAG                   = "AUDITING_IMPORTER";
 
-
   private class OAuditingDistribConfig extends OAuditingConfig {
     private boolean onNodeJoinedEnabled = false;
-    private String onNodeJoinedMessage = "The node ${node} has joined";
+    private String  onNodeJoinedMessage = "The node ${node} has joined";
 
-    private boolean onNodeLeftEnabled = false;
-    private String onNodeLeftMessage = "The node ${node} has left";
+    private boolean onNodeLeftEnabled   = false;
+    private String  onNodeLeftMessage   = "The node ${node} has left";
 
     public OAuditingDistribConfig(final ODocument cfg) {
       if (cfg.containsField("onNodeJoinedEnabled"))
         onNodeJoinedEnabled = cfg.field("onNodeJoinedEnabled");
-        
+
       onNodeJoinedMessage = cfg.field("onNodeJoinedMessage");
-      
+
       if (cfg.containsField("onNodeLeftEnabled"))
         onNodeLeftEnabled = cfg.field("onNodeLeftEnabled");
-        
+
       onNodeLeftMessage = cfg.field("onNodeLeftMessage");
     }
-    
+
     @Override
     public String formatMessage(final OAuditingOperation op, final String subject) {
       if (op == OAuditingOperation.NODEJOINED) {
-      	return resolveMessage(onNodeJoinedMessage, "node", subject);
-      } else
-      if (op == OAuditingOperation.NODELEFT) {
-      	return resolveMessage(onNodeLeftMessage, "node", subject);
+        return resolveMessage(onNodeJoinedMessage, "node", subject);
+      } else if (op == OAuditingOperation.NODELEFT) {
+        return resolveMessage(onNodeLeftMessage, "node", subject);
       }
-      
+
       return subject;
     }
 
     @Override
     public boolean isEnabled(OAuditingOperation op) {
       if (op == OAuditingOperation.NODEJOINED) {
-      	return onNodeJoinedEnabled;
-      } else
-      if (op == OAuditingOperation.NODELEFT) {
-      	return onNodeLeftEnabled;
+        return onNodeJoinedEnabled;
+      } else if (op == OAuditingOperation.NODELEFT) {
+        return onNodeLeftEnabled;
       }
 
-    	return false;
+      return false;
     }
   }
-
 
   public ODefaultAuditing() {
     hooks = new ConcurrentHashMap<String, OAuditingHook>(20);
@@ -125,7 +121,8 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   @Override
   public void onCreate(final ODatabaseInternal iDatabase) {
     // Don't audit system database events.
-    if(iDatabase.getName().equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME)) return;
+    if (iDatabase.getName().equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
+      return;
 
     final OAuditingHook hook = defaultHook(iDatabase);
     hooks.put(iDatabase.getName(), hook);
@@ -199,13 +196,13 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   @Override
   public void onOpen(ODatabaseInternal iDatabase) {
     // Don't audit system database events.
-    if(iDatabase.getName().equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
+    if (iDatabase.getName().equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
       return;
-    
+
     // If the database has been opened by the auditing importer, do not hook it.
-    if(iDatabase.getProperty(IMPORTER_FLAG) != null)
+    if (iDatabase.getProperty(IMPORTER_FLAG) != null)
       return;
-  	
+
     OAuditingHook oAuditingHook = hooks.get(iDatabase.getName());
     if (oAuditingHook == null) {
       oAuditingHook = defaultHook(iDatabase);
@@ -301,8 +298,13 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
 
   }
 
+  @Deprecated
   public static String getClusterName(final String dbName) {
-  	 return dbName + "_auditing";
+    return dbName + "_auditing";
+  }
+
+  public static String getClassName(final String dbName) {
+    return dbName + AUDITING_LOG_CLASSNAME;
   }
 
   //////
@@ -311,10 +313,11 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
 
     // This should never happen, but just in case...
     // Don't audit system database events.
-    if(iDatabaseName != null && iDatabaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME)) return;
+    if (iDatabaseName != null && iDatabaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
+      return;
 
     hooks.put(iDatabaseName, new OAuditingHook(cfg, server));
-    
+
     updateConfigOnDisk(iDatabaseName, cfg);
   }
 
@@ -341,7 +344,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
    */
   public void log(final OAuditingOperation operation, final String dbName, final String username, final String message) {
     // If dbName is null, then we submit the log message to the global auditing hook.
-    // Otherwise, we submit it to the hook associated with dbName.    
+    // Otherwise, we submit it to the hook associated with dbName.
     if (dbName != null) {
       final OAuditingHook oAuditingHook = hooks.get(dbName);
 
@@ -351,7 +354,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
         globalHook.log(operation, dbName, username, message);
       }
     } else { // Use the global hook.
-    	globalHook.log(operation, dbName, username, message);
+      globalHook.log(operation, dbName, username, message);
     }
   }
 
@@ -360,13 +363,13 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
 
     try {
       ODatabaseDocumentInternal sysdb = server.getSystemDatabase().openSystemDatabase();
-  	
+
       OSchema schema = sysdb.getMetadata().getSchema();
       OClass cls = schema.getClass(AUDITING_LOG_CLASSNAME);
 
       if (cls == null) {
         cls = sysdb.getMetadata().getSchema().createClass(AUDITING_LOG_CLASSNAME);
-        cls.createProperty("date", OType.DATETIME).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+        cls.createProperty("date", OType.DATETIME);
         cls.createProperty("user", OType.STRING);
         cls.createProperty("operation", OType.BYTE);
         cls.createProperty("record", OType.LINK);
@@ -375,7 +378,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
         cls.createProperty("database", OType.STRING);
       }
     } catch (Exception e) {
-    	OLogManager.instance().error(this, "Creating auditing class exception: %s", e.getMessage());
+      OLogManager.instance().error(this, "Creating auditing class exception: %s", e.getMessage());
     } finally {
       if (currentDB != null)
         ODatabaseRecordThreadLocal.INSTANCE.set(currentDB);
@@ -384,23 +387,22 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     }
   }
 
-  // Used by OSystemDBImporter to set the IMPORTER_FLAG property in order to prevent 
+  // Used by OSystemDBImporter to set the IMPORTER_FLAG property in order to prevent
   // the import actions from being logged.
   public static ODatabaseDocumentTx openImporterDatabase(final OServer server, final String dbName) {
-  	 ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + server.getDatabaseDirectory() + dbName);
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + server.getDatabaseDirectory() + dbName);
     db.setProperty(IMPORTER_FLAG, true);
     db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
-    
+
     try {
       db.open("OSystemDBImporter", "nopasswordneeded");
     } catch (Exception e) {
-    	db = null;
+      db = null;
       OLogManager.instance().error(null, "openImporterDatabase() Cannot open database '%s'", e, dbName);
     }
-    
-    return db;
-  }  
 
+    return db;
+  }
 
   //////
   // OAuditingService (OSecurityComponent)
@@ -408,7 +410,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   // Called once the Server is running.
   public void active() {
     createClassIfNotExists();
-    
+
     globalHook = new OAuditingHook(server);
 
     Orient.instance().addDbLifecycleListener(this);
@@ -418,7 +420,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     }
 
     if (systemDbImporter != null && systemDbImporter.isEnabled()) {
-    	systemDbImporter.start();
+      systemDbImporter.start();
     }
   }
 
@@ -431,7 +433,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
       }
 
       if (jsonConfig.containsField("distributed")) {
-        ODocument distribDoc = jsonConfig.field("distributed");        
+        ODocument distribDoc = jsonConfig.field("distributed");
         distribConfig = new OAuditingDistribConfig(distribDoc);
       }
 
@@ -448,7 +450,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
   // Called on removal of the component.
   public void dispose() {
     if (systemDbImporter != null && systemDbImporter.isEnabled()) {
-    	systemDbImporter.shutdown();
+      systemDbImporter.shutdown();
     }
 
     if (server.getDistributedManager() != null) {
@@ -456,7 +458,7 @@ public class ODefaultAuditing implements OAuditingService, ODatabaseLifecycleLis
     }
 
     Orient.instance().removeDbLifecycleListener(this);
-    
+
     if (globalHook != null) {
       globalHook.shutdown(false);
       globalHook = null;
