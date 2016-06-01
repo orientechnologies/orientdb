@@ -17,13 +17,11 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.OServer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,7 +30,7 @@ import java.util.List;
 
 public class OServerCommandAuditing extends OServerCommandDistributedScope {
   private static final String[] NAMES = { "GET|auditing/*", "POST|auditing/*" };
-  private OServer server;
+  private OServer               server;
 
   public OServerCommandAuditing(OServer server) {
     super("server.profiler");
@@ -54,6 +52,7 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
           doGet(iRequest, iResponse, parts[1]);
         }
       } else if ("POST".equals(iRequest.httpMethod)) {
+
         if (action.equalsIgnoreCase("config")) {
           doPost(iRequest, iResponse, db);
         } else if (action.equalsIgnoreCase("query")) {
@@ -71,20 +70,17 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
 
     ODocument params = new ODocument().fromJSON(iRequest.content);
 
-    iRequest.databaseName = db;
-    ODatabaseDocumentTx databaseDocumentTx = getProfiledDatabaseInstance(iRequest);
-
     Collection<ODocument> documents = new ArrayList<ODocument>();
-    
-    String query = buildQuery(databaseDocumentTx.getName(), params);
-    
-    documents = (Collection<ODocument>)server.getSystemDatabase().execute(null, query, params.toMap());
+
+    String query = buildQuery(params);
+
+    documents = (Collection<ODocument>) server.getSystemDatabase().execute(null, query, params.toMap());
 
     iResponse.writeResult(documents);
   }
 
-  private String buildQuery(final String dbName, ODocument params) {
-    String query = String.format("select user as username,* from cluster:%s_auditing :where order by date desc limit :limit", dbName);
+  private String buildQuery(ODocument params) {
+    String query = String.format("select user as username,* from OAuditingLog :where order by date desc limit :limit");
 
     List<String> whereConditions = new ArrayList<String>();
     Integer limit = params.field("limit");
@@ -97,6 +93,9 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     }
     if (isNotNullNotEmpty(params, "record")) {
       whereConditions.add("record = :record");
+    }
+    if (isNotNullNotEmpty(params, "db")) {
+      whereConditions.add("database = :db");
     }
     if (isNotNullNotEmpty(params, "note")) {
       String note = params.field("note");
