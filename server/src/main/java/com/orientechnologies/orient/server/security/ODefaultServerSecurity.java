@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.security;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
@@ -195,15 +196,15 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
       synchronized (authenticatorsList) {
         StringBuilder sb = new StringBuilder();
 
-        // Walk through the list of OSecurityAuthenticators.        
+        // Walk through the list of OSecurityAuthenticators.
         for (OSecurityAuthenticator sa : authenticatorsList) {
           if (sa.isEnabled()) {
             String sah = sa.getAuthenticationHeader(databaseName);
 
             if (sah != null && sah.trim().length() > 0) {
               // If we're not the first authenticator, then append "\n".
-              if(sb.length() > 0){
-                 sb.append("\n");
+              if (sb.length() > 0) {
+                sb.append("\n");
               }
               sb.append(sah);
             }
@@ -446,9 +447,8 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     synchronized (auditingSynch) {
       if (auditingService != null)
         auditingService.log(operation, dbName, username, message);
-    }  	
+    }
   }
-
 
   // OSecuritySystem
   public void registerSecurityClass(final Class<?> cls) {
@@ -513,9 +513,11 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     if (name.equalsIgnoreCase("auditing")) {
       auditingDoc = jsonConfig;
       reloadAuditingService();
+
     } else if (name.equalsIgnoreCase("authentication")) {
       authDoc = jsonConfig;
       reloadAuthMethods();
+
     } else if (name.equalsIgnoreCase("ldapImporter")) {
       ldapImportDoc = jsonConfig;
       reloadImportLDAP();
@@ -526,7 +528,8 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
       serverDoc = jsonConfig;
       reloadServer();
     }
-    
+    setSection(name, jsonConfig);
+
     log(OAuditingOperation.RELOADEDSECURITY, null, null, String.format("The %s security component has been reloaded", name));
   }
 
@@ -671,7 +674,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
 
       if (isEnabled()) {
         registerRESTCommands();
-        
+
         log(OAuditingOperation.SECURITY, null, null, "The security module is now loaded");
       }
     } else {
@@ -766,6 +769,35 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
     }
 
     return sectionDoc;
+  }
+
+  // Change the component section and save it to disk
+  private void setSection(final String section, ODocument sectionDoc) {
+
+    ODocument oldSection = getSection(section);
+    try {
+      if (configDoc != null) {
+
+        configDoc.field(section, sectionDoc);
+        String configFile = OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/security.json");
+
+        // The default "security.json" file can be overridden in the server config file.
+        String securityFile = getConfigProperty("server.security.file");
+        if (securityFile != null)
+          configFile = securityFile;
+
+        String ssf = OGlobalConfiguration.SERVER_SECURITY_FILE.getValueAsString();
+        if (ssf != null)
+          configFile = ssf;
+
+        File f = new File(configFile);
+        OIOUtils.writeFile(f, configDoc.toJSON("prettyPrint"));
+      }
+    } catch (Exception ex) {
+      configDoc.field(section, oldSection);
+      OLogManager.instance().error(this, "ODefaultServerSecurity.setSection(%s) Exception: %s", section, ex.getMessage());
+    }
+
   }
 
   // "${ORIENTDB_HOME}/config/security.json"
@@ -967,6 +999,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
             OLogManager.instance().error(this, "ODefaultServerSecurity.reloadAuditingService() Auditing class property is missing");
           }
         }
+
       }
     } catch (Exception ex) {
       OLogManager.instance().error(this, "ODefaultServerSecurity.reloadAuditingService() Exception: %s", ex.getMessage());
