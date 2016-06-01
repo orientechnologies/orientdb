@@ -40,30 +40,25 @@ public class OStressTesterCommandLineParserTest {
             assertTrue(ex.getMessage().contains(String.format(OErrorMessages.COMMAND_LINE_PARSER_INVALID_MODE, "foo")));
         }
 
-        OStressTester stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100"});
-        assertEquals(100, stressTester.getIterationsNumber());
-        assertNull(stressTester.getPassword());
-
-        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100", "-p", "foo"});
+        OStressTester stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100", "-p", "foo"});
         assertEquals(100, stressTester.getIterationsNumber());
         assertEquals("foo", stressTester.getPassword());
 
-        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100", "-t", "4"});
+        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100", "-t", "4", "-p", "foo"});
         assertEquals(100, stressTester.getIterationsNumber());
         assertEquals(4, stressTester.getThreadsNumber());
-        assertNull(stressTester.getPassword());
+        assertEquals("foo", stressTester.getPassword());
 
-        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100","-t","4","-m","plocal"});
-        assertEquals(100, stressTester.getIterationsNumber());
-        assertEquals(4, stressTester.getThreadsNumber());
-        assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());
-        assertNull(stressTester.getPassword());
-
-        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100","-t","4","-m","plocal","-s","c1r1u1d1"});
+        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100","-t","4","-m","plocal", "-p", "foo"});
         assertEquals(100, stressTester.getIterationsNumber());
         assertEquals(4, stressTester.getThreadsNumber());
         assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());
-        assertNull(stressTester.getPassword());
+        assertEquals("foo", stressTester.getPassword());
 
+        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100","-t","4","-m","plocal","-s","c1r1u1d1", "-p", "foo"});
+        assertEquals(100, stressTester.getIterationsNumber());
+        assertEquals(4, stressTester.getThreadsNumber());
+        assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());
+        assertEquals("foo", stressTester.getPassword());
     }
 }

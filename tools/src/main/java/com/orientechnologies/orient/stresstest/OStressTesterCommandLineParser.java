@@ -44,7 +44,7 @@ public class OStressTesterCommandLineParser {
         if (mode != com.orientechnologies.orient.stresstest.OMode.PLOCAL) {
             throw new OInitException("OMode [" + mode + "] not yet supported. Use PLOCAL.");
         }
-        OOperationsSet operationsSet = new OOperationsSet(options.get(OConstants.OPTION_OPERATIONS));
+        OOperationsSet operationsSet = new OOperationsSet(options.get(OConstants.OPTION_OPERATIONS), threadsNumber, iterationsNumber);
         String rootPassword = options.get(OConstants.OPTION_ROOT_PASSWORD);
         return new OStressTester(mode, operationsSet, iterationsNumber, threadsNumber, rootPassword);
     }
@@ -66,7 +66,7 @@ public class OStressTesterCommandLineParser {
         options = setDefaultIfNotPresent(options, OConstants.OPTION_MODE, com.orientechnologies.orient.stresstest.OMode.PLOCAL.name());
         options = setDefaultIfNotPresent(options, OConstants.OPTION_ITERATIONS, "10");
         options = setDefaultIfNotPresent(options, OConstants.OPTION_THREADS, "4");
-        options = setDefaultIfNotPresent(options, OConstants.OPTION_OPERATIONS, "C1000R1000U500D500");
+        options = setDefaultIfNotPresent(options, OConstants.OPTION_OPERATIONS, "C5000R5000U5000D5000");
 
         try {
             OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());

@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.stresstest.output;
 
 /**
- * This class contains the times of execution of the operations for an executor (a single thread).
+ * This class contains the execution times in ms of the operations for an executor (a single thread).
  *
  * @author Andrea Iacono
  */

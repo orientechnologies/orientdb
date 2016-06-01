@@ -47,7 +47,7 @@ public class OOperationsExecutor implements Callable {
         this.password = password;
         this.consoleWriter = consoleWriter;
         this.operationsSet = operationsSet;
-        insertedDocs = new ArrayList<>();
+        insertedDocs = new ArrayList<ODocument>();
     }
 
 

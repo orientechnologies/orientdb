@@ -40,7 +40,7 @@ public class OOperationsSet {
      * @param ops
      * @throws Exception if the param format is not correct
      */
-    public OOperationsSet(String ops) throws OInitException {
+    public OOperationsSet(String ops, int threads, int iterations) throws OInitException {
 
         ops = ops.toUpperCase();
         if (!(ops.contains("C") && ops.contains("R") && ops.contains("U") && ops.contains("D"))) {
@@ -75,6 +75,11 @@ public class OOperationsSet {
             }
             pos += valPos.position + 1;
         }
+        
+        creates = (creates / iterations) / threads; 
+        reads = (reads / iterations) / threads;
+        updates = (updates / iterations) / threads;
+        deletes = (deletes / iterations) / threads;
     }
 
     private ValuePosition getValue(String ops, int pos) throws OInitException {
