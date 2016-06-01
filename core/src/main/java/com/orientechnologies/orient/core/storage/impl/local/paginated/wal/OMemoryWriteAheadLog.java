@@ -108,4 +108,9 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
   public void removeFullCheckpointListener(OFullCheckpointRequestListener listener) {
   }
+
+  @Override
+  public long getPreferredSegmentCount() {
+    throw new UnsupportedOperationException("Operation not supported for in memory storage.");
+  }
 }

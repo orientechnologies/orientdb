@@ -300,6 +300,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       diskWriteAheadLog.addLowDiskSpaceListener(this);
       diskWriteAheadLog.checkFreeSpace();
       writeAheadLog = diskWriteAheadLog;
+      writeAheadLog.addFullCheckpointListener(this);
     } else
       writeAheadLog = null;
 
