@@ -62,9 +62,11 @@
             </parameters>
         </handler>
 
+        <!-- SYS LOG CONNECTOR, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
         <handler class="com.orientechnologies.security.syslog.ODefaultSyslog">
             <parameters>
                 <parameter name="enabled" value="true"/>
+                <parameter name="debug" value="false"/>
                 <parameter name="hostname" value="localhost"/>
                 <parameter name="port" value="514"/>
                 <parameter name="appName" value="OrientDB"/>
