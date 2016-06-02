@@ -19,22 +19,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.security.SecureRandom;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
@@ -80,6 +64,21 @@ import com.orientechnologies.orient.server.security.ODefaultServerSecurity;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 import com.orientechnologies.orient.server.security.OServerSecurity;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
   private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
@@ -978,16 +977,22 @@ public class OServer {
   }
 
   protected void loadUsers() throws IOException {
-    final OServerConfiguration configuration = serverCfg.getConfiguration();
+    try {
+      final OServerConfiguration configuration = serverCfg.getConfiguration();
 
-    if (configuration.isAfterFirstTime) {
-      return;
+      if (configuration.isAfterFirstTime) {
+        return;
+      }
+
+      configuration.isAfterFirstTime = true;
+
+      if (OGlobalConfiguration.CREATE_DEFAULT_USERS.getValueAsBoolean())
+        createDefaultServerUsers();
+
+    } finally {
+      // REMOVE THE ENV VARIABLE FOR SECURITY REASONS
+      OSystemVariableResolver.setEnv(ROOT_PASSWORD_VAR, "");
     }
-
-    configuration.isAfterFirstTime = true;
-
-    if (OGlobalConfiguration.CREATE_DEFAULT_USERS.getValueAsBoolean())
-      createDefaultServerUsers();
   }
 
   /**
