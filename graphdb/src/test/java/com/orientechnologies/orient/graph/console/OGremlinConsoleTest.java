@@ -31,6 +31,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -63,6 +64,28 @@ public class OGremlinConsoleTest {
       } finally {
         db.close();
       }
+    } finally {
+      console.close();
+    }
+  }
+
+  @Test
+  public void testGraphMLExport() {
+    final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
+    final String OUTPUT_FILE = "target/test/resources/graph-example-2.xml";
+    String dbUrl = "memory:testGraphMLImport";
+    StringBuilder builder = new StringBuilder();
+    builder.append("create database " + dbUrl + ";\n");
+    builder.append("import database " + INPUT_FILE + ";\n");
+    builder.append("export database " + OUTPUT_FILE + ";\n");
+    OConsoleDatabaseApp console = new OGremlinConsole(new String[] { builder.toString() });
+    try {
+      console.run();
+
+      final File f = new File(OUTPUT_FILE);
+      Assert.assertTrue(f.exists());
+      Assert.assertTrue(f.length() > 0);
+
     } finally {
       console.close();
     }
