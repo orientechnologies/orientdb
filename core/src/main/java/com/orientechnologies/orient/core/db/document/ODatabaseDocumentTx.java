@@ -1206,16 +1206,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   private void clearOwner() {
     final Thread current = Thread.currentThread();
-    final Thread o = owner.get();
-
-    if (o == null) {
-      throw new IllegalStateException("Database is going to be closed but was not opened");
-    }
-
-    if (o != current || !owner.compareAndSet(current, null)) {
-      throw new IllegalStateException("Database was opened in other thread `" + o.getName() + "' thread but closed in `" +
-          current.getName() + "' thread");
-    }
+    owner.compareAndSet(current, null);
   }
 
   @Override
