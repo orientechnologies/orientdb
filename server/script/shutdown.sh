@@ -70,7 +70,7 @@ else
 
     if [ "x$wait" = "xyes" ] ; then
       while true ; do
-        ps auxw | grep java | grep $ORIENTDB_HOME/lib/orientdb-server > /dev/null || break
+        ps auxww | grep java | grep $ORIENTDB_HOME/lib/orientdb-server > /dev/null || break
         sleep 1;
       done
     fi
