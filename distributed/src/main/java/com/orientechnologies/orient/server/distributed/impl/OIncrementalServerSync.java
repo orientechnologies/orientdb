@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -68,7 +69,7 @@ public class OIncrementalServerSync {
    * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
    */
-  public void importDelta(final OServer serverInstance, final ODatabaseDocumentTx db, final FileInputStream in, final String iNode)
+  public void importDelta(final OServer serverInstance, final ODatabaseDocumentInternal db, final FileInputStream in, final String iNode)
       throws IOException {
     final String nodeName = serverInstance.getDistributedManager().getLocalNodeName();
 

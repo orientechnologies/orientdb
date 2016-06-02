@@ -24,16 +24,20 @@ public class OUpdateStatementTest {
     try {
       SimpleNode result = osql.parse();
       if (!isCorrect) {
+        System.out.println(query);
+        if (result != null) {
+          System.out.println("->");
+          System.out.println(result.toString());
+          System.out.println("............");
+        }
         fail();
       }
-//      System.out.println(query);
-//      System.out.println("->");
-//      System.out.println(result.toString());
-//      System.out.println("............");
+
 
       return result;
     } catch (Exception e) {
       if (isCorrect) {
+        System.out.println(query);
         e.printStackTrace();
         fail();
       }

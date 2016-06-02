@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.orient.console.OTableFormatter;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -197,7 +198,7 @@ public class ODistributedOutput {
     return buffer.toString();
   }
 
-  public static String formatClasses(final ODistributedConfiguration cfg, final ODatabaseDocumentTx db) {
+  public static String formatClasses(final ODistributedConfiguration cfg, final ODatabaseDocument db) {
     final StringBuilder buffer = new StringBuilder();
 
     final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {

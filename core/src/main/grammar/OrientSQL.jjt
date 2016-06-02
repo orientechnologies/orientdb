@@ -901,8 +901,6 @@ OStatement StatementInternal():
                 LOOKAHEAD(UpdateStatement())
                 result = UpdateStatement()
                 |
-                result = MatchStatement()
-                |
                 result = ProfileStorageStatement()
                 |
                 LOOKAHEAD(TruncateClassStatement())
@@ -910,9 +908,6 @@ OStatement StatementInternal():
                 |
                 LOOKAHEAD(TruncateClusterStatement())
                 result = TruncateClusterStatement()
-                |
-                LOOKAHEAD(FindReferencesStatement())
-                result = FindReferencesStatement()
                 |
                 LOOKAHEAD(TruncateRecordStatement())
                 result = TruncateRecordStatement()
@@ -985,6 +980,11 @@ OStatement QueryStatement():
         result = SelectWithoutTargetStatement()
         |
         result = TraverseStatement()
+        |
+        result = MatchStatement()
+        |
+        LOOKAHEAD( FindReferencesStatement() )
+        result = FindReferencesStatement()
     ){ return result; }
 }
 
@@ -1761,69 +1761,11 @@ OCreateEdgeStatement CreateEdgeStatement():
 	[ jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]]
 	<FROM>
 	(
-	    jjtThis.leftRid = Rid()
-	    |
-	    (
-	        <LBRACKET>
-	        [
-	            lastRid = Rid()
-	            {
-	                jjtThis.leftRids=new ArrayList();
-	                jjtThis.leftRids.add(lastRid);
-	            }
-	            (
-	                <COMMA>
-	                lastRid = Rid() { jjtThis.leftRids.add(lastRid); }
-	            )*
-	        ] <RBRACKET>
-	    )
-	    |
-	    (
-	        <LPAREN>
-	        (
-	            LOOKAHEAD(SelectStatement()) jjtThis.leftStatement = SelectStatement()
-	            |
-	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.leftStatement = SelectWithoutTargetStatement()
-	        )
-	        <RPAREN>
-	    )
-	    |
-	    jjtThis.leftParam = InputParameter()
-	    |
-	    jjtThis.leftIdentifier = Identifier()
+	    jjtThis.leftExpression = Expression()
 	)
 	<TO>
 	(
-        jjtThis.rightRid = Rid()
-	    |
-	    (
-	        <LBRACKET>
-	        [
-	            lastRid = Rid()
-	            {
-	                jjtThis.rightRids=new ArrayList();
-	                jjtThis.rightRids.add(lastRid);
-	            }
-	            (
-	                <COMMA>
-	                lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
-	            )*
-	        ] <RBRACKET>
-	    )
-	    |
-	    (
-	        <LPAREN>
-	        (
-	            LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
-	            |
-	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
-	        )
-	        <RPAREN>
-	    )
-	    |
-	    jjtThis.rightParam = InputParameter()
-	    |
-	    jjtThis.rightIdentifier = Identifier()
+	    jjtThis.rightExpression = Expression()
 	)
     [ jjtThis.body = InsertBody() ]
     [ jjtThis.retry = Retry() ]
@@ -2190,9 +2132,10 @@ OMathExpression ParenthesisExpression():
     (
 	    <LPAREN>
 	    (
-	        jjtThis.expression = Expression()
+	        LOOKAHEAD(2)
+	        jjtThis.statement = QueryStatement()
 	        |
-	        jjtThis.statement = SelectStatement()
+	        jjtThis.expression = Expression()
 	        |
             jjtThis.statement = InsertStatement()
         )
@@ -2271,13 +2214,7 @@ OLetItem LetItem():
     	    (
     	        <LPAREN>
     	        (
-    	            LOOKAHEAD( SelectStatement() )
-    	            jjtThis.query = SelectStatement()
-    	            |
-    	            LOOKAHEAD( SelectWithoutTargetStatement() )
-    	            jjtThis.query = SelectWithoutTargetStatement()
-    	            |
-    	            jjtThis.query = TraverseStatement()
+    	            jjtThis.query = QueryStatement()
     	        )
     	        <RPAREN>
     	    )
@@ -2312,17 +2249,7 @@ OFromItem FromItem():
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	<LPAREN> (
-    	            LOOKAHEAD(SelectStatement()) jjtThis.statement = SelectStatement()
-    	            |
-    	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.statement = SelectWithoutTargetStatement()
-    	            |
-    	            jjtThis.statement = TraverseStatement()
-    	            |
-                    jjtThis.statement = MatchStatement()
-					|
-					jjtThis.statement = FindReferencesStatement()
-    	) <RPAREN>
+    	<LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
     	|
     	jjtThis.inputParam = InputParameter()
     	|

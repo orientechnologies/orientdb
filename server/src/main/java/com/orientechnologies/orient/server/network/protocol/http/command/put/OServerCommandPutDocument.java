@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.put;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -38,7 +39,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
     iRequest.data.commandInfo = "Edit Document";
 
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
     ORecordId recordId;
     final ODocument doc;
 

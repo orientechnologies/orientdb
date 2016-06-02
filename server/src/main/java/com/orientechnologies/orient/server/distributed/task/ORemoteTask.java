@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -41,7 +42,7 @@ public interface ORemoteTask extends Externalizable {
 
   OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType();
 
-  Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager, ODatabaseDocumentTx database)
+  Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager, ODatabaseDocumentInternal database)
       throws Exception;
 
   int getPartitionKey();

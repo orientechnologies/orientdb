@@ -21,6 +21,8 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -48,7 +50,7 @@ public class ORestartServerTask extends OAbstractRemoteTask {
 
   @Override
   public Object execute(ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentTx database) throws Exception {
+      final ODatabaseDocumentInternal database) throws Exception {
 
     ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
         "Restarting server...");

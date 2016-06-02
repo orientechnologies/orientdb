@@ -367,6 +367,28 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     return result;
   }
 
+  @Override
+  public Map<String, Object> getProperties() {
+    if (this.rawElement == null)
+      return null;
+    final ODocument raw = this.rawElement.getRecord();
+    if (raw == null)
+      return null;
+
+    final OrientBaseGraph graph = setCurrentGraphInThreadLocal();
+
+    final Map<String, Object> result = new HashMap<String, Object>();
+
+    for (String field : raw.fieldNames())
+      if (graph != null && settings.isUseVertexFieldsForEdgeLabels()) {
+        if (!field.startsWith(CONNECTION_OUT_PREFIX) && !field.startsWith(CONNECTION_IN_PREFIX))
+          result.put(field, raw.field(field));
+      } else if (!field.equals(OrientBaseGraph.CONNECTION_OUT) && !field.equals(OrientBaseGraph.CONNECTION_IN))
+        result.put(field, raw.field(field));
+
+    return result;
+  }
+
   /**
    * Returns a lazy iterable instance against vertices.
    *

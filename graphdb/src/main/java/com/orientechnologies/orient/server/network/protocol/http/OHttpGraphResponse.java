@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.tinkerpop.blueprints.Direction;
@@ -75,14 +76,22 @@ public class OHttpGraphResponse extends OHttpResponse {
         // IGNORE IT
         continue;
 
-      if (entry instanceof ODocument)
-        if (((ODocument) entry).getSchemaClass().isVertexType())
+      entry = ((OIdentifiable)entry).getRecord();
+
+      if (entry == null || !(entry instanceof OIdentifiable))
+        // IGNORE IT
+        continue;
+
+      if (entry instanceof ODocument) {
+        OClass schemaClass = ((ODocument) entry).getSchemaClass();
+        if (schemaClass!=null && schemaClass.isVertexType())
           vertices.add(graph.getVertex(entry));
-        else if (((ODocument) entry).getSchemaClass().isEdgeType())
+        else if (schemaClass!=null && schemaClass.isEdgeType())
           edges.add(graph.getEdge(entry));
         else
           // IGNORE IT
           continue;
+      }
     }
 
     final StringWriter buffer = new StringWriter();
@@ -123,8 +132,8 @@ public class OHttpGraphResponse extends OHttpResponse {
       json.writeAttribute("@rid", edge.getIdentity());
       json.writeAttribute("@class", edge.getRecord().getClassName());
 
-      json.writeAttribute("from", edge.getVertex(Direction.IN).getId());
-      json.writeAttribute("to", edge.getVertex(Direction.OUT).getId());
+      json.writeAttribute("from", edge.getVertex(Direction.OUT).getId());
+      json.writeAttribute("to", edge.getVertex(Direction.IN).getId());
 
       for (String field : edge.getPropertyKeys()) {
         final Object v = edge.getProperty(field);

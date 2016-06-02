@@ -22,6 +22,8 @@ package com.orientechnologies.common.console;
 
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -34,22 +36,41 @@ import java.util.Set;
  * Custom implementation of TTY reader. Supports arrow keys + history.
  */
 public class TTYConsoleReader implements OConsoleReader {
-
   private final static String HISTORY_FILE_NAME   = ".orientdb_history";
-  public final static int     END_CHAR            = 70;
-  public final static int     BEGIN_CHAR          = 72;
-  public final static int     DEL_CHAR            = 126;
-  public final static int     DOWN_CHAR           = 66;
-  public final static int     UP_CHAR             = 65;
-  public final static int     RIGHT_CHAR          = 67;
-  public final static int     LEFT_CHAR           = 68;
-  public final static int     HORIZONTAL_TAB_CHAR = 9;
-  public final static int     VERTICAL_TAB_CHAR   = 11;
-  public final static int     BACKSPACE_CHAR      = 127;
-  public final static int     NEW_LINE_CHAR       = 10;
-  public final static int     UNIT_SEPARATOR_CHAR = 31;
+  public final static  int    END_CHAR            = 70;
+  public final static  int    BEGIN_CHAR          = 72;
+  public final static  int    DEL_CHAR            = 126;
+  public final static  int    DOWN_CHAR           = 66;
+  public final static  int    UP_CHAR             = 65;
+  public final static  int    RIGHT_CHAR          = 67;
+  public final static  int    LEFT_CHAR           = 68;
+  public final static  int    HORIZONTAL_TAB_CHAR = 9;
+  public final static  int    VERTICAL_TAB_CHAR   = 11;
+  public final static  int    BACKSPACE_CHAR      = 127;
+  public final static  int    NEW_LINE_CHAR       = 10;
+  public final static  int    UNIT_SEPARATOR_CHAR = 31;
   private final static int    MAX_HISTORY_ENTRIES = 50;
-  protected int               currentPos          = 0;
+
+  private static final Object signalLock         = new Object();
+  private static       int    cachedConsoleWidth = -1; // -1 for no cached value, -2 to indicate the error
+
+  static {
+    final Signal signal = new Signal("WINCH");
+    Signal.handle(signal, new SignalHandler() {
+      @Override
+      public void handle(Signal signal) {
+        synchronized (signalLock) {
+          cachedConsoleWidth = -1;
+        }
+      }
+    });
+  }
+
+  protected int cursorPosition    = 0;
+  protected int oldPromptLength   = 0;
+  protected int oldTextLength     = 0;
+  protected int oldCursorPosition = 0;
+  protected int maxTotalLength    = 0;
 
   protected final List<String> history = new ArrayList<String>();
 
@@ -95,7 +116,7 @@ public class TTYConsoleReader implements OConsoleReader {
     String consoleInput = "";
 
     StringBuffer buffer = new StringBuffer();
-    currentPos = 0;
+    cursorPosition = 0;
     historyBuffer = null;
     int historyNum = history.size();
     boolean hintedHistory = false;
@@ -119,39 +140,23 @@ public class TTYConsoleReader implements OConsoleReader {
         }
         if (ctrl) {
           if (next == RIGHT_CHAR) {
-            currentPos = buffer.indexOf(" ", currentPos) + 1;
-            if (currentPos == 0)
-              currentPos = buffer.length();
-            StringBuffer cleaner = new StringBuffer();
-            for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
-            }
-            rewriteConsole(cleaner, true);
-            rewriteConsole(buffer, false);
+            cursorPosition = buffer.indexOf(" ", cursorPosition) + 1;
+            if (cursorPosition == 0)
+              cursorPosition = buffer.length();
+            updatePrompt(buffer);
           } else if (next == LEFT_CHAR) {
-            if (currentPos > 1 && currentPos < buffer.length() && buffer.charAt(currentPos - 1) == ' ') {
-              currentPos = buffer.lastIndexOf(" ", (currentPos - 2)) + 1;
+            if (cursorPosition > 1 && cursorPosition < buffer.length() && buffer.charAt(cursorPosition - 1) == ' ') {
+              cursorPosition = buffer.lastIndexOf(" ", (cursorPosition - 2)) + 1;
             } else {
-              currentPos = buffer.lastIndexOf(" ", currentPos) + 1;
+              cursorPosition = buffer.lastIndexOf(" ", cursorPosition) + 1;
             }
-            if (currentPos < 0)
-              currentPos = 0;
-            StringBuffer cleaner = new StringBuffer();
-            for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
-            }
-            rewriteConsole(cleaner, true);
-            rewriteConsole(buffer, false);
-          } else {
+            if (cursorPosition < 0)
+              cursorPosition = 0;
+            updatePrompt(buffer);
           }
         } else {
           if (next == UP_CHAR && !history.isEmpty()) {
             if (history.size() > 0) { // UP
-              StringBuffer cleaner = new StringBuffer();
-              for (int i = 0; i < buffer.length(); i++) {
-                cleaner.append(" ");
-              }
-              rewriteConsole(cleaner, true);
               if (!hintedHistory && (historyNum == history.size() || !buffer.toString().equals(history.get(historyNum)))) {
                 if (buffer.length() > 0) {
                   hintedHistory = true;
@@ -166,18 +171,11 @@ public class TTYConsoleReader implements OConsoleReader {
               } else {
                 buffer = new StringBuffer(historyBuffer);
               }
-              currentPos = buffer.length();
-              rewriteConsole(buffer, false);
-              // writeHistory(historyNum);
+              cursorPosition = buffer.length();
+              updatePrompt(buffer);
             }
           } else if (next == DOWN_CHAR && !history.isEmpty()) { // DOWN
             if (history.size() > 0) {
-              StringBuffer cleaner = new StringBuffer();
-              for (int i = 0; i < buffer.length(); i++) {
-                cleaner.append(" ");
-              }
-              rewriteConsole(cleaner, true);
-
               historyNum = getHintedHistoryIndexDown(historyNum);
               if (historyNum == history.size()) {
                 if (historyBuffer != null) {
@@ -188,97 +186,59 @@ public class TTYConsoleReader implements OConsoleReader {
               } else {
                 buffer = new StringBuffer(history.get(historyNum));
               }
-              currentPos = buffer.length();
-              rewriteConsole(buffer, false);
-              // writeHistory(historyNum);
+              cursorPosition = buffer.length();
+              updatePrompt(buffer);
             }
           } else if (next == RIGHT_CHAR) {
-            if (currentPos < buffer.length()) {
-              currentPos++;
-              StringBuffer cleaner = new StringBuffer();
-              for (int i = 0; i < buffer.length(); i++) {
-                cleaner.append(" ");
-              }
-              rewriteConsole(cleaner, true);
-              rewriteConsole(buffer, false);
+            if (cursorPosition < buffer.length()) {
+              cursorPosition++;
+              updatePrompt(buffer);
             }
           } else if (next == LEFT_CHAR) {
-            if (currentPos > 0) {
-              currentPos--;
-              StringBuffer cleaner = new StringBuffer();
-              for (int i = 0; i < buffer.length(); i++) {
-                cleaner.append(" ");
-              }
-              rewriteConsole(cleaner, true);
-              rewriteConsole(buffer, false);
+            if (cursorPosition > 0) {
+              cursorPosition--;
+              updatePrompt(buffer);
             }
           } else if (next == END_CHAR) {
-            currentPos = buffer.length();
-            StringBuffer cleaner = new StringBuffer();
-            for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
-            }
-            rewriteConsole(cleaner, true);
-            rewriteConsole(buffer, false);
+            cursorPosition = buffer.length();
+            updatePrompt(buffer);
           } else if (next == BEGIN_CHAR) {
-            currentPos = 0;
-            StringBuffer cleaner = new StringBuffer();
-            for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
-            }
-            rewriteConsole(cleaner, true);
-            rewriteConsole(buffer, false);
-          } else {
+            cursorPosition = 0;
+            updatePrompt(buffer);
           }
         }
       } else {
         if (next == NEW_LINE_CHAR) {
           outStream.println();
+          oldPromptLength = 0;
+          oldTextLength = 0;
+          oldCursorPosition = 0;
+          maxTotalLength = 0;
           break;
         } else if (next == BACKSPACE_CHAR) {
-          if (buffer.length() > 0 && currentPos > 0) {
-            StringBuffer cleaner = new StringBuffer();
-            for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
-            }
-            buffer.deleteCharAt(currentPos - 1);
-            currentPos--;
-            rewriteConsole(cleaner, true);
-            rewriteConsole(buffer, false);
+          if (buffer.length() > 0 && cursorPosition > 0) {
+            buffer.deleteCharAt(cursorPosition - 1);
+            cursorPosition--;
+            updatePrompt(buffer);
           }
         } else if (next == DEL_CHAR) {
-          if (buffer.length() > 0 && currentPos >= 0 && currentPos < buffer.length()) {
-            StringBuffer cleaner = new StringBuffer();
-            for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
-            }
-            buffer.deleteCharAt(currentPos);
-            rewriteConsole(cleaner, true);
-            rewriteConsole(buffer, false);
+          if (buffer.length() > 0 && cursorPosition >= 0 && cursorPosition < buffer.length()) {
+            buffer.deleteCharAt(cursorPosition);
+            updatePrompt(buffer);
           }
         } else if (next == HORIZONTAL_TAB_CHAR) {
-          StringBuffer cleaner = new StringBuffer();
-          for (int i = 0; i < buffer.length(); i++) {
-            cleaner.append(" ");
-          }
           buffer = writeHint(buffer);
-          rewriteConsole(cleaner, true);
-          rewriteConsole(buffer, false);
-          currentPos = buffer.length();
+          cursorPosition = buffer.length();
+          updatePrompt(buffer);
         } else {
           if ((next > UNIT_SEPARATOR_CHAR && next < BACKSPACE_CHAR) || next > BACKSPACE_CHAR) {
-            StringBuffer cleaner = new StringBuffer();
-            for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
-            }
-            if (currentPos == buffer.length()) {
+            if (cursorPosition == buffer.length()) {
               buffer.append((char) next);
             } else {
-              buffer.insert(currentPos, (char) next);
+              buffer.insert(cursorPosition, (char) next);
             }
-            currentPos++;
-            rewriteConsole(cleaner, true);
-            rewriteConsole(buffer, false);
+            cursorPosition++;
+            updatePrompt(buffer);
           } else {
             outStream.println();
             outStream.print(buffer);
@@ -307,12 +267,37 @@ public class TTYConsoleReader implements OConsoleReader {
     }
   }
 
-  public OConsoleApplication getConsole() {
-    return console;
-  }
-
   public void setConsole(OConsoleApplication iConsole) {
     console = iConsole;
+  }
+
+  @Override
+  public int getConsoleWidth() {
+    synchronized (signalLock) {
+      if (cachedConsoleWidth > 0) // we have cached value
+        return cachedConsoleWidth;
+
+      if (cachedConsoleWidth == -1) { // no cached value
+        try {
+          final Process process = Runtime.getRuntime().exec(new String[] { "sh", "-c", "tput cols 2> /dev/tty" });
+          final String line = new BufferedReader(new InputStreamReader(process.getInputStream())).readLine();
+          process.waitFor();
+
+          if (process.exitValue() == 0 && line != null) {
+            cachedConsoleWidth = Integer.parseInt(line);
+          } else
+            cachedConsoleWidth = -2;
+        } catch (IOException e) {
+          cachedConsoleWidth = -2;
+        } catch (InterruptedException e) {
+          cachedConsoleWidth = -2;
+        } catch (NumberFormatException e) {
+          cachedConsoleWidth = -2;
+        }
+      }
+
+      return cachedConsoleWidth == -2 || cachedConsoleWidth == 0 ? OConsoleReader.FALLBACK_CONSOLE_WIDTH : cachedConsoleWidth;
+    }
   }
 
   private void writeHistory(int historyNum) throws IOException {
@@ -398,7 +383,7 @@ public class TTYConsoleReader implements OConsoleReader {
         }
       }
       hintBuffer.append("-----------------------------\n");
-      rewriteHintConsole(hintBuffer);
+      updateHints(hintBuffer);
     } else if (suggestions.size() > 0) {
       buffer = new StringBuffer();
       buffer.append(suggestions.get(0));
@@ -407,20 +392,131 @@ public class TTYConsoleReader implements OConsoleReader {
     return buffer;
   }
 
-  private void rewriteConsole(StringBuffer buffer, boolean cleaner) {
+  private void updatePrompt(StringBuffer newText) {
+    final int consoleWidth = getConsoleWidth();
+    final String newPrompt = console.getPrompt();
+    final int newTotalLength = newPrompt.length() + newText.length();
+    final int oldTotalLength = oldPromptLength + oldTextLength;
+
+    // 1. Hide the cursor to reduce flickering.
+
+    hideCursor();
+
+    // 2. Position to the old prompt beginning.
+
     outStream.print("\r");
-    outStream.print(console.getPrompt());
-    if (currentPos < buffer.length() && buffer.length() > 0 && !cleaner) {
-      outStream.print("\033[0m" + buffer.substring(0, currentPos) + "\033[0;30;47m" + buffer.substring(currentPos, currentPos + 1)
-          + "\033[0m" + buffer.substring(currentPos + 1) + "\033[0m");
-    } else {
-      outStream.print(buffer);
-    }
+    moveCursorVertically(-getWraps(oldPromptLength, oldCursorPosition, consoleWidth));
+
+    // 3. Write the new prompt over the old one.
+
+    outStream.print(newPrompt);
+    outStream.print(newText);
+
+    // 4. Clear the remaining ending part of the old prompt, if any.
+
+    final StringBuilder spaces = new StringBuilder();
+    final int promptLengthDelta = oldTotalLength - newTotalLength;
+    for (int i = 0; i < promptLengthDelta; i++)
+      spaces.append(' ');
+    outStream.print(spaces);
+
+    // 5. Reset the cursor to the prompt beginning. We may do navigation relative to the updated console cursor position,
+    // but the math becomes too tricky in this case. Feel free to fix this ;)
+
+    outStream.print("\r");
+    if (newTotalLength > oldTotalLength) {
+      if (newTotalLength > maxTotalLength && newTotalLength % consoleWidth == 0) {
+        outStream.print('\n'); // make room for the cursor
+        moveCursorVertically(-1);
+      }
+      moveCursorVertically(-getWraps(newPrompt.length(), newText.length() - 1, consoleWidth));
+    } else
+      moveCursorVertically(-getWraps(oldPromptLength, oldTextLength - 1, consoleWidth));
+
+    // 6. Place the cursor at the right place.
+
+    moveCursorVertically((newPrompt.length() + cursorPosition) / consoleWidth);
+    moveCursorHorizontally((newPrompt.length() + cursorPosition) % consoleWidth);
+
+    // 7. Update the stored things.
+
+    oldPromptLength = newPrompt.length();
+    oldTextLength = newText.length();
+    oldCursorPosition = cursorPosition;
+    maxTotalLength = Math.max(newTotalLength, maxTotalLength);
+
+    // 8. Show the cursor.
+
+    showCursor();
   }
 
-  private void rewriteHintConsole(StringBuffer buffer) {
+  private void erasePrompt() {
+    final int consoleWidth = getConsoleWidth();
+    final int oldTotalLength = oldPromptLength + oldTextLength;
+
+    // 1. Hide the cursor to reduce flickering.
+
+    hideCursor();
+
+    // 2. Position to the prompt beginning.
+
     outStream.print("\r");
-    outStream.print(buffer);
+    moveCursorVertically(-getWraps(oldPromptLength, oldCursorPosition, consoleWidth));
+
+    // 3. Clear the prompt.
+
+    final StringBuilder spaces = new StringBuilder();
+    for (int i = 0; i < oldTotalLength; i++)
+      spaces.append(' ');
+    outStream.print(spaces);
+
+    // 4. Reset the cursor to the prompt beginning.
+
+    outStream.print("\r");
+    moveCursorVertically(-getWraps(oldPromptLength, oldCursorPosition, consoleWidth));
+
+    // 5. Update the stored things.
+
+    oldPromptLength = 0;
+    oldTextLength = 0;
+    oldCursorPosition = 0;
+    maxTotalLength = 0;
+
+    // 6. Show the cursor.
+
+    showCursor();
+  }
+
+  private void updateHints(StringBuffer hints) {
+    erasePrompt();
+    outStream.print("\r");
+    outStream.print(hints);
+  }
+
+  private int getWraps(int promptLength, int cursorPosition, int consoleWidth) {
+    return (promptLength + Math.max(0, cursorPosition)) / consoleWidth;
+  }
+
+  private void hideCursor() {
+    outStream.print("\033[?25l");
+  }
+
+  private void showCursor() {
+    outStream.print("\033[?25h");
+  }
+
+  private void moveCursorHorizontally(int delta) {
+    if (delta > 0)
+      outStream.print("\033[" + delta + "C");
+    else if (delta < 0)
+      outStream.print("\033[" + Math.abs(delta) + "D");
+  }
+
+  private void moveCursorVertically(int delta) {
+    if (delta > 0)
+      outStream.print("\033[" + delta + "B");
+    else if (delta < 0)
+      outStream.print("\033[" + Math.abs(delta) + "A");
   }
 
   private int getHintedHistoryIndexUp(int historyNum) {

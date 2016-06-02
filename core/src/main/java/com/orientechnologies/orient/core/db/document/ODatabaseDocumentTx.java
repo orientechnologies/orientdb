@@ -64,6 +64,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
@@ -134,9 +135,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private OCurrentStorageComponentsFactory componentsFactory;
   private boolean initialized = false;
   private OTransaction currentTx;
-  private boolean                 keepStorageOpen = false;
-  private AtomicReference<Thread> owner           = new AtomicReference<Thread>();
-
+  private boolean keepStorageOpen = false;
   protected ODatabaseSessionMetadata sessionMetadata;
 
   /**
@@ -1043,7 +1042,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * @return True if the input record is changed, otherwise false
    */
   public ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id) {
-    if (id == null || hooks.isEmpty())
+    if (id == null || hooks.isEmpty() || id.getIdentity().getClusterId() == 0)
       return ORecordHook.RESULT.RECORD_NOT_CHANGED;
     ORID identity = id.getIdentity().copy();
     if (!pushInHook(identity))
@@ -3136,11 +3135,28 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   private byte[] updateStream(final ORecord record) {
+    ORecordSerializationContext.pullContext();
+
+    ODirtyManager manager = ORecordInternal.getDirtyManager(record);
+    Set<ORecord> newRecords = manager.getNewRecords();
+    Set<ORecord> updatedRecords = manager.getUpdateRecords();
+    manager.clearForSave();
+    if (newRecords != null) {
+      for (ORecord newRecord : newRecords) {
+        if (newRecord != record)
+          getTransaction().saveRecord(newRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      }
+    }
+    if (updatedRecords != null) {
+      for (ORecord updatedRecord : updatedRecords) {
+        if (updatedRecord != record)
+          getTransaction().saveRecord(updatedRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+      }
+    }
+
+    ORecordSerializationContext.pushContext();
     ORecordInternal.unsetDirty(record);
     record.setDirty();
-    ORecordSerializationContext.pullContext();
-    ORecordSerializationContext.pushContext();
-
     return record.toStream();
   }
 

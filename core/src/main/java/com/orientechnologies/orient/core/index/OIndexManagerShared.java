@@ -318,7 +318,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       document.copyTo(doc);
 
       // USE A NEW DB INSTANCE
-      final ODatabaseDocumentTx newDb = new ODatabaseDocumentTx(db.getURL());
+      final ODatabaseDocumentInternal newDb = new ODatabaseDocumentTx(db.getURL());
 
       Runnable recreateIndexesTask = new RecreateIndexesTask(newDb, doc);
 
@@ -492,12 +492,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   }
 
   private class RecreateIndexesTask implements Runnable {
-    private final ODatabaseDocumentTx newDb;
-    private final ODocument           doc;
-    private int                       ok;
-    private int                       errors;
+    private final ODatabaseDocumentInternal newDb;
+    private final ODocument                 doc;
+    private       int                       ok;
+    private       int                       errors;
 
-    public RecreateIndexesTask(ODatabaseDocumentTx newDb, ODocument doc) {
+    public RecreateIndexesTask(ODatabaseDocumentInternal newDb, ODocument doc) {
       this.newDb = newDb;
       this.doc = doc;
     }

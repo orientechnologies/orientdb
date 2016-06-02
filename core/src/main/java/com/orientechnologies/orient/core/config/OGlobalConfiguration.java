@@ -952,7 +952,7 @@ public enum OGlobalConfiguration {
 
   private static void autoConfigDiskCacheSize() {
     final long osMemory = OMemory.getPhysicalMemorySize();
-    final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
+    final long jvmMaxMemory = OMemory.getCappedRuntimeMaxMemory(2L * 1024 * 1024 * 1024 /* 2GB */);
     final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
 
     if (maxDirectMemory == -1) {

@@ -102,6 +102,9 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       }
 
       value = parserText.substring(pos + 1).trim();
+      if(attribute.equals(ATTRIBUTES.NAME) ||attribute.equals(ATTRIBUTES.LINKEDCLASS)){
+        value = decodeClassName(value);
+      }
 
       if (value.length() == 0) {
         throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
@@ -117,6 +120,9 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
             expValue = settingExp.toString();
           }
           value = expValue == null ? null : expValue.toString();
+          if(attribute.equals(ATTRIBUTES.NAME) ||attribute.equals(ATTRIBUTES.LINKEDCLASS)){
+            value = decodeClassName(value);
+          }
         }
       }else {
         if (value.equalsIgnoreCase("null")) {

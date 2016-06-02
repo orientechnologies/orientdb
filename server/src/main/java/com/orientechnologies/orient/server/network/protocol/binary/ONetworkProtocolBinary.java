@@ -969,7 +969,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     checkServerAccess("database.copy", connection);
 
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) server.openDatabase(dbUrl, dbUser, dbPassword);
+    final ODatabaseDocument db = (ODatabaseDocumentTx) server.openDatabase(dbUrl, dbUser, dbPassword);
 
     beginResponse();
     try {
@@ -2558,7 +2558,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
   }
 
-  protected ODatabaseDocumentTx createDatabase(final ODatabaseDocumentTx iDatabase, String dbUser, final String dbPasswd,
+  protected ODatabaseDocumentInternal createDatabase(final ODatabaseDocumentInternal iDatabase, String dbUser, final String dbPasswd,
       final String backupPath) {
     if (iDatabase.exists())
       throw new ODatabaseException("Database '" + iDatabase.getURL() + "' already exists");
@@ -2599,7 +2599,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
    * @param storageType Storage type between "plocal" or "memory".
    * @return
    */
-  protected ODatabaseDocumentTx getDatabaseInstance(final String dbName, final String dbType, final String storageType) {
+  protected ODatabaseDocumentInternal getDatabaseInstance(final String dbName, final String dbType, final String storageType) {
     String path;
 
     final OStorage stg = Orient.instance().getStorage(dbName);

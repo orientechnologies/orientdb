@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.cache;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -30,10 +31,10 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 public class OCommandCacheHook extends ORecordHookAbstract {
 
-  private final OCommandCache       cmdCache;
-  private final ODatabaseDocumentTx database;
+  private final OCommandCache     cmdCache;
+  private final ODatabaseDocument database;
 
-  public OCommandCacheHook(final ODatabaseDocumentTx iDatabase) {
+  public OCommandCacheHook(final ODatabaseDocument iDatabase) {
     database = iDatabase;
     cmdCache = iDatabase.getMetadata().getCommandCache().isEnabled() ? iDatabase.getMetadata().getCommandCache() : null;
   }

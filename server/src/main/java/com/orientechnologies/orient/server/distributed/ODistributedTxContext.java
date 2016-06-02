@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -15,9 +16,9 @@ public interface ODistributedTxContext {
 
   void commit();
 
-  void fix(ODatabaseDocumentTx database, List<ORemoteTask> fixTasks);
+  void fix(ODatabaseDocumentInternal database, List<ORemoteTask> fixTasks);
 
-  int rollback(final ODatabaseDocumentTx database);
+  int rollback(final ODatabaseDocumentInternal database);
 
   void destroy();
 

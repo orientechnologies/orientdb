@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -52,7 +54,7 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
 
     iRequest.data.commandInfo = "Import records";
 
-    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+    ODatabaseDocument db = getProfiledDatabaseInstance(iRequest);
     try {
 
       final OClass cls = db.getMetadata().getSchema().getClass(urlParts[3]);

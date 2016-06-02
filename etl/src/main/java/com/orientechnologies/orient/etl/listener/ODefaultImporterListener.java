@@ -20,41 +20,41 @@ package com.orientechnologies.orient.etl.listener;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ODefaultImporterListener implements OImporterListener {
 
   @Override
-  public void onBeforeFile(final ODatabaseDocumentTx db, final OCommandContext iContext) {
+  public void onBeforeFile(final ODatabaseDocument db, final OCommandContext iContext) {
   }
 
   @Override
-  public void onAfterFile(final ODatabaseDocumentTx db, final OCommandContext iContext) {
+  public void onAfterFile(final ODatabaseDocument db, final OCommandContext iContext) {
   }
 
   @Override
-  public boolean onBeforeLine(final ODatabaseDocumentTx db, final OCommandContext iContext) {
+  public boolean onBeforeLine(final ODatabaseDocument db, final OCommandContext iContext) {
     return true;
   }
 
   @Override
-  public void onAfterLine(final ODatabaseDocumentTx db, final OCommandContext iContext) {
+  public void onAfterLine(final ODatabaseDocument db, final OCommandContext iContext) {
   }
 
   @Override
-  public void onDump(final ODatabaseDocumentTx db, final OCommandContext iContext) {
+  public void onDump(final ODatabaseDocument db, final OCommandContext iContext) {
   }
 
   @Override
-  public void onJoinNotFound(final ODatabaseDocumentTx db, final OCommandContext iContext, final OIndex<?> iIndex, final Object iKey) {
+  public void onJoinNotFound(final ODatabaseDocument db, final OCommandContext iContext, final OIndex<?> iIndex, final Object iKey) {
     iContext.setVariable("joinNotFound", ((Integer) iContext.getVariable("joinNotFound", 0)) + 1);
     OLogManager.instance().warn(this, "     + %d line: join record not found in index '%s' for key='%s'",
         iContext.getVariable("currentLine"), iIndex, iKey);
   }
 
   @Override
-  public void validate(ODatabaseDocumentTx db, OCommandContext iContext, ODocument iRecord) {
+  public void validate(ODatabaseDocument db, OCommandContext iContext, ODocument iRecord) {
   }
 }

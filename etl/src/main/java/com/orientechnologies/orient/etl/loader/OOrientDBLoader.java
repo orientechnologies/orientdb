@@ -21,6 +21,7 @@ package com.orientechnologies.orient.etl.loader;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -86,7 +87,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     }
 
     if (tx && dbType == DOCUMENT) {
-      final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+      final ODatabaseDocument documentDatabase = pipeline.getDocumentDatabase();
       if (!documentDatabase.getTransaction().isActive()) {
         documentDatabase.begin();
         documentDatabase.getTransaction().setUsingLog(txUseLog);
@@ -112,7 +113,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     // DO BATCH COMMIT
     if (batchCommitSize > 0 && batchCounter.get() > batchCommitSize) {
       if (dbType == DOCUMENT) {
-        final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+        final ODatabaseDocument documentDatabase = pipeline.getDocumentDatabase();
         log(DEBUG, "committing batch");
         documentDatabase.commit();
         documentDatabase.begin();
@@ -196,7 +197,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   public void rollback(OETLPipeline pipeline) {
     if (tx)
       if (dbType == DOCUMENT) {
-        final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+        final ODatabaseDocument documentDatabase = pipeline.getDocumentDatabase();
         if (documentDatabase.getTransaction().isActive())
           documentDatabase.rollback();
       } else
@@ -256,7 +257,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   private OClass getOrCreateClassOnDocument(OETLPipeline pipeline, String iClassName, String iSuperClass) {
     OClass cls;// DOCUMENT
-    final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+    final ODatabaseDocument documentDatabase = pipeline.getDocumentDatabase();
     if (documentDatabase.getMetadata().getSchema().existsClass(iClassName))
       cls = documentDatabase.getMetadata().getSchema().getClass(iClassName);
     else {
@@ -404,7 +405,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   private void configureDocumentDB() {
-    final ODatabaseDocumentTx documentDatabase = new ODatabaseDocumentTx(dbURL);
+    final ODatabaseDocument documentDatabase = new ODatabaseDocumentTx(dbURL);
 
     if (documentDatabase.exists() && dbAutoDropIfExists) {
       log(INFO, "Dropping existent database '%s'...", dbURL);
@@ -434,7 +435,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       throw new OLoaderException("unable to manage remote db without server admin credentials");
     }
 
-    ODatabaseDocumentTx documentDatabase = new ODatabaseDocumentTx(dbURL);
+    ODatabaseDocument documentDatabase = new ODatabaseDocumentTx(dbURL);
     try {
       OServerAdmin admin = new OServerAdmin(documentDatabase.getURL()).connect(serverUser, serverPassword);
       boolean exists = admin.existsDatabase();
@@ -459,7 +460,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   public void beginLoader(OETLPipeline pipeline) {
 
     synchronized (this) {
-      ODatabaseDocumentTx documentDatabase = null;
+      ODatabaseDocument documentDatabase = null;
       OrientBaseGraph graphDatabase = null;
 
       final OrientGraphFactory factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
@@ -483,7 +484,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   }
 
-  private void createSchema(OETLPipeline pipeline, ODatabaseDocumentTx documentDatabase) {
+  private void createSchema(OETLPipeline pipeline, ODatabaseDocument documentDatabase) {
     if (classes != null) {
       for (ODocument cls : classes) {
         schemaClass = getOrCreateClass(pipeline, (String) cls.field("name"), (String) cls.field("extends"));

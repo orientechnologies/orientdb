@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -57,7 +58,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
   @Override
   public Object execute(final ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentTx database) throws Exception {
+      final ODatabaseDocumentInternal database) throws Exception {
 
     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
       if (database == null)
