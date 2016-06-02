@@ -60,8 +60,14 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
 
   public ORecordIteratorClass(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final String iClassName, final boolean iPolymorphic, final boolean iterateThroughTombstones) {
+    this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iterateThroughTombstones, true);
+  }
+
+  public ORecordIteratorClass(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
+      final String iClassName, final boolean iPolymorphic, final boolean iterateThroughTombstones, boolean begin) {
     this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iterateThroughTombstones, OStorage.LOCKING_STRATEGY.DEFAULT);
-    begin();
+    if (begin)
+      begin();
   }
 
   @Deprecated

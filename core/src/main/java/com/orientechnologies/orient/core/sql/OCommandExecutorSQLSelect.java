@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -520,7 +521,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return true;
   }
 
-  protected boolean executeSearchRecord(final OIdentifiable id, final OCommandContext iContext) {
+  protected boolean executeSearchRecord(final OIdentifiable id, final OCommandContext iContext, boolean callHooks) {
     if (id == null)
       return false;
 
@@ -592,6 +593,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       iContext.setVariable("current", record);
 
       if (filter(record, iContext)) {
+        if(callHooks){
+          ((ODatabaseDocumentInternal)getDatabase()).callbackHooks(ORecordHook.TYPE.BEFORE_READ,record.getIdentity());
+          ((ODatabaseDocumentInternal)getDatabase()).callbackHooks(ORecordHook.TYPE.AFTER_READ,record);
+        }
+
         if (parallel) {
           try {
             applyGroupBy(record, iContext);
@@ -1600,7 +1606,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               isBrowsingAscendingOrder(), from, to, new OCallable<Boolean, ORecord>() {
                 @Override
                 public Boolean call(final ORecord iRecord) {
-                  if (!executeSearchRecord(iRecord, context)) {
+                  if (!executeSearchRecord(iRecord, context, true)) {
                     return Boolean.FALSE;
                   }
 
@@ -1627,7 +1633,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     // BROWSE, UNMARSHALL AND FILTER ALL THE RECORDS ON CURRENT THREAD
     for (int browsed = 0; iTarget.hasNext(); browsed++) {
       final OIdentifiable next = iTarget.next();
-      if (!executeSearchRecord(next, context))
+      if (!executeSearchRecord(next, context, false))
         return false;
 
       if (tipActivated && browsed > queryScanThresholdWarning) {
@@ -1678,7 +1684,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           from, to, new OCallable<Boolean, ORecord>() {
             @Override
             public Boolean call(final ORecord iRecord) {
-              if (!executeSearchRecord(iRecord, iContext)) {
+              if (!executeSearchRecord(iRecord, iContext, true)) {
                 results[current] = false;
                 return Boolean.FALSE;
               }
