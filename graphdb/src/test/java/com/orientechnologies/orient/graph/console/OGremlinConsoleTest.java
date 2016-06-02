@@ -27,12 +27,15 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.graph.graphml.OGraphMLReader;
 import com.orientechnologies.orient.graph.graphml.OIgnoreGraphMLImportStrategy;
 import com.orientechnologies.orient.graph.graphml.ORenameGraphMLImportStrategy;
+import com.sun.mail.iap.ByteArray;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.List;
 
 /**
@@ -42,6 +45,16 @@ import java.util.List;
  */
 public class OGremlinConsoleTest {
 
+  private class TestOGremlinConsole extends  OGremlinConsole {
+
+    public ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+    public TestOGremlinConsole(String[] args) {
+      super(args);
+      setOutput(new PrintStream(output));
+    }
+
+  }
   @Test
   public void testGraphMLImport() {
     final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
@@ -49,7 +62,7 @@ public class OGremlinConsoleTest {
     StringBuilder builder = new StringBuilder();
     builder.append("create database " + dbUrl + ";\n");
     builder.append("import database " + INPUT_FILE + ";\n");
-    OConsoleDatabaseApp console = new OGremlinConsole(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] { builder.toString() });
     try {
       console.run();
 
@@ -78,7 +91,7 @@ public class OGremlinConsoleTest {
     builder.append("create database " + dbUrl + ";\n");
     builder.append("import database " + INPUT_FILE + ";\n");
     builder.append("export database " + OUTPUT_FILE + ";\n");
-    OConsoleDatabaseApp console = new OGremlinConsole(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] { builder.toString() });
     try {
       console.run();
 
@@ -100,7 +113,7 @@ public class OGremlinConsoleTest {
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
     builder.append("create class newposition extends V;\n");
     builder.append("move vertex (select from V) to class:newposition;\n");
-    OConsoleDatabaseApp console = new OGremlinConsole(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] { builder.toString() });
 
     try {
       console.run();
@@ -128,7 +141,7 @@ public class OGremlinConsoleTest {
     builder.append("create database " + dbUrl + ";\n");
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
     builder.append("gremlin g.V;\n");
-    OConsoleDatabaseApp console = new OGremlinConsole(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] { builder.toString() });
 
     try {
       console.run();
@@ -159,7 +172,7 @@ public class OGremlinConsoleTest {
     StringBuilder builder = new StringBuilder();
     builder.append("create database " + dbUrl + ";\n");
     builder.append("import database " + INPUT_FILE + " batchSize=10;\n");
-    OConsoleDatabaseApp console = new OGremlinConsole(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = new TestOGremlinConsole(new String[] { builder.toString() });
 
     try {
       console.run();
