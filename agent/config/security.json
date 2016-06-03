@@ -2,7 +2,8 @@
   "enabled": true,
   "debug": false,
   "server": {
-    "createDefaultUsers": true
+    "createDefaultUsers": true,
+    "enabled": true
   },
   "authentication": {
     "allowDefault": true,
@@ -13,10 +14,24 @@
         "enabled": true,
         "users": [
           {
+            "username": "root",
+            "resources": "*"
+          },
+          {
             "username": "guest",
-            "resources": "server.listDatabases,server.dblist"
+            "resources": "connect,server.listDatabases,server.dblist"
           }
         ]
+      },
+      {
+        "name": "Kerberos",
+        "class": "com.orientechnologies.security.kerberos.OKerberosAuthenticator",
+        "enabled": true,
+        "debug": false,
+        "krb5_config": "/etc/krb5.conf",
+        "service": {"ktname":"/etc/keytab/kerberosuser","principal":"kerberosuser/kerberos.domain.com@REALM.COM"},
+        "spnego": {"ktname":"/etc/keytab/kerberosuser","principal":"HTTP/kerberos.domain.com@REALM.COM"},
+        "client": {"useTicketCache":false,"principal":"kerberosuser@REALM.COM","renewalPeriod":300}
       },
       {
         "name": "ServerConfig",
@@ -27,10 +42,54 @@
         "name": "SystemAuthenticator",
         "class": "com.orientechnologies.orient.server.security.authenticator.OSystemUserAuthenticator",
         "enabled": true
-      } ]
+      }
+    ],
+    "enabled": true
+  },
+  "passwordValidator": {
+    "class": "com.orientechnologies.security.password.ODefaultPasswordValidator",
+    "minimumLength": 10,
+    "numberRegEx": "(?:[0-9].*){2}",
+    "uppercaseRegEx": "(?:[A-Z].*){3}",
+    "specialRegEx": "(?:[^a-zA-Z0-9 ].*){2}",
+    "enabled": true,
+    "ignoreUUID": true
   },
   "auditing": {
     "class": "com.orientechnologies.security.auditing.ODefaultAuditing",
-    "enabled": false
+    "enabled": true,
+    "distributed": {"onNodeJoinedEnabled":true,"onNodeJoinedMessage":"Node ${node} has joined...","onNodeLeftEnabled":false,"onNodeLeftMessage":"Node ${node} has left..."}
+  },
+  "ldapImporter": {
+    "enabled": true,
+    "class": "com.orientechnologies.security.ldap.OLDAPImporter",
+    "debug": false,
+    "period": 60,
+    "databases": [
+      {
+        "name": "MarioDb",
+        "ignoreLocal": true,
+        "database": "MarioDB",
+        "domains": [
+          {
+            "domain": "test.domain.com",
+            "authenticator": "Kerberos",
+            "servers": [
+              {
+                "url": "ldap://alias.ad.domain.com:389",
+                "isAlias": true
+              }
+            ],
+            "users": [
+              {
+                "baseDN": "CN=Users,DC=ad,DC=domain,DC=com",
+                "filter": "(&(objectCategory=person)(objectclass=user)(memberOf=CN=ODBUser,CN=Users,DC=ad,DC=domain,DC=com))",
+                "roles": ["reader","writer"]
+              }
+            ]
+          }
+        ]
+      }
+    ]
   }
 }

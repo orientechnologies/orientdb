@@ -73,6 +73,12 @@
 
         </handler>
 
+        <handler
+                class="com.orientechnologies.agent.OEnterpriseAgent">
+            <parameters>
+            </parameters>
+        </handler>
+
     </handlers>
     <network>
         <sockets>
@@ -139,6 +145,12 @@
     <storages>
     </storages>
     <users>
+        <user resources="*"
+              password="{PBKDF2WithHmacSHA1}50F89FFB1197CC011948AB23329EBE1FDF21D71798C1EF37:9F8162848D8CBA5D656B5F05E3ADF58F06492CFB76B8AE69:65536"
+              name="root"/>
+        <user resources="connect,server.listDatabases,server.dblist"
+              password="{PBKDF2WithHmacSHA1}A4D03E28AF5770E9BD9D0DD5EE8918EC47EF5171C2F5BA65:A1254448F092656E31639EB6F844032445240C8D3D89B00A:65536"
+              name="guest"/>
     </users>
     <properties>
         <!-- DATABASE POOL: size min/max -->
