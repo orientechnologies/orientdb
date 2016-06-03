@@ -531,6 +531,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
         activeNodesNamesByMemberId.put(iEvent.getMember().getUuid(), (String) cfg.field("name"));
 
+        dumpServersStatus();
+
       } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
           final String databaseName = key.substring(CONFIG_DATABASE_PREFIX.length());
@@ -579,6 +581,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         }
 
         updateLastClusterChange();
+
+        dumpServersStatus();
 
       } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
         final String dbName = key.substring(CONFIG_DATABASE_PREFIX.length());

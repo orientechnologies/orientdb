@@ -57,9 +57,12 @@ import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
@@ -112,7 +115,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
   protected String                                               nodeUuid;
 
-  private volatile int                                           hashLastServerDump                = 0;
+  private volatile String                                        lastServerDump                    = "";
 
   protected abstract ODistributedConfiguration getLastDatabaseConfiguration(String databaseName);
 
@@ -635,7 +638,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         throw new ODistributedException("Cannot find node '" + rNodeName + "'");
 
       ODocument cfg = getNodeConfigurationByUuid(member.getUuid());
-      while (cfg == null || cfg.field("listeners") == null ) {
+      while (cfg == null || cfg.field("listeners") == null) {
         try {
           Thread.sleep(100);
           cfg = getNodeConfigurationByUuid(member.getUuid());
@@ -895,7 +898,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
     return iNodes.size();
   }
-
 
   @Override
   public String toString() {
@@ -1721,7 +1723,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
     // Check for the system database.
-    if (iDatabase.getName().equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME)) return false;
+    if (iDatabase.getName().equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
+      return false;
 
     if (dbUrl.startsWith("plocal:")) {
       // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
@@ -1739,13 +1742,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
    * Avoids to dump the same configuration twice if it's unchanged since the last time.
    */
   protected void dumpServersStatus() {
-    final String dump = ODistributedOutput.formatServerStatus(this, getClusterConfiguration());
+    final String compactStatus = ODistributedOutput.getCompactServerStatus(this, getClusterConfiguration());
 
-    final int hashServerDump = dump.hashCode();
+    if (!lastServerDump.equals(compactStatus)) {
+      lastServerDump = compactStatus;
 
-    if (hashServerDump != hashLastServerDump) {
-      hashLastServerDump = hashServerDump;
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status:\n%s", dump);
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Distributed servers status:\n%s",
+          ODistributedOutput.formatServerStatus(this, getClusterConfiguration()));
     }
   }
 
