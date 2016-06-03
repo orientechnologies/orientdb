@@ -907,6 +907,43 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\n\n" + tot + " item(s) found. Query executed in " + elapsedSeconds + " sec(s).");
   }
 
+  @ConsoleCommand(splitInWords = false, description = "Execute a MATCH query against the database and display the results", onlineHelp = "SQL-Match")
+  public void match(@ConsoleParameter(name = "query-text", description = "The query to execute") String iQueryText) {
+    checkForDatabase();
+
+    if (iQueryText == null)
+      return;
+
+    iQueryText = iQueryText.trim();
+
+    if (iQueryText.length() == 0 || iQueryText.equalsIgnoreCase("match"))
+      return;
+
+    iQueryText = "match " + iQueryText;
+
+    final int queryLimit;
+    final int displayLimit;
+    if (iQueryText.toLowerCase().contains(" limit ")) {
+      queryLimit = -1;
+      displayLimit = -1;
+    } else {
+      // USE LIMIT + 1 TO DISCOVER IF MORE ITEMS ARE PRESENT
+      displayLimit = Integer.parseInt(properties.get("limit"));
+      queryLimit = displayLimit + 1;
+    }
+
+    final long start = System.currentTimeMillis();
+    setResultset(
+        (List<OIdentifiable>) currentDatabase.query(new OSQLSynchQuery<ODocument>(iQueryText, queryLimit).setFetchPlan("*:0")));
+
+    float elapsedSeconds = getElapsedSecs(start);
+
+    dumpResultSet(displayLimit);
+
+    long tot = displayLimit > -1 ? Math.min(currentResultSet.size(), displayLimit) : currentResultSet.size();
+    message("\n\n" + tot + " item(s) found. Query executed in " + elapsedSeconds + " sec(s).");
+  }
+
   @ConsoleCommand(splitInWords = false, description = "Move from current record by evaluating a predicate against current record")
   public void move(@ConsoleParameter(name = "text", description = "The sql predicate to evaluate") final String iText) {
     if (iText == null)
