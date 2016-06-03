@@ -68,6 +68,10 @@ public class OBackupTask implements OBackupListener {
 
   }
 
+  public OBackupStrategy getStrategy() {
+    return strategy;
+  }
+
   public void changeConfig(OBackupConfig config, ODocument doc) {
     if (task != null) {
       task.cancel();

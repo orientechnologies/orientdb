@@ -20,6 +20,7 @@ package com.orientechnologies.agent.backup.strategy;
 
 import com.orientechnologies.agent.backup.OBackupConfig;
 import com.orientechnologies.agent.backup.log.OBackupLogger;
+import com.orientechnologies.agent.backup.log.OBackupScheduledLog;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
@@ -55,14 +56,28 @@ public class OBackupStrategyFullBackup extends OBackupStrategy {
   @Override
   public Date scheduleNextExecution() {
 
-    ODocument full = (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.FULL_BACKUP);
-    String when = full.field(OBackupConfig.WHEN);
-    try {
-      OCronExpression expression = new OCronExpression(when);
-      return expression.getNextValidTimeAfter(new Date());
-    } catch (ParseException e) {
-      e.printStackTrace();
+    OBackupScheduledLog last = lastUnfiredSchedule();
+
+    if (last == null) {
+      ODocument full = (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.FULL_BACKUP);
+      String when = full.field(OBackupConfig.WHEN);
+      try {
+        OCronExpression expression = new OCronExpression(when);
+        Date nextExecution = expression.getNextValidTimeAfter(new Date());
+        OBackupScheduledLog log = new OBackupScheduledLog(logger.nextOpId(), logger.nextOpId(), getUUID(), getDbName(),
+            getMode().toString());
+        log.nextExecution = nextExecution.getTime();
+        getLogger().log(log);
+        return nextExecution;
+      } catch (ParseException e) {
+        e.printStackTrace();
+      }
+
+    } else {
+      return new Date(last.nextExecution);
     }
+
     return null;
+
   }
 }

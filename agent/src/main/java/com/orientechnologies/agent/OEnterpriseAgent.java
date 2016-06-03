@@ -159,6 +159,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     }
   }
 
+  public OBackupManager getBackupManager() {
+    return backupManager;
+  }
+
   @Override
   public PRIORITY getPriority() {
     return PRIORITY.LAST;

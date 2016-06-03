@@ -18,30 +18,186 @@
 
 package com.orientechnologies.agent.backup;
 
+import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.backup.log.OBackupLogType;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.HashMap;
+
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.fail;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * Created by Enrico Risa on 22/03/16.
  */
+
 public class OBackupManagerTest {
 
-  @Test
-  public void backupManagerTest() {
-//    OBackupManager manager = new OBackupManager(new OMemoryBackUpConfig());
-//    ODocument backup = new ODocument();
-//    backup.field("when", "0 0 12 * * ?");
-//    backup.field("mode", "FULL_BACKUP");
-//    backup.field("server", "_all");
-//    backup.field("target", new ODocument().field("type", "local").field("path", "/tmp/testbackup"));
-//    ODocument document = manager.addBackup(backup);
-//
-//    String uuid = document.field("uuid");
-//    Assert.assertNotNull(uuid);
+  private OServer             server;
 
-//    ODocument status = manager.logs(uuid);
-//    Assert.assertNotNull(status);
-//    Assert.assertNotNull(status.field("status"));
-//    Assert.assertNotNull(status.field("nextExecution"));
-//    Assert.assertEquals("WAITING", status.field("status"));
+  private final String        DB_NAME     = "backupDB";
+  private final String        BACKUP_PATH = System.getProperty("java.io.tmpdir") + File.separator + DB_NAME;
+  private ODatabaseDocumentTx db;
+
+  private OBackupManager      manager;
+
+  @Before
+  public void bootOrientDB() {
+
+    try {
+      InputStream stream = ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml");
+      server = OServerMain.create();
+      server.startup(stream);
+      server.activate();
+      server.getSystemDatabase().execute(new OCallable<Object, Object>() {
+        @Override
+        public Object call(Object iArgument) {
+          return null;
+        }
+      }, "delete from OBackupLog");
+
+      db = new ODatabaseDocumentTx("plocal:" + server.getDatabaseDirectory() + File.separator + DB_NAME);
+
+      if (db.exists()) {
+
+        db.drop();
+      } else {
+        db.create();
+      }
+
+      OEnterpriseAgent agent = server.getPluginByClass(OEnterpriseAgent.class);
+
+      manager = agent.getBackupManager();
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  @After
+  public void tearDownOrientDB() {
+    db.drop();
+    server.shutdown();
+    OFileUtils.deleteRecursively(new File(BACKUP_PATH));
+  }
+
+  // {
+  // "dbName": "test",
+  // "modes": {"INCREMENTAL_BACKUP":{"when":"0 0/5 * * * ?"},"FULL_BACKUP":{"when":"0 0/10 * * * ?"}},
+  // "directory": "/tmp/tests/Backup",
+  // "uuid": "d8bb1c0e-133f-4c0c-9018-930d71cdb485",
+  // "enabled": false,
+  // "retentionDays": 30
+  // }
+
+  @Test
+  public void backupFullTest() throws InterruptedException {
+
+    ODocument modes = new ODocument();
+
+    ODocument mode = new ODocument();
+    modes.field("FULL_BACKUP", mode);
+    mode.field("when", "0/5 * * * * ?");
+
+    ODocument backup = new ODocument();
+    backup.field("dbName", DB_NAME);
+    backup.field("directory", BACKUP_PATH);
+    backup.field("modes", modes);
+    backup.field("enabled", true);
+    backup.field("retentionDays", 30);
+
+    ODocument cfg = manager.addBackup(backup);
+
+    String uuid = cfg.field("uuid");
+
+    OBackupTask task = manager.getTask(uuid);
+    Thread.sleep(10000);
+
+    task.stop();
+
+
+    ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
+    assertNotNull(logs);
+    assertNotNull(logs.field("logs"));
+
+    Collection<ODocument> list = logs.field("logs");
+    assertEquals(7, list.size());
+
+    checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
+
+  }
+
+  @Test
+  public void backupIncrementalTest() throws InterruptedException {
+
+    ODocument modes = new ODocument();
+
+    ODocument mode = new ODocument();
+    modes.field("INCREMENTAL_BACKUP", mode);
+    mode.field("when", "0/5 * * * * ?");
+
+    ODocument backup = new ODocument();
+    backup.field("dbName", DB_NAME);
+    backup.field("directory", BACKUP_PATH);
+    backup.field("modes", modes);
+    backup.field("enabled", true);
+    backup.field("retentionDays", 30);
+
+    ODocument cfg = manager.addBackup(backup);
+
+    String uuid = cfg.field("uuid");
+
+    OBackupTask task = manager.getTask(uuid);
+
+    Thread.sleep(10000);
+
+    task.stop();
+
+    ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
+    assertNotNull(logs);
+    assertNotNull(logs.field("logs"));
+
+    Collection<ODocument> list = logs.field("logs");
+    assertEquals(7, list.size());
+
+    checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
+
+    checkSameUnitUids(list);
+
+  }
+
+  private void checkSameUnitUids(Collection<ODocument> list) {
+
+    if (list.size() > 0) {
+      Long unitId = null;
+      for (ODocument d : list) {
+        if (unitId == null) {
+          unitId = d.field("unitId");
+        } else {
+          assertEquals(unitId, d.field("unitId"));
+        }
+      }
+    } else {
+      fail();
+    }
+  }
+
+  private void checkNoOp(Collection<ODocument> list, String op) {
+    for (ODocument log : list) {
+      assertNotEquals(op, log.field("op"));
+    }
   }
 }

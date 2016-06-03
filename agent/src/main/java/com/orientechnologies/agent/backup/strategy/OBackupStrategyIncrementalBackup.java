@@ -19,11 +19,13 @@
 package com.orientechnologies.agent.backup.strategy;
 
 import com.orientechnologies.agent.backup.OBackupConfig;
+import com.orientechnologies.agent.backup.log.OBackupLog;
+import com.orientechnologies.agent.backup.log.OBackupLogType;
 import com.orientechnologies.agent.backup.log.OBackupLogger;
+import com.orientechnologies.agent.backup.log.OBackupScheduledLog;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
-
 
 import java.io.File;
 import java.text.ParseException;
@@ -54,14 +56,37 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
   @Override
   public Date scheduleNextExecution() {
 
-    ODocument full = (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.INCREMENTAL_BACKUP);
-    String when = full.field(OBackupConfig.WHEN);
-    try {
-      OCronExpression expression = new OCronExpression(when);
-      return expression.getNextValidTimeAfter(new Date());
-    } catch (ParseException e) {
-      e.printStackTrace();
+    OBackupScheduledLog last = lastUnfiredSchedule();
+
+    if (last == null) {
+      ODocument full = (ODocument) cfg.eval(OBackupConfig.MODES + "." + OAutomaticBackup.MODE.INCREMENTAL_BACKUP);
+      String when = full.field(OBackupConfig.WHEN);
+      try {
+        OCronExpression expression = new OCronExpression(when);
+        Date nextExecution = expression.getNextValidTimeAfter(new Date());
+        Long unitId = logger.nextOpId();
+        try {
+          OBackupLog lastCompleted = logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
+
+          if (lastCompleted != null) {
+            unitId = lastCompleted.getUnitId();
+          }
+
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+        OBackupScheduledLog log = new OBackupScheduledLog(unitId, logger.nextOpId(), getUUID(), getDbName(), getMode().toString());
+        log.nextExecution = nextExecution.getTime();
+        getLogger().log(log);
+        return nextExecution;
+      } catch (ParseException e) {
+        e.printStackTrace();
+      }
+
+    } else {
+      return new Date(last.nextExecution);
     }
+
     return null;
   }
 }

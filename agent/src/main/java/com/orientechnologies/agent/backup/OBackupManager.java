@@ -97,6 +97,10 @@ public class OBackupManager implements OServerLifecycleListener {
 
   }
 
+  public OBackupTask getTask(String uuid) {
+    return tasks.get(uuid);
+  }
+
   public void changeBackup(String uuid, ODocument doc) {
 
     config.changeBackup(uuid, doc);
@@ -108,12 +112,13 @@ public class OBackupManager implements OServerLifecycleListener {
     config.removeBackup(uuid);
   }
 
-  public void removeAndStopBackup(String uuid){
+  public void removeAndStopBackup(String uuid) {
     removeBackup(uuid);
     OBackupTask task = tasks.get(uuid);
     task.stop();
 
   }
+
   public ODocument logs(String uuid, int page, int pageSize, Map<String, String> params) {
     ODocument history = new ODocument();
     try {
