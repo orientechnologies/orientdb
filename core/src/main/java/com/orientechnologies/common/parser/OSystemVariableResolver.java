@@ -66,7 +66,7 @@ public class OSystemVariableResolver implements OVariableParserListener {
   }
 
   public static void setEnv(final String name, String value) {
-    final Map<String, String> map = new HashMap<String, String>(1);
+    final Map<String, String> map = new HashMap<String, String>(System.getenv());
     map.put(name, value);
     setEnv(map);
   }
