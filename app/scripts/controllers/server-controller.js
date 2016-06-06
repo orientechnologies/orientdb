@@ -390,18 +390,36 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
 
 
   $scope.menus = [
-    {name: "stats", title: "Dashboard", template: 'stats', icon: 'fa-dashboard'},
-    {name: "general", title: "Servers Management", template: 'general', icon: 'fa-desktop'},
-    {name: "cluster", title: "Cluster Management", template: 'distributed', icon: 'fa-sitemap'},
-    {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
-    {name: "backup", title: "Backup Management", template: 'backup', icon: 'fa-clock-o'},
+    {
+      name: "stats", title: "Dashboard", template: 'stats', icon: 'fa-dashboard',
+      wiki: "Studio-Dashboard.html"
+    },
+    {
+      name: "general", title: "Servers Management", template: 'general', icon: 'fa-desktop',
+      wiki: "Studio-Server-Management.html"
+    },
+    {
+      name: "cluster", title: "Cluster Management", template: 'distributed', icon: 'fa-sitemap',
+      wiki: "Studio-Cluster-Management.html"
+    },
+    {
+      name: "profiler",
+      title: "Query Profiler",
+      template: 'profiler',
+      icon: 'fa-rocket',
+      wiki: "Studio-Query-Profiler.html"
+    },
+    {
+      name: "backup",
+      title: "Backup Management",
+      template: 'backup',
+      icon: 'fa-clock-o',
+      wiki: "Studio-Backup-Management.html"
+    },
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
-    {name: "auditing", title: "Auditing", template: 'auditing', icon: 'fa-headphones'},
-    {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb'},
+    {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb', wiki: "Studio-Teleporter.html"},
     {name: "plugins", title: "Plugins Management", template: 'plugins', icon: 'fa-plug'},
-    {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'},
-    {name: "configuration", title: "Settings", template: 'config', icon: 'fa-cogs'},
-    {name: "storage", title: "Storages", template: 'storage', icon: 'fa-database'}
+    {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'}
   ]
   if ($routeParams.tab) {
     $scope.menus.forEach(function (e) {
@@ -417,6 +435,9 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
     $scope.current = $scope.menus[0];
   }
 
+  $scope.getWiki = function (c) {
+    return Database.resolveWiki(c.wiki);
+  }
 
   $scope.getTemplate = function (tab) {
     return 'views/server/stats/' + tab + '.html';

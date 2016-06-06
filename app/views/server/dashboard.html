@@ -1,5 +1,16 @@
 <div class="admin-header">
-  <h2> {{current.title | capitalize}}</h2>
+  <h2> {{current.title | capitalize}}
+
+    <a ng-show="current.wiki" href="{{ getWiki(current) }}" class="btn btn-trasparent btn-help"
+       data-placement="right"
+       target="_blank"
+       data-title="Help"
+       data-trigger="hover"
+       data-animation="am-flip-x"
+       bs-tooltip>
+      <i class="fa fa-question-circle fa-lg"></i>
+    </a>
+  </h2>
 </div>
 <div class="card">
   <div class="row">

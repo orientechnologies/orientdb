@@ -855,7 +855,7 @@ ee.controller('AutomaticBackupController', function ($scope, $modal, Database) {
 
 });
 
-ee.controller('EEDashboardController', function ($scope, $rootScope, $routeParams) {
+ee.controller('EEDashboardController', function ($scope, $rootScope, $routeParams, Database) {
 
 
   $rootScope.$on('servermgmt:open', function () {
@@ -868,12 +868,16 @@ ee.controller('EEDashboardController', function ($scope, $rootScope, $routeParam
 
   $scope.menus = [
     {name: "stats", title: "Dashboard", template: 'stats', icon: 'fa-dashboard'},
-    {name: "general", title: "Servers Management", template: 'general', icon: 'fa-desktop'},
+    {
+      name: "general",
+      title: "Servers Management",
+      template: 'general',
+      icon: 'fa-desktop'
+    },
     {name: "cluster", title: "Cluster Management", template: 'distributed', icon: 'fa-sitemap'},
     {name: "backup", title: "Backup Management", template: 'backup', icon: 'fa-clock-o'},
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
-    //{name: "auditing", title: "Auditing", template: 'auditing', icon: 'fa-headphones'},
     {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb'},
     {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'}
 
@@ -1498,7 +1502,7 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
   $scope.$on('db-chosen', function (evt, db) {
 
     $scope.backup = db.backup;
-
+    $scope.db = db;
     var incr = undefined;
     var full = undefined;
     if ($scope.backup.modes) {
@@ -1518,43 +1522,7 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
 
     $scope.incremental_cron.cron('value', incr);
     $scope.full_cron.cron('value', full);
-    function initCalendar() {
-      $('#calendar').fullCalendar({
-        header: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'month,agendaWeek,agendaDay'
-        },
-        viewRender: function (view, element) {
 
-
-          $scope.from = view.start.format('x');
-          $scope.to = view.end.format('x');
-
-
-          $scope.requestEvents();
-
-        },
-        eventClick: function (calEvent, jsEvent, view) {
-
-          var modalScope = $scope.$new(true);
-          modalScope.event = calEvent;
-          var modalPromise = $modal({template: 'views/server/backup/modalBackup.html', scope: modalScope, show: false});
-
-          modalScope.restoreBackup = function (evt) {
-            $scope.restore(evt._source);
-          }
-
-          modalScope.removeBackup = function (evt) {
-            $scope.removeBkp(evt._source);
-          }
-          modalPromise.$promise.then(modalPromise.show);
-        },
-        defaultView: 'agendaWeek',
-        editable: true
-
-      })
-    }
 
     $scope.requestEvents = function () {
       BackupService.logs($scope.backup.uuid, {from: $scope.from, to: $scope.to}).then(function (data) {
@@ -1564,20 +1532,9 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
         $scope.refreshEvents();
       })
     }
-    if (!$scope.backup.uuid) {
-      $scope.backup.dbName = db.name;
-      $scope.backup.modes = {};
-      $scope.backup.enabled = true;
-      $scope.backup.retentionDays = 30;
-      $('#calendar').fullCalendar('destroy');
-    } else {
 
 
-      $('#calendar').fullCalendar('destroy');
-
-      initCalendar();
-
-    }
+    $scope.initBackup(db);
 
     $scope.removeBkp = function (evt) {
 
@@ -1661,6 +1618,9 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
         case "RESTORE_STARTED":
           clazz += " log-restore-started";
           break;
+        case "RESTORE_ERROR":
+          clazz += " log-error";
+          break;
 
       }
       return clazz;
@@ -1681,10 +1641,13 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
           info += " started";
           break;
         case "RESTORE_FINISHED":
-          info = "Incremental Restore finished";
+          info = "Restore finished";
           break;
         case "RESTORE_STARTED":
-          info = "Incremental Restore started";
+          info = "Restore started";
+          break;
+        case "RESTORE_ERROR":
+          info = "Restore error";
           break;
       }
       return info;
@@ -1721,10 +1684,67 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
   })
 
 
+  function initCalendar() {
+    $('#calendar').fullCalendar({
+      header: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'month,agendaWeek,agendaDay'
+      },
+      viewRender: function (view, element) {
+
+
+        $scope.from = view.start.format('x');
+        $scope.to = view.end.format('x');
+
+
+        if ($scope.from && $scope.to) {
+          $scope.requestEvents();
+        }
+
+      },
+      eventClick: function (calEvent, jsEvent, view) {
+
+        var modalScope = $scope.$new(true);
+        modalScope.event = calEvent;
+        var modalPromise = $modal({template: 'views/server/backup/modalBackup.html', scope: modalScope, show: false});
+
+        modalScope.restoreBackup = function (evt) {
+          $scope.restore(evt._source);
+        }
+
+        modalScope.removeBackup = function (evt) {
+          $scope.removeBkp(evt._source);
+        }
+        modalPromise.$promise.then(modalPromise.show);
+      },
+      defaultView: 'agendaWeek',
+      editable: true
+
+    })
+  }
+
+  $scope.initBackup = function (db) {
+    if (!$scope.backup.uuid) {
+      $scope.backup.dbName = db.name;
+      $scope.backup.modes = {};
+      $scope.backup.enabled = true;
+      $scope.backup.retentionDays = 30;
+      $('#calendar').fullCalendar('destroy');
+    } else {
+
+
+      $('#calendar').fullCalendar('destroy');
+
+      initCalendar();
+
+    }
+  }
+
   $scope.save = function () {
     BackupService.save($scope.backup).then(function (data) {
       $scope.backup = data;
-      $scope.requestEvents();
+      $scope.initBackup($scope.db);
       Notification.push({content: "Backup saved", autoHide: true});
     }).catch(function (err) {
       Notification.push({content: err.data, error: true, autoHide: true});
