@@ -147,7 +147,7 @@ public class OStressTesterCommandLineParser {
                     if (option.startsWith("-")) {
                         option = option.substring(1);
                     } else {
-                        if (!OConstants.AVAILABLE_OPTIONS.contains(option)) {
+                        if (!OConstants.MAIN_OPTIONS.contains(option)) {
                             throw new OInitException((String.format(OErrorMessages.COMMAND_LINE_PARSER_INVALID_OPTION, args[i])));
                         }
                     }

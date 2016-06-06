@@ -34,11 +34,11 @@ public class OStressTesterCommandLineParserTest {
         }
 
         try {
-            OStressTesterCommandLineParser.getStressTester(new String[]{"-t", "10", "-p"});
+            OStressTesterCommandLineParser.getStressTester(new String[]{"-t", "10", "-n"});
             fail();
         }
         catch (Exception ex) {
-            assertTrue(ex.getMessage().contains(String.format(OErrorMessages.COMMAND_LINE_PARSER_EXPECTED_VALUE, "-p")));
+            assertTrue(ex.getMessage().contains(String.format(OErrorMessages.COMMAND_LINE_PARSER_EXPECTED_VALUE, "-n")));
         }
 
         try {
@@ -65,38 +65,38 @@ public class OStressTesterCommandLineParserTest {
             assertTrue(ex.getMessage().contains(OErrorMessages.COMMAND_LINE_PARSER_MODE_PARAM_MANDATORY));
         }
 
-        OStressTester stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100", "-p", "foo", "-m", "plocal"});
+        OStressTester stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100", "--root-password", "foo", "-m", "plocal"});
         assertEquals(100, stressTester.getIterationsNumber());
         assertEquals("foo", stressTester.getPassword());
         assertEquals(OMode.PLOCAL, stressTester.getDatabaseIdentifier().getMode());
 
-        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-m", "memory", "-p", "foo"});
+        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-m", "memory", "--root-password", "foo"});
         assertEquals("foo", stressTester.getPassword());
         assertEquals(OMode.MEMORY, stressTester.getDatabaseIdentifier().getMode());
 
-        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100", "-t", "4", "-p", "foo", "-m", "plocal"});
+        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100", "-t", "4", "--root-password", "foo", "-m", "plocal"});
         assertEquals(100, stressTester.getIterationsNumber());
         assertEquals(4, stressTester.getThreadsNumber());
         assertNull(stressTester.getDatabaseIdentifier().getRemoteIp());
         assertEquals(2424, stressTester.getDatabaseIdentifier().getRemotePort());
 
-        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-m","remote", "--remote-ip", "127.0.0.1", "-p", "foo"});
+        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-m","remote", "--remote-ip", "127.0.0.1", "--root-password", "foo"});
         assertEquals("foo", stressTester.getPassword());
         assertEquals("127.0.0.1", stressTester.getDatabaseIdentifier().getRemoteIp());
         assertEquals(2424, stressTester.getDatabaseIdentifier().getRemotePort());
 
-        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-m","remote", "--remote-ip", "127.0.0.1", "-p", "foo", "--remote-port", "1025"});
+        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-m","remote", "--remote-ip", "127.0.0.1", "--root-password", "foo", "--remote-port", "1025"});
         assertEquals("foo", stressTester.getPassword());
         assertEquals("127.0.0.1", stressTester.getDatabaseIdentifier().getRemoteIp());
         assertEquals(1025, stressTester.getDatabaseIdentifier().getRemotePort());
 
-        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100","-t","4","-m","plocal", "-p", "foo"});
+        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100","-t","4","-m","plocal", "--root-password", "foo"});
         assertEquals(100, stressTester.getIterationsNumber());
         assertEquals(4, stressTester.getThreadsNumber());
         assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());
         assertEquals("foo", stressTester.getPassword());
 
-        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100","-t","4","-m","plocal","-s","c1r1u1d1", "-p", "foo"});
+        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100","-t","4","-m","plocal","-s","c1r1u1d1", "--root-password", "foo"});
         assertEquals(100, stressTester.getIterationsNumber());
         assertEquals(4, stressTester.getThreadsNumber());
         assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());

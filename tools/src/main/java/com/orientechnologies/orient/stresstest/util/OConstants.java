@@ -30,17 +30,17 @@ public class OConstants {
     public final static String OPTION_ITERATIONS = "n";
     public final static String OPTION_THREADS = "t";
     public final static String OPTION_OPERATIONS = "s";
-    public final static String OPTION_ROOT_PASSWORD = "p";
+    public final static String OPTION_ROOT_PASSWORD = "root-password";
     public final static String OPTION_REMOTE_IP = "remote-ip";
     public final static String OPTION_REMOTE_PORT = "remote-port";
-    public final static String AVAILABLE_OPTIONS = OPTION_MODE + OPTION_ITERATIONS + OPTION_THREADS + OPTION_OPERATIONS + OPTION_ROOT_PASSWORD;
+    public final static String MAIN_OPTIONS = OPTION_MODE + OPTION_ITERATIONS + OPTION_THREADS + OPTION_OPERATIONS;
 
     public static final String SYNTAX = "StressTester " +
             "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" +
             "\n\t-n iterationsNumber " +
             "\n\t-s operationSet " +
             "\n\t-t threadsNumber " +
-            "\n\t-p rootPassword (optional)" +
+            "\n\t--root-password rootPassword (optional)" +
             "\n\t--remote-ip ipOrHostname(optional)" +
             "\n\t--remote-port portNumber(optional)" +
             "\n";
