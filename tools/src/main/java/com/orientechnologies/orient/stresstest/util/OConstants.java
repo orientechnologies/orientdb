@@ -32,12 +32,22 @@ public class OConstants {
     public final static String OPTION_OPERATIONS = "s";
     public final static String OPTION_ROOT_PASSWORD = "p";
     public final static String OPTION_REMOTE_IP = "remote-ip";
+    public final static String OPTION_REMOTE_PORT = "remote-port";
     public final static String AVAILABLE_OPTIONS = OPTION_MODE + OPTION_ITERATIONS + OPTION_THREADS + OPTION_OPERATIONS + OPTION_ROOT_PASSWORD;
 
-    public static final String SYNTAX = "OStressTester \n\t-m [plocal|memory|remote|distributed] \n\t-n iterationsNumber \n\t-s operationSet \n\t-t threadsNumber \n\t-p rootPassword (optional)"; //\t--remote-ip 192.168.1.1\n";
+    public static final String SYNTAX = "StressTester " +
+            "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" +
+            "\n\t-n iterationsNumber " +
+            "\n\t-s operationSet " +
+            "\n\t-t threadsNumber " +
+            "\n\t-p rootPassword (optional)" +
+            "\n\t--remote-ip ipOrHostname(optional)" +
+            "\n\t--remote-port portNumber(optional)" +
+            "\n";
     public static final String TEMP_DATABASE_NAME = "stress-test-db-";
     public static final String CLASS_NAME = "StressTestDoc";
     public static final String INDEX_NAME = CLASS_NAME + ".Index";
 
     public static final String VERSION = "0.1";
+    public static final String CONSOLE_REMOTE_PASSWORD_PROMPT = "OrientDB Server (%s:%d) - Please insert the root password to create the test database: ";
 }

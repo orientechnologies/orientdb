@@ -21,9 +21,13 @@ package com.orientechnologies.orient.stresstest;
 
 import com.orientechnologies.orient.stresstest.operations.OOperationsSet;
 import com.orientechnologies.orient.stresstest.util.OConstants;
+import com.orientechnologies.orient.stresstest.util.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.util.OErrorMessages;
 import com.orientechnologies.orient.stresstest.util.OInitException;
 
+import java.io.Console;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,25 +39,57 @@ import java.util.Map;
  */
 public class OStressTesterCommandLineParser {
 
+    /**
+     * builds a StressTester object using the command line arguments
+     * @param args
+     * @return
+     * @throws Exception
+     */
     public static OStressTester getStressTester(String[] args) throws Exception {
 
         Map<String, String> options = checkOptions(readOptions(args));
+        String dbName = OConstants.TEMP_DATABASE_NAME + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        OMode mode = OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());
+        String rootPassword = options.get(OConstants.OPTION_ROOT_PASSWORD);
         int iterationsNumber = getNumber(options.get(OConstants.OPTION_ITERATIONS), "iterations");
         int threadsNumber = getNumber(options.get(OConstants.OPTION_THREADS), "threads");
-        OMode mode = OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());
-        if (mode == OMode.DISTRIBUTED) {
-            throw new OInitException("OMode [" + mode + "] not yet supported.");
-        }
         OOperationsSet operationsSet = new OOperationsSet(options.get(OConstants.OPTION_OPERATIONS), threadsNumber, iterationsNumber);
-        String rootPassword = options.get(OConstants.OPTION_ROOT_PASSWORD);
-        return new OStressTester(mode, operationsSet, iterationsNumber, threadsNumber, rootPassword);
+        String remoteIp = options.get(OConstants.OPTION_REMOTE_IP);
+        int remotePort = 2424;
+
+        if (options.get(OConstants.OPTION_REMOTE_PORT) != null) {
+            remotePort = getNumber(options.get(OConstants.OPTION_REMOTE_PORT), "remotePort");
+            if (remotePort > 65535) {
+                throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_INVALID_REMOTE_PORT_NUMBER, remotePort));
+            }
+        }
+
+        if (mode == OMode.DISTRIBUTED) {
+            throw new OInitException(String.format("OMode [%s] not yet supported.", mode));
+        }
+
+        if (mode == OMode.REMOTE && remoteIp == null) {
+            throw new OInitException(OErrorMessages.COMMAND_LINE_PARSER_MISSING_REMOTE_IP);
+        }
+
+        if (rootPassword == null && mode == OMode.REMOTE) {
+            Console console = System.console();
+            if (console != null) {
+                rootPassword = String.valueOf(console.readPassword(String.format(OConstants.CONSOLE_REMOTE_PASSWORD_PROMPT, remoteIp , remotePort)));
+            } else {
+                throw new Exception(OErrorMessages.ERROR_OPENING_CONSOLE);
+            }
+        }
+
+        ODatabaseIdentifier databaseIdentifier = new ODatabaseIdentifier(mode, dbName, rootPassword, remoteIp, remotePort);
+        return new OStressTester(databaseIdentifier, operationsSet, iterationsNumber, threadsNumber);
     }
 
     private static int getNumber(String value, String option) throws OInitException {
         try {
             int val = Integer.parseInt(value);
             if (val < 0) {
-                throw new NumberFormatException();
+                throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_LESSER_THAN_ZERO_NUMBER, option));
             }
             return val;
         } catch (NumberFormatException ex) {
@@ -62,6 +98,10 @@ public class OStressTesterCommandLineParser {
     }
 
     private static Map<String, String> checkOptions(Map<String, String> options) throws OInitException {
+
+        if (options.get(OConstants.OPTION_MODE) == null) {
+            throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_MODE_PARAM_MANDATORY));
+        }
 
         options = setDefaultIfNotPresent(options, OConstants.OPTION_MODE, OMode.PLOCAL.name());
         options = setDefaultIfNotPresent(options, OConstants.OPTION_ITERATIONS, "10");

@@ -150,7 +150,7 @@ public class OStressTestResults {
     }
 
     private StringBuilder getParameters() {
-        return new StringBuilder("OMode: ")
+        return new StringBuilder("Mode: ")
                 .append(mode.toString())
                 .append(", Threads: ")
                 .append(threadsNumber)

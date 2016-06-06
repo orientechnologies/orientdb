@@ -24,9 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.stresstest.OMode;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -36,34 +34,44 @@ import java.util.List;
  */
 public class ODatabaseUtils {
 
-    public static void createDatabase(String dbName, OMode mode, String password) throws Exception {
-        if (mode == OMode.PLOCAL || mode == OMode.MEMORY) {
-            new ODatabaseDocumentTx(getDatabaseUrl(dbName, mode)).create();
-        }
-        else if (mode == OMode.REMOTE) {
-            new OServerAdmin(getDatabaseUrl(dbName, mode))
-                    .connect("root", password)
-                    .createDatabase(dbName, "document", "plocal");
+    public static void createDatabase(ODatabaseIdentifier databaseIdentifier) throws Exception {
+        switch (databaseIdentifier.getMode()) {
+            case PLOCAL:
+            case MEMORY:
+                new ODatabaseDocumentTx(databaseIdentifier.getUrl()).create();
+                break;
+            case REMOTE:
+                new OServerAdmin(databaseIdentifier.getUrl())
+                        .connect("root", databaseIdentifier.getPassword())
+                        .createDatabase(databaseIdentifier.getName(), "document", "plocal");
+                break;
         }
     }
 
-    public static ODatabase openDatabase(OMode mode, String dbName, String password) {
-        if (mode == OMode.PLOCAL || mode == OMode.MEMORY) {
-            return new ODatabaseDocumentTx(getDatabaseUrl(dbName, mode)).open("admin", "admin");
-        }
-        else if (mode == OMode.REMOTE) {
-            return new ODatabaseDocumentTx(getDatabaseUrl(dbName, mode)).open("root", password);
+    public static ODatabase openDatabase(ODatabaseIdentifier databaseIdentifier) {
+        switch (databaseIdentifier.getMode()) {
+            case PLOCAL:
+            case MEMORY:
+                return new ODatabaseDocumentTx(databaseIdentifier.getUrl()).open("admin", "admin");
+            case REMOTE:
+                return new ODatabaseDocumentTx(databaseIdentifier.getUrl()).open("root", databaseIdentifier.getPassword());
         }
 
         return null;
     }
 
-    public static void dropDatabase(String dbName, OMode mode, String password) throws Exception {
-        if (mode == OMode.PLOCAL || mode == OMode.MEMORY) {
-            openDatabase(mode, getDatabaseUrl(dbName, mode), null).drop();
-        }
-        else if (mode == OMode.REMOTE) {
-            new OServerAdmin("remote:localhost:2424").connect("root", password).dropDatabase(dbName, "plocal");
+    public static void dropDatabase(ODatabaseIdentifier databaseIdentifier) throws Exception {
+
+        switch (databaseIdentifier.getMode()) {
+            case PLOCAL:
+            case MEMORY:
+                openDatabase(databaseIdentifier).drop();
+                break;
+            case REMOTE:
+                new OServerAdmin(databaseIdentifier.getUrl())
+                        .connect("root", databaseIdentifier.getPassword())
+                        .dropDatabase(databaseIdentifier.getName(), "plocal");
+                break;
         }
     }
 
@@ -91,26 +99,11 @@ public class ODatabaseUtils {
         doc.save();
     }
 
-
     private static String getThreadValue(int n) {
         return getThreadValue(n, "");
     }
 
     private static String getThreadValue(int n, String prefix) {
         return prefix + "value-" + Thread.currentThread().getId() + "-" + n;
-    }
-
-    private static String getDatabaseUrl(String dbName, OMode mode) {
-        switch (mode) {
-            case PLOCAL:
-                return "plocal:" + System.getProperty("java.io.tmpdir") + File.separator + dbName;
-            case MEMORY:
-                return "memory:" + dbName;
-            case REMOTE:
-                return "remote:localhost:2424/" + dbName;
-            case DISTRIBUTED:
-                return null;
-        }
-        return null;
     }
 }

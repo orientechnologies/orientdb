@@ -32,12 +32,10 @@ import com.orientechnologies.orient.stresstest.output.OConsoleWriter;
 import com.orientechnologies.orient.stresstest.output.OOperationsExecutorResults;
 import com.orientechnologies.orient.stresstest.output.OStressTestResults;
 import com.orientechnologies.orient.stresstest.util.OConstants;
+import com.orientechnologies.orient.stresstest.util.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.util.ODatabaseUtils;
 
-import java.io.Console;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -54,31 +52,19 @@ import java.util.concurrent.Future;
 public class OStressTester {
 
     private int threadsNumber;
-    private String password;
-    private OMode mode;
-    private OOperationsSet operationsSet;
     private int iterationsNumber;
+    private ODatabaseIdentifier databaseIdentifier;
+    private OOperationsSet operationsSet;
     private OConsoleWriter consoleProgressWriter;
     private OStressTestResults stressTestResults;
 
-    public OStressTester(OMode mode, OOperationsSet operationsSet, int iterationsNumber, int threadsNumber, String password) throws Exception {
-        this.mode = mode;
+    public OStressTester(ODatabaseIdentifier databaseIdentifier, OOperationsSet operationsSet, int iterationsNumber, int threadsNumber) throws Exception {
         this.operationsSet = operationsSet;
         this.iterationsNumber = iterationsNumber;
         this.threadsNumber = threadsNumber;
-        stressTestResults = new OStressTestResults(operationsSet, mode, threadsNumber, iterationsNumber);
+        this.databaseIdentifier = databaseIdentifier;
+        stressTestResults = new OStressTestResults(operationsSet, databaseIdentifier.getMode(), threadsNumber, iterationsNumber);
         consoleProgressWriter = new OConsoleWriter(operationsSet, threadsNumber, iterationsNumber);
-
-        this.password = password;
-        if (password == null) {
-            Console console = System.console();
-            if (console != null) {
-                this.password = new String(console.readPassword("Server Root Password: "));
-            } else {
-                throw new Exception("An error has occurred opening the console. Please supply the root password as the -p parameter.");
-            }
-        }
-
     }
 
     @SuppressWarnings("unchecked")
@@ -92,13 +78,12 @@ public class OStressTester {
         OLogManager.instance().setConsoleLevel("SEVERE");
 
         // creates the temporary DB where to execute the test
-        String dbName = OConstants.TEMP_DATABASE_NAME + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        ODatabaseUtils.createDatabase(dbName, mode, password);
+        ODatabaseUtils.createDatabase(databaseIdentifier);
 
         // opens the newly created db and creates an index on the class we're going to use
-        ODatabase database = ODatabaseUtils.openDatabase(mode, dbName, password);
+        ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
         if (database == null) {
-            throw new Exception("Couldn't open database " + dbName + ".");
+            throw new Exception("Couldn't open database " + databaseIdentifier.getName() + ".");
         }
 
         try {
@@ -131,7 +116,7 @@ public class OStressTester {
                 // creates the operations executors
                 List<Callable<OOperationsExecutorResults>> operationsExecutors = new ArrayList<Callable<OOperationsExecutorResults>>();
                 for (int j = 0; j < threadsNumber; j++) {
-                    operationsExecutors.add(new OOperationsExecutor(dbName, password, mode, operationsSet, consoleProgressWriter));
+                    operationsExecutors.add(new OOperationsExecutor(databaseIdentifier, operationsSet, consoleProgressWriter));
                 }
 
                 // starts parallel execution (blocking)
@@ -156,9 +141,9 @@ public class OStressTester {
             returnCode = 1;
             // ex.printStackTrace();
         } finally {
-            // we don't need to drop the in memory DB
-            if (mode != OMode.MEMORY) {
-                ODatabaseUtils.dropDatabase(dbName, mode, password);
+            // we don't need to drop the in-memory DB
+            if (databaseIdentifier.getMode() != OMode.MEMORY) {
+                ODatabaseUtils.dropDatabase(databaseIdentifier);
             }
         }
 
@@ -174,11 +159,15 @@ public class OStressTester {
     }
 
     public OMode getMode() {
-        return mode;
+        return databaseIdentifier.getMode();
+    }
+
+    public ODatabaseIdentifier getDatabaseIdentifier() {
+        return databaseIdentifier;
     }
 
     public String getPassword() {
-        return password;
+        return databaseIdentifier.getPassword();
     }
 
     public static void main(String[] args) {
