@@ -79,6 +79,7 @@ public class OStressTester {
 
         // creates the temporary DB where to execute the test
         ODatabaseUtils.createDatabase(databaseIdentifier);
+        consoleProgressWriter.printMessage(String.format("Created database [%s].", databaseIdentifier.getUrl()));
 
         // opens the newly created db and creates an index on the class we're going to use
         ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
