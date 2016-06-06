@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 public class OSBTreeBonsaiLocalTest {
   private static final int KEYS_COUNT = 500000;
   protected OSBTreeBonsaiLocal<Integer, OIdentifiable> sbTree;
-  private   ODatabaseDocumentTx                        databaseDocumentTx;
+  protected ODatabaseDocumentTx                        databaseDocumentTx;
 
   @BeforeClass
   public void beforeClass() {
@@ -40,7 +40,7 @@ public class OSBTreeBonsaiLocalTest {
 
     databaseDocumentTx.create();
 
-    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("OSBTreeBonsaiLocalTest", ".irs",
+    sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>("actualSBTreeBonsaiLocalTest", ".irs",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE);
   }
