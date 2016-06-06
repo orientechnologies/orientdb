@@ -46,23 +46,25 @@ import static org.junit.Assert.assertNotEquals;
 
 public class OBackupManagerTest {
 
-  private OServer             server;
+  private OServer server;
 
-  private final String        DB_NAME     = "backupDB";
-  private final String        BACKUP_PATH = System.getProperty("java.io.tmpdir") + File.separator + DB_NAME;
+  private final String DB_NAME     = "backupDB";
+  private final String BACKUP_PATH = System.getProperty("java.io.tmpdir") + File.separator + DB_NAME;
   private ODatabaseDocumentTx db;
 
-  private OBackupManager      manager;
+  private OBackupManager manager;
 
   @Before
   public void bootOrientDB() {
 
     try {
       InputStream stream = ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml");
-      server = OServerMain.create();
+      server = OServerMain.create(false);
       server.startup(stream);
       server.activate();
-      server.getSystemDatabase().execute(new OCallable<Object, Object>() {
+      server.getSystemDatabase(
+
+      ).execute(new OCallable<Object, Object>() {
         @Override
         public Object call(Object iArgument) {
           return null;
@@ -127,7 +129,6 @@ public class OBackupManagerTest {
     Thread.sleep(10000);
 
     task.stop();
-
 
     ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
     assertNotNull(logs);
