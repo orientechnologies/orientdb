@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCacheIdGen;
 public abstract class OEngineAbstract implements OEngine {
   private static final OWriteCacheIdGen writeCacheIdGen = new OSnowFlakeIdGen();
 
+  private boolean running = false;
+
   protected int generateStorageId() {
     return writeCacheIdGen.nextId();
   }
@@ -42,9 +44,21 @@ public abstract class OEngineAbstract implements OEngine {
     return dbMode;
   }
 
+  @Override
+  public void startup() {
+    this.running = true;
+  }
+
+  @Override
   public void shutdown() {
+    this.running = false;
   }
 
   public void removeStorage(final OStorage iStorage) {
+  }
+
+  @Override
+  public boolean isRunning() {
+    return running;
   }
 }

@@ -57,13 +57,18 @@ public class OEngineRemote extends OEngineAbstract {
 
   @Override
   public void startup() {
+    super.startup();
+
     connectionManager = new ORemoteConnectionManager(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsLong());
   }
 
   @Override
   public void shutdown() {
-    super.shutdown();
-    connectionManager.close();
+    try {
+      connectionManager.close();
+    } finally {
+      super.shutdown();
+    }
   }
 
   @Override
