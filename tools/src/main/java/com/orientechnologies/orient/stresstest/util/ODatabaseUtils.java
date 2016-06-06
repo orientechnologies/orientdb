@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.stresstest.OMode;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -36,19 +37,32 @@ import java.util.List;
 public class ODatabaseUtils {
 
     public static void createDatabase(String dbName, OMode mode, String password) throws Exception {
-        if (mode == com.orientechnologies.orient.stresstest.OMode.PLOCAL) {
-            String dbUrl = "remote:localhost:2424/" + dbName;
-            OServerAdmin serverAdmin = new OServerAdmin(dbUrl).connect("root", password);
-            serverAdmin.createDatabase(dbName, "document", "plocal");
+        if (mode == OMode.PLOCAL || mode == OMode.MEMORY) {
+            new ODatabaseDocumentTx(getDatabaseUrl(dbName, mode)).create();
+        }
+        else if (mode == OMode.REMOTE) {
+            new OServerAdmin(getDatabaseUrl(dbName, mode))
+                    .connect("root", password)
+                    .createDatabase(dbName, "document", "plocal");
         }
     }
 
-    public static ODatabase openDatabase(String dbName, String password) {
-        return new ODatabaseDocumentTx("remote:localhost:2424/" + dbName).open("root", password);
+    public static ODatabase openDatabase(OMode mode, String dbName, String password) {
+        if (mode == OMode.PLOCAL || mode == OMode.MEMORY) {
+            return new ODatabaseDocumentTx(getDatabaseUrl(dbName, mode)).open("admin", "admin");
+        }
+        else if (mode == OMode.REMOTE) {
+            return new ODatabaseDocumentTx(getDatabaseUrl(dbName, mode)).open("root", password);
+        }
+
+        return null;
     }
 
     public static void dropDatabase(String dbName, OMode mode, String password) throws Exception {
-        if (mode == com.orientechnologies.orient.stresstest.OMode.PLOCAL) {
+        if (mode == OMode.PLOCAL || mode == OMode.MEMORY) {
+            openDatabase(mode, getDatabaseUrl(dbName, mode), null).drop();
+        }
+        else if (mode == OMode.REMOTE) {
             new OServerAdmin("remote:localhost:2424").connect("root", password).dropDatabase(dbName, "plocal");
         }
     }
@@ -84,5 +98,19 @@ public class ODatabaseUtils {
 
     private static String getThreadValue(int n, String prefix) {
         return prefix + "value-" + Thread.currentThread().getId() + "-" + n;
+    }
+
+    private static String getDatabaseUrl(String dbName, OMode mode) {
+        switch (mode) {
+            case PLOCAL:
+                return "plocal:" + System.getProperty("java.io.tmpdir") + File.separator + dbName;
+            case MEMORY:
+                return "memory:" + dbName;
+            case REMOTE:
+                return "remote:localhost:2424/" + dbName;
+            case DISTRIBUTED:
+                return null;
+        }
+        return null;
     }
 }

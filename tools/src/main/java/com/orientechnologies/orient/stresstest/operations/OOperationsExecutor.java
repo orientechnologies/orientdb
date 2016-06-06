@@ -21,6 +21,7 @@ package com.orientechnologies.orient.stresstest.operations;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.stresstest.OMode;
 import com.orientechnologies.orient.stresstest.output.OConsoleWriter;
 import com.orientechnologies.orient.stresstest.output.OOperationsExecutorResults;
 import com.orientechnologies.orient.stresstest.util.ODatabaseUtils;
@@ -39,12 +40,14 @@ public class OOperationsExecutor implements Callable {
     private OOperationsSet operationsSet;
     private String dbName;
     private String password;
+    private OMode mode;
     private OConsoleWriter consoleWriter;
     private List<ODocument> insertedDocs;
 
-    public OOperationsExecutor(String dbName, String password, OOperationsSet operationsSet, OConsoleWriter consoleWriter) {
+    public OOperationsExecutor(String dbName, String password, OMode mode, OOperationsSet operationsSet, OConsoleWriter consoleWriter) {
         this.dbName = dbName;
         this.password = password;
+        this.mode = mode;
         this.consoleWriter = consoleWriter;
         this.operationsSet = operationsSet;
         insertedDocs = new ArrayList<ODocument>();
@@ -55,7 +58,7 @@ public class OOperationsExecutor implements Callable {
     public Object call() throws Exception {
 
         // the database must be opened in the executing thread
-        ODatabase database = ODatabaseUtils.openDatabase(dbName, password);
+        ODatabase database = ODatabaseUtils.openDatabase(mode, dbName, password);
 
         // executes all the operations defined for this test
         long start = System.currentTimeMillis();

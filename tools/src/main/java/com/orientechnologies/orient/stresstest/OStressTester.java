@@ -96,7 +96,11 @@ public class OStressTester {
         ODatabaseUtils.createDatabase(dbName, mode, password);
 
         // opens the newly created db and creates an index on the class we're going to use
-        ODatabase database = ODatabaseUtils.openDatabase(dbName, password);
+        ODatabase database = ODatabaseUtils.openDatabase(mode, dbName, password);
+        if (database == null) {
+            throw new Exception("Couldn't open database " + dbName + ".");
+        }
+
         try {
 
             final OSchema schema = database.getMetadata().getSchema();
@@ -127,7 +131,7 @@ public class OStressTester {
                 // creates the operations executors
                 List<Callable<OOperationsExecutorResults>> operationsExecutors = new ArrayList<Callable<OOperationsExecutorResults>>();
                 for (int j = 0; j < threadsNumber; j++) {
-                    operationsExecutors.add(new OOperationsExecutor(dbName, password, operationsSet, consoleProgressWriter));
+                    operationsExecutors.add(new OOperationsExecutor(dbName, password, mode, operationsSet, consoleProgressWriter));
                 }
 
                 // starts parallel execution (blocking)
@@ -152,7 +156,10 @@ public class OStressTester {
             returnCode = 1;
             // ex.printStackTrace();
         } finally {
-            ODatabaseUtils.dropDatabase(dbName, mode, password);
+            // we don't need to drop the in memory DB
+            if (mode != OMode.MEMORY) {
+                ODatabaseUtils.dropDatabase(dbName, mode, password);
+            }
         }
 
         return returnCode;

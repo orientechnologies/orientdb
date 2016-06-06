@@ -34,7 +34,7 @@ import java.util.List;
  */
 public class OStressTestResults {
 
-    private final String OPERATION_RESULT = "\nAverage time for %,d %s: %.2f secs [%dth percentile] - Throughput: %,d/s.\"";
+    private final String OPERATION_RESULT = "\nAverage time for %,d %s: %.2f secs [%dth percentile] - Throughput: %,d/s.";
     private List<Long> operationsExecutorCreatesResults = new ArrayList<Long>();
     private List<Long> operationsExecutorReadsResults = new ArrayList<Long>();
     private List<Long> operationsExecutorUpdatesResults = new ArrayList<Long>();

@@ -40,9 +40,9 @@ public class OStressTesterCommandLineParser {
         Map<String, String> options = checkOptions(readOptions(args));
         int iterationsNumber = getNumber(options.get(OConstants.OPTION_ITERATIONS), "iterations");
         int threadsNumber = getNumber(options.get(OConstants.OPTION_THREADS), "threads");
-        OMode mode = com.orientechnologies.orient.stresstest.OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());
-        if (mode != com.orientechnologies.orient.stresstest.OMode.PLOCAL) {
-            throw new OInitException("OMode [" + mode + "] not yet supported. Use PLOCAL.");
+        OMode mode = OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());
+        if (mode == OMode.DISTRIBUTED) {
+            throw new OInitException("OMode [" + mode + "] not yet supported.");
         }
         OOperationsSet operationsSet = new OOperationsSet(options.get(OConstants.OPTION_OPERATIONS), threadsNumber, iterationsNumber);
         String rootPassword = options.get(OConstants.OPTION_ROOT_PASSWORD);
@@ -63,7 +63,7 @@ public class OStressTesterCommandLineParser {
 
     private static Map<String, String> checkOptions(Map<String, String> options) throws OInitException {
 
-        options = setDefaultIfNotPresent(options, OConstants.OPTION_MODE, com.orientechnologies.orient.stresstest.OMode.PLOCAL.name());
+        options = setDefaultIfNotPresent(options, OConstants.OPTION_MODE, OMode.PLOCAL.name());
         options = setDefaultIfNotPresent(options, OConstants.OPTION_ITERATIONS, "10");
         options = setDefaultIfNotPresent(options, OConstants.OPTION_THREADS, "4");
         options = setDefaultIfNotPresent(options, OConstants.OPTION_OPERATIONS, "C5000R5000U5000D5000");
