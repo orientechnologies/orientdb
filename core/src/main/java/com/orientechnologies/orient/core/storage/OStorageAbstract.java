@@ -83,7 +83,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
     this.name = normalizeName(name);
 
-    if (OStringSerializerHelper.contains(name, ','))
+    if (OStringSerializerHelper.contains(this.name, ','))
       throw new IllegalArgumentException("Invalid character in storage name: " + this.name);
 
     url = iURL;
