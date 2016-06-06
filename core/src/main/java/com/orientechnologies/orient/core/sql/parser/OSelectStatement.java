@@ -288,7 +288,7 @@ public class OSelectStatement extends OStatement {
     final ORID[] range = new ORID[2];// TODO
     boolean useCache = false;// TODO
     if (iAscendentOrder)
-      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, useCache).setRange(range[0],
+      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, useCache, false).setRange(range[0],
           range[1]);
     else
       return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic).setRange(range[0],

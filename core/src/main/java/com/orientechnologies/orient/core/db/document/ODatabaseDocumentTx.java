@@ -91,6 +91,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Document API entrypoint.
@@ -133,7 +134,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private OCurrentStorageComponentsFactory componentsFactory;
   private boolean initialized = false;
   private OTransaction currentTx;
-  private boolean keepStorageOpen = false;
+  private boolean                 keepStorageOpen = false;
+  private AtomicReference<Thread> owner           = new AtomicReference<Thread>();
+
   protected ODatabaseSessionMetadata sessionMetadata;
 
   /**
@@ -215,8 +218,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    */
   @Override
   public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
+    boolean failure = true;
+    setupThreadOwner();
     activateOnCurrentThread();
-
     try {
       if (status == STATUS.OPEN)
         throw new IllegalStateException("Database " + getName() + " is already open");
@@ -255,12 +259,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       // WAKE UP LISTENERS
       callOnOpenListeners();
 
+      failure = false;
     } catch (OException e) {
       close();
       throw e;
     } catch (Exception e) {
       close();
       throw OException.wrapException(new ODatabaseException("Cannot open database url=" + getURL()), e);
+    } finally {
+      if (failure)
+        owner.set(null);
     }
     return (DB) this;
   }
@@ -272,6 +280,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public <DB extends ODatabase> DB open(final OToken iToken) {
+    boolean failure = true;
+
+    setupThreadOwner();
     activateOnCurrentThread();
 
     try {
@@ -306,14 +317,28 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       // WAKE UP LISTENERS
       callOnOpenListeners();
+
+      failure = false;
     } catch (OException e) {
       close();
       throw e;
     } catch (Exception e) {
       close();
       throw OException.wrapException(new ODatabaseException("Cannot open database"), e);
+    } finally {
+      if (failure)
+        owner.set(null);
     }
     return (DB) this;
+  }
+
+  private void setupThreadOwner() {
+    final Thread current = Thread.currentThread();
+    final Thread o = owner.get();
+
+    if (o != null || !owner.compareAndSet(null, current)) {
+      throw new IllegalStateException("Current instance is owned by other thread" + (o != null ? " : '" + o.getName() + "'" : ""));
+    }
   }
 
   public void callOnOpenListeners() {
@@ -354,6 +379,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
+    setupThreadOwner();
     activateOnCurrentThread();
 
     try {
@@ -455,6 +481,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       status = STATUS.CLOSED;
       ODatabaseRecordThreadLocal.INSTANCE.remove();
+      clearOwner();
 
     } catch (OException e) {
       // PASS THROUGH
@@ -474,6 +501,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new ODatabaseException("Cannot copy a closed db");
 
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx(this.url);
+    db.setupThreadOwner();
+
     db.user = this.user;
     db.properties.putAll(this.properties);
     db.serializer = this.serializer;
@@ -1172,6 +1201,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       storage.close();
 
     ODatabaseRecordThreadLocal.INSTANCE.remove();
+    clearOwner();
+  }
+
+  private void clearOwner() {
+    final Thread current = Thread.currentThread();
+    owner.compareAndSet(current, null);
   }
 
   @Override

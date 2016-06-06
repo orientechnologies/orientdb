@@ -147,19 +147,15 @@ public class OMemory {
           "The sum of the configured JVM maximum heap size (" + maxHeapSize + " bytes) " + "and the OrientDB maximum cache size ("
               + maxCacheSize + " bytes) is larger than the available physical memory size " + "(" + physicalMemory
               + " bytes). That may cause out of memory errors, please tune the configuration up. Use the "
-              + "-Xmx JVM option to lower the JVM maximum heap memory size or storage.diskCache.bufferSize OrientDB option to lower "
-              + "memory requirements of the cache.");
+              + "-Xmx JVM option to lower the JVM maximum heap memory size or storage.diskCache.bufferSize OrientDB option to "
+              + "lower memory requirements of the cache.");
   }
 
   /**
    * Checks the {@link com.orientechnologies.common.directmemory.OByteBufferPool} configuration and emits a warning
    * if configuration is invalid.
-   *
-   * @param checkCacheConfiguration {@code false} to check only basic byte buffer pool configuration settings,
-   *                                {@code true} to also check the pool configuration for compatibility with OrientDB cache
-   *                                configuration.
    */
-  public static void checkByteBufferPoolConfiguration(boolean checkCacheConfiguration) {
+  public static void checkByteBufferPoolConfiguration() {
     final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
     final long memoryChunkSize = OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsLong();
     final long maxCacheSize = getMaxCacheMemorySize();
@@ -171,7 +167,7 @@ public class OMemory {
               + "configuration up. Use the -XX:MaxDirectMemorySize JVM option to raise the JVM maximum direct memory size "
               + "or memory.chunk.size OrientDB option to lower memory chunk size.");
 
-    if (checkCacheConfiguration && memoryChunkSize > maxCacheSize)
+    if (memoryChunkSize > maxCacheSize)
       OLogManager.instance().warn(OMemory.class,
           "The configured memory chunk size (" + memoryChunkSize + " bytes) is larger than the configured maximum cache size ("
               + maxCacheSize + " bytes). That may cause overallocation of a memory which will be wasted, please tune the "
@@ -180,7 +176,7 @@ public class OMemory {
   }
 
   /**
-   * Tries to fix some common memory configuration problems:
+   * Tries to fix some common cache/memory configuration problems:
    * <ul>
    * <li>Cache size is larger than direct memory size.</li>
    * <li>Memory chunk size is larger than cache size.</li>

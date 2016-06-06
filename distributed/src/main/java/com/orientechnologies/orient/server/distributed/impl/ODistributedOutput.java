@@ -23,7 +23,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.orient.console.OTableFormatter;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -124,6 +123,60 @@ public class ODistributedOutput {
     table.setColumnHidden("#");
     table.writeRecords(rows, -1);
     buffer.append("\n");
+    return buffer.toString();
+  }
+
+  /**
+   * Create a compact string with all the relevant information.
+   * 
+   * @param manager
+   * @param distribCfg
+   * @return
+   */
+  public static String getCompactServerStatus(final ODistributedServerManager manager, final ODocument distribCfg) {
+    final StringBuilder buffer = new StringBuilder();
+
+    final Collection<ODocument> members = distribCfg.field("members");
+
+    if (members != null) {
+      buffer.append(members.size());
+      buffer.append(":[");
+
+      int memberCount = 0;
+      for (ODocument m : members) {
+        if (m == null)
+          continue;
+
+        if (memberCount++ > 0)
+          buffer.append(",");
+
+        final String serverName = m.field("name");
+        buffer.append(serverName);
+        buffer.append(m.field("status"));
+
+        final Collection<String> databases = m.field("databases");
+        if (databases != null) {
+          buffer.append("{");
+          int dbCount = 0;
+          for (String dbName : databases) {
+            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName);
+
+            if (dbCount++ > 0)
+              buffer.append(",");
+
+            buffer.append(dbName);
+            buffer.append("=");
+            buffer.append(manager.getDatabaseStatus(serverName, dbName));
+            buffer.append(" (");
+            buffer.append(dbCfg.getServerRole(serverName));
+            buffer.append(")");
+          }
+          buffer.append("}");
+        }
+      }
+      buffer.append("]");
+    }
+
     return buffer.toString();
   }
 

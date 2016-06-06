@@ -97,7 +97,8 @@ public class Orient extends OListenerManger<OOrientListener> {
     instance.startup();
   }
 
-  private String                         os;
+  private final String os;
+
   private volatile Timer                 timer;
   private volatile ORecordFactoryManager recordFactoryManager = new ORecordFactoryManager();
   private OrientShutdownHook             shutdownHook;
@@ -149,7 +150,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   protected Orient() {
     super(true);
-
+    this.os = System.getProperty("os.name").toLowerCase();
     threadGroup = new ThreadGroup("OrientDB");
     threadGroup.setDaemon(false);
   }
@@ -199,8 +200,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (active)
         // ALREADY ACTIVE
         return this;
-
-      os = System.getProperty("os.name").toLowerCase();
 
       if (timer == null)
         timer = new Timer(true);
@@ -314,8 +313,6 @@ public class Orient extends OListenerManger<OOrientListener> {
           OLogManager.instance().debug(this, "Failed to replace engine " + engine.getName());
       }
     }
-
-    initEngines();
   }
 
   public Orient shutdown() {
@@ -478,6 +475,14 @@ public class Orient extends OListenerManger<OOrientListener> {
         throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
             + iURL + ". Registered engines are: " + engines.keySet());
 
+      if (!engine.isRunning()) {
+        final List<String> knownEngines = new ArrayList<String>(engines.keySet());
+        if (!startEngine(engine))
+          throw new OConfigurationException(
+              "Error on opening database: the engine '" + engineName + "' was unable to start. URL was: " + iURL
+                  + ". Registered engines was: " + knownEngines);
+      }
+
       // SEARCH FOR DB-NAME
       iURL = iURL.substring(pos + 1);
 
@@ -560,7 +565,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  private void registerEngine(final OEngine iEngine) throws IllegalArgumentException {
+  protected void registerEngine(final OEngine iEngine) throws IllegalArgumentException {
     OEngine oEngine = engines.get(iEngine.getName());
 
     if (oEngine != null) {
@@ -569,31 +574,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
     }
     engines.put(iEngine.getName(), iEngine);
-  }
-
-  private void initEngines() {
-    final List<String> entriesToDelete = new ArrayList<String>();
-
-    for (Map.Entry<String, OEngine> entry : engines.entrySet()) {
-      final OEngine engine = entry.getValue();
-      try {
-        engine.startup();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during initialization of engine '%s', engine will be removed", e, entry.getKey());
-
-        try {
-          engine.shutdown();
-        } catch (Exception se) {
-          OLogManager.instance().error(this, "Error during engine shutdown", se);
-        }
-
-        entriesToDelete.add(entry.getKey());
-      }
-    }
-
-    for (String storageType : entriesToDelete) {
-      engines.remove(storageType);
-    }
   }
 
   /**
@@ -607,6 +587,46 @@ public class Orient extends OListenerManger<OOrientListener> {
     engineLock.readLock().lock();
     try {
       return engines.get(engineName);
+    } finally {
+      engineLock.readLock().unlock();
+    }
+  }
+
+  /**
+   * Obtains an {@link OEngine engine} instance with the given {@code engineName}, if it is {@link OEngine#isRunning() running}.
+   *
+   * @param engineName the name of the engine to obtain.
+   * @return the obtained engine instance or {@code null} if no such engine known or the engine is not running.
+   */
+  public OEngine getEngineIfRunning(final String engineName) {
+    engineLock.readLock().lock();
+    try {
+      final OEngine engine = engines.get(engineName);
+      return engine == null || !engine.isRunning() ? null : engine;
+    } finally {
+      engineLock.readLock().unlock();
+    }
+  }
+
+  /**
+   * Obtains a {@link OEngine#isRunning() running} {@link OEngine engine} instance with the given {@code engineName}.
+   * If engine is not running, starts it.
+   *
+   * @param engineName the name of the engine to obtain.
+   * @return the obtained running engine instance, never {@code null}.
+   * @throws IllegalStateException if an engine with the given is not found or failed to start.
+   */
+  public OEngine getRunningEngine(final String engineName) {
+    engineLock.readLock().lock();
+    try {
+      OEngine engine = engines.get(engineName);
+      if (engine == null)
+        throw new IllegalStateException("Engine '" + engineName + "' is not found.");
+
+      if (!engine.isRunning() && !startEngine(engine))
+        throw new IllegalStateException("Engine '" + engineName + "' is failed to start.");
+
+      return engine;
     } finally {
       engineLock.readLock().unlock();
     }
@@ -845,6 +865,27 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
+  private boolean startEngine(OEngine engine) {
+    final String name = engine.getName();
+
+    try {
+      engine.startup();
+      return true;
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error during initialization of engine '%s', engine will be removed", e, name);
+
+      try {
+        engine.shutdown();
+      } catch (Exception se) {
+        OLogManager.instance().error(this, "Error during engine shutdown", se);
+      }
+
+      engines.remove(name);
+    }
+
+    return false;
+  }
+
   /**
    * Shutdown thread group which is used in methods {@link #submit(Callable)} and {@link #submit(Runnable)}.
    */
@@ -884,7 +925,8 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       // SHUTDOWN ENGINES
       for (OEngine engine : engines.values())
-        engine.shutdown();
+        if (engine.isRunning())
+          engine.shutdown();
       engines.clear();
     }
 

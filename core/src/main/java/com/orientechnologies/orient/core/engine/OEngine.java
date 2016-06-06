@@ -40,4 +40,9 @@ public interface OEngine {
   void startup();
 
   String getNameFromPath(String dbPath);
+
+  /**
+   * @return {@code true} if this engine has been started and not shutdown yet, {@code false} otherwise.
+   */
+  boolean isRunning();
 }
