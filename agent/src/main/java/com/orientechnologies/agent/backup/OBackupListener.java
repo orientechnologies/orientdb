@@ -34,6 +34,6 @@ public interface OBackupListener {
    * @param log
    *          Event Logged
    */
-  public void onEvent(ODocument cfg, OBackupLog log);
+  public Boolean onEvent(ODocument cfg, OBackupLog log);
 
 }

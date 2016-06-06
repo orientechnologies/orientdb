@@ -40,9 +40,11 @@ public interface OBackupLogger {
   public List<OBackupLog> findByUUIDAndUnitId(String uuid, Long unitId, int page, int pageSize, Map<String, String> params)
       throws IOException;
 
-  public void deleteByUUIDAndUnitIdAndTimestamp(String uuid, Long unitId, Long timestamp) throws IOException;
+  public void deleteByUUIDAndUnitIdAndTx(String uuid, Long unitId, Long tx) throws IOException;
 
   public void deleteByUUIDAndTimestamp(String uuid, Long timestamp) throws IOException;
 
   public List<OBackupLog> findAllLatestByUUID(String uuid, int page, int pageSize) throws IOException;
+
+  void deleteLog(OBackupLog scheduled);
 }

@@ -19,6 +19,7 @@
 package com.orientechnologies.agent.backup;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
+import com.orientechnologies.agent.backup.log.OBackupLog;
 import com.orientechnologies.agent.backup.log.OBackupLogType;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
@@ -34,11 +35,12 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.fail;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
 
 /**
  * Created by Enrico Risa on 22/03/16.
@@ -46,13 +48,13 @@ import static org.junit.Assert.assertNotEquals;
 
 public class OBackupManagerTest {
 
-  private OServer server;
+  private OServer             server;
 
-  private final String DB_NAME     = "backupDB";
-  private final String BACKUP_PATH = System.getProperty("java.io.tmpdir") + File.separator + DB_NAME;
+  private final String        DB_NAME     = "backupDB";
+  private final String        BACKUP_PATH = System.getProperty("java.io.tmpdir") + File.separator + DB_NAME;
   private ODatabaseDocumentTx db;
 
-  private OBackupManager manager;
+  private OBackupManager      manager;
 
   @Before
   public void bootOrientDB() {
@@ -96,14 +98,54 @@ public class OBackupManagerTest {
     OFileUtils.deleteRecursively(new File(BACKUP_PATH));
   }
 
-  // {
-  // "dbName": "test",
-  // "modes": {"INCREMENTAL_BACKUP":{"when":"0 0/5 * * * ?"},"FULL_BACKUP":{"when":"0 0/10 * * * ?"}},
-  // "directory": "/tmp/tests/Backup",
-  // "uuid": "d8bb1c0e-133f-4c0c-9018-930d71cdb485",
-  // "enabled": false,
-  // "retentionDays": 30
-  // }
+  @Test
+  public void backupFullIncrementalMixTest() throws InterruptedException {
+
+    ODocument modes = new ODocument();
+
+    ODocument mode = new ODocument();
+    modes.field("FULL_BACKUP", mode);
+    mode.field("when", "0/5 * * * * ?");
+
+    ODocument incrementalMode = new ODocument();
+    modes.field("INCREMENTAL_BACKUP", incrementalMode);
+    incrementalMode.field("when", "0/2 * * * * ?");
+
+    ODocument backup = new ODocument();
+    backup.field("dbName", DB_NAME);
+    backup.field("directory", BACKUP_PATH);
+    backup.field("modes", modes);
+    backup.field("enabled", true);
+    backup.field("retentionDays", 30);
+
+    ODocument cfg = manager.addBackup(backup);
+
+    String uuid = cfg.field("uuid");
+
+    final OBackupTask task = manager.getTask(uuid);
+
+    final CountDownLatch latch = new CountDownLatch(17);
+    task.registerListener(new OBackupListener() {
+      @Override
+      public Boolean onEvent(ODocument cfg, OBackupLog log) {
+        latch.countDown();
+        return latch.getCount() > 0;
+
+      }
+    });
+    latch.await();
+    ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
+    assertNotNull(logs);
+    assertNotNull(logs.field("logs"));
+
+    List<ODocument> list = logs.field("logs");
+    assertEquals(18, list.size());
+
+    checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
+
+    deleteAndCheck(uuid, list, 17, 15);
+
+  }
 
   @Test
   public void backupFullTest() throws InterruptedException {
@@ -125,20 +167,63 @@ public class OBackupManagerTest {
 
     String uuid = cfg.field("uuid");
 
-    OBackupTask task = manager.getTask(uuid);
-    Thread.sleep(10000);
+    final OBackupTask task = manager.getTask(uuid);
 
-    task.stop();
+    final CountDownLatch latch = new CountDownLatch(5);
+    task.registerListener(new OBackupListener() {
+      @Override
+      public Boolean onEvent(ODocument cfg, OBackupLog log) {
+        latch.countDown();
+        return latch.getCount() > 0;
 
+      }
+    });
+    latch.await();
     ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
     assertNotNull(logs);
     assertNotNull(logs.field("logs"));
 
-    Collection<ODocument> list = logs.field("logs");
-    assertEquals(7, list.size());
+    List<ODocument> list = logs.field("logs");
+    assertEquals(6, list.size());
 
     checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
 
+    deleteAndCheck(uuid, list, 5, 3);
+
+    task.getStrategy().retainLogs(-1);
+
+    list = getLogs(uuid);
+
+    assertEquals(0, list.size());
+
+    list = logs.field("logs");
+
+    checkEmptyPaths(list);
+
+  }
+
+  private void checkEmptyPaths(List<ODocument> list) {
+
+    for (ODocument log : list) {
+      if (log.field("op").equals(OBackupLogType.BACKUP_FINISHED.toString())) {
+
+        String path = log.field("path");
+
+        File f = new File(path);
+
+        assertFalse(f.exists());
+      }
+
+    }
+  }
+
+  protected List<ODocument> getLogs(String uuid) {
+    ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
+    assertNotNull(logs);
+    assertNotNull(logs.field("logs"));
+
+    List<ODocument> list = logs.field("logs");
+    return list;
   }
 
   @Test
@@ -163,21 +248,46 @@ public class OBackupManagerTest {
 
     OBackupTask task = manager.getTask(uuid);
 
-    Thread.sleep(10000);
+    final CountDownLatch latch = new CountDownLatch(5);
+    task.registerListener(new OBackupListener() {
+      @Override
+      public Boolean onEvent(ODocument cfg, OBackupLog log) {
+        latch.countDown();
+        return latch.getCount() > 0;
 
-    task.stop();
+      }
+    });
+    latch.await();
 
     ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
     assertNotNull(logs);
     assertNotNull(logs.field("logs"));
 
-    Collection<ODocument> list = logs.field("logs");
-    assertEquals(7, list.size());
+    List<ODocument> list = logs.field("logs");
+    assertEquals(6, list.size());
 
     checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
 
     checkSameUnitUids(list);
 
+    deleteAndCheck(uuid, list, 5, 0);
+
+    checkEmptyPaths(list);
+  }
+
+  private void deleteAndCheck(String uuid, List<ODocument> list, int index, long expected) {
+    ODocument doc = list.get(index);
+    long unitId = doc.field("unitId");
+    long txId = doc.field("txId");
+    manager.deleteBackup(uuid, unitId, txId);
+
+    List<ODocument> execute = (List<ODocument>) server.getSystemDatabase().execute(new OCallable<Object, Object>() {
+      @Override
+      public Object call(Object iArgument) {
+        return iArgument;
+      }
+    }, "select count(*) from OBackupLog");
+    assertEquals(expected, execute.get(0).field("count"));
   }
 
   private void checkSameUnitUids(Collection<ODocument> list) {

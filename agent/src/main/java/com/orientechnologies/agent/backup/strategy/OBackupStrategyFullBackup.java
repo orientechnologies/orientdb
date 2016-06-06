@@ -19,6 +19,7 @@
 package com.orientechnologies.agent.backup.strategy;
 
 import com.orientechnologies.agent.backup.OBackupConfig;
+import com.orientechnologies.agent.backup.OBackupListener;
 import com.orientechnologies.agent.backup.log.OBackupLogger;
 import com.orientechnologies.agent.backup.log.OBackupScheduledLog;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -54,7 +55,7 @@ public class OBackupStrategyFullBackup extends OBackupStrategy {
   }
 
   @Override
-  public Date scheduleNextExecution() {
+  public Date scheduleNextExecution(OBackupListener listener) {
 
     OBackupScheduledLog last = lastUnfiredSchedule();
 
@@ -68,6 +69,9 @@ public class OBackupStrategyFullBackup extends OBackupStrategy {
             getMode().toString());
         log.nextExecution = nextExecution.getTime();
         getLogger().log(log);
+
+        listener.onEvent(cfg, log);
+
         return nextExecution;
       } catch (ParseException e) {
         e.printStackTrace();

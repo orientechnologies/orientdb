@@ -105,15 +105,18 @@ public abstract class OBackupStrategy {
     ODatabaseDocumentTx database = null;
     ORestoreStartedLog restoreStartedLog = null;
 
+    String url = "plocal:" + server.getDatabaseDirectory() + databaseName;
+    database = new ODatabaseDocumentTx(url);
+
+    if (database.exists()) {
+      throw new IllegalArgumentException("Cannot restore the backup to an existing database (" + databaseName + ").");
+    }
     try {
 
       OBackupFinishedLog finished = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID(), unitId);
       restoreStartedLog = new ORestoreStartedLog(finished.getUnitId(), logger.nextOpId(), getUUID(), getDbName(),
           finished.getMode());
       logger.log(restoreStartedLog);
-      String url = "plocal:" + server.getDatabaseDirectory() + databaseName;
-
-      database = new ODatabaseDocumentTx(url);
       if (!database.exists()) {
         database.create(finished.getPath());
       }
@@ -174,7 +177,7 @@ public abstract class OBackupStrategy {
 
   protected abstract String calculatePath();
 
-  public abstract Date scheduleNextExecution();
+  public abstract Date scheduleNextExecution(OBackupListener listener);
 
   public OBackupLogger getLogger() {
     return logger;
@@ -228,9 +231,9 @@ public abstract class OBackupStrategy {
     return (OBackupScheduledLog) lastSchedule;
   }
 
-  public void doDeleteBackup(OBackupTask oBackupTask, Long unitId, Long timestamp) {
+  public void doDeleteBackup(OBackupTask oBackupTask, Long unitId, Long tx) {
     try {
-      logger.deleteByUUIDAndUnitIdAndTimestamp(getUUID(), unitId, timestamp);
+      logger.deleteByUUIDAndUnitIdAndTx(getUUID(), unitId, tx);
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error deleting backups for UUID : " + getUUID(), e);
     }
@@ -239,18 +242,34 @@ public abstract class OBackupStrategy {
   public void retainLogs() {
 
     Integer retentionDays = getRetentionDays();
-
     if (retentionDays != null && retentionDays > 0) {
-      Calendar c = Calendar.getInstance();
-      c.setTime(new Date());
-      c.add(Calendar.DATE, (-1) * retentionDays);
+      retainLogs(retentionDays);
+    }
+  }
 
-      Long time = c.getTime().getTime();
-      try {
-        logger.deleteByUUIDAndTimestamp(getUUID(), time);
-      } catch (IOException e) {
-        OLogManager.instance().error(this, "Error deleting backups for UUID : " + getUUID(), e);
-      }
+  public void retainLogs(int retentionDays) {
+
+    Calendar c = Calendar.getInstance();
+    c.setTime(new Date());
+    c.add(Calendar.DATE, (-1) * retentionDays);
+
+    Long time = c.getTime().getTime();
+    try {
+      logger.deleteByUUIDAndTimestamp(getUUID(), time);
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error deleting backups for UUID : " + getUUID(), e);
+    }
+  }
+
+  public ODocument getCfg() {
+    return cfg;
+  }
+
+  public void deleteLastScheduled() {
+
+    OBackupScheduledLog scheduled = lastUnfiredSchedule();
+    if (scheduled != null) {
+      logger.deleteLog(scheduled);
     }
   }
 }

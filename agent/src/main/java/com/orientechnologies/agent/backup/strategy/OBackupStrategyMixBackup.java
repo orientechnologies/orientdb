@@ -19,6 +19,7 @@
 package com.orientechnologies.agent.backup.strategy;
 
 import com.orientechnologies.agent.backup.OBackupConfig;
+import com.orientechnologies.agent.backup.OBackupListener;
 import com.orientechnologies.agent.backup.log.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
@@ -76,7 +77,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
   }
 
   @Override
-  public Date scheduleNextExecution() {
+  public Date scheduleNextExecution(OBackupListener listener) {
 
     OBackupScheduledLog last = lastUnfiredSchedule();
 
@@ -109,6 +110,7 @@ public class OBackupStrategyMixBackup extends OBackupStrategy {
         OBackupScheduledLog log = new OBackupScheduledLog(unitId, logger.nextOpId(), getUUID(), getDbName(), getMode().toString());
         log.nextExecution = nextExecution.getTime();
         getLogger().log(log);
+        listener.onEvent(cfg, log);
         return nextExecution;
       } catch (ParseException e) {
         e.printStackTrace();

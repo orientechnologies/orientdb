@@ -251,7 +251,7 @@ public class OBackupDBLogger implements OBackupLogger {
 
             Long unitId = doc.field("unitId");
             units.add(unitId);
-            return false;
+            return true;
           }
 
           @Override
@@ -302,7 +302,7 @@ public class OBackupDBLogger implements OBackupLogger {
 
             ODocument doc = (ODocument) iRecord;
             dropFile(doc);
-            return false;
+            return true;
           }
 
           @Override
@@ -323,7 +323,7 @@ public class OBackupDBLogger implements OBackupLogger {
   }
 
   @Override
-  public void deleteByUUIDAndUnitIdAndTimestamp(final String uuid, final Long unitId, final Long txId) throws IOException {
+  public void deleteByUUIDAndUnitIdAndTx(final String uuid, final Long unitId, final Long txId) throws IOException {
 
     final String selectQuery = String.format("select from %s where uuid = :uuid and unitId = :unitId and txId >= :txId",
         CLASS_NAME);
@@ -347,7 +347,7 @@ public class OBackupDBLogger implements OBackupLogger {
 
             ODocument doc = (ODocument) iRecord;
             dropFile(doc);
-            return false;
+            return true;
           }
 
           @Override
@@ -374,10 +374,18 @@ public class OBackupDBLogger implements OBackupLogger {
     if (oBackupLog instanceof OBackupFinishedLog) {
 
       String path = "";
+      String directory = ((OBackupFinishedLog) oBackupLog).getPath();
       try {
-        path = ((OBackupFinishedLog) oBackupLog).getPath() + File.separator + ((OBackupFinishedLog) oBackupLog).fileName;
+
+        path = directory + File.separator + ((OBackupFinishedLog) oBackupLog).fileName;
         File f = new File(path);
         f.delete();
+        File dir = new File(directory);
+        if (dir.isDirectory()) {
+          if (dir.listFiles().length == 0) {
+            dir.delete();
+          }
+        }
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error deleting file " + path, e);
       }
@@ -409,6 +417,29 @@ public class OBackupDBLogger implements OBackupLogger {
     }
 
     return logs;
+  }
+
+  @Override
+  public void deleteLog(final OBackupLog scheduled) {
+
+    final String query = String
+        .format("delete from %s where uuid = :uuid and unitId = :unitId and txId = :txId  and timestamp = :timestamp", CLASS_NAME);
+    final Map<String, Object> queryParams = new HashMap<String, Object>() {
+      {
+        put("uuid", scheduled.getUuid());
+        put("unitId", scheduled.getUnitId());
+        put("txId", scheduled.getTxId());
+        put("timestamp", scheduled.getTimestamp());
+      }
+    };
+
+    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
+      @Override
+      public Void call(ODatabase iArgument) {
+        iArgument.command(new OCommandSQL(query)).execute(queryParams);
+        return null;
+      }
+    });
   }
 
   public OSystemDatabase getDatabase() {

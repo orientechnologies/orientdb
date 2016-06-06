@@ -36,6 +36,7 @@ public class OBackupTask implements OBackupListener {
 
   private OBackupStrategy strategy;
   private TimerTask       task;
+  private OBackupListener listener;
 
   public OBackupTask(OBackupStrategy strategy) {
     this.strategy = strategy;
@@ -45,7 +46,7 @@ public class OBackupTask implements OBackupListener {
   protected void schedule() {
 
     if (strategy.isEnabled()) {
-      Date nextExecution = strategy.scheduleNextExecution();
+      Date nextExecution = strategy.scheduleNextExecution(this);
 
       task = new TimerTask() {
         @Override
@@ -61,8 +62,8 @@ public class OBackupTask implements OBackupListener {
 
       OLogManager.instance().info(this,
           "Scheduled [" + strategy.getMode() + "] task : " + strategy.getUUID() + ". Next execution will be " + nextExecution);
-    }
 
+    }
 
     strategy.retainLogs();
 
@@ -76,17 +77,33 @@ public class OBackupTask implements OBackupListener {
     if (task != null) {
       task.cancel();
     }
+    strategy.deleteLastScheduled();
     strategy = config.strategy(doc, strategy.getLogger());
 
     schedule();
   }
 
   @Override
-  public void onEvent(ODocument cfg, OBackupLog log) {
+  public Boolean onEvent(ODocument cfg, OBackupLog log) {
 
+    Boolean canContinue = invokeListener(cfg, log);
     if (OBackupLogType.BACKUP_FINISHED.equals(log.getType())) {
-      schedule();
+      if (canContinue) {
+        schedule();
+      }
     }
+    return true;
+  }
+
+  private Boolean invokeListener(ODocument cfg, OBackupLog log) {
+    if (listener != null) {
+      try {
+        return listener.onEvent(cfg, log);
+      } catch (Exception e) {
+        OLogManager.instance().info(this, "Error invoking listener on event  [" + log.getType() + "] ");
+      }
+    }
+    return true;
   }
 
   public void stop() {
@@ -94,6 +111,10 @@ public class OBackupTask implements OBackupListener {
       task.cancel();
       OLogManager.instance().info(this, "Cancelled schedule backup on database  [" + strategy.getDbName() + "] ");
     }
+  }
+
+  public void registerListener(OBackupListener listener) {
+    this.listener = listener;
   }
 
   public void restore(ODocument doc) {
