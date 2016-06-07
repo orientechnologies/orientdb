@@ -154,6 +154,9 @@ public class OIndexFullText extends OIndexMultiValues {
    */
   @Override
   public boolean remove(Object key, final OIdentifiable value) {
+    if (key == null)
+      return false;
+
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
