@@ -45,6 +45,8 @@ public abstract class OCommandExecutorSQLPermissionAbstract extends OCommandExec
       privilege = ORole.PERMISSION_UPDATE;
     else if ("DELETE".equals(privilegeName))
       privilege = ORole.PERMISSION_DELETE;
+    else if ("EXECUTE".equals(privilegeName))
+      privilege = ORole.PERMISSION_EXECUTE;
     else if ("ALL".equals(privilegeName))
       privilege = ORole.PERMISSION_ALL;
     else if ("NONE".equals(privilegeName))

@@ -1300,6 +1300,17 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.get(0).field("long"), 1L);
   }
 
+  @Test
+  public void testDifferenceOfInlineCollections(){
+    //issue #5294
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select difference([1,2,3],[1,2]) as difference"));
+    assertEquals(results.size(), 1);
+    Object differenceFieldValue = results.get(0).field("difference");
+    assertTrue(differenceFieldValue instanceof Collection);
+    assertEquals(((Collection)differenceFieldValue).size(), 1);
+    assertEquals(((Collection)differenceFieldValue).iterator().next(), 3);
+  }
+
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;

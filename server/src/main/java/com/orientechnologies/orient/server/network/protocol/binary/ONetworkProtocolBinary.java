@@ -109,13 +109,13 @@ import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected final    Level                logClientExceptions;
   protected final    boolean              logClientFullStackTrace;
-  protected          OChannelBinaryServer channel;
+  protected          OChannelBinary       channel;
   protected volatile int                  requestType;
   protected          int                  clientTxId;
   protected          boolean              okSent;
-  private            boolean              tokenConnection=false;
-  private long distributedRequests  = 0;
-  private long distributedResponses = 0;
+  private boolean tokenConnection      = false;
+  private long    distributedRequests  = 0;
+  private long    distributedResponses = 0;
 
   public ONetworkProtocolBinary() {
     this("OrientDB <- BinaryClient/?");
@@ -127,12 +127,23 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     logClientFullStackTrace = OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE.getValueAsBoolean();
   }
 
+  /**
+   * Internal varialbe injection useful for testing.
+   * @param server
+   * @param channel
+   */
+  public void initVariables(final OServer server, OChannelBinaryServer channel){
+    this.server = server;
+    this.channel = channel;
+  }
+
   @Override
   public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
       final OContextConfiguration iConfig) throws IOException {
 
-    server = iServer;
-    channel = new OChannelBinaryServer(iSocket, iConfig);
+
+    OChannelBinaryServer channel = new OChannelBinaryServer(iSocket, iConfig);
+    initVariables(iServer, channel);
 
     // SEND PROTOCOL VERSION
     channel.writeShort((short) getVersion());
@@ -1343,7 +1354,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       OCommandResultListener cmdResultListener = command.getResultListener();
 
       if (live) {
-        liveListener = new OLiveCommandResultListener(connection, clientTxId, cmdResultListener);
+        liveListener = new OLiveCommandResultListener(server, connection, clientTxId, cmdResultListener);
         listener = new OSyncCommandResultListener(null);
         command.setResultListener(liveListener);
       } else if (asynch) {

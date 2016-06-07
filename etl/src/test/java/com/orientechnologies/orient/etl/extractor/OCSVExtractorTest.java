@@ -387,7 +387,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     ODocument doc = res.get(1);
     System.out.println(doc.toJSON());
 
-    assertThat(doc.<OIdentifiable>field("id")).isEqualTo("#1:1");
+    assertThat(doc.<String>field("id")).isEqualTo("#1:1");
 
 
   }
