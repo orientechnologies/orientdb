@@ -308,6 +308,8 @@ TOKEN:
     |
     < READ: ( "R" | "r") ( "E" | "e")  ( "A" | "a") ( "D" | "d")>
     |
+    < EXECUTE: ( "E" | "e") ( "X" | "x") ( "E" | "e") ( "C" | "c")  ( "U" | "u")  ( "T" | "t") ( "E" | "e")>
+    |
     < ALL: ( "A" | "a") ( "L" | "l") ( "L" | "l")>
     |
     < NONE: ( "N" | "n") ( "O" | "o")  ( "N" | "n") ( "E" | "e")>
@@ -738,6 +740,8 @@ OIdentifier Identifier():
     token = <REVOKE>
     |
     token = <READ>
+    |
+    token = <EXECUTE>
     |
     token = <ALL>
     |
@@ -4149,6 +4153,8 @@ OPermission Permission():
         <UPDATE> { jjtThis.permission = "UPDATE"; }
         |
         <DELETE> { jjtThis.permission = "DELETE"; }
+        |
+        <EXECUTE> { jjtThis.permission = "EXECUTE"; }
         |
         <ALL> { jjtThis.permission = "ALL"; }
         |
