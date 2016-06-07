@@ -294,7 +294,7 @@ public class OClientConnectionManager {
     return false;
   }
 
-  private void removeConnectFromSession(OClientConnection connection) {
+  private void removeConnectionFromSession(OClientConnection connection) {
     if (connection.getProtocol() instanceof ONetworkProtocolBinary) {
       byte[] tokenBytes = connection.getTokenBytes();
       OHashToken hashToken = new OHashToken(tokenBytes);
@@ -313,7 +313,7 @@ public class OClientConnectionManager {
   public void disconnect(final OClientConnection iConnection) {
     OLogManager.instance().debug(this, "Disconnecting connection %s...", iConnection);
     OServerPluginHelper.invokeHandlerCallbackOnClientDisconnection(server, iConnection);
-    removeConnectFromSession(iConnection);
+    removeConnectionFromSession(iConnection);
     iConnection.close();
 
     int totalRemoved = 0;
@@ -405,7 +405,8 @@ public class OClientConnectionManager {
 
       final ONetworkProtocol protocol = entry.getValue().getProtocol();
 
-      protocol.sendShutdown();
+      if(protocol != null)
+        protocol.sendShutdown();
 
       OLogManager.instance().debug(this, "Sending shutdown to thread %s", protocol);
 
