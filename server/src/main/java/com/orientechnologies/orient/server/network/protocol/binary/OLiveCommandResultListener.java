@@ -25,7 +25,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
@@ -34,12 +33,12 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientSessions;
+import com.orientechnologies.orient.server.OServer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -58,28 +57,30 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
 
   private OClientConnection connection;
   private final AtomicBoolean empty = new AtomicBoolean(true);
-  private final int txId;
+  private final int sessionId;
   private final Set<ORID> alreadySent = new HashSet<ORID>();
   private OClientSessions session;
 
-  public OLiveCommandResultListener(final OClientConnection connection, final int txId,
+  public OLiveCommandResultListener(OServer server, final OClientConnection connection, final int sessionId,
       OCommandResultListener wrappedResultListener) {
     super(wrappedResultListener);
     this.connection = connection;
-    session = connection.getProtocol().getServer().getClientConnectionManager().getSession(connection);
-    this.txId = txId;
+    session = server.getClientConnectionManager().getSession(connection);
+    this.sessionId = sessionId;
   }
 
-  @Override public boolean result(final Object iRecord) {
+  @Override
+  public boolean result(final Object iRecord) {
     final ONetworkProtocolBinary protocol = ((ONetworkProtocolBinary) connection.getProtocol());
     if (empty.compareAndSet(true, false))
       try {
-        protocol.sendOk(connection, txId);
+        protocol.sendOk(connection, sessionId);
       } catch (IOException ignored) {
       }
     try {
       fetchRecord(iRecord, new ORemoteFetchListener() {
-        @Override protected void sendRecord(ORecord iLinked) {
+        @Override
+        protected void sendRecord(ORecord iLinked) {
           if (!alreadySent.contains(iLinked.getIdentity())) {
             alreadySent.add(iLinked.getIdentity());
             try {
@@ -119,9 +120,10 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
         }
         break;
       }
-      ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
+      OClientConnection curConnection = connections.get(0);
+      ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) curConnection.getProtocol();
 
-      OChannelBinaryServer channel = (OChannelBinaryServer) protocol.getChannel();
+      OChannelBinary channel = protocol.getChannel();
       try {
         channel.acquireWriteLock();
         try {
@@ -147,6 +149,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
         }
         sendFail = false;
       } catch (IOException e) {
+        session.removeConnection(curConnection);
         connections = session.getConnections();
         if (connections.isEmpty()) {
           OLiveQueryHook.unsubscribe(iToken, connection.getDatabase());
@@ -162,17 +165,19 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     } while (sendFail);
   }
 
-  @Override public void onError(int iLiveToken) {
+  @Override
+  public void onError(int iLiveToken) {
 
   }
 
-  @Override public void onUnsubscribe(int iLiveToken) {
+  @Override
+  public void onUnsubscribe(int iLiveToken) {
     boolean sendFail = true;
     do {
       List<OClientConnection> connections = session.getConnections();
       ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
 
-      OChannelBinaryServer channel = (OChannelBinaryServer) protocol.getChannel();
+      OChannelBinary channel = protocol.getChannel();
       try {
         channel.acquireWriteLock();
         try {

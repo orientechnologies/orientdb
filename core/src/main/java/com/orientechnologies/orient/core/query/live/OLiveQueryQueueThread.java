@@ -94,4 +94,8 @@ public class OLiveQueryQueueThread extends Thread {
   public boolean hasListeners(){
     return !subscribers.isEmpty();
   }
+
+  public boolean hasToken(Integer key) {
+    return subscribers.containsKey(key);
+  }
 }
