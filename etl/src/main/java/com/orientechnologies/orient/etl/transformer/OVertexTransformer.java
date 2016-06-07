@@ -26,25 +26,24 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.INFO;
-
 public class OVertexTransformer extends OAbstractTransformer {
   private String vertexClass;
   private boolean skipDuplicates = false;
+  private String clusterName;
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-                                    + "{class:{optional:true,description:'Vertex class name to assign. Default is "
-                                    + OrientVertexType.CLASS_NAME + "'}}"
-                                    + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}"
-                                    + "]"
-                                    + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
+        + "{class:{optional:true,description:'Vertex class name to assign. Default is " + OrientVertexType.CLASS_NAME + "'}}"
+        + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}" + "]"
+        + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
   }
 
   @Override
   public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
+    clusterName = iConfiguration.field("cluster");
+
     if (iConfiguration.containsField("class"))
       vertexClass = (String) resolve(iConfiguration.field("class"));
     if (iConfiguration.containsField("skipDuplicates"))
@@ -69,12 +68,15 @@ public class OVertexTransformer extends OAbstractTransformer {
   public Object executeTransform(final Object input) {
 
     final OrientVertex v = pipeline.getGraphDatabase().getVertex(input);
+
     if (v == null)
       return null;
 
     if (vertexClass != null && !vertexClass.equals(v.getRecord().getClassName()))
       try {
-        v.setProperty("@class", vertexClass);
+
+        v.getRecord().setClassName(vertexClass);
+        v.save(clusterName);
       } catch (ORecordDuplicatedException e) {
         if (skipDuplicates) {
           return null;
@@ -82,6 +84,7 @@ public class OVertexTransformer extends OAbstractTransformer {
           throw e;
         }
       }
+
     return v;
   }
 }

@@ -17,10 +17,10 @@
  */
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,36 +38,41 @@ public class OVertexTransformerTest extends OETLBaseTest {
   public void setUp() {
     super.setUp();
     graph.createVertexType("Person");
-    graph.createKeyIndex("name", Vertex.class, new Parameter<String, String>("type", "UNIQUE"), new Parameter<String, String>(
-        "class", "Person"));
+    graph.createKeyIndex("name", Vertex.class, new Parameter<String, String>("type", "UNIQUE"),
+        new Parameter<String, String>("class", "Person"));
     graph.commit();
   }
 
   @Test
   public void testCreateVertex() {
     process("{source: { content: { value: 'name,\nGregor' } }, extractor : { csv: {} },"
-            + " transformers: [{vertex: {class:'Person', skipDuplicates:false}},"
-            + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
-    assertEquals(1, graph.countVertices("Person"));
+        + " transformers: [{vertex: {class:'Person', skipDuplicates:false}},"
+        + "], loader: { orientdb: { dbAutoCreateProperties:true, cluster: 'custom', dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+
+    assertEquals("V", 1, graph.countVertices());
+    assertEquals("person", 1, graph.countVertices("Person"));
+
+    for (ODocument doc : graph.getRawGraph().browseCluster("custom")) {
+      System.out.println(doc.toJSON());
+    }
   }
 
   @Test
   public void testCreateTargetVertexIfNotExists() {
     process("{source: { content: { value: 'name,idf,parent\nParent,1,\nChild,2,1' } }, extractor : { csv: {} },"
-            + " transformers: [{merge: { joinFieldName:'idf', lookup:'V.idf'}}, {vertex: {class:'V'}},"
-            + "{edge:{ class: 'E', joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if: '$input.parent IS NOT NULL'}"
-            + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
-
+        + " transformers: [{merge: { joinFieldName:'idf', lookup:'V.idf'}}, {vertex: {class:'V'}},"
+        + "{edge:{ class: 'E', joinFieldName: 'parent', lookup: 'V.idf', unresolvedLinkAction: 'CREATE' }, if: '$input.parent IS NOT NULL'}"
+        + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
     assertThat(graph.countVertices("V")).isEqualTo(2);
   }
 
-//  @Test(expected = ORecordDuplicatedException.class)
+  //  @Test(expected = ORecordDuplicatedException.class)
   @Test
   public void testErrorOnDuplicateVertex() {
     process("{ config: { 'log': 'DEBUG' },  source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
-            + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}},"
-            + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+        + " transformers: [ {vertex: {class:'Person', skipDuplicates:false}},"
+        + "], loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
 
     assertThat(graph.countVertices("V")).isEqualTo(1);
   }
@@ -75,8 +80,9 @@ public class OVertexTransformerTest extends OETLBaseTest {
   @Test
   public void testSkipDuplicateVertex() {
     process("{source: { content: { value: 'name,\nGregor\nGregor\nHans' } }, extractor : { csv: {} },"
-            + " transformers: [{vertex: {class:'Person', skipDuplicates:true}},],"
-            + " loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
-    assertEquals(2, graph.countVertices("Person"));
+        + " transformers: [{vertex: {class:'Person', skipDuplicates:true}},],"
+        + " loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', useLightweightEdges:false } } }");
+
+    assertThat(graph.countVertices("Person")).isEqualTo(2);
   }
 }
