@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.stresstest;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -29,12 +30,14 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.stresstest.operations.OOperationsExecutor;
 import com.orientechnologies.orient.stresstest.operations.OOperationsSet;
 import com.orientechnologies.orient.stresstest.output.OConsoleWriter;
+import com.orientechnologies.orient.stresstest.output.OJsonResultsFormatter;
 import com.orientechnologies.orient.stresstest.output.OOperationsExecutorResults;
 import com.orientechnologies.orient.stresstest.output.OStressTestResults;
 import com.orientechnologies.orient.stresstest.util.OConstants;
 import com.orientechnologies.orient.stresstest.util.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.util.ODatabaseUtils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -55,17 +58,19 @@ public class OStressTester {
   private int                 iterationsNumber;
   private ODatabaseIdentifier databaseIdentifier;
   private int                 txNumber;
+  private String              outputResultFile;
   private OOperationsSet      operationsSet;
   private OConsoleWriter      consoleProgressWriter;
   private OStressTestResults  stressTestResults;
 
   public OStressTester(ODatabaseIdentifier databaseIdentifier, OOperationsSet operationsSet, int iterationsNumber,
-      int threadsNumber, int txNumber) throws Exception {
+      int threadsNumber, int txNumber, String outputResultFile) throws Exception {
     this.operationsSet = operationsSet;
     this.iterationsNumber = iterationsNumber;
     this.threadsNumber = threadsNumber;
     this.databaseIdentifier = databaseIdentifier;
     this.txNumber = txNumber;
+    this.outputResultFile = outputResultFile;
     stressTestResults = new OStressTestResults(operationsSet, databaseIdentifier.getMode(), threadsNumber, iterationsNumber);
     consoleProgressWriter = new OConsoleWriter(operationsSet, threadsNumber, iterationsNumber);
   }
@@ -130,10 +135,13 @@ public class OStressTester {
       System.out.println("\r                                                                                             ");
       System.out.println(stressTestResults.toString());
 
+      // if specified, writes output to file
+      if (outputResultFile != null) {
+        OIOUtils.writeFile(new File(outputResultFile), OJsonResultsFormatter.format(stressTestResults));
+      }
     } catch (Exception ex) {
       System.err.println("\nAn error has occurred while running the stress test: " + ex.getMessage());
       returnCode = 1;
-      // ex.printStackTrace();
     } finally {
       // we don't need to drop the in-memory DB
       if (databaseIdentifier.getMode() != OMode.MEMORY) {

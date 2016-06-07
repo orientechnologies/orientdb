@@ -26,6 +26,7 @@ import com.orientechnologies.orient.stresstest.util.OErrorMessages;
 import com.orientechnologies.orient.stresstest.util.OInitException;
 
 import java.io.Console;
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -52,6 +53,7 @@ public class OStressTesterCommandLineParser {
     String dbName = OConstants.TEMP_DATABASE_NAME + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
     OMode mode = OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());
     String rootPassword = options.get(OConstants.OPTION_ROOT_PASSWORD);
+    String resultOutputFile = options.get(OConstants.OPTION_OUTPUT_FILE);
     int iterationsNumber = getNumber(options.get(OConstants.OPTION_ITERATIONS), "iterations");
     int operationsPerTransaction = getNumber(options.get(OConstants.OPTION_TRANSACTIONS), "transactions");
     int threadsNumber = getNumber(options.get(OConstants.OPTION_THREADS), "threads");
@@ -59,8 +61,24 @@ public class OStressTesterCommandLineParser {
     String remoteIp = options.get(OConstants.OPTION_REMOTE_IP);
     int remotePort = 2424;
 
+    if (resultOutputFile != null) {
+      File outputFile = new File(resultOutputFile);
+      if (outputFile.exists()) {
+        throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_EXISTING_OUTPUT_FILE, resultOutputFile));
+      }
+      if (!outputFile.getParentFile().exists()) {
+        throw new OInitException(
+            String.format(OErrorMessages.COMMAND_LINE_PARSER_NOT_EXISTING_OUTPUT_DIRECTORY, outputFile.getParentFile().getAbsoluteFile()));
+      }
+      if (!outputFile.getParentFile().canWrite()) {
+        throw new OInitException(
+            String.format(OErrorMessages.COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE, outputFile.getParentFile().getAbsoluteFile()));
+      }
+    }
+
     if (operationsPerTransaction > operationsSet.getNumberOfCreates()) {
-      throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_TX_GREATER_THAN_CREATES, operationsPerTransaction, operationsSet.getNumberOfCreates()));
+      throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_TX_GREATER_THAN_CREATES, operationsPerTransaction,
+          operationsSet.getNumberOfCreates()));
     }
 
     if (options.get(OConstants.OPTION_REMOTE_PORT) != null) {
@@ -89,7 +107,8 @@ public class OStressTesterCommandLineParser {
     }
 
     ODatabaseIdentifier databaseIdentifier = new ODatabaseIdentifier(mode, dbName, rootPassword, remoteIp, remotePort);
-    return new OStressTester(databaseIdentifier, operationsSet, iterationsNumber, threadsNumber, operationsPerTransaction);
+    return new OStressTester(databaseIdentifier, operationsSet, iterationsNumber, threadsNumber, operationsPerTransaction,
+        resultOutputFile);
   }
 
   private static int getNumber(String value, String option) throws OInitException {
