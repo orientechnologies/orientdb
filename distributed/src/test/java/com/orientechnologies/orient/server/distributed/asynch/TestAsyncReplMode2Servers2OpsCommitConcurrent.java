@@ -5,13 +5,13 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import java.util.concurrent.CountDownLatch;
 
 public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2ServerTest {
 
-  private static final int TOTAL   = 100;
+  private static final int TOTAL   = 50;
   private ORID             vertex1Id;
   CountDownLatch           counter = new CountDownLatch(2);
 
@@ -60,9 +60,12 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
             vertex1.addEdge("edgetype", vertex2);
             graph.commit();
 
-            System.out.println(iClient + " - successfully committed version: " + vertex1.getRecord().getVersion());
+            System.out
+                .println(iClient + " - successfully committed version: " + vertex1.getRecord().getVersion() + " retry: " + retry);
           } catch (ONeedRetryException e) {
-            System.out.println(iClient + " - caught conflict, reloading vertex. v=" + vertex1.getRecord().getVersion());
+            System.out.println(
+                iClient + " - caught conflict, reloading vertex. v=" + vertex1.getRecord().getVersion() + " retry: " + retry);
+            graph.rollback();
             vertex1.reload();
           }
         }
@@ -81,8 +84,6 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
     } finally {
       System.out.println("Shutting down");
       graph.shutdown();
-
-      sleep(1000);
     }
   }
 }

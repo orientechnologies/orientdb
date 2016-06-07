@@ -459,7 +459,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   }
 
   @Override
-  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, OIdentifiable> event) {
+  public void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, OIdentifiable> event) {
     if (!marshalling)
       super.fireCollectionChangedEvent(event);
   }

@@ -17,20 +17,23 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 /**
  * Test distributed TX
  */
 public abstract class AbstractServerClusterTxTest extends AbstractServerClusterInsertTest {
-  protected final OPartitionedDatabasePoolFactory poolFactory   = new OPartitionedDatabasePoolFactory();
-  protected int                                   printBlocksOf = 100;
+  protected int printBlocksOf = 100;
 
   protected AbstractServerClusterTxTest() {
     useTransactions = true;
@@ -44,15 +47,17 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
     @Override
     public Void call() throws Exception {
       final String name = Integer.toString(threadId);
-
+      Set<Integer> clusters = new LinkedHashSet<Integer>();
+      LinkedHashMap<String, Long> clusterNames = new LinkedHashMap<String, Long>();
       for (int i = 0; i < count; i++) {
         final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
 
         try {
           final int id = baseCount + i;
 
-          int retry = 0;
+          final String uid = UUID.randomUUID().toString();
 
+          int retry;
           for (retry = 0; retry < maxRetries; retry++) {
             if ((i + 1) % printBlocksOf == 0)
               System.out.println("\nWriter " + database.getURL() + "(thread=" + threadId + ") managed " + (i + 1) + "/" + count
@@ -62,13 +67,12 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
               database.begin();
 
             try {
-              ODocument person = createRecord(database, id);
+              ODocument person = createRecord(database, id, uid);
               updateRecord(database, person);
               checkRecord(database, person);
               deleteRecord(database, person);
               checkRecordIsDeleted(database, person);
-
-              person = createRecord(database, id);
+              person = createRecord(database, id, uid);
               updateRecord(database, person);
               checkRecord(database, person);
 
@@ -77,38 +81,58 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
 
               if (delayWriter > 0)
                 Thread.sleep(delayWriter);
+              clusters.add(person.getIdentity().getClusterId());
+
+              String clusterName = database.getClusterNameById(person.getIdentity().getClusterId());
+              Long counter = clusterNames.get(clusterName);
+              if (counter == null)
+                counter = 0L;
+
+              clusterNames.put(clusterName, counter + 1);
 
               // OK
               break;
 
             } catch (InterruptedException e) {
+              // STOP IT
               System.out.println("Writer received interrupt (db=" + database.getURL());
               Thread.currentThread().interrupt();
               break;
+            } catch (ORecordNotFoundException e) {
+              // IGNORE IT AND RETRY
+              System.out
+                  .println("ORecordNotFoundException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
+              // e.printStackTrace();
             } catch (ORecordDuplicatedException e) {
-              // IGNORE IT
+              // IGNORE IT AND RETRY
+              System.out.println(
+                  "ORecordDuplicatedException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
+              // e.printStackTrace();
             } catch (OTransactionException e) {
               if (e.getCause() instanceof ORecordDuplicatedException)
-                // IGNORE IT
+                // IGNORE IT AND RETRY
                 ;
               else
                 throw e;
             } catch (ONeedRetryException e) {
-              System.out.println("Writer received exception (db=" + database.getURL());
+              // System.out.println("ONeedRetryException Exception caught on writer thread " + threadId + " (db=" +
+              // database.getURL());
 
               if (retry >= maxRetries)
                 e.printStackTrace();
 
-              break;
             } catch (ODistributedException e) {
+              System.out
+                  .println("ODistributedException Exception caught on writer thread " + threadId + " (db=" + database.getURL());
               if (!(e.getCause() instanceof ORecordDuplicatedException)) {
                 database.rollback();
                 throw e;
               }
+
+              // RETRY
             } catch (Throwable e) {
-              System.out.println("Writer received exception (db=" + database.getURL());
+              System.out.println(e.getClass() + " Exception caught on writer thread " + threadId + " (db=" + database.getURL());
               e.printStackTrace();
-              return null;
             }
           }
         } finally {
@@ -117,7 +141,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
         }
       }
 
-      System.out.println("\nWriter " + name + " END");
+      System.out.println("\nWriter " + name + " END total:" + count + " clusters:" + clusters + " names:" + clusterNames);
       return null;
     }
 

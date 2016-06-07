@@ -41,18 +41,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
@@ -62,12 +52,12 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  public static final int VERSION = 11;
+  public static final int VERSION           = 11;
 
-  protected OJSONWriter writer;
-  protected long        recordExported;
-  protected int         compressionLevel  = Deflater.BEST_SPEED;
-  protected int         compressionBuffer = 16384;              // 16Kb
+  protected OJSONWriter   writer;
+  protected long          recordExported;
+  protected int           compressionLevel  = Deflater.BEST_SPEED;
+  protected int           compressionBuffer = 16384;              // 16Kb
 
   public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -372,7 +362,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         writer.endObject(4, true);
       }
 
-      ODocument metadata = index.getMetadata();
+      final ODocument metadata = index.getMetadata();
       if (metadata != null)
         writer.writeAttribute(4, true, "metadata", metadata);
 
@@ -468,7 +458,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.beginObject(1, true, "schema");
     OSchema s = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
     writer.writeAttribute(2, true, "version", s.getVersion());
-
+    writer.writeAttribute(2, false, "blob-clusters", database.getBlobClusterIds());
     if (!s.getClasses().isEmpty()) {
       writer.beginCollection(2, true, "classes");
 
@@ -529,7 +519,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
               writer.writeAttribute(0, false, "collate", p.getCollate().getName());
             if (p.getDefaultValue() != null)
               writer.writeAttribute(0, false, "default-value", p.getDefaultValue());
-
+            if (p.getRegexp() != null)
+              writer.writeAttribute(0, false, "regexp", p.getRegexp());
             final Set<String> customKeys = p.getCustomKeys();
             final Map<String, String> custom = new HashMap<String, String>();
             for (String key : customKeys)

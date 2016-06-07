@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 public class OImmutableSchema implements OSchema {
   private final Map<Integer, OClass> clustersToClasses;
   private final Map<String, OClass>  classes;
+  private final Set<Integer>         blogClusters;
 
   public final int                       version;
   private final ORID                     identity;
@@ -81,6 +82,7 @@ public class OImmutableSchema implements OSchema {
     for (OClass cl : classes.values()) {
       ((OImmutableClass) cl).init();
     }
+    this.blogClusters = Collections.unmodifiableSet(new HashSet<Integer>(schemaShared.getBlobClusters()));
   }
 
   @Override
@@ -269,7 +271,17 @@ public class OImmutableSchema implements OSchema {
     return clusterSelectionFactory;
   }
 
+  @Override
+  public void onPostIndexManagement() {
+  }
+
   private ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
+
+  public Set<Integer> getBlobClusters() {
+    return blogClusters;
+  }
+
+
 }

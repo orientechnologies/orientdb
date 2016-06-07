@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public interface OClusterSelectionStrategy {
-  public int getCluster(final OClass iClass, final ODocument doc);
+  int getCluster(final OClass iClass, final ODocument doc);
 
   String getName();
 }

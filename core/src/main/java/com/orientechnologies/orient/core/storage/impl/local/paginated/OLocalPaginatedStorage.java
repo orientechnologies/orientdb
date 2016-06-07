@@ -41,28 +41,17 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -70,9 +59,9 @@ import java.util.zip.ZipOutputStream;
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage {
+public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorageComponent {
 
-  private static String[] ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet",
+  private static String[] ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet", ".fl",
       ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
@@ -223,6 +212,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
+  public void close(boolean force, boolean onDelete) {
+    super.close(force, onDelete);
+    if (writeAheadLog != null)
+      ((ODiskWriteAheadLog) writeAheadLog).removeLowDiskSpaceListener(this);
+  }
+
+  @Override
   protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
 
     File[] nonActiveSegments;
@@ -264,11 +260,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     }
 
     return lastLSN;
-  }
-
-  @Override
-  protected boolean isWritesAllowedDuringBackup() {
-    return true;
   }
 
   @Override
@@ -363,13 +354,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   @Override
   protected void preCloseSteps() throws IOException {
-    if (writeCache != null)
-      try {
-        ((OWOWCache) writeCache).unregisterMBean();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "MBean for write cache cannot be unregistered", e);
-      }
-
     try {
       if (writeAheadLog != null) {
         checkpointExecutor.shutdown();
@@ -441,11 +425,19 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     return dirtyFlag.isDirty();
   }
 
+  @Override
+  protected boolean isWriteAllowedDuringIncrementalBackup() {
+    return true;
+  }
+
   protected void initWalAndDiskCache() throws IOException {
     if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       checkpointExecutor = Executors.newSingleThreadExecutor(new FullCheckpointThreadFactory());
 
-      writeAheadLog = new ODiskWriteAheadLog(this);
+      final ODiskWriteAheadLog diskWriteAheadLog = new ODiskWriteAheadLog(this);
+      diskWriteAheadLog.addLowDiskSpaceListener(this);
+      diskWriteAheadLog.checkFreeSpace();
+      writeAheadLog = diskWriteAheadLog;
       writeAheadLog.addFullCheckpointListener(this);
     } else
       writeAheadLog = null;
@@ -459,11 +451,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), writeCacheSize, diskCacheSize, this, true,
         getId());
     wowCache.addLowDiskSpaceListener(this);
-    try {
-      wowCache.registerMBean();
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for write cache cannot be registered.");
-    }
 
     writeCache = wowCache;
   }

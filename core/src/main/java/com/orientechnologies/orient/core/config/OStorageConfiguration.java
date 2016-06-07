@@ -19,21 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.IOException;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
@@ -43,11 +28,18 @@ import com.orientechnologies.orient.core.id.OImmutableRecordId;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
+import java.io.IOException;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Versions:
@@ -70,16 +62,16 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId CONFIG_RID = new OImmutableRecordId(0, 0);
+  public static final ORecordId                           CONFIG_RID                    = new OImmutableRecordId(0, 0);
 
-  public static final String DEFAULT_CHARSET         = "UTF-8";
-  public static final String DEFAULT_DATE_FORMAT     = "yyyy-MM-dd";
-  public static final String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+  public static final String                              DEFAULT_CHARSET               = "UTF-8";
+  public static final String                              DEFAULT_DATE_FORMAT           = "yyyy-MM-dd";
+  public static final String                              DEFAULT_DATETIME_FORMAT       = "yyyy-MM-dd HH:mm:ss";
 
   private String                                          charset;
   public static final int                                 CURRENT_VERSION               = 17;
   public static final int                                 CURRENT_BINARY_FORMAT_VERSION = 12;
-  private final List<OStorageEntryConfiguration>          properties = new ArrayList<OStorageEntryConfiguration>();
+  private final List<OStorageEntryConfiguration>          properties                    = new ArrayList<OStorageEntryConfiguration>();
   protected final transient OStorage                      storage;
   private volatile OContextConfiguration                  configuration;
   public volatile int                                     version;
@@ -103,6 +95,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile String                                 recordSerializer;
   private volatile int                                    recordSerializerVersion;
   private volatile boolean                                strictSQL;
+  private volatile Map<String, Object>                    loadProperties;
   private volatile ConcurrentMap<String, IndexEngineData> indexEngines;
   private volatile transient boolean                      validation                    = true;
   private volatile boolean                                txRequiredForSQLGraphOperations;
@@ -143,7 +136,7 @@ public class OStorageConfiguration implements OSerializableStream {
     unusualSymbols = null;
     clusterSelection = null;
     conflictStrategy = null;
-    minimumClusters = 0; // 0 = AUTOMATIC
+    minimumClusters = OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.getValueAsInteger(); // 0 = AUTOMATIC
     recordSerializer = null;
     recordSerializerVersion = 0;
     strictSQL = false;
@@ -203,12 +196,21 @@ public class OStorageConfiguration implements OSerializableStream {
 
     fromStream(record);
 
+    this.loadProperties = new HashMap<String, Object>(iProperties);
+
     return this;
+  }
+
+  public Map<String, Object> getLoadProperties() {
+    if (loadProperties == null)
+      return Collections.emptyMap();
+
+    return Collections.unmodifiableMap(loadProperties);
   }
 
   public void update() throws OSerializationException {
     final byte[] record = toStream();
-    storage.updateRecord(CONFIG_RID, true, record, -1, ORecordBytes.RECORD_TYPE, 0, null);
+    storage.updateRecord(CONFIG_RID, true, record, -1, OBlob.RECORD_TYPE, 0, null);
   }
 
   public boolean isEmpty() {
@@ -629,7 +631,7 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public void create() throws IOException {
-    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, 0, ORecordBytes.RECORD_TYPE, (byte) 0, null);
+    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, 0, OBlob.RECORD_TYPE, (byte) 0, null);
   }
 
   public void synch() throws IOException {
@@ -638,9 +640,12 @@ public class OStorageConfiguration implements OSerializableStream {
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
   }
 
+  public void delete() throws IOException {
+    close();
+  }
+
   public void close() throws IOException {
     clear();
-
     initConfiguration();
   }
 
@@ -790,7 +795,7 @@ public class OStorageConfiguration implements OSerializableStream {
       validation = "true".equalsIgnoreCase(iValue);
 
     synchronized (properties) {
-      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
         final OStorageEntryConfiguration e = it.next();
         if (e.name.equalsIgnoreCase(iName)) {
           // FOUND: OVERWRITE IT
@@ -806,7 +811,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public String getProperty(final String iName) {
     synchronized (properties) {
-      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
         final OStorageEntryConfiguration e = it.next();
         if (e.name.equalsIgnoreCase(iName))
           return e.value;
@@ -817,7 +822,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public boolean existsProperty(final String iName) {
     synchronized (properties) {
-      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
         final OStorageEntryConfiguration e = it.next();
         if (e.name.equalsIgnoreCase(iName))
           return true;
@@ -828,7 +833,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void removeProperty(final String iName) {
     synchronized (properties) {
-      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext(); ) {
+      for (Iterator<OStorageEntryConfiguration> it = properties.iterator(); it.hasNext();) {
         final OStorageEntryConfiguration e = it.next();
         if (e.name.equalsIgnoreCase(iName)) {
           it.remove();

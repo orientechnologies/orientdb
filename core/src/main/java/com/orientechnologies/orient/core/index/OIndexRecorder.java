@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.ArrayList;
@@ -165,6 +166,11 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
+  public long getRebuildVersion() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
   public void flush() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
@@ -266,7 +272,7 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public boolean isRebuiding() {
+  public boolean isRebuilding() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -278,6 +284,15 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   @Override
   public Object getLastKey() {
     throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override public int getIndexId() {
+    return delegate.getIndexId();
+  }
+
+  @Override
+  public boolean isUnique() {
+    return delegate.isUnique();
   }
 
   @Override
@@ -342,7 +357,7 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public IndexMetadata loadMetadata(ODocument iConfig) {
+  public OIndexMetadata loadMetadata(ODocument iConfig) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -367,7 +382,7 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public void addTxOperation(ODocument operationDocument) {
+  public void addTxOperation(OTransactionIndexChanges changes) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

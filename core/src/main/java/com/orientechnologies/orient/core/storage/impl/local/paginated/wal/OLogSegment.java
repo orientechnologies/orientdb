@@ -11,6 +11,8 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.File;
@@ -21,27 +23,24 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 
-/**
- * Created by tglman on 20/01/16.
- */
 final class OLogSegment implements Comparable<OLogSegment> {
   private final OByteBufferPool byteBufferPool = OByteBufferPool.instance();
-  private       ODiskWriteAheadLog writeAheadLog;
-  private final RandomAccessFile   rndFile;
-  private final File               file;
-  private final long               order;
-  private final int                maxPagesCacheSize;
+  private       ODiskWriteAheadLog           writeAheadLog;
+  private final RandomAccessFile             rndFile;
+  private final File                         file;
+  private final long                         order;
+  private final int                          maxPagesCacheSize;
+  private final OPerformanceStatisticManager performanceStatisticManager;
   protected final  Lock             cacheLock = new ReentrantLock();
   private volatile List<OLogRecord> logCache  = new ArrayList<OLogRecord>();
 
-  private final   ScheduledExecutorService commitExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+  private final ScheduledExecutorService commitExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
     @Override
     public Thread newThread(Runnable r) {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
@@ -50,14 +49,15 @@ final class OLogSegment implements Comparable<OLogSegment> {
       return thread;
     }
   });
-  private volatile long     filledUpTo;
-  private boolean  closed;
+  private volatile long    filledUpTo;
+  private          boolean closed;
   private OLogSequenceNumber last = null;
   private OLogSequenceNumber pendingLSNToFlush;
 
   private volatile boolean flushNewData = true;
 
-  private WeakReference<OPair<OLogSequenceNumber, byte[]>> lastReadRecord = new WeakReference<OPair<OLogSequenceNumber, byte[]>>(null);
+  private WeakReference<OPair<OLogSequenceNumber, byte[]>> lastReadRecord = new WeakReference<OPair<OLogSequenceNumber, byte[]>>(
+      null);
 
   private final class FlushTask implements Runnable {
     private FlushTask() {
@@ -66,105 +66,116 @@ final class OLogSegment implements Comparable<OLogSegment> {
     @Override
     public void run() {
       try {
-        OLogSegment.this.commitLog();
-      } catch (Throwable e) {
-        OLogManager.instance().error(this, "Error during WAL background flush", e);
+        try {
+          OLogSegment.this.commitLog();
+        } catch (Throwable e) {
+          OLogManager.instance().error(this, "Error during WAL background flush", e);
+        }
+      } finally {
+        writeAheadLog.checkFreeSpace();
       }
     }
   }
 
   private void commitLog() throws IOException {
-
     if (!flushNewData)
       return;
-    flushNewData = false;
-    List<OLogRecord> toFlush;
+
+    final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
+    if (statistic != null)
+      statistic.startWALFlushTimer();
     try {
-      cacheLock.lock();
-      if (logCache.isEmpty())
-        return;
+      flushNewData = false;
+      List<OLogRecord> toFlush;
+      try {
+        cacheLock.lock();
+        if (logCache.isEmpty())
+          return;
 
-      toFlush = logCache;
-      logCache = new ArrayList<OLogRecord>();
-    }finally {
-      cacheLock.unlock();
-    }
-    if (toFlush.isEmpty())
-      return;
-    byte[] pageContent = new byte[OWALPage.PAGE_SIZE];
-
-    OLogRecord first = toFlush.get(0);
-    int curIndex = (int) (first.writeFrom / OWALPage.PAGE_SIZE);
-    synchronized (rndFile) {
-      long pagesCount = rndFile.length() / OWALPage.PAGE_SIZE;
-      if (pagesCount > curIndex ) {
-        rndFile.seek(curIndex * OWALPage.PAGE_SIZE);
-        rndFile.readFully(pageContent);
+        toFlush = logCache;
+        logCache = new ArrayList<OLogRecord>();
+      } finally {
+        cacheLock.unlock();
       }
-    }
+      if (toFlush.isEmpty())
+        return;
+      byte[] pageContent = new byte[OWALPage.PAGE_SIZE];
 
-    OLogSequenceNumber lsn = null;
-    int pageIndex = 0;
-    int pos =0;
-    boolean lastToFlush=false;
-    for (OLogRecord log : toFlush) {
-      lsn = new OLogSequenceNumber(order, log.writeFrom);
-      pos = (int) (log.writeFrom % OWALPage.PAGE_SIZE);
-      pageIndex = (int) (log.writeFrom / OWALPage.PAGE_SIZE);
-      int written = 0;
-
-      while (written < log.record.length) {
-        lastToFlush =true;
-        int pageFreeSpace = OWALPage.calculateRecordSize(OWALPage.PAGE_SIZE - pos);
-        int contentLength = Math.min(pageFreeSpace, (log.record.length - written));
-        int fromRecord = written;
-        written += contentLength;
-
-        pos = writeContentInPage(pageContent, pos, log.record, written == log.record.length, fromRecord, contentLength);
-
-        if (OWALPage.PAGE_SIZE - pos < OWALPage.MIN_RECORD_SIZE) {
-          synchronized (rndFile) {
-            rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
-            flushPage(pageContent);
-          }
-          if (pendingLSNToFlush != null) {
-            this.writeAheadLog.setFlushedLsn(pendingLSNToFlush);
-          }
-          pendingLSNToFlush = lsn;
-          lastToFlush=false;
-          pageIndex++;
-          pos = OWALPage.RECORDS_OFFSET;
+      OLogRecord first = toFlush.get(0);
+      int curIndex = (int) (first.writeFrom / OWALPage.PAGE_SIZE);
+      synchronized (rndFile) {
+        long pagesCount = rndFile.length() / OWALPage.PAGE_SIZE;
+        if (pagesCount > curIndex) {
+          rndFile.seek(curIndex * OWALPage.PAGE_SIZE);
+          rndFile.readFully(pageContent);
         }
       }
 
-    }
-    if(lastToFlush) {
-      synchronized (rndFile) {
-        rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
-        flushPage(pageContent);
-      }
-    }
-    if (OGlobalConfiguration.WAL_SYNC_ON_PAGE_FLUSH.getValueAsBoolean()) {
-      synchronized (rndFile) {
-        rndFile.getFD().sync();
-      }
-    }
-    this.writeAheadLog.setFlushedLsn(lsn);
+      OLogSequenceNumber lsn = null;
+      int pageIndex = 0;
+      int pos = 0;
+      boolean lastToFlush = false;
+      for (OLogRecord log : toFlush) {
+        lsn = new OLogSequenceNumber(order, log.writeFrom);
+        pos = (int) (log.writeFrom % OWALPage.PAGE_SIZE);
+        pageIndex = (int) (log.writeFrom / OWALPage.PAGE_SIZE);
+        int written = 0;
 
+        while (written < log.record.length) {
+          lastToFlush = true;
+          int pageFreeSpace = OWALPage.calculateRecordSize(OWALPage.PAGE_SIZE - pos);
+          int contentLength = Math.min(pageFreeSpace, (log.record.length - written));
+          int fromRecord = written;
+          written += contentLength;
+
+          pos = writeContentInPage(pageContent, pos, log.record, written == log.record.length, fromRecord, contentLength);
+
+          if (OWALPage.PAGE_SIZE - pos < OWALPage.MIN_RECORD_SIZE) {
+            synchronized (rndFile) {
+              rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
+              flushPage(pageContent);
+            }
+            if (pendingLSNToFlush != null) {
+              this.writeAheadLog.setFlushedLsn(pendingLSNToFlush);
+            }
+            pendingLSNToFlush = lsn;
+            lastToFlush = false;
+            pageIndex++;
+            pos = OWALPage.RECORDS_OFFSET;
+          }
+        }
+
+      }
+      if (lastToFlush) {
+        synchronized (rndFile) {
+          rndFile.seek(pageIndex * OWALPage.PAGE_SIZE);
+          flushPage(pageContent);
+        }
+      }
+      if (OGlobalConfiguration.WAL_SYNC_ON_PAGE_FLUSH.getValueAsBoolean()) {
+        synchronized (rndFile) {
+          rndFile.getFD().sync();
+        }
+      }
+      this.writeAheadLog.setFlushedLsn(lsn);
+    } finally {
+      if (statistic != null)
+        statistic.stopWALFlushTimer();
+    }
   }
 
   /**
    * Write the content in the page and return the new page cursor position.
    *
    * @param pageContent   buffer of the page to be filled
-   * @param posInPage           position in the page where to write
+   * @param posInPage     position in the page where to write
    * @param log           content to write to the page
    * @param isLast        flag to mark if is last portion of the record
    * @param fromRecord    the start of the portion of the record to write in this page
    * @param contentLength the length of the portion of the record to write in this page
    * @return the new page cursor  position after this write.
    */
-  private int writeContentInPage(byte[] pageContent, int posInPage, byte[] log, boolean isLast, int fromRecord,int contentLength) {
+  private int writeContentInPage(byte[] pageContent, int posInPage, byte[] log, boolean isLast, int fromRecord, int contentLength) {
     OByteSerializer.INSTANCE.serializeNative(!isLast ? (byte) 1 : 0, pageContent, posInPage);
     OByteSerializer.INSTANCE.serializeNative(isLast ? (byte) 1 : 0, pageContent, posInPage + 1);
     OIntegerSerializer.INSTANCE.serializeNative(contentLength, pageContent, posInPage + 2);
@@ -184,11 +195,12 @@ final class OLogSegment implements Comparable<OLogSegment> {
 
   }
 
-
-  OLogSegment(ODiskWriteAheadLog writeAheadLog, File file, int maxPagesCacheSize) throws IOException {
+  OLogSegment(ODiskWriteAheadLog writeAheadLog, File file, int maxPagesCacheSize,
+      OPerformanceStatisticManager performanceStatisticManager) throws IOException {
     this.writeAheadLog = writeAheadLog;
     this.file = file;
     this.maxPagesCacheSize = maxPagesCacheSize;
+    this.performanceStatisticManager = performanceStatisticManager;
 
     order = extractOrder(file.getName());
     closed = false;
@@ -197,7 +209,8 @@ final class OLogSegment implements Comparable<OLogSegment> {
 
   public void startFlush() {
     if (writeAheadLog.getCommitDelay() > 0)
-      commitExecutor.scheduleAtFixedRate(new FlushTask(), writeAheadLog.getCommitDelay(), writeAheadLog.getCommitDelay(), TimeUnit.MILLISECONDS);
+      commitExecutor.scheduleAtFixedRate(new FlushTask(), writeAheadLog.getCommitDelay(), writeAheadLog.getCommitDelay(),
+          TimeUnit.MILLISECONDS);
   }
 
   public void stopFlush(boolean flush) {
@@ -355,7 +368,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
     try {
       cacheLock.lock();
       logCache.add(rec);
-    }finally {
+    } finally {
       cacheLock.unlock();
     }
     long flushedPos = 0;
@@ -363,7 +376,11 @@ final class OLogSegment implements Comparable<OLogSegment> {
       flushedPos = writeAheadLog.getFlushedLsn().getPosition();
     long pagesInCache = (filledUpTo - flushedPos) / OWALPage.PAGE_SIZE;
     if (pagesInCache > maxPagesCacheSize) {
-      OLogManager.instance().info(this, "Max cache limit is reached (%d vs. %d), sync flush is performed", maxPagesCacheSize, pagesInCache);
+      OLogManager.instance()
+          .info(this, "Max cache limit is reached (%d vs. %d), sync flush is performed", maxPagesCacheSize, pagesInCache);
+
+      writeAheadLog.incrementCacheOverflowCount();
+
       flush();
     }
     return last;

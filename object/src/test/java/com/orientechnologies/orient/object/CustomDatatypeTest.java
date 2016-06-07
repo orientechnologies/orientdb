@@ -78,7 +78,7 @@ public class CustomDatatypeTest {
 		result.setValue(iFieldValue);
 		return result;
 	    }
-	});
+	}, db);
 	OObjectSerializerHelper.bindSerializerContext(WrappedString.class,
 		serializerContext);
 

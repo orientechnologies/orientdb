@@ -37,7 +37,7 @@ public class OSequenceOrdered extends OSequence {
 
         return newValue;
       }
-    });
+    }, "next");
   }
 
   @Override
@@ -56,7 +56,7 @@ public class OSequenceOrdered extends OSequence {
 
         return newValue;
       }
-    });
+    }, "reset");
   }
 
   @Override

@@ -78,6 +78,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
     database.close();
 
     database = new OObjectDatabaseTx(url + "_objectschema");
+    ODatabaseHelper.dropDatabase(database, getStorageType());
     ODatabaseHelper.createDatabase(database, url + "_objectschema", getStorageType());
 
     try {
@@ -95,8 +96,9 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
       export.close();
       exportDatabase.close();
       ODatabaseDocumentTx importDatabase = new ODatabaseDocumentTx(url + "_objectschema");
+
       if (url.startsWith("remote")) {
-        importDatabase.open("root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
+        importDatabase.open("root", ODatabaseHelper.getServerRootPassword());
       } else {
         importDatabase.open("admin", "admin");
       }

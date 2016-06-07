@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -38,11 +30,9 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLResultsetDelegate;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
+import com.orientechnologies.orient.core.sql.*;
+
+import java.util.*;
 
 /**
  * Target parser.
@@ -64,7 +54,7 @@ public class OSQLTarget extends OBaseParser {
   protected String                            targetIndexValues;
   protected boolean                           targetIndexValuesAsc;
 
-  public OSQLTarget(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
+  public OSQLTarget(final String iText, final OCommandContext iContext) {
     super();
     context = iContext;
     parserText = iText;

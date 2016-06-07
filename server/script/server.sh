@@ -84,17 +84,20 @@ fi
 # -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=1044
 # AND ATTACH TO THE CURRENT HOST, PORT 1044
 
-# ORIENTDB MAXIMUM HEAP. USE SYNTAX -Xmx<memory>, WHERE <memory> HAS THE TOTAL MEMORY AND SIZE UNIT. EXAMPLE: -Xmx512m
-MAXHEAP=-Xmx512m
+# ORIENTDB memory options, default to 512 of heap.
+
+if [ -z "$ORIENTDB_OPTS_MEMORY" ] ; then
+    ORIENTDB_OPTS_MEMORY="-Xms512m -Xmx512m"
+fi
 # ORIENTDB MAXIMUM DISKCACHE IN MB, EXAMPLE, ENTER -Dstorage.diskCache.bufferSize=8192 FOR 8GB
 MAXDISKCACHE=""
 
 echo $$ > $ORIENTDB_PID
 
-exec "$JAVA" $JAVA_OPTS $MAXHEAP $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS $MAXDISKCACHE \
+exec "$JAVA" $JAVA_OPTS $ORIENTDB_OPTS_MEMORY $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS $MAXDISKCACHE \
     -Djava.util.logging.config.file="$LOG_FILE" \
     -Dorientdb.config.file="$CONFIG_FILE" \
     -Dorientdb.www.path="$WWW_PATH" \
     -Dorientdb.build.number="@BUILD@" \
-    -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" \
+    -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*:$ORIENTDB_HOME/plugins/*" \
     $* com.orientechnologies.orient.server.OServerMain

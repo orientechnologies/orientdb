@@ -19,9 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.Collection;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-import com.orientechnologies.orient.core.id.ORID;
+import java.util.Collection;
 
 /**
  * Generic Distributed Database interface.
@@ -30,41 +33,57 @@ import com.orientechnologies.orient.core.id.ORID;
  *
  */
 public interface ODistributedDatabase {
+
+  String getDatabaseName();
+
   ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, Collection<String> iNodes,
-      ODistributedRequest.EXECUTION_MODE iExecutionMode);
+      ODistributedRequest.EXECUTION_MODE iExecutionMode, Object localResult,
+      OCallable<Void, ODistributedRequestId> iAfterSentCallback);
 
   void setOnline();
+
+  int checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType, Collection<String> iClusterNames,
+      Collection<String> iNodes, ODistributedConfiguration cfg);
 
   /**
    * Locks the record to be sure distributed transactions never work concurrently against the same records in the meanwhile the
    * transaction is executed and the OCompleteTxTask is not arrived.
    *
-   * @see #unlockRecord(ORID)
+   * @see #unlockRecord(OIdentifiable, ODistributedRequestId)
    * @param iRecord
    *          Record to lock
-   * @param iNodeName
-   *          node name
+   * @param iRequestId
+   *          Request id
    * @return true if the lock succeed, otherwise false
    */
-  boolean lockRecord(ORID iRecord, final String iNodeName);
+  ODistributedRequestId lockRecord(OIdentifiable iRecord, final ODistributedRequestId iRequestId);
 
   /**
    * Unlocks the record previously locked through #lockRecord method.
    *
-   * @see #lockRecord(ORID, String)
+   * @see #lockRecord(OIdentifiable, ODistributedRequestId)
    * @param iRecord
-   *          Record to lock
-   * @return true if the lock succeed, otherwise false
+   * @param requestId
    */
-  void unlockRecord(ORID iRecord);
+  void unlockRecord(OIdentifiable iRecord, ODistributedRequestId requestId);
 
   /**
    * Unlocks all the record locked by node iNodeName
    * 
-   * @param iNodeName
-   *          node name
+   * @param iNodeId
+   *          node id
    */
-  void unlockRecords(String iNodeName);
+  void handleUnreachableNode(int iNodeId);
 
   ODistributedSyncConfiguration getSyncConfiguration();
+
+  void processRequest(ODistributedRequest request);
+
+  ODistributedTxContext registerTxContext(ODistributedRequestId reqId);
+
+  ODistributedTxContext popTxContext(ODistributedRequestId requestId);
+
+  ODistributedServerManager getManager();
+
+  ODatabaseDocumentTx getDatabaseInstance();
 }

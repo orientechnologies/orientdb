@@ -23,7 +23,7 @@ References:
  ORIENTDB LICENSE
 -------------------------------------------------------------------------------------
 
-                   Copyright 1999-2015 (c) OrientDB LTD
+                   Copyright 1999-2016 (c) OrientDB LTD
 
 
                                 Apache License

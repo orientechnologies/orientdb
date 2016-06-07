@@ -156,12 +156,16 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
               break;
 
             } catch (ONeedRetryException e) {
+              if (lock) {
+                Assert.fail(ONeedRetryException.class.getSimpleName() + " was encountered");
+              }
+
             }
           }
         }
-      } catch (Throwable e) {
+      } catch (RuntimeException e) {
         e.printStackTrace();
-        Assert.assertTrue(false);
+        throw e;
       }
     }
   }

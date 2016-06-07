@@ -199,10 +199,6 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
 
   protected void parseSetting(final String option, final List<String> items) {
     if (option.equalsIgnoreCase("-excludeAll")) {
-      includeClasses = new HashSet<String>();
-      excludeClasses = null;
-      includeClusters = new HashSet<String>();
-      excludeClusters = null;
       includeInfo = false;
       includeClusterDefinitions = false;
       includeSchema = false;
@@ -241,7 +237,10 @@ public abstract class ODatabaseImpExpAbstract extends ODatabaseTool {
 
     } else if (option.equalsIgnoreCase("-includeSchema")) {
       includeSchema = Boolean.parseBoolean(items.get(0));
-
+      if (includeSchema) {
+        includeClusterDefinitions = true;
+        includeInfo = true;
+      }
     } else if (option.equalsIgnoreCase("-includeSecurity")) {
       includeSecurity = Boolean.parseBoolean(items.get(0));
 

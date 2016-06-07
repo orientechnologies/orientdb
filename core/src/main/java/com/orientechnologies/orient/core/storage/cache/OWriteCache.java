@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.storage.cache;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -127,4 +128,6 @@ public interface OWriteCache {
    * @see #getId()
    */
   long externalFileId(int fileId);
+
+  OPerformanceStatisticManager getPerformanceStatisticManager();
 }

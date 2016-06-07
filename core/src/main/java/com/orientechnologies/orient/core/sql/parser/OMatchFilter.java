@@ -30,7 +30,7 @@ public class OMatchFilter extends SimpleNode {
   public String getAlias() {
     for (OMatchFilterItem item : items) {
       if (item.alias != null) {
-        return item.alias.getValue();
+        return item.alias.getStringValue();
       }
     }
     return null;

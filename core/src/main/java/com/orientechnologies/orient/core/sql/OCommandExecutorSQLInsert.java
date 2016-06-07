@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -36,14 +37,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.storage.OCluster;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -126,12 +122,23 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
           throw new OQueryParsingException("Class '" + className + "' was not found");
       }
 
+      if(clusterName != null && className == null){
+        ODatabaseDocumentInternal db = getDatabase();
+        OCluster cluster = db.getStorage().getClusterByName(clusterName);
+        if(cluster != null){
+          clazz = db.getMetadata().getSchema().getClassByClusterId(cluster.getId());
+          if(clazz != null){
+            className = clazz.getName();
+          }
+        }
+      }
+
       parserSkipWhiteSpaces();
       if (parserIsEnded())
         throwSyntaxErrorException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'");
 
       final String temp = parseOptionalWord(true);
-      if (temp.equals("CLUSTER")) {
+      if (parserGetLastWord().equalsIgnoreCase("cluster")) {
         clusterName = parserRequiredWord(false);
 
         parserSkipWhiteSpaces();
@@ -331,8 +338,13 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     if (endFields == -1)
       throwSyntaxErrorException("Missed closed brace");
 
+    final ArrayList<String> fieldNamesQuoted = new ArrayList<String>();
+    parserSetCurrentPosition(OStringSerializerHelper.getParameters(parserText, beginFields, endFields, fieldNamesQuoted));
     final ArrayList<String> fieldNames = new ArrayList<String>();
-    parserSetCurrentPosition(OStringSerializerHelper.getParameters(parserText, beginFields, endFields, fieldNames));
+    for(String fieldName:fieldNamesQuoted){
+      fieldNames.add(decodeClassName(fieldName));
+    }
+
     if (fieldNames.size() == 0)
       throwSyntaxErrorException("Set of fields is empty. Example: (name, surname)");
 

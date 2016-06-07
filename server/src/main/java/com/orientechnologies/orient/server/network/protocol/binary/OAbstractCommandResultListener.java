@@ -31,12 +31,11 @@ import com.orientechnologies.orient.core.record.ORecord;
  * Abstract class to manage command results.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public abstract class OAbstractCommandResultListener implements OCommandResultListener {
   protected final OCommandResultListener wrappedResultListener;
 
-  private OFetchPlan                     fetchPlan;
+  private OFetchPlan fetchPlan;
 
   protected OAbstractCommandResultListener(final OCommandResultListener wrappedResultListener) {
     this.wrappedResultListener = wrappedResultListener;
@@ -69,4 +68,5 @@ public abstract class OAbstractCommandResultListener implements OCommandResultLi
 
     return null;
   }
+
 }

@@ -21,10 +21,15 @@ package com.orientechnologies.orient.console;
 
 import com.orientechnologies.common.console.OConsoleApplication;
 
-public abstract class OrientConsole extends OConsoleApplication {
+public abstract class OrientConsole extends OConsoleApplication implements OTableFormatter.OTableOutput {
 
   public OrientConsole(String[] args) {
     super(args);
+  }
+
+  @Override
+  public void onMessage(String text, Object... args) {
+    message(text, args);
   }
 
   @Override

@@ -42,12 +42,8 @@ public interface OIndexFactory {
   Set<String> getAlgorithms();
 
   /**
-   *
-   *
-   *
-   *
-   *
-   *
+   * Creates an index.
+   * 
    * @param name
    * @param database
    * @param indexType
@@ -61,6 +57,6 @@ public interface OIndexFactory {
   OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException;
 
-  OIndexEngine createIndexEngine(String algorithm,String name, Boolean durableInNonTxMode, OStorage storage, int version,
+  OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
       Map<String, String> engineProperties);
 }

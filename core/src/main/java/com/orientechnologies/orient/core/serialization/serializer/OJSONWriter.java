@@ -64,10 +64,10 @@ public class OJSONWriter {
   }
 
   public static String writeValue(Object iValue, final String iFormat) throws IOException {
-    return writeValue(iValue, iFormat, 0);
+    return writeValue(iValue, iFormat, 0, null);
   }
 
-  public static String writeValue(Object iValue, final String iFormat, final int iIndentLevel) throws IOException {
+  public static String writeValue(Object iValue, final String iFormat, final int iIndentLevel, OType valueType) throws IOException {
     if (iValue == null)
       return "null";
 
@@ -163,8 +163,10 @@ public class OJSONWriter {
       iteratorToJSON(((Iterable<?>) iValue).iterator(), iFormat, buffer);
 
     else {
-      OType  t = OType.getTypeByValue(iValue);
-      if(t == OType.CUSTOM){
+      if(valueType == null)
+        valueType = OType.getTypeByValue(iValue);
+      
+      if(valueType == OType.CUSTOM){
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream object = new ObjectOutputStream(baos);
         object.writeObject(iValue);
@@ -390,15 +392,22 @@ public class OJSONWriter {
     return this;
   }
 
-  public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue) throws IOException {
-    return writeAttribute(iIdentLevel, iNewLine, iName, iValue, format);
-  }
 
   public OJSONWriter writeAttribute(final String iName, final Object iValue) throws IOException {
     return writeAttribute(-1, false, iName, iValue, format);
   }
 
-  public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue, final String iFormat) throws IOException {
+  public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue)
+      throws IOException {
+    return writeAttribute(iIdentLevel, iNewLine, iName, iValue, format, null);
+  }
+
+  public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue,
+      final String iFormat) throws IOException {
+    return writeAttribute(iIdentLevel, iNewLine, iName, iValue, iFormat, null);
+  }
+  public OJSONWriter writeAttribute(final int iIdentLevel, final boolean iNewLine, final String iName, final Object iValue,
+      final String iFormat,OType valueType) throws IOException {
     if (!firstAttribute)
       out.append(",");
 
@@ -423,7 +432,7 @@ public class OJSONWriter {
       }
       out.append(']');
     } else
-      out.append(writeValue(iValue, iFormat, iIdentLevel));
+      out.append(writeValue(iValue, iFormat, iIdentLevel, valueType));
 
     firstAttribute = false;
     return this;

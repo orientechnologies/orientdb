@@ -346,7 +346,7 @@ public class OBasicCommandContext implements OCommandContext {
    */
   public synchronized boolean addToUniqueResult(Object o) {
     Object toAdd = o;
-    if(o instanceof ODocument){
+    if(o instanceof ODocument && ((ODocument) o).getIdentity().isNew()){
       toAdd = new ODocumentEqualityWrapper((ODocument) o);
     }
     return this.uniqueResult.add(toAdd);

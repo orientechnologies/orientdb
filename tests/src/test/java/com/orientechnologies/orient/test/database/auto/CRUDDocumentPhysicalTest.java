@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import org.testng.Assert;
@@ -71,7 +72,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   @Test
   public void testPool() throws IOException {
     OPartitionedDatabasePool pool = new OPartitionedDatabasePool(url, "admin", "admin");
-    final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[pool.getMaxSize()];
+    final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[pool.getMaxPartitonSize()];
 
     for (int i = 0; i < 10; ++i) {
       for (int db = 0; db < dbs.length; ++db)
@@ -964,5 +965,27 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     } catch (Exception e) {
     }
     return doc;
+  }
+
+
+  @Test
+  public void testAny() {
+    database.command(new OCommandSQL("create class TestExport")).execute();
+    database.command(new OCommandSQL("create property TestExport.anything ANY")).execute();
+    database.command(new OCommandSQL("insert into TestExport set anything = 3")).execute();
+    database.command(new OCommandSQL("insert into TestExport set anything = 'Jay'")).execute();
+    database.command(new OCommandSQL("insert into TestExport set anything = 2.3")).execute();
+
+    List<ODocument> result = database.command(new OCommandSQL("select count(*) from TestExport where anything = 3")).execute();
+    Assert.assertNotNull(result);
+    Assert.assertEquals(result.size(), 1);
+
+    result = database.command(new OCommandSQL("select count(*) from TestExport where anything = 'Jay'")).execute();
+    Assert.assertNotNull(result);
+    Assert.assertEquals(result.size(), 1);
+
+    result = database.command(new OCommandSQL("select count(*) from TestExport where anything = 2.3")).execute();
+    Assert.assertNotNull(result);
+    Assert.assertEquals(result.size(), 1);
   }
 }

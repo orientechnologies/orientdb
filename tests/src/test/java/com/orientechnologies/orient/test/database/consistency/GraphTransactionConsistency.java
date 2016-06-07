@@ -42,7 +42,7 @@ public class GraphTransactionConsistency {
   private final static int THREADS = 8;
 
   public void testTransactionConsistency() throws InterruptedException {
-    final OrientGraphFactory factory = new OrientGraphFactory("plocal:target/GraphTransactionConsistency");
+    final OrientGraphFactory factory = new OrientGraphFactory("plocal:target/GraphTransactionConsistency", false);
 
     database = txMode ? factory.getTx() : factory.getNoTx();
 

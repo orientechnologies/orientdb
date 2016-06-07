@@ -20,37 +20,123 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
-  *
-  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
-  *
-  */
- public interface ODistributedRequest {
-   enum EXECUTION_MODE {
-     RESPONSE, NO_RESPONSE
-   }
+ *
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ */
+public class ODistributedRequest implements Externalizable {
+  public enum EXECUTION_MODE {
+    RESPONSE, NO_RESPONSE
+  }
 
-   long getId();
+  private final ORemoteTaskFactory taskFactory;
+  private ODistributedRequestId    id;
+  private EXECUTION_MODE           executionMode;
+  private String                   databaseName;
+  private long                     senderThreadId;
+  private ORemoteTask              task;
+  private ORID                     userRID;       // KEEP ALSO THE RID TO AVOID SECURITY PROBLEM ON DELETE & RECREATE USERS
 
-   void setId(long iId);
+  public ODistributedRequest(final ORemoteTaskFactory taskFactory) {
+    this.taskFactory = taskFactory;
+  }
 
-   EXECUTION_MODE getExecutionMode();
+  public ODistributedRequest(final ORemoteTaskFactory taskFactory, final int senderNodeId, final long msgSequence,
+      final String databaseName, final ORemoteTask payload, EXECUTION_MODE iExecutionMode) {
+    this.taskFactory = taskFactory;
+    this.id = new ODistributedRequestId(senderNodeId, msgSequence);
+    this.databaseName = databaseName;
+    this.senderThreadId = Thread.currentThread().getId();
+    this.task = payload;
+    this.executionMode = iExecutionMode;
+  }
 
-   String getDatabaseName();
+  public ODistributedRequestId getId() {
+    return id;
+  }
 
-   ODistributedRequest setDatabaseName(final String databaseName);
+  public void setId(final ODistributedRequestId reqId) {
+    id = reqId;
+  }
 
-   String getSenderNodeName();
+  public String getDatabaseName() {
+    return databaseName;
+  }
 
-   ODistributedRequest setSenderNodeName(String localNodeName);
+  public ODistributedRequest setDatabaseName(final String databaseName) {
+    this.databaseName = databaseName;
+    return this;
+  }
 
-   OAbstractRemoteTask getTask();
+  public ORemoteTask getTask() {
+    return task;
+  }
 
-   ODistributedRequest setTask(final OAbstractRemoteTask payload);
+  public ODistributedRequest setTask(final ORemoteTask payload) {
+    this.task = payload;
+    return this;
+  }
 
-   ORID getUserRID();
+  public ORID getUserRID() {
+    return userRID;
+  }
 
-   void setUserRID(ORID iUserRID);
- }
+  public void setUserRID(final ORID iUserRID) {
+    this.userRID = iUserRID;
+  }
+
+  public EXECUTION_MODE getExecutionMode() {
+    return executionMode;
+  }
+
+  public ODistributedRequest setExecutionMode(final EXECUTION_MODE executionMode) {
+    this.executionMode = executionMode;
+    return this;
+  }
+
+  @Override
+  public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeObject(id);
+    out.writeLong(senderThreadId);
+    out.writeUTF(databaseName != null ? databaseName : "");
+    out.writeByte(task.getFactoryId());
+    task.writeExternal(out);
+    out.writeObject(userRID);
+  }
+
+  @Override
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    id = (ODistributedRequestId) in.readObject();
+    senderThreadId = in.readLong();
+    databaseName = in.readUTF();
+    if (databaseName.isEmpty())
+      databaseName = null;
+    task = (ORemoteTask) taskFactory.createTask(in.readByte());
+    task.readExternal(in);
+    userRID = (ORID) in.readObject();
+  }
+
+  @Override
+  public String toString() {
+    final StringBuilder buffer = new StringBuilder(256);
+    buffer.append("id=");
+    buffer.append(id);
+    if (task != null) {
+      buffer.append(" task=");
+      buffer.append(task.toString());
+    }
+    if (userRID != null) {
+      buffer.append(" user=");
+      buffer.append(userRID);
+    }
+    return buffer.toString();
+  }
+}

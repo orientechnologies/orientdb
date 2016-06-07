@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OStringParser;
@@ -47,6 +37,9 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+
+import java.math.BigDecimal;
+import java.util.*;
 
 public abstract class OStringSerializerHelper {
   public static final char   RECORD_SEPARATOR        = ',';
@@ -155,6 +148,13 @@ public abstract class OStringSerializerHelper {
       // RECORD
       final String value = (String) iValue;
       return ORecordSerializerSchemaAware2CSV.INSTANCE.embeddedMapFromStream(iDocument, null, value, null);
+
+    case ANY:
+      if (iValue instanceof String) {
+        final String s = (String) iValue;
+        return decode(OIOUtils.getStringContent(s));
+      }
+      return iValue;
     }
 
     throw new IllegalArgumentException("Type " + iType + " does not support converting value: " + iValue);
@@ -395,8 +395,8 @@ public abstract class OStringSerializerHelper {
               else if (c == BAG_END)
                 if (!isCharPresent(c, iSeparator)) {
                   if (insideBag == 0)
-                    throw new OSerializationException("Found invalid " + BAG_BEGIN
-                        + " character. Ensure it is opened and closed correctly.");
+                    throw new OSerializationException(
+                        "Found invalid " + BAG_BEGIN + " character. Ensure it is opened and closed correctly.");
                   insideBag--;
                 }
             }
@@ -411,7 +411,8 @@ public abstract class OStringSerializerHelper {
           stringBeginChar = c;
         }
 
-        if (insideParenthesis == 0 && insideList == 0 && insideSet == 0 && insideMap == 0 && insideLinkPart == 0 && insideBag == 0) {
+        if (insideParenthesis == 0 && insideList == 0 && insideSet == 0 && insideMap == 0 && insideLinkPart == 0
+            && insideBag == 0) {
           // OUTSIDE A PARAMS/COLLECTION/MAP
           if (i >= iMinPosSeparatorAreValid && isCharPresent(c, iSeparator)) {
             // SEPARATOR (OUTSIDE A STRING): PUSH
@@ -864,8 +865,8 @@ public abstract class OStringSerializerHelper {
 
       return OBase64Utils.decode(s);
     } else
-      throw new IllegalArgumentException("Cannot parse binary as the same type as the value (class=" + iValue.getClass().getName()
-          + "): " + iValue);
+      throw new IllegalArgumentException(
+          "Cannot parse binary as the same type as the value (class=" + iValue.getClass().getName() + "): " + iValue);
   }
 
   /**
@@ -885,10 +886,8 @@ public abstract class OStringSerializerHelper {
   }
 
   public static String removeQuotationMarks(final String iValue) {
-    if (iValue != null
-        && iValue.length() > 1
-        && (iValue.charAt(0) == '\'' && iValue.charAt(iValue.length() - 1) == '\'' || iValue.charAt(0) == '"'
-            && iValue.charAt(iValue.length() - 1) == '"'))
+    if (iValue != null && iValue.length() > 1 && (iValue.charAt(0) == '\'' && iValue.charAt(iValue.length() - 1) == '\''
+        || iValue.charAt(0) == '"' && iValue.charAt(iValue.length() - 1) == '"'))
       return iValue.substring(1, iValue.length() - 1);
 
     return iValue;

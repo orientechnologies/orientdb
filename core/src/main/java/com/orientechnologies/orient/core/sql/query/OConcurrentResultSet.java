@@ -22,11 +22,7 @@ package com.orientechnologies.orient.core.sql.query;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * ResultSet implementation that allows concurrent population.
@@ -77,6 +73,13 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
       final OConcurrentResultSet<T> copy = new OConcurrentResultSet<T>(wrapped.copy());
       copy.completed = true;
       return copy;
+    }
+  }
+
+  @Override
+  public boolean isEmptyNoWait() {
+    synchronized (wrapped) {
+      return wrapped.isEmpty();
     }
   }
 
@@ -213,8 +216,8 @@ public class OConcurrentResultSet<T> implements OResultSet<T> {
         }
 
         if (index > size || size == 0)
-          throw new NoSuchElementException("Error on browsing at element " + index + " while the resultset contains only " + size
-              + " items");
+          throw new NoSuchElementException(
+              "Error on browsing at element " + index + " while the resultset contains only " + size + " items");
 
         synchronized (wrapped) {
           return wrapped.get(index++);

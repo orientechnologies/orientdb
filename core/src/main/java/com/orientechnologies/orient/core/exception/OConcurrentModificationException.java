@@ -36,12 +36,12 @@ public class OConcurrentModificationException extends ONeedRetryException implem
   private static final String MESSAGE_RECORD_VERSION = "your=v";
   private static final String MESSAGE_DB_VERSION     = "db=v";
 
-  private static final long serialVersionUID = 1L;
+  private static final long   serialVersionUID       = 1L;
 
-  private ORID rid;
-  private int  databaseVersion = 0;
-  private int  recordVersion   = 0;
-  private int  recordOperation;
+  private ORID                rid;
+  private int                 databaseVersion        = 0;
+  private int                 recordVersion          = 0;
+  private int                 recordOperation;
 
   public OConcurrentModificationException(OConcurrentModificationException exception) {
     super(exception);
@@ -52,7 +52,7 @@ public class OConcurrentModificationException extends ONeedRetryException implem
     this.recordOperation = exception.recordOperation;
   }
 
-  protected OConcurrentModificationException(String message) {
+  protected OConcurrentModificationException(final String message) {
     super(message);
   }
 
@@ -77,8 +77,8 @@ public class OConcurrentModificationException extends ONeedRetryException implem
     final OConcurrentModificationException other = (OConcurrentModificationException) obj;
 
     if (recordOperation == other.recordOperation && rid.equals(other.rid)) {
-      if(databaseVersion == other.databaseVersion)
-        return recordOperation == other.recordVersion;
+      if (databaseVersion == other.databaseVersion)
+        return recordOperation == other.recordOperation;
     }
 
     return false;

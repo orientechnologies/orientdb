@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -18,7 +19,7 @@ public class OCommandExecutorSQLScriptTest {
   private static String DB_STORAGE = "memory";
   private static String DB_NAME    = "OCommandExecutorSQLScriptTest";
 
-  ODatabaseDocumentTx   db;
+  ODatabaseDocumentTx db;
 
   @BeforeClass
   public void beforeClass() throws Exception {
@@ -106,7 +107,7 @@ public class OCommandExecutorSQLScriptTest {
   public void testConsoleLog() throws Exception {
     StringBuilder script = new StringBuilder();
     script.append("LET $a = 'log'\n");
-    script.append("console.log This is a test of log for ${a}");
+    script.append("console.log 'This is a test of log for ${a}'");
     db.command(new OCommandScript("sql", script.toString())).execute();
   }
 
@@ -114,7 +115,7 @@ public class OCommandExecutorSQLScriptTest {
   public void testConsoleOutput() throws Exception {
     StringBuilder script = new StringBuilder();
     script.append("LET $a = 'output'\n");
-    script.append("console.output This is a test of log for ${a}");
+    script.append("console.output 'This is a test of log for ${a}'");
     db.command(new OCommandScript("sql", script.toString())).execute();
   }
 
@@ -122,7 +123,7 @@ public class OCommandExecutorSQLScriptTest {
   public void testConsoleError() throws Exception {
     StringBuilder script = new StringBuilder();
     script.append("LET $a = 'error'\n");
-    script.append("console.error This is a test of log for ${a}");
+    script.append("console.error 'This is a test of log for ${a}'");
     db.command(new OCommandScript("sql", script.toString())).execute();
   }
 
@@ -182,6 +183,14 @@ public class OCommandExecutorSQLScriptTest {
     Assert.assertEquals(qResult, "OK");
   }
 
+  @Test
+  public void testIf3() throws Exception {
+    StringBuilder script = new StringBuilder();
+    script.append("let $a = select 1 as one; if($a[0].one = 1){return 'OK';}return 'FAIL';");
+    Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
+    Assert.assertNotNull(qResult);
+    Assert.assertEquals(qResult, "OK");
+  }
   @Test
   public void testNestedIf2() throws Exception {
     StringBuilder script = new StringBuilder();
@@ -277,4 +286,19 @@ public class OCommandExecutorSQLScriptTest {
     script.append("let $b = select \"foo \\\"; bar\" as one\n");
     Object qResult = db.command(new OCommandScript("sql", script.toString())).execute();
   }
+  
+  @Test
+  public void testQuotedRegex() {
+    //issue #4996 (simplified)
+    db.command(new OCommandSQL("CREATE CLASS QuotedRegex2")).execute();
+    String batch = "INSERT INTO QuotedRegex2 SET regexp=\"'';\"";
+
+    db.command(new OCommandScript(batch.toString())).execute();
+
+    List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM QuotedRegex2"));
+    Assert.assertEquals(result.size(), 1);
+    ODocument doc = result.get(0);
+    Assert.assertEquals(doc.field("regexp"), "'';");
+  }
+
 }

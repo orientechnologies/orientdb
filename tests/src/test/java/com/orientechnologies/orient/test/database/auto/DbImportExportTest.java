@@ -15,12 +15,14 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -36,12 +38,16 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   public static final String NEW_DB_PATH      = "target/test-import";
   public static final String NEW_DB_URL       = "target/test-import";
 
-  private String testPath;
+  private String             testPath;
+  private String             exportFilePath;
+  private boolean            dumpMode         = false;
 
   @Parameters(value = { "url", "testPath" })
   public DbImportExportTest(@Optional String url, String testPath) {
     super(url);
     this.testPath = testPath;
+
+    exportFilePath = System.getProperty("exportFilePath", EXPORT_FILE_PATH);
   }
 
   @Test
@@ -49,7 +55,10 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
-    ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + EXPORT_FILE_PATH, this);
+    // ADD A CUSTOM TO THE CLASS
+    database.command(new OCommandSQL("alter class V custom onBeforeCreate=onBeforeCreateItem")).execute();
+
+    ODatabaseExport export = new ODatabaseExport(database, testPath + "/" + exportFilePath, this);
     export.exportDatabase();
     export.close();
 
@@ -68,7 +77,7 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
     database.create();
 
-    ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
+    ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + exportFilePath, this);
 
     // UNREGISTER ALL THE HOOKS
     for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks().keySet())) {
@@ -85,6 +94,14 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
 
   @Test(dependsOnMethods = "testDbImport")
   public void testCompareDatabases() throws IOException {
+    if ("remote".equals(getStorageType()) || url.startsWith("remote:")) {
+      String env = getTestEnv();
+      if (env == null || env.equals("dev"))
+        return;
+
+      // EXECUTES ONLY IF NOT REMOTE ON CI/RELEASE TEST ENV
+    }
+
     String urlPrefix = getStorageType() + ":";
 
     final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportTest.NEW_DB_URL,
@@ -97,5 +114,11 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
+    if (iText != null && iText.contains("ERR"))
+      // ACTIVATE DUMP MODE
+      dumpMode = true;
+
+    if (dumpMode)
+      OLogManager.instance().error(this, iText);
   }
 }

@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import static java.sql.ResultSet.CONCUR_READ_ONLY;
+import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
@@ -65,6 +67,16 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     assertThat(rowsInserted).isEqualTo(2);
   }
 
+
+  @Test
+  public void testInsertRIDReturning() throws Exception {
+    conn.createStatement().executeQuery("CREATE CLASS Insertable ");
+    ResultSet result = conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(1) return @rid");
+
+    assertThat(result.next()).isTrue();
+    assertThat(result.getObject("id")).isNotNull();
+  }
+
   @Test
   public void testExecuteUpdateReturnsNumberOfRowsDeleted() throws Exception {
     conn.createStatement().executeQuery("CREATE CLASS Insertable ");
@@ -115,5 +127,32 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     // Let's verify the previous process
     ResultSet resultSet = conn.createStatement().executeQuery("SELECT count(*) FROM insertable WHERE id = 'someRandomUid'");
     assertThat(resultSet.getInt(1)).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldCreatePreparedStatementWithExtendConstructor() throws Exception {
+
+    PreparedStatement stmt = conn.prepareStatement("SELECT FROM Item WHERE intKey = ?", TYPE_FORWARD_ONLY, CONCUR_READ_ONLY);
+    stmt.setInt(1, 1);
+
+    ResultSet rs = stmt.executeQuery();
+
+    assertThat(rs.next()).isTrue();
+
+    assertThat(rs.getString("@class")).isEqualToIgnoringCase("Item");
+
+    assertThat(rs.getString("stringKey")).isEqualTo("1");
+    assertThat(rs.getInt("intKey")).isEqualTo(1);
+    //
+  }
+
+  @Test(expected = SQLException.class)
+  public void shouldTrhowSqlExceptionOnError() throws SQLException {
+
+    String query = "select sequence('?').next()";
+    PreparedStatement stmt = conn.prepareStatement(query);
+    stmt.setString(1, "theSequence");
+    stmt.executeQuery();
+
   }
 }

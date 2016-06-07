@@ -16,12 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -39,8 +34,8 @@ public class SQLDropIndexTest {
   private final String        url;
 
   @Parameters(value = "url")
-  public SQLDropIndexTest(final String url) {
-    this.url = url;
+  public SQLDropIndexTest(@Optional final String url) {
+    this.url = BaseTest.prepareUrl(url);
   }
 
   @BeforeClass

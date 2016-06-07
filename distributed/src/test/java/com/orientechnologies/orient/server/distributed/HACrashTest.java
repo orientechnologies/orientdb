@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.Callable;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
- * Distributed non TX test against "remote" protocol. It starts 3 servers and during a stress test, kill last server. The test checks
- * all the clients can auto-reconnect to the next available server.
+ * Distributed non TX test against "remote" protocol. It starts 3 servers and during a stress test, kill last server. The test
+ * checks all the clients can auto-reconnect to the next available server.
  */
 public class HACrashTest extends AbstractServerClusterTxTest {
   final static int SERVERS       = 3;
@@ -31,11 +31,13 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   volatile int     serverStarted = 0;
   volatile boolean lastServerOn  = false;
 
+  // @Ignore
   @Test
   public void test() throws Exception {
     startupNodesInSequence = true;
     count = 500;
     maxRetries = 10;
+    delayWriter = 0;
     useTransactions = false;
     init(SERVERS);
     prepare(false);
@@ -55,42 +57,33 @@ public class HACrashTest extends AbstractServerClusterTxTest {
         public void run() {
           try {
             // CRASH LAST SERVER try {
-            executeWhen(new Callable<Boolean>() {
+            executeWhen(0, new OCallable<Boolean, ODatabaseDocumentTx>() {
               // CONDITION
               @Override
-              public Boolean call() throws Exception {
-                final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
-                    .acquire();
-                try {
-                  return database.countClass("Person") > (count * SERVERS) * 1 / 3;
-                } finally {
-                  database.close();
-                }
+              public Boolean call(ODatabaseDocumentTx db) {
+                return db.countClass("Person") > (count * SERVERS * writerCount + baseCount) * 1 / 3;
               }
             }, // ACTION
-                new Callable() {
+                new OCallable<Boolean, ODatabaseDocumentTx>() {
               @Override
-              public Object call() throws Exception {
+              public Boolean call(ODatabaseDocumentTx db) {
                 Assert.assertTrue("Insert was too fast", inserting);
                 banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
+
                 serverInstance.get(SERVERS - 1).crashServer();
                 lastServerOn = false;
 
-                executeWhen(new Callable<Boolean>() {
+                executeWhen(db, new OCallable<Boolean, ODatabaseDocumentTx>() {
                   @Override
-                  public Boolean call() throws Exception {
-                    final ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin")
-                        .acquire();
-                    try {
-                      return database.countClass("Person") > (count * SERVERS) * 2 / 3;
-                    } finally {
-                      database.close();
-                    }
+                  public Boolean call(ODatabaseDocumentTx db) {
+                    return db.countClass("Person") > (count * writerCount * SERVERS) * 2 / 4;
                   }
-                }, new Callable() {
+                }, new OCallable<Boolean, ODatabaseDocumentTx>() {
                   @Override
-                  public Object call() throws Exception {
+                  public Boolean call(ODatabaseDocumentTx db) {
                     Assert.assertTrue("Insert was too fast", inserting);
+
+                    delayWriter = 10;
 
                     banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
                     try {
@@ -114,6 +107,21 @@ public class HACrashTest extends AbstractServerClusterTxTest {
         }
       }).start();
     }
+  }
+
+  @Override
+  protected void onBeforeChecks() throws InterruptedException {
+    // // WAIT UNTIL THE END
+    waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
+      @Override
+      public Boolean call(ODatabaseDocumentTx db) {
+        final boolean ok = db.countClass("Person") >= count * writerCount * SERVERS + baseCount;
+        if (!ok)
+          System.out.println(
+              "FOUND " + db.countClass("Person") + " people instead of expected " + (count * writerCount * SERVERS) + baseCount);
+        return ok;
+      }
+    }, 10000);
   }
 
   @Override

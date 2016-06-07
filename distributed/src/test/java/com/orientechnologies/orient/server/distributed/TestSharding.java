@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -38,32 +37,28 @@ public class TestSharding extends AbstractServerClusterTest {
   }
 
   @Override
+  protected void onAfterDatabaseCreation(OrientBaseGraph graphNoTx) {
+    final OrientVertexType clientType = graphNoTx.createVertexType("Client-Type", 1);
+    final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name-property", OType.STRING);
+    prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+
+    graphNoTx.command(new OCommandSQL("alter cluster `Client-Type` name `Client-Type_europe`")).execute();
+
+    clientType.addCluster("client-type_usa");
+    clientType.addCluster("client-type_asia");
+
+    graphNoTx.createVertexType("Product-Type", 1);
+    graphNoTx.createVertexType("Hobby-Type", 1);
+
+    graphNoTx.createEdgeType("Knows-Type", 1);
+    graphNoTx.createEdgeType("Buy-Type", 1);
+    graphNoTx.createEdgeType("Loves-Type", 1);
+  }
+
+  @Override
   protected void executeTest() throws Exception {
     try {
-      OrientGraphFactory localFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-      OrientGraphNoTx graphNoTx = localFactory.getNoTx();
-
-      try {
-        final OrientVertexType clientType = graphNoTx.createVertexType("Client-Type");
-        final OrientVertexType.OrientVertexProperty prop = clientType.createProperty("name-property", OType.STRING);
-        prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-
-        for (int i = 1; i < serverInstance.size(); ++i) {
-          final String serverName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
-          clientType.addCluster("client_" + serverName);
-        }
-
-        graphNoTx.createVertexType("Product-Type");
-        graphNoTx.createVertexType("Hobby-Type");
-
-        graphNoTx.createEdgeType("Knows-Type");
-        graphNoTx.createEdgeType("Buy-Type");
-        graphNoTx.createEdgeType("Loves-Type");
-
-        Thread.sleep(500);
-      } finally {
-        graphNoTx.shutdown();
-      }
+      OrientGraphFactory localFactory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName(), false);
 
       final OrientVertex product;
       final OrientVertex fishing;
@@ -87,7 +82,7 @@ public class TestSharding extends AbstractServerClusterTest {
       for (int i = 0; i < vertices.length; ++i) {
         final String nodeName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
 
-        OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + i + "/databases/" + getDatabaseName());
+        OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + i + "/databases/" + getDatabaseName(), false);
         graph = factory.getNoTx();
         try {
 
@@ -95,7 +90,8 @@ public class TestSharding extends AbstractServerClusterTest {
 
           final int clId = vertices[i].getIdentity().getClusterId();
 
-          final int clusterId = graph.getRawGraph().getClusterIdByName("client-type_" + nodeName);
+          final String expectedClusterNameAssigned = "client-type_" + nodeName;
+          final int clusterId = graph.getRawGraph().getClusterIdByName(expectedClusterNameAssigned);
           Assert.assertEquals("Error on assigning cluster client_" + nodeName, clId, clusterId);
 
           vertices[i].setProperty("name-property", "shard_" + i);
@@ -136,7 +132,7 @@ public class TestSharding extends AbstractServerClusterTest {
       }
 
       for (int i = 0; i < vertices.length; ++i) {
-        OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + i + "/databases/" + getDatabaseName());
+        OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + i + "/databases/" + getDatabaseName(), false);
         graph = factory.getNoTx();
         try {
 
@@ -174,7 +170,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // FOR ALL THE DATABASES QUERY THE SINGLE CLUSTER TO TEST ROUTING
       for (int server = 0; server < vertices.length; ++server) {
-        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
+        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName(), false);
         OrientGraphNoTx g = f.getNoTx();
 
         System.out.println("Query from server " + server + "...");
@@ -216,7 +212,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // TEST DISTRIBUTED QUERY + AGGREGATION + SUB_QUERY AGAINST ALL 3 DATABASES TO TEST MAP/REDUCE
       for (int server = 0; server < vertices.length; ++server) {
-        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + 0 + "/databases/" + getDatabaseName());
+        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + 0 + "/databases/" + getDatabaseName(), false);
         OrientGraphNoTx g = f.getNoTx();
         try {
           // MISC QUERIES
@@ -244,7 +240,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST MAP/REDUCE
       for (int server = 0; server < vertices.length; ++server) {
-        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
+        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName(), false);
         OrientGraphNoTx g = f.getNoTx();
         try {
 
@@ -271,7 +267,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION
       for (int server = 0; server < vertices.length; ++server) {
-        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
+        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName(), false);
         OrientGraphNoTx g = f.getNoTx();
         try {
 
@@ -293,7 +289,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION + GROUP BY
       for (int server = 0; server < vertices.length; ++server) {
-        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
+        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName(), false);
         OrientGraphNoTx g = f.getNoTx();
         try {
 
@@ -317,7 +313,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
       // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION + ADDITIONAL FIELD
       for (int server = 0; server < vertices.length; ++server) {
-        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
+        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName(), false);
         OrientGraphNoTx g = f.getNoTx();
         try {
 
@@ -342,7 +338,7 @@ public class TestSharding extends AbstractServerClusterTest {
       testQueryWithFilter();
 
       // TEST DISTRIBUTED DELETE WITH DIRECT COMMAND AND SQL
-      OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + 0 + "/databases/" + getDatabaseName());
+      OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + 0 + "/databases/" + getDatabaseName(), false);
       OrientGraphNoTx g = f.getNoTx();
       try {
         Iterable<OrientVertex> countResultBeforeDelete = g.command(new OCommandSQL("select from `Client-Type`")).execute();

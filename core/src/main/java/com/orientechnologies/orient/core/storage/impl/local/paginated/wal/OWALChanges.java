@@ -33,6 +33,8 @@ public interface OWALChanges {
 
   void moveData(ByteBuffer buffer, int from, int to, int len);
 
+  boolean hasChanges();
+
   /**
    * Apply the changes to a page.
    *
@@ -67,5 +69,7 @@ public interface OWALChanges {
    * @return the offset+read bytes.
    */
   int fromStream(int offset, byte[] stream);
+
+  OWALChanges inverse(ByteBuffer buffer);
 
 }

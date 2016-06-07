@@ -26,11 +26,7 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.IndexableGraph;
-import com.tinkerpop.blueprints.KeyIndexableGraph;
-import com.tinkerpop.blueprints.MetaGraph;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 
 /**
  * OrientDB extension to Blueprints standard.
@@ -90,6 +86,18 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
   OrientVertexType createVertexType(String iClassName);
 
   /**
+   * Creates a new Vertex persistent class.
+   *
+   * @param iClassName
+   *          Vertex class name
+   * @param clusters
+   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @return OrientVertexType instance representing the persistent class
+   */
+  OrientVertexType createVertexType(String iClassName, int clusters);
+
+  /**
    * Creates a new Vertex persistent class specifying the super class.
    * 
    * @param iClassName
@@ -102,6 +110,20 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
 
   /**
    * Creates a new Vertex persistent class specifying the super class.
+   *
+   * @param iClassName
+   *          Vertex class name
+   * @param iSuperClassName
+   *          Vertex class name to extend
+   * @param clusters
+   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @return OrientVertexType instance representing the persistent class
+   */
+  OrientVertexType createVertexType(String iClassName, String iSuperClassName, int clusters);
+
+  /**
+   * Creates a new Vertex persistent class specifying the super class.
    * 
    * @param iClassName
    *          Vertex class name
@@ -110,6 +132,20 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    * @return OrientVertexType instance representing the persistent class
    */
   OrientVertexType createVertexType(String iClassName, OClass iSuperClass);
+
+  /**
+   * Creates a new Vertex persistent class specifying the super class.
+   *
+   * @param iClassName
+   *          Vertex class name
+   * @param iSuperClass
+   *          OClass Vertex to extend
+   * @param clusters
+   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @return OrientVertexType instance representing the persistent class
+   */
+  OrientVertexType createVertexType(String iClassName, OClass iSuperClass, int clusters);
 
   /**
    * Drop a vertex class.
@@ -162,6 +198,20 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    * @return OrientEdgeType instance representing the persistent class
    */
   OrientEdgeType createEdgeType(String iClassName, OClass iSuperClass);
+
+  /**
+   * Creates a new Edge persistent class specifying the super class.
+   *
+   * @param iClassName
+   *          Edge class name
+   * @param iSuperClass
+   *          OClass Edge to extend
+   * @param clusters
+   *          The number of clusters to create for the new class. By default the MINIMUMCLUSTERS database setting is used. In v2.2
+   *          and later, the number of clusters are proportioned to the amount of cores found on the machine
+   * @return OrientEdgeType instance representing the persistent class
+   */
+  OrientEdgeType createEdgeType(String iClassName, OClass iSuperClass, int clusters);
 
   /**
    * Drops an edge class.

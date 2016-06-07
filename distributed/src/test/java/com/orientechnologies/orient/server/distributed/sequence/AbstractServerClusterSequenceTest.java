@@ -11,16 +11,8 @@ import com.orientechnologies.orient.server.distributed.AbstractServerClusterTest
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import org.junit.Assert;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -64,8 +56,8 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     // Assuming seq2.next() is called once after calling seq1.next() once, and cache size is
     // C, seq2.current() - seq1.current() = C
 
-    OSequence seq1 = dbs[0].getMetadata().getSequenceLibrary()
-        .createSequence(sequenceName, SEQUENCE_TYPE.CACHED, new OSequence.CreateParams().setDefaults().setCacheSize(CACHE_SIZE));
+    OSequence seq1 = dbs[0].getMetadata().getSequenceLibrary().createSequence(sequenceName, SEQUENCE_TYPE.CACHED,
+        new OSequence.CreateParams().setDefaults().setCacheSize(CACHE_SIZE));
     OSequence seq2 = dbs[1].getMetadata().getSequenceLibrary().getSequence(sequenceName);
 
     Assert.assertEquals(seq1.getName(), seq2.getName());
@@ -87,9 +79,10 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     OSequenceLibrary seq1 = dbs[0].getMetadata().getSequenceLibrary();
     OSequenceLibrary seq2 = dbs[1].getMetadata().getSequenceLibrary();
 
-    //
     seq1.createSequence(sequenceName, SEQUENCE_TYPE.ORDERED, null);
     Assert.assertEquals(SEQUENCE_TYPE.ORDERED, seq1.getSequence(sequenceName).getSequenceType());
+
+    Assert.assertNotNull("The sequence has not be propagated to the 2nd server", seq2.getSequence(sequenceName));
 
     ODatabaseRecordThreadLocal.INSTANCE.set(dbs[0]);
     Assert.assertEquals(0L, seq1.getSequence(sequenceName).current());
@@ -130,13 +123,17 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
           List<Long> res = new ArrayList<Long>(SEQ_RUN_COUNT);
 
           OSequence seq = db.getMetadata().getSequenceLibrary().getSequence(sequenceName);
+
+          // HIGH CONCURRENCY: INCREMENT THE RETRY
+          seq.setMaxRetry(10000);
+
           for (int j = 0; j < SEQ_RUN_COUNT; ++j) {
             try {
               long value = seq.next();
               res.add(value);
-              Thread.sleep(new Random().nextInt(50));
             } catch (OConcurrentModificationException ex) {
               failures.incrementAndGet();
+              Thread.sleep(new Random().nextInt(100));
             }
           }
 
@@ -157,6 +154,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
     }
     long expectedSize = set.size() - failures.get();
 
-    Assert.assertEquals("Distributed sequence of type " + sequenceType + " generates duplicate values", totalValues, expectedSize);
+    Assert.assertEquals("Distributed sequence of type " + sequenceType + " generates duplicate values, failures=" + failures.get(),
+        totalValues, expectedSize);
   }
 }

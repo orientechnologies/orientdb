@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.sql.parser.OAlterPropertyStatement;
+import com.orientechnologies.orient.core.sql.parser.OExpression;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -54,9 +56,8 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-      //TODO disabled for now, because the API of setXXX has to be refactored
-//      queryText = preParse(queryText, iRequest);
-//      textRequest.setText(queryText);
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
       init((OCommandRequestText) iRequest);
 
@@ -81,10 +82,10 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       if (parts.length != 2)
         throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
 
-      className = parts[0];
+      className = decodeClassName(parts[0]);
       if (className == null)
         throw new OCommandSQLParsingException("Class not found", parserText, oldPos);
-      fieldName = parts[1];
+      fieldName = decodeClassName(parts[1]);
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
@@ -101,18 +102,58 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       }
 
       value = parserText.substring(pos + 1).trim();
+      if(attribute.equals(ATTRIBUTES.NAME) ||attribute.equals(ATTRIBUTES.LINKEDCLASS)){
+        value = decodeClassName(value);
+      }
 
-      if (value.length() == 0)
+      if (value.length() == 0) {
         throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
             + getSyntax(), parserText, oldPos);
+      }
 
-      if (value.equalsIgnoreCase("null"))
-        value = null;
 
+      if(preParsedStatement != null) {
+        OExpression settingExp = ((OAlterPropertyStatement) preParsedStatement).settingValue;
+        if (settingExp != null) {
+          Object expValue = settingExp.execute(null, context);
+          if(expValue == null){
+            expValue = settingExp.toString();
+          }
+          value = expValue == null ? null : expValue.toString();
+          if(attribute.equals(ATTRIBUTES.NAME) ||attribute.equals(ATTRIBUTES.LINKEDCLASS)){
+            value = decodeClassName(value);
+          }
+        }
+      }else {
+        if (value.equalsIgnoreCase("null")) {
+          value = null;
+        }
+        if (value != null && isQuoted(value)) {
+          value = removeQuotes(value);
+        }
+      }
     } finally {
       textRequest.setText(originalQuery);
     }
     return this;
+  }
+
+  private String removeQuotes(String s) {
+    s = s.trim();
+    return s.substring(1, s.length() - 1).replaceAll("\\\\\"", "\"");
+  }
+
+
+  private boolean isQuoted(String s) {
+    s = s.trim();
+    if (s.startsWith("\"") && s.endsWith("\""))
+      return true;
+    if (s.startsWith("'") && s.endsWith("'"))
+      return true;
+    if (s.startsWith("`") && s.endsWith("`"))
+      return true;
+
+    return false;
   }
 
   @Override

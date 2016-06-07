@@ -30,7 +30,9 @@ import com.tinkerpop.blueprints.impls.orient.OBonsaiTreeRepair;
 import com.tinkerpop.blueprints.impls.orient.OGraphRepair;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.util.io.graphml.GraphMLWriter;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -87,11 +89,11 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     try {
       final Object result = currentDatabase.command(new OCommandGremlin(iScriptText)).execute();
 
-      float elapsedSeconds = (System.currentTimeMillis() - start) / 1000;
+      float elapsed = System.currentTimeMillis() - start;
 
       out.println("\n" + result);
 
-      out.printf("\nScript executed in %f sec(s).", elapsedSeconds);
+      out.printf("\nScript executed in %f ms.", elapsed);
     } catch (OStorageException e) {
       final Throwable cause = e.getCause();
       if (cause instanceof OCommandExecutorNotFoundException)
@@ -117,15 +119,48 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
         final OrientGraph g = new OrientGraph(currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
+
+        final long totalEdges = g.countEdges();
+        final long totalVertices = g.countVertices();
+
         new OGraphMLReader(g).setOptions(opts).inputGraph(g, fileName);
         g.commit();
         currentDatabase.commit();
+
+        message("\nDone: imported %d vertices and %d edges", g.countVertices() - totalVertices, g.countEdges() - totalEdges);
 
       } catch (ODatabaseImportException e) {
         printError(e);
       }
     } else
       super.importDatabase(text);
+  }
+
+  @Override
+  public void exportDatabase(@ConsoleParameter(name = "options", description = "Export options") String iText) throws IOException {
+    checkForDatabase();
+
+    if (iText != null && (iText.endsWith(".graphml") || iText.endsWith(".xml"))) {
+      message("\nExporting database in GRAPHML format to " + iText + "...");
+
+      try {
+        final OrientGraph g = new OrientGraph(currentDatabase);
+        g.setUseLog(false);
+        g.setWarnOnForceClosingTx(false);
+
+        // CREATE THE EXPORT FILE IF NOT EXIST YET
+        final File f = new File(iText);
+        f.getParentFile().mkdirs();
+        f.createNewFile();
+
+        new GraphMLWriter(g).outputGraph(iText);
+
+      } catch (ODatabaseImportException e) {
+        printError(e);
+      }
+    } else
+      // BASE EXPORT
+      super.exportDatabase(iText);
   }
 
   @Override
@@ -175,6 +210,6 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
 
   @Override
   protected boolean isCollectingCommands(final String iLine) {
-    return super.isCollectingCommands(iLine) || iLine.startsWith("gremlin");
+    return super.isCollectingCommands(iLine) || iLine.trim().equalsIgnoreCase("gremlin");
   }
 }

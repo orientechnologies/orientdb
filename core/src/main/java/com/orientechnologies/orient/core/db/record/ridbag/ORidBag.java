@@ -434,6 +434,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     delegate.requestDelete();
     final OSBTreeRidBag treeBag = new OSBTreeRidBag();
     treeBag.setCollectionPointer(pointer);
+    treeBag.setOwner(delegate.getOwner());
+    for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : delegate.getChangeListeners())
+      treeBag.addChangeListener(listener);
     delegate = treeBag;
   }
 
@@ -452,4 +455,13 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return delegate;
   }
 
+  @Override
+  public void fireCollectionChangedEvent(OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
+    delegate.fireCollectionChangedEvent(event);
+  }
+
+  @Override
+  public void replace(OMultiValueChangeEvent<Object, Object> event, Object newValue) {
+    //not needed do nothing
+  }
 }

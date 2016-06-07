@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -69,6 +68,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.put(iKey, iValue);
   }
 
+  @Override
+  public long getRebuildVersion() {
+    return delegate.getRebuildVersion();
+  }
+
   public boolean remove(final Object key) {
     return delegate.remove(key);
   }
@@ -94,7 +98,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
       indexManager.save();
     }
   }
-
 
   @Override
   public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
@@ -130,7 +133,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.delete();
   }
 
-
   public String getName() {
     return delegate.getName();
   }
@@ -148,6 +150,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.isAutomatic();
   }
 
+  @Override
+  public boolean isUnique() {
+    return delegate.isUnique();
+  }
+
   public ODocument getConfiguration() {
     return delegate.getConfiguration();
   }
@@ -156,7 +163,6 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   public ODocument getMetadata() {
     return delegate.getMetadata();
   }
-
 
   public long rebuild() {
     return delegate.rebuild();
@@ -226,8 +232,8 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
-  public boolean isRebuiding() {
-    return delegate.isRebuiding();
+  public boolean isRebuilding() {
+    return delegate.isRebuilding();
   }
 
   @Override
@@ -238,6 +244,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   @Override
   public Object getLastKey() {
     return delegate.getLastKey();
+  }
+
+  @Override
+  public int getIndexId() {
+    return delegate.getIndexId();
   }
 
   @Override

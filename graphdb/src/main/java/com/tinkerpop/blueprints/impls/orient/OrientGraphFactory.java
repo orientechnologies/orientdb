@@ -17,7 +17,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   protected AtomicBoolean                     used = new AtomicBoolean(false);
 
   /**
-   * Creates a factory that use default admin credentials.
+   * Creates a factory that use default admin credentials and pool with maximum amount of connections equal to amount of CPU cores.
    *
    * @param iURL
    *          to the database
@@ -27,7 +27,22 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   }
 
   /**
-   * Creates a factory with given credentials.
+   * Creates a factory that use default admin credentials and pool with maximum amount of connections equal to amount of CPU cores
+   * if needed.
+   *
+   * @param iURL
+   *          to the database
+   * @param createPool
+   *          flag which indicates whether pool should be created.
+   */
+  public OrientGraphFactory(final String iURL, boolean createPool) {
+    this(iURL, OrientBaseGraph.ADMIN, OrientBaseGraph.ADMIN, createPool);
+  }
+
+  /**
+   * Creates a factory with given credentials and pool with maximum amount of connections equal to amount of CPU cores.
+   * <p>
+   * If you wish to change pool settings call com.tinkerpop.blueprints.impls.orient.OrientGraphFactory#setupPool(int, int) method.
    *
    * @param iURL
    *          to the database
@@ -37,9 +52,50 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    *          of the user
    */
   public OrientGraphFactory(final String iURL, final String iUser, final String iPassword) {
+    this(iURL, iUser, iPassword, true);
+  }
+
+  /**
+   * Creates a factory with given credentials and pool with maximum amount of connections equal to amount of CPU cores if that is
+   * needed.
+   * <p>
+   * If you wish to change pool settings call com.tinkerpop.blueprints.impls.orient.OrientGraphFactory#setupPool(int, int) method.
+   *
+   * @param iURL
+   *          to the database
+   * @param iUser
+   *          name of the user
+   * @param iPassword
+   *          of the user
+   * @param createPool
+   *          flag which indicates whether pool should be created.
+   */
+  public OrientGraphFactory(final String iURL, final String iUser, final String iPassword, boolean createPool) {
     url = iURL;
     user = iUser;
     password = iPassword;
+    if (createPool)
+      pool = new OPartitionedDatabasePool(url, user, password, 64, Runtime.getRuntime().availableProcessors()).setAutoCreate(true);
+  }
+
+  /**
+   * Creates a factory with given credentials also you may pass pool which you already use in "document part" of your application.
+   * It is mandatory to use the same pool for document and graph databases.
+   *
+   * @param iURL
+   *          to the database
+   * @param iUser
+   *          name of the user
+   * @param iPassword
+   *          password of the user
+   * @param pool
+   *          Pool which is used in "document part" of your application.
+   */
+  public OrientGraphFactory(final String iURL, final String iUser, final String iPassword, OPartitionedDatabasePool pool) {
+    url = iURL;
+    user = iUser;
+    password = iPassword;
+    this.pool = pool;
   }
 
   /**
@@ -54,7 +110,6 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
 
   /**
    * Drops current database if such one exists.
-   *
    */
   public void drop() {
     getDatabase(false, true).drop();
@@ -101,9 +156,9 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   /**
    * Gives new connection to database. If current factory configured to use pool (see {@link #setupPool(int, int)} method),
    * retrieves connection from pool. Otherwise creates new connection each time.
-   *
+   * <p>
    * Automatically creates database if database with given URL does not exist
-   *
+   * <p>
    * Shortcut for {@code getDatabase(true)}
    *
    * @return database.
@@ -125,7 +180,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   public ODatabaseDocumentTx getDatabase(final boolean iCreate, final boolean iOpen) {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
 
-    final OStorageRemote.CONNECTION_STRATEGY connMode = settings.getConnectionStrategy();
+    final String connMode = settings.getConnectionStrategy();
     db.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
 
     if (!db.getURL().startsWith("remote:") && !db.exists()) {
@@ -141,6 +196,8 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
 
   /**
    * Check if the database with path given to the factory exists.
+   * <p>
+   * this api can be used only in embedded mode, and has no need of authentication.
    *
    * @return true if database is exists
    */
@@ -163,7 +220,11 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * @return this
    */
   public OrientGraphFactory setupPool(final int iMin, final int iMax) {
-    pool = new OPartitionedDatabasePool(url, user, password, iMax).setAutoCreate(true);
+    if (pool != null) {
+      pool.close();
+    }
+
+    pool = new OPartitionedDatabasePool(url, user, password, 64, iMax).setAutoCreate(true);
     return this;
   }
 

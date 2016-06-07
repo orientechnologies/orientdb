@@ -17,10 +17,10 @@
 package com.orientechnologies.lucene.engine;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory;
 import com.orientechnologies.lucene.analyzer.OLucenePerFieldAnalyzerWrapper;
 import com.orientechnologies.lucene.builder.DocBuilder;
 import com.orientechnologies.lucene.builder.OQueryBuilder;
@@ -34,9 +34,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexEngine.ValuesTransformer;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -46,7 +44,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TrackingIndexWriter;
 import org.apache.lucene.search.ControlledRealTimeReopenThread;
@@ -59,7 +56,6 @@ import org.apache.lucene.store.RAMDirectory;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimerTask;
@@ -71,6 +67,7 @@ import static com.orientechnologies.lucene.engine.OLuceneIndexEngineAbstract.RID
 public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements OOrientListener {
 
   private final String              name;
+  private final ODocument           metadata;
   protected     OLuceneFacetManager facetManager;
   protected     TimerTask           commitTask;
   protected AtomicBoolean closed = new AtomicBoolean(true);
@@ -82,15 +79,16 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   private   Map<String, OLuceneClassIndexContext> oindexes;
   private   long                                  reopenToken;
 
-  private OLucenePerFieldAnalyzerWrapper indexAnalyzer;
-  private OLucenePerFieldAnalyzerWrapper queryAnalyzer;
+  private Analyzer indexAnalyzer;
+  private Analyzer queryAnalyzer;
 
-  public OLuceneStorage(String name, DocBuilder builder, OQueryBuilder queryBuilder) {
+  public OLuceneStorage(String name, DocBuilder builder, OQueryBuilder queryBuilder, ODocument metadata) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
         OGlobalConfiguration.MVRBTREE_TIMEOUT.getValueAsInteger(), true);
     this.name = name;
     this.builder = builder;
     this.queryBuilder = queryBuilder;
+    this.metadata = metadata;
 
     indexAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
     queryAnalyzer = new OLucenePerFieldAnalyzerWrapper(new StandardAnalyzer());
@@ -123,7 +121,7 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
   private void reOpen() throws IOException {
 
     if (mgrWriter != null) {
-      OLogManager.instance().info(this, "index storage is openm don't reopen");
+      OLogManager.instance().info(this, "index storage is open don't reopen");
 
       return;
     }
@@ -178,17 +176,12 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   public IndexWriter createIndexWriter(Directory directory) throws IOException {
 
-    IndexWriterConfig iwc = new IndexWriterConfig(indexAnalyzer);
-    iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-
+    OLuceneIndexWriterFactory fc = new OLuceneIndexWriterFactory();
     // TODO: manage taxo
     // facetManager = new OLuceneFacetManager(this, metadata);
 
     OLogManager.instance().debug(this, "Creating Lucene index in '%s'...", directory);
-
-    IndexWriter writer = new IndexWriter(directory, iwc);
-
-    return writer;
+    return fc.createIndexWriter(directory, metadata, indexAnalyzer());
   }
 
   public void flush() {
@@ -200,53 +193,27 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
     return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
   }
 
+  public Analyzer indexAnalyzer() {
+    return indexAnalyzer;
+  }
+
   public void initIndex(OLuceneClassIndexContext indexContext) {
 
     OLogManager.instance().info(this, "START INIT initIndex:: name " + indexContext.name + " def :: " + indexContext.definition);
     oindexes.put(indexContext.name, indexContext);
 
-    initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
+    //    initializerAnalyzers(indexContext.indexClass, indexContext.metadata);
+
+    OLuceneAnalyzerFactory afc = new OLuceneAnalyzerFactory();
+
+    indexContext.metadata.field("prefix_with_class_name", true, OType.BOOLEAN);
+
+    indexAnalyzer = afc.createAnalyzer(indexContext.definition, OLuceneAnalyzerFactory.AnalyzerKind.INDEX, indexContext.metadata);
+    queryAnalyzer = afc.createAnalyzer(indexContext.definition, OLuceneAnalyzerFactory.AnalyzerKind.QUERY, indexContext.metadata);
 
     OLogManager.instance()
         .info(this, "DONE INIT initIndex:: indexAnalyzer::  " + indexAnalyzer + " queryanalzer:: " + queryAnalyzer);
 
-  }
-
-  private void initializerAnalyzers(OClass indexClass, ODocument metadata) {
-    for (String meta : metadata.fieldNames()) {
-      String fieldName = meta.substring(0, meta.indexOf("_"));
-      if (meta.contains("index"))
-        indexAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String>field(meta)));
-      else if (meta.contains("query"))
-        queryAnalyzer.add(indexClass.getName() + "." + fieldName, buildAnalyzer(metadata.<String>field(meta)));
-    }
-  }
-
-  private Analyzer buildAnalyzer(String analyzerFQN) {
-
-    OLogManager.instance().info(this, "looking for analyzer::  " + analyzerFQN);
-    try {
-
-      final Class classAnalyzer = Class.forName(analyzerFQN);
-      final Constructor constructor = classAnalyzer.getConstructor();
-
-      return (Analyzer) constructor.newInstance();
-    } catch (ClassNotFoundException e) {
-      throw OException.wrapException(new OIndexException("Analyzer: " + analyzerFQN + " not found"), e);
-    } catch (NoSuchMethodException e) {
-      Class classAnalyzer = null;
-      try {
-        classAnalyzer = Class.forName(analyzerFQN);
-        return (Analyzer) classAnalyzer.newInstance();
-
-      } catch (Throwable e1) {
-        throw OException.wrapException(new OIndexException("Couldn't instantiate analyzer:  public constructor  not found"), e);
-      }
-
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on getting analyzer for Lucene index", e);
-    }
-    return new StandardAnalyzer();
   }
 
   public boolean remove(Object key, OIdentifiable value) {
@@ -264,8 +231,14 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   }
 
-  public long sizeInTx(OLuceneTxChanges changes) {
-    return 0;
+  public long size() {
+
+    try {
+      return searcher().getIndexReader().numDocs();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return mgrWriter.getIndexWriter().maxDoc();
   }
 
   public OLuceneTxChanges buildTxChanges() throws IOException {
@@ -423,10 +396,6 @@ public class OLuceneStorage extends OSharedResourceAdaptiveExternal implements O
 
   public String getName() {
     return name;
-  }
-
-  public Analyzer indexAnalyzer() {
-    return indexAnalyzer;
   }
 
   public Analyzer queryAnalyzer() {

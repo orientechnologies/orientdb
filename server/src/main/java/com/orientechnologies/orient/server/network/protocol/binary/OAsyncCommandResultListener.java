@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.server.OClientConnection;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -44,19 +45,21 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
   private final AtomicBoolean          empty       = new AtomicBoolean(true);
   private final int                    txId;
   private final Set<ORID>              alreadySent = new HashSet<ORID>();
+  private final OClientConnection      connection;
 
-  public OAsyncCommandResultListener(final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId,
+  public OAsyncCommandResultListener(OClientConnection connection, final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId,
       final OCommandResultListener wrappedResultListener) {
     super(wrappedResultListener);
     this.protocol = iNetworkProtocolBinary;
     this.txId = txId;
+    this.connection = connection;
   }
 
   @Override
   public boolean result(final Object iRecord) {
     if (empty.compareAndSet(true, false))
       try {
-        protocol.sendOk(txId);
+        protocol.sendOk(connection, txId);
       } catch (IOException ignored) {
       }
 
@@ -68,7 +71,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
             alreadySent.add(iLinked.getIdentity());
             try {
               protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT
-              protocol.writeIdentifiable(iLinked);
+              protocol.writeIdentifiable(connection, iLinked);
             } catch (IOException e) {
               OLogManager.instance().error(this, "Cannot write against channel", e);
             }
@@ -77,7 +80,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
       });
       alreadySent.add(((OIdentifiable) iRecord).getIdentity());
       protocol.channel.writeByte((byte) 1); // ONE MORE RECORD
-      protocol.writeIdentifiable(((OIdentifiable) iRecord).getRecord());
+      protocol.writeIdentifiable(connection, ((OIdentifiable) iRecord).getRecord());
       protocol.channel.flush();// TODO review this flush... it's for non blocking...
 
       if (wrappedResultListener != null)

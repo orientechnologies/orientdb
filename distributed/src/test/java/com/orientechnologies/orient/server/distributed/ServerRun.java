@@ -17,8 +17,12 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -70,16 +74,18 @@ public class ServerRun {
   }
 
   public void crashServer() {
-    server.getClientConnectionManager().killAllChannels();
-    if (server != null)
+    if (server != null) {
+      server.getClientConnectionManager().killAllChannels();
+      ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
       server.shutdown();
+    }
   }
 
   protected OrientBaseGraph createDatabase(final String iName) {
     return createDatabase(iName, null);
   }
 
-  protected OrientBaseGraph createDatabase(final String iName, final OCallable<Object, OrientGraphFactory> iCfgCallback) {
+  public OrientBaseGraph createDatabase(final String iName, final OCallable<Object, OrientGraphFactory> iCfgCallback) {
     String dbPath = getDatabasePath(iName);
 
     new File(dbPath).mkdirs();
@@ -98,7 +104,7 @@ public class ServerRun {
     return factory.getNoTx();
   }
 
-  protected void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {
+  public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {
     // COPY THE DATABASE TO OTHER DIRECTORIES
     System.out.println("Dropping any previous database '" + iDatabaseName + "' under: " + iDatabaseName + "...");
     OFileUtils.deleteRecursively(new File(iDestinationDirectory));
@@ -107,8 +113,8 @@ public class ServerRun {
     OFileUtils.copyDirectory(new File(getDatabasePath(iDatabaseName)), new File(iDestinationDirectory));
   }
 
-  protected OServer startServer(final String iServerConfigFile) throws Exception {
-    System.out.println("Starting server " + serverId + " from " + getServerHome() + "...");
+  public OServer startServer(final String iServerConfigFile) throws Exception {
+    System.out.println("Starting server with serverId " + serverId + " from " + getServerHome() + "...");
 
     System.setProperty("ORIENTDB_HOME", getServerHome());
 
@@ -122,16 +128,54 @@ public class ServerRun {
     return server;
   }
 
-  protected void shutdownServer() {
-    if (server != null)
+  public void shutdownServer() {
+    if (server != null) {
+      try {
+        ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().shutdown();
+      } catch (Exception e) {
+      }
       server.shutdown();
+    }
+
+    closeStorages();
+  }
+
+  public void terminateServer() {
+    if (server != null) {
+      try {
+        if (((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().isRunning())
+          ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
+      } catch (Exception e) {
+      }
+      server.shutdown();
+    }
+
+    closeStorages();
+  }
+
+  public void closeStorages() {
+    for (OStorage s : Orient.instance().getStorages()) {
+      if (s instanceof OLocalPaginatedStorage && ((OLocalPaginatedStorage) s).getStoragePath().startsWith(getDatabasePath(""))) {
+        s.close(true, false);
+        Orient.instance().unregisterStorage(s);
+      }
+    }
+  }
+
+  public void deleteStorages() {
+    for (OStorage s : Orient.instance().getStorages()) {
+      if (s instanceof OLocalPaginatedStorage && ((OLocalPaginatedStorage) s).getStoragePath().startsWith(getDatabasePath(""))) {
+        s.close(true, true);
+        Orient.instance().unregisterStorage(s);
+      }
+    }
   }
 
   protected String getServerHome() {
     return getServerHome(serverId);
   }
 
-  protected String getDatabasePath(final String iDatabaseName) {
+  public String getDatabasePath(final String iDatabaseName) {
     return getDatabasePath(serverId, iDatabaseName);
   }
 

@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -115,6 +117,21 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     return this;
   }
 
+  public OIndexTxAware<T> putOnlyClientTrack(final Object iKey, final OIdentifiable iValue) {
+    final ORID rid = iValue.getIdentity();
+
+    if (!rid.isValid())
+      if (iValue instanceof ORecord)
+        // EARLY SAVE IT
+        ((ORecord) iValue).save();
+      else
+        throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + "'");
+
+    ((OTransactionRealAbstract) database.getTransaction())
+        .addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue, true);
+    return this;
+  }
+
   @Override
   public boolean remove(final Object key) {
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, key, null);
@@ -126,6 +143,13 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID);
     return true;
   }
+
+  public boolean removeOnlyClientTrack(final Object iKey, final OIdentifiable iRID) {
+    ((OTransactionRealAbstract) database.getTransaction())
+        .addIndexEntry(delegate, super.getName(), OPERATION.REMOVE, iKey, iRID, true);
+    return true;
+  }
+
 
   @Override
   public OIndexTxAware<T> clear() {

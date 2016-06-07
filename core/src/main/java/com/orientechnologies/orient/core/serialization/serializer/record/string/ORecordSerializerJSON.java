@@ -48,10 +48,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordStringable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -245,7 +242,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             // RECORD VALUE(S)
             if ("null".equals(fieldValue))
               iRecord.fromStream(OCommonConst.EMPTY_BYTE_ARRAY);
-            else if (iRecord instanceof ORecordBytes) {
+            else if (iRecord instanceof OBlob) {
               // BYTES
               iRecord.fromStream(OBase64Utils.decode(fieldValueAsString));
             } else if (iRecord instanceof ORecordStringable) {
@@ -350,9 +347,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         final ORecordStringable record = (ORecordStringable) iRecord;
         json.writeAttribute(settings.indentLevel, true, "value", record.value());
 
-      } else if (iRecord instanceof ORecordBytes) {
+      } else if (iRecord instanceof OBlob) {
         // BYTES
-        final ORecordBytes record = (ORecordBytes) iRecord;
+        final OBlob record = (OBlob) iRecord;
         json.writeAttribute(settings.indentLevel, true, "value", OBase64Utils.encodeBytes(record.toStream()));
       } else
 
@@ -434,7 +431,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       return getValueAsCollection(iRecord, iFieldValue, iType, iLinkedType, iFieldTypes, iNoMap, iOptions);
     }
 
-    if (iType == null)
+    if (iType == null || iType == OType.ANY)
       // TRY TO DETERMINE THE CONTAINED TYPE from THE FIRST VALUE
       if (iFieldValue.charAt(0) != '\"' && iFieldValue.charAt(0) != '\'') {
         if (iFieldValue.equalsIgnoreCase("false") || iFieldValue.equalsIgnoreCase("true"))

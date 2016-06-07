@@ -32,7 +32,7 @@ public class OServerCommandPatchDocument
 
     iRequest.data.commandInfo = "Edit Document";
 
-    com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx db = null;
+    com.orientechnologies.orient.core.db.document.ODatabaseDocument db = null;
     com.orientechnologies.orient.core.id.ORecordId recordId;
     final com.orientechnologies.orient.core.record.impl.ODocument doc;
 

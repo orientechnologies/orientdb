@@ -30,8 +30,6 @@ public class OExpression extends SimpleNode {
     if (value instanceof ORid) {
       ORid v = (ORid) value;
       return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
-    } else if (value instanceof OInputParameter) {
-      return ((OInputParameter) value).bindFromInputParams(ctx.getInputParameters());
     } else if (value instanceof OMathExpression) {
       return ((OMathExpression) value).execute(iCurrentRecord, ctx);
     } else if (value instanceof OJson) {
@@ -61,10 +59,6 @@ public class OExpression extends SimpleNode {
     if(value instanceof String) {
       return true;
     }
-    if(value instanceof OInputParameter) {
-      return true;
-    }
-
     if(value instanceof OMathExpression) {
       return ((OMathExpression)value).isEarlyCalculated();
     }
@@ -72,16 +66,16 @@ public class OExpression extends SimpleNode {
     return false;
   }
 
-  public String getDefaultAlias() {
+  public OIdentifier getDefaultAlias() {
 
     if (value instanceof String) {
-      return (String) value;
+      OIdentifier identifier = new OIdentifier(-1);
+      identifier.setValue((String)value);
+      return identifier;
     }
     // TODO create an interface for this;
 
     // if (value instanceof ORid) {
-    // return null;// TODO
-    // } else if (value instanceof OInputParameter) {
     // return null;// TODO
     // } else if (value instanceof OMathExpression) {
     // return null;// TODO
@@ -89,9 +83,11 @@ public class OExpression extends SimpleNode {
     // return null;// TODO
     // }
 
-    return ("" + value).replaceAll("\\.", "_").replaceAll(" ", "_").replaceAll("\n", "_").replaceAll("\b", "_")
+    String result = ("" + value).replaceAll("\\.", "_").replaceAll(" ", "_").replaceAll("\n", "_").replaceAll("\b", "_")
         .replaceAll("\\[", "_").replaceAll("\\]", "_").replaceAll("\\(", "_").replaceAll("\\)", "_");
-
+    OIdentifier identifier = new OIdentifier(-1);
+    identifier.setValue(result);
+    return identifier;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {

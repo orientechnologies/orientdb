@@ -191,6 +191,34 @@ public class OWALPageChangesPortion implements OWALChanges {
     return offset;
   }
 
+  @Override
+  public OWALChanges inverse(ByteBuffer buffer) {
+    final OWALPageChangesPortion inverse = new OWALPageChangesPortion(pageSize);
+
+    if (pageChunks != null) {
+      final byte[][][] inversePageChunks = inverse.pageChunks = new byte[(pageSize + (PORTION_BYTES - 1)) / PORTION_BYTES][][];
+
+      for (int portionIndex = 0; portionIndex < pageChunks.length; ++portionIndex) {
+        final byte[][] portion = pageChunks[portionIndex];
+        if (portion == null)
+          continue;
+
+        final byte[][] inversePortion = inversePageChunks[portionIndex] = new byte[PORTION_SIZE][];
+        for (int chunkIndex = 0; chunkIndex < portion.length; ++chunkIndex) {
+          final byte[] chunk = portion[chunkIndex];
+          if (chunk == null)
+            continue;
+
+          final byte[] inverseChunk = inversePortion[chunkIndex] = new byte[CHUNK_SIZE];
+          buffer.position(portionIndex * PORTION_BYTES + chunkIndex * CHUNK_SIZE);
+          buffer.get(inverseChunk);
+        }
+      }
+    }
+
+    return inverse;
+  }
+
   private void readData(ByteBuffer pointer, int offset, byte[] data) {
     if (pageChunks == null || pageChunks[offset / PORTION_BYTES] == null) {
       if (pointer != null) {
@@ -268,5 +296,10 @@ public class OWALPageChangesPortion implements OWALChanges {
         chunkIndex = 0;
       }
     }
+  }
+
+  @Override
+  public boolean hasChanges() {
+    return pageChunks != null;
   }
 }

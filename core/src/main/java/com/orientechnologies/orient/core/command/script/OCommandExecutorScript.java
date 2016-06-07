@@ -22,20 +22,17 @@ package com.orientechnologies.orient.core.command.script;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OContextVariableResolver;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
-import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -45,33 +42,23 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.core.sql.parser.OIfStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import javax.script.*;
+import java.io.*;
+import java.util.*;
 
 /**
  * Executes Script Commands.
- * 
- * @see OCommandScript
+ *
  * @author Luca Garulli
- * 
+ * @see OCommandScript
  */
 public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest {
   private static final int             MAX_DELAY     = 100;
@@ -93,6 +80,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
+    if (context == null)
+      context = new OBasicCommandContext();
     return executeInContext(context, iArgs);
   }
 
@@ -102,11 +91,52 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     parameters = iArgs;
 
     parameters = iArgs;
-    if (language.equalsIgnoreCase("SQL"))
+    if (language.equalsIgnoreCase("SQL")) {
       // SPECIAL CASE: EXECUTE THE COMMANDS IN SEQUENCE
+      try {
+        parserText = preParse(parserText, iArgs);
+      } catch (ParseException e) {
+        throw new OCommandExecutionException("Invalid script:" + e.getMessage());
+      }
       return executeSQL();
-    else
+    } else {
       return executeJsr223Script(language, iContext, iArgs);
+    }
+  }
+
+  private String preParse(String parserText, final Map<Object, Object> iArgs) throws ParseException {
+    final boolean strict = getDatabase().getStorage().getConfiguration().isStrictSql();
+    if (strict) {
+      parserText = addSemicolons(parserText);
+      InputStream is = new ByteArrayInputStream(parserText.getBytes());
+      OrientSql osql = new OrientSql(is);
+      List<OStatement> statements = osql.parseScript();
+      StringBuilder result = new StringBuilder();
+      for (OStatement stm : statements) {
+        stm.toString(iArgs, result);
+        if (!(stm instanceof OIfStatement)) {
+          result.append(";");
+        }
+        result.append("\n");
+      }
+      return result.toString();
+    } else {
+      return parserText;
+    }
+  }
+
+  private String addSemicolons(String parserText) {
+    String[] rows = parserText.split("\n");
+    StringBuilder builder = new StringBuilder();
+    for (String row : rows) {
+      row = row.trim();
+      builder.append(row);
+      if (!(row.endsWith(";") || row.endsWith("{"))) {
+        builder.append(";");
+      }
+      builder.append("\n");
+    }
+    return builder.toString();
   }
 
   public boolean isIdempotent() {
@@ -204,7 +234,6 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
             // this block is here (and not below, with the other conditions)
             // just because of the smartSprit() that does not parse correctly a single bracket
-
 
             // final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';', true);
             final List<String> lineParts = splitBySemicolon(lastLine);
@@ -388,7 +417,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
       if ((c == '"' || c == '\'') && (prev == null || !prev.equals('\\'))) {
         if (lastQuote != null && lastQuote.equals(c)) {
           lastQuote = null;
-        } else {
+        } else if (lastQuote == null) {
           lastQuote = c;
         }
       }
@@ -462,7 +491,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
   private Object getValue(final String iValue, final ODatabaseDocument db) {
     Object lastResult = null;
-
+    boolean recordResultSet = true;
     if (iValue.equalsIgnoreCase("NULL"))
       lastResult = null;
     else if (iValue.startsWith("[") && iValue.endsWith("]")) {
@@ -478,6 +507,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         result.add(getValue(item, db));
       }
       lastResult = result;
+      checkIsRecordResultSet(lastResult);
     } else if (iValue.startsWith("{") && iValue.endsWith("}")) {
       // MAP
       final Map<String, String> map = OStringSerializerHelper.getMap(iValue);
@@ -516,15 +546,31 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
         result.put(key, value);
       }
       lastResult = result;
-    } else if (iValue.startsWith("\"") && iValue.endsWith("\"") || iValue.startsWith("'") && iValue.endsWith("'"))
+      checkIsRecordResultSet(lastResult);
+    } else if (iValue.startsWith("\"") && iValue.endsWith("\"") || iValue.startsWith("'") && iValue.endsWith("'")) {
       lastResult = new OContextVariableResolver(context).parse(OIOUtils.getStringContent(iValue));
-    else if (iValue.startsWith("(") && iValue.endsWith(")"))
+      checkIsRecordResultSet(lastResult);
+    } else if (iValue.startsWith("(") && iValue.endsWith(")"))
       lastResult = executeCommand(iValue, db);
-    else
+    else {
       lastResult = new OSQLPredicate(iValue).evaluate(context);
 
+    }
     // END OF THE SCRIPT
     return lastResult;
+  }
+
+  private void checkIsRecordResultSet(Object result) {
+    if (!(result instanceof OIdentifiable) && !(result instanceof OResultSet)) {
+      if (!OMultiValue.isMultiValue(result)) {
+        request.setRecordResultSet(false);
+      } else  {
+        for (Object val : OMultiValue.getMultiValueIterable(result)) {
+          if (!(val instanceof OIdentifiable))
+            request.setRecordResultSet(false);
+        }
+      }
+    }
   }
 
   private void executeSleep(String lastCommand) {

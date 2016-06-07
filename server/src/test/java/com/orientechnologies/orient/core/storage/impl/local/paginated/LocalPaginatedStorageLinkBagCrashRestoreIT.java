@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,9 +32,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LocalPaginatedStorageLinkBagCrashRestoreIT {
   private static String URL_BASE;
   private static String URL_TEST;
-  private final OLockManager<ORID>              lockManager     = new OLockManager<ORID>(true, 30000);
-  private final AtomicInteger                   positionCounter = new AtomicInteger();
-  private final OPartitionedDatabasePoolFactory poolFactory     = new OPartitionedDatabasePoolFactory();
+  private final OOneEntryPerKeyLockManager<ORID> lockManager     = new OOneEntryPerKeyLockManager<ORID>(true, 30000, 10000);
+  private final AtomicInteger                    positionCounter = new AtomicInteger();
+  private final OPartitionedDatabasePoolFactory  poolFactory     = new OPartitionedDatabasePoolFactory();
   private File buildDir;
   private ExecutorService executorService = Executors.newCachedThreadPool();
   private          Process process;
@@ -50,21 +51,43 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
     buildDirectory += "/localPaginatedStorageLinkBagCrashRestore";
 
     buildDir = new File(buildDirectory);
+
+    buildDirectory = buildDir.getCanonicalPath();
+    buildDir = new File(buildDirectory);
+
     if (buildDir.exists())
       OFileUtils.deleteRecursively(buildDir);
 
     buildDir.mkdir();
 
+    final File mutexFile = new File(buildDir, "mutex.ct");
+    final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
+    mutex.seek(0);
+    mutex.write(0);
+
     String javaExec = System.getProperty("java.home") + "/bin/java";
+    javaExec = new File(javaExec).getCanonicalPath();
+
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-classpath", System.getProperty("java.class.path"),
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-XX:MaxDirectMemorySize=512g", "-classpath",
+        System.getProperty("java.class.path"),  "-DmutexFile=" + mutexFile.getCanonicalPath(),
         "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     process = processBuilder.start();
 
-    Thread.sleep(5000);
+    System.out.println(LocalPaginatedStorageLinkBagCrashRestoreIT.class.getSimpleName() + ": Wait for server start");
+    boolean started = false;
+    do {
+      Thread.sleep(5000);
+      mutex.seek(0);
+      started = mutex.read() == 1;
+    } while (!started);
+
+    mutex.close();
+    mutexFile.delete();
+    System.out.println(LocalPaginatedStorageLinkBagCrashRestoreIT.class.getSimpleName() + ": Server was started");
   }
 
   @Test
@@ -86,7 +109,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
 
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
     futures.add(executorService.submit(new DocumentAdder()));
-    Thread.sleep(1000);
+    TimeUnit.SECONDS.sleep(1);
 
     for (int i = 0; i < 5; i++)
       futures.add(executorService.submit(new RidAdder()));
@@ -94,7 +117,8 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
     for (int i = 0; i < 5; i++)
       futures.add(executorService.submit(new RidDeleter()));
 
-    Thread.sleep(3000);
+    System.out.println("Wait for 5 minutes");
+    TimeUnit.MINUTES.sleep(5);
     long lastTs = System.currentTimeMillis();
 
     ODatabaseDocumentTx test_db = poolFactory.get(URL_TEST, "admin", "admin").acquire();
@@ -220,8 +244,6 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
     long maxInterval = minTs == Long.MAX_VALUE ? 0 : lastTs - minTs;
     System.out.println("Lost records max interval (ms) : " + maxInterval);
 
-    assertThat(recordsTested - recordsRestored).isLessThan(120);
-
     assertThat(maxInterval).isLessThan(2000);
 
     base_db.activateOnCurrentThread();
@@ -240,6 +262,12 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
       server.startup(RemoteDBRunner.class
           .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-linkbag-crash-config.xml"));
       server.activate();
+
+      final String mutexFile = System.getProperty("mutexFile");
+      final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
+      mutex.seek(0);
+      mutex.write(1);
+      mutex.close();
     }
   }
 
@@ -292,11 +320,10 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
       while (true) {
         final long ts = System.currentTimeMillis();
 
-        System.out.println("last cluster pos:: " + lastClusterPosition);
         final int position = random.nextInt((int) lastClusterPosition);
         final ORID orid = new ORecordId(defaultClusterId, position);
 
-        lockManager.acquireLock(orid, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.acquireLock(orid, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
         try {
 
           try {
@@ -309,7 +336,6 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
             base_db.close();
 
             ODatabaseDocumentTx test_db = poolFactory.get(URL_TEST, "admin", "admin").acquire();
-            test_db.open("admin", "admin");
             addRids(orid, test_db, ridsToAdd, ts);
             test_db.close();
 
@@ -318,7 +344,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
             throw e;
           }
         } finally {
-          lockManager.releaseLock(this, orid, OLockManager.LOCK.EXCLUSIVE);
+          lockManager.releaseLock(this, orid, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
         }
       }
     }
@@ -349,7 +375,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
           final long position = random.nextInt((int) lastClusterPosition);
           final ORID orid = new ORecordId(defaultClusterId, position);
 
-          lockManager.acquireLock(orid, OLockManager.LOCK.EXCLUSIVE);
+          lockManager.acquireLock(orid, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
           try {
             ODatabaseDocumentTx base_db = poolFactory.get(URL_BASE, "admin", "admin").acquire();
             final List<ORID> ridsToRemove = new ArrayList<ORID>();
@@ -387,7 +413,7 @@ public class LocalPaginatedStorageLinkBagCrashRestoreIT {
 
             test_db.close();
           } finally {
-            lockManager.releaseLock(this, orid, OLockManager.LOCK.EXCLUSIVE);
+            lockManager.releaseLock(this, orid, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
           }
         }
       } catch (RuntimeException e) {

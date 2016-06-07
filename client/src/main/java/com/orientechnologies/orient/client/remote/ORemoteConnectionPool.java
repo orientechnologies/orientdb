@@ -5,9 +5,9 @@ import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 
@@ -18,15 +18,16 @@ import java.util.Map;
  */
 public class ORemoteConnectionPool implements OResourcePoolListener<String, OChannelBinaryAsynchClient>, OChannelListener {
 
-
   private OResourcePool<String, OChannelBinaryAsynchClient> pool;
-  private ORemoteConnectionPushListener listener = new ORemoteConnectionPushListener();
+  private ORemoteConnectionPushListener                     listener;
 
-  public ORemoteConnectionPool(int iMaxResources) {
+  public ORemoteConnectionPool(int iMaxResources, final boolean createAsyncListener) {
     pool = new OResourcePool<String, OChannelBinaryAsynchClient>(iMaxResources, this);
+    listener = createAsyncListener ? new ORemoteConnectionPushListener() : null;
   }
 
-  protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration, Map<String, Object> iAdditionalArg) throws OIOException {
+  protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration,
+      Map<String, Object> iAdditionalArg) throws OIOException {
     if (iServerURL == null)
       throw new IllegalArgumentException("server url is null");
 
@@ -36,6 +37,10 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
 
       final String serverURL;
       final String databaseName;
+
+      if (iServerURL.startsWith(OEngineRemote.PREFIX))
+        iServerURL = iServerURL.substring(OEngineRemote.PREFIX.length());
+
       int sepPos = iServerURL.indexOf("/");
       if (sepPos > -1) {
         // REMOVE DATABASE NAME IF ANY
@@ -50,7 +55,8 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
       final String remoteHost = serverURL.substring(0, sepPos);
       final int remotePort = Integer.parseInt(serverURL.substring(sepPos + 1));
 
-      final OChannelBinaryAsynchClient ch = new OChannelBinaryAsynchClient(remoteHost, remotePort, databaseName, clientConfiguration, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, listener);
+      final OChannelBinaryAsynchClient ch = new OChannelBinaryAsynchClient(remoteHost, remotePort, databaseName,
+          clientConfiguration, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, listener);
 
       // REGISTER MYSELF AS LISTENER TO REMOVE THE CHANNEL FROM THE POOL IN CASE OF CLOSING
       ch.registerListener(this);
@@ -67,13 +73,21 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
   }
 
   @Override
-  public OChannelBinaryAsynchClient createNewResource(String iKey, Object... iAdditionalArgs) {
+  public OChannelBinaryAsynchClient createNewResource(final String iKey, final Object... iAdditionalArgs) {
     return createNetworkConnection(iKey, (OContextConfiguration) iAdditionalArgs[0], (Map<String, Object>) iAdditionalArgs[1]);
   }
 
   @Override
-  public boolean reuseResource(String iKey, Object[] iAdditionalArgs, OChannelBinaryAsynchClient iValue) {
-    return iValue.isConnected();
+  public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final OChannelBinaryAsynchClient iValue) {
+    final boolean canReuse = iValue.isConnected();
+    if (!canReuse)
+      // CANNOT REUSE: CLOSE IT PROPERLY
+      try {
+        iValue.close();
+      } catch (Exception e) {
+        OLogManager.instance().debug(this, "Error on closing socket connection", e);
+      }
+    return canReuse;
   }
 
   public OResourcePool<String, OChannelBinaryAsynchClient> getPool() {
@@ -91,9 +105,13 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
 
   }
 
-  public OChannelBinaryAsynchClient acquire(String iServerURL, long timeout, OContextConfiguration clientConfiguration, Map<String, Object> iConfiguration, OStorageRemoteAsynchEventListener iListener) {
-    OChannelBinaryAsynchClient ret = pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration);
-    listener.addListener(this, ret, iListener);
+  public OChannelBinaryAsynchClient acquire(final String iServerURL, final long timeout,
+      final OContextConfiguration clientConfiguration, final Map<String, Object> iConfiguration,
+      final OStorageRemoteAsynchEventListener iListener) {
+    final OChannelBinaryAsynchClient ret = pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration,
+        iListener != null);
+    if (listener != null && iListener != null)
+      listener.addListener(this, ret, iListener);
     return ret;
   }
 }

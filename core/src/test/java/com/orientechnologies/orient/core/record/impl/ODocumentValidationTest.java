@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.record.impl;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -12,15 +13,7 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ODocumentValidationTest {
 
@@ -646,6 +639,7 @@ public class ODocumentValidationTest {
       clazz.createProperty("linkList", OType.LINKLIST).setLinkedClass(clazz1);
       clazz.createProperty("linkSet", OType.LINKSET).setLinkedClass(clazz1);
       clazz.createProperty("linkMap", OType.LINKMAP).setLinkedClass(clazz1);
+      clazz.createProperty("linkBag", OType.LINKBAG).setLinkedClass(clazz1);
       ODocument d = new ODocument(clazz);
       d.field("link", new ODocument(clazz1));
       d.field("embedded", new ODocument(clazz1));
@@ -673,6 +667,9 @@ public class ODocumentValidationTest {
 
       checkField(d, "linkList", Arrays.asList(new ODocument(clazz)));
       checkField(d, "linkSet", new HashSet<ODocument>(Arrays.asList(new ODocument(clazz))));
+      ORidBag bag = new ORidBag();
+      bag.add(new ODocument(clazz));
+      checkField(d, "linkBag", bag);
       Map<String, ODocument> map2 = new HashMap<String, ODocument>();
       map2.put("a", new ODocument(clazz));
       checkField(d, "linkMap", map2);
@@ -680,6 +677,66 @@ public class ODocumentValidationTest {
     } finally {
       db.drop();
     }
+  }
+
+  @Test
+  public void testValidLinkCollectionsUpdate(){
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
+    db.create();
+    try {
+      OClass clazz = db.getMetadata().getSchema().createClass("Validation");
+      OClass clazz1 = db.getMetadata().getSchema().createClass("Validation1");
+      clazz.createProperty("linkList", OType.LINKLIST).setLinkedClass(clazz1);
+      clazz.createProperty("linkSet", OType.LINKSET).setLinkedClass(clazz1);
+      clazz.createProperty("linkMap", OType.LINKMAP).setLinkedClass(clazz1);
+      clazz.createProperty("linkBag", OType.LINKBAG).setLinkedClass(clazz1);
+      ODocument d = new ODocument(clazz);
+      d.field("link", new ODocument(clazz1));
+      d.field("embedded", new ODocument(clazz1));
+      List<ODocument> list = Arrays.asList(new ODocument(clazz1));
+      d.field("linkList", list);
+      Set<ODocument> set = new HashSet<ODocument>(list);
+      d.field("linkSet", set);
+      d.field("linkBag", new ORidBag());
+
+      Map<String, ODocument> map = new HashMap<String, ODocument>();
+      map.put("a", new ODocument(clazz1));
+      d.field("linkMap", map);
+      db.save(d);
+
+      try {
+        ODocument newD = d.copy();
+        ((Collection)newD.field("linkList")).add(new ODocument(clazz));
+        newD.validate();
+        AssertJUnit.fail();
+      } catch (OValidationException v) {
+      }
+
+      try {
+        ODocument newD = d.copy();
+        ((Collection)newD.field("linkSet")).add(new ODocument(clazz));
+        newD.validate();
+        AssertJUnit.fail();
+      } catch (OValidationException v) {
+      }
+      try {
+        ODocument newD = d.copy();
+        ((ORidBag)newD.field("linkBag")).add(new ODocument(clazz));
+        newD.validate();
+        AssertJUnit.fail();
+      } catch (OValidationException v) {
+      }
+      try {
+        ODocument newD = d.copy();
+        ((Map<String, ODocument> )newD.field("linkMap")).put("a",new ODocument(clazz));
+        newD.validate();
+        AssertJUnit.fail();
+      } catch (OValidationException v) {
+      }
+    } finally {
+      db.drop();
+    }
+
   }
 
   private void checkField(ODocument toCheck, String field, Object newValue) {

@@ -31,19 +31,12 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.net.BindException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -193,20 +186,6 @@ public class OServerNetworkListener extends Thread {
           // listen for and accept a client connection to serverSocket
           final Socket socket = serverSocket.accept();
 
-          if (server.getDistributedManager() != null) {
-            final ODistributedServerManager.NODE_STATUS nodeStatus = server.getDistributedManager().getNodeStatus();
-            if (nodeStatus != ODistributedServerManager.NODE_STATUS.ONLINE) {
-              OLogManager.instance().warn(this,
-                  "Distributed server is not yet ONLINE (status=%s), reject incoming connection from %s. If you are trying to shutdown the server, please kill the process",
-                  nodeStatus, socket.getRemoteSocketAddress());
-              socket.close();
-
-              // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
-              Thread.sleep(100);
-              continue;
-            }
-          }
-
           final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
 
           int conns = server.getClientConnectionManager().getTotal();
@@ -231,7 +210,7 @@ public class OServerNetworkListener extends Thread {
           socket.setReceiveBufferSize(socketBufferSize);
 
           // CREATE A NEW PROTOCOL INSTANCE
-          ONetworkProtocol protocol = protocolType.newInstance();
+          final ONetworkProtocol protocol = protocolType.newInstance();
 
           // CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
           protocol.config(this, server, socket, configuration);
@@ -260,17 +239,46 @@ public class OServerNetworkListener extends Thread {
   }
 
   public String getListeningAddress(final boolean resolveMultiIfcWithLocal) {
-    String address = serverSocket.getInetAddress().getHostAddress().toString();
-    if (resolveMultiIfcWithLocal && address.equals("0.0.0.0"))
+    String address = serverSocket.getInetAddress().getHostAddress();
+    if (resolveMultiIfcWithLocal && address.equals("0.0.0.0")) {
       try {
-        address = InetAddress.getLocalHost().getHostAddress().toString();
-      } catch (UnknownHostException e) {
+        address = OChannel.getLocalIpAddress(true);
+      } catch (Exception ex) {
+        address = null;
+      }
+      if (address == null) {
         try {
-          address = OChannel.getLocalIpAddress(true);
-        } catch (Exception ex) {
+          address = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+          OLogManager.instance().warn(this, "Error resolving current host address", e);
         }
       }
+    }
+
     return address + ":" + serverSocket.getLocalPort();
+  }
+
+  public static void main(String[] args) {
+    System.out.println(OServerNetworkListener.getLocalHostIp());
+  }
+
+  public static String getLocalHostIp() {
+    try {
+      InetAddress host = InetAddress.getLocalHost();
+      InetAddress[] addrs = InetAddress.getAllByName(host.getHostName());
+      for (InetAddress addr : addrs) {
+        if (!addr.isLoopbackAddress()) {
+          return addr.toString();
+        }
+      }
+    } catch (UnknownHostException e) {
+      try {
+        return OChannel.getLocalIpAddress(true);
+      } catch (SocketException e1) {
+
+      }
+    }
+    return null;
   }
 
   @Override
@@ -312,8 +320,9 @@ public class OServerNetworkListener extends Thread {
 
         if (serverSocket.isBound()) {
           OLogManager.instance().info(this,
-              "Listening $ANSI{green " + iProtocolName + "} connections on $ANSI{green " + inboundAddr.getAddress().getHostAddress() + ":"
-                  + inboundAddr.getPort() + "} (protocol v." + protocolVersion + ", socket=" + socketFactory.getName() + ")");
+              "Listening $ANSI{green " + iProtocolName + "} connections on $ANSI{green " + inboundAddr.getAddress().getHostAddress()
+                  + ":" + inboundAddr.getPort() + "} (protocol v." + protocolVersion + ", socket=" + socketFactory.getName() + ")");
+
           return;
         }
       } catch (BindException be) {

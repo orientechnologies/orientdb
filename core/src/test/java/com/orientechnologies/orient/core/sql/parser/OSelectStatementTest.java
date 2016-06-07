@@ -30,17 +30,21 @@ public class OSelectStatementTest {
     try {
       SimpleNode result = osql.parse();
       if (!isCorrect) {
+        System.out.println(query);
+        if(result!= null ) {
+          System.out.println("->");
+          StringBuilder builer = new StringBuilder();
+          result.toString(null, builer);
+          System.out.println(builer.toString());
+          System.out.println("............");
+        }
         fail();
       }
-      System.out.println(query);
-      System.out.println("->");
-      StringBuilder builer = new StringBuilder();
-      result.toString(null, builer);
-      System.out.println(builer.toString());
-      System.out.println("............");
+
       return result;
     } catch (Exception e) {
       if (isCorrect) {
+        System.out.println(query);
         e.printStackTrace();
         fail();
       }
@@ -632,6 +636,20 @@ public class OSelectStatementTest {
     checkRightSyntax("select from V limit :limit");
   }
 
+  @Test
+  public void testFetchPlanBracketStar(){
+    //issue #5689
+    checkRightSyntax("SELECT FROM Def fetchplan *:2 [*]in_*:-2");
+    checkRightSyntax("SELECT FROM Def fetchplan *:2 [1]in_*:-2");
+  }
+
+  @Test
+  public void testJsonQuoting(){
+    //issue #5911
+    checkRightSyntax("SELECT '\\/\\/'");
+    checkRightSyntax("SELECT \"\\/\\/\"");
+
+  }
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
@@ -655,6 +673,30 @@ public class OSelectStatementTest {
         + "   LET $TotalListsQuery = ( SELECT Count(1) AS Count FROM ContactList WHERE Account=#20:1 AND EntityInfo.State=0)\n"
         + " SKIP 10 LIMIT 1");
   }
+
+  @Test
+  public void testQuotedBacktick(){
+    checkRightSyntax("SELECT \"\" as `bla\\`bla` from foo");
+  }
+
+  @Test
+  public void testParamConcat(){
+    //issue #6049
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? ");
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? + '%'");
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like \"%\" + ? + '%'");
+  }
+
+  public void testAppendParams(){
+    checkRightSyntax("select from User where Account.Name like :name + '%'");
+
+  }
+
+  public void testLetMatch(){
+    checkRightSyntax("select $a let $a = (MATCH {class:Foo, as:bar, where:(name = 'foo')} return $elements)");
+
+  }
+
 
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());

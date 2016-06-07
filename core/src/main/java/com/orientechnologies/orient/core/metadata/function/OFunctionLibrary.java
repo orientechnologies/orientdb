@@ -23,20 +23,23 @@ import java.util.Set;
 
 /**
  * Manages stored functions.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public interface OFunctionLibrary {
-  public Set<String> getFunctionNames();
+  Set<String> getFunctionNames();
 
-  public OFunction getFunction(String iName);
+  OFunction getFunction(String iName);
 
-  public OFunction createFunction(String iName);
+  OFunction createFunction(String iName);
 
-  public void create();
+  void dropFunction(String iName);
 
-  public void load();
+  void dropFunction(OFunction function);
 
-  public void close();
+  void create();
+
+  void load();
+
+  void close();
 }

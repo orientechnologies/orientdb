@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.orient.core.storage.cache;
 
-import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
  * @author Andrey Lomakin
@@ -36,7 +36,7 @@ public class OCachePointer {
   private static final int WRITERS_OFFSET = 32;
   private static final int READERS_MASK   = 0xFFFFFFFF;
 
-  private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
   private final AtomicInteger referrersCount         = new AtomicInteger();
   private final AtomicLong    readersWritersReferrer = new AtomicLong();
@@ -187,6 +187,15 @@ public class OCachePointer {
     decrementReferrer();
   }
 
+  /**
+   * DEBUG only !!!
+   *
+   * @return Whether pointer lock (read or write )is acquired
+   */
+  public boolean isLockAcquiredByCurrentThread() {
+    return readWriteLock.getReadHoldCount() > 0 || readWriteLock.isWriteLockedByCurrentThread();
+  }
+
   public void incrementReferrer() {
     referrersCount.incrementAndGet();
   }
@@ -198,7 +207,7 @@ public class OCachePointer {
     }
 
     if (rf < 0)
-      throw new IllegalStateException("Invalid direct memory state, number of referrers can not be negative " + rf);
+      throw new IllegalStateException("Invalid direct memory state, number of referrers cannot be negative " + rf);
   }
 
   public ByteBuffer getSharedBuffer() {

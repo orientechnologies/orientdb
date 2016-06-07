@@ -72,6 +72,7 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
       if (clusterName == null)
         throw new OCommandSQLParsingException("Cluster is null. Use " + getSyntax(), parserText, pos);
 
+      clusterName = decodeClassName(clusterName);
     } finally {
       textRequest.setText(originalQuery);
     }

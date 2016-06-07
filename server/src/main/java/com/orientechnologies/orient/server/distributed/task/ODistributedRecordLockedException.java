@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 
 /**
  * Exception thrown when a record is locked by a running distributed transaction.
@@ -29,15 +30,25 @@ import com.orientechnologies.orient.core.id.ORID;
  * 
  */
 public class ODistributedRecordLockedException extends ONeedRetryException {
-  protected ORID rid;
+  protected ORID                  rid;
+  protected ODistributedRequestId lockHolder;
 
-  public ODistributedRecordLockedException(final ORID iRid) {
-    super("Record with rid " + iRid + " is locked");
+  public ODistributedRecordLockedException(final ODistributedRecordLockedException exception) {
+    super(exception);
+  }
+
+  public ODistributedRecordLockedException(final ORID iRid, final ODistributedRequestId iLockingRequestId) {
+    super("Record with rid " + iRid + " is locked by request " + iLockingRequestId);
     rid = iRid;
+    lockHolder = iLockingRequestId;
   }
 
   public ORID getRid() {
     return rid;
+  }
+
+  public ODistributedRequestId getLockHolder() {
+    return lockHolder;
   }
 
   @Override

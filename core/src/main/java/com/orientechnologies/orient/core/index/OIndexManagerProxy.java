@@ -19,18 +19,17 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.Set;
 
 public class OIndexManagerProxy extends OProxedResource<OIndexManager> implements OIndexManager {
 
@@ -66,18 +65,26 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
-      final int[] clusterIdsToIndex, final OProgressListener progressListener, ODocument metadata) {
+      final int[] clusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata) {
+
+    if (isDistributedCommand()) {
+      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
+      return remoteIndexManager.createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
+    }
+
     return delegate.createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, String iType, OIndexDefinition iIndexDefinition, int[] iClusterIdsToIndex,
-      OProgressListener progressListener, ODocument metadata, String algorithm) {
-    return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
-  }
+  public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
+      final int[] iClusterIdsToIndex, final OProgressListener progressListener, final ODocument metadata, final String algorithm) {
+    if (isDistributedCommand()) {
+      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
+      return remoteIndexManager.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata,
+          algorithm);
+    }
 
-  public OIndex<?> getIndexInternal(final String iName) {
-    return ((OIndexManagerShared) delegate).getIndexInternal(iName);
+    return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
   }
 
   public ODocument getConfiguration() {
@@ -85,6 +92,11 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   }
 
   public OIndexManager dropIndex(final String iIndexName) {
+    if (isDistributedCommand()) {
+      final OIndexManagerRemote remoteIndexManager = new OIndexManagerRemote(database);
+      return remoteIndexManager.dropIndex(iIndexName);
+    }
+
     return delegate.dropIndex(iIndexName);
   }
 
@@ -135,6 +147,15 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   }
 
   @Override
+  public OIndexUnique getClassUniqueIndex(final String className) {
+    return delegate.getClassUniqueIndex(className);
+  }
+
+  public OIndex<?> getClassAutoShardingIndex(final String className) {
+    return delegate.getClassAutoShardingIndex(className);
+  }
+
+  @Override
   public void recreateIndexes() {
     delegate.recreateIndexes();
   }
@@ -166,5 +187,10 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 
   public void removeClassPropertyIndex(final OIndex<?> idx) {
     delegate.removeClassPropertyIndex(idx);
+  }
+
+  private boolean isDistributedCommand() {
+    return database.getStorage().isDistributed()
+        && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 }

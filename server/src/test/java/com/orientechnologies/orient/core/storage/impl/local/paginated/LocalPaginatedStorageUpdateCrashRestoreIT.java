@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -20,13 +20,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,7 +40,7 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
   private File buildDir;
   private AtomicInteger idGen = new AtomicInteger(0);
 
-  private OLockManager<Integer> idLockManager = new OLockManager<Integer>(true, 1000);
+  private OOneEntryPerKeyLockManager<Integer> idLockManager = new OOneEntryPerKeyLockManager<Integer>(true, 1000, 10000);
 
   private ExecutorService executorService = Executors.newCachedThreadPool();
   private Process process;
@@ -52,21 +50,43 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
     buildDirectory += "/localPaginatedStorageUpdateCrashRestore";
 
     buildDir = new File(buildDirectory);
+
+    buildDirectory = buildDir.getCanonicalPath();
+    buildDir = new File(buildDirectory);
+
     if (buildDir.exists())
       OFileUtils.deleteFolderIfEmpty(buildDir);
 
     buildDir.mkdir();
 
+    final File mutexFile = new File(buildDir, "mutex.ct");
+    final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
+    mutex.seek(0);
+    mutex.write(0);
+
     String javaExec = System.getProperty("java.home") + "/bin/java";
+    javaExec = (new File(javaExec)).getCanonicalPath();
+
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath", System.getProperty("java.class.path"),
+        "-DORIENTDB_HOME=" + buildDirectory, "-DmutexFile=" + mutexFile.getCanonicalPath(), RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     process = processBuilder.start();
 
-    Thread.sleep(5000);
+
+    System.out.println(LocalPaginatedStorageUpdateCrashRestoreIT.class.getSimpleName() + ": Wait for server start");
+    boolean started = false;
+    do {
+      Thread.sleep(5000);
+      mutex.seek(0);
+      started = mutex.read() == 1;
+    } while (!started);
+
+    mutex.close();
+    mutexFile.delete();
+    System.out.println(LocalPaginatedStorageUpdateCrashRestoreIT.class.getSimpleName() + ": Server was started");
   }
 
   @After
@@ -113,7 +133,8 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
       futures.add(executorService.submit(new DataUpdateTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(30000);
+    System.out.println("Wait for 5 minutes");
+    TimeUnit.MINUTES.sleep(5);
 
     long lastTs = System.currentTimeMillis();
     System.out.println("Wait for process to destroy");
@@ -252,6 +273,12 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
       server.startup(RemoteDBRunner.class
           .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-update-config.xml"));
       server.activate();
+
+      final String mutexFile = System.getProperty("mutexFile");
+      final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
+      mutex.seek(0);
+      mutex.write(1);
+      mutex.close();
     }
   }
 
@@ -275,7 +302,7 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
       try {
         while (true) {
           final int idToUpdate = random.nextInt(idGen.get());
-          idLockManager.acquireLock(idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+          idLockManager.acquireLock(idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
           try {
             OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from TestClass where id  = " + idToUpdate);
             final List<ODocument> result = baseDB.query(query);
@@ -293,11 +320,14 @@ public class LocalPaginatedStorageUpdateCrashRestoreIT {
             if (counter % 50000 == 0)
               System.out.println(counter + " records were updated.");
           } finally {
-            idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+            idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
           }
         }
       } finally {
+        baseDB.activateOnCurrentThread();
         baseDB.close();
+
+        testDB.activateOnCurrentThread();
         testDB.close();
       }
     }

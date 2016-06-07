@@ -85,7 +85,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
 
         if (!graphDb.isClosed()) {
           ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
-          if (autoStartTx)
+          if (autoStartTx && autoTxStartRequired(graphDb))
             ((OrientGraph) result).begin();
 
           shouldBeShutDown.setValue(false);
@@ -98,7 +98,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     shouldBeShutDown.setValue(true);
 
     final OrientGraph g = new OrientGraph((ODatabaseDocumentTx) database, false);
-    if (autoStartTx)
+    if (autoStartTx && autoTxStartRequired(database))
       g.begin();
     return g;
   }
@@ -141,12 +141,12 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
 
     if (result != null) {
-      final ODatabaseDocumentTx graphDb = result.getRawGraph();
+      final ODatabaseDocument graphDb = result.getRawGraph();
 
       // CHECK IF THE DATABASE + USER IN TL IS THE SAME IN ORDER TO USE IT
       if (canReuseActiveGraph(graphDb, database)) {
         if (!graphDb.isClosed()) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+          graphDb.activateOnCurrentThread();
           shouldBeShutDown.setValue(false);
           return result;
         }
@@ -293,4 +293,9 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     }
     return false;
   }
+
+  private static boolean autoTxStartRequired(ODatabaseDocument database) {
+    return !database.getTransaction().isActive();
+  }
+
 }

@@ -11,14 +11,13 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
+import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 /**
@@ -51,7 +50,7 @@ public class OSBTreeCollectionManagerRemoteTest {
 
     when(dbMock.getStorage()).thenReturn(storageMock);
     when(storageMock.getUnderlying()).thenReturn(storageMock);
-    when(storageMock.beginRequest(eq(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI))).thenReturn(clientMock);
+    when(storageMock.beginRequest(Mockito.any(OChannelBinaryAsynchClient.class), eq(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI))).thenReturn(clientMock);
     when(networkSerializerMock.readCollectionPointer(Mockito.<OChannelBinaryAsynchClient> any())).thenReturn(
         new OBonsaiCollectionPointer(EXPECTED_FILE_ID, EXPECTED_ROOT_POINTER));
 
@@ -65,7 +64,7 @@ public class OSBTreeCollectionManagerRemoteTest {
     verifyNoMoreInteractions(dbMock);
 
     verify(storageMock).getUnderlying();
-    verify(storageMock).beginRequest(eq(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI));
+    verify(storageMock).beginRequest(Mockito.any(OChannelBinaryAsynchClient.class),eq(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI));
     verify(clientMock).writeInt(eq(EXPECTED_CLUSTER_ID));
     verify(storageMock).endRequest(Matchers.same(clientMock));
     verify(storageMock).beginResponse(Matchers.same(clientMock));

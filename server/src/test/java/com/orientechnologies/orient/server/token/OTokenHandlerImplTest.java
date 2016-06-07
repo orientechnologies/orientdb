@@ -21,13 +21,6 @@ import static org.junit.Assert.*;
 
 public class OTokenHandlerImplTest {
 
-  @Before
-  public void beforeTest() {
-    if (Orient.instance().getEngine("memory") == null) {
-      Orient.instance().startup();
-    }
-  }
-
   @Test
   @Ignore
   public void testWebTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {

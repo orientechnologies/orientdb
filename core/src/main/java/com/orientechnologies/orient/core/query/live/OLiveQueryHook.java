@@ -19,18 +19,13 @@
  */
 package com.orientechnologies.orient.core.query.live;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -38,6 +33,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by luigidellaquila on 16/03/15.
@@ -62,7 +63,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
     }
   }
 
-  public OLiveQueryHook(ODatabaseDocumentTx db) {
+  public OLiveQueryHook(ODatabaseDocumentInternal db) {
     super(db);
     getOpsReference(db);
     db.registerListener(this);
@@ -165,6 +166,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
     // TODO sync
     if (list != null) {
       for (ORecordOperation item : list) {
+        item.setRecord(item.getRecord().copy());
         ops.queueThread.enqueue(item);
       }
     }
@@ -216,7 +218,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
     if (db.getTransaction() == null || !db.getTransaction().isActive()) {
 
       // TODO synchronize
-      ORecordOperation op = new ORecordOperation(iDocument, iType);
+      ORecordOperation op = new ORecordOperation(iDocument.copy(), iType);
       ops.queueThread.enqueue(op);
       return;
     }

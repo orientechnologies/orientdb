@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
  * Distributed test on drop + recreate database.
  */
 public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTest {
-  final static int SERVERS = 2;
+  final static int SERVERS = 3;
 
   @Test
   public void test() throws Exception {
@@ -35,17 +35,27 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
 
   @Override
   protected void onAfterExecution() throws Exception {
-    for (ServerRun s : serverInstance) {
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(s));
-      db.open("admin", "admin");
+    int s = 0;
+    do {
+      for (ServerRun server : serverInstance) {
+        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
+        db.open("admin", "admin");
 
-      banner("DROPPING DATABASE ON SERVER " + s.getServerId());
-      db.drop();
+        banner("DROPPING DATABASE ON SERVER " + server.getServerId());
+        db.drop();
 
-      banner("RE-CREATING DATABASE ON SERVER " + s.getServerId());
+        Thread.sleep(1000);
+      }
 
+      ServerRun server = serverInstance.get(s);
+
+      banner("RE-CREATING DATABASE ON SERVER " + server.getServerId());
+
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
       db.create();
-    }
+      db.close();
+
+    } while (++s < serverInstance.size());
   }
 
   protected String getDatabaseURL(final ServerRun server) {

@@ -27,27 +27,30 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OBinaryField;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 
 import java.util.Set;
 
 /**
  * Represent an object field as value in the query condition.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OSQLFilterItemField extends OSQLFilterItemAbstract {
+
   protected Set<String> preLoadedFields;
   protected String[]    preLoadedFieldsArray;
   protected String      name;
   protected OCollate    collate;
+  private boolean       collatePreset = false;
+  private String        stringValue;
 
   /**
    * Represents filter item as chain of fields. Provide interface to work with this chain like with sequence of field names.
@@ -74,7 +77,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
     /**
      * Field chain is considered as long chain if it contains more than one item.
-     * 
+     *
      * @return true if this chain is long and false in another case.
      */
     public boolean isLong() {
@@ -89,16 +92,27 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   public OSQLFilterItemField(final String iName, final OClass iClass) {
     this.name = OIOUtils.getStringContent(iName);
     collate = getCollateForField(iClass, name);
+    if (iClass != null) {
+      collatePreset = true;
+    }
   }
 
   public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName, final OClass iClass) {
     super(iQueryToParse, iName);
     collate = getCollateForField(iClass, iName);
+    if (iClass != null) {
+      collatePreset = true;
+    }
   }
 
   public Object getValue(final OIdentifiable iRecord, final Object iCurrentResult, final OCommandContext iContext) {
     if (iRecord == null)
       throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved because current record is NULL");
+
+    if (preLoadedFields != null && preLoadedFields.size() == 1) {
+      if ("@rid".equalsIgnoreCase(preLoadedFields.iterator().next()))
+        return iRecord.getIdentity();
+    }
 
     final ODocument doc = (ODocument) iRecord.getRecord();
 
@@ -112,7 +126,15 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     if (preLoadedFieldsArray != null && !doc.deserializeFields(preLoadedFieldsArray))
       return null;
 
-    final Object v = doc.rawField(name);
+    final Object v = stringValue == null ? doc.rawField(name) : stringValue;
+
+    if (!collatePreset && doc != null) {
+      OClass schemaClass = doc.getSchemaClass();
+      if (schemaClass != null) {
+        collate = getCollateForField(schemaClass, name);
+      }
+    }
+
     return transformValue(iRecord, iContext, v);
   }
 
@@ -135,14 +157,28 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   }
 
   public void setRoot(final OBaseParser iQueryToParse, final String iRoot) {
+    if (isStringLiteral(iRoot)) {
+      this.stringValue = OIOUtils.getStringContent(iRoot);
+    }
+    //TODO support all the basic types
     this.name = OIOUtils.getStringContent(iRoot);
+  }
+
+  private boolean isStringLiteral(String iRoot) {
+    if (iRoot.startsWith("'") && iRoot.endsWith("'")) {
+      return true;
+    }
+    if (iRoot.startsWith("\"") && iRoot.endsWith("\"")) {
+      return true;
+    }
+    return false;
   }
 
   /**
    * Check whether or not this filter item is chain of fields (e.g. "field1.field2.field3"). Return true if filter item contains
    * only field projections operators, if field item contains any other projection operator the method returns false. When filter
    * item does not contains any chain operator, it is also field chain consist of one field.
-   * 
+   *
    * @return whether or not this filter item can be represented as chain of fields.
    */
   public boolean isFieldChain() {
@@ -161,10 +197,9 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   /**
    * Creates {@code FieldChain} in case when filter item can have such representation.
-   * 
+   *
    * @return {@code FieldChain} representation of this filter item.
-   * @throws IllegalStateException
-   *           if this filter item cannot be represented as {@code FieldChain}.
+   * @throws IllegalStateException if this filter item cannot be represented as {@code FieldChain}.
    */
   public FieldChain getFieldChain() {
     if (!isFieldChain()) {
@@ -180,5 +215,44 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   public OCollate getCollate() {
     return collate;
+  }
+
+  /**
+   * get the collate of this expression, based on the fully evaluated field chain starting from the passed object.
+   *
+   * @param doc the root element (document?) of this field chain
+   * @return the collate, null if no collate is defined
+   */
+  public OCollate getCollate(Object doc) {
+    if (collate != null || operationsChain == null || !isFieldChain()) {
+      return collate;
+    }
+    if (!(doc instanceof OIdentifiable)) {
+      return null;
+    }
+    FieldChain chain = getFieldChain();
+    ODocument lastDoc = ((OIdentifiable) doc).getRecord();
+    for (int i = 0; i < chain.getItemCount() - 1; i++) {
+      if (lastDoc == null) {
+        return null;
+      }
+      Object nextDoc = lastDoc.field(chain.getItemName(i));
+      if (nextDoc == null || !(nextDoc instanceof OIdentifiable)) {
+        return null;
+      }
+      lastDoc = ((OIdentifiable) nextDoc).getRecord();
+    }
+    if (lastDoc == null) {
+      return null;
+    }
+    OClass schemaClass = lastDoc.getSchemaClass();
+    if (schemaClass == null) {
+      return null;
+    }
+    OProperty property = schemaClass.getProperty(chain.getItemName(chain.getItemCount() - 1));
+    if (property == null) {
+      return null;
+    }
+    return property.getCollate();
   }
 }

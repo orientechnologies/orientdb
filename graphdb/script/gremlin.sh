@@ -24,6 +24,7 @@ if [ "$JAVA_OPTIONS" = "" ] ; then
     JAVA_OPTIONS="-Xms32m -Xmx512m"
 fi
 
+ORIENTDB_SETTINGS="-XX:MaxDirectMemorySize=512g"
 
 # Launch the application
 if [ "$1" = "-e" ]; then
@@ -37,12 +38,12 @@ if [ "$1" = "-e" ]; then
         i=$(($i+1))
     done
   fi
-    eval "$JAVA" $JAVA_OPTIONS -cp $CP:../plugins/*.jar com.tinkerpop.gremlin.groovy.jsr223.ScriptExecutor $k
+    eval "$JAVA" $JAVA_OPTIONS $ORIENTDB_SETTINGS -cp $CP:../plugins/*.jar com.tinkerpop.gremlin.groovy.jsr223.ScriptExecutor $k
 else
   if [ "$1" = "-v" ]; then
-    "$JAVA" -server $JAVA_OPTIONS -cp $CP:../plugins/*.jar com.tinkerpop.gremlin.Version
+    "$JAVA" -server $JAVA_OPTIONS $ORIENTDB_SETTINGS -cp $CP:../plugins/*.jar com.tinkerpop.gremlin.Version
   else
-    "$JAVA" -server $JAVA_OPTIONS -cp $CP:../plugins/*.jar com.tinkerpop.gremlin.groovy.console.Console
+    "$JAVA" -server $JAVA_OPTIONS $ORIENTDB_SETTINGS -cp $CP:../plugins/*.jar com.tinkerpop.gremlin.groovy.console.Console
   fi
 fi
 

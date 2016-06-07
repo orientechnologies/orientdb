@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.IOException;
-import java.util.Map;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -33,15 +30,18 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
+import java.io.IOException;
+import java.util.Map;
+
 /**
  * Handles the database configuration in one big record.
  */
 @SuppressWarnings("serial")
 @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OStorageConfigurationSegment extends OStorageConfiguration {
-  private static final long serialVersionUID = 638874446554389034L;
+  private static final long                  serialVersionUID = 638874446554389034L;
 
-  private static final int                   START_SIZE = 10000;
+  private static final int                   START_SIZE       = 10000;
   private final transient OSingleFileSegment segment;
 
   public OStorageConfigurationSegment(final OLocalPaginatedStorage iStorage) throws IOException {
@@ -52,8 +52,12 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
   public void close() throws IOException {
     super.close();
-
     segment.close();
+  }
+
+  public void delete() throws IOException {
+    super.delete();
+    segment.delete();
   }
 
   public void create() throws IOException {

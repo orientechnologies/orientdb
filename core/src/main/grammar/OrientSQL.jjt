@@ -319,6 +319,20 @@ TOKEN:
     < IDEMPOTENT: ( "I" | "i") ( "D" | "d")  ( "E" | "e") ( "M" | "m") ( "P" | "p")  ( "O" | "o") ( "T" | "t")  ( "E" | "e") ( "N" | "n") ( "T" | "t") >
     |
     < LANGUAGE: ( "L" | "l") ( "A" | "a")  ( "N" | "n") ( "G" | "g") ( "U" | "u")  ( "A" | "a") ( "G" | "g")  ( "E" | "e") >
+    |
+    < BEGIN: ( "B" | "b") ( "E" | "e")  ( "G" | "g") ( "I" | "i") ( "N" | "n") >
+    |
+    < COMMIT: ( "C" | "c") ( "O" | "o")  ( "M" | "m") ( "M" | "m") ( "I" | "i")  ( "T" | "t") >
+    |
+    < IF: ( "I" | "i") ( "F" | "f") >
+    |
+    < ISOLATION: ( "I" | "i") ( "S" | "s") ( "O" | "o") ( "L" | "l") ( "A" | "a") ( "T" | "t") ( "I" | "i") ( "O" | "o") ( "N" | "n") >
+    |
+    < SLEEP: ( "S" | "s") ( "L" | "l") ( "E" | "e") ( "E" | "e") ( "P" | "p")  >
+    |
+    < CONSOLE: ( "C" | "c") ( "O" | "o") ( "N" | "n") ( "S" | "s") ( "O" | "o")  ( "L" | "l") ( "E" | "e")>
+    |
+    < BLOB: ( "B" | "b") ( "L" | "l") ( "O" | "o") ( "B" | "b") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -386,7 +400,7 @@ TOKEN :
       "'"
       (   (~["'","\\","\n","\r"])
         | ("\\"
-            ( ["n","t","b","r","f","\\","'","\""]
+            ( ["n","t","b","r","f","\\","'","\"","/"]
             | ["0"-"7"] ( ["0"-"7"] )?
             | ["0"-"3"] ["0"-"7"] ["0"-"7"]
             )
@@ -400,7 +414,7 @@ TOKEN :
 	      "\""
 	      (   (~["\"","\\","\n","\r"])
 	        | ("\\"
-	            ( ["n","t","b","r","f","\\","'","\""]
+	            ( ["n","t","b","r","f","\\","'","\"","/"]
 	            | ["0"-"7"] ( ["0"-"7"] )?
 	            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
 	            )
@@ -413,7 +427,7 @@ TOKEN :
 	      "'"
 	      (   (~["\'","\\","\n","\r"])
 	        | ("\\"
-	            ( ["n","t","b","r","f","\\","'","\""]
+	            ( ["n","t","b","r","f","\\","'","\"","/"]
 	            | ["0"-"7"] ( ["0"-"7"] )?
 	            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
 	            )
@@ -517,7 +531,7 @@ TOKEN :
 {
   < IDENTIFIER: ( ((<DOLLAR>) | <LETTER>) (<PART_LETTER>)* ) >
 |
-  < QUOTED_IDENTIFIER: ( "`" (~["`"]) (~["`"])*  "`") >
+  < QUOTED_IDENTIFIER: ( "`" (~["`"] | "\\`") (~["`"] | "\\`")*  "`") >
 |
   < INDEX_COLON: <INDEX> ":" >
 |
@@ -562,11 +576,30 @@ ORid Rid():
     { return jjtThis; }
 }
 
-/** Root production. */
+/** Root productions. */
 OStatement parse() :
 {OStatement result;}
 {
   result = Statement() <EOF>
+  { return result; }
+}
+
+List<OStatement> parseScript() :
+{
+  List<OStatement> result = new ArrayList<OStatement>();
+  OStatement last;
+}
+{
+    (
+        LOOKAHEAD(StatementSemicolon())
+        last = StatementSemicolon() {result.add(last);}
+        |
+        last = IfStatement() {result.add(last);}
+        |
+        <SEMICOLON>
+    )*
+
+  <EOF>
   { return result; }
 }
 
@@ -718,6 +751,20 @@ OIdentifier Identifier():
     |
     token = <LANGUAGE>
     |
+    token = <BEGIN>
+    |
+    token = <COMMIT>
+    |
+    token = <IF>
+    |
+    token = <ISOLATION>
+    |
+    token = <SLEEP>
+    |
+    token = <CONSOLE>
+    |
+    token = <BLOB>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -778,8 +825,23 @@ ONumber Number():
     { return result; }
 }
 
-
 OStatement Statement():
+{OStatement result = null;}
+{
+    result = StatementInternal()
+    [ <SEMICOLON> ]
+    {return result;}
+}
+
+OStatement StatementSemicolon():
+{OStatement result = null;}
+{
+    result = StatementInternal()
+    <SEMICOLON>
+    {return result;}
+}
+
+OStatement StatementInternal():
 {
     OStatement result = null;
 }
@@ -799,6 +861,24 @@ OStatement Statement():
                 result = DeleteEdgeStatement()
                 |
                 result = InsertStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateClassStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreatePropertyStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateIndexStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateClusterStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateLinkStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateFunctionStatement()
                 |
                 LOOKAHEAD(CreateVertexStatementNoTarget())
                 result = CreateVertexStatementNoTarget()
@@ -821,8 +901,6 @@ OStatement Statement():
                 LOOKAHEAD(UpdateStatement())
                 result = UpdateStatement()
                 |
-                result = MatchStatement()
-                |
                 result = ProfileStorageStatement()
                 |
                 LOOKAHEAD(TruncateClassStatement())
@@ -831,14 +909,8 @@ OStatement Statement():
                 LOOKAHEAD(TruncateClusterStatement())
                 result = TruncateClusterStatement()
                 |
-                LOOKAHEAD(FindReferencesStatement())
-                result = FindReferencesStatement()
-                |
                 LOOKAHEAD(TruncateRecordStatement())
                 result = TruncateRecordStatement()
-                |
-                LOOKAHEAD(CreateClassStatement())
-                result = CreateClassStatement()
                 |
                 LOOKAHEAD(AlterClassStatement())
                 result = AlterClassStatement()
@@ -846,25 +918,16 @@ OStatement Statement():
                 LOOKAHEAD(DropClassStatement())
                 result = DropClassStatement()
                 |
-                LOOKAHEAD(CreatePropertyStatement())
-                result = CreatePropertyStatement()
-                |
                 LOOKAHEAD(AlterPropertyStatement())
                 result = AlterPropertyStatement()
                 |
                 LOOKAHEAD(DropPropertyStatement())
                 result = DropPropertyStatement()
                 |
-                LOOKAHEAD(CreateIndexStatement())
-                result = CreateIndexStatement()
-                |
                 result = RebuildIndexStatement()
                 |
                 LOOKAHEAD(2)
                 result = DropIndexStatement()
-                |
-                LOOKAHEAD(CreateClusterStatement())
-                result = CreateClusterStatement()
                 |
                 LOOKAHEAD(AlterClusterStatement())
                 result = AlterClusterStatement()
@@ -877,19 +940,28 @@ OStatement Statement():
                 |
                 result = OptimizeDatabaseStatement()
                 |
-                LOOKAHEAD(2)
-                result = CreateLinkStatement()
-                |
                 result = GrantStatement()
                 |
                 result = RevokeStatement()
                 |
-                LOOKAHEAD(2)
-                result = CreateFunctionStatement()
-            ) [ <SEMICOLON> ]
+                result = BeginStatement()
+                |
+                result = CommitStatement()
+                |
+                result = ReturnStatement()
+                |
+                result = SleepStatement()
+                |
+                result = ConsoleStatement()
+                |
+                result = IfStatement()
+            )
         )
         |
         result = ExplainStatement()
+        |
+        result = LetStatement()
+
     )
 	{
 	    return result;
@@ -908,6 +980,11 @@ OStatement QueryStatement():
         result = SelectWithoutTargetStatement()
         |
         result = TraverseStatement()
+        |
+        result = MatchStatement()
+        |
+        LOOKAHEAD( FindReferencesStatement() )
+        result = FindReferencesStatement()
     ){ return result; }
 }
 
@@ -918,7 +995,7 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
     	<SELECT>
         jjtThis.projection = Projection()
     	[ jjtThis.letClause = LetClause() ]
-    	[ jjtThis.unwind = Unwind() ] 
+    	[ jjtThis.unwind = Unwind() ]
     	(
 			[
 				jjtThis.skip = Skip() [ jjtThis.limit = Limit() ]
@@ -1465,9 +1542,9 @@ OUpdateIncrementItem UpdateIncrementItem():
 {}
 {
     (
-	    jjtThis.left = Identifier() 
+	    jjtThis.left = Identifier()
 	    [ jjtThis.leftModifier = Modifier() ]
-	    <EQ> 
+	    <EQ>
 	    jjtThis.right = Expression()
 	)
 	{ return jjtThis; }
@@ -1686,69 +1763,11 @@ OCreateEdgeStatement CreateEdgeStatement():
 	[ jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]]
 	<FROM>
 	(
-	    jjtThis.leftRid = Rid()
-	    |
-	    (
-	        <LBRACKET>
-	        [
-	            lastRid = Rid()
-	            {
-	                jjtThis.leftRids=new ArrayList();
-	                jjtThis.leftRids.add(lastRid);
-	            }
-	            (
-	                <COMMA>
-	                lastRid = Rid() { jjtThis.leftRids.add(lastRid); }
-	            )*
-	        ] <RBRACKET>
-	    )
-	    |
-	    (
-	        <LPAREN>
-	        (
-	            LOOKAHEAD(SelectStatement()) jjtThis.leftStatement = SelectStatement()
-	            |
-	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.leftStatement = SelectWithoutTargetStatement()
-	        )
-	        <RPAREN>
-	    )
-	    |
-	    jjtThis.leftParam = InputParameter()
-	    |
-	    jjtThis.leftIdentifier = Identifier()
+	    jjtThis.leftExpression = Expression()
 	)
 	<TO>
 	(
-        jjtThis.rightRid = Rid()
-	    |
-	    (
-	        <LBRACKET>
-	        [
-	            lastRid = Rid()
-	            {
-	                jjtThis.rightRids=new ArrayList();
-	                jjtThis.rightRids.add(lastRid);
-	            }
-	            (
-	                <COMMA>
-	                lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
-	            )*
-	        ] <RBRACKET>
-	    )
-	    |
-	    (
-	        <LPAREN>
-	        (
-	            LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
-	            |
-	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
-	        )
-	        <RPAREN>
-	    )
-	    |
-	    jjtThis.rightParam = InputParameter()
-	    |
-	    jjtThis.rightIdentifier = Identifier()
+	    jjtThis.rightExpression = Expression()
 	)
     [ jjtThis.body = InsertBody() ]
     [ jjtThis.retry = Retry() ]
@@ -1896,11 +1915,11 @@ OArrayRangeSelector ArrayRangeSelector():
 }
 
 
-String Alias():
+OIdentifier Alias():
 { OIdentifier identifier; }
 {
 	identifier = Identifier()
-	{return identifier.getValue();}
+	{return identifier;}
 }
 
 ORecordAttribute RecordAttribute():
@@ -2028,29 +2047,9 @@ OExpression Expression():
 {
     (
         <NULL> {jjtThis.value = null;}
-
-/*        |
-        LOOKAHEAD(2)
-        token = <STRING_LITERAL>
-        {
-            jjtThis.value = token.image.substring(1, token.image.length() - 1);
-            if(token.image.startsWith("'")) {
-                jjtThis.singleQuotes = true;
-            }else{
-                jjtThis.doubleQuotes = true;
-            }
-
-        }
-
-        |
-        token = <CHARACTER_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);  jjtThis.singleQuotes = true;}
-        */
         |
         LOOKAHEAD( Rid() )
         jjtThis.value = Rid()
-        |
-        LOOKAHEAD( InputParameter() )
-        jjtThis.value = InputParameter()
         |
         LOOKAHEAD( MathExpression() )
         jjtThis.value = MathExpression()
@@ -2135,9 +2134,10 @@ OMathExpression ParenthesisExpression():
     (
 	    <LPAREN>
 	    (
-	        jjtThis.expression = Expression()
+	        LOOKAHEAD(2)
+	        jjtThis.statement = QueryStatement()
 	        |
-	        jjtThis.statement = SelectStatement()
+	        jjtThis.expression = Expression()
 	        |
             jjtThis.statement = InsertStatement()
         )
@@ -2216,13 +2216,7 @@ OLetItem LetItem():
     	    (
     	        <LPAREN>
     	        (
-    	            LOOKAHEAD( SelectStatement() )
-    	            jjtThis.query = SelectStatement()
-    	            |
-    	            LOOKAHEAD( SelectWithoutTargetStatement() )
-    	            jjtThis.query = SelectWithoutTargetStatement()
-    	            |
-    	            jjtThis.query = TraverseStatement()
+    	            jjtThis.query = QueryStatement()
     	        )
     	        <RPAREN>
     	    )
@@ -2257,17 +2251,7 @@ OFromItem FromItem():
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	<LPAREN> (
-    	            LOOKAHEAD(SelectStatement()) jjtThis.statement = SelectStatement()
-    	            |
-    	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.statement = SelectWithoutTargetStatement()
-    	            |
-    	            jjtThis.statement = TraverseStatement()
-    	            |
-                    jjtThis.statement = MatchStatement()
-					|
-					jjtThis.statement = FindReferencesStatement()
-    	) <RPAREN>
+    	<LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
     	|
     	jjtThis.inputParam = InputParameter()
     	|
@@ -3125,7 +3109,15 @@ OFetchPlanItem FetchPlanItem():
         (
             <STAR> { jjtThis.star = true; }
             |
-            [ <LBRACKET> jjtThis.leftDepth = Integer() <RBRACKET> ]
+            [
+                <LBRACKET>
+                (
+                    jjtThis.leftDepth = Integer()
+                    |
+                    <STAR> { jjtThis.leftStar = true; }
+                )
+                <RBRACKET>
+            ]
             lastIdentifier = Identifier() { lastStarred = false; } [<STAR> { lastStarred = true; }]
             {
                 String field = lastIdentifier.getValue();
@@ -3610,7 +3602,7 @@ OFindReferencesStatement FindReferencesStatement():
         |
         (
             <LPAREN>
-            jjtThis.subQuery = Statement()
+            jjtThis.subQuery = StatementInternal()
             <RPAREN>
         )
     )
@@ -3668,6 +3660,7 @@ OAlterClassStatement AlterClassStatement():
 {
 	OIdentifier lastIdentifier;
 	OInteger lastInteger;
+	Token lastToken;
 }
 {
 	<ALTER> <CLASS>
@@ -3786,6 +3779,8 @@ OAlterClassStatement AlterClassStatement():
 				jjtThis.identifierValue = Identifier()
 				|
 				"round-robin" { jjtThis.customString = "round-robin"; }
+				|
+				lastToken = <STRING_LITERAL> {  jjtThis.customString = token.image.substring(1, token.image.length() - 1); }
 			)
 		)
 		|
@@ -4026,11 +4021,16 @@ ODropIndexStatement DropIndexStatement():
 OCreateClusterStatement CreateClusterStatement():
 {}
 {
-	<CREATE> <CLUSTER>
-	(
-		jjtThis.name = Identifier()
+    (
+        <CREATE>
+        (
+            ( <CLUSTER> )
+            |
+            ( <BLOB> <CLUSTER> { jjtThis.blob = true; } )
+        )
+        jjtThis.name = Identifier()
+        [ <ID> jjtThis.id = Integer() ]
 	)
-	[ <ID> jjtThis.id = Integer() ]
 	{ return jjtThis; }
 }
 
@@ -4135,7 +4135,7 @@ OExplainStatement ExplainStatement():
 {
     (
         <EXPLAIN>
-        jjtThis.statement = Statement()
+        jjtThis.statement = StatementInternal()
     )
     { return jjtThis; }
 }
@@ -4250,6 +4250,100 @@ OCreateFunctionStatement CreateFunctionStatement():
             <LANGUAGE>
             jjtThis.language = Identifier()
         ]
+    )
+    { return jjtThis; }
+}
+
+
+OLetStatement LetStatement():
+{ }
+{
+    (
+        <LET>
+        jjtThis.name = Identifier()
+        <EQ>
+        (
+            LOOKAHEAD(Statement())
+            jjtThis.statement =  StatementInternal()
+            |
+            LOOKAHEAD(Expression())
+            jjtThis.expression = Expression()
+        )
+    )
+    {return jjtThis;}
+}
+
+OBeginStatement BeginStatement():
+{ }
+{
+    (
+        <BEGIN>
+        [ <ISOLATION> jjtThis.isolation = Identifier() ]
+    )
+    {return jjtThis;}
+}
+
+OCommitStatement CommitStatement():
+{ }
+{
+    (
+        <COMMIT>
+        [
+            <RETRY>
+            jjtThis.retry = Integer()
+        ]
+    )
+    {return jjtThis;}
+}
+
+OReturnStatement ReturnStatement():
+{ }
+{
+    (
+        <RETURN>
+        [
+            jjtThis.expression = Expression()
+        ]
+    )
+    {return jjtThis;}
+}
+
+OIfStatement IfStatement():
+{ OStatement last; }
+{
+    (
+        <IF><LPAREN>
+        jjtThis.expression = OrBlock()
+        <RPAREN><LBRACE>
+        (
+            LOOKAHEAD(StatementSemicolon())
+            last = StatementSemicolon() { jjtThis.statements.add(last); }
+            |
+            last = IfStatement() { jjtThis.statements.add(last); }
+            |
+            <SEMICOLON>
+        )*
+        <RBRACE>
+    )
+    { return jjtThis; }
+}
+
+OSleepStatement SleepStatement():
+{ }
+{
+    (
+        <SLEEP> jjtThis.millis = Integer()
+    )
+    { return jjtThis; }
+}
+
+OConsoleStatement ConsoleStatement():
+{ }
+{
+    (
+        <CONSOLE> <DOT>
+        jjtThis.logLevel = Identifier()
+        jjtThis.message = Expression()
     )
     { return jjtThis; }
 }

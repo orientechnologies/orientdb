@@ -1,33 +1,33 @@
 package com.orientechnologies.orient.graph.blueprints;
 
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
 public class ConcurrentTxTest {
 
   private final static String STORAGE_ENGINE = "memory";
   private final static String DATABASE_URL   = STORAGE_ENGINE + ":" + ConcurrentTxTest.class.getSimpleName();
 
-  private final static String PROPERTY_NAME  = "pn";
-  OrientGraphFactory          graphFactory;
+  private final static String PROPERTY_NAME = "pn";
+  OrientGraphFactory graphFactory;
 
   @Before
   public void setUpGraph() {
     graphFactory = new OrientGraphFactory(DATABASE_URL);
     graphFactory.setAutoStartTx(false);
+    graphFactory.setupPool(0, 200);
   }
 
   @After
@@ -142,7 +142,7 @@ public class ConcurrentTxTest {
   }
 
   @Test(expected = OConcurrentModificationException.class)
-  public void testProvokeOConcurrentModificationException() {
+  public void testProvokeOConcurrentModificationException() throws Exception {
 
     final int firstValue = 0;
     final int secondValue = 1;
@@ -151,15 +151,24 @@ public class ConcurrentTxTest {
     // Create vertex
     OrientGraph tx = graphFactory.getTx();
     tx.begin();
-    OrientVertex firstVertexHandle = tx.addVertex(null, PROPERTY_NAME, firstValue);
+    final OrientVertex firstVertexHandle = tx.addVertex(null, PROPERTY_NAME, firstValue);
     tx.commit();
 
-    // 1. Update
-    Object recordId = firstVertexHandle.getId();
-    OrientGraph tx2 = graphFactory.getTx();
-    tx2.begin();
-    Vertex secondVertexHandle = tx2.getVertex(recordId);
-    secondVertexHandle.setProperty(PROPERTY_NAME, secondValue);
+    final Object recordId = firstVertexHandle.getId();
+
+    Thread updateThread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        // 1. Update
+        OrientGraph tx2 = graphFactory.getTx();
+        tx2.begin();
+        Vertex secondVertexHandle = tx2.getVertex(recordId);
+        secondVertexHandle.setProperty(PROPERTY_NAME, secondValue);
+        tx2.commit();
+      }
+    });
+    updateThread.start();
+    updateThread.join();
 
     // 2. Update
     OrientGraph tx3 = graphFactory.getTx();
@@ -167,8 +176,7 @@ public class ConcurrentTxTest {
     Vertex thirdVertexHandle = tx3.getVertex(recordId);
     thirdVertexHandle.setProperty(PROPERTY_NAME, thirdValue);
 
-    // Commit
-    tx2.commit();
+    //commit
     tx3.commit();
   }
 

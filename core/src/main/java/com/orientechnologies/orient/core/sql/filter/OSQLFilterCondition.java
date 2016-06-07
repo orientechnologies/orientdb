@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
@@ -83,7 +84,7 @@ public class OSQLFilterCondition {
 
     Object l = evaluate(iCurrentRecord, iCurrentResult, left, iContext, binaryEvaluation);
 
-    if (operator != null && operator.canShortCircuit(l))
+    if (operator == null || operator.canShortCircuit(l))
       return l;
 
     if (right instanceof OSQLQuery<?>)
@@ -100,7 +101,7 @@ public class OSQLFilterCondition {
           final BytesContainer bytes = new BytesContainer();
           ORecordSerializerBinary.INSTANCE.getCurrentSerializer().serializeValue(bytes, r, type, null);
           bytes.offset = 0;
-          final OCollate collate = r instanceof OSQLFilterItemField ? ((OSQLFilterItemField) r).getCollate() : null;
+          final OCollate collate = r instanceof OSQLFilterItemField ? ((OSQLFilterItemField) r).getCollate(iCurrentRecord) : null;
           r = new OBinaryField(null, type, bytes, collate);
           if (!(right instanceof OSQLFilterItem || right instanceof OSQLFilterCondition))
             // FIXED VALUE, REPLACE IT
@@ -118,7 +119,7 @@ public class OSQLFilterCondition {
           final BytesContainer bytes = new BytesContainer();
           ORecordSerializerBinary.INSTANCE.getCurrentSerializer().serializeValue(bytes, l, type, null);
           bytes.offset = 0;
-          final OCollate collate = l instanceof OSQLFilterItemField ? ((OSQLFilterItemField) l).getCollate() : null;
+          final OCollate collate = l instanceof OSQLFilterItemField ? ((OSQLFilterItemField) l).getCollate(iCurrentRecord) : null;
           l = new OBinaryField(null, type, bytes, collate);
           if (!(left instanceof OSQLFilterItem || left instanceof OSQLFilterCondition))
             // FIXED VALUE, REPLACE IT
@@ -129,30 +130,18 @@ public class OSQLFilterCondition {
         l = ((OBinaryField) l).copy();
     }
 
-
     if (binaryEvaluation)
       binaryEvaluation = l instanceof OBinaryField && r instanceof OBinaryField;
 
 
     if (!binaryEvaluation) {
       // no collate for regular expressions, otherwise quotes will result in no match
-      final OCollate collate = operator instanceof OQueryOperatorMatches ? null : getCollate();
+      final OCollate collate = operator instanceof OQueryOperatorMatches ? null : getCollate(iCurrentRecord);
       final Object[] convertedValues = checkForConversion(iCurrentRecord, l, r, collate);
       if (convertedValues != null) {
         l = convertedValues[0];
         r = convertedValues[1];
       }
-    }
-
-    if (operator == null) {
-      if (l == null)
-      // THE LEFT RETURNED NULL
-      {
-        return Boolean.FALSE;
-      }
-
-      // UNITARY OPERATOR: JUST RETURN LEFT RESULT
-      return l;
     }
 
     Object result;
@@ -169,11 +158,21 @@ public class OSQLFilterCondition {
     return result;
   }
 
+  @Deprecated
   public OCollate getCollate() {
     if (left instanceof OSQLFilterItemField) {
       return ((OSQLFilterItemField) left).getCollate();
     } else if (right instanceof OSQLFilterItemField) {
       return ((OSQLFilterItemField) right).getCollate();
+    }
+    return null;
+  }
+
+  public OCollate getCollate(OIdentifiable doc) {
+    if (left instanceof OSQLFilterItemField) {
+      return ((OSQLFilterItemField) left).getCollate(doc);
+    } else if (right instanceof OSQLFilterItemField) {
+      return ((OSQLFilterItemField) right).getCollate(doc);
     }
     return null;
   }
@@ -357,7 +356,7 @@ public class OSQLFilterCondition {
 
     if (iCurrentRecord != null) {
       iCurrentRecord = iCurrentRecord.getRecord();
-      if (iCurrentRecord != null && ((ODocument) iCurrentRecord).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+      if (iCurrentRecord != null && ((ORecord) iCurrentRecord).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
         try {
           iCurrentRecord = iCurrentRecord.getRecord().load();
         } catch (ORecordNotFoundException e) {

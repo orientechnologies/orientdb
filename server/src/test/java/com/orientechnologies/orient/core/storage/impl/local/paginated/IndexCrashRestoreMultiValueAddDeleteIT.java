@@ -14,16 +14,15 @@ import com.orientechnologies.orient.server.OServerMain;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -34,7 +33,7 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
   private final AtomicLong idGen = new AtomicLong();
   private ODatabaseDocumentTx baseDocumentTx;
   private ODatabaseDocumentTx testDocumentTx;
-  private File buildDir;
+  private File                buildDir;
   private ExecutorService executorService = Executors.newCachedThreadPool();
   private Process process;
 
@@ -46,21 +45,40 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
     buildDirectory += "/indexCrashRestoreMultiValueAddDelete";
 
     buildDir = new File(buildDirectory);
+    buildDirectory = buildDir.getCanonicalPath();
+
     if (buildDir.exists())
       OFileUtils.deleteRecursively(buildDir);
 
     buildDir.mkdir();
+    final File mutexFile = new File(buildDir, "mutex.ct");
+    final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
+    mutex.seek(0);
+    mutex.write(0);
 
     String javaExec = System.getProperty("java.home") + "/bin/java";
+    javaExec = new File(javaExec).getCanonicalPath();
+
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory,
+        RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     process = processBuilder.start();
 
-    Thread.sleep(5000);
+    System.out.println(IndexCrashRestoreMultiValueAddDeleteIT.class.getSimpleName() + ": Wait for server start");
+    boolean started = false;
+    do {
+      Thread.sleep(5000);
+      mutex.seek(0);
+      started = mutex.read() == 1;
+    } while (!started);
+
+    mutex.close();
+    mutexFile.delete();
+    System.out.println(IndexCrashRestoreMultiValueAddDeleteIT.class.getSimpleName() + ": Server was started");
   }
 
   @After
@@ -90,6 +108,7 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
     testDocumentTx.open("admin", "admin");
   }
 
+  @Test
   public void testEntriesAddition() throws Exception {
 
     createSchema(baseDocumentTx);
@@ -102,7 +121,8 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(3000);
+    System.out.println("Wait for 5 minutes");
+    TimeUnit.MINUTES.sleep(5);
 
     System.out.println("Wait for process to destroy");
     process.destroy();
@@ -181,8 +201,6 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
             .getSize());
     System.out.println("Lost records max interval : " + (minLostTs == Long.MAX_VALUE ? 0 : lastTs - minLostTs));
 
-
-
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
@@ -200,6 +218,12 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
       server.startup(RemoteDBRunner.class.getResourceAsStream(
           "/com/orientechnologies/orient/core/storage/impl/local/paginated/index-crash-multivalue-value-add-delete-config.xml"));
       server.activate();
+
+      final String mutexFile = System.getProperty("mutexFile");
+      final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
+      mutex.seek(0);
+      mutex.write(1);
+      mutex.close();
     }
   }
 
@@ -240,7 +264,10 @@ public class IndexCrashRestoreMultiValueAddDeleteIT {
           }
         }
       } finally {
+        baseDB.activateOnCurrentThread();
         baseDB.close();
+
+        testDB.activateOnCurrentThread();
         testDB.close();
       }
     }

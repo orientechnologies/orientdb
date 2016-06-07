@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
@@ -42,28 +41,19 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
 
   @Test
   public void test() throws Exception {
-    // SET MAXQUEUE SIZE LOWER TO TEST THE NODE IS NOT RESTARTED AUTOMATICALLY
-    final long queueMaxSize = OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.getValueAsLong();
-    OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(1000);
+    startupNodesInSequence = true;
+    count = 1000;
+    maxRetries = 10;
+    init(SERVERS);
+    prepare(false);
 
-    try {
-      startupNodesInSequence = true;
-      count = 1000;
-      maxRetries = 10;
-      init(SERVERS);
-      prepare(false);
-
-      // EXECUTE TESTS ONLY ON FIRST 2 NODES LEAVING NODE3 AS BACKUP ONLY REPLICA
-      executeTestsOnServers = new ArrayList<ServerRun>();
-      for (int i = 0; i < serverInstance.size() - 1; ++i) {
-        executeTestsOnServers.add(serverInstance.get(i));
-      }
-
-      execute();
-
-    } finally {
-      OGlobalConfiguration.DISTRIBUTED_QUEUE_MAXSIZE.setValue(queueMaxSize);
+    // EXECUTE TESTS ONLY ON FIRST 2 NODES LEAVING NODE3 AS BACKUP ONLY REPLICA
+    executeTestsOnServers = new ArrayList<ServerRun>();
+    for (int i = 0; i < serverInstance.size() - 1; ++i) {
+      executeTestsOnServers.add(serverInstance.get(i));
     }
+
+    execute();
   }
 
   @Override
@@ -94,8 +84,6 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
     }
 
     if (serverStarted++ == (SERVERS - 1)) {
-      startQueueMonitorTask();
-
       // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
       new Thread(new Runnable() {
         @Override
@@ -123,7 +111,7 @@ public class OneNodeBackupTest extends AbstractServerClusterTxTest {
                 banner("STARTING BACKUP SERVER " + (SERVERS - 1));
 
                 OrientGraphFactory factory = new OrientGraphFactory(
-                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName());
+                    "plocal:target/server" + (SERVERS - 1) + "/databases/" + getDatabaseName(), false);
                 OrientGraphNoTx g = factory.getNoTx();
 
                 backupInProgress = true;

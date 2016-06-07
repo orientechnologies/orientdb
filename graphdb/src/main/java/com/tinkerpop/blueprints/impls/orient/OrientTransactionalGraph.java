@@ -20,6 +20,7 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.common.log.OLogManager;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
@@ -31,7 +32,7 @@ import com.tinkerpop.blueprints.TransactionalGraph;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
- * 
+ *
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientTransactionalGraph extends OrientBaseGraph implements TransactionalGraph {
@@ -53,7 +54,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     this.setAutoStartTx(isAutoStartTx());
 
     if (isAutoStartTx())
-      begin();
+      ensureTransaction();
   }
 
   protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx, final String iUserName,
@@ -63,14 +64,14 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     this.setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
-      begin();
+      ensureTransaction();
   }
 
   protected OrientTransactionalGraph(final OPartitionedDatabasePool pool) {
     super(pool);
     setCurrentGraphInThreadLocal();
 
-    begin();
+    ensureTransaction();
   }
 
   protected OrientTransactionalGraph(final OPartitionedDatabasePool pool, final Settings configuration) {
@@ -78,7 +79,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     setCurrentGraphInThreadLocal();
 
     if (configuration.isAutoStartTx())
-      begin();
+      ensureTransaction();
   }
 
   protected OrientTransactionalGraph(final String url) {
@@ -91,7 +92,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
-      begin();
+      ensureTransaction();
   }
 
   protected OrientTransactionalGraph(final String url, final String username, final String password) {
@@ -104,7 +105,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     this.setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
-      begin();
+      ensureTransaction();
   }
 
   protected OrientTransactionalGraph(final Configuration configuration) {
@@ -128,9 +129,22 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     return this;
   }
 
+  @Override
+  public void setAutoStartTx(boolean autoStartTx) {
+    makeActive();
+
+    final boolean showWarning = !autoStartTx && isAutoStartTx() && getDatabase() != null && getDatabase().getTransaction().isActive();
+    super.setAutoStartTx(autoStartTx);
+
+    if (showWarning)
+      OLogManager.instance().warn(this,
+          "Auto transaction starting is turned off for the graph, but already started transaction is left open."
+              + "Commit it manually or consider disabling auto transactions while creating the graph or its factory.");
+  }
+
   /**
    * Closes a transaction.
-   * 
+   *
    * @param conclusion
    *          Can be SUCCESS for commit and FAILURE to rollback.
    */
@@ -139,8 +153,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void stopTransaction(final Conclusion conclusion) {
     makeActive();
 
-    if (database.isClosed() || database.getTransaction() instanceof OTransactionNoTx
-        || database.getTransaction().getStatus() != TXSTATUS.BEGUN)
+    if (getDatabase().isClosed() || getDatabase().getTransaction() instanceof OTransactionNoTx
+        || getDatabase().getTransaction().getStatus() != TXSTATUS.BEGUN)
       return;
 
     if (Conclusion.SUCCESS == conclusion)
@@ -155,12 +169,12 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void commit() {
     makeActive();
 
-    if (database == null)
+    if (getDatabase() == null)
       return;
 
-    database.commit();
+    getDatabase().commit();
     if (isAutoStartTx())
-      begin();
+      ensureTransaction();
   }
 
   /**
@@ -169,27 +183,32 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void rollback() {
     makeActive();
 
-    if (database == null)
+    if (getDatabase() == null)
       return;
 
-    database.rollback();
+    getDatabase().rollback();
     if (isAutoStartTx())
-      begin();
+      ensureTransaction();
   }
 
+  @Override
   public void begin() {
     makeActive();
 
-    final boolean txBegun = database.getTransaction().isActive();
-    if (!txBegun) {
-      database.begin();
-      database.getTransaction().setUsingLog(settings.isUseLog());
-    }
+    // XXX: Under some circumstances, auto started transactions are committed outside of the graph using the
+    // underlying database and later restarted using the graph. So we have to check the status of the
+    // database transaction to support this behaviour.
+    if (isAutoStartTx() && getDatabase().getTransaction().isActive())
+      throw new OTransactionException("A mixture of auto started and manually started transactions is not allowed. "
+          + "Disable auto transactions for the graph before starting a manual transaction.");
+
+    getDatabase().begin();
+    getDatabase().getTransaction().setUsingLog(settings.isUseLog());
   }
 
   @Override
   protected void autoStartTransaction() {
-    final boolean txBegun = database.getTransaction().isActive();
+    final boolean txBegun = getDatabase().getTransaction().isActive();
 
     if (!isAutoStartTx()) {
       if (isRequireTransaction() && !txBegun)
@@ -198,8 +217,18 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       return;
     }
 
-    if (!txBegun)
-      begin();
+    if (!txBegun) {
+      getDatabase().begin();
+      getDatabase().getTransaction().setUsingLog(settings.isUseLog());
+    }
+  }
+
+  private void ensureTransaction() {
+    final boolean txBegun = getDatabase().getTransaction().isActive();
+    if (!txBegun) {
+      getDatabase().begin();
+      getDatabase().getTransaction().setUsingLog(settings.isUseLog());
+    }
   }
 
 }

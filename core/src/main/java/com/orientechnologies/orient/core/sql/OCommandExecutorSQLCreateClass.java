@@ -84,7 +84,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
 
       className = word.toString();
       if(this.preParsedStatement!=null){
-        className = ((OCreateClassStatement)preParsedStatement).name.getValue();
+        className = ((OCreateClassStatement)preParsedStatement).name.getStringValue();
       }
       if (className == null)
         throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
@@ -103,9 +103,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
               throw new OCommandSQLParsingException(
                   "Syntax error after EXTENDS for class " + className + ". Expected the super-class name. Use " + getSyntax(),
                   parserText, oldPos);
-            if (!database.getMetadata().getSchema().existsClass(word.toString()))
+            String superclassName = decodeClassName(word.toString());
+
+            if (!database.getMetadata().getSchema().existsClass(superclassName))
               throw new OCommandSQLParsingException("Super-class " + word + " not exists", parserText, oldPos);
-            superClass = database.getMetadata().getSchema().getClass(word.toString());
+            superClass = database.getMetadata().getSchema().getClass(superclassName);
             superClasses.add(superClass);
             hasNext = false;
             for (; pos < parserText.length(); pos++) {
@@ -205,6 +207,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   @Override
   public String getSyntax() {
     return "CREATE CLASS <class> [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [CLUSTERS <total-cluster-number>] [ABSTRACT]";
+  }
+
+  @Override
+  public String getUndoCommand() {
+    return "drop class " + className;
   }
 
   @Override

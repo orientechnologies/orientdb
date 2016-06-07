@@ -70,6 +70,8 @@ public class OAlterClassStatementTest extends OParserTestAbstract {
 
     checkRightSyntax("alter class polymorpicIdsPropagation removecluster 436");
 
+    checkRightSyntax("ALTER CLASS Person CUSTOM `onCreate.identityType`=role");
+
     checkWrongSyntax("ALTER CLASS Foo NAME Bar baz");
 
     checkWrongSyntax("ALTER CLASS Foo SUPERCLASS *Bar");

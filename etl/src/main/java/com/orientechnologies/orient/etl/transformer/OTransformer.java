@@ -24,5 +24,7 @@ import com.orientechnologies.orient.etl.OETLPipelineComponent;
  * ETL Transformer.
  */
 public interface OTransformer extends OETLPipelineComponent {
+
   Object transform(final Object input);
+
 }

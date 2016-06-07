@@ -21,12 +21,13 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
-import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -39,24 +40,20 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OStoragePerformanceStatistic;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
+import javax.management.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -85,6 +82,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final AtomicReference<WaitingListNode> waitingTail = new AtomicReference<WaitingListNode>();
 
   private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
+  private final OPerformanceStatisticManager performanceStatisticManager;
 
   /**
    * Flag which indicates whether we work in unsafe mode for current thread.
@@ -114,10 +112,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     });
   }
 
-  private final OAbstractPaginatedStorage    storage;
-  private final OStoragePerformanceStatistic storagePerformanceStatistic;
-  private final OWriteAheadLog               writeAheadLog;
-  private final OLockManager<String> lockManager = new OLockManager<String>(true, -1);
+  private final OAbstractPaginatedStorage storage;
+  private final OWriteAheadLog            writeAheadLog;
+  private final OOneEntryPerKeyLockManager<String> lockManager = new OOneEntryPerKeyLockManager<String>(true, -1,
+      OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
   private final OReadCache  readCache;
   private final OWriteCache writeCache;
 
@@ -128,7 +126,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     this.writeAheadLog = storage.getWALInstance();
     this.readCache = storage.getReadCache();
     this.writeCache = storage.getWriteCache();
-    this.storagePerformanceStatistic = storage.getStoragePerformanceStatistic();
+    this.performanceStatisticManager = storage.getPerformanceStatisticManager();
+
+    performanceStatisticManager.registerComponent("atomic operation");
   }
 
   /**
@@ -160,10 +160,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * @param trackNonTxOperations If this flag set to <code>true</code> then special record {@link ONonTxOperationPerformedWALRecord} will be added to
    *                             WAL in case of atomic operation is started outside of active storage transaction. During storage restore procedure
    *                             this record is monitored and if given record is present then rebuild of all indexes is performed.
-   * @param fullName             Name of component which is going participate in atomic operation.
+   * @param lockName             Name of lock (usually name of component) which is going participate in atomic operation.
    * @return Instance of active atomic operation.
    */
-  public OAtomicOperation startAtomicOperation(String fullName, boolean trackNonTxOperations) throws IOException {
+  public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
     if (unsafeMode.get() || writeAheadLog == null)
       return null;
 
@@ -171,8 +171,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (operation != null) {
       operation.incrementCounter();
 
-      if (fullName != null)
-        acquireExclusiveLockTillOperationComplete(operation, fullName);
+      if (lockName != null)
+        acquireExclusiveLockTillOperationComplete(operation, lockName);
 
       return operation;
     }
@@ -202,7 +202,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     final OOperationUnitId unitId = OOperationUnitId.generateId();
     final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
-    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storagePerformanceStatistic, storage.getId());
+    operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), performanceStatisticManager);
     currentOperation.set(operation);
 
     if (trackAtomicOperations) {
@@ -213,8 +213,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (trackNonTxOperations && storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
-    if (fullName != null)
-      acquireExclusiveLockTillOperationComplete(operation, fullName);
+    if (lockName != null)
+      acquireExclusiveLockTillOperationComplete(operation, lockName);
 
     return operation;
   }
@@ -222,7 +222,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   /**
    * Switch off unsafe mode. During this mode it is not guaranteed that operations will support
    * ACID properties but system performance will be faster.
-   *
+   * <p>
    * To switch off unsafe mode call {@link #switchOffUnsafeMode()}
    */
   public void switchOnUnsafeMode() {
@@ -250,6 +250,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
           last.next = node;
         }
 
+        node.linkLatch.countDown();
+
         break;
       }
     }
@@ -263,6 +265,13 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       if (tail == null)
         return null;
 
+      //head is null but tail is not null we are in the middle of addition of item in the list
+      if (head == null) {
+        //let other thread to make it's work
+        Thread.yield();
+        continue;
+      }
+
       if (head == tail) {
         return new WaitingListNode(head.item);
       }
@@ -270,8 +279,12 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       if (waitingHead.compareAndSet(head, tail)) {
         WaitingListNode node = head;
 
+        node.waitTillAllLinksWillBeCreated();
+
         while (node.next != tail) {
           node = node.next;
+
+          node.waitTillAllLinksWillBeCreated();
         }
 
         node.next = new WaitingListNode(tail.item);
@@ -399,16 +412,19 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       throw OException.wrapException(nre, exception);
     }
 
-    final int counter = operation.decrementCounter();
-    assert counter >= 0;
+    final int counter = operation.getCounter();
+    assert counter > 0;
 
-    if (counter == 0) {
+    if (counter == 1) {
       if (!operation.isRollback())
         operation.commitChanges(writeAheadLog);
 
       writeAheadLog
           .logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(), operation.getMetadata());
 
+      // We have to decrement the counter after the disk operations, otherwise, if they
+      // fail, we will be unable to rollback the atomic operation later.
+      operation.decrementCounter();
       currentOperation.set(null);
 
       if (trackAtomicOperations) {
@@ -416,19 +432,36 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       }
 
       for (String lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
       atomicOperationsCount.decrement();
-    }
+    } else
+      operation.decrementCounter();
 
     return operation;
+  }
+
+  public OUncompletedCommit<OAtomicOperation> initiateCommit() throws IOException {
+    if (unsafeMode.get() || writeAheadLog == null)
+      return new OUncompletedCommit.NoOperation<OAtomicOperation>(null);
+
+    final OAtomicOperation operation = currentOperation.get();
+    assert operation != null;
+
+    final int counter = operation.decrementCounter();
+    assert counter >= 0;
+
+    if (counter > 0)
+      return new OUncompletedCommit.NoOperation<OAtomicOperation>(operation);
+
+    return new UncompletedCommit(operation, operation.initiateCommit(writeAheadLog));
   }
 
   private void acquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String fullName) {
     if (operation.containsInLockedObjects(fullName))
       return;
 
-    lockManager.acquireLock(fullName, OLockManager.LOCK.EXCLUSIVE);
+    lockManager.acquireLock(fullName, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
     operation.addLockedObject(fullName);
   }
 
@@ -436,10 +469,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (unsafeMode.get() || writeAheadLog == null)
       return;
 
-    assert durableComponent.getName() != null;
-    assert durableComponent.getFullName() != null;
+    assert durableComponent.getLockName() != null;
 
-    lockManager.acquireLock(durableComponent.getFullName(), OLockManager.LOCK.SHARED);
+    lockManager.acquireLock(durableComponent.getLockName(), OOneEntryPerKeyLockManager.LOCK.SHARED);
   }
 
   public void releaseReadLock(ODurableComponent durableComponent) {
@@ -447,9 +479,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       return;
 
     assert durableComponent.getName() != null;
-    assert durableComponent.getFullName() != null;
+    assert durableComponent.getLockName() != null;
 
-    lockManager.releaseLock(this, durableComponent.getFullName(), OLockManager.LOCK.SHARED);
+    lockManager.releaseLock(this, durableComponent.getLockName(), OOneEntryPerKeyLockManager.LOCK.SHARED);
   }
 
   public void registerMBean() {
@@ -457,8 +489,15 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       try {
         final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         final ObjectName mbeanName = new ObjectName(getMBeanName());
-        if (!server.isRegistered(mbeanName))
+
+        if (!server.isRegistered(mbeanName)) {
           server.registerMBean(this, mbeanName);
+        } else {
+          mbeanIsRegistered.set(false);
+          OLogManager.instance().warn(this,
+              "MBean with name %s has already registered. Probably your system was not shutdown correctly "
+                  + "or you have several running applications which use OrientDB engine inside", mbeanName.getCanonicalName());
+        }
 
       } catch (MalformedObjectNameException e) {
         throw OException.wrapException(new OStorageException("Error during registration of atomic manager MBean"), e);
@@ -539,11 +578,83 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   private static final class WaitingListNode {
+    /**
+     * Latch which indicates that all links are created between add and existing list elements.
+     */
+    private final CountDownLatch linkLatch = new CountDownLatch(1);
+
     private final    Thread          item;
     private volatile WaitingListNode next;
 
     public WaitingListNode(Thread item) {
       this.item = item;
+    }
+
+    public void waitTillAllLinksWillBeCreated() {
+      try {
+        linkLatch.await();
+      } catch (InterruptedException e) {
+        throw new OInterruptedException(
+            "Thread was interrupted while was waiting for completion of 'waiting linked list' operation");
+      }
+    }
+  }
+
+  private class UncompletedCommit implements OUncompletedCommit<OAtomicOperation> {
+    private final OAtomicOperation         operation;
+    private final OUncompletedCommit<Void> nestedCommit;
+
+    public UncompletedCommit(OAtomicOperation operation, OUncompletedCommit<Void> nestedCommit) {
+      this.operation = operation;
+      this.nestedCommit = nestedCommit;
+    }
+
+    @Override
+    public OAtomicOperation complete() {
+      nestedCommit.complete();
+
+      try {
+        writeAheadLog
+            .logAtomicOperationEndRecord(operation.getOperationUnitId(), false, operation.getStartLSN(), operation.getMetadata());
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error while completing an uncompleted commit."), e);
+      }
+
+      currentOperation.set(null);
+
+      if (trackAtomicOperations)
+        activeAtomicOperations.remove(operation.getOperationUnitId());
+
+      for (String lockObject : operation.lockedObjects())
+        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+
+      atomicOperationsCount.decrement();
+
+      return operation;
+    }
+
+    @Override
+    public void rollback() {
+      operation.rollback(null);
+
+      nestedCommit.rollback();
+
+      try {
+        writeAheadLog
+            .logAtomicOperationEndRecord(operation.getOperationUnitId(), true, operation.getStartLSN(), operation.getMetadata());
+      } catch (IOException e) {
+        throw OException.wrapException(new OStorageException("Error while rollbacking an uncompleted commit."), e);
+      }
+
+      currentOperation.set(null);
+
+      if (trackAtomicOperations)
+        activeAtomicOperations.remove(operation.getOperationUnitId());
+
+      for (String lockObject : operation.lockedObjects())
+        lockManager.releaseLock(this, lockObject, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+
+      atomicOperationsCount.decrement();
     }
   }
 }

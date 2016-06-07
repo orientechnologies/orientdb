@@ -77,6 +77,6 @@ public class ORecordCacheWeakRefs extends OAbstractMapCache<WeakHashMap<ORID, We
 
   @Override
   public void clear() {
-    cache = new WeakHashMap<ORID, WeakReference<ORecord>>();
+    cache.clear();
   }
 }

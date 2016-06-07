@@ -20,8 +20,8 @@
 package com.orientechnologies.orient.console;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
-import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -29,34 +29,84 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 
 public class OTableFormatter {
-  protected final static String           MORE                 = "...";
-  protected final static Set<String>      prefixedColumns      = new LinkedHashSet<String>(Arrays.asList(new String[] { "#",
-      "@RID", "@CLASS"                                        }));
-  protected final OConsoleApplication     out;
-  protected final static SimpleDateFormat DEF_DATEFORMAT       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-  protected int                           maxMultiValueEntries = 10;
-  protected int                           minColumnSize        = 4;
-  protected int                           maxWidthSize         = 150;
+  public enum ALIGNMENT {
+    LEFT, CENTER, RIGHT
+  }
 
-  public OTableFormatter(final OConsoleApplication iConsole) {
+  protected final static String                    MORE                 = "...";
+  protected final static SimpleDateFormat          DEF_DATEFORMAT       = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+
+  protected OPair<String, Boolean>                 columnSorting        = null;
+  protected final Map<String, ALIGNMENT>           columnAlignment      = new HashMap<String, ALIGNMENT>();
+  protected final Map<String, Map<String, String>> columnMetadata       = new HashMap<String, Map<String, String>>();
+  protected final Set<String>                      columnHidden         = new HashSet<String>();
+  protected final Set<String>                      prefixedColumns      = new LinkedHashSet<String>(
+      Arrays.asList(new String[] { "#", "@RID", "@CLASS" }));
+  protected final OTableOutput                     out;
+  protected int                                    maxMultiValueEntries = 10;
+  protected int                                    minColumnSize        = 4;
+  protected int                                    maxWidthSize         = 150;
+  protected String                                 nullValue            = "";
+  private boolean                                  leftBorder           = true;
+  private boolean                                  rightBorder          = true;
+  private ODocument                                footer;
+
+  public interface OTableOutput {
+    void onMessage(String text, Object... args);
+  }
+
+  public OTableFormatter(final OTableOutput iConsole) {
     this.out = iConsole;
   }
 
-  public void writeRecords(final Collection<OIdentifiable> resultSet, final int limit) {
+  public void setColumnSorting(final String column, final boolean ascending) {
+    columnSorting = new OPair<String, Boolean>(column, ascending);
+  }
+
+  public void setColumnHidden(final String column) {
+    columnHidden.add(column);
+  }
+
+  public void writeRecords(final List<? extends OIdentifiable> resultSet, final int limit) {
     writeRecords(resultSet, limit, null);
   }
 
-  public void writeRecords(final Collection<OIdentifiable> resultSet, final int limit,
+  public void writeRecords(final List<? extends OIdentifiable> resultSet, final int limit,
       final OCallable<Object, OIdentifiable> iAfterDump) {
     final Map<String, Integer> columns = parseColumns(resultSet, limit);
+
+    if (columnSorting != null) {
+      Collections.sort(resultSet, new Comparator<Object>() {
+        @Override
+        public int compare(final Object o1, final Object o2) {
+          final ODocument doc1 = ((OIdentifiable) o1).getRecord();
+          final ODocument doc2 = ((OIdentifiable) o2).getRecord();
+          final Object value1 = doc1.field(columnSorting.getKey());
+          final Object value2 = doc2.field(columnSorting.getKey());
+          final boolean ascending = columnSorting.getValue();
+
+          final int result;
+          if (value2 == null)
+            result = 1;
+          else if (value1 == null)
+            result = 0;
+          else if (value1 instanceof Comparable)
+            result = ((Comparable) value1).compareTo(value2);
+          else
+            result = value1.toString().compareTo(value2.toString());
+
+          return ascending ? result : result * -1;
+        }
+      });
+    }
 
     int fetched = 0;
     for (OIdentifiable record : resultSet) {
@@ -66,13 +116,31 @@ public class OTableFormatter {
 
       if (limit > -1 && fetched >= limit) {
         printHeaderLine(columns);
-        out.message("\nLIMIT EXCEEDED: resultset contains more items not displayed (limit=" + limit + ")");
+        out.onMessage("\nLIMIT EXCEEDED: resultset contains more items not displayed (limit=" + limit + ")");
         return;
       }
     }
 
     if (fetched > 0)
       printHeaderLine(columns);
+
+    if (footer != null) {
+      dumpRecordInTable(-1, footer, columns);
+      printHeaderLine(columns);
+    }
+  }
+
+  public void setColumnAlignment(final String column, final ALIGNMENT alignment) {
+    columnAlignment.put(column, alignment);
+  }
+
+  public void setColumnMetadata(final String columnName, final String metadataName, final String metadataValue) {
+    Map<String, String> metadata = columnMetadata.get(columnName);
+    if (metadata == null) {
+      metadata = new LinkedHashMap<String, String>();
+      columnMetadata.put(columnName, metadata);
+    }
+    metadata.put(metadataName, metadataValue);
   }
 
   public int getMaxWidthSize() {
@@ -98,35 +166,80 @@ public class OTableFormatter {
       printHeader(iColumns);
 
     // FORMAT THE LINE DYNAMICALLY
-    List<Object> vargs = new ArrayList<Object>();
+    List<String> vargs = new ArrayList<String>();
     try {
       if (iRecord instanceof ODocument)
         ((ODocument) iRecord).setLazyLoad(false);
 
       final StringBuilder format = new StringBuilder(maxWidthSize);
-      for (Entry<String, Integer> col : iColumns.entrySet()) {
-        if (format.length() > 0)
-          format.append('|');
-        format.append("%-" + col.getValue() + "s");
 
-        Object value = getFieldValue(iIndex, iRecord, col.getKey());
+      if (leftBorder)
+        format.append('|');
+
+      int i = 0;
+      for (Entry<String, Integer> col : iColumns.entrySet()) {
+        final String columnName = col.getKey();
+        final int columnWidth = col.getValue();
+
+        if (i++ > 0)
+          format.append('|');
+
+        format.append("%-" + columnWidth + "s");
+
+        Object value = getFieldValue(iIndex, iRecord, columnName);
+        String valueAsString = null;
 
         if (value != null) {
-          value = value.toString();
-          if (((String) value).length() > col.getValue()) {
+          valueAsString = value.toString();
+          if (valueAsString.length() > columnWidth) {
             // APPEND ...
-            value = ((String) value).substring(0, col.getValue() - 3) + MORE;
+            valueAsString = valueAsString.substring(0, columnWidth - 3) + MORE;
           }
         }
 
-        vargs.add(value);
+        valueAsString = formatCell(columnName, columnWidth, valueAsString);
+
+        vargs.add(valueAsString);
       }
 
-      out.message("\n" + format.toString(), vargs.toArray());
+      if (rightBorder)
+        format.append('|');
+
+      out.onMessage("\n" + format.toString(), vargs.toArray());
 
     } catch (Throwable t) {
-      out.message("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record dued to: " + t);
+      out.onMessage("%3d|%9s|%s\n", iIndex, iRecord.getIdentity(), "Error on loading record due to: " + t);
     }
+  }
+
+  protected String formatCell(final String columnName, final int columnWidth, String valueAsString) {
+    if (valueAsString == null)
+      valueAsString = nullValue;
+
+    final ALIGNMENT alignment = columnAlignment.get(columnName);
+    if (alignment != null) {
+      switch (alignment) {
+      case LEFT:
+        break;
+      case CENTER: {
+        final int room = columnWidth - valueAsString.length();
+        if (room > 1) {
+          for (int k = 0; k < room / 2; ++k)
+            valueAsString = " " + valueAsString;
+        }
+        break;
+      }
+      case RIGHT: {
+        final int room = columnWidth - valueAsString.length();
+        if (room > 0) {
+          for (int k = 0; k < room; ++k)
+            valueAsString = " " + valueAsString;
+        }
+        break;
+      }
+      }
+    }
+    return valueAsString;
   }
 
   private Object getFieldValue(final int iIndex, final OIdentifiable iRecord, final String iColumnName) {
@@ -134,23 +247,35 @@ public class OTableFormatter {
 
     if (iColumnName.equals("#"))
       // RECORD NUMBER
-      value = iIndex;
+      value = iIndex > -1 ? iIndex : "";
     else if (iColumnName.equals("@RID"))
       // RID
       value = iRecord.getIdentity().toString();
     else if (iRecord instanceof ODocument)
       value = ((ODocument) iRecord).field(iColumnName);
-    else if (iRecord instanceof ORecordBytes)
-      value = "<binary> (size=" + ((ORecordBytes) iRecord).toStream().length + " bytes)";
+    else if (iRecord instanceof OBlob)
+      value = "<binary> (size=" + ((OBlob) iRecord).toStream().length + " bytes)";
     else if (iRecord instanceof OIdentifiable) {
       final ORecord rec = iRecord.getRecord();
       if (rec instanceof ODocument)
         value = ((ODocument) rec).field(iColumnName);
-      else if (rec instanceof ORecordBytes)
-        value = "<binary> (size=" + ((ORecordBytes) rec).toStream().length + " bytes)";
+      else if (rec instanceof OBlob)
+        value = "<binary> (size=" + ((OBlob) rec).toStream().length + " bytes)";
     }
 
     return getPrettyFieldValue(value, maxMultiValueEntries);
+  }
+
+  public void setNullValue(final String s) {
+    nullValue = s;
+  }
+
+  public void setLeftBorder(final boolean value) {
+    leftBorder = value;
+  }
+
+  public void setRightBorder(final boolean value) {
+    rightBorder = value;
   }
 
   public static String getPrettyFieldMultiValue(final Iterator<?> iterator, final int maxMultiValueEntries) {
@@ -176,6 +301,10 @@ public class OTableFormatter {
     value.append("]");
 
     return value.toString();
+  }
+
+  public void setFooter(final ODocument footer) {
+    this.footer = footer;
   }
 
   public static Object getPrettyFieldValue(Object value, final int multiValueMaxEntries) {
@@ -207,19 +336,90 @@ public class OTableFormatter {
   }
 
   private void printHeader(final Map<String, Integer> iColumns) {
-    final StringBuilder buffer = new StringBuilder("\n");
+    final StringBuilder columnRow = new StringBuilder("\n");
+    final Map<String, StringBuilder> metadataRows = new HashMap<String, StringBuilder>();
+
+    // INIT METADATA
+    final LinkedHashSet<String> allMetadataNames = new LinkedHashSet<String>();
+    final Set<String> metadataColumns = new HashSet<String>();
+
+    for (Entry<String, Map<String, String>> entry : columnMetadata.entrySet()) {
+      metadataColumns.add(entry.getKey());
+
+      for (Entry<String, String> entry2 : entry.getValue().entrySet()) {
+        allMetadataNames.add(entry2.getKey());
+
+        StringBuilder metadataRow = metadataRows.get(entry2.getKey());
+        if (metadataRow == null) {
+          metadataRow = new StringBuilder("\n");
+          metadataRows.put(entry2.getKey(), metadataRow);
+        }
+      }
+    }
 
     printHeaderLine(iColumns);
     int i = 0;
+
+    if (leftBorder) {
+      columnRow.append('|');
+      if (!metadataRows.isEmpty()) {
+        for (StringBuilder buffer : metadataRows.values())
+          buffer.append('|');
+      }
+    }
+
     for (Entry<String, Integer> column : iColumns.entrySet()) {
-      if (i++ > 0)
-        buffer.append('|');
       String colName = column.getKey();
+
+      if (columnHidden.contains(colName))
+        continue;
+
+      if (i > 0) {
+        columnRow.append('|');
+        if (!metadataRows.isEmpty()) {
+          for (StringBuilder buffer : metadataRows.values())
+            buffer.append('|');
+        }
+      }
+
       if (colName.length() > column.getValue())
         colName = colName.substring(0, column.getValue());
-      buffer.append(String.format("%-" + column.getValue() + "s", colName));
+      columnRow.append(String.format("%-" + column.getValue() + "s", formatCell(colName, column.getValue(), colName)));
+
+      if (!metadataRows.isEmpty()) {
+        // METADATA VALUE
+        for (String metadataName : allMetadataNames) {
+          final StringBuilder buffer = metadataRows.get(metadataName);
+          final Map<String, String> metadataColumn = columnMetadata.get(column.getKey());
+          String metadataValue = metadataColumn != null ? metadataColumn.get(metadataName) : null;
+          if (metadataValue == null)
+            metadataValue = "";
+
+          if (metadataValue.length() > column.getValue())
+            metadataValue = metadataValue.substring(0, column.getValue());
+          buffer.append(String.format("%-" + column.getValue() + "s", formatCell(colName, column.getValue(), metadataValue)));
+        }
+      }
+
+      ++i;
     }
-    out.message(buffer.toString());
+
+    if (rightBorder) {
+      columnRow.append('|');
+      if (!metadataRows.isEmpty()) {
+        for (StringBuilder buffer : metadataRows.values())
+          buffer.append('|');
+      }
+    }
+
+    if (!metadataRows.isEmpty()) {
+      // PRINT METADATA IF ANY
+      for (StringBuilder buffer : metadataRows.values())
+        out.onMessage(buffer.toString());
+      printHeaderLine(iColumns);
+    }
+
+    out.onMessage(columnRow.toString());
 
     printHeaderLine(iColumns);
   }
@@ -228,27 +428,37 @@ public class OTableFormatter {
     final StringBuilder buffer = new StringBuilder("\n");
 
     if (iColumns.size() > 0) {
+      if (leftBorder)
+        buffer.append('+');
+
       int i = 0;
-      for (Entry<String, Integer> col : iColumns.entrySet()) {
+      for (Entry<String, Integer> column : iColumns.entrySet()) {
+        final String colName = column.getKey();
+        if (columnHidden.contains(colName))
+          continue;
+
         if (i++ > 0)
           buffer.append("+");
 
-        for (int k = 0; k < col.getValue(); ++k)
+        for (int k = 0; k < column.getValue(); ++k)
           buffer.append("-");
       }
+
+      if (rightBorder)
+        buffer.append('+');
     }
 
-    out.message(buffer.toString());
+    out.onMessage(buffer.toString());
   }
 
   /**
    * Fill the column map computing the maximum size for a field.
-   * 
+   *
    * @param resultSet
    * @param limit
    * @return
    */
-  private Map<String, Integer> parseColumns(final Collection<OIdentifiable> resultSet, final int limit) {
+  private Map<String, Integer> parseColumns(final Collection<? extends OIdentifiable> resultSet, final int limit) {
     final Map<String, Integer> columns = new LinkedHashMap<String, Integer>();
 
     for (String c : prefixedColumns)
@@ -275,7 +485,7 @@ public class OTableFormatter {
         if (!hasClass && doc.getClassName() != null)
           hasClass = true;
 
-      } else if (rec instanceof ORecordBytes) {
+      } else if (rec instanceof OBlob) {
         // UNIQUE BINARY FIELD
         columns.put("value", maxWidthSize - 15);
 
@@ -293,6 +503,14 @@ public class OTableFormatter {
 
     if (!hasClass)
       columns.remove("@CLASS");
+
+    if( footer!=null){
+      footer.setLazyLoad(false);
+      // PARSE ALL THE DOCUMENT'S FIELDS
+      for (String fieldName : footer.fieldNames()) {
+        columns.put(fieldName, getColumnSize(fetched, footer, fieldName, columns.get(fieldName)));
+      }
+    }
 
     // COMPUTE MAXIMUM WIDTH
     int width = 0;
@@ -350,6 +568,9 @@ public class OTableFormatter {
     if (!hasClass)
       columns.remove("@CLASS");
 
+    for (String c : columnHidden)
+      columns.remove(c);
+
     return columns;
   }
 
@@ -360,6 +581,17 @@ public class OTableFormatter {
       newColumnSize = fieldName.length();
     else
       newColumnSize = Math.max(origSize, fieldName.length());
+
+    final Map<String, String> metadata = columnMetadata.get(fieldName);
+    if (metadata != null) {
+      // UPDATE WIDTH WITH METADATA VALUES
+      for (String v : metadata.values()) {
+        if (v != null) {
+          if (v.length() > newColumnSize)
+            newColumnSize = v.length();
+        }
+      }
+    }
 
     final Object fieldValue = getFieldValue(iIndex, iRecord, fieldName);
 

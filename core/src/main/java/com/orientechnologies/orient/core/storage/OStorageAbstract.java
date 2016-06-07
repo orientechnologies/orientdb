@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
@@ -39,8 +35,12 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   public final static ThreadGroup storageThreadGroup;
@@ -67,23 +67,23 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     storageThreadGroup = new ThreadGroup(parentThreadGroup, "OrientDB Storage");
   }
 
-  protected final String                          url;
-  protected final String                          mode;
-  protected final OSharedResourceAdaptiveExternal dataLock;
-  protected final OReadersWriterSpinLock          stateLock;
+  protected final String                              url;
+  protected final String                              mode;
+  protected final OSharedResourceAdaptiveExternal     dataLock;
+  protected final OReadersWriterSpinLock              stateLock;
 
   protected volatile OStorageConfiguration            configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
   protected String                                    name;
-  protected AtomicLong                                version = new AtomicLong();
-  protected volatile STATUS                           status  = STATUS.CLOSED;
+  protected AtomicLong                                version         = new AtomicLong();
+  protected volatile STATUS                           status          = STATUS.CLOSED;
 
-  private final OSharedContainerImpl sharedContainer = new OSharedContainerImpl();
+  private final OSharedContainerImpl                  sharedContainer = new OSharedContainerImpl();
 
   public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
     this.name = normalizeName(name);
 
-    if (OStringSerializerHelper.contains(name, ','))
+    if (OStringSerializerHelper.contains(this.name, ','))
       throw new IllegalArgumentException("Invalid character in storage name: " + this.name);
 
     url = iURL;
@@ -230,11 +230,6 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   @Override
   public OCurrentStorageComponentsFactory getComponentsFactory() {
     return componentsFactory;
-  }
-
-  @Override
-  public long getLastOperationId() {
-    return 0;
   }
 
   @Override

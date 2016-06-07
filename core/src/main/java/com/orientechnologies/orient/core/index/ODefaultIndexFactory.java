@@ -30,8 +30,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Default OrientDB index factory for indexes based on MVRBTree.<br>
- * Supports index types :
+ * Default OrientDB index factory for indexes based on SBTree.<br>
+ * Supports index types:
  * <ul>
  * <li>UNIQUE</li>
  * <li>NOTUNIQUE</li>
@@ -41,10 +41,10 @@ import java.util.Set;
  */
 public class ODefaultIndexFactory implements OIndexFactory {
 
-  public static final String       SBTREE_ALGORITHM             = "SBTREE";
+  public static final String SBTREE_ALGORITHM = "SBTREE";
 
-  public static final String       SBTREEBONSAI_VALUE_CONTAINER = "SBTREEBONSAISET";
-  public static final String       NONE_VALUE_CONTAINER         = "NONE";
+  public static final String SBTREEBONSAI_VALUE_CONTAINER = "SBTREEBONSAISET";
+  public static final String NONE_VALUE_CONTAINER         = "NONE";
 
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
@@ -102,10 +102,10 @@ public class ODefaultIndexFactory implements OIndexFactory {
       version = getLastVersion();
 
     if (SBTREE_ALGORITHM.equals(algorithm))
-      return createSBTreeIndex(name, indexType, valueContainerAlgorithm, metadata, (OAbstractPaginatedStorage) database
-          .getStorage().getUnderlying(), version);
+      return createSBTreeIndex(name, indexType, valueContainerAlgorithm, metadata,
+          (OAbstractPaginatedStorage) database.getStorage().getUnderlying(), version);
 
-    throw new OConfigurationException("Unsupported type : " + indexType);
+    throw new OConfigurationException("Unsupported type: " + indexType);
   }
 
   private OIndexInternal<?> createSBTreeIndex(String name, String indexType, String valueContainerAlgorithm, ODocument metadata,
@@ -121,7 +121,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
       return new OIndexDictionary(name, indexType, SBTREE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
     }
 
-    throw new OConfigurationException("Unsupported type : " + indexType);
+    throw new OConfigurationException("Unsupported type: " + indexType);
   }
 
   @Override
@@ -130,7 +130,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OIndexEngine createIndexEngine(String algorithm,String name, Boolean durableInNonTxMode, OStorage storage, int version,
+  public OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,
       Map<String, String> engineProperties) {
 
     final OIndexEngine indexEngine;
@@ -144,7 +144,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine(name);
     else
-      throw new OIndexException("Unsupported storage type : " + storageType);
+      throw new OIndexException("Unsupported storage type: " + storageType);
 
     return indexEngine;
   }

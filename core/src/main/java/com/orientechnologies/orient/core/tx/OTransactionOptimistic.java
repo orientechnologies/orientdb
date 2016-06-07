@@ -22,16 +22,15 @@ package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
@@ -41,8 +40,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -55,6 +52,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -64,50 +62,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
 
-  private boolean usingLog = true;
-  private int     txStartCounter;
-
-  private class CommitIndexesCallback implements Runnable {
-    private final Map<String, OIndex<?>> indexes;
-
-    private CommitIndexesCallback(Map<String, OIndex<?>> indexes) {
-      this.indexes = indexes;
-    }
-
-    @Override
-    public void run() {
-      final ODocument indexEntries = getIndexChanges();
-      if (indexEntries != null) {
-        final Map<String, OIndexInternal<?>> indexesToCommit = new HashMap<String, OIndexInternal<?>>();
-
-        for (Entry<String, Object> indexEntry : indexEntries) {
-          final OIndexInternal<?> index = indexes.get(indexEntry.getKey()).getInternal();
-          indexesToCommit.put(index.getName(), index.getInternal());
-        }
-
-        for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-          indexInternal.preCommit();
-
-        for (Entry<String, Object> indexEntry : indexEntries) {
-          final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
-
-          if (index == null) {
-            OLogManager.instance().error(this, "Index with name '" + indexEntry.getKey() + "' was not found.");
-            throw new OIndexException("Index with name '" + indexEntry.getKey() + "' was not found.");
-          } else
-            index.addTxOperation((ODocument) indexEntry.getValue());
-        }
-
-        try {
-          for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-            indexInternal.commit();
-        } finally {
-          for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-            indexInternal.postCommit();
-        }
-      }
-    }
-  }
+  private boolean              usingLog = true;
+  private int                  txStartCounter;
 
   public OTransactionOptimistic(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
@@ -158,6 +114,31 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   }
 
   @Override
+  public OUncompletedCommit<Void> initiateCommit() {
+    return initiateCommit(false);
+  }
+
+  @Override
+  public OUncompletedCommit<Void> initiateCommit(boolean force) {
+    checkTransaction();
+
+    if (txStartCounter < 0)
+      throw new OStorageException("Invalid value of tx counter");
+
+    if (force)
+      txStartCounter = 0;
+    else
+      txStartCounter--;
+
+    if (txStartCounter == 0)
+      return doInitiateCommit();
+    else if (txStartCounter > 0)
+      return new UncompletedCommit(false, null);
+    else
+      throw new OTransactionException("Transaction was committed more times than it is started.");
+  }
+
+  @Override
   public int amountOfNestedTxs() {
     return txStartCounter;
   }
@@ -196,13 +177,15 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     // CLEAR THE CACHE
     database.getLocalCache().clear();
 
-    // REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
-    // EXECUTED
-    //    for (ORecordOperation v : recordEntries.values())
-    //      v.getRecord().unload();
-
-    for (ORecordOperation v : allEntries.values())
-      v.getRecord().unload();
+    // REMOVE ALL THE DIRTY ENTRIES AND UNDO ANY DIRTY DOCUMENT IF POSSIBLE.
+    for (ORecordOperation v : allEntries.values()) {
+      final ORecord rec = v.getRecord();
+      if (rec.isDirty())
+        if (rec instanceof ODocument && ((ODocument) rec).isTrackingChanges())
+          ((ODocument) rec).undo();
+        else
+          rec.unload();
+    }
 
     close();
 
@@ -255,7 +238,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     final ORecord txRecord = getRecord(rid);
     if (txRecord == OTransactionRealAbstract.DELETED_RECORD)
       // DELETED IN TX
-      throw new ORecordNotFoundException("Record with id " + rid + " was not found in database.");
+      throw new ORecordNotFoundException(rid);
 
     if (txRecord != null) {
       if (txRecord.getVersion() > recordVersion)
@@ -265,7 +248,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
 
     if (rid.isTemporary())
-      throw new ORecordNotFoundException("Record with id " + rid + " was not found in database.");
+      throw new ORecordNotFoundException(rid);
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record = database.executeReadRecord((ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache,
@@ -358,11 +341,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       return null;
 
     boolean originalSaved = false;
-    ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
+    final ODirtyManager dirtyManager = ORecordInternal.getDirtyManager(iRecord);
     do {
       Set<ORecord> newRecord = dirtyManager.getNewRecords();
       Set<ORecord> updatedRecord = dirtyManager.getUpdateRecords();
-      dirtyManager.clearForSave();
+      dirtyManager.clear();
       if (newRecord != null) {
         for (ORecord rec : newRecord) {
           if (rec instanceof ODocument)
@@ -433,7 +416,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       case ORecordOperation.LOADED:
         /**
          * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord}
-         * .
          */
         break;
       case ORecordOperation.UPDATED: {
@@ -455,22 +437,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
         if (!rid.isValid()) {
           ORecordInternal.onBeforeIdentityChanged(iRecord);
-          if (database.getStorage().isAssigningClusterIds() || iClusterName != null) {
-            // ASSIGN A UNIQUE SERIAL TEMPORARY ID
-            if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
-              rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
-
-            if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
-              final ODocument recordSchemaAware = (ODocument) iRecord;
-              final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
-              final OClass clusterIdClass = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot()
-                  .getClassByClusterId(rid.clusterId);
-              if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
-                  || (recordClass != null && !recordClass.equals(clusterIdClass)))
-                throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
-                    + clusterIdClass + " but saved with class " + recordClass);
-            }
-          }
+          database.assignAndCheckCluster(iRecord, iClusterName);
 
           rid.clusterPosition = newObjectCounter--;
 
@@ -577,25 +544,20 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.COMMITTING;
 
     if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
-      if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
+      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()
           && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
         database.getStorage().commit(this, null);
       else {
-        final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
-        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
-          indexes.put(index.getName(), index);
-
-        final Runnable callback = new CommitIndexesCallback(indexes);
 
         final String storageType = database.getStorage().getUnderlying().getType();
 
         if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
-          database.getStorage().commit(OTransactionOptimistic.this, callback);
+          database.getStorage().commit(OTransactionOptimistic.this, null);
         else {
           database.getStorage().callInLock(new Callable<Object>() {
             @Override
             public Object call() throws Exception {
-              database.getStorage().commit(OTransactionOptimistic.this, callback);
+              database.getStorage().commit(OTransactionOptimistic.this, null);
               return null;
             }
           }, true);
@@ -606,6 +568,95 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     close();
 
     status = TXSTATUS.COMPLETED;
+  }
+
+  private OUncompletedCommit<Void> doInitiateCommit() {
+    if (status == TXSTATUS.ROLLED_BACK || status == TXSTATUS.ROLLBACKING)
+      throw new ORollbackException("Given transaction was rolled back and cannot be used.");
+
+    status = TXSTATUS.COMMITTING;
+
+    if (!allEntries.isEmpty() || !indexEntries.isEmpty()) {
+      if (!OScenarioThreadLocal.INSTANCE.isRunModeDistributed()
+          && !(database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
+        return new UncompletedCommit(true, database.getStorage().initiateCommit(this, null));
+      else {
+        final String storageType = database.getStorage().getUnderlying().getType();
+
+        if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
+          return new UncompletedCommit(true, database.getStorage().initiateCommit(OTransactionOptimistic.this, null));
+        else
+          return database.getStorage().callInLock(new Callable<OUncompletedCommit<Void>>() {
+            @Override
+            public OUncompletedCommit<Void> call() throws Exception {
+              return new UncompletedCommit(true, database.getStorage().initiateCommit(OTransactionOptimistic.this, null));
+            }
+          }, true);
+      }
+    }
+
+    return new UncompletedCommit(true, null);
+  }
+
+  private class UncompletedCommit implements OUncompletedCommit<Void> {
+
+    private final boolean                                    topLevel;
+    private final OUncompletedCommit<List<ORecordOperation>> nestedCommit;
+
+    public UncompletedCommit(boolean topLevel, OUncompletedCommit<List<ORecordOperation>> nestedCommit) {
+      this.topLevel = topLevel;
+      this.nestedCommit = nestedCommit;
+    }
+
+    @Override
+    public Void complete() {
+      checkTransaction();
+
+      if (!topLevel) {
+        OLogManager.instance().debug(this, "Nested transaction was closed but transaction itself was not committed.");
+        return null;
+      }
+
+      if (nestedCommit != null)
+        nestedCommit.complete();
+
+      close();
+      status = TXSTATUS.COMPLETED;
+
+      return null;
+    }
+
+    @Override
+    public void rollback() {
+      checkTransaction();
+
+      if (!topLevel) {
+        OTransactionOptimistic.this.rollback(false, 0);
+        return;
+      }
+
+      status = TXSTATUS.ROLLBACKING;
+
+      if (nestedCommit != null)
+        nestedCommit.rollback();
+
+      // CLEAR THE CACHE
+      database.getLocalCache().clear();
+
+      // REMOVE ALL THE DIRTY ENTRIES AND UNDO ANY DIRTY DOCUMENT IF POSSIBLE.
+      for (ORecordOperation v : allEntries.values()) {
+        final ORecord rec = v.getRecord();
+        if (rec.isDirty())
+          if (rec instanceof ODocument && ((ODocument) rec).isTrackingChanges())
+            ((ODocument) rec).undo();
+          else
+            rec.unload();
+      }
+
+      close();
+
+      status = TXSTATUS.ROLLED_BACK;
+    }
   }
 
 }

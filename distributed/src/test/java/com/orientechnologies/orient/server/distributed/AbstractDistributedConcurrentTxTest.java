@@ -20,21 +20,19 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import junit.framework.Assert;
+import com.tinkerpop.blueprints.impls.orient.*;
+import org.junit.Assert;
 
 import java.util.Date;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
@@ -70,28 +68,37 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
           if ((i + 1) % 100 == 0)
             System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
 
+          int retry = 0;
           boolean success = false;
-          for (int retry = 0; retry < 100; ++retry) {
+          for (; retry < 200; ++retry) {
             try {
-              updateVertex(graph, localVertex);
+              updateVertex(localVertex);
               graph.commit();
+              OLogManager.instance().info(this, "Success count %d retry %d", i, retry);
               success = true;
               break;
 
-            } catch (OConcurrentModificationException e) {
-              graph.rollback();
-
             } catch (ODistributedRecordLockedException e) {
               lockExceptions.incrementAndGet();
-              graph.rollback();
+              OLogManager.instance().info(this, "increment lockExceptions %d", lockExceptions.get());
+
+            } catch (ONeedRetryException e) {
+              OLogManager.instance().info(this, "Concurrent Exceptions %s", e, e);
 
             } catch (Exception e) {
               graph.rollback();
               throw e;
             }
+
+            Thread.sleep(10 + new Random().nextInt(500));
+
+            localVertex.reload();
+
+            OLogManager.instance().info(this, "Retry %d with reloaded vertex v=%d", retry, localVertex.getRecord().getVersion());
           }
 
-          Assert.assertTrue(success);
+          Assert.assertTrue("Unable to complete the transaction (last=" + i + "/" + count + "), even after " + retry + " retries",
+              success);
 
         } catch (InterruptedException e) {
           System.out.println("Writer received interrupt (db=" + databaseUrl);
@@ -107,17 +114,18 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
       }
 
       System.out.println("\nWriter " + name + " END. count = " + count + " lockExceptions: " + lockExceptions);
-
-      if (expectedConcurrentException)
-        Assert.assertTrue(lockExceptions.get() > 0);
-      else
-        Assert.assertTrue(lockExceptions.get() == 0);
-
       return null;
     }
   }
 
   protected void onAfterExecution() {
+
+    final long totalLockExceptions = lockExceptions.get();
+    if (expectedConcurrentException)
+      Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions > 0);
+    else
+      Assert.assertTrue("lockExceptions are " + totalLockExceptions, totalLockExceptions == 0);
+
     factory.close();
   }
 
@@ -141,7 +149,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
     OrientVertexType provider = graph.createVertexType("Provider", person);
     provider.createProperty("totalPurchased", OType.DECIMAL);
 
-    factory = new OrientGraphFactory(graph.getRawGraph().getURL(), "admin", "admin");
+    factory = new OrientGraphFactory(graph.getRawGraph().getURL(), "admin", "admin", false);
     factory.setStandardElementConstraints(false);
 
     v = createVertex(graph, 0, 0, 0).getIdentity();
@@ -155,15 +163,17 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
   protected OrientVertex createVertex(OrientBaseGraph graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
-    final Object result = graph.command(
-        new OCommandSQL("create vertex Provider content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
-            + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '"
-            + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateFormatInstance().format(new Date())
-            + "', 'children': '" + uniqueId + "', 'saved': 0}")).execute();
+    final Object result = graph
+        .command(new OCommandSQL(
+            "create vertex Provider content {'id': '" + UUID.randomUUID().toString() + "', 'name': 'Billy" + uniqueId
+                + "', 'surname': 'Mayes" + uniqueId + "', 'birthday': '" + ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+                    .getConfiguration().getDateFormatInstance().format(new Date())
+                + "', 'children': '" + uniqueId + "', 'saved': 0}"))
+        .execute();
     return (OrientVertex) result;
   }
 
-  protected void updateVertex(OrientGraph graph, OrientVertex v) {
+  protected void updateVertex(OrientVertex v) {
     v.setProperty("saved", ((Integer) v.getProperty("saved")) + 1);
   }
 }

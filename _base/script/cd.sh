@@ -10,6 +10,6 @@ fi
 
 echo "Switching to the fresh built OrientDB $VER"
 
-DIR=distribution/target/orientdb-community-$VER-distribution.dir/orientdb-community-$VER/
+DIR=distribution/target/orientdb-community-$VER.dir/orientdb-community-$VER/
 
 cd $DIR

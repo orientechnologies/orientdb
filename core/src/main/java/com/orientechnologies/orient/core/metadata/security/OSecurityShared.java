@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -41,6 +42,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.Orient;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,9 +53,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Shared security class. It's shared by all the database instances that point to the same storage.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSecurityShared implements OSecurity, OCloseable {
   private final AtomicLong version = new AtomicLong();
@@ -199,7 +200,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     final OSecurityUser currentUser = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
     if (currentUser != null) {
       // CHECK IF CURRENT USER IS ENLISTED
-      if (!iAllowAll.contains(currentUser.getIdentity())) {
+      if (iAllowAll == null || (iAllowAll != null && !iAllowAll.contains(currentUser.getIdentity()))) {
         // CHECK AGAINST SPECIFIC _ALLOW OPERATION
         if (iAllowOperation != null && iAllowOperation.contains(currentUser.getIdentity()))
           return true;
@@ -207,7 +208,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
         // CHECK IF AT LEAST ONE OF THE USER'S ROLES IS ENLISTED
         for (OSecurityRole r : currentUser.getRoles()) {
           // CHECK AGAINST GENERIC _ALLOW
-          if (iAllowAll.contains(r.getIdentity()))
+          if (iAllowAll != null && iAllowAll.contains(r.getIdentity()))
             return true;
           // CHECK AGAINST SPECIFIC _ALLOW OPERATION
           if (iAllowOperation != null && iAllowOperation.contains(r.getIdentity()))
@@ -216,7 +217,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
           // inheritance
           OSecurityRole parentRole = r.getParentRole();
           while (parentRole != null) {
-            if (iAllowAll.contains(parentRole.getIdentity()))
+            if (iAllowAll != null && iAllowAll.contains(parentRole.getIdentity()))
               return true;
             if (iAllowOperation != null && iAllowOperation.contains(parentRole.getIdentity()))
               return true;
@@ -311,7 +312,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public boolean dropUser(final String iUserName) {
-    final Number removed = getDatabase().<OCommandRequest> command(new OCommandSQL("delete from OUser where name = ?"))
+    final Number removed = getDatabase().<OCommandRequest>command(new OCommandSQL("delete from OUser where name = ?"))
         .execute(iUserName);
 
     return removed != null && removed.intValue() > 0;
@@ -329,8 +330,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (iRoleName == null)
       return null;
 
-    final List<ODocument> result = getDatabase()
-        .<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from ORole where name = ? limit 1")).execute(iRoleName);
+    final List<ODocument> result = getDatabase().<OCommandRequest>command(
+        new OSQLSynchQuery<ODocument>("select from ORole where name = ? limit 1")).execute(iRoleName);
 
     if (result != null && !result.isEmpty())
       return new ORole(result.get(0));
@@ -342,9 +343,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (iRoleName == null)
       return null;
 
-    final List<ODocument> result = getDatabase()
-        .<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select rid from index:ORole.name where key = ? limit 1"))
-        .execute(iRoleName);
+    final List<ODocument> result = getDatabase().<OCommandRequest>command(
+        new OSQLSynchQuery<ODocument>("select rid from index:ORole.name where key = ? limit 1")).execute(iRoleName);
 
     if (result != null && !result.isEmpty())
       return result.get(0).rawField("rid");
@@ -362,18 +362,18 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public boolean dropRole(final String iRoleName) {
-    final Number removed = getDatabase()
-        .<OCommandRequest> command(new OCommandSQL("delete from ORole where name = '" + iRoleName + "'")).execute();
+    final Number removed = getDatabase().<OCommandRequest>command(
+        new OCommandSQL("delete from ORole where name = '" + iRoleName + "'")).execute();
 
     return removed != null && removed.intValue() > 0;
   }
 
   public List<ODocument> getAllUsers() {
-    return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
+    return getDatabase().<OCommandRequest>command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
   }
 
   public List<ODocument> getAllRoles() {
-    return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from ORole")).execute();
+    return getDatabase().<OCommandRequest>command(new OSQLSynchQuery<ODocument>("select from ORole")).execute();
   }
 
   public OUser create() {
@@ -397,12 +397,16 @@ public class OSecurityShared implements OSecurity, OCloseable {
     readerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
     readerRole.save();
 
-    createUser("reader", "reader", new String[] { readerRole.getName() });
+    // This will return the global value if a local storage context configuration value does not exist.
+    boolean createDefUsers = getDatabase().getStorage().getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
+
+    if(createDefUsers)
+      createUser("reader", "reader", new String[] { readerRole.getName() });
 
     final ORole writerRole = createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
     writerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
-    writerRole.addRule(ORule.ResourceGeneric.SCHEMA, null,
-        ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
+    writerRole
+        .addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
     writerRole.addRule(ORule.ResourceGeneric.CLUSTER, OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_NONE);
     readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_NONE);
@@ -415,14 +419,15 @@ public class OSecurityShared implements OSecurity, OCloseable {
     writerRole.addRule(ORule.ResourceGeneric.SYSTEM_CLUSTERS, null, ORole.PERMISSION_NONE);
     writerRole.save();
 
-    createUser("writer", "writer", new String[] { writerRole.getName() });
+    if(createDefUsers)
+	   createUser("writer", "writer", new String[] { writerRole.getName() });
 
     return adminUser;
   }
 
   /**
    * Repairs the security structure if broken by creating the ADMIN role and user with default password.
-   * 
+   *
    * @return
    */
 
@@ -445,8 +450,15 @@ public class OSecurityShared implements OSecurity, OCloseable {
     }
 
     OUser adminUser = getUser(OUser.ADMIN);
-    if (adminUser == null)
-      adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
+
+    if (adminUser == null) {
+      // This will return the global value if a local storage context configuration value does not exist.
+      boolean createDefUsers = getDatabase().getStorage().getConfiguration().getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
+
+      if(createDefUsers) {
+        adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
+      }
+    }
 
     // SINCE 1.2.0
     createOrUpdateORestrictedClass(database);
@@ -462,13 +474,21 @@ public class OSecurityShared implements OSecurity, OCloseable {
       unsafe = true;
     }
     if (!restrictedClass.existsProperty(ALLOW_ALL_FIELD))
-      restrictedClass.createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), unsafe);
+      restrictedClass
+          .createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
+              unsafe);
     if (!restrictedClass.existsProperty(ALLOW_READ_FIELD))
-      restrictedClass.createProperty(ALLOW_READ_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), unsafe);
+      restrictedClass
+          .createProperty(ALLOW_READ_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
+              unsafe);
     if (!restrictedClass.existsProperty(ALLOW_UPDATE_FIELD))
-      restrictedClass.createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), unsafe);
+      restrictedClass
+          .createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
+              unsafe);
     if (!restrictedClass.existsProperty(ALLOW_DELETE_FIELD))
-      restrictedClass.createProperty(ALLOW_DELETE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME), unsafe);
+      restrictedClass
+          .createProperty(ALLOW_DELETE_FIELD, OType.LINKSET, database.getMetadata().getSchema().getClass(OIdentity.CLASS_NAME),
+              unsafe);
   }
 
   private void createOrUpdateOUserClass(final ODatabaseDocument database, OClass identityClass, OClass roleClass) {
@@ -482,7 +502,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
       userClass.setSuperClasses(Arrays.asList(identityClass));
 
     if (!userClass.existsProperty("name")) {
-      userClass.createProperty("name", OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true).setCollate("ci");
+      ((OClassImpl) userClass).createProperty("name", OType.STRING, (OType) null, unsafe).setMandatory(true).setNotNull(true)
+          .setCollate("ci").setMin("1").setRegexp("\\S+(.*\\S+)*");
       userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     } else {
       final OProperty name = userClass.getProperty("name");
@@ -543,7 +564,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
       }
       OProperty p = userClass.getProperty("name");
       if (p == null)
-        p = userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+        p = userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setMin("1")
+            .setRegexp("\\S+(.*\\S+)*");
 
       if (userClass.getInvolvedIndexes("name") == null)
         p.createIndex(INDEX_TYPE.UNIQUE);
@@ -582,7 +604,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public OUser getUser(final String iUserName) {
-    List<ODocument> result = getDatabase().<OCommandRequest> command(
+    List<ODocument> result = getDatabase().<OCommandRequest>command(
         new OSQLSynchQuery<ODocument>("select from OUser where name = ? limit 1").setFetchPlan("roles:1")).execute(iUserName);
 
     if (result != null && !result.isEmpty())
@@ -592,9 +614,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public ORID getUserRID(final String iUserName) {
-    List<ODocument> result = getDatabase()
-        .<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select rid from index:OUser.name where key = ? limit 1"))
-        .execute(iUserName);
+    List<ODocument> result = getDatabase().<OCommandRequest>command(
+        new OSQLSynchQuery<ODocument>("select rid from index:OUser.name where key = ? limit 1")).execute(iUserName);
 
     if (result != null && !result.isEmpty())
       return result.get(0).rawField("rid");
@@ -612,7 +633,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     version.incrementAndGet();
   }
 
-  private ODatabaseDocumentInternal getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

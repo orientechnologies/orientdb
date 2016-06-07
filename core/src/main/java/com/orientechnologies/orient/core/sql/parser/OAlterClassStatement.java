@@ -16,7 +16,7 @@ public class OAlterClassStatement extends OStatement {
   /**
    * the class property to be altered
    */
-  protected OClass.ATTRIBUTES property;
+  public OClass.ATTRIBUTES property;
 
   protected OIdentifier       identifierValue;
   protected List<OIdentifier> identifierListValue;
@@ -24,8 +24,8 @@ public class OAlterClassStatement extends OStatement {
   protected Boolean           remove;
   protected ONumber           numberValue;
   protected Boolean           booleanValue;
-  protected OIdentifier       customKey;
-  protected OExpression       customValue;
+  public OIdentifier       customKey;
+  public OExpression       customValue;
 
   // only to manage 'round-robin' as a cluster selection strategy (not a valid identifier)
   protected String            customString;
@@ -64,7 +64,7 @@ public class OAlterClassStatement extends OStatement {
       if (identifierValue != null) {
         identifierValue.toString(params, builder);
       } else if (customString!=null){
-        builder.append(customString);
+        builder.append('\'').append(customString).append('\'');
       }else{
         builder.append("null");
       }

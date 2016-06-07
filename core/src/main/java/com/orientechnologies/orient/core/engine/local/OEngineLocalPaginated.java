@@ -20,20 +20,19 @@
 
 package com.orientechnologies.orient.core.engine.local;
 
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
+import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -42,16 +41,25 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 public class OEngineLocalPaginated extends OEngineAbstract {
   public static final String NAME = "plocal";
 
-  private final O2QCache readCache;
+  private volatile O2QCache readCache;
 
   public OEngineLocalPaginated() {
+  }
+
+  @Override
+  public void startup() {
+    OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
+    super.startup();
+
     readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
         OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger());
+
     try {
-      readCache.registerMBean();
+      if (OByteBufferPool.instance() != null)
+        OByteBufferPool.instance().registerMBean();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for read cache cannot be registered", e);
+      OLogManager.instance().error(this, "MBean for byte buffer pool cannot be registered", e);
     }
   }
 
@@ -69,18 +77,6 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   public OStorage createStorage(final String dbName, final Map<String, String> configuration) {
     try {
-      try {
-        final Class<? extends OLocalPaginatedStorage> enterpriseVersion = (Class<? extends OLocalPaginatedStorage>) Class
-            .forName("com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage");
-        final Constructor<? extends OLocalPaginatedStorage> constructor = enterpriseVersion
-            .getConstructor(String.class, String.class, String.class, Integer.TYPE, OReadCache.class);
-        return constructor.newInstance(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
-      } catch (ClassNotFoundException cne) {
-      } catch (NoSuchMethodException nme) {
-      } catch (IllegalAccessException iae) {
-      } catch (InvocationTargetException ite) {
-      } catch (InstantiationException ie) {
-      }
 
       return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
     } catch (Exception e) {
@@ -96,20 +92,28 @@ public class OEngineLocalPaginated extends OEngineAbstract {
     return NAME;
   }
 
-  public boolean isShared() {
-    return true;
+  public O2QCache getReadCache() {
+    return readCache;
+  }
+
+  @Override
+  public String getNameFromPath(String dbPath) {
+    return OIOUtils.getRelativePathIfAny(dbPath, null);
   }
 
   @Override
   public void shutdown() {
-    super.shutdown();
-
-    readCache.clear();
     try {
-      readCache.unregisterMBean();
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for read cache cannot be unregistered", e);
-    }
+      readCache.clear();
 
+      try {
+        if (OByteBufferPool.instance() != null)
+          OByteBufferPool.instance().unregisterMBean();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "MBean for byte buffer pool cannot be unregistered", e);
+      }
+    } finally {
+      super.shutdown();
+    }
   }
 }

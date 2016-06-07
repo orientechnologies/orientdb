@@ -34,6 +34,7 @@ import java.util.List;
 public class OTransactionIndexChangesPerKey {
   public Object                       key;
   public List<OTransactionIndexEntry> entries;
+  public boolean  clientTrackOnly;
 
   public static class OTransactionIndexEntry {
     public OPERATION     operation;

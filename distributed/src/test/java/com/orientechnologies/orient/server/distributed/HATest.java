@@ -17,7 +17,9 @@ package com.orientechnologies.orient.server.distributed;
 
 import org.junit.Test;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 /**
  * Distributed TX test against "plocal" protocol + shutdown and restart of a node.
@@ -28,6 +30,7 @@ public class HATest extends AbstractServerClusterTxTest {
   @Test
   public void test() throws Exception {
     useTransactions = false;
+    count = 10;
     init(SERVERS);
     prepare(false);
     execute();
@@ -38,28 +41,38 @@ public class HATest extends AbstractServerClusterTxTest {
     banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
     serverInstance.get(SERVERS - 1).shutdownServer();
 
-    Thread.sleep(1000);
-
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
 
-    count = 200;
+    count = 10;
 
     executeMultipleTest();
 
     banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
-    serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
 
-    Thread.sleep(1000);
+    serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+    if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
+      serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
 
-    // TODO: WHY REOPENING DATABASE LET TEST TO PASS?
-    for (int i = 0; i < SERVERS; ++i) {
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(i))).open("admin", "admin");
-      db.close();
-    }
+    count = 10;
 
     executeMultipleTest();
+  }
+
+  @Override
+  protected void onBeforeChecks() throws InterruptedException {
+    // // WAIT UNTIL THE END
+    waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
+      @Override
+      public Boolean call(ODatabaseDocumentTx db) {
+        final boolean ok = db.countClass("Person") >= count * writerCount * SERVERS + baseCount;
+        if (!ok)
+          System.out.println(
+              "FOUND " + db.countClass("Person") + " people instead of expected " + (count * writerCount * SERVERS) + baseCount);
+        return ok;
+      }
+    }, 10000);
   }
 
   protected String getDatabaseURL(final ServerRun server) {
@@ -68,6 +81,6 @@ public class HATest extends AbstractServerClusterTxTest {
 
   @Override
   public String getDatabaseName() {
-    return "distributed-inserttxha";
+    return "distributed-hatest";
   }
 }

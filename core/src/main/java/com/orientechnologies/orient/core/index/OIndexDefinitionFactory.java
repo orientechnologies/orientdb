@@ -20,19 +20,19 @@
 
 package com.orientechnologies.orient.core.index;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
-
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
  * Contains helper methods for {@link OIndexDefinition} creation.
@@ -92,7 +92,7 @@ public class OIndexDefinitionFactory {
       final List<OType> types, List<OCollate> collates, String indexKind, String algorithm) {
     final OIndexFactory factory = OIndexes.getFactory(indexKind, algorithm);
     final String className = oClass.getName();
-    final OCompositeIndexDefinition compositeIndex = new OCompositeIndexDefinition(className, factory.getLastVersion());
+    final OCompositeIndexDefinition compositeIndex = new OCompositeIndexDefinition(className);
 
     for (int i = 0, fieldsToIndexSize = fieldsToIndex.size(); i < fieldsToIndexSize; i++) {
       OCollate collate = null;
@@ -125,7 +125,7 @@ public class OIndexDefinitionFactory {
   private static OIndexDefinition createSingleFieldIndexDefinition(OClass oClass, final String field, final OType type,
       OCollate collate, String indexKind, String algorithm) {
 
-    final String fieldName = adjustFieldName(oClass, extractFieldName(field));
+    final String fieldName = OClassImpl.decodeClassName(adjustFieldName(oClass, extractFieldName(field)));
     final OIndexDefinition indexDefinition;
 
     final OProperty propertyToIndex = oClass.getProperty(fieldName);

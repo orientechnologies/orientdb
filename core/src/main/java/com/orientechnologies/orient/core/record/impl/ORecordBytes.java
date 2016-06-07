@@ -40,10 +40,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  * using the reset() at every re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ORecordBytes extends ORecordAbstract {
+public class ORecordBytes extends ORecordAbstract implements OBlob {
   private static final long   serialVersionUID = 1L;
 
-  public static final byte    RECORD_TYPE      = 'b';
   private static final byte[] EMPTY_SOURCE     = new byte[] {};
 
   public ORecordBytes() {
@@ -90,6 +89,12 @@ public class ORecordBytes extends ORecordAbstract {
   }
 
   @Override
+  public ORecordAbstract clear() {
+    clearSource();
+    return super.clear();
+  }
+
+  @Override
   public byte[] toStream() {
     return _source;
   }
@@ -107,7 +112,7 @@ public class ORecordBytes extends ORecordAbstract {
   /**
    * Reads the input stream in memory. This is less efficient than {@link #fromInputStream(InputStream, int)} because allocation is
    * made multiple times. If you already know the input size use {@link #fromInputStream(InputStream, int)}.
-   * 
+   *
    * @param in
    *          Input Stream, use buffered input stream wrapper to speed up reading
    * @return Buffer read from the stream. It's also the internal buffer size in bytes
@@ -137,7 +142,7 @@ public class ORecordBytes extends ORecordAbstract {
   /**
    * Reads the input stream in memory specifying the maximum bytes to read. This is more efficient than
    * {@link #fromInputStream(InputStream)} because allocation is made only once.
-   * 
+   *
    * @param in
    *          Input Stream, use buffered input stream wrapper to speed up reading
    * @param maxSize

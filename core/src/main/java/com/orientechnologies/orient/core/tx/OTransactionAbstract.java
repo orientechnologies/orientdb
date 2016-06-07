@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.tx;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -223,7 +224,11 @@ public abstract class OTransactionAbstract implements OTransaction {
     return lockedRecords;
   }
 
-  protected String getClusterName(ORecord record) {
+  protected String getClusterName(final ORecord record) {
+    if (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().isRemote())
+      // DON'T ASSIGN CLUSTER WITH REMOTE: SERVER KNOWS THE RIGHT CLUSTER BASED ON LOCALITY
+      return null;
+
     int clusterId = record.getIdentity().getClusterId();
     if (clusterId == ORID.CLUSTER_ID_INVALID) {
       // COMPUTE THE CLUSTER ID
@@ -233,7 +238,7 @@ public abstract class OTransactionAbstract implements OTransaction {
       if (schemaClass != null) {
         // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
         if (schemaClass.isAbstract())
-          throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and cannot be saved");
+          throw new OSchemaException("Document belongs to abstract class '" + schemaClass.getName() + "' and cannot be saved");
         clusterId = schemaClass.getClusterForNewInstance((ODocument) record);
         return database.getClusterNameById(clusterId);
       } else {

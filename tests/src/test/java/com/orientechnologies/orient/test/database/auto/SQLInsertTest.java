@@ -562,6 +562,19 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(((ODocument) doc.field("like")).field("count"), 0);
   }
 
+  public void testInsertWithClusterAsFieldName() {
+    OClass c = database.getMetadata().getSchema().getOrCreateClass("InsertWithClusterAsFieldName");
+
+    database.command(
+        new OCommandSQL("INSERT INTO InsertWithClusterAsFieldName ( `cluster` ) values ( 'foo' )")).execute();
+
+    List<ODocument> result = database
+        .query(new OSQLSynchQuery<ODocument>("SELECT FROM InsertWithClusterAsFieldName"));
+
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertEquals(result.get(0).field("cluster"), "foo");
+  }
+
   private List<Long> getValidPositions(int clusterId) {
     final List<Long> positions = new ArrayList<Long>();
 

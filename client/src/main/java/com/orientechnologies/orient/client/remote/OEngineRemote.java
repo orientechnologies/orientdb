@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -29,32 +26,24 @@ import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.Map;
+
 /**
  * Remote engine implementation.
- * 
+ *
  * @author Luca Garulli
  */
 public class OEngineRemote extends OEngineAbstract {
-  public static final String                         NAME           = "remote";
-  protected static final Map<String, OStorageRemote> sharedStorages = new HashMap<String, OStorageRemote>();
-  protected final ORemoteConnectionManager           connectionManager;
+  public static final String NAME   = "remote";
+  public static final String PREFIX = NAME + ":";
+  protected volatile ORemoteConnectionManager connectionManager;
 
   public OEngineRemote() {
-    connectionManager = new ORemoteConnectionManager(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger(),
-        OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsLong());
   }
 
   public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
     try {
-      synchronized (sharedStorages) {
-        OStorageRemote sharedStorage = sharedStorages.get(iURL);
-        if (sharedStorage == null) {
-          sharedStorage = new OStorageRemote(null, iURL, "rw");
-          sharedStorages.put(iURL, sharedStorage);
-        }
-
-        return new OStorageRemoteThread(sharedStorage);
-      }
+      return new OStorageRemote(null, iURL, "rw");
     } catch (Exception e) {
       final String message = "Error on opening database: " + iURL;
       OLogManager.instance().error(this, message, e);
@@ -67,16 +56,24 @@ public class OEngineRemote extends OEngineAbstract {
   }
 
   @Override
-  public void shutdown() {
-    super.shutdown();
-    connectionManager.close();
-    synchronized (sharedStorages) {
-      for (Map.Entry<String, OStorageRemote> entry : sharedStorages.entrySet()) {
-        entry.getValue().close(true, false);
-      }
+  public void startup() {
+    super.startup();
 
-      sharedStorages.clear();
+    connectionManager = new ORemoteConnectionManager(OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsLong());
+  }
+
+  @Override
+  public void shutdown() {
+    try {
+      connectionManager.close();
+    } finally {
+      super.shutdown();
     }
+  }
+
+  @Override
+  public String getNameFromPath(String dbPath) {
+    return dbPath;
   }
 
   public ORemoteConnectionManager getConnectionManager() {
@@ -87,7 +84,4 @@ public class OEngineRemote extends OEngineAbstract {
     return NAME;
   }
 
-  public boolean isShared() {
-    return false;
-  }
 }

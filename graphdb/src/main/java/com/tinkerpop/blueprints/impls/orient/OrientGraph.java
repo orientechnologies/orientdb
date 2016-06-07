@@ -39,9 +39,9 @@ import com.tinkerpop.blueprints.util.ExceptionFactory;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientGraph extends OrientTransactionalGraph {
-  private boolean featuresInitialized = false;
+  private boolean          featuresInitialized = false;
 
-  protected final Features FEATURES = new Features();
+  protected final Features FEATURES            = new Features();
 
   /**
    * Creates a new Transactional Graph using an existent database instance. User and password are passed in case of re-open.
@@ -280,10 +280,11 @@ public class OrientGraph extends OrientTransactionalGraph {
   OrientEdge addEdgeInternal(final OrientVertex currentVertex, String label, final OrientVertex inVertex, final String iClassName,
       final String iClusterName, final Object... fields) {
     if (currentVertex.checkDeletedInTx())
-      throw new ORecordNotFoundException("The vertex " + currentVertex.getIdentity() + " has been deleted");
+      throw new ORecordNotFoundException(currentVertex.getIdentity(),
+          "The vertex " + currentVertex.getIdentity() + " has been deleted");
 
     if (inVertex.checkDeletedInTx())
-      throw new ORecordNotFoundException("The vertex " + inVertex.getIdentity() + " has been deleted");
+      throw new ORecordNotFoundException(inVertex.getIdentity(), "The vertex " + inVertex.getIdentity() + " has been deleted");
 
     autoStartTransaction();
 
@@ -364,15 +365,13 @@ public class OrientGraph extends OrientTransactionalGraph {
       to = to.getIdentity();
     }
 
-
-
     // OUT-VERTEX ---> IN-VERTEX/EDGE
     currentVertex.createLink(this, outDocument, to, outFieldName);
 
     // IN-VERTEX ---> OUT-VERTEX/EDGE
     currentVertex.createLink(this, inDocument, from, inFieldName);
-    //THE DIRTY MANAGER MANAGE THE SAVE OF ALL LINKED ENTITIES.
-    if(!edge.isLightweight())
+    // THE DIRTY MANAGER MANAGE THE SAVE OF ALL LINKED ENTITIES.
+    if (!edge.isLightweight())
       edge.save(iClusterName);
     else
       outDocument.save();

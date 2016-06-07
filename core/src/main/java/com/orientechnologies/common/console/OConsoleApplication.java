@@ -25,26 +25,14 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.ServiceLoader;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -60,7 +48,6 @@ public class OConsoleApplication {
   protected              String[]            helpCommands    = { "help", "?" };
   protected              String[]            exitCommands    = { "exit", "bye", "quit" };
   protected              Map<String, String> properties      = new HashMap<String, String>();
-  // protected OConsoleReader reader = new TTYConsoleReader();
   protected              OConsoleReader      reader          = new ODefaultConsoleReader();
   protected boolean                 interactiveMode;
   protected String[]                args;
@@ -77,10 +64,12 @@ public class OConsoleApplication {
   public static String getCorrectMethodName(Method m) {
     StringBuilder buffer = new StringBuilder(128);
     buffer.append(getClearName(m.getName()));
-    for (int i = 0; i<m.getParameterAnnotations().length; i++) {
-      for (int j = 0; j<m.getParameterAnnotations()[i].length; j++) {
+    for (int i = 0; i < m.getParameterAnnotations().length; i++) {
+      for (int j = 0; j < m.getParameterAnnotations()[i].length; j++) {
         if (m.getParameterAnnotations()[i][j] instanceof com.orientechnologies.common.console.annotation.ConsoleParameter) {
-          buffer.append(" <" + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name() + ">");
+          buffer.append(
+              " <" + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name()
+                  + ">");
         }
       }
     }
@@ -93,7 +82,7 @@ public class OConsoleApplication {
     char c;
     if (iJavaName != null) {
       buffer.append(iJavaName.charAt(0));
-      for (int i = 1; i<iJavaName.length(); ++i) {
+      for (int i = 1; i < iJavaName.length(); ++i) {
         c = iJavaName.charAt(i);
 
         if (Character.isUpperCase(c)) {
@@ -140,6 +129,7 @@ public class OConsoleApplication {
             break;
         } catch (Exception e) {
           result = 1;
+          out.print("Error on reading console input: " + e.getMessage());
           OLogManager.instance().error(this, "Error on reading console input: %s", e, consoleInput);
         }
       }
@@ -171,6 +161,11 @@ public class OConsoleApplication {
     return verboseLevel;
   }
 
+  protected int getConsoleWidth() {
+    final String width = properties.get("width");
+    return width == null ? reader.getConsoleWidth() : Integer.parseInt(width);
+  }
+
   public boolean isEchoEnabled() {
     return isPropertyEnabled("echo");
   }
@@ -197,7 +192,10 @@ public class OConsoleApplication {
   }
 
   protected boolean executeBatch(final String commandLine) {
-    final File commandFile = new File(commandLine);
+    File commandFile = new File(commandLine);
+    if (!commandFile.isAbsolute()) {
+      commandFile = new File(new File("."), commandLine);
+    }
 
     OCommandStream scanner;
     try {
@@ -234,8 +232,9 @@ public class OConsoleApplication {
 
         } else if (commandBuffer.length() > 0) {
           // BUFFER IT
-          commandBuffer.append(';');
+          commandBuffer.append(' ');
           commandBuffer.append(commandLine);
+          commandBuffer.append(';');
           commandLine = null;
         }
 
@@ -250,8 +249,8 @@ public class OConsoleApplication {
           final RESULT status = execute(commandLine);
           commandLine = null;
 
-          if (status == RESULT.EXIT || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
-              && iBatchMode)
+          if (status == RESULT.EXIT
+              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors"))) && iBatchMode)
             return false;
         }
       }
@@ -266,8 +265,8 @@ public class OConsoleApplication {
           }
 
           final RESULT status = execute(commandBuffer.toString());
-          if (status == RESULT.EXIT || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors")))
-              && iBatchMode)
+          if (status == RESULT.EXIT
+              || (status == RESULT.ERROR && !Boolean.parseBoolean(properties.get("ignoreErrors"))) && iBatchMode)
             return false;
         }
       }
@@ -312,14 +311,20 @@ public class OConsoleApplication {
       }
 
     for (String cmd : exitCommands)
-      if (cmd.equals(commandWords[0])) {
+      if (cmd.equalsIgnoreCase(commandWords[0])) {
         return RESULT.EXIT;
       }
 
     Method lastMethodInvoked = null;
     final StringBuilder lastCommandInvoked = new StringBuilder(1024);
 
-    final String commandLowerCase = iCommand.toLowerCase();
+    String commandLowerCase = "";
+    for (int i = 0; i < commandWords.length; i++) {
+      if (i > 0) {
+        commandLowerCase += " ";
+      }
+      commandLowerCase += commandWords[i].toLowerCase();
+    }
 
     for (Entry<Method, Object> entry : getConsoleMethods().entrySet()) {
       final Method m = entry.getKey();
@@ -646,15 +651,15 @@ public class OConsoleApplication {
       if (ann != null) {
         // FETCH ONLINE CONTENT
         if (onlineMode && !ann.onlineHelp().isEmpty()) {
-//          try {
-            final String text = getOnlineHelp(ONLINE_HELP_URL + ann.onlineHelp() + ONLINE_HELP_EXT);
-            if (text != null && !text.isEmpty()) {
-              message(text);
-              // ONLINE FETCHING SUCCEED: RETURN
-              return;
-            }
-//          } catch (Exception e) {
-//          }
+          // try {
+          final String text = getOnlineHelp(ONLINE_HELP_URL + ann.onlineHelp() + ONLINE_HELP_EXT);
+          if (text != null && !text.isEmpty()) {
+            message(text);
+            // ONLINE FETCHING SUCCEED: RETURN
+            return;
+          }
+          // } catch (Exception e) {
+          // }
           error("!CANNOT FETCH ONLINE DOCUMENTATION, CHECK IF COMPUTER IS CONNECTED TO THE INTERNET.");
           return;
         }

@@ -19,21 +19,6 @@
  */
 package com.orientechnologies.orient.core;
 
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -41,7 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerStub;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
+import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactory;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactoryImpl;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -50,57 +35,50 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.engine.OEngine;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
+import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
-  public static final String ORIENTDB_HOME = "ORIENTDB_HOME";
-  public static final String URL_SYNTAX    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+  public static final String                                                         ORIENTDB_HOME                 = "ORIENTDB_HOME";
+  public static final String                                                         URL_SYNTAX                    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  private static final    Orient  instance               = new Orient();
-  private static volatile boolean registerDatabaseByPath = false;
+  private static final Orient                                                        instance                      = new Orient();
+  private static volatile boolean                                                    registerDatabaseByPath        = false;
 
-  private final ConcurrentMap<String, OEngine>      engines    = new ConcurrentHashMap<String, OEngine>();
-  private final ConcurrentMap<String, OStorage>     storages   = new ConcurrentHashMap<String, OStorage>();
-  private final ConcurrentHashMap<Integer, Boolean> storageIds = new ConcurrentHashMap<Integer, Boolean>();
+  private final ConcurrentMap<String, OEngine>                                       engines                       = new ConcurrentHashMap<String, OEngine>();
+  private final ConcurrentMap<String, OStorage>                                      storages                      = new ConcurrentHashMap<String, OStorage>();
+  private final ConcurrentHashMap<Integer, Boolean>                                  storageIds                    = new ConcurrentHashMap<Integer, Boolean>();
 
-  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
-  private final OScriptManager                                                       scriptManager        = new OScriptManager();
-  private final ThreadGroup threadGroup;
-  private final AtomicInteger                                        serialId                      = new AtomicInteger();
-  private final ReadWriteLock                                        engineLock                    = new ReentrantReadWriteLock();
-  private final ORecordConflictStrategyFactory                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
-  private final ReferenceQueue<OOrientStartupListener>               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
-  private final ReferenceQueue<OOrientShutdownListener>              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
-  private final Set<OOrientStartupListener>                          startupListeners              = Collections
+  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
+  private final OScriptManager                                                       scriptManager                 = new OScriptManager();
+  private final ThreadGroup                                                          threadGroup;
+  private final ReadWriteLock                                                        engineLock                    = new ReentrantReadWriteLock();
+  private final ORecordConflictStrategyFactory                                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
+  private final ReferenceQueue<OOrientStartupListener>                               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
+  private final ReferenceQueue<OOrientShutdownListener>                              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
+  private final Set<OOrientStartupListener>                                          startupListeners              = Collections
       .newSetFromMap(new ConcurrentHashMap<OOrientStartupListener, Boolean>());
-  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>  weakStartupListeners          = Collections
+  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>                  weakStartupListeners          = Collections
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
-  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>> weakShutdownListeners         = Collections
+  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>>                 weakShutdownListeners         = Collections
       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
 
-  private final PriorityQueue<OShutdownHandler> shutdownHandlers = new PriorityQueue<OShutdownHandler>(
-      new Comparator<OShutdownHandler>() {
+  private final PriorityQueue<OShutdownHandler>                                      shutdownHandlers              = new PriorityQueue<OShutdownHandler>(
+      11, new Comparator<OShutdownHandler>() {
         @Override
         public int compare(OShutdownHandler handlerOne, OShutdownHandler handlerTwo) {
           if (handlerOne.getPriority() > handlerTwo.getPriority())
@@ -113,21 +91,24 @@ public class Orient extends OListenerManger<OOrientListener> {
         }
       });
 
-  private final OLocalRecordCacheFactory localRecordCache = new OLocalRecordCacheFactoryImpl();
+  private final OLocalRecordCacheFactory                                             localRecordCache              = new OLocalRecordCacheFactoryImpl();
 
   static {
     instance.startup();
   }
 
-  private          String os;
-  private volatile Timer  timer;
+  private final String os;
+
+  private volatile Timer                 timer;
   private volatile ORecordFactoryManager recordFactoryManager = new ORecordFactoryManager();
-  private          OrientShutdownHook          shutdownHook;
-  private volatile OProfiler                   profiler;
-  private          ODatabaseThreadLocalFactory databaseThreadFactory;
-  private volatile boolean active = false;
-  private ThreadPoolExecutor workers;
-  private OSignalHandler     signalHandler;
+  private OrientShutdownHook             shutdownHook;
+  private volatile OProfiler             profiler;
+  private ODatabaseThreadLocalFactory    databaseThreadFactory;
+  private volatile boolean               active               = false;
+  private ThreadPoolExecutor             workers;
+  private OSignalHandler                 signalHandler;
+  private volatile OSecuritySystem       security;
+  private boolean                        runningDistributed   = false;
 
   private static class WeakHashSetValueHolder<T> extends WeakReference<T> {
     private final int hashCode;
@@ -169,7 +150,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   protected Orient() {
     super(true);
-
+    this.os = System.getProperty("os.name").toLowerCase();
     threadGroup = new ThreadGroup("OrientDB");
     threadGroup.setDaemon(false);
   }
@@ -220,8 +201,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         // ALREADY ACTIVE
         return this;
 
-      os = System.getProperty("os.name").toLowerCase();
-
       if (timer == null)
         timer = new Timer(true);
 
@@ -249,10 +228,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         }
       });
 
-      // REGISTER THE EMBEDDED ENGINE
-      registerEngine(new OEngineLocalPaginated());
-      registerEngine(new OEngineMemory());
-      registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
+      registerEngines();
 
       if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
         OGlobalConfiguration.dumpConfiguration(System.out);
@@ -291,7 +267,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Add handler which will be executed during {@link #shutdown()} call.
    *
-   * @param shutdownHandler Shutdown handler instance.
+   * @param shutdownHandler
+   *          Shutdown handler instance.
    */
   public void addShutdownHandler(OShutdownHandler shutdownHandler) {
     engineLock.writeLock().lock();
@@ -314,13 +291,30 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   /**
-   * Shutdown whole OrientDB ecosystem. Usually is called during JVM shutdown by JVM shutdown handler.
-   * During shutdown all handlers which were registered by the call of {@link #addShutdownHandler(OShutdownHandler)}
-   * are called together with pre-registered system shoutdown handlers according to their priority.
+   * Shutdown whole OrientDB ecosystem. Usually is called during JVM shutdown by JVM shutdown handler. During shutdown all handlers
+   * which were registered by the call of {@link #addShutdownHandler(OShutdownHandler)} are called together with pre-registered
+   * system shoutdown handlers according to their priority.
    *
    * @see OShutdownWorkersHandler
    * @see
    */
+  private void registerEngines() {
+    ClassLoader classLoader = Orient.class.getClassLoader();
+
+    Iterator<OEngine> engines = OClassLoaderHelper.lookupProviderWithOrientClassLoader(OEngine.class, classLoader);
+
+    OEngine engine = null;
+    while (engines.hasNext()) {
+      try {
+        engine = engines.next();
+        registerEngine(engine);
+      } catch (IllegalArgumentException e) {
+        if (engine != null)
+          OLogManager.instance().debug(this, "Failed to replace engine " + engine.getName());
+      }
+    }
+  }
+
   public Orient shutdown() {
     engineLock.writeLock().lock();
     try {
@@ -332,14 +326,15 @@ public class Orient extends OListenerManger<OOrientListener> {
       OLogManager.instance().info(this, "Orient Engine is shutting down...");
       for (OShutdownHandler handler : shutdownHandlers) {
         try {
-          OLogManager.instance().info(this, "Shutdown handler %s is going to be called", handler);
+          OLogManager.instance().debug(this, "Shutdown handler %s is going to be called", handler);
           handler.shutdown();
-          OLogManager.instance().info(this, "Shutdown handler %s completed", handler);
+          OLogManager.instance().debug(this, "Shutdown handler %s completed", handler);
         } catch (Exception e) {
           OLogManager.instance().error(this, "Exception during calling of shutdown handler %s", handler);
         }
       }
 
+      shutdownHandlers.clear();
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
     } finally {
@@ -464,14 +459,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
 
-    if (isWindowsOS()) {
-      // WINDOWS ONLY: REMOVE DOUBLE SLASHES NOT AS PREFIX (WINDOWS PATH COULD NEED STARTING FOR "\\". EXAMPLE: "\\mydrive\db"). AT
-      // THIS LEVEL BACKSLASHES ARRIVES AS SLASHES
-      iURL = iURL.charAt(0) + iURL.substring(1).replace("//", "/");
-    } else
-      // REMOVE ANY //
-      iURL = iURL.replace("//", "/");
-
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
     if (pos <= 0)
@@ -485,16 +472,33 @@ public class Orient extends OListenerManger<OOrientListener> {
       final OEngine engine = engines.get(engineName.toLowerCase());
 
       if (engine == null)
-        throw new OConfigurationException(
-            "Error on opening database: the engine '" + engineName + "' was not found. URL was: " + iURL
-                + ". Registered engines are: " + engines.keySet());
+        throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
+            + iURL + ". Registered engines are: " + engines.keySet());
+
+      if (!engine.isRunning()) {
+        final List<String> knownEngines = new ArrayList<String>(engines.keySet());
+        if (!startEngine(engine))
+          throw new OConfigurationException(
+              "Error on opening database: the engine '" + engineName + "' was unable to start. URL was: " + iURL
+                  + ". Registered engines was: " + knownEngines);
+      }
 
       // SEARCH FOR DB-NAME
       iURL = iURL.substring(pos + 1);
+
+      if (isWindowsOS()) {
+        // WINDOWS ONLY: REMOVE DOUBLE SLASHES NOT AS PREFIX (WINDOWS PATH COULD NEED STARTING FOR "\\". EXAMPLE: "\\mydrive\db").
+        // AT
+        // THIS LEVEL BACKSLASHES ARRIVES AS SLASHES
+        iURL = iURL.charAt(0) + iURL.substring(1).replace("//", "/");
+      } else
+        // REMOVE ANY //
+        iURL = iURL.replace("//", "/");
+
       pos = iURL.indexOf('?');
 
       Map<String, String> parameters = null;
-      final String dbPath;
+      String dbPath;
       if (pos > 0) {
         dbPath = iURL.substring(0, pos);
         iURL = iURL.substring(pos + 1);
@@ -513,32 +517,34 @@ public class Orient extends OListenerManger<OOrientListener> {
       } else
         dbPath = iURL;
 
-      final String dbName = registerDatabaseByPath ? dbPath : OIOUtils.getRelativePathIfAny(dbPath, null);
-
-      OStorage storage;
-      if (engine.isShared()) {
-        // SEARCH IF ALREADY USED
-        storage = storages.get(dbName);
-        if (storage == null) {
-          // NOT FOUND: CREATE IT
-
-          do {
-            storage = engine.createStorage(dbPath, parameters);
-          } while ((storage instanceof OIdentifiableStorage)
-              && storageIds.putIfAbsent(((OIdentifiableStorage) storage).getId(), Boolean.TRUE) != null);
-
-          final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
-          if (oldStorage != null)
-            storage = oldStorage;
+      if (registerDatabaseByPath) {
+        try {
+          dbPath = new File(dbPath).getCanonicalPath();
+        } catch (IOException e) {
+          // IGNORE IT
         }
-      } else {
-        // REGISTER IT WITH A SERIAL NAME TO AVOID BEING REUSED
-        storage = engine.createStorage(dbPath, parameters);
-        storages.put(dbName + "__" + serialId.incrementAndGet(), storage);
       }
 
-      for (OOrientListener l : browseListeners())
-        l.onStorageRegistered(storage);
+      final String dbName = registerDatabaseByPath ? dbPath : engine.getNameFromPath(dbPath);
+
+      OStorage storage;
+      // SEARCH IF ALREADY USED
+      storage = storages.get(dbName);
+      if (storage == null) {
+        // NOT FOUND: CREATE IT
+
+        do {
+          storage = engine.createStorage(dbPath, parameters);
+        } while ((storage instanceof OIdentifiableStorage)
+            && storageIds.putIfAbsent(((OIdentifiableStorage) storage).getId(), Boolean.TRUE) != null);
+
+        final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
+        if (oldStorage != null)
+          storage = oldStorage;
+
+        for (OOrientListener l : browseListeners())
+          l.onStorageRegistered(storage);
+      }
 
       return storage;
     } finally {
@@ -559,25 +565,68 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  public void registerEngine(final OEngine iEngine) {
-    engineLock.readLock().lock();
-    try {
-      engines.put(iEngine.getName(), iEngine);
-    } finally {
-      engineLock.readLock().unlock();
+  protected void registerEngine(final OEngine iEngine) throws IllegalArgumentException {
+    OEngine oEngine = engines.get(iEngine.getName());
+
+    if (oEngine != null) {
+      if (!oEngine.getClass().isAssignableFrom(iEngine.getClass())) {
+        throw new IllegalArgumentException("Cannot replace storage " + iEngine.getName());
+      }
     }
+    engines.put(iEngine.getName(), iEngine);
   }
 
   /**
    * Returns the engine by its name.
    *
-   * @param engineName Engine name to retrieve
+   * @param engineName
+   *          Engine name to retrieve
    * @return OEngine instance of found, otherwise null
    */
   public OEngine getEngine(final String engineName) {
     engineLock.readLock().lock();
     try {
       return engines.get(engineName);
+    } finally {
+      engineLock.readLock().unlock();
+    }
+  }
+
+  /**
+   * Obtains an {@link OEngine engine} instance with the given {@code engineName}, if it is {@link OEngine#isRunning() running}.
+   *
+   * @param engineName the name of the engine to obtain.
+   * @return the obtained engine instance or {@code null} if no such engine known or the engine is not running.
+   */
+  public OEngine getEngineIfRunning(final String engineName) {
+    engineLock.readLock().lock();
+    try {
+      final OEngine engine = engines.get(engineName);
+      return engine == null || !engine.isRunning() ? null : engine;
+    } finally {
+      engineLock.readLock().unlock();
+    }
+  }
+
+  /**
+   * Obtains a {@link OEngine#isRunning() running} {@link OEngine engine} instance with the given {@code engineName}.
+   * If engine is not running, starts it.
+   *
+   * @param engineName the name of the engine to obtain.
+   * @return the obtained running engine instance, never {@code null}.
+   * @throws IllegalStateException if an engine with the given is not found or failed to start.
+   */
+  public OEngine getRunningEngine(final String engineName) {
+    engineLock.readLock().lock();
+    try {
+      OEngine engine = engines.get(engineName);
+      if (engine == null)
+        throw new IllegalStateException("Engine '" + engineName + "' is not found.");
+
+      if (!engine.isRunning() && !startEngine(engine))
+        throw new IllegalStateException("Engine '" + engineName + "' is failed to start.");
+
+      return engine;
     } finally {
       engineLock.readLock().unlock();
     }
@@ -718,6 +767,14 @@ public class Orient extends OListenerManger<OOrientListener> {
     profiler = iProfiler;
   }
 
+  public OSecuritySystem getSecurity() {
+    return this.security;
+  }
+
+  public void setSecurity(final OSecuritySystem security) {
+    this.security = security;
+  }
+
   public void registerThreadDatabaseFactory(final ODatabaseThreadLocalFactory iDatabaseFactory) {
     databaseThreadFactory = iDatabaseFactory;
   }
@@ -784,14 +841,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     return localRecordCache;
   }
 
-  private void registerEngine(final String className) {
-    try {
-      final Class<?> cls = Class.forName(className);
-      registerEngine((OEngine) cls.newInstance());
-    } catch (Exception e) {
-    }
-  }
-
   private void purgeWeakStartupListeners() {
     synchronized (removedStartupListenersQueue) {
       WeakHashSetValueHolder<OOrientStartupListener> ref = (WeakHashSetValueHolder<OOrientStartupListener>) removedStartupListenersQueue
@@ -814,6 +863,27 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
 
     }
+  }
+
+  private boolean startEngine(OEngine engine) {
+    final String name = engine.getName();
+
+    try {
+      engine.startup();
+      return true;
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error during initialization of engine '%s', engine will be removed", e, name);
+
+      try {
+        engine.shutdown();
+      } catch (Exception se) {
+        OLogManager.instance().error(this, "Error during engine shutdown", se);
+      }
+
+      engines.remove(name);
+    }
+
+    return false;
   }
 
   /**
@@ -855,7 +925,8 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       // SHUTDOWN ENGINES
       for (OEngine engine : engines.values())
-        engine.shutdown();
+        if (engine.isRunning())
+          engine.shutdown();
       engines.clear();
     }
 
@@ -866,8 +937,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   /**
-   * Interrupts all threads in OrientDB thread group and stops timer is used in methods {@link #scheduleTask(TimerTask, Date, long)} and
-   * {@link #scheduleTask(TimerTask, long, long)}.
+   * Interrupts all threads in OrientDB thread group and stops timer is used in methods {@link #scheduleTask(TimerTask, Date, long)}
+   * and {@link #scheduleTask(TimerTask, long, long)}.
    */
   private class OShutdownPendingThreadsHandler implements OShutdownHandler {
     @Override
@@ -881,8 +952,10 @@ public class Orient extends OListenerManger<OOrientListener> {
         // STOP ALL THE PENDING THREADS
         threadGroup.interrupt();
 
-      timer.cancel();
-      timer = null;
+      if (timer != null) {
+        timer.cancel();
+        timer = null;
+      }
     }
 
     @Override
@@ -955,5 +1028,13 @@ public class Orient extends OListenerManger<OOrientListener> {
     public String toString() {
       return getClass().getSimpleName();
     }
+  }
+
+  public boolean isRunningDistributed() {
+    return runningDistributed;
+  }
+
+  public void setRunningDistributed(final boolean runningDistributed) {
+    this.runningDistributed = runningDistributed;
   }
 }

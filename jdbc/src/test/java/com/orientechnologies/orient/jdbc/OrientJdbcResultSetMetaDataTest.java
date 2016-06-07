@@ -2,10 +2,8 @@ package com.orientechnologies.orient.jdbc;
 
 import org.junit.Test;
 
-import java.sql.Date;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.Statement;
+import java.math.BigDecimal;
+import java.sql.*;
 import java.util.Calendar;
 import java.util.TimeZone;
 
@@ -19,14 +17,7 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(conn.isClosed()).isFalse();
 
     Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
-    assertThat(rs.getFetchSize()).isEqualTo(20);
-
-    assertThat(rs.isBeforeFirst()).isTrue();
-
-    assertThat(rs.next()).isTrue();
-
-    assertThat(rs.getRow()).isEqualTo(0);
+    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date, score FROM Item");
 
     assertThat(rs.getString(1)).isEqualTo("1");
     assertThat(rs.getString("stringKey")).isEqualTo("1");
@@ -43,12 +34,9 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(rs.getDate("date").toString()).isEqualTo(date.toString());
     assertThat(rs.getDate(5).toString()).isEqualTo(date.toString());
 
-    rs.last();
+    //DECIMAL
+    assertThat(rs.getBigDecimal("score")).isEqualTo(BigDecimal.valueOf(959));
 
-    assertThat(rs.getRow()).isEqualTo(19);
-    rs.close();
-
-    assertThat(rs.isClosed()).isTrue();
   }
 
   @Test
@@ -128,12 +116,12 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(conn.isClosed()).isFalse();
 
     Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date, score FROM Item");
 
     rs.next();
     ResultSetMetaData metaData = rs.getMetaData();
 
-    assertThat(metaData.getColumnCount()).isEqualTo(5);
+    assertThat(metaData.getColumnCount()).isEqualTo(6);
 
     assertThat(metaData.getColumnType(2)).isEqualTo(java.sql.Types.INTEGER);
 
@@ -143,6 +131,9 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
     assertThat(metaData.getColumnType(4)).isEqualTo(java.sql.Types.BIGINT);
 
     assertThat(metaData.getColumnType(5)).isEqualTo(java.sql.Types.TIMESTAMP);
+
+    assertThat(metaData.getColumnType(6)).isEqualTo(Types.DECIMAL);
+
     assertThat(metaData.getColumnClassName(1)).isEqualTo(String.class.getName());
     assertThat(metaData.getColumnType(1)).isEqualTo(java.sql.Types.VARCHAR);
 

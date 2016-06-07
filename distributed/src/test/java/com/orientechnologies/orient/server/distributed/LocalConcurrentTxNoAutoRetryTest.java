@@ -27,17 +27,20 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * Distributed TX test against "plocal" protocol.
  */
 public class LocalConcurrentTxNoAutoRetryTest extends AbstractDistributedConcurrentTxTest {
+
+  private static final int SERVERS = 3;
+
   @Test
   public void test() throws Exception {
     expectedConcurrentException = true;
+    writerCount = 3;
 
     OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(1);
     try {
 
-      init(3);
+      init(SERVERS);
       prepare(false);
       execute();
-
     } finally {
       OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(10);
     }

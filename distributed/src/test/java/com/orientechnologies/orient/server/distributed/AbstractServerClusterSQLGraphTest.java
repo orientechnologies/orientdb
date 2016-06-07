@@ -135,7 +135,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
 
     OrientEdgeType knows = graph.createEdgeType("Knows");
 
-    factory = new OrientGraphFactory(graph.getRawGraph().getURL(), "admin", "admin");
+    factory = new OrientGraphFactory(graph.getRawGraph().getURL(), "admin", "admin", false);
     factory.setStandardElementConstraints(false);
   }
 

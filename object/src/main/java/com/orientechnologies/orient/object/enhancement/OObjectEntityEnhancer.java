@@ -79,8 +79,8 @@ public class OObjectEntityEnhancer {
   public <T> T getProxiedInstance(final Class<T> iClass, Object iEnclosingInstance, final ODocument doc, final ProxyObject parent,
       Object... iArgs) {
     if (iClass == null) {
-      throw new OSerializationException("Type " + doc.getClassName()
-          + " cannot be serialized because is not part of registered entities. To fix this error register this class");
+      throw new OSerializationException("Type '" + doc.getClassName()
+          + "' cannot be serialized because is not part of registered entities. To fix this error register this class");
     }
     final Class<T> c;
     boolean isInnerClass = OObjectEntitySerializer.getEnclosingClass(iClass) != null;

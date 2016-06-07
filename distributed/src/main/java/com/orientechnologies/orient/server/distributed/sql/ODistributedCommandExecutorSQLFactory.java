@@ -39,8 +39,10 @@ public class ODistributedCommandExecutorSQLFactory implements OCommandExecutorSQ
     // COMMANDS
     final Map<String, Class<? extends OCommandExecutorSQLAbstract>> commands = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
 
-    commands.put(OCommandExecutorSQLSyncDatabase.NAME, OCommandExecutorSQLSyncDatabase.class);
-    commands.put(OCommandExecutorSQLSyncCluster.NAME, OCommandExecutorSQLSyncCluster.class);
+    commands.put(OCommandExecutorSQLHASyncDatabase.NAME, OCommandExecutorSQLHASyncDatabase.class);
+    commands.put(OCommandExecutorSQLHASyncCluster.NAME, OCommandExecutorSQLHASyncCluster.class);
+    commands.put(OCommandExecutorSQLHARemoveServer.NAME, OCommandExecutorSQLHARemoveServer.class);
+    commands.put(OCommandExecutorSQLHAStatus.NAME, OCommandExecutorSQLHAStatus.class);
 
     COMMANDS = Collections.unmodifiableMap(commands);
   }

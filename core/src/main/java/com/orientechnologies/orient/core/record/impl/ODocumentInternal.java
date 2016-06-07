@@ -20,14 +20,15 @@
 
 package com.orientechnologies.orient.core.record.impl;
 
-import java.util.Map.Entry;
-import java.util.Set;
-
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class ODocumentInternal {
 
@@ -43,7 +44,8 @@ public class ODocumentInternal {
     oDocument.removeOwner(iOwner);
   }
 
-  public static void rawField(final ODocument oDocument, final String iFieldName, final Object iFieldValue, final OType iFieldType) {
+  public static void rawField(final ODocument oDocument, final String iFieldName, final Object iFieldValue,
+      final OType iFieldType) {
     oDocument.rawField(iFieldName, iFieldValue, iFieldType);
   }
 
@@ -52,6 +54,9 @@ public class ODocumentInternal {
   }
 
   public static OImmutableClass getImmutableSchemaClass(final ODocument oDocument) {
+    if (oDocument == null) {
+      return null;
+    }
     return oDocument.getImmutableSchemaClass();
   }
 
@@ -71,7 +76,7 @@ public class ODocumentInternal {
     document.clearTrackData();
   }
 
-  public static void checkClass(ODocument doc, ODatabaseDocumentTx database) {
+  public static void checkClass(ODocument doc, ODatabaseDocumentInternal database) {
     doc.checkClass(database);
 
   }

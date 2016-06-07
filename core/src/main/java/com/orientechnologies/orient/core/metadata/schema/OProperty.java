@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
 import java.util.Set;
@@ -167,6 +168,40 @@ public interface OProperty extends Comparable<OProperty> {
    * @return see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)}.
    */
   public OIndex<?> createIndex(final String iType);
+
+  /**
+   * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
+   * suggest to remove the index, make the massive insert and recreate it.
+   *
+   *
+   * @param iType
+   *          One of types supported.
+   *          <ul>
+   *          <li>UNIQUE: Doesn't allow duplicates</li>
+   *          <li>NOTUNIQUE: Allow duplicates</li>
+   *          <li>FULLTEXT: Indexes single word for full text search</li>
+   *          </ul>
+   * @param metadata the index metadata
+   * @return see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)}.
+   */
+  public OIndex<?> createIndex(String iType, ODocument metadata);
+
+  /**
+   * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
+   * suggest to remove the index, make the massive insert and recreate it.
+   *
+   *
+   * @param iType
+   *          One of types supported.
+   *          <ul>
+   *          <li>UNIQUE: Doesn't allow duplicates</li>
+   *          <li>NOTUNIQUE: Allow duplicates</li>
+   *          <li>FULLTEXT: Indexes single word for full text search</li>
+   *          </ul>
+   * @param metadata the index metadata
+   * @return see {@link OClass#createIndex(String, OClass.INDEX_TYPE, String...)}.
+   */
+  public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata);
 
   /**
    * Remove the index on property

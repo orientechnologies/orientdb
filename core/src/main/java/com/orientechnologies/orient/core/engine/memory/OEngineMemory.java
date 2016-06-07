@@ -19,14 +19,17 @@
  */
 package com.orientechnologies.orient.core.engine.memory;
 
-import java.util.Map;
-
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
+import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
+
+import java.util.Map;
 
 public class OEngineMemory extends OEngineAbstract {
   public static final String NAME = "memory";
@@ -49,7 +52,35 @@ public class OEngineMemory extends OEngineAbstract {
     return NAME;
   }
 
-  public boolean isShared() {
-    return true;
+  @Override
+  public String getNameFromPath(String dbPath) {
+    return OIOUtils.getRelativePathIfAny(dbPath, null);
+  }
+
+  @Override
+  public void startup() {
+    OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
+    super.startup();
+
+    try {
+      if (OByteBufferPool.instance() != null)
+        OByteBufferPool.instance().registerMBean();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "MBean for byte buffer pool cannot be registered", e);
+    }
+  }
+
+  @Override
+  public void shutdown() {
+    try {
+      try {
+        if (OByteBufferPool.instance() != null)
+          OByteBufferPool.instance().unregisterMBean();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "MBean for byte buffer pool cannot be unregistered", e);
+      }
+    } finally {
+      super.shutdown();
+    }
   }
 }

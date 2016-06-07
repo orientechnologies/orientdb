@@ -15,11 +15,7 @@ import java.io.Reader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
 
@@ -44,19 +40,17 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON(
-        "{parameters:["
-        + getCommonConfigurationParameters()
-        + ",{separator:{optional:true,description:'Column separator'}},"
-        + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
-        + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
-        + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
-        + "{dateFormat:{optional:true,description:'Date format used to parde dates. Default is yyyy-MM-dd'}},"
-        + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
-        + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
-        + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
-        + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}},"
-        + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): DEFAULT, EXCEL, MYSQL, RFC4180, TDF',type:'String'}}"
-        + "],input:['String'],output:'ODocument'}");
+        "{parameters:[" + getCommonConfigurationParameters() + ",{separator:{optional:true,description:'Column separator'}},"
+            + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
+            + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
+            + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
+            + "{dateFormat:{optional:true,description:'Date format used to parde dates. Default is yyyy-MM-dd'}},"
+            + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
+            + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
+            + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
+            + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}},"
+            + "{predefinedFormat:{optional:true,description:'Name of standard csv format (from Apache commons-csv): DEFAULT, EXCEL, MYSQL, RFC4180, TDF',type:'String'}}"
+            + "],input:['String'],output:'ODocument'}");
   }
 
   @Override

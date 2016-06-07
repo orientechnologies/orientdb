@@ -11,6 +11,7 @@ public class OFetchPlanItem extends SimpleNode {
   protected Boolean      star;
 
   protected OInteger     leftDepth;
+  protected boolean      leftStar = false;
 
   protected OInteger     rightDepth;
 
@@ -37,6 +38,8 @@ public class OFetchPlanItem extends SimpleNode {
         builder.append("[");
         leftDepth.toString(params, builder);
         builder.append("]");
+      }else if(leftStar){
+        builder.append("[*]");
       }
 
       boolean first = true;

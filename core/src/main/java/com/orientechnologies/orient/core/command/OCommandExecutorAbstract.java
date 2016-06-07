@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import java.util.*;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OBaseParser;
@@ -30,14 +32,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Abstract implementation of Executor Command interface.
@@ -75,6 +69,10 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   public <RET extends OCommandExecutor> RET setProgressListener(final OProgressListener progressListener) {
     this.progressListener = progressListener;
     return (RET) this;
+  }
+
+  public String getUndoCommand() {
+    return null;
   }
 
   public long getDistributedTimeout() {
@@ -163,7 +161,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   public boolean isCacheable() {
     return false;
   }
-  
+
   public Object mergeResults(final Map<String, Object> results) throws Exception {
 
     if (results.isEmpty())

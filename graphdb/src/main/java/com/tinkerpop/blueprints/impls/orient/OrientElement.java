@@ -20,14 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
@@ -42,9 +34,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.tinkerpop.blueprints.Edge;
@@ -52,6 +44,14 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Base Graph Element where OrientVertex and OrientEdge classes extends from. Labels are managed as OrientDB classes.
@@ -93,6 +93,13 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   public abstract String getElementType();
 
   /**
+   * (Blueprints Extension) Gets all the properties from a Vertex or Edge in one shot.
+   *
+   * @return a map containing all the properties of the Vertex/Edge.
+   */
+  public abstract Map<String, Object> getProperties();
+
+  /**
    * Removes the Element from the Graph. In case the element is a Vertex, all the incoming and outgoing edges are automatically
    * removed too.
    */
@@ -104,12 +111,12 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     graph.autoStartTransaction();
 
     if (checkDeletedInTx())
-      graph.throwRecordNotFoundException("The graph element with id '" + getIdentity() + "' not found");
+      graph.throwRecordNotFoundException(getIdentity(), "The graph element with id " + getIdentity() + " not found");
 
     try {
       getRecord().load();
     } catch (ORecordNotFoundException e) {
-      graph.throwRecordNotFoundException(e.getMessage());
+      graph.throwRecordNotFoundException(getIdentity(), e.getMessage());
     }
     getRecord().delete();
   }
@@ -159,25 +166,11 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public <T extends OrientElement> T setProperties(final Object... fields) {
     if (checkDeletedInTx())
-      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException(getIdentity(), "The graph element " + getIdentity() + " has been deleted");
 
     setPropertiesInternal(fields);
     save();
     return (T) this;
-  }
-
-  /**
-   * (Blueprints Extension) Gets all the properties from a Vertex or Edge in one shot.
-   * 
-   * @return a map containing all the properties of the Vertex/Edge.
-   */
-  public Map<String, Object> getProperties() {
-    if (this.rawElement == null)
-      return null;
-    ODocument raw = this.rawElement.getRecord();
-    if (raw == null)
-      return null;
-    return raw.toMap();
   }
 
   /**
@@ -191,7 +184,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   @Override
   public void setProperty(final String key, final Object value) {
     if (checkDeletedInTx())
-      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException(getIdentity(), "The graph element " + getIdentity() + " has been deleted");
 
     validateProperty(this, key, value);
     final OrientBaseGraph graph = getGraph();
@@ -216,7 +209,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public void setProperty(final String key, final Object value, final OType iType) {
     if (checkDeletedInTx())
-      graph.throwRecordNotFoundException("The graph element " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException(getIdentity(), "The graph element " + getIdentity() + " has been deleted");
 
     validateProperty(this, key, value);
 
@@ -272,10 +265,17 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return (T) rawElement.getIdentity().toString();
 
     final Object fieldValue = getRecord().field(key);
-    if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof ORecordBytes))
-      // CONVERT IT TO VERTEX/EDGE
-      return (T) graph.getElement(fieldValue);
-    else if (!(fieldValue instanceof Map) && OMultiValue.isMultiValue(fieldValue)
+    if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof OBlob)) {
+      ODocument record = ((OIdentifiable) fieldValue).getRecord();
+      if (record != null) {
+        final OClass schemaClass = record.getSchemaClass();
+        if (schemaClass != null && (schemaClass.isVertexType() || schemaClass.isEdgeType())) {
+          // CONVERT IT TO VERTEX/EDGE
+          return (T) graph.getElement(fieldValue);
+        }
+      }
+      return (T) fieldValue;
+    } else if (!(fieldValue instanceof Map) && OMultiValue.isMultiValue(fieldValue)
         && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
       final OIdentifiable firstValue = (OIdentifiable) OMultiValue.getFirstValue(fieldValue);
 

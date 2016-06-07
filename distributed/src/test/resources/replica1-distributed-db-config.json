@@ -1,9 +1,7 @@
 {
   "autoDeploy": true,
-  "hotAlignment": false,
   "readQuorum": 1,
-  "writeQuorum": 2,
-  "failureAvailableNodesLessQuorum": false,
+  "writeQuorum": "majority",
   "readYourWrites": true,
   "servers": {
     "europe0": "master",
@@ -11,8 +9,6 @@
   },
   "clusters": {
     "internal": {
-    },
-    "index": {
     },
     "*": {
       "servers": [

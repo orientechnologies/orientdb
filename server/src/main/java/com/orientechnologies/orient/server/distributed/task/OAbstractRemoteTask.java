@@ -21,11 +21,11 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.Externalizable;
 
 /**
  * Base class for Tasks to be executed remotely.
@@ -33,13 +33,10 @@ import java.io.Externalizable;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public abstract class OAbstractRemoteTask implements Externalizable {
+public abstract class OAbstractRemoteTask implements ORemoteTask {
   private static final long  serialVersionUID = 1L;
-  protected transient String nodeSource;
 
-  public enum RESULT_STRATEGY {
-    ANY, UNION
-  }
+  protected transient String nodeSource;
 
   /**
    * Constructor used from unmarshalling.
@@ -47,25 +44,36 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   public OAbstractRemoteTask() {
   }
 
+  @Override
   public abstract String getName();
 
   public abstract OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType();
 
-  public abstract Object execute(OServer iServer, ODistributedServerManager iManager, ODatabaseDocumentTx database)
-      throws Exception;
+  @Override
+  public abstract Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
+      ODatabaseDocumentInternal database) throws Exception;
 
+  @Override
+  public int getPartitionKey() {
+    return -1;
+  }
+
+  @Override
   public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
+  @Override
   public long getSynchronousTimeout(final int iSynchNodes) {
     return getDistributedTimeout() * iSynchNodes;
   }
 
+  @Override
   public long getTotalTimeout(final int iTotalNodes) {
     return getDistributedTimeout() * iTotalNodes;
   }
 
+  @Override
   public RESULT_STRATEGY getResultStrategy() {
     return RESULT_STRATEGY.ANY;
   }
@@ -75,27 +83,23 @@ public abstract class OAbstractRemoteTask implements Externalizable {
     return getName();
   }
 
+  @Override
   public String getNodeSource() {
     return nodeSource;
   }
 
+  @Override
   public void setNodeSource(String nodeSource) {
     this.nodeSource = nodeSource;
   }
 
-  public boolean isRequireNodeOnline() {
-    return true;
-  }
-
-  public boolean isRequiredOpenDatabase() {
-    return true;
-  }
-
+  @Override
   public boolean isIdempotent() {
     return false;
   }
 
-  public String getQueueName(final String iOriginalQueueName) {
-    return iOriginalQueueName;
+  @Override
+  public boolean isNodeOnlineRequired() {
+    return true;
   }
 }

@@ -23,7 +23,6 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
@@ -32,20 +31,16 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodRuntime;
+import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Handles runtime results.
@@ -76,7 +71,18 @@ public class ORuntimeResult {
   @SuppressWarnings("unchecked")
   public static ODocument applyRecord(final ODocument iValue, final Map<String, Object> iProjections, final OCommandContext iContext, final OIdentifiable iRecord) {
     // APPLY PROJECTIONS
-    final ODocument inputDocument = (ODocument) (iRecord != null ? iRecord.getRecord() : null);
+
+    ORecord record = (iRecord != null ? iRecord.getRecord() : null);
+    //MANAGE SPECIFIC CASES FOR RECORD BYTES
+    if (ORecordBytes.RECORD_TYPE == ORecordInternal.getRecordType(record)) {
+      for (Entry<String, Object> projection : iProjections.entrySet()) {
+        if ("rid".equalsIgnoreCase(projection.getKey())) {
+          iValue.field(projection.getKey(), record.getIdentity());
+        }
+      }
+      return iValue;
+    }
+    final ODocument inputDocument = (ODocument) record;
 
     if (iProjections.isEmpty())
       // SELECT * CASE
@@ -145,7 +151,7 @@ public class ORuntimeResult {
               Object value = projectionValueIterator.next();
               if (value instanceof OIdentifiable) {
                 value = ((OIdentifiable) value).getRecord();
-                if (!((OIdentifiable) value).getIdentity().isPersistent())
+                if (value != null && !((OIdentifiable) value).getIdentity().isPersistent())
                   link = false;
               }
 

@@ -27,6 +27,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 import com.orientechnologies.orient.etl.loader.OLoader;
@@ -45,9 +46,9 @@ public class OETLPipeline {
   protected final OCommandContext    context;
   protected final LOG_LEVELS         logLevel;
   protected final int                maxRetries;
-  protected boolean                  haltOnError;
-  protected ODatabaseDocumentTx      db;
-  protected OrientBaseGraph          graph;
+  protected       boolean            haltOnError;
+  protected       ODatabaseDocument  db;
+  protected       OrientBaseGraph    graph;
 
   public OETLPipeline(final OETLProcessor processor, final List<OTransformer> transformers, final OLoader loader,
       final LOG_LEVELS logLevel, final int maxRetries, final boolean haltOnError) {
@@ -62,23 +63,22 @@ public class OETLPipeline {
 
     for (OTransformer t : this.transformers)
       t.setPipeline(this);
-    this.loader.setPipeline(this);
 
   }
 
   public synchronized void begin() {
-    loader.begin();
+    loader.beginLoader(this);
     for (OTransformer t : transformers)
       t.begin();
   }
 
-  public ODatabaseDocumentTx getDocumentDatabase() {
+  public ODatabaseDocument getDocumentDatabase() {
     if (db != null)
       db.activateOnCurrentThread();
     return db;
   }
 
-  public OETLPipeline setDocumentDatabase(final ODatabaseDocumentTx iDb) {
+  public OETLPipeline setDocumentDatabase(final ODatabaseDocument iDb) {
     db = iDb;
     return this;
   }
@@ -118,18 +118,18 @@ public class OETLPipeline {
         }
         if (current != null)
           // LOAD
-          loader.load(current, context);
+          loader.load(this, current, context);
 
         return current;
       } catch (ONeedRetryException e) {
-        loader.rollback();
+        loader.rollback(this);
         retry++;
         processor.out(INFO, "Error in pipeline execution, retry = %d/%d (exception=%s)", retry, maxRetries, e);
       } catch (OETLProcessHaltedException e) {
         processor.out(ERROR, "Pipeline execution halted");
         processor.getStats().incrementErrors();
 
-        loader.rollback();
+        loader.rollback(this);
         throw e;
 
       } catch (Exception e) {
@@ -140,12 +140,16 @@ public class OETLPipeline {
           return null;
         }
 
-        loader.rollback();
+        loader.rollback(this);
         throw OException.wrapException(new OETLProcessHaltedException("Halt"), e);
 
       }
     } while (retry < maxRetries);
 
     return this;
+  }
+
+  public void end() {
+    loader.endLoader(this);
   }
 }

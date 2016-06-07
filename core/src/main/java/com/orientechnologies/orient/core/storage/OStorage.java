@@ -20,10 +20,12 @@
 package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.resource.OSharedContainer;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -32,6 +34,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -91,6 +94,11 @@ public interface OStorage extends OBackupable, OSharedContainer {
   OStorageOperationResult<Integer> updateRecord(ORecordId iRecordId, boolean updateContent, byte[] iContent, int iVersion,
       byte iRecordType, int iMode, ORecordCallback<Integer> iCallback);
 
+  /**
+   * Resurrects a record that was previously deleted, with a new content.
+   */
+  OStorageOperationResult<Integer> recyclePosition(ORecordId iRecordId, byte[] iContent, int iVersion, byte iRecordType);
+
   OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, int iVersion, int iMode, ORecordCallback<Boolean> iCallback);
 
   ORecordMetadata getRecordMetadata(final ORID rid);
@@ -98,7 +106,9 @@ public interface OStorage extends OBackupable, OSharedContainer {
   boolean cleanOutRecord(ORecordId recordId, int recordVersion, int iMode, ORecordCallback<Boolean> callback);
 
   // TX OPERATIONS
-  void commit(OTransaction iTx, Runnable callback);
+  List<ORecordOperation> commit(OTransaction iTx, Runnable callback);
+
+  OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction iTx, Runnable callback);
 
   // TX OPERATIONS
   void rollback(OTransaction iTx);
@@ -235,8 +245,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   OCurrentStorageComponentsFactory getComponentsFactory();
 
-  long getLastOperationId();
-
   OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback);
 
   OCluster getClusterByName(String clusterName);
@@ -245,14 +253,18 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   void setConflictStrategy(ORecordConflictStrategy iResolver);
 
-  void incrementalBackup(String backupDirectory);
+  /**
+   *
+   * @param backupDirectory
+   * @return Backup file name
+   */
+  String incrementalBackup(String backupDirectory);
 
   void restoreFromIncrementalBackup(String filePath);
 
   /**
-   * This method is called in {@link com.orientechnologies.orient.core.Orient#shutdown()} method.
-   * For most of the storages it means that storage will be merely closed, but sometimes additional operations are need to be
-   * taken in account.
+   * This method is called in {@link com.orientechnologies.orient.core.Orient#shutdown()} method. For most of the storages it means
+   * that storage will be merely closed, but sometimes additional operations are need to be taken in account.
    */
   void shutdown();
 }

@@ -31,7 +31,7 @@ import com.tinkerpop.blueprints.Direction;
  */
 public class OrientVertexType extends OrientElementType {
   // Keeping the name in Immutable class because i cannot do the other way around
-  public static final String CLASS_NAME = OImmutableClass.VERTEX_CLASS_NAME;
+  public static final String CLASS_NAME = OClass.VERTEX_CLASS_NAME;
 
   public class OrientVertexProperty extends OPropertyAbstractDelegate {
     public static final String      ORDERED = "ordered";
@@ -94,6 +94,14 @@ public class OrientVertexType extends OrientElementType {
   public OrientVertexType addCluster(final String iClusterName) {
     delegate.addCluster(iClusterName);
     return this;
+  }
+
+  @Override public boolean isEdgeType() {
+    return false;
+  }
+
+  @Override public boolean isVertexType() {
+    return true;
   }
 
   @Override

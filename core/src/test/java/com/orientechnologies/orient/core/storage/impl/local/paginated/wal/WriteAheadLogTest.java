@@ -1,25 +1,20 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
+import org.testng.Assert;
+import org.testng.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.*;
 
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.storage.OStorage;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Andrey Lomakin
@@ -27,7 +22,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  */
 @Test
 public class WriteAheadLogTest {
-  private static final int   ONE_KB = 1024;
+  private static final int ONE_KB = 1024;
   private ODiskWriteAheadLog writeAheadLog;
   private File               testDir;
 
@@ -60,6 +55,8 @@ public class WriteAheadLogTest {
     OStorageConfiguration configurationMock = mock(OStorageConfiguration.class);
     when(configurationMock.getLocaleInstance()).thenReturn(Locale.getDefault());
     when(paginatedStorage.getConfiguration()).thenReturn(configurationMock);
+    when(paginatedStorage.getPerformanceStatisticManager())
+        .thenReturn(new OPerformanceStatisticManager(paginatedStorage, Long.MAX_VALUE, -1));
 
     return new ODiskWriteAheadLog(maxPagesCacheSize, -1, maxSegmentSize, null, paginatedStorage);
   }
@@ -328,7 +325,7 @@ public class WriteAheadLogTest {
 
     OLogSequenceNumber end = null;
 
-    for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE;) {
+    for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE; ) {
       int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 15;
       walRecord = new TestRecord(contentSize, false);
 
@@ -379,8 +376,8 @@ public class WriteAheadLogTest {
     writeAheadLog = createWAL();
 
     OLogSequenceNumber end = null;
-    for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE;) {
-      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 1;
+    for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE; ) {
+      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 15;
       walRecord = new TestRecord(contentSize, false);
 
       end = writeAheadLog.log(walRecord);
@@ -427,8 +424,8 @@ public class WriteAheadLogTest {
 
     OLogSequenceNumber end = null;
 
-    for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE;) {
-      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 1;
+    for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE; ) {
+      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 15;
       walRecord = new TestRecord(contentSize, false);
 
       end = writeAheadLog.log(walRecord);
@@ -474,8 +471,8 @@ public class WriteAheadLogTest {
     writeAheadLog = createWAL();
 
     OLogSequenceNumber end = null;
-    for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE;) {
-      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 1;
+    for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE; ) {
+      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 15;
       walRecord = new TestRecord(contentSize, false);
 
       end = writeAheadLog.log(walRecord);
@@ -502,7 +499,7 @@ public class WriteAheadLogTest {
     System.out.println("seed of testWriteMultipleRecordsWithDifferentSizeAfterCloseFour " + seed);
     Random random = new Random(seed);
 
-    for (int writtenSize = 0; writtenSize < 16 * OWALPage.PAGE_SIZE;) {
+    for (int writtenSize = 0; writtenSize < 16 * OWALPage.PAGE_SIZE; ) {
       int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 2 * OIntegerSerializer.INT_SIZE + 5;
       OWALRecord walRecord = new TestRecord(contentSize, false);
 
@@ -521,8 +518,9 @@ public class WriteAheadLogTest {
     assertLogContent(writeAheadLog, writtenRecords);
 
     OLogSequenceNumber end = null;
-    for (int writtenSize = 0; writtenSize < 16 * OWALPage.PAGE_SIZE;) {
-      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 2 * OIntegerSerializer.INT_SIZE + 5;;
+    for (int writtenSize = 0; writtenSize < 16 * OWALPage.PAGE_SIZE; ) {
+      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 2 * OIntegerSerializer.INT_SIZE + 5;
+      ;
       OWALRecord walRecord = new TestRecord(contentSize, false);
 
       end = writeAheadLog.log(walRecord);
@@ -769,14 +767,14 @@ public class WriteAheadLogTest {
     OWALRecord walRecord;
 
     while (writtenContent <= 4 * OWALPage.PAGE_SIZE) {
-      int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 8;
+      int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 15;
       walRecord = new TestRecord(contentSize, false);
       writeAheadLog.log(walRecord);
 
       writtenContent += contentSize;
     }
 
-    int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 8;
+    int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 15;
     walRecord = new TestRecord(contentSize, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
 
@@ -972,8 +970,8 @@ public class WriteAheadLogTest {
     writeAheadLog = createWAL();
 
     Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
-    Assert.assertEquals(writeAheadLog.size(), ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE
-        + OWALPage.RECORDS_OFFSET);
+    Assert.assertEquals(writeAheadLog.size(),
+        ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE + OWALPage.RECORDS_OFFSET);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
 
     try {
@@ -1012,8 +1010,8 @@ public class WriteAheadLogTest {
 
     writeAheadLog = createWAL();
 
-    Assert.assertEquals(writeAheadLog.size(), ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE
-        + OWALPage.RECORDS_OFFSET);
+    Assert.assertEquals(writeAheadLog.size(),
+        ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE + OWALPage.RECORDS_OFFSET);
     Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
 
@@ -1053,8 +1051,8 @@ public class WriteAheadLogTest {
     writeAheadLog = createWAL();
 
     Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
-    Assert.assertEquals(writeAheadLog.size(), ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE
-        + OWALPage.RECORDS_OFFSET);
+    Assert.assertEquals(writeAheadLog.size(),
+        ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE + OWALPage.RECORDS_OFFSET);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
 
     try {
@@ -1088,8 +1086,8 @@ public class WriteAheadLogTest {
     writeAheadLog = createWAL();
 
     Assert.assertTrue(writeAheadLog.end().compareTo(end) >= 0);
-    Assert.assertEquals(writeAheadLog.size(), ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE
-        + OWALPage.RECORDS_OFFSET);
+    Assert.assertEquals(writeAheadLog.size(),
+        ((int) (Math.ceil(logSize / (1.0 * OWALPage.PAGE_SIZE)))) * OWALPage.PAGE_SIZE + OWALPage.RECORDS_OFFSET);
     assertLogContent(writeAheadLog, writtenRecords.subList(0, 1));
 
     try {
@@ -1720,9 +1718,8 @@ public class WriteAheadLogTest {
 
     @Override
     public String toString() {
-      return "TestRecord {size: "
-          + (data.length + OIntegerSerializer.INT_SIZE + 1 + (OIntegerSerializer.INT_SIZE + 3) + ", updateMasterRecord : "
-              + updateMasterRecord + "}");
+      return "TestRecord {size: " + (data.length + OIntegerSerializer.INT_SIZE + 1 + (OIntegerSerializer.INT_SIZE + 3)
+          + ", updateMasterRecord : " + updateMasterRecord + "}");
     }
   }
 

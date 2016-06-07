@@ -25,10 +25,12 @@ public class ONullBucketTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, null, OStringSerializer.INSTANCE, true);
     Assert.assertNull(bucket.getValue());
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -40,6 +42,7 @@ public class ONullBucketTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, null, OStringSerializer.INSTANCE, true);
 
@@ -47,6 +50,7 @@ public class ONullBucketTest {
     OSBTreeValue<String> treeValue = bucket.getValue();
     Assert.assertEquals(treeValue.getValue(), "test");
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -58,6 +62,7 @@ public class ONullBucketTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, null, OStringSerializer.INSTANCE, true);
 
@@ -67,6 +72,7 @@ public class ONullBucketTest {
     OSBTreeValue<String> treeValue = bucket.getValue();
     Assert.assertNull(treeValue);
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -78,6 +84,7 @@ public class ONullBucketTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     ONullBucket<String> bucket = new ONullBucket<String>(cacheEntry, null, OStringSerializer.INSTANCE, true);
 
@@ -92,6 +99,7 @@ public class ONullBucketTest {
     treeValue = bucket.getValue();
     Assert.assertEquals(treeValue.getValue(), "testOne");
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 

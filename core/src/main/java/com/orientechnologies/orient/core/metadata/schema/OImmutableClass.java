@@ -19,17 +19,6 @@
   */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -42,19 +31,31 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.schedule.OScheduler;
+import com.orientechnologies.orient.core.schedule.OScheduledEvent;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/21/14
  */
 public class OImmutableClass implements OClass {
-  public static final String EDGE_CLASS_NAME   = "E";
-  public static final String VERTEX_CLASS_NAME = "V";
-  private boolean            inited            = false;
-  private final boolean      isAbstract;
-  private final boolean      strictMode;
+  /**
+   * use OClass.EDGE_CLASS_NAME instead
+   */
+  @Deprecated
+  public static final String              EDGE_CLASS_NAME   = OClass.EDGE_CLASS_NAME;
+  /**
+   * use OClass.EDGE_CLASS_NAME instead
+   */
+  @Deprecated
+  public static final String              VERTEX_CLASS_NAME = OClass.VERTEX_CLASS_NAME;
 
+
+  private boolean                         inited            = false;
+  private final boolean                   isAbstract;
+  private final boolean                   strictMode;
   private final String                    name;
   private final String                    streamAbleName;
   private final Map<String, OProperty>    properties;
@@ -72,21 +73,22 @@ public class OImmutableClass implements OClass {
   private final Map<String, String>       customFields;
   private final String                    description;
 
-  private final OImmutableSchema      schema;
+  private final OImmutableSchema          schema;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private final List<OImmutableClass> superClasses;
+  private final List<OImmutableClass>     superClasses;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private Collection<OImmutableClass> subclasses;
-  private boolean                     restricted;
-  private boolean                     isVertexType;
-  private boolean                     isEdgeType;
-  private boolean                     triggered;
-  private boolean                     function;
-  private boolean                     scheduler;
-  private boolean                     ouser;
-  private boolean                     orole;
+  private Collection<OImmutableClass>     subclasses;
+  private boolean                         restricted;
+  private boolean                         isVertexType;
+  private boolean                         isEdgeType;
+  private boolean                         triggered;
+  private boolean                         function;
+  private boolean                         scheduler;
+  private boolean                         ouser;
+  private boolean                         orole;
+  private OIndex<?>                       autoShardingIndex;
 
-  public OImmutableClass(OClass oClass, OImmutableSchema schema) {
+  public OImmutableClass(final OClass oClass, final OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
     strictMode = oClass.isStrictMode();
     this.schema = schema;
@@ -142,15 +144,20 @@ public class OImmutableClass implements OClass {
       this.allProperties = Collections.unmodifiableCollection(allProperties);
       this.allPropertiesMap = Collections.unmodifiableMap(allPropsMap);
       this.restricted = isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME);
-      this.isVertexType = isSubClassOf(VERTEX_CLASS_NAME);
-      this.isEdgeType = isSubClassOf(EDGE_CLASS_NAME);
+      this.isVertexType = isSubClassOf(OClass.VERTEX_CLASS_NAME);
+      this.isEdgeType = isSubClassOf(OClass.EDGE_CLASS_NAME);
       this.triggered = isSubClassOf(OClassTrigger.CLASSNAME);
       this.function = isSubClassOf(OFunctionTrigger.CLASSNAME);
-      this.scheduler = isSubClassOf(OScheduler.CLASSNAME);
+      this.scheduler = isSubClassOf(OScheduledEvent.CLASS_NAME);
       this.ouser = isSubClassOf(OUser.CLASS_NAME);
       this.orole = isSubClassOf(ORole.CLASS_NAME);
-      inited = true;
+
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      this.autoShardingIndex = db != null && db.getMetadata() != null && db.getMetadata().getIndexManager() != null
+          ? db.getMetadata().getIndexManager().getClassAutoShardingIndex(name) : null;
     }
+
+    inited = true;
   }
 
   @Override
@@ -363,6 +370,11 @@ public class OImmutableClass implements OClass {
 
   @Override
   public OClass addCluster(String iClusterName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OClass truncateCluster(String clusterName) {
     throw new UnsupportedOperationException();
   }
 
@@ -642,7 +654,7 @@ public class OImmutableClass implements OClass {
 
   @Override
   public OIndex<?> getClassIndex(String iName) {
-    return getDatabase().getMetadata().getIndexManager().getClassIndex(this.name, name);
+    return getDatabase().getMetadata().getIndexManager().getClassIndex(this.name, iName);
   }
 
   @Override
@@ -670,6 +682,11 @@ public class OImmutableClass implements OClass {
     Set<OIndex<?>> indexes = new HashSet<OIndex<?>>();
     getIndexes(indexes);
     return indexes;
+  }
+
+  @Override
+  public OIndex<?> getAutoShardingIndex() {
+    return autoShardingIndex;
   }
 
   @Override

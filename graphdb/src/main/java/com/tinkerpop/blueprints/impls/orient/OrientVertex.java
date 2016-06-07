@@ -32,30 +32,17 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * OrientDB Vertex implementation of TinkerPop Blueprints standard.
@@ -67,7 +54,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
   public static final String CONNECTION_OUT_PREFIX = OrientBaseGraph.CONNECTION_OUT + "_";
   public static final String CONNECTION_IN_PREFIX  = OrientBaseGraph.CONNECTION_IN + "_";
 
-  private static final long serialVersionUID = 1L;
+  private static final long  serialVersionUID      = 1L;
 
   /**
    * (Internal) Called by serialization.
@@ -380,6 +367,28 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     return result;
   }
 
+  @Override
+  public Map<String, Object> getProperties() {
+    if (this.rawElement == null)
+      return null;
+    final ODocument raw = this.rawElement.getRecord();
+    if (raw == null)
+      return null;
+
+    final OrientBaseGraph graph = setCurrentGraphInThreadLocal();
+
+    final Map<String, Object> result = new HashMap<String, Object>();
+
+    for (String field : raw.fieldNames())
+      if (graph != null && settings.isUseVertexFieldsForEdgeLabels()) {
+        if (!field.startsWith(CONNECTION_OUT_PREFIX) && !field.startsWith(CONNECTION_IN_PREFIX))
+          result.put(field, raw.field(field));
+      } else if (!field.equals(OrientBaseGraph.CONNECTION_OUT) && !field.equals(OrientBaseGraph.CONNECTION_IN))
+        result.put(field, raw.field(field));
+
+    return result;
+  }
+
   /**
    * Returns a lazy iterable instance against vertices.
    *
@@ -553,16 +562,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final OrientBaseGraph graph = getGraph();
 
     if (checkDeletedInTx())
-      graph.throwRecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
+      graph.throwRecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
 
     final ORID oldIdentity = getIdentity().copy();
 
     final ORecord oldRecord = oldIdentity.getRecord();
     if (oldRecord == null)
-      graph.throwRecordNotFoundException("The vertex " + getIdentity() + " has been deleted");
-
-    if (!graph.getRawGraph().getTransaction().isActive())
-      throw new IllegalStateException("Move vertex requires an active transaction to be executed in safe manner");
+      graph.throwRecordNotFoundException(getIdentity(), "The vertex " + getIdentity() + " has been deleted");
 
     // DELETE THE OLD RECORD FIRST TO AVOID ISSUES WITH UNIQUE CONSTRAINTS
     oldRecord.delete();
@@ -1035,10 +1041,25 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     if (settings.isUseVertexFieldsForEdgeLabels()) {
       if (iClassNames == null)
-        // FALL BACK TO LOAD ALL FIELD NAMES
+      // FALL BACK TO LOAD ALL FIELD NAMES
+      {
         return null;
+      }
+      OSchemaProxy schema = getGraph().getRawGraph().getMetadata().getSchema();
 
+      Set<String> allClassNames = new HashSet<String>();
       for (String className : iClassNames) {
+        allClassNames.add(className);
+        OClass clazz = schema.getClass(className);
+        if (clazz != null) {
+          Collection<OClass> subClasses = clazz.getAllSubclasses();
+          for (OClass subClass : subClasses) {
+            allClassNames.add(subClass.getName());
+          }
+        }
+      }
+
+      for (String className : allClassNames) {
         switch (iDirection) {
         case OUT:
           result.add(CONNECTION_OUT_PREFIX + className);

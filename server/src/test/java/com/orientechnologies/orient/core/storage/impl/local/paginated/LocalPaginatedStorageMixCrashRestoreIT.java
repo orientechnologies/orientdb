@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -21,12 +21,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Andrey Lomakin
@@ -40,7 +42,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
   private File buildDir;
   private AtomicInteger idGen = new AtomicInteger();
 
-  private OLockManager<Integer> idLockManager = new OLockManager<Integer>(true, 1000);
+  private OOneEntryPerKeyLockManager<Integer> idLockManager = new OOneEntryPerKeyLockManager<Integer>(true, 1000, 10000);
 
   private ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -51,26 +53,51 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
   private ConcurrentHashMap<Integer, Long> deletedIds = new ConcurrentHashMap<Integer, Long>();
 
+  private final AtomicLong lastOperation = new AtomicLong();
+
   public void spawnServer() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageMixCrashRestore";
 
     buildDir = new File(buildDirectory);
+
+    buildDirectory = buildDir.getCanonicalPath();
+    buildDir = new File(buildDirectory);
+
     if (buildDir.exists())
       OFileUtils.deleteRecursively(buildDir);
 
     buildDir.mkdir();
 
+    final File mutexFile = new File(buildDir, "mutex.ct");
+    final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
+    mutex.seek(0);
+    mutex.write(0);
+
     String javaExec = System.getProperty("java.home") + "/bin/java";
+    javaExec = new File(javaExec).getCanonicalPath();
+
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
+        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory,
+        RemoteDBRunner.class.getName());
+
     processBuilder.inheritIO();
 
     process = processBuilder.start();
 
-    Thread.sleep(5000);
+    System.out.println(LocalPaginatedStorageMixCrashRestoreIT.class.getSimpleName() + ": Wait for server start");
+    boolean started = false;
+    do {
+      Thread.sleep(5000);
+      mutex.seek(0);
+      started = mutex.read() == 1;
+    } while (!started);
+
+    mutex.close();
+    mutexFile.delete();
+    System.out.println(LocalPaginatedStorageMixCrashRestoreIT.class.getSimpleName() + ": Server was started");
   }
 
   @After
@@ -117,9 +144,9 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       futures.add(executorService.submit(new DataChangeTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(3000);
+    System.out.println("Wait for 5 minutes");
+    TimeUnit.MINUTES.sleep(5);
 
-    long lastTs = System.currentTimeMillis();
     System.out.println("Wait for process to destroy");
 
     process.destroy();
@@ -146,7 +173,7 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
     testDocumentTx.open("admin", "admin");
 
     System.out.println("Start documents comparison.");
-    compareDocuments(lastTs);
+    compareDocuments(lastOperation.get());
   }
 
   private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
@@ -289,8 +316,12 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       server.startup(RemoteDBRunner.class
           .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-mix-config.xml"));
       server.activate();
-      while (true)
-        ;
+
+      final String mutexFile = System.getProperty("mutexFile");
+      final RandomAccessFile mutex = new RandomAccessFile(mutexFile, "rw");
+      mutex.seek(0);
+      mutex.write(1);
+      mutex.close();
     }
   }
 
@@ -332,18 +363,24 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
               actionType = 2;
           }
 
+          long ts = -1;
           switch (actionType) {
           case 0:
-            createRecord();
+            ts = createRecord();
             break;
           case 1:
-            updateRecord();
+            ts = updateRecord();
             break;
           case 2:
-            deleteRecord();
+            ts = deleteRecord();
             break;
           default:
             throw new IllegalStateException("Invalid action type " + actionType);
+          }
+
+          long currentTs = lastOperation.get();
+          while (currentTs < ts && !lastOperation.compareAndSet(currentTs, ts)) {
+            currentTs = lastOperation.get();
           }
         }
       } finally {
@@ -354,40 +391,44 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       }
     }
 
-    private void createRecord() {
+    private long createRecord() {
+      long ts = -1;
       final int idToCreate = idGen.getAndIncrement();
-      idLockManager.acquireLock(idToCreate, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.acquireLock(idToCreate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
       try {
         final ODocument document = new ODocument("TestClass");
         document.field("id", idToCreate);
-        document.field("timestamp", System.currentTimeMillis());
+        ts = System.currentTimeMillis();
+        document.field("timestamp", ts);
         document.field("stringValue", "sfe" + random.nextLong());
 
         saveDoc(document, baseDB, testDB);
 
         addedIds.add(document.<Integer>field("id"));
       } finally {
-        idLockManager.releaseLock(Thread.currentThread(), idToCreate, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.releaseLock(Thread.currentThread(), idToCreate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
       }
+
+      return ts;
     }
 
-    private void deleteRecord() {
+    private long deleteRecord() {
       int closeId = random.nextInt(idGen.get());
 
       Integer idToDelete = addedIds.ceiling(closeId);
       if (idToDelete == null)
         idToDelete = addedIds.first();
 
-      idLockManager.acquireLock(idToDelete, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.acquireLock(idToDelete, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
       while (deletedIds.containsKey(idToDelete)) {
-        idLockManager.releaseLock(Thread.currentThread(), idToDelete, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.releaseLock(Thread.currentThread(), idToDelete, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
         closeId = random.nextInt(idGen.get());
 
         idToDelete = addedIds.ceiling(closeId);
         if (idToDelete == null)
           idToDelete = addedIds.first();
-        idLockManager.acquireLock(idToDelete, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.acquireLock(idToDelete, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
       }
 
       addedIds.remove(idToDelete);
@@ -407,27 +448,29 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
 
       deletedIds.put(idToDelete, ts);
 
-      idLockManager.releaseLock(Thread.currentThread(), idToDelete, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.releaseLock(Thread.currentThread(), idToDelete, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+
+      return ts;
     }
 
-    private void updateRecord() {
+    private long updateRecord() {
       int closeId = random.nextInt(idGen.get());
 
       Integer idToUpdate = addedIds.ceiling(closeId);
       if (idToUpdate == null)
         idToUpdate = addedIds.first();
 
-      idLockManager.acquireLock(idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.acquireLock(idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
 
       while (deletedIds.containsKey(idToUpdate)) {
-        idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
         closeId = random.nextInt(idGen.get());
 
         idToUpdate = addedIds.ceiling(closeId);
         if (idToUpdate == null)
           idToUpdate = addedIds.first();
 
-        idLockManager.acquireLock(idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+        idLockManager.acquireLock(idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
       }
 
       addedIds.remove(idToUpdate);
@@ -438,14 +481,18 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
       Assert.assertTrue(!documentsToUpdate.isEmpty());
 
       final ODocument documentToUpdate = documentsToUpdate.get(0);
-      documentToUpdate.field("timestamp", System.currentTimeMillis());
+      long ts = System.currentTimeMillis();
+
+      documentToUpdate.field("timestamp", ts);
       documentToUpdate.field("stringValue", "vde" + random.nextLong());
 
       saveDoc(documentToUpdate, baseDB, testDB);
 
       updatedIds.add(idToUpdate);
 
-      idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+      idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+
+      return ts;
     }
   }
 }

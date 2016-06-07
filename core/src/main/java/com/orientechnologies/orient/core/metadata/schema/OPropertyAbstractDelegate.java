@@ -16,11 +16,12 @@
 
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Abstract Delegate for OProperty interface.
@@ -172,6 +173,14 @@ public class OPropertyAbstractDelegate implements OProperty {
   @Override
   public OIndex<?> createIndex(final String iType) {
     return delegate.createIndex(iType);
+  }
+
+  @Override public OIndex<?> createIndex(String iType, ODocument metadata) {
+    return delegate.createIndex(iType, metadata);
+  }
+
+  @Override public OIndex<?> createIndex(OClass.INDEX_TYPE iType, ODocument metadata) {
+    return delegate.createIndex(iType, metadata);
   }
 
   @Override

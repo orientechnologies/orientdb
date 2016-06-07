@@ -19,12 +19,8 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -42,6 +38,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+
+import java.util.*;
 
 /**
  * No operation transaction.
@@ -71,14 +69,20 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
-  public void restore() {
-  }
-
-  @Override
   public void commit(boolean force) {
   }
 
   public void rollback() {
+  }
+
+  @Override
+  public OUncompletedCommit<Void> initiateCommit() {
+    return OUncompletedCommit.NO_OPERATION;
+  }
+
+  @Override
+  public OUncompletedCommit<Void> initiateCommit(boolean force) {
+    return OUncompletedCommit.NO_OPERATION;
   }
 
   @Deprecated
@@ -198,7 +202,8 @@ public class OTransactionNoTx extends OTransactionAbstract {
         database.getLocalCache().freeRecord(rid);
 
       throw OException.wrapException(
-          new ODatabaseException("Error during saving of record" + iRecord != null ? " with rid " + iRecord.getIdentity() : ""), e);
+          new ODatabaseException("Error during saving of record" + (iRecord != null ? " with rid " + iRecord.getIdentity() : "")),
+          e);
     }
   }
 
@@ -276,7 +281,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
       throw OException.wrapException(
-          new ODatabaseException("Error during deletion of record" + iRecord != null ? " with rid " + iRecord.getIdentity() : ""),
+          new ODatabaseException("Error during deletion of record" + (iRecord != null ? " with rid " + iRecord.getIdentity() : "")),
           e);
     }
   }
@@ -333,10 +338,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public OTransactionIndexChangesPerKey getIndexEntry(final String iIndexName, final Object iKey) {
-    return null;
-  }
-
   public void addIndexEntry(final OIndex<?> delegate, final String indexName, final OPERATION status, final Object key,
       final OIdentifiable value) {
     switch (status) {
@@ -349,7 +350,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
       break;
 
     case REMOVE:
-      assert key != null;
       delegate.remove(key, value);
       break;
     }

@@ -72,4 +72,9 @@ public interface OCommandDistributedReplicateRequest {
    * Returns the distributed timeout in milliseconds.
    */
   long getDistributedTimeout();
+
+  /**
+   * Returns the undo command if any.
+   */
+  String getUndoCommand();
 }

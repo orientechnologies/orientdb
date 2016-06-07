@@ -23,8 +23,10 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 /**
  * Record factory. To use your own record implementation use the declareRecordType() method. Example of registration of the record
@@ -34,10 +36,9 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
  * declareRecordType('m', "myrecord", MyRecord.class);
  * </code>
  * </p>
- * 
+ *
  * @author Sylvain Spinelli
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 @SuppressWarnings("unchecked")
 public class ORecordFactoryManager {
@@ -55,9 +56,14 @@ public class ORecordFactoryManager {
         return new ODocument();
       }
     });
-    declareRecordType(ORecordBytes.RECORD_TYPE, "bytes", ORecordBytes.class, new ORecordFactory() {
+    declareRecordType(OBlob.RECORD_TYPE, "bytes", OBlob.class, new ORecordFactory() {
       public ORecord newRecord() {
         return new ORecordBytes();
+      }
+    });
+    declareRecordType(ORecordFlat.RECORD_TYPE, "flat", ORecordFlat.class, new ORecordFactory() {
+      public ORecord newRecord() {
+        return new ORecordFlat();
       }
     });
   }

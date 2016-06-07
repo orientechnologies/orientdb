@@ -132,6 +132,9 @@ public class ODatabaseRepair extends ODatabaseTool {
     if (fieldValue instanceof OIdentifiable) {
       final ORID id = ((OIdentifiable) fieldValue).getIdentity();
 
+      if (id.getClusterId() == 0 && id.getClusterPosition() == 0)
+        return true;
+
       if (id.isValid())
         if (id.isPersistent()) {
           final ORecord connected = ((OIdentifiable) fieldValue).getRecord();

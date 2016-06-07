@@ -52,6 +52,8 @@ LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 LOG_LEVEL=warning
 WWW_PATH=$ORIENTDB_HOME/www
 JAVA_OPTS=-Djava.awt.headless=true
+# It's better to set MaxDirectMemorySize, since no one sure OServerShutdownMain will refer inside it
+ORIENTDB_SETTINGS="-XX:MaxDirectMemorySize=512g"
 ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
 
 PARAMS=$*
@@ -62,7 +64,7 @@ if [ -f "$ORIENTDB_PID" ] && [ "${#PARAMS}" -eq 0 ] ; then
     rm "$ORIENTDB_PID"
 else
     echo "pid file not present or params detected"
-    "$JAVA" -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" \
+    "$JAVA" -client $JAVA_OPTS $ORIENTDB_SETTINGS -Dorientdb.config.file="$CONFIG_FILE" \
         -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*" \
         com.orientechnologies.orient.server.OServerShutdownMain $*
 

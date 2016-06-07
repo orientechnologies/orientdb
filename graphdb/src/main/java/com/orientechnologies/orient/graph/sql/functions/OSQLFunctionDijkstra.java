@@ -19,31 +19,23 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.sql.OSQLHelper;
-import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Dijkstra's algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph.
- * 
+ * <p>
  * The first parameter is source record. The second parameter is destination record. The third parameter is a name of property that
  * represents 'weight'.
- * 
+ * <p>
  * If property is not defined in edge or is null, distance between vertexes are 0.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
   public static final String NAME = "dijkstra";
@@ -56,37 +48,21 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
 
   public LinkedList<OrientVertex> execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
       final Object[] iParams, final OCommandContext iContext) {
+    return new OSQLFunctionAstar().execute(this, iCurrentRecord, iCurrentResult, toAStarParams(iParams), iContext);
+  }
 
-    return OGraphCommandExecutorSQLFactory
-        .runWithAnyGraph(new OGraphCommandExecutorSQLFactory.GraphCallBack<LinkedList<OrientVertex>>() {
-          @Override
-          public LinkedList<OrientVertex> call(final OrientBaseGraph graph) {
-
-            final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
-
-            Object source = iParams[0];
-            if (OMultiValue.isMultiValue(source)) {
-              if (OMultiValue.getSize(source) > 1)
-                throw new IllegalArgumentException("Only one sourceVertex is allowed");
-              source = OMultiValue.getFirstValue(source);
-            }
-            paramSourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
-
-            Object dest = iParams[1];
-            if (OMultiValue.isMultiValue(dest)) {
-              if (OMultiValue.getSize(dest) > 1)
-                throw new IllegalArgumentException("Only one destinationVertex is allowed");
-              dest = OMultiValue.getFirstValue(dest);
-            }
-            paramDestinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
-
-            paramWeightFieldName = OIOUtils.getStringContent(iParams[2]);
-            if (iParams.length > 3)
-              paramDirection = Direction.valueOf(iParams[3].toString().toUpperCase());
-
-            return internalExecute(iContext);
-          }
-        });
+  private Object[] toAStarParams(Object[] iParams) {
+    Object[] result = new Object[4];
+    result[0] = iParams[0];
+    result[1] = iParams[1];
+    result[2] = iParams[2];
+    Map<String, Object> options = new HashMap<String, Object>();
+    options.put("emptyIfMaxDepth", true);
+    if(iParams.length > 3) {
+      options.put("direction", iParams[3]);
+    }
+    result[3] = options;
+    return result;
   }
 
   private LinkedList<OrientVertex> internalExecute(final OCommandContext iContext) {
@@ -98,19 +74,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
   }
 
   protected float getDistance(final OrientVertex node, final OrientVertex target) {
-    final Iterator<Edge> edges = node.getEdges(target, paramDirection).iterator();
-    if (edges.hasNext()) {
-      final Edge e = edges.next();
-      if (e != null) {
-        final Object fieldValue = e.getProperty(paramWeightFieldName);
-        if (fieldValue != null)
-          if (fieldValue instanceof Float)
-            return (Float) fieldValue;
-          else if (fieldValue instanceof Number)
-            return ((Number) fieldValue).floatValue();
-      }
-    }
-    return MIN;
+    return -1;//not used anymore
   }
 
   @Override

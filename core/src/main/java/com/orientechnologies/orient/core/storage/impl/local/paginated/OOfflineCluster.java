@@ -15,20 +15,17 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.io.IOException;
 
 /**
  * Represents an offline cluster, created with the "alter cluster X status offline" command. To restore the original cluster assure
@@ -115,7 +112,13 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType) throws IOException {
+  public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
+    throw new OOfflineClusterException("Cannot allocat a new position on offline cluster '" + name + "'");
+  }
+
+  @Override
+  public OPhysicalPosition createRecord(byte[] content, int recordVersion, byte recordType, OPhysicalPosition allocatedPosition)
+      throws IOException {
     throw new OOfflineClusterException("Cannot create a new record on offline cluster '" + name + "'");
   }
 
@@ -130,9 +133,15 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
+  public void recycleRecord(long clusterPosition, byte[] content, int recordVersion, byte recordType) throws IOException {
+    throw new OOfflineClusterException("Cannot resurrect a record on offline cluster '" + name + "'");
+  }
+
+  @Override
   public ORawBuffer readRecord(long clusterPosition) throws IOException {
     throw OException.wrapException(
-        new ORecordNotFoundException("Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
+        new ORecordNotFoundException(new ORecordId(id, clusterPosition),
+            "Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
         new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'"));
   }
 
@@ -140,7 +149,8 @@ public class OOfflineCluster implements OCluster {
   public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion)
       throws IOException, ORecordNotFoundException {
     throw OException.wrapException(
-        new ORecordNotFoundException("Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
+        new ORecordNotFoundException(new ORecordId(id, clusterPosition),
+            "Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
         new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'"));
   }
 

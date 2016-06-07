@@ -28,9 +28,9 @@ package com.orientechnologies.orient.core.record;
  */
 @Deprecated
 public interface ORecordListener {
-  public enum EVENT {
+  enum EVENT {
     CLEAR, RESET, MARSHALL, UNMARSHALL, UNLOAD, IDENTITY_CHANGED
   }
 
-  public void onEvent(ORecord iDocument, EVENT iEvent);
+  void onEvent(ORecord iDocument, EVENT iEvent);
 }
