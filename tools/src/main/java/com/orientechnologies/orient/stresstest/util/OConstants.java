@@ -29,20 +29,22 @@ public class OConstants {
     public final static String OPTION_MODE = "m";
     public final static String OPTION_ITERATIONS = "n";
     public final static String OPTION_THREADS = "t";
+    public final static String OPTION_TRANSACTIONS = "x";
     public final static String OPTION_OPERATIONS = "s";
     public final static String OPTION_ROOT_PASSWORD = "root-password";
     public final static String OPTION_REMOTE_IP = "remote-ip";
     public final static String OPTION_REMOTE_PORT = "remote-port";
-    public final static String MAIN_OPTIONS = OPTION_MODE + OPTION_ITERATIONS + OPTION_THREADS + OPTION_OPERATIONS;
+    public final static String MAIN_OPTIONS = OPTION_MODE + OPTION_ITERATIONS + OPTION_THREADS + OPTION_OPERATIONS + OPTION_TRANSACTIONS;
 
     public static final String SYNTAX = "StressTester " +
             "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" +
             "\n\t-n iterationsNumber " +
-            "\n\t-s operationSet " +
-            "\n\t-t threadsNumber " +
-            "\n\t--root-password rootPassword (optional)" +
-            "\n\t--remote-ip ipOrHostname(optional)" +
-            "\n\t--remote-port portNumber(optional)" +
+            "\n\t-s operationSet" +
+            "\n\t-t threadsNumber" +
+            "\n\t-x operationsPerTransaction" +
+            "\n\t--root-password rootPassword" +
+            "\n\t--remote-ip ipOrHostname" +
+            "\n\t--remote-port portNumber" +
             "\n";
     public static final String TEMP_DATABASE_NAME = "stress-test-db-";
     public static final String CLASS_NAME = "StressTestDoc";

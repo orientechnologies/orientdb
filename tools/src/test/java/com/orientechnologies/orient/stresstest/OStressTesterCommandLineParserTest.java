@@ -58,6 +58,15 @@ public class OStressTesterCommandLineParserTest {
         }
 
         try {
+            OStressTesterCommandLineParser.getStressTester(new String[]{"-m", "memory", "-x", "4", "-n", "10", "-t", "2", "-s", "C60R60U60D60"});
+            fail();
+        }
+        catch (Exception ex) {
+          ex.printStackTrace();
+            assertTrue(ex.getMessage().contains(String.format(OErrorMessages.COMMAND_LINE_PARSER_TX_GREATER_THAN_CREATES, 4, 3)));
+        }
+
+        try {
             OStressTesterCommandLineParser.getStressTester(new String[]{"-n", "10"});
             fail();
         }
@@ -95,6 +104,13 @@ public class OStressTesterCommandLineParserTest {
         assertEquals(4, stressTester.getThreadsNumber());
         assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());
         assertEquals("foo", stressTester.getPassword());
+
+        stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100","-t","4","-m","plocal", "--root-password", "foo", "-x", "12"});
+        assertEquals(100, stressTester.getIterationsNumber());
+        assertEquals(4, stressTester.getThreadsNumber());
+        assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());
+        assertEquals("foo", stressTester.getPassword());
+        assertEquals(12, stressTester.getTransactionsNumber());
 
         stressTester = OStressTesterCommandLineParser.getStressTester(new String[]{"-n","100","-t","4","-m","plocal","-s","c1r1u1d1", "--root-password", "foo"});
         assertEquals(100, stressTester.getIterationsNumber());

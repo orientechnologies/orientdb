@@ -51,134 +51,133 @@ import java.util.concurrent.Future;
  */
 public class OStressTester {
 
-    private int threadsNumber;
-    private int iterationsNumber;
-    private ODatabaseIdentifier databaseIdentifier;
-    private OOperationsSet operationsSet;
-    private OConsoleWriter consoleProgressWriter;
-    private OStressTestResults stressTestResults;
+  private int                 threadsNumber;
+  private int                 iterationsNumber;
+  private ODatabaseIdentifier databaseIdentifier;
+  private int                 txNumber;
+  private OOperationsSet      operationsSet;
+  private OConsoleWriter      consoleProgressWriter;
+  private OStressTestResults  stressTestResults;
 
-    public OStressTester(ODatabaseIdentifier databaseIdentifier, OOperationsSet operationsSet, int iterationsNumber, int threadsNumber) throws Exception {
-        this.operationsSet = operationsSet;
-        this.iterationsNumber = iterationsNumber;
-        this.threadsNumber = threadsNumber;
-        this.databaseIdentifier = databaseIdentifier;
-        stressTestResults = new OStressTestResults(operationsSet, databaseIdentifier.getMode(), threadsNumber, iterationsNumber);
-        consoleProgressWriter = new OConsoleWriter(operationsSet, threadsNumber, iterationsNumber);
+  public OStressTester(ODatabaseIdentifier databaseIdentifier, OOperationsSet operationsSet, int iterationsNumber,
+      int threadsNumber, int txNumber) throws Exception {
+    this.operationsSet = operationsSet;
+    this.iterationsNumber = iterationsNumber;
+    this.threadsNumber = threadsNumber;
+    this.databaseIdentifier = databaseIdentifier;
+    this.txNumber = txNumber;
+    stressTestResults = new OStressTestResults(operationsSet, databaseIdentifier.getMode(), threadsNumber, iterationsNumber);
+    consoleProgressWriter = new OConsoleWriter(operationsSet, threadsNumber, iterationsNumber);
+  }
+
+  @SuppressWarnings("unchecked")
+  private int execute() throws Exception {
+
+    long startTime;
+    long totalTime = 0;
+    int returnCode = 0;
+
+    // we don't want logs from DB
+    OLogManager.instance().setConsoleLevel("SEVERE");
+
+    // creates the temporary DB where to execute the test
+    ODatabaseUtils.createDatabase(databaseIdentifier);
+    consoleProgressWriter.printMessage(String.format("Created database [%s].", databaseIdentifier.getUrl()));
+
+    // opens the newly created db and creates an index on the class we're going to use
+    ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
+    if (database == null) {
+      throw new Exception("Couldn't open database " + databaseIdentifier.getName() + ".");
+    }
+    try {
+      final OSchema schema = database.getMetadata().getSchema();
+      final OClass oClass = schema.createClass(OConstants.CLASS_NAME);
+      oClass.createProperty("name", OType.STRING);
+      OIndexManager indexManager = database.getMetadata().getIndexManager();
+      indexManager.createIndex(OConstants.INDEX_NAME, OClass.INDEX_TYPE.UNIQUE.toString(),
+          new OPropertyIndexDefinition(OConstants.CLASS_NAME, "name", OType.STRING), oClass.getClusterIds(), null, null);
+    } finally {
+      database.close();
     }
 
-    @SuppressWarnings("unchecked")
-    private int execute() throws Exception {
+    // starts the test
+    try {
 
-        long startTime;
-        long totalTime = 0;
-        int returnCode = 0;
+      // iterates n times
+      for (int i = 0; i < iterationsNumber; i++) {
 
-        // we don't want logs from DB
-        OLogManager.instance().setConsoleLevel("SEVERE");
-
-        // creates the temporary DB where to execute the test
-        ODatabaseUtils.createDatabase(databaseIdentifier);
-        consoleProgressWriter.printMessage(String.format("Created database [%s].", databaseIdentifier.getUrl()));
-
-        // opens the newly created db and creates an index on the class we're going to use
-        ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
-        if (database == null) {
-            throw new Exception("Couldn't open database " + databaseIdentifier.getName() + ".");
+        // creates the operations executors
+        List<Callable<OOperationsExecutorResults>> operationsExecutors = new ArrayList<Callable<OOperationsExecutorResults>>();
+        for (int j = 0; j < threadsNumber; j++) {
+          operationsExecutors.add(new OOperationsExecutor(databaseIdentifier, operationsSet, txNumber, consoleProgressWriter));
         }
 
-        try {
+        // starts parallel execution (blocking call)
+        startTime = System.currentTimeMillis();
+        List<Future<OOperationsExecutorResults>> threadsResults = Executors.newFixedThreadPool(threadsNumber)
+            .invokeAll(operationsExecutors);
+        totalTime += System.currentTimeMillis() - startTime;
 
-            final OSchema schema = database.getMetadata().getSchema();
-            final OClass oClass = schema.createClass(OConstants.CLASS_NAME);
-            oClass.createProperty("name", OType.STRING);
-            OIndexManager indexManager = database.getMetadata().getIndexManager();
-            indexManager.createIndex(
-                    OConstants.INDEX_NAME,
-                    OClass.INDEX_TYPE.UNIQUE.toString(),
-                    new OPropertyIndexDefinition(
-                            OConstants.CLASS_NAME,
-                            "name",
-                            OType.STRING
-                    ),
-                    oClass.getClusterIds(),
-                    null,
-                    null);
-        } finally {
-            database.close();
+        // add the output of every executor
+        for (Future<OOperationsExecutorResults> threadResults : threadsResults) {
+          stressTestResults.addThreadResults(threadResults.get());
         }
+      }
+      // stops total benchmarking
+      stressTestResults.addTotalExecutionTime(totalTime);
 
-        // starts the test
-        try {
+      // prints out total output
+      System.out.println("\r                                                                                             ");
+      System.out.println(stressTestResults.toString());
 
-            // iterates n times
-            for (int i = 0; i < iterationsNumber; i++) {
-
-                // creates the operations executors
-                List<Callable<OOperationsExecutorResults>> operationsExecutors = new ArrayList<Callable<OOperationsExecutorResults>>();
-                for (int j = 0; j < threadsNumber; j++) {
-                    operationsExecutors.add(new OOperationsExecutor(databaseIdentifier, operationsSet, consoleProgressWriter));
-                }
-
-                // starts parallel execution (blocking)
-                startTime = System.currentTimeMillis();
-                List<Future<OOperationsExecutorResults>> threadsResults = Executors.newFixedThreadPool(threadsNumber).invokeAll(operationsExecutors);
-                totalTime += System.currentTimeMillis() - startTime;
-
-                // add the output of every executor
-                for (Future<OOperationsExecutorResults> threadResults : threadsResults) {
-                    stressTestResults.addThreadResults(threadResults.get());
-                }
-            }
-            // stops total benchmarking
-            stressTestResults.addTotalExecutionTime(totalTime);
-
-            // prints out total output
-            System.out.println("\r                                                                                             ");
-            System.out.println(stressTestResults.toString());
-
-        } catch (Exception ex) {
-            System.err.println("\nAn error has occurred while running the stress test: " + ex.getMessage());
-            returnCode = 1;
-            // ex.printStackTrace();
-        } finally {
-            // we don't need to drop the in-memory DB
-            if (databaseIdentifier.getMode() != OMode.MEMORY) {
-                ODatabaseUtils.dropDatabase(databaseIdentifier);
-            }
-        }
-
-        return returnCode;
+    } catch (Exception ex) {
+      System.err.println("\nAn error has occurred while running the stress test: " + ex.getMessage());
+      returnCode = 1;
+      // ex.printStackTrace();
+    } finally {
+      // we don't need to drop the in-memory DB
+      if (databaseIdentifier.getMode() != OMode.MEMORY) {
+        ODatabaseUtils.dropDatabase(databaseIdentifier);
+        consoleProgressWriter.printMessage(String.format("Dropped database [%s].", databaseIdentifier.getUrl()));
+      }
     }
 
-    public int getIterationsNumber() {
-        return iterationsNumber;
-    }
+    return returnCode;
+  }
 
-    public int getThreadsNumber() {
-        return threadsNumber;
-    }
+  public int getIterationsNumber() {
+    return iterationsNumber;
+  }
 
-    public OMode getMode() {
-        return databaseIdentifier.getMode();
-    }
+  public int getThreadsNumber() {
+    return threadsNumber;
+  }
 
-    public ODatabaseIdentifier getDatabaseIdentifier() {
-        return databaseIdentifier;
-    }
+  public OMode getMode() {
+    return databaseIdentifier.getMode();
+  }
 
-    public String getPassword() {
-        return databaseIdentifier.getPassword();
-    }
+  public ODatabaseIdentifier getDatabaseIdentifier() {
+    return databaseIdentifier;
+  }
 
-    public static void main(String[] args) {
-        int returnValue = 1;
-        try {
-            OStressTester stressTester = OStressTesterCommandLineParser.getStressTester(args);
-            returnValue = stressTester.execute();
-        } catch (Exception ex) {
-            System.err.println(ex.getMessage());
-        }
-        System.exit(returnValue);
+  public String getPassword() {
+    return databaseIdentifier.getPassword();
+  }
+
+  public int getTransactionsNumber() {
+    return txNumber;
+  }
+
+  public static void main(String[] args) {
+    int returnValue = 1;
+    try {
+      OStressTester stressTester = OStressTesterCommandLineParser.getStressTester(args);
+      returnValue = stressTester.execute();
+    } catch (Exception ex) {
+      System.err.println(ex.getMessage());
     }
+    System.exit(returnValue);
+  }
+
 }
