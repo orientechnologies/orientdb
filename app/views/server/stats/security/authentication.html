@@ -29,6 +29,12 @@
             <div class="form-group">
               <label class="col-md-3 control-label">
                 Allow Default
+                <a href="javascript:void(0)" tabindex="1"
+                   data-trigger="focus" data-placement="right"
+                   data-container="body"
+                   data-content="{{ 'sec.authentication.allowDefault' | translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a>
               </label>
               <div class="col-md-9">
                 <input type="checkbox" ng-model="authentication.allowDefault">
@@ -51,7 +57,16 @@
                   <tbody>
                   <tr ng-click="currentSelected = a.class" ng-repeat="a in authentication.authenticators"
                       ng-class="{ 'active' : (a.class == currentSelected)}">
-                    <td>{{a.name}}</td>
+                    <td>
+                      {{a.name}}
+
+                      <a href="javascript:void(0)" tabindex="1"
+                         data-trigger="focus" data-placement="right"
+                         data-container="body"
+                         data-content="{{ 'sec.authenticator.' + a.name | translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a>
+                    </td>
                     <td>
                       <input type="checkbox" ng-model="a.enabled"></td>
                     <td>

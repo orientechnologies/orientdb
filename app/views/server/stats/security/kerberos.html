@@ -21,6 +21,12 @@
     <div class="form-group">
       <label class="col-md-4 control-label">
         Kerberos Config File
+        <a href="javascript:void(0)" tabindex="1"
+           data-trigger="focus" data-placement="right"
+           data-container="body"
+           data-content="{{ 'sec.kerberos.configFile' | translate:links }}" bs-popover>
+          <i class="fa fa-question-circle"></i>
+        </a>
       </label>
       <div class="col-md-8">
         <input type="text" class="form-control" ng-model="kerberos.krb5_config">
@@ -31,6 +37,12 @@
     <div class="form-group">
       <label class="col-md-4 control-label">
         Service ktname
+        <a href="javascript:void(0)" tabindex="1"
+           data-trigger="focus" data-placement="right"
+           data-container="body"
+           data-content="{{ 'sec.kerberos.service.ktname' | translate:links }}" bs-popover>
+          <i class="fa fa-question-circle"></i>
+        </a>
       </label>
       <div class="col-md-8">
         <input type="text" class="form-control" ng-model="kerberos.service.ktname">
@@ -40,6 +52,12 @@
     <div class="form-group">
       <label class="col-md-4 control-label">
         Service principal
+        <a href="javascript:void(0)" tabindex="1"
+           data-trigger="focus" data-placement="right"
+           data-container="body"
+           data-content="{{ 'sec.kerberos.service.principal' | translate:links }}" bs-popover>
+          <i class="fa fa-question-circle"></i>
+        </a>
       </label>
       <div class="col-md-8">
         <input type="text" class="form-control" ng-model="kerberos.service.principal">
@@ -51,6 +69,12 @@
     <div class="form-group">
       <label class="col-md-4 control-label">
         SPNEGO ktname
+        <a href="javascript:void(0)" tabindex="1"
+           data-trigger="focus" data-placement="right"
+           data-container="body"
+           data-content="{{ 'sec.kerberos.spnego.ktname' | translate:links }}" bs-popover>
+          <i class="fa fa-question-circle"></i>
+        </a>
       </label>
       <div class="col-md-8">
         <input type="text" class="form-control" ng-model="kerberos.spnego.ktname">
@@ -60,6 +84,12 @@
     <div class="form-group">
       <label class="col-md-4 control-label">
         SPNEGO principal
+        <a href="javascript:void(0)" tabindex="1"
+           data-trigger="focus" data-placement="right"
+           data-container="body"
+           data-content="{{ 'sec.kerberos.spnego.principal' | translate:links }}" bs-popover>
+          <i class="fa fa-question-circle"></i>
+        </a>
       </label>
       <div class="col-md-8">
         <input type="text" class="form-control" ng-model="kerberos.spnego.principal">
@@ -73,6 +103,12 @@
 
       <label class="col-md-4 control-label">
         Client ccname
+        <a href="javascript:void(0)" tabindex="1"
+           data-trigger="focus" data-placement="right"
+           data-container="body"
+           data-content="{{ 'sec.kerberos.client.ccname' | translate:links }}" bs-popover>
+          <i class="fa fa-question-circle"></i>
+        </a>
       </label>
       <div class="col-md-8">
         <input type="text" class="form-control" ng-model="kerberos.client.ccname">
@@ -83,6 +119,12 @@
 
       <label class="col-md-4 control-label">
         Client ktname
+        <a href="javascript:void(0)" tabindex="1"
+           data-trigger="focus" data-placement="right"
+           data-container="body"
+           data-content="{{ 'sec.kerberos.client.ktname' | translate:links }}" bs-popover>
+          <i class="fa fa-question-circle"></i>
+        </a>
       </label>
       <div class="col-md-8">
         <input type="text" class="form-control" ng-model="kerberos.client.ktname">
@@ -91,6 +133,12 @@
     <div class="form-group">
       <label class="col-md-4 control-label">
         Client useTicketCache
+        <a href="javascript:void(0)" tabindex="1"
+           data-trigger="focus" data-placement="right"
+           data-container="body"
+           data-content="{{ 'sec.kerberos.client.useTicketCache' | translate:links }}" bs-popover>
+          <i class="fa fa-question-circle"></i>
+        </a>
       </label>
       <div class="col-md-8">
         <input type="checkbox" ng-model="kerberos.client.useTicketCache">
@@ -99,6 +147,12 @@
     <div class="form-group">
       <label class="col-md-4 control-label">
         Client principal
+        <a href="javascript:void(0)" tabindex="1"
+           data-trigger="focus" data-placement="right"
+           data-container="body"
+           data-content="{{ 'sec.kerberos.client.principal' | translate:links }}" bs-popover>
+          <i class="fa fa-question-circle"></i>
+        </a>
       </label>
       <div class="col-md-8">
         <input type="text" class="form-control" ng-model="kerberos.client.principal">
@@ -108,7 +162,13 @@
 
     <div class="form-group">
       <label class="col-md-4 control-label">
-        renewalPeriod
+        Renewal Period
+        <a href="javascript:void(0)" tabindex="1"
+           data-trigger="focus" data-placement="right"
+           data-container="body"
+           data-content="{{ 'sec.kerberos.client.renewalPeriod' | translate:links }}" bs-popover>
+          <i class="fa fa-question-circle"></i>
+        </a>
       </label>
       <div class="col-md-8">
         <input type="number" class="form-control" ng-model="kerberos.client.renewalPeriod">

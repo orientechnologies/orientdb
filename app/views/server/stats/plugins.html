@@ -7,7 +7,15 @@
       </div>
     </div>
   </div>
-  <div ng-show="agentActive">
+
+  <div class="col-md-12" ng-show="noPlugins">
+    <div class="row">
+      <div class="col-md-12 studio-well-tips">
+        <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
+      </div>
+    </div>
+  </div>
+  <div ng-show="agentActive && !noPlugins">
     <div class="row row-space studio-well">
       <div class="col-md-6">
         <form class="form-horizontal ">

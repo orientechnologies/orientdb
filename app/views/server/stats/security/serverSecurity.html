@@ -19,17 +19,24 @@
 
         <div class="panel-body">
           <form class="form-horizontal">
-            <div class="form-group">
-              <label class="col-md-4 control-label">
-                Enabled
-              </label>
-              <div class="col-md-8">
-                <input type="checkbox" ng-model="serverSecurity.enabled">
-              </div>
-            </div>
+            <!--<div class="form-group">-->
+            <!--<label class="col-md-4 control-label">-->
+            <!--Enabled-->
+            <!--</label>-->
+            <!--<div class="col-md-8">-->
+            <!--<input type="checkbox" ng-model="serverSecurity.enabled">-->
+            <!--</div>-->
+            <!--</div>-->
             <div class="form-group">
               <label class="col-md-4 control-label">
                 createDefaultUsers
+
+                <a href="javascript:void(0)" tabindex="1"
+                   data-trigger="focus" data-placement="right"
+                   data-container="body"
+                   data-content="{{ 'sec.server.createDefaultUsers' | translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a>
               </label>
               <div class="col-md-8">
                 <input type="checkbox" ng-model="serverSecurity.createDefaultUsers">
@@ -58,22 +65,27 @@
             <div class="form-group">
               <label class="col-md-4 control-label">
                 Enabled
+                <a href="javascript:void(0)" tabindex="1"
+                   data-trigger="focus" data-placement="right"
+                   data-container="body"
+                   data-content="{{ 'ssec.passwordValidator.enable' | translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a>
               </label>
               <div class="col-md-8">
                 <input type="checkbox" ng-model="passwordValidator.enabled">
               </div>
             </div>
-            <!--<div class="form-group">-->
-              <!--<label class="col-md-4 control-label">-->
-                <!--Implementation-->
-              <!--</label>-->
-              <!--<div class="col-md-8">-->
-                <!--<p class="form-control-static">{{passwordValidator.class}}</p>-->
-              <!--</div>-->
-            <!--</div>-->
+
             <div class="form-group">
               <label class="col-md-4 control-label">
                 Ignore UUID
+                <a href="javascript:void(0)" tabindex="1"
+                   data-trigger="focus" data-placement="right"
+                   data-container="body"
+                   data-content="{{ 'sec.passwordValidator.ignoreUUID' | translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a>
               </label>
               <div class="col-md-8">
                 <input type="checkbox" ng-model="passwordValidator.ignoreUUID">
@@ -82,6 +94,12 @@
             <div class="form-group">
               <label class="col-md-4 control-label">
                 Minimum Length
+                <a href="javascript:void(0)" tabindex="1"
+                   data-trigger="focus" data-placement="right"
+                   data-container="body"
+                   data-content="{{ 'sec.passwordValidator.minimumLength' | translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a>
               </label>
               <div class="col-md-8">
                 <input type="number" ng-model="passwordValidator.minimumLength">
@@ -90,6 +108,12 @@
             <div class="form-group">
               <label class="col-md-4 control-label">
                 Number Regex
+                <a href="javascript:void(0)" tabindex="1"
+                   data-trigger="focus" data-placement="right"
+                   data-container="body"
+                   data-content="{{ 'sec.passwordValidator.numberRegEx' | translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a>
               </label>
               <div class="col-md-8">
                 <input type="text" ng-model="passwordValidator.numberRegEx">
@@ -98,6 +122,12 @@
             <div class="form-group">
               <label class="col-md-4 control-label">
                 Upper Case Regex
+                <a href="javascript:void(0)" tabindex="1"
+                   data-trigger="focus" data-placement="right"
+                   data-container="body"
+                   data-content="{{ 'sec.passwordValidator.uppercaseRegEx' | translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a>
               </label>
               <div class="col-md-8">
                 <input type="text" ng-model="passwordValidator.uppercaseRegEx">
@@ -106,6 +136,12 @@
             <div class="form-group">
               <label class="col-md-4 control-label">
                 Special Regex
+                <a href="javascript:void(0)" tabindex="1"
+                   data-trigger="focus" data-placement="right"
+                   data-container="body"
+                   data-content="{{ 'sec.passwordValidator.specialRegEx' | translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a>
               </label>
               <div class="col-md-8">
                 <input type="text" ng-model="passwordValidator.specialRegEx">

@@ -514,9 +514,12 @@ ee.controller("ProfilerController", ['$scope', 'Profiler', 'Cluster', 'Spinner',
 }]);
 
 
-ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'ngTableParams', 'AgentService', 'SecurityService', 'DatabaseApi', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams, AgentService, SecurityService, DatabaseApi) {
+ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner', 'Notification', '$modal', 'ngTableParams', 'AgentService', 'SecurityService', 'DatabaseApi', 'Database', function ($scope, Auditing, Cluster, Spinner, Notification, $modal, ngTableParams, AgentService, SecurityService, DatabaseApi, Database) {
 
 
+  $scope.auditingWiki = Database.resolveWiki("Studio-Auditing.html");
+
+  $scope.NODB = "--No Database--";
   $scope.enabled = false;
   $scope.clazz = 'tabs-style-linebox';
   $scope.links = {
@@ -534,6 +537,9 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
     Cluster.node().then(function (data) {
       $scope.servers = data.members;
       $scope.server = $scope.servers[0];
+
+
+      $scope.databases = [$scope.NODB].concat($scope.server.databases);
 
       if ($scope.server.databases.length > 0) {
         $scope.db = $scope.server.databases[0];
@@ -565,6 +571,20 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
 
     SecurityService.get().then(function (security) {
       try {
+
+
+        if (!security.auditing) {
+          security.auditing = {
+            "class": "com.orientechnologies.security.auditing.ODefaultAuditing",
+            "enabled": false,
+            "distributed": {
+              "onNodeJoinedEnabled": false,
+              "onNodeJoinedMessage": "Node ${node} has joined...",
+              "onNodeLeftEnabled": false,
+              "onNodeLeftMessage": "Node ${node} has left..."
+            }
+          }
+        }
         $scope.auditingCfg = security.auditing;
         if (!$scope.auditingCfg.distributed) {
           $scope.auditingCfg.distributed = {
@@ -580,6 +600,7 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
       }
       if ($scope.enabled) {
         Auditing.getConfig({db: $scope.db}).then(function (data) {
+
           $scope.config = data;
 
           if ($scope.config && !$scope.config.schema) {
@@ -611,12 +632,42 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
 
   }
 
+
   $scope.changeDB = function (db) {
     if (db) {
       $scope.db = db;
       initConfig();
     }
   }
+  $scope.$watch("auditingCfg.enabled", function (val, old) {
+    if (old != undefined && val) {
+
+      if (!$scope.config) {
+
+        $scope.config = {
+          "auditClassName": "AuditingLog",
+          "classes": {
+            "*": {
+              "polymorphic": true,
+              "onCreateEnabled": false,
+              "onCreateMessage": "",
+              "onReadEnabled": false,
+              "onReadMessage": "",
+              "onUpdateEnabled": false,
+              "onUpdateMessage": "",
+              "onDeleteEnabled": false,
+              "onDeleteMessage": "",
+              "onCreateClassEnabled": false,
+              "onCreateClassMessage": "",
+              "onDropClassEnabled": false,
+              "onDropClassMessage": ""
+            }
+          },
+          schema: {}
+        }
+      }
+    }
+  })
   $scope.$watch("db", function (db) {
     if (db) {
       initConfig();
@@ -630,18 +681,22 @@ ee.controller("AuditingController", ['$scope', 'Auditing', 'Cluster', 'Spinner',
   }
   $scope.save = function () {
 
-
-    return Auditing.saveConfig({db: $scope.db}, $scope.config);
+    if ($scope.config) {
+      return Auditing.saveConfig({db: $scope.db}, $scope.config);
+    }
 
   }
 
   $scope.filter = function () {
     Spinner.start();
-    Auditing.query({db: $scope.db, query: $scope.query}).then(function (data) {
+
+    var q = angular.copy($scope.query);
+    if ($scope.NODB == q.db) {
+      q.db = null;
+    }
+    Auditing.query({db: $scope.db, query: q}).then(function (data) {
 
       $scope.logs = data.result;
-      //$scope.tableParams.total($scope.logs.length);
-      //$scope.tableParams.reload();
       Spinner.stopSpinner();
     }).catch(function (error) {
       Notification.push({content: error.data, error: true, autoHide: true});
@@ -748,6 +803,9 @@ ee.controller('PluginsController', function ($scope, Plugins, Cluster, Notificat
         $scope.plugins = data.plugins.filter(function (p) {
           return p.name != 'ee-events';
         });
+
+        $scope.noPlugins = $scope.plugins.length == 0;
+
         $scope.selectedPlugin = $scope.plugins[0];
         $scope.currentEditingPlugin = angular.copy($scope.selectedPlugin);
       })
@@ -790,7 +848,6 @@ ee.controller('MailController', function ($scope, $modal, Database) {
 
 
   $scope.mailWiki = Database.resolveWiki("Mail-Plugin.html");
-  ;
   $scope.removeProfile = function () {
 
     var idx = $scope.profiles.indexOf($scope.profile);
@@ -1729,7 +1786,7 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
       $scope.backup.dbName = db.name;
       $scope.backup.modes = {};
       $scope.backup.enabled = true;
-      $scope.backup.retentionDays = 30;
+      $scope.backup.retentionDays = -1;
       $('#calendar').fullCalendar('destroy');
     } else {
 
@@ -1994,8 +2051,12 @@ ee.controller('OKerberosController', function ($scope, SecurityService, Notifica
 });
 
 
-ee.controller('OLdapController', function ($scope, SecurityService, Notification) {
+ee.controller('OLdapController', function ($scope, SecurityService, Notification, DatabaseApi) {
 
+
+  DatabaseApi.listDatabases(function (data) {
+    $scope.databases = data.databases;
+  });
 
   $scope.ldap = $scope.security.ldapImporter || {
       enabled: false,
@@ -2012,7 +2073,7 @@ ee.controller('OLdapController', function ($scope, SecurityService, Notification
       return r.class == k;
     });
   }
-  $scope.authenticators = $scope.getValues('com.orientechnologies.security.kerberos.OKerberosAuthenticator');
+  $scope.authenticators = $scope.security.authentication.authenticators;
 
   if ($scope.ldap.databases.length > 0) {
     $scope.currentSelected = $scope.ldap.databases[0];
@@ -2089,7 +2150,7 @@ ee.controller('OLdapController', function ($scope, SecurityService, Notification
   }
   $scope.addDatabase = function () {
     $scope.currentSelected = {
-      name: "",
+      database: "",
       ignoreLocal: true,
     };
     $scope.ldap.databases.push($scope.currentSelected)

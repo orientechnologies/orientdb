@@ -8,9 +8,18 @@
   </div>
   <div class="row row-space">
 
+
   </div>
 
-  <div ng-show="agentActive" class="row row-space">
+
+  <div class="col-md-12" ng-show="noPlugins">
+    <div class="col-md-12 studio-well-tips">
+      <h4 ng-bind-html=" 'agent.pluginsNotFound' | translate:links "></h4>
+    </div>
+  </div>
+
+
+  <div ng-show="agentActive && !noPlugins" class="row row-space">
 
     <tabset clazz="clazz">
       <tab ng-repeat="plugin in plugins" context="plugin" title="{{plugin.name}}"
@@ -18,7 +27,7 @@
     </tabset>
   </div>
 
-  <div ng-show="agentActive" class="row row-space">
+  <div ng-show="agentActive && !noPlugins" class="row row-space">
     <div class="col-md-6 col-md-offset-3">
       <div class="pull-right">
         <button class="btn btn-sm btn-primary" ng-click="saveConfiguration()"><i

@@ -416,7 +416,7 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
       icon: 'fa-clock-o',
       wiki: "Studio-Backup-Management.html"
     },
-    {name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
+    {name: "security", title: "Security", template: 'security', icon: 'fa-lock', wiki: "Security-Config.html"},
     {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb', wiki: "Studio-Teleporter.html"},
     {name: "plugins", title: "Plugins Management", template: 'plugins', icon: 'fa-plug'},
     {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'}

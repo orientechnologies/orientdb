@@ -34,6 +34,12 @@
             <div class="form-group">
               <label class="col-md-3 control-label">
                 Period (seconds)
+                <a href="javascript:void(0)" tabindex="1"
+                   data-trigger="focus" data-placement="right"
+                   data-container="body"
+                   data-content="{{ 'sec.ldap.period' | translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a>
               </label>
               <div class="col-md-9">
                 <input type="number" class="form-control" ng-model="ldap.period">
@@ -48,8 +54,23 @@
               <div class="col-md-9">
                 <table class="table table-hover">
                   <thead>
-                  <th>Name</th>
-                  <th>Ignore Local</th>
+                  <th>
+                    Name
+                    <a href="javascript:void(0)" tabindex="1"
+                       data-trigger="focus" data-placement="right"
+                       data-container="body"
+                       data-content="{{ 'sec.ldap.database.name' | translate:links }}" bs-popover>
+                      <i class="fa fa-question-circle"></i>
+                    </a>
+                  </th>
+                  <th>Ignore Local
+                    <a href="javascript:void(0)" tabindex="1"
+                       data-trigger="focus" data-placement="right"
+                       data-container="body"
+                       data-content="{{ 'sec.ldap.database.ignoreLocal' | translate:links }}" bs-popover>
+                      <i class="fa fa-question-circle"></i>
+                    </a>
+                  </th>
                   <th>
                     <button class="btn btn-xs" ng-click="addDatabase()"><i class="fa fa-plus-circle"></i>
                     </button>
@@ -92,15 +113,31 @@
                 <div class="form-group">
                   <label class="col-md-3 control-label">
                     Name
+                    <a href="javascript:void(0)" tabindex="1"
+                       data-trigger="focus" data-placement="right"
+                       data-container="body"
+                       data-content="{{ 'sec.ldap.database.name' | translate:links }}" bs-popover>
+                      <i class="fa fa-question-circle"></i>
+                    </a>
                   </label>
                   <div class="col-md-9">
-                    <input type="text" class="form-control" ng-model="currentSelected.database">
+                    <select class="form-control" ng-options="db for db in databases"
+                            ng-model="currentSelected.database">
+
+                    </select>
+                    <!--<input type="text" class="form-control" ng-model="currentSelected.database">-->
                   </div>
                 </div>
 
                 <div class="form-group">
                   <label class="col-md-3 control-label">
                     Ignore Local
+                    <a href="javascript:void(0)" tabindex="1"
+                       data-trigger="focus" data-placement="right"
+                       data-container="body"
+                       data-content="{{ 'sec.ldap.database.ignoreLocal' | translate:links }}" bs-popover>
+                      <i class="fa fa-question-circle"></i>
+                    </a>
                   </label>
                   <div class="col-md-9">
                     <input type="checkbox" ng-model="currentSelected.ignoreLocal">
@@ -115,8 +152,23 @@
 
                     <table class="table table-hover">
                       <thead>
-                      <th>Domain</th>
-                      <th>Authenticator</th>
+                      <th>Domain
+
+                        <a href="javascript:void(0)" tabindex="1"
+                           data-trigger="focus" data-placement="right"
+                           data-container="body"
+                           data-content="{{ 'sec.ldap.database.domain.domain' | translate:links }}" bs-popover>
+                          <i class="fa fa-question-circle"></i>
+                        </a>
+                      </th>
+                      <th>Authenticator
+                        <a href="javascript:void(0)" tabindex="1"
+                           data-trigger="focus" data-placement="right"
+                           data-container="body"
+                           data-content="{{ 'sec.ldap.database.domain.authenticator' | translate:links }}" bs-popover>
+                          <i class="fa fa-question-circle"></i>
+                        </a>
+                      </th>
                       <th>
                         <button class="btn btn-xs" ng-click="addDomain()"><i class="fa fa-plus-circle"></i>
                         </button>
@@ -156,6 +208,12 @@
                 <div class="form-group">
                   <label class="col-md-3 control-label">
                     Domain
+                    <a href="javascript:void(0)" tabindex="1"
+                       data-trigger="focus" data-placement="right"
+                       data-container="body"
+                       data-content="{{ 'sec.ldap.database.domain.domain' | translate:links }}" bs-popover>
+                      <i class="fa fa-question-circle"></i>
+                    </a>
                   </label>
                   <div class="col-md-9">
                     <input type="text" class="form-control" ng-model="currentDomain.domain">
@@ -165,6 +223,12 @@
                 <div class="form-group">
                   <label class="col-md-3 control-label">
                     Authenticator
+                    <a href="javascript:void(0)" tabindex="1"
+                       data-trigger="focus" data-placement="right"
+                       data-container="body"
+                       data-content="{{ 'sec.ldap.database.domain.authenticator' | translate:links }}" bs-popover>
+                      <i class="fa fa-question-circle"></i>
+                    </a>
                   </label>
                   <div class="col-md-9">
                     <select class="form-control" ng-options="a.name as a.name for a in authenticators"
@@ -178,8 +242,22 @@
                   <div class="col-md-9">
                     <table class="table table-hover">
                       <thead>
-                      <th>Url</th>
-                      <th>isAlias</th>
+                      <th>Url
+                        <a href="javascript:void(0)" tabindex="1"
+                           data-trigger="focus" data-placement="right"
+                           data-container="body"
+                           data-content="{{ 'sec.ldap.database.domain.server.url' | translate:links }}" bs-popover>
+                          <i class="fa fa-question-circle"></i>
+                        </a>
+                      </th>
+                      <th>isAlias
+                        <a href="javascript:void(0)" tabindex="1"
+                           data-trigger="focus" data-placement="right"
+                           data-container="body"
+                           data-content="{{ 'sec.ldap.database.domain.server.isAlias' | translate:links }}" bs-popover>
+                          <i class="fa fa-question-circle"></i>
+                        </a>
+                      </th>
                       <th>
                         <button class="btn btn-xs" ng-click="addServer()"><i class="fa fa-plus-circle"></i>
                         </button>
@@ -211,9 +289,30 @@
                   <div class="col-md-9">
                     <table class="table table-hover">
                       <thead>
-                      <th>BaseDN</th>
-                      <th>Filter</th>
-                      <th>Roles (comma separated)</th>
+                      <th>BaseDN
+                        <a href="javascript:void(0)" tabindex="1"
+                           data-trigger="focus" data-placement="right"
+                           data-container="body"
+                           data-content="{{ 'sec.ldap.database.domain.user.baseDN' | translate:links }}" bs-popover>
+                          <i class="fa fa-question-circle"></i>
+                        </a>
+                      </th>
+                      <th>Filter
+                        <a href="javascript:void(0)" tabindex="1"
+                           data-trigger="focus" data-placement="right"
+                           data-container="body"
+                           data-content="{{ 'sec.ldap.database.domain.user.filter' | translate:links }}" bs-popover>
+                          <i class="fa fa-question-circle"></i>
+                        </a>
+                      </th>
+                      <th>Roles (comma separated)
+                        <a href="javascript:void(0)" tabindex="1"
+                           data-trigger="focus" data-placement="right"
+                           data-container="body"
+                           data-content="{{ 'sec.ldap.database.domain.user.roles' | translate:links }}" bs-popover>
+                          <i class="fa fa-question-circle"></i>
+                        </a>
+                      </th>
                       <th>
                         <button class="btn btn-xs" ng-click="addUser()"><i class="fa fa-plus-circle"></i>
                         </button>

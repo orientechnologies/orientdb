@@ -17,7 +17,17 @@
     <div class="col-md-6">
       <div class="panel panel-default">
         <div class="panel-heading">
-          <b>Global Settings</b>
+          <b>Global Settings
+            <a href="{{ auditingWiki }}" class="btn btn-trasparent btn-help"
+               data-placement="right"
+               target="_blank"
+               data-title="Help"
+               data-trigger="hover"
+               data-animation="am-flip-x"
+               bs-tooltip>
+              <i class="fa fa-question-circle fa-lg"></i>
+            </a>
+          </b>
         </div>
         <div class="panel-body">
           <form class="form-horizontal">
@@ -40,7 +50,7 @@
             </div>
 
             <div class="form-group">
-              <label class="col-sm-3 control-label">Node left</label>
+              <label class="col-sm-3 control-label">Node Left</label>
               <div class="col-sm-1">
                 <input type="checkbox" ng-model="auditingCfg.distributed.onNodeLeftEnabled"/>
               </div>
@@ -64,7 +74,8 @@
       <form class="form-inline ">
         <div class="form-group">
           <label>Database </label>
-          <select id="databasesOnline" ng-model="db" class="form-control" ng-change="changeDB(db)" ng-options="db for db in server.databases"
+          <select id="databasesOnline" ng-model="db" class="form-control" ng-change="changeDB(db)"
+                  ng-options="db for db in server.databases"
                   data-placeholder="Pick a Server"></select>
         </div>
       </form>
@@ -159,7 +170,7 @@
     <div class="col-md-12">
       <div class="panel panel-default" ng-show="auditingCfg.enabled">
         <div class="panel-heading">
-          Class Auditing
+          <b>Class Auditing</b>
           <div class="panel-actions">
             <div class="btn-group">
               <button class="btn btn-sm btn-success" ng-click="addClass()"><i class="fa fa-plus-circle"></i> Add Class

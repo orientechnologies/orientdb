@@ -234,7 +234,7 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
   $scope.usersResult = new Array;
   $scope.selectedRole = null;
   $scope.roleMode = ['DENY_ALL_BUT', 'ALLOW_ALL_BUT'];
-  $scope.permissions = ["delete", "update", "read", "create"];
+  $scope.permissions = ["execute", "delete", "update", "read", "create"];
   $scope.getListUsers = function () {
     $scope.functions = new Array;
     CommandApi.queryText({
@@ -283,6 +283,7 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
       $scope.disabledSecurity = true;
     } else {
       $scope.rules = Object.keys(selectedRole['rules']).sort();
+
     }
   }
 
@@ -386,7 +387,7 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
       item = Math.floor(item / 2);
       Num1 = item % 2;
     }
-    var synch = 4 - DecToBin.length;
+    var synch = 5 - DecToBin.length;
     for (var i = 0; i < synch; i++) {
       DecToBin = '0'.concat(DecToBin);
     }
