@@ -62,7 +62,6 @@ public class OStressTesterCommandLineParserTest {
             fail();
         }
         catch (Exception ex) {
-          ex.printStackTrace();
             assertTrue(ex.getMessage().contains(String.format(OErrorMessages.COMMAND_LINE_PARSER_TX_GREATER_THAN_CREATES, 4, 3)));
         }
 
