@@ -50,8 +50,9 @@ public class OClientConnectionManager {
   protected       AtomicInteger                              connectionSerial = new AtomicInteger(0);
   protected final ConcurrentMap<OHashToken, OClientSessions> sessions         = new ConcurrentHashMap<OHashToken, OClientSessions>();
   protected final TimerTask timerTask;
+  private         OServer   server;
 
-  public OClientConnectionManager() {
+  public OClientConnectionManager(OServer server) {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
 
     timerTask = new TimerTask() {
@@ -74,6 +75,7 @@ public class OClientConnectionManager {
                 return connections.size();
               }
             });
+    this.server = server;
   }
 
   public void cleanExpiredConnections() {
@@ -212,20 +214,18 @@ public class OClientConnectionManager {
   /**
    * Disconnects and kill the associated network manager.
    *
-   * @param server
    * @param iChannelId id of connection
    */
-  public void kill(OServer server, final int iChannelId) {
-    kill(server, connections.get(iChannelId));
+  public void kill(final int iChannelId) {
+    kill(connections.get(iChannelId));
   }
 
   /**
    * Disconnects and kill the associated network manager.
    *
-   * @param server
    * @param connection connection to kill
    */
-  public void kill(OServer server, final OClientConnection connection) {
+  public void kill(final OClientConnection connection) {
     if (connection != null) {
       final ONetworkProtocol protocol = connection.getProtocol();
 
@@ -236,7 +236,7 @@ public class OClientConnectionManager {
         OLogManager.instance().error(this, "Error during interruption of binary protocol", e);
       }
 
-      disconnect(server, connection);
+      disconnect(connection);
 
       // KILL THE NETWORK MANAGER TOO
       protocol.sendShutdown();
@@ -265,11 +265,10 @@ public class OClientConnectionManager {
   /**
    * Disconnects a client connections
    *
-   * @param server
    * @param iChannelId id of connection
    * @return true if was last one, otherwise false
    */
-  public boolean disconnect(OServer server, final int iChannelId) {
+  public boolean disconnect(final int iChannelId) {
     OLogManager.instance().debug(this, "Disconnecting connection with id=%d", iChannelId);
 
     final OClientConnection connection = connections.remove(iChannelId);
@@ -311,7 +310,7 @@ public class OClientConnectionManager {
     }
   }
 
-  public void disconnect(OServer server, final OClientConnection iConnection) {
+  public void disconnect(final OClientConnection iConnection) {
     OLogManager.instance().debug(this, "Disconnecting connection %s...", iConnection);
     OServerPluginHelper.invokeHandlerCallbackOnClientDisconnection(server, iConnection);
     removeConnectFromSession(iConnection);
@@ -389,10 +388,10 @@ public class OClientConnectionManager {
           channel.releaseWriteLock();
         }
       } catch (IOException e) {
-        disconnect(p.getServer(), c);
+        disconnect(c);
       } catch (Exception e) {
         OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
-        disconnect(p.getServer(), c);
+        disconnect(c);
       }
     }
   }
