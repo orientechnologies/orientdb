@@ -372,7 +372,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     final OStorage storage = getStorage();
     storage.restoreFromIncrementalBackup(incrementalBackupPath);
-    getMetadata().reload();
+
+    metadata = new OMetadataDefault(this);
+    metadata.load();
 
     return (DB) this;
   }
