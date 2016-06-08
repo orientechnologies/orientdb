@@ -316,6 +316,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                 lockingStrategy = LOCKING_STRATEGY.NONE;
               } else if (lock.equals("RECORD")) {
                 lockingStrategy = LOCKING_STRATEGY.EXCLUSIVE_LOCK;
+              } else if (lock.equals("SHARED")) {
+                lockingStrategy = LOCKING_STRATEGY.SHARED_LOCK;
               }
             } else if (w.equals(KEYWORD_PARALLEL)) {
               parallel = parseParallel(w);

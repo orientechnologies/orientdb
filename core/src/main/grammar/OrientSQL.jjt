@@ -335,6 +335,10 @@ TOKEN:
     < CONSOLE: ( "C" | "c") ( "O" | "o") ( "N" | "n") ( "S" | "s") ( "O" | "o")  ( "L" | "l") ( "E" | "e")>
     |
     < BLOB: ( "B" | "b") ( "L" | "l") ( "O" | "o") ( "B" | "b") >
+    |
+    < SHARED: ( "S" | "s") ( "H" | "h") ( "A" | "a") ( "R" | "r") ( "E" | "e") ( "D" | "d") >
+    |
+    < DEFAULT_: ( "D" | "d") ( "E" | "e") ( "F" | "f") ( "A" | "a") ( "U" | "u") ( "L" | "l") ( "T" | "t") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -769,6 +773,10 @@ OIdentifier Identifier():
     |
     token = <BLOB>
     |
+    token = <SHARED>
+    |
+    token = <DEFAULT_>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -1009,7 +1017,17 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
 		)
     	[ jjtThis.fetchPlan = FetchPlan() ]
     	[ jjtThis.timeout = Timeout() ]
-        [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
+        [ <LOCK>
+            (
+                <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
+                |
+                <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
+                |
+                <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
+                |
+                <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
+            )
+        ]
         [ <PARALLEL> { jjtThis.parallel = true; } ]
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
@@ -1041,7 +1059,17 @@ OSelectStatement SelectStatement():
         )
         [ jjtThis.fetchPlan = FetchPlan() ]
         [ jjtThis.timeout = Timeout() ]
-        [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
+        [ <LOCK>
+            (
+                <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
+                |
+                <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
+                |
+                <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
+                |
+                <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
+            )
+        ]
         [ <PARALLEL> { jjtThis.parallel = true; } ]
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
@@ -1431,7 +1459,17 @@ OUpdateEdgeStatement UpdateEdgeStatement():
 		]
 	]
 	[ <WHERE> jjtThis.whereClause = WhereClause() ]
-	[ <LOCK> <RECORD> { jjtThis.lockRecord = true; } ]
+	[ <LOCK>
+        (
+            <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
+            |
+            <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
+            |
+            <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
+            |
+            <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
+        )
+    ]
 	[ jjtThis.limit = Limit() ]
 	[ jjtThis.timeout = Timeout() ]
   )
@@ -1455,7 +1493,17 @@ OUpdateStatement UpdateStatement():
     	    ]
     	]
     	[ <WHERE> jjtThis.whereClause = WhereClause() ]
-    	[ <LOCK> <RECORD> { jjtThis.lockRecord = true; } ]
+    	[ <LOCK>
+            (
+                <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
+                |
+                <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
+                |
+                <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
+                |
+                <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
+            )
+        ]
     	[ jjtThis.limit = Limit() ]
     	[ jjtThis.timeout = Timeout() ]
     )
