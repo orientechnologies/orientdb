@@ -23,6 +23,8 @@ package com.orientechnologies.orient.server.network.protocol.binary;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
@@ -32,10 +34,11 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientSessions;
+import com.orientechnologies.orient.server.OServer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -49,22 +52,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Asynchronous command result manager. As soon as a record is returned by the command is sent over the wire.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class OLiveCommandResultListener extends OAbstractCommandResultListener implements OLiveResultListener {
 
-  private OClientConnection      connection;
-  private final AtomicBoolean    empty       = new AtomicBoolean(true);
-  private final int              txId;
-  private final Set<ORID>        alreadySent = new HashSet<ORID>();
-  private OClientSessions        session;
+  private OClientConnection connection;
+  private final AtomicBoolean empty = new AtomicBoolean(true);
+  private final int sessionId;
+  private final Set<ORID> alreadySent = new HashSet<ORID>();
+  private OClientSessions session;
 
-  public OLiveCommandResultListener(final OClientConnection connection, final int txId,
+  public OLiveCommandResultListener(OServer server, final OClientConnection connection, final int sessionId,
       OCommandResultListener wrappedResultListener) {
     super(wrappedResultListener);
     this.connection = connection;
-    session = connection.getProtocol().getServer().getClientConnectionManager().getSession(connection);
-    this.txId = txId;
+    session = server.getClientConnectionManager().getSession(connection);
+    this.sessionId = sessionId;
   }
 
   @Override
@@ -72,7 +74,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     final ONetworkProtocolBinary protocol = ((ONetworkProtocolBinary) connection.getProtocol());
     if (empty.compareAndSet(true, false))
       try {
-        protocol.sendOk(connection, txId);
+        protocol.sendOk(connection, sessionId);
       } catch (IOException ignored) {
       }
     try {
@@ -108,9 +110,20 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
     boolean sendFail = true;
     do {
       List<OClientConnection> connections = session.getConnections();
-      ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
+      if (connections.size() == 0) {
+        try {
+          ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+          OLogManager.instance().warn(this, "Unsubscribing live query for connection " + connection);
+          OLiveQueryHook.unsubscribe(iToken, db);
+        } catch (Exception e) {
+          OLogManager.instance().warn(this, "Unsubscribing live query for connection " + connection, e);
+        }
+        break;
+      }
+      OClientConnection curConnection = connections.get(0);
+      ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) curConnection.getProtocol();
 
-      OChannelBinaryServer channel = (OChannelBinaryServer) protocol.getChannel();
+      OChannelBinary channel = protocol.getChannel();
       try {
         channel.acquireWriteLock();
         try {
@@ -125,7 +138,6 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
           writeVersion(out, iOp.getRecord().getVersion());
           writeRID(out, (ORecordId) iOp.getRecord().getIdentity());
           writeBytes(out, protocol.getRecordBytes(connection, iOp.getRecord()));
-
           channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
           channel.writeInt(Integer.MIN_VALUE);
           channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_LIVE_QUERY);
@@ -137,14 +149,14 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
         }
         sendFail = false;
       } catch (IOException e) {
+        session.removeConnection(curConnection);
         connections = session.getConnections();
         if (connections.isEmpty()) {
           OLiveQueryHook.unsubscribe(iToken, connection.getDatabase());
           break;
         }
       } catch (Exception e) {
-        OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e,
-            protocol.getRemoteAddress());
+        OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, protocol.getRemoteAddress());
         protocol.getServer().getClientConnectionManager().disconnect(protocol.getServer(), connection);
         OLiveQueryHook.unsubscribe(iToken, connection.getDatabase());
         break;
@@ -165,7 +177,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
       List<OClientConnection> connections = session.getConnections();
       ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connections.get(0).getProtocol();
 
-      OChannelBinaryServer channel = (OChannelBinaryServer) protocol.getChannel();
+      OChannelBinary channel = protocol.getChannel();
       try {
         channel.acquireWriteLock();
         try {

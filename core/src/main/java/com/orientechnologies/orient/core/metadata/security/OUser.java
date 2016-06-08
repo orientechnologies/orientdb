@@ -93,13 +93,22 @@ public class OUser extends OIdentity implements OSecurityUser {
     final Collection<ODocument> loadedRoles = iSource.field("roles");
     if (loadedRoles != null)
       for (final ODocument d : loadedRoles) {
-        if (d != null) {
-          roles.add(new ORole(d));
+        if (d != null) {        	
+        	 ORole role = createRole(d);
+          if(role != null) roles.add(role);
         } else
           OLogManager.instance()
-              .warn(this, "User '%s' declare to have a role that does not exist in database, skipt it", getName());
+              .warn(this, "User '%s' is declared to have a role that does not exist in the database.  Ignoring it.", getName());
 
       }
+  }
+  
+  /**
+   * Derived classes can override createRole() to return an extended ORole implementation or 
+   * null if the role should not be added.
+   */
+  protected ORole createRole(final ODocument roleDoc) {
+  	 return new ORole(roleDoc);
   }
 
   /**
@@ -125,7 +134,7 @@ public class OUser extends OIdentity implements OSecurityUser {
 
     if (role == null)
       throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
-          + "' has no the permission to execute the operation '" + ORole.permissionToString(iOperation)
+          + "' does not have permission to execute the operation '" + ORole.permissionToString(iOperation)
           + "' against the resource: " + resourceGeneric + "." + resourceSpecific);
 
     return role;
@@ -142,7 +151,7 @@ public class OUser extends OIdentity implements OSecurityUser {
     for (ORole r : roles) {
       if (r == null)
         OLogManager.instance().warn(this,
-            "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
+            "User '%s' has a null role, ignoring it. Consider fixing this user's roles before continuing", getName());
       else if (r.allow(resourceGeneric, resourceSpecific, iOperation))
         return r;
     }

@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 
 /**
@@ -31,11 +30,11 @@ import com.orientechnologies.common.exception.OSystemException;
 public class ODistributedException extends OSystemException {
   private static final long serialVersionUID = 1L;
 
-  public ODistributedException(ODistributedException exception) {
+  public ODistributedException(final ODistributedException exception) {
     super(exception);
   }
 
-  public ODistributedException(String message) {
+  public ODistributedException(final String message) {
     super(message);
   }
 
@@ -44,7 +43,7 @@ public class ODistributedException extends OSystemException {
     if (obj == null || !obj.getClass().equals(getClass()))
       return false;
 
-    String message = ((ODistributedException) obj).getMessage();
+    final String message = ((ODistributedException) obj).getMessage();
     return (getMessage() == message) || (getMessage() != null && getMessage().equals(message));
   }
 

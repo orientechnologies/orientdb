@@ -19,6 +19,7 @@
     */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -32,7 +33,7 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
 
     final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>[/fetchPlan]");
 

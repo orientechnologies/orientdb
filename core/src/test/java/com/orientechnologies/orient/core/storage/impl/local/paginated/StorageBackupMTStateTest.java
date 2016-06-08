@@ -211,7 +211,7 @@ public class StorageBackupMTStateTest {
             // retry
           } catch (OModificationOperationProhibitedException e) {
             System.out.println("Modification prohibited , wait 5s ...");
-            Thread.sleep(5000);
+            Thread.sleep(2000);
             // retry
           } catch (Exception e) {
             e.printStackTrace();
@@ -249,7 +249,7 @@ public class StorageBackupMTStateTest {
             // retry
           } catch (OModificationOperationProhibitedException e) {
             System.out.println("Modification prohibited , wait 5s ...");
-            Thread.sleep(5000);
+            Thread.sleep(2000);
             // retry
           } catch (Exception e) {
             e.printStackTrace();
@@ -412,8 +412,8 @@ public class StorageBackupMTStateTest {
 
               if (counter % 1000 == 0) {
                 System.out.println(counter + " documents are deleted");
-                System.out.println("Pause for 3 seconds...");
-                Thread.sleep(3000);
+                System.out.println("Pause for 1 second...");
+                Thread.sleep(1000);
               }
 
               break;
@@ -421,8 +421,8 @@ public class StorageBackupMTStateTest {
               flowLock.releaseReadLock();
             }
           } catch (OModificationOperationProhibitedException mope) {
-            System.out.println("Modification was prohibited ... wait 5s.");
-            Thread.sleep(5 * 1000);
+            System.out.println("Modification was prohibited ... wait 3s.");
+            Thread.sleep(3 * 1000);
           } catch (ORecordNotFoundException rnfe) {
             // retry
           } catch (OConcurrentModificationException cme) {

@@ -1199,6 +1199,7 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  @Test
   public void testCollateOnCollections() {
     //issue #4851
     db.command(new OCommandSQL("create class OCommandExecutorSqlSelectTest_collateOnCollections")).execute();
@@ -1225,6 +1226,7 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  @Test
   public void testEvalLong() {
     //http://www.prjhub.com/#/issues/6472
     List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT EVAL(\"86400000 * 26\") AS value"));
@@ -1232,6 +1234,7 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.get(0).field("value"), 86400000l*26);
   }
 
+  @Test
   public void testCollateOnLinked() {
     List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from CollateOnLinked2 where linked.name = 'foo' "));
     assertEquals(results.size(), 1);
@@ -1244,6 +1247,70 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from TestParams where surname like ? + '%'"), "fo");
     assertEquals(results.size(), 1);
   }
+
+  public void testCompositeIndexWithoutNullValues() {
+    db.command(new OCommandSQL("create class CompositeIndexWithoutNullValues")).execute();
+    db.command(new OCommandSQL("create property CompositeIndexWithoutNullValues.one String")).execute();
+    db.command(new OCommandSQL("create property CompositeIndexWithoutNullValues.two String")).execute();
+    db.command(new OCommandSQL("create index CompositeIndexWithoutNullValues.one_two on CompositeIndexWithoutNullValues (one, two) NOTUNIQUE METADATA {ignoreNullValues: true}")).execute();
+
+    db.command(new OCommandSQL("insert into CompositeIndexWithoutNullValues set one = 'foo'")).execute();
+    db.command(new OCommandSQL("insert into CompositeIndexWithoutNullValues set one = 'foo', two = 'bar'")).execute();
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select from CompositeIndexWithoutNullValues where one = ?"), "foo");
+    assertEquals(results.size(), 2);
+    results = db.query(new OSQLSynchQuery<ODocument>("select from CompositeIndexWithoutNullValues where one = ? and two = ?"), "foo", "bar");
+    assertEquals(results.size(), 1);
+
+    db.command(new OCommandSQL("create class CompositeIndexWithoutNullValues2")).execute();
+    db.command(new OCommandSQL("create property CompositeIndexWithoutNullValues2.one String")).execute();
+    db.command(new OCommandSQL("create property CompositeIndexWithoutNullValues2.two String")).execute();
+    db.command(new OCommandSQL("create index CompositeIndexWithoutNullValues2.one_two on CompositeIndexWithoutNullValues2 (one, two) NOTUNIQUE METADATA {ignoreNullValues: false}")).execute();
+
+    db.command(new OCommandSQL("insert into CompositeIndexWithoutNullValues2 set one = 'foo'")).execute();
+    db.command(new OCommandSQL("insert into CompositeIndexWithoutNullValues2 set one = 'foo', two = 'bar'")).execute();
+    results = db.query(new OSQLSynchQuery<ODocument>("select from CompositeIndexWithoutNullValues2 where one = ?"), "foo");
+    assertEquals(results.size(), 2);
+    results = db.query(new OSQLSynchQuery<ODocument>("select from CompositeIndexWithoutNullValues where one = ? and two = ?"), "foo", "bar");
+    assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void testDateFormat(){
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select date('2015-07-20', 'yyyy-MM-dd').format('dd.MM.yyyy') as dd"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.get(0).field("dd"), "20.07.2015");
+  }
+
+
+  @Test
+  public void testConcatenateNamedParams(){
+    //issue #5572
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from TestMultipleClusters where name like :p1 + '%'"), "fo");
+    assertEquals(results.size(), 1);
+    
+    results =db.query(new OSQLSynchQuery<ODocument>("select from TestMultipleClusters where name like :p1 "), "fo");
+    assertEquals(results.size(), 0);
+  }
+
+  @Test
+  public void testMethodsOnStrings(){
+    //issue #5671
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select '1'.asLong() as long"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.get(0).field("long"), 1L);
+  }
+
+  @Test
+  public void testDifferenceOfInlineCollections(){
+    //issue #5294
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select difference([1,2,3],[1,2]) as difference"));
+    assertEquals(results.size(), 1);
+    Object differenceFieldValue = results.get(0).field("difference");
+    assertTrue(differenceFieldValue instanceof Collection);
+    assertEquals(((Collection)differenceFieldValue).size(), 1);
+    assertEquals(((Collection)differenceFieldValue).iterator().next(), 3);
+  }
+
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;

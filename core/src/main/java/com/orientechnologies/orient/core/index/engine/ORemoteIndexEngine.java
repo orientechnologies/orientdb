@@ -58,7 +58,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-                        OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata) {
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties, ODocument metadata) {
   }
 
   @Override
@@ -71,7 +71,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
 
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
   }
 
   @Override

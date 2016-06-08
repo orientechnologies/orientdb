@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.delete;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -35,7 +36,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
 
     try {
       final String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: document/<database>/<record-id>");

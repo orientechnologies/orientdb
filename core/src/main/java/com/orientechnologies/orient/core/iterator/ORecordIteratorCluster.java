@@ -36,19 +36,19 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIterator<REC> {
   private ORecord currentRecord;
 
-  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
+  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final int iClusterId) {
     this(iDatabase, iLowLevelDatabase, iClusterId, ORID.CLUSTER_POS_INVALID, ORID.CLUSTER_POS_INVALID, false,
         OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
-  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
+  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final int iClusterId, final long firstClusterEntry, final long lastClusterEntry) {
     this(iDatabase, iLowLevelDatabase, iClusterId, firstClusterEntry, lastClusterEntry, false, OStorage.LOCKING_STRATEGY.NONE);
   }
 
   @Deprecated
-  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
+  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final int iClusterId, final long firstClusterEntry, final long lastClusterEntry, final boolean iterateThroughTombstones,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iterateThroughTombstones, iLockingStrategy);

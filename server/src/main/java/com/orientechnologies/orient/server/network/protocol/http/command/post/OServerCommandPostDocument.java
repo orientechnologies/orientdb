@@ -19,6 +19,7 @@
    */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -38,7 +39,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
 
     iRequest.data.commandInfo = "Create document";
 
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
 
     ODocument doc;
 

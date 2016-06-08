@@ -31,7 +31,7 @@ public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
     super(url);
   }
 
-  @Test
+  @Test(enabled = false)
   public void testConnect() throws Exception {
     final OServerAdmin admin = new OServerAdmin("remote:localhost:" + serverPort).connect("root",
         ODatabaseHelper.getServerRootPassword());

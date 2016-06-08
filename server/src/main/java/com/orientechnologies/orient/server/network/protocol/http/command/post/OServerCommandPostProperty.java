@@ -22,7 +22,8 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 import java.io.IOException;
  import java.util.Map;
 
- import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
  import com.orientechnologies.orient.core.metadata.schema.OClass;
  import com.orientechnologies.orient.core.metadata.schema.OProperty;
  import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -41,7 +42,7 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
 
    @Override
    public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-     ODatabaseDocumentTx db = null;
+     ODatabaseDocument db = null;
      try {
        db = getProfiledDatabaseInstance(iRequest);
        if (iRequest.content == null || iRequest.content.length() <= 0)
@@ -56,7 +57,7 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
    }
 
    @SuppressWarnings("unused")
-   protected boolean addSingleProperty(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentTx db)
+   protected boolean addSingleProperty(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocument db)
        throws InterruptedException, IOException {
      String[] urlParts = checkSyntax(iRequest.url, 4,
          "Syntax error: property/<database>/<class-name>/<property-name>/[<property-type>]/[<link-type>]");
@@ -120,7 +121,7 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
    }
 
    @SuppressWarnings({ "unchecked", "unused" })
-   protected boolean addMultipreProperties(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentTx db)
+   protected boolean addMultipreProperties(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocument db)
        throws InterruptedException, IOException {
      String[] urlParts = checkSyntax(iRequest.url, 3, "Syntax error: property/<database>/<class-name>");
 

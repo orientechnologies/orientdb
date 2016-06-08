@@ -74,6 +74,18 @@ public class OCreateEdgeStatementTest {
     checkRightSyntax("create edge Foo from [#11:0, #11:3] to [#11:1, #12:0] set foo='bar', bar=2 retry 3 wait 20 batch 10");
   }
 
+  public void testInputVariables() {
+    checkRightSyntax("create edge Foo from ? to ?");
+    checkRightSyntax("create edge Foo from :a to :b");
+    checkRightSyntax("create edge Foo from [:a, :b] to [:b, :c]");
+  }
+
+  public void testSubStatements() {
+    checkRightSyntax("create edge Foo from (select from Foo) to (select from bar)");
+    checkRightSyntax("create edge Foo from (traverse out() from #12:0) to (select from bar)");
+    checkRightSyntax("create edge Foo from (MATCH {class:Person, as:A} return $elements) to (select from bar)");
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

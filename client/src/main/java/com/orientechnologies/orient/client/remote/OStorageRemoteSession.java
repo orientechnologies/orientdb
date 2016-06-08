@@ -11,7 +11,7 @@ import java.util.*;
 public class OStorageRemoteSession implements ODatabaseSessionMetadata {
   public boolean                                commandExecuting       = false;
   public int                                    serverURLIndex         = -1;
-  public Set<OChannelBinary>                    connections            = new HashSet<OChannelBinary>();
+  public Set<OChannelBinary>                    connections            = Collections.newSetFromMap( new WeakHashMap<OChannelBinary, Boolean>());
   public String                                 connectionUserName     = null;
   public String                                 connectionUserPassword = null;
   public Map<String, OStorageRemoteNodeSession> sessions               = new HashMap<String, OStorageRemoteNodeSession>();

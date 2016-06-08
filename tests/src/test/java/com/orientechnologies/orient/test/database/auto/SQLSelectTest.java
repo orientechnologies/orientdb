@@ -1542,6 +1542,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   }
 
+  @Test
   public void testSelectFromIndexValues() {
     database.command(new OCommandSQL("create index selectFromIndexValues on Profile (name) notunique")).execute();
 
@@ -1672,6 +1673,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     }
   }
 
+  @Test
   public void testOutFilterInclude() {
     OSchemaProxy schema = database.getMetadata().getSchema();
     schema.createClass("TestOutFilterInclude", schema.getClass("V"));
@@ -1707,6 +1709,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     return positions;
   }
 
+  @Test
   public void testBinaryClusterSelect() {
     database.command(new OCommandSQL("create blob cluster binarycluster")).execute();
     database.reload();
@@ -1728,6 +1731,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(result.size(), 0);
   }
 
+  @Test
   public void testExpandSkip() {
     OSchemaProxy schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
@@ -1744,6 +1748,12 @@ public class SQLSelectTest extends AbstractSelectTest {
     List<OIdentifiable> result = database.query(
         new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1'"));
     Assert.assertEquals(result.size(), 3);
+
+    Map<Object, Object> params = new HashMap<Object, Object>();
+    params.put("values", Arrays.asList(new String[]{"2", "3", "antani"}));
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()[name in :values]) from TestExpandSkip where name = '1'"), params);
+    Assert.assertEquals(result.size(), 2);
 
     result = database.query(
         new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 1"));
@@ -1763,6 +1773,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   }
 
+  @Test
   public void testPolymorphicEdges() {
     OSchemaProxy schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
@@ -1790,7 +1801,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   }
 
-
+  @Test
   public void testSizeOfLink() {
     OSchemaProxy schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
@@ -1803,6 +1814,41 @@ public class SQLSelectTest extends AbstractSelectTest {
     List<OIdentifiable> result = database.query(
         new OSQLSynchQuery<OIdentifiable>(" select from (select from TestSizeOfLink where name = '1') where out()[name=2].size() > 0"));
     Assert.assertEquals(result.size(), 1);
+  }
+
+  @Test
+  public void testEmbeddedMapAndDotNotation() {
+    OSchemaProxy schema = database.getMetadata().getSchema();
+    OClass v = schema.getClass("V");
+    final OClass cls = schema.createClass("EmbeddedMapAndDotNotation", v);
+    database.command(new OCommandSQL("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'")).execute();
+    database.command(new OCommandSQL("CREATE VERTEX EmbeddedMapAndDotNotation set data = {\"bar\": \"baz\", \"quux\": 1}, name = 'bar'")).execute();
+    database.command(new OCommandSQL("CREATE EDGE E FROM (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'foo') to (SELECT FROM EmbeddedMapAndDotNotation WHERE name = 'bar')")).execute();
+
+    List<OIdentifiable> result = database.query(
+        new OSQLSynchQuery<OIdentifiable>(" select out().data as result from (select from EmbeddedMapAndDotNotation where name = 'foo')"));
+    Assert.assertEquals(result.size(), 1);
+    ODocument doc = result.get(0).getRecord();
+    Assert.assertNotNull(doc);
+    List list = doc.field("result");
+    Assert.assertEquals(list.size(), 1);
+    Object first = list.get(0);
+    Assert.assertTrue(first instanceof Map);
+    Assert.assertEquals(((Map)first).get("bar"), "baz");
+
+  }
+
+  @Test
+  public void testLetWithQuotedValue() {
+    OSchemaProxy schema = database.getMetadata().getSchema();
+    OClass v = schema.getClass("V");
+    final OClass cls = schema.createClass("LetWithQuotedValue", v);
+    database.command(new OCommandSQL("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\"")).execute();
+
+    List<OIdentifiable> result = database.query(
+        new OSQLSynchQuery<OIdentifiable>(" select expand($a) let $a = (select from LetWithQuotedValue where name = \"\\\"foo\\\"\")"));
+    Assert.assertEquals(result.size(), 1);
+
   }
 
 }

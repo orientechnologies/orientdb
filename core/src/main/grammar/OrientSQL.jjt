@@ -308,6 +308,8 @@ TOKEN:
     |
     < READ: ( "R" | "r") ( "E" | "e")  ( "A" | "a") ( "D" | "d")>
     |
+    < EXECUTE: ( "E" | "e") ( "X" | "x") ( "E" | "e") ( "C" | "c")  ( "U" | "u")  ( "T" | "t") ( "E" | "e")>
+    |
     < ALL: ( "A" | "a") ( "L" | "l") ( "L" | "l")>
     |
     < NONE: ( "N" | "n") ( "O" | "o")  ( "N" | "n") ( "E" | "e")>
@@ -739,6 +741,8 @@ OIdentifier Identifier():
     |
     token = <READ>
     |
+    token = <EXECUTE>
+    |
     token = <ALL>
     |
     token = <NONE>
@@ -862,6 +866,24 @@ OStatement StatementInternal():
                 |
                 result = InsertStatement()
                 |
+                LOOKAHEAD(2)
+                result = CreateClassStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreatePropertyStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateIndexStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateClusterStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateLinkStatement()
+                |
+                LOOKAHEAD(2)
+                result = CreateFunctionStatement()
+                |
                 LOOKAHEAD(CreateVertexStatementNoTarget())
                 result = CreateVertexStatementNoTarget()
                 |
@@ -883,8 +905,6 @@ OStatement StatementInternal():
                 LOOKAHEAD(UpdateStatement())
                 result = UpdateStatement()
                 |
-                result = MatchStatement()
-                |
                 result = ProfileStorageStatement()
                 |
                 LOOKAHEAD(TruncateClassStatement())
@@ -893,14 +913,8 @@ OStatement StatementInternal():
                 LOOKAHEAD(TruncateClusterStatement())
                 result = TruncateClusterStatement()
                 |
-                LOOKAHEAD(FindReferencesStatement())
-                result = FindReferencesStatement()
-                |
                 LOOKAHEAD(TruncateRecordStatement())
                 result = TruncateRecordStatement()
-                |
-                LOOKAHEAD(CreateClassStatement())
-                result = CreateClassStatement()
                 |
                 LOOKAHEAD(AlterClassStatement())
                 result = AlterClassStatement()
@@ -908,25 +922,16 @@ OStatement StatementInternal():
                 LOOKAHEAD(DropClassStatement())
                 result = DropClassStatement()
                 |
-                LOOKAHEAD(CreatePropertyStatement())
-                result = CreatePropertyStatement()
-                |
                 LOOKAHEAD(AlterPropertyStatement())
                 result = AlterPropertyStatement()
                 |
                 LOOKAHEAD(DropPropertyStatement())
                 result = DropPropertyStatement()
                 |
-                LOOKAHEAD(CreateIndexStatement())
-                result = CreateIndexStatement()
-                |
                 result = RebuildIndexStatement()
                 |
                 LOOKAHEAD(2)
                 result = DropIndexStatement()
-                |
-                LOOKAHEAD(CreateClusterStatement())
-                result = CreateClusterStatement()
                 |
                 LOOKAHEAD(AlterClusterStatement())
                 result = AlterClusterStatement()
@@ -939,15 +944,9 @@ OStatement StatementInternal():
                 |
                 result = OptimizeDatabaseStatement()
                 |
-                LOOKAHEAD(2)
-                result = CreateLinkStatement()
-                |
                 result = GrantStatement()
                 |
                 result = RevokeStatement()
-                |
-                LOOKAHEAD(2)
-                result = CreateFunctionStatement()
                 |
                 result = BeginStatement()
                 |
@@ -985,6 +984,11 @@ OStatement QueryStatement():
         result = SelectWithoutTargetStatement()
         |
         result = TraverseStatement()
+        |
+        result = MatchStatement()
+        |
+        LOOKAHEAD( FindReferencesStatement() )
+        result = FindReferencesStatement()
     ){ return result; }
 }
 
@@ -1761,69 +1765,11 @@ OCreateEdgeStatement CreateEdgeStatement():
 	[ jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]]
 	<FROM>
 	(
-	    jjtThis.leftRid = Rid()
-	    |
-	    (
-	        <LBRACKET>
-	        [
-	            lastRid = Rid()
-	            {
-	                jjtThis.leftRids=new ArrayList();
-	                jjtThis.leftRids.add(lastRid);
-	            }
-	            (
-	                <COMMA>
-	                lastRid = Rid() { jjtThis.leftRids.add(lastRid); }
-	            )*
-	        ] <RBRACKET>
-	    )
-	    |
-	    (
-	        <LPAREN>
-	        (
-	            LOOKAHEAD(SelectStatement()) jjtThis.leftStatement = SelectStatement()
-	            |
-	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.leftStatement = SelectWithoutTargetStatement()
-	        )
-	        <RPAREN>
-	    )
-	    |
-	    jjtThis.leftParam = InputParameter()
-	    |
-	    jjtThis.leftIdentifier = Identifier()
+	    jjtThis.leftExpression = Expression()
 	)
 	<TO>
 	(
-        jjtThis.rightRid = Rid()
-	    |
-	    (
-	        <LBRACKET>
-	        [
-	            lastRid = Rid()
-	            {
-	                jjtThis.rightRids=new ArrayList();
-	                jjtThis.rightRids.add(lastRid);
-	            }
-	            (
-	                <COMMA>
-	                lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
-	            )*
-	        ] <RBRACKET>
-	    )
-	    |
-	    (
-	        <LPAREN>
-	        (
-	            LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
-	            |
-	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
-	        )
-	        <RPAREN>
-	    )
-	    |
-	    jjtThis.rightParam = InputParameter()
-	    |
-	    jjtThis.rightIdentifier = Identifier()
+	    jjtThis.rightExpression = Expression()
 	)
     [ jjtThis.body = InsertBody() ]
     [ jjtThis.retry = Retry() ]
@@ -2190,9 +2136,10 @@ OMathExpression ParenthesisExpression():
     (
 	    <LPAREN>
 	    (
-	        jjtThis.expression = Expression()
+	        LOOKAHEAD(2)
+	        jjtThis.statement = QueryStatement()
 	        |
-	        jjtThis.statement = SelectStatement()
+	        jjtThis.expression = Expression()
 	        |
             jjtThis.statement = InsertStatement()
         )
@@ -2271,13 +2218,7 @@ OLetItem LetItem():
     	    (
     	        <LPAREN>
     	        (
-    	            LOOKAHEAD( SelectStatement() )
-    	            jjtThis.query = SelectStatement()
-    	            |
-    	            LOOKAHEAD( SelectWithoutTargetStatement() )
-    	            jjtThis.query = SelectWithoutTargetStatement()
-    	            |
-    	            jjtThis.query = TraverseStatement()
+    	            jjtThis.query = QueryStatement()
     	        )
     	        <RPAREN>
     	    )
@@ -2312,17 +2253,7 @@ OFromItem FromItem():
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	<LPAREN> (
-    	            LOOKAHEAD(SelectStatement()) jjtThis.statement = SelectStatement()
-    	            |
-    	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.statement = SelectWithoutTargetStatement()
-    	            |
-    	            jjtThis.statement = TraverseStatement()
-    	            |
-                    jjtThis.statement = MatchStatement()
-					|
-					jjtThis.statement = FindReferencesStatement()
-    	) <RPAREN>
+    	<LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
     	|
     	jjtThis.inputParam = InputParameter()
     	|
@@ -4222,6 +4153,8 @@ OPermission Permission():
         <UPDATE> { jjtThis.permission = "UPDATE"; }
         |
         <DELETE> { jjtThis.permission = "DELETE"; }
+        |
+        <EXECUTE> { jjtThis.permission = "EXECUTE"; }
         |
         <ALL> { jjtThis.permission = "ALL"; }
         |

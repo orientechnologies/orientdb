@@ -220,14 +220,23 @@ public class OWALPageChangesPortion implements OWALChanges {
   }
 
   private void readData(ByteBuffer pointer, int offset, byte[] data) {
-    if (pageChunks == null || pageChunks[offset / PORTION_BYTES] == null) {
+    if (pageChunks == null) {
       if (pointer != null) {
         pointer.position(offset);
         pointer.get(data, 0, data.length);
       }
       return;
     }
+
     int portionIndex = offset / PORTION_BYTES;
+    if (portionIndex == (offset + data.length - 1) / PORTION_BYTES && pageChunks[portionIndex] == null) {
+      if (pointer != null) {
+        pointer.position(offset);
+        pointer.get(data, 0, data.length);
+      }
+      return;
+    }
+
     int chunkIndex = (offset - portionIndex * PORTION_BYTES) / CHUNK_SIZE;
     int chunkOffset = offset - (portionIndex * PORTION_BYTES + chunkIndex * CHUNK_SIZE);
 
@@ -296,5 +305,10 @@ public class OWALPageChangesPortion implements OWALChanges {
         chunkIndex = 0;
       }
     }
+  }
+
+  @Override
+  public boolean hasChanges() {
+    return pageChunks != null;
   }
 }

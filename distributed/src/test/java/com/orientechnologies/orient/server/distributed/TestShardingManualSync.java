@@ -3,12 +3,18 @@ package com.orientechnologies.orient.server.distributed;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
+/**
+ * Tests with 2 servers the ability to resync a cluster manually.
+ * 
+ * @author Luca Garulli
+ */
 public class TestShardingManualSync extends AbstractServerClusterTest {
 
   protected final static int SERVERS = 2;
@@ -68,7 +74,21 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
     try {
       log("Adding vertex to europe node...");
 
+      try {
+        final OrientVertex v2 = graphNoTxEurope.addVertex("class:Client");
+        Assert.fail("Quorum not respected after shutting down node USA");
+      } catch (Exception e) {
+        // OK
+      }
+
+      // CHANGE THE WRITE QUORUM = 1
+      final ODistributedConfiguration dCfg = serverInstance.get(0).server.getDistributedManager()
+          .getDatabaseConfiguration(getDatabaseName());
+      ODocument newCfg = dCfg.getDocument().field("writeQuorum", 1);
+      serverInstance.get(0).server.getDistributedManager().updateCachedDatabaseConfiguration(getDatabaseName(), newCfg, true, true);
+
       final OrientVertex v2 = graphNoTxEurope.addVertex("class:Client");
+
       clusterName = graphNoTxEurope.getRawGraph().getClusterNameById(v2.getIdentity().getClusterId());
 
       log("Restarting USA server...");
@@ -89,7 +109,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       Assert.assertEquals(1, graphNoTxUsa.countVertices());
 
       log("Manually syncing cluster client of node USA...");
-      graphNoTxUsa.command(new OCommandSQL("sync cluster " + clusterName)).execute();
+      graphNoTxUsa.command(new OCommandSQL("ha sync cluster " + clusterName)).execute();
 
       Assert.assertEquals(2, graphNoTxUsa.countVertices());
 

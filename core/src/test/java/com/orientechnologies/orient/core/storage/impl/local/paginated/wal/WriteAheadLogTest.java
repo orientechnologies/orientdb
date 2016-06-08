@@ -377,7 +377,7 @@ public class WriteAheadLogTest {
 
     OLogSequenceNumber end = null;
     for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE; ) {
-      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 1;
+      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 15;
       walRecord = new TestRecord(contentSize, false);
 
       end = writeAheadLog.log(walRecord);
@@ -425,7 +425,7 @@ public class WriteAheadLogTest {
     OLogSequenceNumber end = null;
 
     for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE; ) {
-      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 1;
+      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 15;
       walRecord = new TestRecord(contentSize, false);
 
       end = writeAheadLog.log(walRecord);
@@ -472,7 +472,7 @@ public class WriteAheadLogTest {
 
     OLogSequenceNumber end = null;
     for (int writtenSize = 0; writtenSize < 4 * OWALPage.PAGE_SIZE; ) {
-      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 1;
+      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 15;
       walRecord = new TestRecord(contentSize, false);
 
       end = writeAheadLog.log(walRecord);
@@ -767,14 +767,14 @@ public class WriteAheadLogTest {
     OWALRecord walRecord;
 
     while (writtenContent <= 4 * OWALPage.PAGE_SIZE) {
-      int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 8;
+      int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 15;
       walRecord = new TestRecord(contentSize, false);
       writeAheadLog.log(walRecord);
 
       writtenContent += contentSize;
     }
 
-    int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 8;
+    int contentSize = random.nextInt(OWALPage.PAGE_SIZE - 1) + 15;
     walRecord = new TestRecord(contentSize, false);
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
 

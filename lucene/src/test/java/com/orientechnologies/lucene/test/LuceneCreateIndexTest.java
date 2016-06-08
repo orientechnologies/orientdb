@@ -43,7 +43,6 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
   public LuceneCreateIndexTest() {
 
     super();
-//    System.setProperty("orientdb.test.env","ci");
     OLogManager.instance().installCustomFormatter();
     OLogManager.instance().setConsoleLevel(Level.INFO.getName());
 

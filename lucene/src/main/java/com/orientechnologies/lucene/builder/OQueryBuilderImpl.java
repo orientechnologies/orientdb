@@ -18,8 +18,10 @@
 
 package com.orientechnologies.lucene.builder;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
@@ -32,6 +34,33 @@ import java.util.Map;
  * Created by Enrico Risa on 02/09/15.
  */
 public class OQueryBuilderImpl implements OQueryBuilder {
+
+  private final boolean allowLeadingWildcard;
+  private final boolean lowercaseExpandedTerms;
+
+  public OQueryBuilderImpl(ODocument metadata) {
+
+    Boolean allowLeadingWildcard = false;
+    if (metadata.containsField("allowLeadingWildcard")) {
+      allowLeadingWildcard = metadata.<Boolean>field("allowLeadingWildcard");
+    }
+
+    Boolean lowercaseExpandedTerms = true;
+    if (metadata.containsField("lowercaseExpandedTerms")) {
+      lowercaseExpandedTerms = metadata.<Boolean>field("lowercaseExpandedTerms");
+    }
+    this.allowLeadingWildcard = allowLeadingWildcard;
+    this.lowercaseExpandedTerms = lowercaseExpandedTerms;
+
+  }
+
+  public OQueryBuilderImpl(boolean allowLeadingWildcard, boolean lowercaseExpandedTerms) {
+    this.allowLeadingWildcard = allowLeadingWildcard;
+    this.lowercaseExpandedTerms = lowercaseExpandedTerms;
+
+    OLogManager.instance().info(this, "allowLeadingWildcard::  " + allowLeadingWildcard);
+  }
+
   @Override
   public Query query(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {
     String query = "";
@@ -53,8 +82,7 @@ public class OQueryBuilderImpl implements OQueryBuilder {
     return getQueryParser(index, query, analyzer);
   }
 
-  protected static Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer)
-      throws ParseException {
+  protected Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer) throws ParseException {
     QueryParser queryParser;
     if ((key).startsWith("(")) {
       queryParser = new QueryParser("", analyzer);
@@ -71,8 +99,13 @@ public class OQueryBuilderImpl implements OQueryBuilder {
           fields[i] = "k" + i;
         }
       }
+
       queryParser = new MultiFieldQueryParser(fields, analyzer);
     }
+
+    queryParser.setAllowLeadingWildcard(allowLeadingWildcard);
+
+    queryParser.setLowercaseExpandedTerms(lowercaseExpandedTerms);
 
     try {
       return queryParser.parse(key);
@@ -82,4 +115,5 @@ public class OQueryBuilderImpl implements OQueryBuilder {
     }
 
   }
+
 }

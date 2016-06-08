@@ -20,8 +20,8 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -67,7 +67,7 @@ public interface ODistributedServerManager {
 
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
 
-  Serializable executeOnLocalNode(ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentTx database);
+  Serializable executeOnLocalNode(ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
 
   ORemoteServerController getRemoteServer(final String nodeName) throws IOException;
 

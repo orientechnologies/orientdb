@@ -33,39 +33,39 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
  * @since 05.08.13
  */
 public class OCachePointer {
-  private static final int              WRITERS_OFFSET         = 32;
-  private static final int              READERS_MASK           = 0xFFFFFFFF;
+  private static final int WRITERS_OFFSET = 32;
+  private static final int READERS_MASK   = 0xFFFFFFFF;
 
-  private final ReadWriteLock           readWriteLock          = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-  private final AtomicInteger           referrersCount         = new AtomicInteger();
-  private final AtomicLong              readersWritersReferrer = new AtomicLong();
+  private final AtomicInteger referrersCount         = new AtomicInteger();
+  private final AtomicLong    readersWritersReferrer = new AtomicLong();
 
-  private final AtomicInteger           usagesCounter          = new AtomicInteger();
+  private final AtomicInteger usagesCounter = new AtomicInteger();
 
-  private volatile OLogSequenceNumber   lastFlushedLsn;
+  private volatile OLogSequenceNumber lastFlushedLsn;
 
-  private volatile WritersListener      writersListener;
+  private volatile WritersListener writersListener;
 
-  private final ByteBuffer              buffer;
-  private final OByteBufferPool         bufferPool;
+  private final ByteBuffer      buffer;
+  private final OByteBufferPool bufferPool;
 
-  private final ThreadLocal<ByteBuffer> threadLocalBuffer      = new ThreadLocal<ByteBuffer>() {
-                                                                 @Override
-                                                                 protected ByteBuffer initialValue() {
-                                                                   if (buffer != null) {
-                                                                     final ByteBuffer b = buffer.duplicate();
-                                                                     b.position(0);
-                                                                     b.order(buffer.order());
-                                                                     return b;
-                                                                   }
+  private final ThreadLocal<ByteBuffer> threadLocalBuffer = new ThreadLocal<ByteBuffer>() {
+    @Override
+    protected ByteBuffer initialValue() {
+      if (buffer != null) {
+        final ByteBuffer b = buffer.duplicate();
+        b.position(0);
+        b.order(buffer.order());
+        return b;
+      }
 
-                                                                   return null;
-                                                                 }
-                                                               };
+      return null;
+    }
+  };
 
-  private final long                    fileId;
-  private final long                    pageIndex;
+  private final long fileId;
+  private final long pageIndex;
 
   public OCachePointer(final ByteBuffer buffer, final OByteBufferPool bufferPool, final OLogSequenceNumber lastFlushedLsn,
       final long fileId, final long pageIndex) {
@@ -185,6 +185,15 @@ public class OCachePointer {
     }
 
     decrementReferrer();
+  }
+
+  /**
+   * DEBUG only !!!
+   *
+   * @return Whether pointer lock (read or write )is acquired
+   */
+  public boolean isLockAcquiredByCurrentThread() {
+    return readWriteLock.getReadHoldCount() > 0 || readWriteLock.isWriteLockedByCurrentThread();
   }
 
   public void incrementReferrer() {

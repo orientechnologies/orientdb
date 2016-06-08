@@ -19,9 +19,9 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
-
 import java.io.IOException;
+
+import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 
 /**
  * Created by tglman on 16/12/15.

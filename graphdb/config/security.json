@@ -5,6 +5,7 @@
     "createDefaultUsers": true
   },
   "authentication": {
+    "enabled": true,
     "allowDefault": true,
     "authenticators": [
       {
@@ -22,8 +23,12 @@
         "name": "ServerConfig",
         "class": "com.orientechnologies.orient.server.security.authenticator.OServerConfigAuthenticator",
         "enabled": true
-      }
-    ]
+      },
+      {
+        "name": "SystemAuthenticator",
+        "class": "com.orientechnologies.orient.server.security.authenticator.OSystemUserAuthenticator",
+        "enabled": true
+      } ]
   },
   "auditing": {
     "class": "com.orientechnologies.security.auditing.ODefaultAuditing",

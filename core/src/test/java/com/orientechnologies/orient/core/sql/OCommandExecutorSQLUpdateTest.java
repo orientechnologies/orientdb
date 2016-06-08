@@ -502,4 +502,28 @@ public class OCommandExecutorSQLUpdateTest {
       db.close();
     }
   }
+
+  @Test
+  public void testUpdateContentNotORestricted() throws Exception {
+    //issue #5564
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:UpdateContentNotORestricted");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class Foo")).execute();
+
+      ODocument d = new ODocument("Foo");
+      d.field("name", "foo");
+      d.save();
+      db.command(new OCommandSQL("update Foo MERGE {\"a\":1}")).execute();
+      db.command(new OCommandSQL("update Foo CONTENT {\"a\":1}")).execute();
+
+      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from Foo"));
+
+      assertEquals(result.size(), 1);
+      ODocument doc = result.get(0);
+      assertNull(doc.field("_allowRead"));
+    } finally {
+      db.close();
+    }
+  }
 }

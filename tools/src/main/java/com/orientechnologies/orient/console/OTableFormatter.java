@@ -57,6 +57,7 @@ public class OTableFormatter {
   protected String                                 nullValue            = "";
   private boolean                                  leftBorder           = true;
   private boolean                                  rightBorder          = true;
+  private ODocument                                footer;
 
   public interface OTableOutput {
     void onMessage(String text, Object... args);
@@ -74,11 +75,11 @@ public class OTableFormatter {
     columnHidden.add(column);
   }
 
-  public void writeRecords(final List<OIdentifiable> resultSet, final int limit) {
+  public void writeRecords(final List<? extends OIdentifiable> resultSet, final int limit) {
     writeRecords(resultSet, limit, null);
   }
 
-  public void writeRecords(final List<OIdentifiable> resultSet, final int limit,
+  public void writeRecords(final List<? extends OIdentifiable> resultSet, final int limit,
       final OCallable<Object, OIdentifiable> iAfterDump) {
     final Map<String, Integer> columns = parseColumns(resultSet, limit);
 
@@ -122,6 +123,11 @@ public class OTableFormatter {
 
     if (fetched > 0)
       printHeaderLine(columns);
+
+    if (footer != null) {
+      dumpRecordInTable(-1, footer, columns);
+      printHeaderLine(columns);
+    }
   }
 
   public void setColumnAlignment(final String column, final ALIGNMENT alignment) {
@@ -225,7 +231,7 @@ public class OTableFormatter {
       }
       case RIGHT: {
         final int room = columnWidth - valueAsString.length();
-        if (room > 1) {
+        if (room > 0) {
           for (int k = 0; k < room; ++k)
             valueAsString = " " + valueAsString;
         }
@@ -241,7 +247,7 @@ public class OTableFormatter {
 
     if (iColumnName.equals("#"))
       // RECORD NUMBER
-      value = iIndex;
+      value = iIndex > -1 ? iIndex : "";
     else if (iColumnName.equals("@RID"))
       // RID
       value = iRecord.getIdentity().toString();
@@ -295,6 +301,10 @@ public class OTableFormatter {
     value.append("]");
 
     return value.toString();
+  }
+
+  public void setFooter(final ODocument footer) {
+    this.footer = footer;
   }
 
   public static Object getPrettyFieldValue(Object value, final int multiValueMaxEntries) {
@@ -448,7 +458,7 @@ public class OTableFormatter {
    * @param limit
    * @return
    */
-  private Map<String, Integer> parseColumns(final Collection<OIdentifiable> resultSet, final int limit) {
+  private Map<String, Integer> parseColumns(final Collection<? extends OIdentifiable> resultSet, final int limit) {
     final Map<String, Integer> columns = new LinkedHashMap<String, Integer>();
 
     for (String c : prefixedColumns)
@@ -493,6 +503,14 @@ public class OTableFormatter {
 
     if (!hasClass)
       columns.remove("@CLASS");
+
+    if( footer!=null){
+      footer.setLazyLoad(false);
+      // PARSE ALL THE DOCUMENT'S FIELDS
+      for (String fieldName : footer.fieldNames()) {
+        columns.put(fieldName, getColumnSize(fetched, footer, fieldName, columns.get(fieldName)));
+      }
+    }
 
     // COMPUTE MAXIMUM WIDTH
     int width = 0;

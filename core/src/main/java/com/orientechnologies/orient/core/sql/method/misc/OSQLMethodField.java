@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -66,7 +67,9 @@ public class OSQLMethodField extends OAbstractSQLMethod {
         for (Object o : OMultiValue.getMultiValueIterable(ioResult, false)) {
           Object newlyAdded = ODocumentHelper.getFieldValue(o, paramAsString);
           if (OMultiValue.isMultiValue(newlyAdded)) {
-            for (Object item : OMultiValue.getMultiValueIterable(newlyAdded)) {
+            if(newlyAdded instanceof Map || newlyAdded instanceof OIdentifiable){
+              result.add(newlyAdded);
+            }else for (Object item : OMultiValue.getMultiValueIterable(newlyAdded)) {
               result.add(item);
             }
           } else {

@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -44,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseListener {
 
-  static class OLiveQueryOps implements OCloseable {
+  public static class OLiveQueryOps implements OCloseable {
 
     protected Map<ODatabaseDocument, List<ORecordOperation>> pendingOps  = new ConcurrentHashMap<ODatabaseDocument, List<ORecordOperation>>();
     private OLiveQueryQueueThread                            queueThread = new OLiveQueryQueueThread();
@@ -60,15 +61,19 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
       }
       pendingOps.clear();
     }
+
+    public OLiveQueryQueueThread getQueueThread() {
+      return queueThread;
+    }
   }
 
-  public OLiveQueryHook(ODatabaseDocumentTx db) {
+  public OLiveQueryHook(ODatabaseDocumentInternal db) {
     super(db);
     getOpsReference(db);
     db.registerListener(this);
   }
 
-  private static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
+  public static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
     return (OLiveQueryOps) db.getStorage().getResource("LiveQueryOps", new Callable<Object>() {
       @Override
       public Object call() throws Exception {

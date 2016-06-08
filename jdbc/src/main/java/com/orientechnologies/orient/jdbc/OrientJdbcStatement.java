@@ -20,7 +20,9 @@ package com.orientechnologies.orient.jdbc;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -39,19 +41,19 @@ import static java.util.Collections.emptyList;
 public class OrientJdbcStatement implements Statement {
 
   protected final OrientJdbcConnection connection;
-  protected final ODatabaseDocumentTx  database;
+  protected final ODatabaseDocument    database;
 
   // protected OCommandSQL query;
-  protected OCommandRequest     query;
-  protected List<ODocument>     documents;
-  protected boolean             closed;
-  protected Object              rawResult;
-  protected OrientJdbcResultSet resultSet;
-  protected List<String>        batches;
+  protected OCommandRequest            query;
+  protected List<ODocument>            documents;
+  protected boolean                    closed;
+  protected Object                     rawResult;
+  protected OrientJdbcResultSet        resultSet;
+  protected List<String>               batches;
 
-  protected int resultSetType;
-  protected int resultSetConcurrency;
-  protected int resultSetHoldability;
+  protected int                        resultSetType;
+  protected int                        resultSetConcurrency;
+  protected int                        resultSetHoldability;
 
   public OrientJdbcStatement(final OrientJdbcConnection iConnection) {
     this(iConnection, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
@@ -77,7 +79,7 @@ public class OrientJdbcStatement implements Statement {
       int resultSetHoldability) {
     this.connection = iConnection;
     this.database = iConnection.getDatabase();
-    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+    database.activateOnCurrentThread();
     documents = emptyList();
     batches = new ArrayList<String>();
     this.resultSetType = resultSetType;
@@ -91,7 +93,7 @@ public class OrientJdbcStatement implements Statement {
       return false;
 
     if (sql.equalsIgnoreCase("select 1")) {
-      documents = new ArrayList<ODocument>();
+      documents = new ArrayList<ODocument>(1);
       documents.add(new ODocument().field("1", 1));
     } else {
       query = new OCommandSQL(sql);
@@ -99,6 +101,9 @@ public class OrientJdbcStatement implements Statement {
         rawResult = executeCommand(query);
         if (rawResult instanceof List<?>) {
           documents = (List<ODocument>) rawResult;
+        } else if (rawResult instanceof OIdentifiable) {
+          documents = new ArrayList<ODocument>(1);
+          documents.add((ODocument) ((OIdentifiable) rawResult).getRecord());
         } else {
           return false;
         }

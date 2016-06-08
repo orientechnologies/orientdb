@@ -5,7 +5,6 @@ import org.junit.Test;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 import static java.sql.ResultSet.CONCUR_READ_ONLY;
 import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
@@ -66,6 +65,16 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     int rowsInserted = statement.executeUpdate();
 
     assertThat(rowsInserted).isEqualTo(2);
+  }
+
+
+  @Test
+  public void testInsertRIDReturning() throws Exception {
+    conn.createStatement().executeQuery("CREATE CLASS Insertable ");
+    ResultSet result = conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(1) return @rid");
+
+    assertThat(result.next()).isTrue();
+    assertThat(result.getObject("id")).isNotNull();
   }
 
   @Test

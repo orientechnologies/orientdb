@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.graph.batch;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -55,25 +57,25 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class OGraphBatchInsertBasic {
 
-  private final String        userName;
-  private final String        dbUrl;
-  private final String        password;
-  Map<Long, List<Long>>       out                      = new HashMap<Long, List<Long>>();
-  Map<Long, List<Long>>       in                       = new HashMap<Long, List<Long>>();
-  private String              idPropertyName           = "uid";
-  private String              edgeClass                = OrientEdgeType.CLASS_NAME;
-  private String              vertexClass              = OrientVertexType.CLASS_NAME;
-  private ODatabaseDocumentTx db;
-  private int                 averageEdgeNumberPerNode = -1;
-  private int                 estimatedEntries         = -1;
-  private int                 bonsaiThreshold          = 1000;
-  private int[]               clusterIds;
-  private long[]              lastClusterPositions;
-  private long                last                     = 0;
-  private boolean             walActive;
+  private final String              userName;
+  private final String              dbUrl;
+  private final String              password;
+  Map<Long, List<Long>>             out                      = new HashMap<Long, List<Long>>();
+  Map<Long, List<Long>>             in                       = new HashMap<Long, List<Long>>();
+  private String                    idPropertyName           = "uid";
+  private String                    edgeClass                = OrientEdgeType.CLASS_NAME;
+  private String                    vertexClass              = OrientVertexType.CLASS_NAME;
+  private ODatabaseDocumentInternal db;
+  private int                       averageEdgeNumberPerNode = -1;
+  private int                       estimatedEntries         = -1;
+  private int                       bonsaiThreshold          = 1000;
+  private int[]                     clusterIds;
+  private long[]                    lastClusterPositions;
+  private long                      last                     = 0;
+  private boolean                   walActive;
 
-  private int                 parallel                 = 4;
-  private AtomicInteger       runningThreads;
+  private int                       parallel                 = 4;
+  private AtomicInteger             runningThreads;
 
   class BatchImporterJob extends Thread {
 
@@ -88,7 +90,7 @@ public class OGraphBatchInsertBasic {
     @Override
     public void run() {
       try {
-        ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+        ODatabaseDocumentInternal db = new ODatabaseDocumentTx(dbUrl);
         db.open(userName, password);
         db.declareIntent(new OIntentMassiveInsert());
         int clusterId = clusterIds[mod];
@@ -249,7 +251,7 @@ public class OGraphBatchInsertBasic {
 
   /**
    * Creates a new vertex
-   * 
+   *
    * @param v
    *          the vertex ID
    */
@@ -263,7 +265,7 @@ public class OGraphBatchInsertBasic {
 
   /**
    * Creates a new edge between two vertices. If vertices do not exist, they will be created
-   * 
+   *
    * @param from
    *          id of the vertex that is starting point of the edge
    * @param to
@@ -292,7 +294,7 @@ public class OGraphBatchInsertBasic {
 
   /**
    * configures the average number of edges per node (for optimization). Use it before calling begin()
-   * 
+   *
    * @param averageEdgeNumberPerNode
    */
   public void setAverageEdgeNumberPerNode(final int averageEdgeNumberPerNode) {
@@ -376,7 +378,7 @@ public class OGraphBatchInsertBasic {
   /**
    * Sets the estimated number of entries, 0 for auto-resize (default). This pre-allocate in memory structure avoiding resizing of
    * them at run-time.
-   * 
+   *
    */
   public void setEstimatedEntries(final int estimatedEntries) {
     this.estimatedEntries = estimatedEntries;
@@ -392,7 +394,7 @@ public class OGraphBatchInsertBasic {
 
   /**
    * sets the number of parallel threads to be used for batch insert
-   * 
+   *
    * @param parallel
    *          number of threads (default 4)
    */

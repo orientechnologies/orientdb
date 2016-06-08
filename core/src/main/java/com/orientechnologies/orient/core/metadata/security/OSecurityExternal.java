@@ -42,19 +42,21 @@ public class OSecurityExternal extends OSecurityShared
 		{
 			if(Orient.instance().getSecurity() == null) throw new OSecurityAccessException(dbName, "External Security System is null!");
 
+			// Uses the external authenticator.
 			// username is returned if authentication is successful, otherwise null.
 			String username = Orient.instance().getSecurity().authenticate(iUsername, iUserPassword);
 
 			if(username != null)
 			{
-				user = getUser(username);
-				
-				if(user == null) throw new OSecurityAccessException(dbName, "User or password not valid for username: " + username + ", database: '" + dbName + "'");
+            user = getUser(username);
+
+			   if(user == null) throw new OSecurityAccessException(dbName, "User or password not valid for username: " + username + ", database: '" + dbName + "'");
 				
 				if(user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE) throw new OSecurityAccessException(dbName, "User '" + username + "' is not active");				
 			}
 			else
 			{
+				// Will use the local database to authenticate.
 				if(Orient.instance().getSecurity().isDefaultAllowed())
 				{
 					user = super.authenticate(iUsername, iUserPassword);
@@ -75,7 +77,22 @@ public class OSecurityExternal extends OSecurityShared
 				}
 			}
 		}
-		
+
 		return user;
 	}	
+
+  @Override
+  public OUser getUser(final String username) {
+    OUser user = null;
+    
+    if (Orient.instance().getSecurity() != null) {
+      // See if there's a system user first.
+      user = Orient.instance().getSecurity().getSystemUser(username, getDatabase().getName());
+    }
+		
+    // If not found, try the local database.
+    if(user == null) user = super.getUser(username);
+  
+    return user;
+  }
 }

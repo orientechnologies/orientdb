@@ -84,13 +84,13 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   }
 
   public abstract Object executeRecordTask(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentTx database) throws Exception;
+      ODatabaseDocumentInternal database) throws Exception;
 
   public abstract ORecord getRecord();
 
   @Override
   public final Object execute(final ODistributedRequestId requestId, final OServer iServer,
-      final ODistributedServerManager iManager, final ODatabaseDocumentTx database) throws Exception {
+      final ODistributedServerManager iManager, final ODatabaseDocumentInternal database) throws Exception {
 
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
     if (lockRecords) {
@@ -129,7 +129,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     return version;
   }
 
-  protected boolean checkForClusterAvailability(final String localNode, final ODistributedConfiguration cfg) {
+  public boolean checkForClusterAvailability(final String localNode, final ODistributedConfiguration cfg) {
     final String clusterName = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.clusterId);
     return cfg.hasCluster(localNode, clusterName);
   }

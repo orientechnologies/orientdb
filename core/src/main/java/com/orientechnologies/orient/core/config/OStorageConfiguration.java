@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.IOException;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
@@ -40,6 +33,13 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
+import java.io.IOException;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Versions:
@@ -136,7 +136,7 @@ public class OStorageConfiguration implements OSerializableStream {
     unusualSymbols = null;
     clusterSelection = null;
     conflictStrategy = null;
-    minimumClusters = 0; // 0 = AUTOMATIC
+    minimumClusters = OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.getValueAsInteger(); // 0 = AUTOMATIC
     recordSerializer = null;
     recordSerializerVersion = 0;
     strictSQL = false;

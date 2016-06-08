@@ -37,19 +37,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OConsoleApplication {
-  protected static final String[]   COMMENT_PREFIXS = new String[] { "#", "--", "//" };
-  public static final String        ONLINE_HELP_URL = "https://raw.githubusercontent.com/orientechnologies/orientdb-docs/master/";
-  public static final String        ONLINE_HELP_EXT = ".md";
-  protected final StringBuilder     commandBuffer   = new StringBuilder(2048);
-  protected InputStream             in              = System.in;                                                                  // System.in;
-  protected PrintStream             out             = System.out;
-  protected PrintStream             err             = System.err;
-  protected String                  wordSeparator   = " ";
-  protected String[]                helpCommands    = { "help", "?" };
-  protected String[]                exitCommands    = { "exit", "bye", "quit" };
-  protected Map<String, String>     properties      = new HashMap<String, String>();
-  // protected OConsoleReader reader = new TTYConsoleReader();
-  protected OConsoleReader          reader          = new ODefaultConsoleReader();
+  protected static final String[]            COMMENT_PREFIXS = new String[] { "#", "--", "//" };
+  public static final    String              ONLINE_HELP_URL = "https://raw.githubusercontent.com/orientechnologies/orientdb-docs/master/";
+  public static final    String              ONLINE_HELP_EXT = ".md";
+  protected final        StringBuilder       commandBuffer   = new StringBuilder(2048);
+  protected              InputStream         in              = System.in;                                                                  // System.in;
+  protected              PrintStream         out             = System.out;
+  protected              PrintStream         err             = System.err;
+  protected              String              wordSeparator   = " ";
+  protected              String[]            helpCommands    = { "help", "?" };
+  protected              String[]            exitCommands    = { "exit", "bye", "quit" };
+  protected              Map<String, String> properties      = new HashMap<String, String>();
+  protected              OConsoleReader      reader          = new ODefaultConsoleReader();
   protected boolean                 interactiveMode;
   protected String[]                args;
   protected TreeMap<Method, Object> methods;
@@ -130,7 +129,7 @@ public class OConsoleApplication {
             break;
         } catch (Exception e) {
           result = 1;
-          out.print("Error on reading console input: "+e.getMessage());
+          out.print("Error on reading console input: " + e.getMessage());
           OLogManager.instance().error(this, "Error on reading console input: %s", e, consoleInput);
         }
       }
@@ -162,6 +161,11 @@ public class OConsoleApplication {
     return verboseLevel;
   }
 
+  protected int getConsoleWidth() {
+    final String width = properties.get("width");
+    return width == null ? reader.getConsoleWidth() : Integer.parseInt(width);
+  }
+
   public boolean isEchoEnabled() {
     return isPropertyEnabled("echo");
   }
@@ -189,7 +193,7 @@ public class OConsoleApplication {
 
   protected boolean executeBatch(final String commandLine) {
     File commandFile = new File(commandLine);
-    if(!commandFile.isAbsolute()){
+    if (!commandFile.isAbsolute()) {
       commandFile = new File(new File("."), commandLine);
     }
 
@@ -228,8 +232,9 @@ public class OConsoleApplication {
 
         } else if (commandBuffer.length() > 0) {
           // BUFFER IT
-          commandBuffer.append(';');
+          commandBuffer.append(' ');
           commandBuffer.append(commandLine);
+          commandBuffer.append(';');
           commandLine = null;
         }
 
@@ -306,14 +311,20 @@ public class OConsoleApplication {
       }
 
     for (String cmd : exitCommands)
-      if (cmd.equals(commandWords[0])) {
+      if (cmd.equalsIgnoreCase(commandWords[0])) {
         return RESULT.EXIT;
       }
 
     Method lastMethodInvoked = null;
     final StringBuilder lastCommandInvoked = new StringBuilder(1024);
 
-    final String commandLowerCase = iCommand.toLowerCase();
+    String commandLowerCase = "";
+    for (int i = 0; i < commandWords.length; i++) {
+      if (i > 0) {
+        commandLowerCase += " ";
+      }
+      commandLowerCase += commandWords[i].toLowerCase();
+    }
 
     for (Entry<Method, Object> entry : getConsoleMethods().entrySet()) {
       final Method m = entry.getKey();

@@ -216,7 +216,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public OIndex<?> createIndex(String iType, ODocument metadata) {
     acquireSchemaReadLock();
     try {
-      return owner.createIndex(getFullName(), iType, null, metadata, new String[]{globalRef.getName()});
+      return owner.createIndex(getFullName(), iType, null, metadata, new String[] { globalRef.getName() });
     } finally {
       releaseSchemaReadLock();
     }
@@ -409,7 +409,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
   protected static void checkSupportLinkedClass(OType type) {
     if (type != OType.LINK && type != OType.LINKSET && type != OType.LINKLIST && type != OType.LINKMAP && type != OType.EMBEDDED
-        && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDMAP && type != OType.LINKBAG )
+        && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDMAP && type != OType.LINKBAG)
       throw new OSchemaException("Linked class is not supported for type: " + type);
   }
 
@@ -659,11 +659,12 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return this;
   }
 
-  private Object quoteString(String s) {
+  private static Object quoteString(String s) {
     if (s == null) {
       return "null";
     }
-    return "\"" + (s.replaceAll("\"", "\\\\\"")) + "\"";
+    String result = "\"" + (s.replaceAll("\\\\", "\\\\\\\\").replaceAll("\"", "\\\\\"")) + "\"";
+    return result;
   }
 
   public String getDefaultValue() {
@@ -1164,15 +1165,18 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
       document.field("min", min);
       document.field("max", max);
-      document.field("regexp", regexp);
-
+      if(regexp!=null) {
+        document.field("regexp", regexp);
+      }
       if (linkedType != null)
         document.field("linkedType", linkedType.id);
       if (linkedClass != null || linkedClassName != null)
         document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
 
       document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-      document.field("collate", collate.getName());
+      if(collate!=null) {
+        document.field("collate", collate.getName());
+      }
       document.field("description", description);
 
     } finally {
@@ -1445,8 +1449,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   private boolean isDistributedCommand() {
-    return getDatabase().getStorage() instanceof OAutoshardedStorage
-        && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
+    return getDatabase().getStorage() instanceof OAutoshardedStorage && !OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
   }
 
   @Override

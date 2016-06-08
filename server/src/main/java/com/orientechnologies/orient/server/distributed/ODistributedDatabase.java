@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -40,6 +41,9 @@ public interface ODistributedDatabase {
       OCallable<Void, ODistributedRequestId> iAfterSentCallback);
 
   void setOnline();
+
+  int checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType, Collection<String> iClusterNames,
+      Collection<String> iNodes, ODistributedConfiguration cfg);
 
   /**
    * Locks the record to be sure distributed transactions never work concurrently against the same records in the meanwhile the

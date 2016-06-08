@@ -72,8 +72,8 @@ public class ConcurrentDistributedUpdateTest extends AbstractScenarioTest {
         final OrientBaseGraph graph = new OrientGraph(databaseURL);
         try {
           String query = "select from Test where prop2='v2-1'";
-          for (int i = 0; i < 1000 && isRunning; i++) {
-            if ((i % 100) == 0) {
+          for (int i = 0; i < 200 && isRunning; i++) {
+            if ((i % 50) == 0) {
               log("[" + id + "] Records Processed: [" + i + "]");
             }
             Iterable<Vertex> vtxs = graph.command(new OCommandSQL(query)).execute();

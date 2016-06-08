@@ -78,10 +78,10 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
       if (parts.length != 2)
         throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
 
-      className = parts[0];
+      className = decodeClassName(parts[0]);
       if (className == null)
         throw new OCommandSQLParsingException("Class not found", parserText, pos);
-      fieldName = parts[1];
+      fieldName = decodeClassName(parts[1]);
 
       pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
       if (pos != -1) {

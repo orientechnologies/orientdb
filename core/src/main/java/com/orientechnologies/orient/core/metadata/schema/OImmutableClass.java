@@ -31,7 +31,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.schedule.OScheduler;
+import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 
 import java.io.IOException;
 import java.util.*;
@@ -148,7 +148,7 @@ public class OImmutableClass implements OClass {
       this.isEdgeType = isSubClassOf(OClass.EDGE_CLASS_NAME);
       this.triggered = isSubClassOf(OClassTrigger.CLASSNAME);
       this.function = isSubClassOf(OFunctionTrigger.CLASSNAME);
-      this.scheduler = isSubClassOf(OScheduler.CLASSNAME);
+      this.scheduler = isSubClassOf(OScheduledEvent.CLASS_NAME);
       this.ouser = isSubClassOf(OUser.CLASS_NAME);
       this.orole = isSubClassOf(ORole.CLASS_NAME);
 

@@ -16,11 +16,6 @@ DIR=distribution/target/orientdb-community-$VER.dir/orientdb-community-$VER/
 
 echo "Releasing OrientDB $VER to $DIR..."
 
-cp ../drivers/orientdb-jdbc/target/orientdb-jdbc-$VER.jar $DIR/lib/
-cp ../modules/orientdb-lucene/target/orientdb-lucene-$VER-dist.jar $DIR/plugins/
-cp ../modules/orientdb-etl/target/orientdb-etl-$VER.jar $DIR/lib/
-cp ../modules/orientdb-etl/script/oetl.* $DIR/bin/
-
 cd $DIR
 
 if [ -n "$1" ]

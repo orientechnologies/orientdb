@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
@@ -59,9 +59,9 @@ import java.util.zip.ZipOutputStream;
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage {
+public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorageComponent {
 
-  private static String[] ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet",
+  private static String[] ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet", ".fl",
       ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
@@ -209,6 +209,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     } finally {
       stateLock.releaseReadLock();
     }
+  }
+
+  @Override
+  public void close(boolean force, boolean onDelete) {
+    super.close(force, onDelete);
+    if (writeAheadLog != null)
+      ((ODiskWriteAheadLog) writeAheadLog).removeLowDiskSpaceListener(this);
   }
 
   @Override
@@ -427,7 +434,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       checkpointExecutor = Executors.newSingleThreadExecutor(new FullCheckpointThreadFactory());
 
-      writeAheadLog = new ODiskWriteAheadLog(this);
+      final ODiskWriteAheadLog diskWriteAheadLog = new ODiskWriteAheadLog(this);
+      diskWriteAheadLog.addLowDiskSpaceListener(this);
+      diskWriteAheadLog.checkFreeSpace();
+      writeAheadLog = diskWriteAheadLog;
       writeAheadLog.addFullCheckpointListener(this);
     } else
       writeAheadLog = null;

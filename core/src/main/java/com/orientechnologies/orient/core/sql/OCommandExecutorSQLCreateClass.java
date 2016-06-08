@@ -177,7 +177,6 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
     return this;
   }
 
-
   @Override
   public long getDistributedTimeout() {
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
@@ -208,6 +207,11 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   @Override
   public String getSyntax() {
     return "CREATE CLASS <class> [EXTENDS <super-class> [,<super-class2>*] ] [CLUSTER <clusterId>*] [CLUSTERS <total-cluster-number>] [ABSTRACT]";
+  }
+
+  @Override
+  public String getUndoCommand() {
+    return "drop class " + className;
   }
 
   @Override

@@ -19,6 +19,7 @@ package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
@@ -53,7 +54,7 @@ public class OrientJdbcConnection implements Connection {
   private final Properties info;
   private final boolean    usePool;
 
-  private ODatabaseDocumentTx database;
+  private ODatabaseDocument   database;
   private boolean             readOnly;
   private boolean             autoCommit;
   private ODatabase.STATUS    status;
@@ -300,7 +301,7 @@ public class OrientJdbcConnection implements Connection {
     return null;
   }
 
-  public ODatabaseDocumentTx getDatabase() {
+  public ODatabaseDocument getDatabase() {
     return database;
   }
 

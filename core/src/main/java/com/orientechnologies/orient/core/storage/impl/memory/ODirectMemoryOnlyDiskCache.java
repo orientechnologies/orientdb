@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.memory;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -257,6 +258,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   public void release(OCacheEntry cacheEntry, OWriteCache writeCache) {
     synchronized (cacheEntry) {
       cacheEntry.decrementUsages();
+      assert cacheEntry.getUsagesCount() > 0 || !cacheEntry.isLockAcquiredByCurrentThread();
     }
   }
 

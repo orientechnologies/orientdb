@@ -93,6 +93,13 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   public abstract String getElementType();
 
   /**
+   * (Blueprints Extension) Gets all the properties from a Vertex or Edge in one shot.
+   *
+   * @return a map containing all the properties of the Vertex/Edge.
+   */
+  public abstract Map<String, Object> getProperties();
+
+  /**
    * Removes the Element from the Graph. In case the element is a Vertex, all the incoming and outgoing edges are automatically
    * removed too.
    */
@@ -164,20 +171,6 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     setPropertiesInternal(fields);
     save();
     return (T) this;
-  }
-
-  /**
-   * (Blueprints Extension) Gets all the properties from a Vertex or Edge in one shot.
-   * 
-   * @return a map containing all the properties of the Vertex/Edge.
-   */
-  public Map<String, Object> getProperties() {
-    if (this.rawElement == null)
-      return null;
-    ODocument raw = this.rawElement.getRecord();
-    if (raw == null)
-      return null;
-    return raw.toMap();
   }
 
   /**
@@ -274,9 +267,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     final Object fieldValue = getRecord().field(key);
     if (graph != null && fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof OBlob)) {
       ODocument record = ((OIdentifiable) fieldValue).getRecord();
-      if(record!=null){
+      if (record != null) {
         final OClass schemaClass = record.getSchemaClass();
-        if(schemaClass!=null && (schemaClass.isVertexType() || schemaClass.isEdgeType())){
+        if (schemaClass != null && (schemaClass.isVertexType() || schemaClass.isEdgeType())) {
           // CONVERT IT TO VERTEX/EDGE
           return (T) graph.getElement(fieldValue);
         }

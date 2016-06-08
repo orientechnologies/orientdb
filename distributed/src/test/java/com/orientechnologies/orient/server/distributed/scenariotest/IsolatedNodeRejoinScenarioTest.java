@@ -77,7 +77,7 @@ public class IsolatedNodeRejoinScenarioTest extends AbstractScenarioTest {
     ServerRun server = serverInstance.get(2);
     OHazelcastPlugin manager = (OHazelcastPlugin) server.getServerInstance().getDistributedManager();
     ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(getDatabaseName());
-    cfg = databaseConfiguration.serialize();
+    cfg = databaseConfiguration.getDocument();
     cfg.field("writeQuorum", 1);
     cfg.field("autoDeploy", true);
     cfg.field("version", (Integer) cfg.field("version") + 1);

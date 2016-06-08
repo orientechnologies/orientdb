@@ -61,7 +61,7 @@ public class DBCreationAndUpdateOneNodeScenarioTest extends AbstractScenarioTest
     // creating new database on server1
     ODatabaseDocumentTx dbServer1 = new ODatabaseDocumentTx(url1);
 
-    Thread.sleep(5000);
+    Thread.sleep(1000);
 
     // checking the db was created both on server2 and server3
     ODatabaseRecordThreadLocal.INSTANCE.set(null);

@@ -200,6 +200,29 @@ public abstract class AbstractServerClusterTest {
 
   }
 
+  protected void executeOnMultipleThreads(final int numOfThreads, final OCallable<Void, Integer> callback) {
+    final Thread[] threads = new Thread[numOfThreads];
+
+    for (int s = 0; s < numOfThreads; ++s) {
+      final int serverId = s;
+      threads[s] = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          callback.call(serverId);
+        }
+      });
+      threads[s].start();
+    }
+
+    for (int s = 0; s < numOfThreads; ++s) {
+      try {
+        threads[s].join();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
   protected void banner(final String iMessage) {
     OLogManager.instance().flush();
     System.out
@@ -339,6 +362,42 @@ public abstract class AbstractServerClusterTest {
         // IGNORE IT
       }
     }
+  }
+
+  protected void waitForDatabaseIsOffline(final String serverName, final String dbName, final long timeout) {
+    final long startTime = System.currentTimeMillis();
+    while (serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
+
+      if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
+        OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+        break;
+      }
+
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+
+  }
+
+  protected void waitForDatabaseIsOnline(final String serverName, final String dbName, final long timeout) {
+    final long startTime = System.currentTimeMillis();
+    while (! serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
+
+      if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
+        OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
+        break;
+      }
+
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    }
+
   }
 
   protected void waitFor(final int serverId, final OCallable<Boolean, ODatabaseDocumentTx> condition, final long timeout) {

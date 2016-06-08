@@ -239,17 +239,46 @@ public class OServerNetworkListener extends Thread {
   }
 
   public String getListeningAddress(final boolean resolveMultiIfcWithLocal) {
-    String address = serverSocket.getInetAddress().getHostAddress().toString();
-    if (resolveMultiIfcWithLocal && address.equals("0.0.0.0"))
+    String address = serverSocket.getInetAddress().getHostAddress();
+    if (resolveMultiIfcWithLocal && address.equals("0.0.0.0")) {
       try {
-        address = InetAddress.getLocalHost().getHostAddress().toString();
-      } catch (UnknownHostException e) {
+        address = OChannel.getLocalIpAddress(true);
+      } catch (Exception ex) {
+        address = null;
+      }
+      if (address == null) {
         try {
-          address = OChannel.getLocalIpAddress(true);
-        } catch (Exception ex) {
+          address = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+          OLogManager.instance().warn(this, "Error resolving current host address", e);
         }
       }
+    }
+
     return address + ":" + serverSocket.getLocalPort();
+  }
+
+  public static void main(String[] args) {
+    System.out.println(OServerNetworkListener.getLocalHostIp());
+  }
+
+  public static String getLocalHostIp() {
+    try {
+      InetAddress host = InetAddress.getLocalHost();
+      InetAddress[] addrs = InetAddress.getAllByName(host.getHostName());
+      for (InetAddress addr : addrs) {
+        if (!addr.isLoopbackAddress()) {
+          return addr.toString();
+        }
+      }
+    } catch (UnknownHostException e) {
+      try {
+        return OChannel.getLocalIpAddress(true);
+      } catch (SocketException e1) {
+
+      }
+    }
+    return null;
   }
 
   @Override

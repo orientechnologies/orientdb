@@ -49,7 +49,7 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
   private void testRoundRobinOnConnect() {
     final OrientGraphFactory factory = new OrientGraphFactory("remote:localhost/" + getDatabaseName());
 
-    factory.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_CONNECT);
+    factory.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_CONNECT.toString());
 
     OrientGraphNoTx graph = factory.getNoTx();
     graph.createVertexType("Client");
@@ -81,7 +81,7 @@ public class ServerClusterRemoteInsertBalancedTest extends AbstractServerCluster
   private void testRoundRobinOnRequest() {
     final OrientGraphFactory factory = new OrientGraphFactory("remote:localhost/" + getDatabaseName());
 
-    factory.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST);
+    factory.setConnectionStrategy(OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST.toString());
 
     OrientGraphNoTx graph = factory.getNoTx();
 

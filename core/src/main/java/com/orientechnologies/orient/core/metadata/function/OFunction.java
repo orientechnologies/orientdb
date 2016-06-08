@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.function;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
@@ -43,7 +44,8 @@ import java.util.Map;
  * @author Luca Garulli
  */
 public class OFunction extends ODocumentWrapper {
-  public static final String CLASS_NAME = "OFunction";
+  public static final String                     CLASS_NAME = "OFunction";
+  private OCallable<Object, Map<Object, Object>> callback;
 
   /**
    * Creates a new function.
@@ -56,7 +58,8 @@ public class OFunction extends ODocumentWrapper {
   /**
    * Creates a new function wrapping the saved document.
    *
-   * @param iDocument Document to assign
+   * @param iDocument
+   *          Document to assign
    */
   public OFunction(final ODocument iDocument) {
     super(iDocument);
@@ -65,7 +68,8 @@ public class OFunction extends ODocumentWrapper {
   /**
    * Loads a function.
    *
-   * @param iRid RID of the function to load
+   * @param iRid
+   *          RID of the function to load
    */
   public OFunction(final ORecordId iRid) {
     super(iRid);
@@ -117,14 +121,20 @@ public class OFunction extends ODocumentWrapper {
     return this;
   }
 
+  public OCallable<Object, Map<Object, Object>> getCallback() {
+    return callback;
+  }
+
+  public OFunction setCallback(final OCallable<Object, Map<Object, Object>> callback) {
+    this.callback = callback;
+    return this;
+  }
+
   public Object execute(final Object... iArgs) {
     return executeInContext(null, iArgs);
   }
 
   public Object executeInContext(final OCommandContext iContext, final Object... iArgs) {
-    final OCommandExecutorFunction command = new OCommandExecutorFunction();
-    command.parse(new OCommandFunction(getName()));
-
     final List<String> params = getParameters();
 
     // CONVERT PARAMETERS IN A MAP
@@ -143,13 +153,18 @@ public class OFunction extends ODocumentWrapper {
       }
     }
 
+    if (callback != null) {
+      // EXECUTE CALLBACK
+      return callback.call(args);
+    }
+
+    // EXECUTE DB FUNCTION
+    final OCommandExecutorFunction command = new OCommandExecutorFunction();
+    command.parse(new OCommandFunction(getName()));
     return command.executeInContext(iContext, args);
   }
 
   public Object executeInContext(final OCommandContext iContext, final Map<String, Object> iArgs) {
-    final OCommandExecutorFunction command = new OCommandExecutorFunction();
-    command.parse(new OCommandFunction(getName()));
-
     // CONVERT PARAMETERS IN A MAP
     final Map<Object, Object> args = new LinkedHashMap<Object, Object>();
 
@@ -161,6 +176,14 @@ public class OFunction extends ODocumentWrapper {
       }
     }
 
+    if (callback != null) {
+      // EXECUTE CALLBACK
+      return callback.call(args);
+    }
+
+    // EXECUTE DB FUNCTION
+    final OCommandExecutorFunction command = new OCommandExecutorFunction();
+    command.parse(new OCommandFunction(getName()));
     return command.executeInContext(iContext, args);
   }
 
@@ -170,6 +193,9 @@ public class OFunction extends ODocumentWrapper {
     Object result;
     while (true) {
       try {
+        if (callback != null)
+          return callback.call(iArgs);
+
         final OCommandExecutorScript command = new OCommandExecutorScript();
         command.parse(new OCommandScript(getLanguage(), getCode()));
         result = command.execute(iArgs);
@@ -194,5 +220,4 @@ public class OFunction extends ODocumentWrapper {
   public String toString() {
     return getName();
   }
-
 }

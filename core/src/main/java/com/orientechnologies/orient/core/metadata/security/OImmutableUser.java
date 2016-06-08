@@ -42,24 +42,25 @@ public class OImmutableUser implements OSecurityUser {
     }
   }
 
-  public OSecurityRole allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
+  public OSecurityRole allow(final ORule.ResourceGeneric resourceGeneric, final String resourceSpecific, final int iOperation) {
     if (roles.isEmpty())
       throw new OSecurityAccessException(getName(), "User '" + getName() + "' has no role defined");
 
     final OSecurityRole role = checkIfAllowed(resourceGeneric, resourceSpecific, iOperation);
 
     if (role == null)
-      throw new OSecurityAccessException(getName(), "User '" + getName() + "' has no the permission to execute the operation '"
+      throw new OSecurityAccessException(getName(), "User '" + getName() + "' does not have permission to execute the operation '"
           + ORole.permissionToString(iOperation) + "' against the resource: " + resourceGeneric + "." + resourceSpecific);
 
     return role;
   }
 
-  public OSecurityRole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
+  public OSecurityRole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, final String resourceSpecific,
+      final int iOperation) {
     for (OImmutableRole r : roles) {
       if (r == null)
         OLogManager.instance().warn(this,
-            "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
+            "User '%s' has a null role, ignoring it.  Consider fixing this user's roles before continuing", getName());
       else if (r.allow(resourceGeneric, resourceSpecific, iOperation))
         return r;
     }
@@ -71,7 +72,7 @@ public class OImmutableUser implements OSecurityUser {
     for (OImmutableRole r : roles)
       if (r == null)
         OLogManager.instance().warn(this,
-            "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
+            "User '%s' has a null role, ignoring it.  Consider fixing this user's roles before continuing", getName());
       else if (r.hasRule(resourceGeneric, resourceSpecific))
         return true;
 

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -50,6 +51,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     final String accept = iRequest.getHeader("accept");
 
     Object params = null;
+    String mode = "resultset";
 
     if (iRequest.content != null && !iRequest.content.isEmpty()) {
       // CONTENT REPLACES TEXT
@@ -58,6 +60,8 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         final ODocument doc = new ODocument().fromJSON(iRequest.content);
         text = doc.field("command");
         params = doc.field("parameters");
+        if (doc.containsField("mode"))
+          mode = doc.field("mode");
 
         if (params instanceof Collection) {
           final Object[] paramArray = new Object[((Collection) params).size()];
@@ -75,7 +79,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     iRequest.data.commandInfo = "Command";
     iRequest.data.commandDetail = text;
 
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
 
     Object response;
 
@@ -99,9 +103,9 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       // REQUEST CAN'T MODIFY THE RESULT, SO IT'S CACHEABLE
       cmd.setCacheableResult(true);
 
-      if(params==null){
+      if (params == null) {
         response = db.command(cmd).execute();
-      }else {
+      } else {
         response = db.command(cmd).execute(params);
       }
 
@@ -125,7 +129,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         additionalContent.put("warnings", tips);
       }
 
-      iResponse.writeResult(response, format, accept, additionalContent);
+      iResponse.writeResult(response, format, accept, additionalContent, mode);
 
     } finally {
       if (db != null)

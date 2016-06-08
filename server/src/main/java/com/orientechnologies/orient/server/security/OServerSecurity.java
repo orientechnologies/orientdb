@@ -42,12 +42,12 @@ public interface OServerSecurity extends OSecuritySystem {
    */
   OSecurityAuthenticator getPrimaryAuthenticator();
 
+  OSyslog getSyslog();
+
   /**
    * Some authenticators support maintaining a list of users and associated resources (and sometimes passwords).
    */
   OServerUserConfiguration getUser(final String username);
 
-  ODatabase<?> openDatabase(final String dbName);
-
-  OSyslog getSyslog();
+  ODatabase<?> openDatabase(final String dbName);  
 }

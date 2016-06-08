@@ -28,21 +28,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.OClientConnection;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.Socket;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -194,6 +183,11 @@ public class OHttpResponse {
 
   public void writeResult(Object iResult, final String iFormat, final String iAccept,
       final Map<String, Object> iAdditionalProperties) throws InterruptedException, IOException {
+    writeResult(iResult, iFormat, iAccept, iAdditionalProperties, null);
+  }
+
+  public void writeResult(Object iResult, final String iFormat, final String iAccept,
+      final Map<String, Object> iAdditionalProperties, final String mode) throws InterruptedException, IOException {
     if (iResult == null) {
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
     } else {
@@ -210,7 +204,7 @@ public class OHttpResponse {
           && (OMultiValue.getSize(iResult) > 0 && !(OMultiValue.getFirstValue(iResult) instanceof OIdentifiable))) {
         newResult = Collections.singleton(new ODocument().field("value", iResult)).iterator();
       } else if (iResult instanceof OIdentifiable) {
-        // CONVERT SIGLE VALUE IN A COLLECTION
+        // CONVERT SINGLE VALUE IN A COLLECTION
         newResult = Collections.singleton(iResult).iterator();
       } else if (iResult instanceof Iterable<?>) {
         newResult = ((Iterable<OIdentifiable>) iResult).iterator();
@@ -223,7 +217,7 @@ public class OHttpResponse {
       if (newResult == null) {
         send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
       } else {
-        writeRecords(newResult, null, iFormat, iAccept, iAdditionalProperties);
+        writeRecords(newResult, null, iFormat, iAccept, iAdditionalProperties, mode);
       }
     }
   }
@@ -242,6 +236,11 @@ public class OHttpResponse {
 
   public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,
       final Map<String, Object> iAdditionalProperties) throws IOException {
+    writeRecords(iRecords, iFetchPlan, iFormat, accept, iAdditionalProperties, null);
+  }
+
+  public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,
+      final Map<String, Object> iAdditionalProperties, final String mode) throws IOException {
     if (iRecords == null)
       return;
 
@@ -340,6 +339,10 @@ public class OHttpResponse {
             json.endCollection(-1, true);
           } else
             json.writeAttribute(entry.getKey(), v);
+
+          if (Thread.currentThread().isInterrupted())
+            break;
+
         }
       }
 
@@ -358,7 +361,6 @@ public class OHttpResponse {
       OLogManager.instance().debug(this, "[OHttpResponse] found and removed pending closed channel %d (%s)", connection, socket);
       throw new IOException("Connection is closed");
     }
-
   }
 
   public void formatMultiValue(final Iterator<?> iIterator, final StringWriter buffer, final String format) throws IOException {

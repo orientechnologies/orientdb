@@ -30,17 +30,21 @@ public class OSelectStatementTest {
     try {
       SimpleNode result = osql.parse();
       if (!isCorrect) {
+        System.out.println(query);
+        if(result!= null ) {
+          System.out.println("->");
+          StringBuilder builer = new StringBuilder();
+          result.toString(null, builer);
+          System.out.println(builer.toString());
+          System.out.println("............");
+        }
         fail();
       }
-      System.out.println(query);
-      System.out.println("->");
-      StringBuilder builer = new StringBuilder();
-      result.toString(null, builer);
-      System.out.println(builer.toString());
-      System.out.println("............");
+
       return result;
     } catch (Exception e) {
       if (isCorrect) {
+        System.out.println(query);
         e.printStackTrace();
         fail();
       }
@@ -681,6 +685,16 @@ public class OSelectStatementTest {
     checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? ");
     checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? + '%'");
     checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like \"%\" + ? + '%'");
+  }
+
+  public void testAppendParams(){
+    checkRightSyntax("select from User where Account.Name like :name + '%'");
+
+  }
+
+  public void testLetMatch(){
+    checkRightSyntax("select $a let $a = (MATCH {class:Foo, as:bar, where:(name = 'foo')} return $elements)");
+
   }
 
 

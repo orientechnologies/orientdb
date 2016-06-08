@@ -31,7 +31,7 @@
                 <parameter value="src/test/resources/asynch-distributed-db-config.json" name="configuration.db.default"/>
                 <parameter value="src/test/resources/hazelcast-2.xml" name="configuration.hazelcast"/>
                 <parameter value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver" name="conflict.resolver.impl"/>
-                <parameter value="node3" name="nodeName"/>
+                <parameter value="node-3" name="nodeName"/>
             </parameters>
         </handler>
     </handlers>

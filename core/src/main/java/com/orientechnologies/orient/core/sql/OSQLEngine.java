@@ -421,7 +421,7 @@ public class OSQLEngine {
     boolean found = names.contains(commandName);
     int pos = -1;
     while (!found) {
-      pos = OStringSerializerHelper.getLowerIndexOf(candidate, pos + 1, " ", "\n", "\r");
+      pos = OStringSerializerHelper.getLowerIndexOf(candidate, pos + 1, " ", "\n", "\r", "\t", "(", "[");
       if (pos > -1) {
         commandName = candidate.substring(0, pos);
         found = names.contains(commandName);
@@ -447,8 +447,8 @@ public class OSQLEngine {
     return new OSQLFilter(iText, iContext, iFilterKeyword);
   }
 
-  public OSQLTarget parseTarget(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
-    return new OSQLTarget(iText, iContext, iFilterKeyword);
+  public OSQLTarget parseTarget(final String iText, final OCommandContext iContext) {
+    return new OSQLTarget(iText, iContext);
   }
 
   public Set<OIdentifiable> parseRIDTarget(final ODatabaseDocument database, String iTarget, final OCommandContext iContext,

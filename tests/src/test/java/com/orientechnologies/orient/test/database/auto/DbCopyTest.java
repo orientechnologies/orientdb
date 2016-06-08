@@ -39,11 +39,12 @@ public class DbCopyTest extends DocumentDBBaseTest implements OCommandOutputList
   public void checkCopy() throws IOException {
     final String className = "DbCopyTest";
     database.getMetadata().getSchema().createClass(className);
-    final ODatabaseDocumentTx otherDB = database.copy();
+
 
     Thread thread = new Thread() {
       @Override
       public void run() {
+        final ODatabaseDocumentTx otherDB = database.copy();
         otherDB.activateOnCurrentThread();
         for (int i = 0; i < 5; i++) {
           ODocument doc = otherDB.newInstance(className);
@@ -77,65 +78,12 @@ public class DbCopyTest extends DocumentDBBaseTest implements OCommandOutputList
       Assert.fail();
     }
 
-
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + className));
 
     Assert.assertEquals(result.size(), 25);
 
   }
 
-  @Test
-  public void checkCopy2() throws IOException {
-    final String className = "DbCopyTest2";
-    database.getMetadata().getSchema().createClass(className);
-    final ODatabaseDocumentTx otherDB = database.copy();
-    try {
-      // final Set<String> result = Collections.synchronizedSet(new HashSet<String>());
-
-      Thread thread = new Thread() {
-        @Override
-        public void run() {
-          otherDB.activateOnCurrentThread();
-          for (int i = 0; i < 20; i++) {
-            ODocument doc = otherDB.newInstance(className);
-            doc.field("num", i);
-            doc.save();
-            try {
-              Thread.sleep(10);
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            }
-          }
-        }
-      };
-      thread.start();
-
-      for (int i = 0; i < 5; i++) {
-        ODocument doc = database.newInstance(className);
-        doc.field("num", i);
-        doc.save();
-        try {
-          Thread.sleep(10);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-      database.close();
-
-      try {
-        thread.join();
-      } catch (InterruptedException e) {
-        Assert.fail();
-      }
-
-      otherDB.activateOnCurrentThread();
-      List<ODocument> result = otherDB.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + className));
-
-      Assert.assertEquals(result.size(), 25);
-    } finally {
-      otherDB.close();
-    }
-  }
 
   @Override
   @Test(enabled = false)

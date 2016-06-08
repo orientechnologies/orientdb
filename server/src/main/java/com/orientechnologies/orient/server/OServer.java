@@ -107,6 +107,7 @@ public class OServer {
   private OClientConnectionManager                         clientConnectionManager;
   private ClassLoader                                      extensionClassLoader;
   private OTokenHandler                                    tokenHandler;
+  private OSystemDatabase                                  systemDatabase;
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -194,6 +195,10 @@ public class OServer {
       startup(serverCfg.getConfiguration());
       activate();
     }
+  }
+
+  public OSystemDatabase getSystemDatabase() {
+    return systemDatabase;
   }
 
   /**
@@ -332,10 +337,16 @@ public class OServer {
       serverSecurity = new ODefaultServerSecurity(this, serverCfg);
       Orient.instance().setSecurity(serverSecurity);
 
+      // Checks to see if the OrientDB System Database exists and creates it if not.
+      // Make sure this happens after setSecurityFactory() is called.
+      initSystemDatabase();
+
       for (OServerLifecycleListener l : lifecycleListeners)
         l.onBeforeActivate();
 
       final OServerConfiguration configuration = serverCfg.getConfiguration();
+
+      tokenHandler = new OTokenHandlerImpl(this);
 
       if (configuration.network != null) {
         // REGISTER/CREATE SOCKET FACTORIES
@@ -374,8 +385,6 @@ public class OServer {
 
         throw OException.wrapException(new OConfigurationException(message), e);
       }
-
-      tokenHandler = new OTokenHandlerImpl(this);
 
       registerPlugins();
 
@@ -491,10 +500,10 @@ public class OServer {
     final String dbPath = Orient.isRegisterDatabaseByPath() ? dbName : getDatabaseDirectory() + name;
 
     if (dbPath.contains(".."))
-      throw new IllegalArgumentException("Storage path is invalid because contains '..'");
+      throw new IllegalArgumentException("Storage path is invalid because it contains '..'");
 
     if (dbPath.contains("*"))
-      throw new IllegalArgumentException("Storage path is invalid because the wildcard '*'");
+      throw new IllegalArgumentException("Storage path is invalid because of the wildcard '*'");
 
     if (dbPath.startsWith("/")) {
       if (!dbPath.startsWith(getDatabaseDirectory()))
@@ -541,6 +550,9 @@ public class OServer {
           && isStorageOfCurrentServerInstance(storage))
         storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
     }
+
+    if (storages != null)
+      storages.remove(OSystemDatabase.SYSTEM_DB_NAME);
 
     return storages;
   }
@@ -864,16 +876,16 @@ public class OServer {
     return openDatabase(iDbUrl, user, password, data, false);
   }
 
-  public ODatabase<?> openDatabase(final String iDbUrl, final String user, final String password, ONetworkProtocolData data,
+  public ODatabaseDocumentTx openDatabase(final String iDbUrl, final String user, final String password, ONetworkProtocolData data,
       final boolean iBypassAccess) {
     final String path = getStoragePath(iDbUrl);
 
-    final ODatabaseInternal<?> database = new ODatabaseDocumentTx(path);
+    final ODatabaseDocumentTx database = new ODatabaseDocumentTx(path);
 
     return openDatabase(database, user, password, data, iBypassAccess);
   }
 
-  public ODatabase<?> openDatabase(final ODatabaseInternal<?> database, final String user, final String password,
+  public ODatabaseDocumentTx openDatabase(final ODatabaseDocumentTx database, final String user, final String password,
       final ONetworkProtocolData data, final boolean iBypassAccess) {
     final OStorage storage = database.getStorage();
     if (database.isClosed()) {
@@ -965,16 +977,22 @@ public class OServer {
   }
 
   protected void loadUsers() throws IOException {
-    final OServerConfiguration configuration = serverCfg.getConfiguration();
+    try {
+      final OServerConfiguration configuration = serverCfg.getConfiguration();
 
-    if (configuration.isAfterFirstTime) {
-      return;
+      if (configuration.isAfterFirstTime) {
+        return;
+      }
+
+      configuration.isAfterFirstTime = true;
+
+      if (OGlobalConfiguration.CREATE_DEFAULT_USERS.getValueAsBoolean())
+        createDefaultServerUsers();
+
+    } finally {
+      // REMOVE THE ENV VARIABLE FOR SECURITY REASONS
+      OSystemVariableResolver.setEnv(ROOT_PASSWORD_VAR, "");
     }
-
-    configuration.isAfterFirstTime = true;
-
-    if (OGlobalConfiguration.CREATE_DEFAULT_USERS.getValueAsBoolean())
-      createDefaultServerUsers();
   }
 
   /**
@@ -1198,5 +1216,9 @@ public class OServer {
 
   public OTokenHandler getTokenHandler() {
     return tokenHandler;
+  }
+
+  private void initSystemDatabase() {
+    systemDatabase = new OSystemDatabase(this);
   }
 }

@@ -336,4 +336,9 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     throw new OCommandSQLParsingException("Illegal field name format, should be '<property> [by key|value]' but was '" + fieldName
         + "'", text, pos);
   }
+
+  @Override
+  public String getUndoCommand() {
+    return "drop index " + indexName;
+  }
 }

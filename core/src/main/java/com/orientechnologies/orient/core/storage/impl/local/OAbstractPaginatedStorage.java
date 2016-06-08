@@ -77,9 +77,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
-import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionAbstract;
-import com.orientechnologies.orient.core.tx.OTxListener;
+import com.orientechnologies.orient.core.tx.*;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.*;
@@ -229,7 +227,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       try {
         status = STATUS.OPEN;
-        doClose(true, false);
+        close(true, false);
       } catch (RuntimeException re) {
         OLogManager.instance().error(this, "Error during storage close", e);
       }
@@ -252,18 +250,18 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OStorageConfiguration.IndexEngineData engineData = configuration.getIndexEngine(indexName);
       final OIndexEngine engine = OIndexes
           .createIndexEngine(engineData.getName(), engineData.getAlgorithm(), engineData.getIndexType(),
-              engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties());
+              engineData.getDurableInNonTxMode(), this, engineData.getVersion(), engineData.getEngineProperties(), null);
 
       try {
         engine.load(engineData.getName(), cf.binarySerializerFactory.getObjectSerializer(engineData.getValueSerializerId()),
             engineData.isAutomatic(), cf.binarySerializerFactory.getObjectSerializer(engineData.getKeySerializedId()),
-            engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize());
+            engineData.getKeyTypes(), engineData.isNullValuesSupport(), engineData.getKeySize(), engineData.getEngineProperties());
 
         indexEngineNameMap.put(engineData.getName().toLowerCase(configuration.getLocaleInstance()), engine);
         indexEngines.add(engine);
       } catch (RuntimeException e) {
         OLogManager.instance()
-            .error(this, "Index '" + engineData.getName() + "' cannot be created and will be removed from configuration");
+            .error(this, "Index '" + engineData.getName() + "' cannot be created and will be removed from configuration", e);
 
         engine.deleteWithoutLoad(engineData.getName());
       }
@@ -446,7 +444,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     try {
       try {
         // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-        doClose(true, true);
+        close(true, true);
 
         try {
           Orient.instance().unregisterStorage(this);
@@ -967,36 +965,48 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (!(cluster instanceof OPaginatedCluster))
       throw new IllegalArgumentException("Cluster '" + iClusterName + "' (type=" + cluster.getClass() + ") does not support scan");
 
+    final long scanBatchSize = OGlobalConfiguration.QUERY_SCAN_BATCH_SIZE.getValueAsLong();
+
     if (transaction.get() != null) {
       final long timer = Orient.instance().getProfiler().startChrono();
       try {
-        ((OPaginatedCluster) cluster).scan(iAscendingOrder, iFrom, iTo, 0, iCallback);
+        if (scanBatchSize > 0) {
+          long lastPos;
+          if (iAscendingOrder) {
+            do {
+              lastPos = ((OPaginatedCluster) cluster).scan(true, iFrom, iTo, scanBatchSize, iCallback);
+              iFrom = lastPos;
+            } while (lastPos > 0);
+          } else {
+            do {
+              lastPos = ((OPaginatedCluster) cluster).scan(false, iFrom, iTo, scanBatchSize, iCallback);
+              iTo = lastPos;
+            } while (lastPos > 0);
+          }
+        } else
+          ((OPaginatedCluster) cluster).scan(iAscendingOrder, iFrom, iTo, 0, iCallback);
+
+        return;
       } finally {
         Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
       }
     }
 
-    final long scanBatchSize = OGlobalConfiguration.QUERY_SCAN_BATCH_SIZE.getValueAsLong();
-
     if (scanBatchSize > 0) {
-      long lastPos = -1;
+      long lastPos;
       if (iAscendingOrder) {
         do {
-          lastPos = scanClusterInLock(iAscendingOrder, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
+          lastPos = scanClusterInLock(true, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
           iFrom = lastPos;
         } while (lastPos > 0);
       } else {
         do {
-          lastPos = scanClusterInLock(iAscendingOrder, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
+          lastPos = scanClusterInLock(false, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
           iTo = lastPos;
         } while (lastPos > 0);
       }
-
-    } else {
-
+    } else
       scanClusterInLock(iAscendingOrder, (OPaginatedCluster) cluster, iFrom, iTo, 0, iCallback);
-
-    }
   }
 
   protected long scanClusterInLock(final boolean iAscendingOrder, final OPaginatedCluster cluster, final long iFrom, final long iTo,
@@ -1269,7 +1279,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkLowDiskSpaceAndFullCheckpointRequests();
 
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
+    final Map<String, OIndexInternal<?>> indexesToCommit = getChangedIndexes(clientTx,
+        databaseRecord.getMetadata().getIndexManager());
+
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
+
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
 
     for (ORecordOperation txEntry : entries) {
@@ -1331,8 +1345,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             result.add(txEntry);
           }
 
-          if (callback != null)
-            callback.run();
+          commitIndexes(clientTx, indexesToCommit);
 
           endStorageTx();
 
@@ -1356,13 +1369,61 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return result;
   }
 
+  private void commitIndexes(OTransaction clientTx, final Map<String, OIndexInternal<?>> indexesToCommit) {
+    assert clientTx instanceof OTransactionOptimistic;
+
+    for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+      indexInternal.preCommit();
+
+    Map<String, OTransactionIndexChanges> indexChanges = ((OTransactionOptimistic) clientTx).getIndexEntries();
+
+    for (Map.Entry<String, OTransactionIndexChanges> indexEntry : indexChanges.entrySet()) {
+      final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
+
+      if (index == null) {
+        OLogManager.instance().error(this, "Index with name '" + indexEntry.getKey() + "' was not found.");
+        throw new OIndexException("Index with name '" + indexEntry.getKey() + "' was not found.");
+      } else
+        index.addTxOperation(indexEntry.getValue());
+    }
+
+    try {
+      for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+        indexInternal.commit();
+    } finally {
+      for (OIndexInternal<?> indexInternal : indexesToCommit.values())
+        indexInternal.postCommit();
+    }
+  }
+
+  private Map<String, OIndexInternal<?>> getChangedIndexes(OTransaction clientTx, OIndexManager manager) {
+    assert clientTx instanceof OTransactionOptimistic;
+
+    Map<String, OTransactionIndexChanges> indexChanges = ((OTransactionOptimistic) clientTx).getIndexEntries();
+
+    final Map<String, OIndexInternal<?>> indexesToCommit = new HashMap<String, OIndexInternal<?>>();
+
+    for (Map.Entry<String, OTransactionIndexChanges> indexChange : indexChanges.entrySet()) {
+      final OIndex<?> idx = manager.getIndex(indexChange.getKey());
+      if (idx == null)
+        throw new OTransactionException("Cannot find index '" + indexChange.getKey() + "' while committing transaction");
+
+      final OIndexInternal<?> index = idx.getInternal();
+      indexesToCommit.put(index.getName(), index.getInternal());
+    }
+    return indexesToCommit;
+  }
+
   @Override
   public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction clientTx, Runnable callback) {
     boolean success = false;
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
-
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
+
+    final Map<String, OIndexInternal<?>> indexesToCommit = getChangedIndexes(clientTx,
+        databaseRecord.getMetadata().getIndexManager());
+
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
 
@@ -1424,8 +1485,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             result.add(txEntry);
           }
 
-          if (callback != null)
-            callback.run();
+          commitIndexes(clientTx, indexesToCommit);
 
           final OUncompletedCommit<List<ORecordOperation>> uncompletedCommit = new UncompletedCommit(clientTx, entries, result,
               atomicOperationsManager.initiateCommit());
@@ -1504,8 +1564,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           nullValuesSupport, keySize, engineProperties);
 
       final OIndexEngine engine = OIndexes
-          .createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties);
-      engine.load(originalName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize);
+          .createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, null);
+      engine.load(originalName, valueSerializer, isAutomatic, keySerializer, keyTypes, nullValuesSupport, keySize,
+          engineData.getEngineProperties());
 
       indexEngineNameMap.put(engineName, engine);
       indexEngines.add(engine);
@@ -1550,17 +1611,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       else
         serializerId = -1;
 
-      final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
-          indexType, durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
-          keySize, engineProperties);
-
       final OIndexEngine engine = OIndexes
-          .createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties);
-      engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex, metadata);
+          .createIndexEngine(originalName, algorithm, indexType, durableInNonTxMode, this, version, engineProperties, metadata);
+
+      engine.create(valueSerializer, isAutomatic, keyTypes, nullValuesSupport, keySerializer, keySize, clustersToIndex,
+          engineProperties, metadata);
 
       indexEngineNameMap.put(engineName, engine);
 
       indexEngines.add(engine);
+
+      final OStorageConfiguration.IndexEngineData engineData = new OStorageConfiguration.IndexEngineData(originalName, algorithm,
+          indexType, durableInNonTxMode, version, serializerId, keySerializer.getId(), isAutomatic, keyTypes, nullValuesSupport,
+          keySize, engineProperties);
+
       configuration.addIndexEngine(engineName, engineData);
 
       return indexEngines.size() - 1;
@@ -1660,8 +1724,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public boolean removeKeyFromIndex(int indexId, Object key) {
-    if (transaction.get() != null)
-      doRemoveKeyFromIndex(indexId, key);
+    if (transaction.get() != null) {
+      return doRemoveKeyFromIndex(indexId, key);
+    }
 
     checkOpeness();
 
@@ -1691,8 +1756,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void clearIndex(int indexId) {
-    if (transaction.get() != null)
+    if (transaction.get() != null) {
       doClearIndex(indexId);
+      return;
+    }
 
     checkOpeness();
 
@@ -1751,8 +1818,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void updateIndexEntry(int indexId, Object key, Callable<Object> valueCreator) {
-    if (transaction.get() != null)
+    if (transaction.get() != null) {
       doUpdateIndexEntry(indexId, key, valueCreator);
+      return;
+    }
 
     checkOpeness();
 
@@ -1847,8 +1916,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void putIndexValue(int indexId, Object key, Object value) {
-    if (transaction.get() != null)
+    if (transaction.get() != null) {
       doPutIndexValue(indexId, key, value);
+      return;
+    }
 
     checkOpeness();
 
@@ -2344,6 +2415,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       else
         freezeId = atomicOperationsManager.freezeAtomicOperations(null, null);
 
+      final List<OFreezableStorageComponent> frozenIndexes = new ArrayList<OFreezableStorageComponent>(indexEngines.size());
+      try {
+        for (OIndexEngine indexEngine : indexEngines)
+          if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent) {
+            ((OFreezableStorageComponent) indexEngine).freeze(false);
+            frozenIndexes.add((OFreezableStorageComponent) indexEngine);
+          }
+      } catch (Exception e) {
+        // RELEASE ALL THE FROZEN INDEXES
+        for (OFreezableStorageComponent indexEngine : frozenIndexes)
+          indexEngine.release();
+
+        throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
+      }
+
       synch();
       try {
         unlock();
@@ -2367,6 +2453,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   public void release() {
     try {
       lock();
+
+      for (OIndexEngine indexEngine : indexEngines)
+        if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
+          ((OFreezableStorageComponent) indexEngine).release();
 
       if (configuration != null)
         configuration.setSoftlyClosed(false);

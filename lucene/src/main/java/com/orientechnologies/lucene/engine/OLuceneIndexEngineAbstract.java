@@ -227,7 +227,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   public void flush() {
 
     try {
-      mgrWriter.getIndexWriter().commit();
+      if (mgrWriter.getIndexWriter().isOpen())
+        mgrWriter.getIndexWriter().commit();
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on flushing Lucene index", e);
     } catch (Throwable e) {
@@ -238,7 +239,8 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, ODocument metadata) {
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
+      ODocument metadata) {
   }
 
   @Override
@@ -319,7 +321,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
-      OType[] keyTypes, boolean nullPointerSupport, int keySize) {
+      OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
     // initIndex(indexName, indexDefinition, isAutomatic, metadata);
   }
 
@@ -484,5 +486,21 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   @Override
   public void onStorageUnregistered(OStorage storage) {
 
+  }
+
+  @Override
+  public void freeze(boolean throwException) {
+
+    close();
+  }
+
+  @Override
+  public void release() {
+
+    try {
+      reOpen(metadata);
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on releasing Lucene index", e);
+    }
   }
 }

@@ -146,16 +146,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         if (metadata == null)
           metadata = new ODocument().setTrackingChanges(false);
 
-        Object durable = metadata.field("durableInNonTxMode");
+        final Object durable = metadata.field("durableInNonTxMode");
         if (!(durable instanceof Boolean))
           metadata.field("durableInNonTxMode", true);
         if (metadata.field("trackMode") == null)
           metadata.field("trackMode", "FULL");
       }
-
-      // decide which cluster to use ("index" - for automatic and "manindex" for manual)
-      final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
-          : manualClusterName;
 
       index = OIndexes.createIndex(getDatabase(), iName, type, algorithm, valueContainerAlgorithm, metadata, -1);
       if (progressListener == null)
@@ -163,13 +159,20 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         progressListener = new OIndexRebuildOutputListener(index);
 
       final Set<String> clustersToIndex = findClustersByIds(clusterIdsToIndex, database);
-      if(indexDefinition != null) {
-        if (metadata != null && Boolean.TRUE.equals(metadata.field("ignoreNullValues"))) {
+      if (indexDefinition != null) {
+        Object ignoreNullValues = metadata == null ? null : metadata.field("ignoreNullValues");
+        if (Boolean.TRUE.equals(ignoreNullValues)) {
           indexDefinition.setNullValuesIgnored(true);
-        } else {
+        } else if (Boolean.FALSE.equals(ignoreNullValues)) {
           indexDefinition.setNullValuesIgnored(false);
+        } else {
+          indexDefinition.setNullValuesIgnored(OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean());
         }
       }
+
+      // decide which cluster to use ("index" - for automatic and "manindex" for manual)
+      final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
+          : manualClusterName;
 
       index.create(iName, indexDefinition, clusterName, clustersToIndex, true, progressListener);
 
@@ -315,7 +318,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       document.copyTo(doc);
 
       // USE A NEW DB INSTANCE
-      final ODatabaseDocumentTx newDb = new ODatabaseDocumentTx(db.getURL());
+      final ODatabaseDocumentInternal newDb = new ODatabaseDocumentTx(db.getURL());
 
       Runnable recreateIndexesTask = new RecreateIndexesTask(newDb, doc);
 
@@ -489,12 +492,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   }
 
   private class RecreateIndexesTask implements Runnable {
-    private final ODatabaseDocumentTx newDb;
-    private final ODocument           doc;
-    private int                       ok;
-    private int                       errors;
+    private final ODatabaseDocumentInternal newDb;
+    private final ODocument                 doc;
+    private       int                       ok;
+    private       int                       errors;
 
-    public RecreateIndexesTask(ODatabaseDocumentTx newDb, ODocument doc) {
+    public RecreateIndexesTask(ODatabaseDocumentInternal newDb, ODocument doc) {
       this.newDb = newDb;
       this.doc = doc;
     }
@@ -558,16 +561,15 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           index.loadFromConfiguration(idx);
           index.delete();
         } catch (Exception e) {
-          OLogManager.instance()
-              .error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)", index.getName(),
-                  e);
+          OLogManager.instance().error(this, "Error on removing index '%s' on rebuilding. Trying removing index files (Cause: %s)",
+              index.getName(), e);
 
           // TRY DELETING ALL THE FILES RELATIVE TO THE INDEX
-          for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext(); ) {
+          for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext();) {
             try {
               final OIndexFactory indexFactory = it.next();
-              final OIndexEngine engine = indexFactory
-                  .createIndexEngine(null, index.getName(), false, getDatabase().getStorage(), 0, null);
+              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, getDatabase().getStorage(),
+                  0, null);
 
               engine.deleteWithoutLoad(index.getName());
             } catch (Exception e2) {

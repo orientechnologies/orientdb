@@ -82,7 +82,7 @@ public class DistributedLifecycleListenerTest extends AbstractServerClusterTest 
 
   @Override
   protected void executeTest() throws Exception {
-    Thread.sleep(2000);
+    Thread.sleep(1000);
   }
 
   @Override
@@ -102,11 +102,11 @@ public class DistributedLifecycleListenerTest extends AbstractServerClusterTest 
     Assert.assertEquals(SERVERS - 1, nodeLeft.get());
 
     Assert.assertEquals(3, changeStatus.size());
-    Assert.assertEquals("europe1." + getDatabaseName(), changeStatus.get(0).getKey());
+    Assert.assertEquals("europe-1." + getDatabaseName(), changeStatus.get(0).getKey());
     Assert.assertEquals(ODistributedServerManager.DB_STATUS.SYNCHRONIZING, changeStatus.get(0).getValue());
-    Assert.assertEquals("europe0." + getDatabaseName(), changeStatus.get(1).getKey());
+    Assert.assertEquals("europe-0." + getDatabaseName(), changeStatus.get(1).getKey());
     Assert.assertEquals(ODistributedServerManager.DB_STATUS.SYNCHRONIZING, changeStatus.get(1).getValue());
-    Assert.assertEquals("europe0." + getDatabaseName(), changeStatus.get(2).getKey());
+    Assert.assertEquals("europe-0." + getDatabaseName(), changeStatus.get(2).getKey());
     Assert.assertEquals(ODistributedServerManager.DB_STATUS.ONLINE, changeStatus.get(2).getValue());
   }
 }

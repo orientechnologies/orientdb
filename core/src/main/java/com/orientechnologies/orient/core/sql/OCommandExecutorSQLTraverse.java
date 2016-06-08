@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-
 import java.util.*;
 
 /**
@@ -69,7 +68,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     try {
       // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-      // System.out.println("NEW PARSER   TO: " + queryText);
+      // System.out.println("NEW PARSER TO: " + queryText);
       textRequest.setText(queryText);
 
       super.parse(iRequest);
@@ -81,7 +80,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
 
       int endPosition = parserText.length();
 
-      parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(pos, endPosition), getContext(), KEYWORD_WHILE);
+      parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(pos, endPosition), getContext());
 
       if (parsedTarget.parserIsEnded())
         parserSetCurrentPosition(endPosition);
@@ -102,8 +101,8 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
 
           traverse.predicate(compiledFilter);
           optimize();
-          parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
-              + parserGetCurrentPosition());
+          parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition
+              : compiledFilter.parserGetCurrentPosition() + parserGetCurrentPosition());
         } else
           parserGoBack();
       }
@@ -111,7 +110,8 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       parserSkipWhiteSpaces();
 
       while (!parserIsEnded()) {
-        if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_OFFSET, KEYWORD_TIMEOUT, KEYWORD_MAXDEPTH, KEYWORD_STRATEGY)) {
+        if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_OFFSET, KEYWORD_TIMEOUT, KEYWORD_MAXDEPTH,
+            KEYWORD_STRATEGY)) {
           final String w = parserGetLastWord();
           if (w.equals(KEYWORD_LIMIT))
             parseLimit(w);
@@ -196,11 +196,8 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
   }
 
   protected void warnDeprecatedWhere() {
-    OLogManager
-        .instance()
-        .warn(
-            this,
-            "Keyword WHERE in traverse has been replaced by WHILE. Please change your query to support WHILE instead of WHERE because now it's only deprecated, but in future it will be removed the back-ward compatibility.");
+    OLogManager.instance().warn(this,
+        "Keyword WHERE in traverse has been replaced by WHILE. Please change your query to support WHILE instead of WHERE because now it's only deprecated, but in future it will be removed the back-ward compatibility.");
   }
 
   @Override
