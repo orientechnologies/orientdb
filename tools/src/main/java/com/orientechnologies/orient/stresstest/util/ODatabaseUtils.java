@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.stresstest.OMode;
 
 import java.util.List;
 
@@ -35,21 +34,44 @@ import java.util.List;
  */
 public class ODatabaseUtils {
 
-    public static void createDatabase(String dbName, OMode mode, String password) throws Exception {
-        if (mode == com.orientechnologies.orient.stresstest.OMode.PLOCAL) {
-            String dbUrl = "remote:localhost:2424/" + dbName;
-            OServerAdmin serverAdmin = new OServerAdmin(dbUrl).connect("root", password);
-            serverAdmin.createDatabase(dbName, "document", "plocal");
+    public static void createDatabase(ODatabaseIdentifier databaseIdentifier) throws Exception {
+        switch (databaseIdentifier.getMode()) {
+            case PLOCAL:
+            case MEMORY:
+                new ODatabaseDocumentTx(databaseIdentifier.getUrl()).create();
+                break;
+            case REMOTE:
+                new OServerAdmin(databaseIdentifier.getUrl())
+                        .connect("root", databaseIdentifier.getPassword())
+                        .createDatabase(databaseIdentifier.getName(), "document", "plocal");
+                break;
         }
     }
 
-    public static ODatabase openDatabase(String dbName, String password) {
-        return new ODatabaseDocumentTx("remote:localhost:2424/" + dbName).open("root", password);
+    public static ODatabase openDatabase(ODatabaseIdentifier databaseIdentifier) {
+        switch (databaseIdentifier.getMode()) {
+            case PLOCAL:
+            case MEMORY:
+                return new ODatabaseDocumentTx(databaseIdentifier.getUrl()).open("admin", "admin");
+            case REMOTE:
+                return new ODatabaseDocumentTx(databaseIdentifier.getUrl()).open("root", databaseIdentifier.getPassword());
+        }
+
+        return null;
     }
 
-    public static void dropDatabase(String dbName, OMode mode, String password) throws Exception {
-        if (mode == com.orientechnologies.orient.stresstest.OMode.PLOCAL) {
-            new OServerAdmin("remote:localhost:2424").connect("root", password).dropDatabase(dbName, "plocal");
+    public static void dropDatabase(ODatabaseIdentifier databaseIdentifier) throws Exception {
+
+        switch (databaseIdentifier.getMode()) {
+            case PLOCAL:
+            case MEMORY:
+                openDatabase(databaseIdentifier).drop();
+                break;
+            case REMOTE:
+                new OServerAdmin(databaseIdentifier.getUrl())
+                        .connect("root", databaseIdentifier.getPassword())
+                        .dropDatabase(databaseIdentifier.getName(), "plocal");
+                break;
         }
     }
 
@@ -76,7 +98,6 @@ public class ODatabaseUtils {
         doc.field("name", getThreadValue(n, "new"));
         doc.save();
     }
-
 
     private static String getThreadValue(int n) {
         return getThreadValue(n, "");

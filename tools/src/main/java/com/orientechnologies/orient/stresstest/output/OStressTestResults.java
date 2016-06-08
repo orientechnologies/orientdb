@@ -34,129 +34,131 @@ import java.util.List;
  */
 public class OStressTestResults {
 
-    private final String OPERATION_RESULT = "\nAverage time for %,d %s: %.2f secs [%dth percentile] - Throughput: %,d/s.\"";
-    private List<Long> operationsExecutorCreatesResults = new ArrayList<Long>();
-    private List<Long> operationsExecutorReadsResults = new ArrayList<Long>();
-    private List<Long> operationsExecutorUpdatesResults = new ArrayList<Long>();
-    private List<Long> operationsExecutorDeletesResults = new ArrayList<Long>();
-    final private OOperationsSet operationsSet;
-    final private OMode mode;
-    final private int threadsNumber;
-    final private int iterationsNumber;
-    private long totalTime;
-    private long times;
-    int counter = 0;
+  final private String     OPERATION_RESULT                 = "\nAverage time for %,d %s: %.2f secs [%dth percentile] - Throughput: %,d/s.";
+  final private List<Long> operationsExecutorCreatesResults = new ArrayList<Long>();
+  final private List<Long> operationsExecutorReadsResults   = new ArrayList<Long>();
+  final private List<Long> operationsExecutorUpdatesResults = new ArrayList<Long>();
+  final private List<Long> operationsExecutorDeletesResults = new ArrayList<Long>();
 
-    public OStressTestResults(OOperationsSet operationsSet, OMode mode, int threadsNumber, int iterationsNumber) {
-        this.operationsSet = operationsSet;
-        this.mode = mode;
-        this.threadsNumber = threadsNumber;
-        this.iterationsNumber = iterationsNumber;
+  // public fields are used for mapping to JSON for output results
+  public final OOperationsSet operationsSet;
+  public final OMode          mode;
+  public       int            threadsNumber;
+  public       int            iterationsNumber;
+  public       long           totalTime;
+
+  public double averageCreatesTime;
+  public double averageReadsTime;
+  public double averageUpdatesTime;
+  public double averageDeletesTime;
+
+  public int createsPercentile;
+  public int readsPercentile;
+  public int updatesPercentile;
+  public int deletesPercentile;
+
+  public long createsThroughput;
+  public long readsThroughput;
+  public long updatesThroughput;
+  public long deletesThroughput;
+
+  public OStressTestResults(OOperationsSet operationsSet, OMode mode, int threadsNumber, int iterationsNumber) {
+    this.operationsSet = operationsSet;
+    this.mode = mode;
+    this.threadsNumber = threadsNumber;
+    this.iterationsNumber = iterationsNumber;
+  }
+
+  public void addTotalExecutionTime(long totalTime) {
+    this.totalTime = totalTime;
+  }
+
+  /**
+   * Adds the output of a single executor. It will be called N times
+   * (where N is the number of threads defined for the test by the number of iterations)
+   *
+   * @param operationsExecutorResults
+   */
+  public void addThreadResults(OOperationsExecutorResults operationsExecutorResults) {
+    operationsExecutorCreatesResults.add(operationsExecutorResults.getCreatesTime());
+    operationsExecutorReadsResults.add(operationsExecutorResults.getReadsTime());
+    operationsExecutorUpdatesResults.add(operationsExecutorResults.getUpdatesTime());
+    operationsExecutorDeletesResults.add(operationsExecutorResults.getDeletesTime());
+  }
+
+  @Override
+  public String toString() {
+
+    StringBuilder results = new StringBuilder();
+    results.append("OrientDB Stress Test v").append(OConstants.VERSION).append("\n").append(getParameters()).append("\n");
+
+    if (totalTime != 0) {
+      results.append("\nTotal execution time: ").append(String.format("%.2f", totalTime / 1000f)).append(" seconds.");
     }
 
-    public void addTotalExecutionTime(long totalTime) {
-        this.totalTime = totalTime;
+    long totalCreatesTime = 1;
+    long totalReadsTime = 1;
+    long totalUpdatesTime = 1;
+    long totalDeletesTime = 1;
+
+    for (int j = 0; j < operationsExecutorCreatesResults.size(); j++) {
+      totalCreatesTime += operationsExecutorCreatesResults.get(j);
+      totalReadsTime += operationsExecutorReadsResults.get(j);
+      totalUpdatesTime += operationsExecutorUpdatesResults.get(j);
+      totalDeletesTime += operationsExecutorDeletesResults.get(j);
     }
 
-    /**
-     * Adds the output of a single executor. It will be called N times
-     * (where N is the number of threads defined for the test by the number of iterations)
-     *
-     * @param operationsExecutorResults
-     */
-    public void addThreadResults(OOperationsExecutorResults operationsExecutorResults) {
-        operationsExecutorCreatesResults.add(operationsExecutorResults.getCreatesTime());
-        operationsExecutorReadsResults.add(operationsExecutorResults.getReadsTime());
-        operationsExecutorUpdatesResults.add(operationsExecutorResults.getUpdatesTime());
-        operationsExecutorDeletesResults.add(operationsExecutorResults.getDeletesTime());
-        counter++;
+    averageCreatesTime = computeAverage(totalCreatesTime);
+    averageReadsTime = computeAverage(totalReadsTime);
+    averageUpdatesTime = computeAverage(totalUpdatesTime);
+    averageDeletesTime = computeAverage(totalDeletesTime);
+
+    createsPercentile = getPercentile(averageCreatesTime, operationsExecutorCreatesResults);
+    readsPercentile = getPercentile(averageReadsTime, operationsExecutorReadsResults);
+    updatesPercentile = getPercentile(averageUpdatesTime, operationsExecutorUpdatesResults);
+    deletesPercentile = getPercentile(averageDeletesTime, operationsExecutorDeletesResults);
+
+    createsThroughput = (int) ((operationsSet.getNumberOfCreates() / (float) averageCreatesTime));
+    readsThroughput = (int) ((operationsSet.getNumberOfReads() / (float) averageReadsTime));
+    updatesThroughput = (int) ((operationsSet.getNumberOfUpdates() / (float) averageUpdatesTime));
+    deletesThroughput = (int) ((operationsSet.getNumberOfDeletes() / (float) averageDeletesTime));
+
+    results.append(
+        String.format(OPERATION_RESULT, operationsSet.getNumberOfCreates(), "Creates", averageCreatesTime, createsPercentile, createsThroughput))
+        .append(String.format(OPERATION_RESULT, operationsSet.getNumberOfReads(), "Reads", averageReadsTime, readsPercentile, readsThroughput))
+        .append(String.format(OPERATION_RESULT, operationsSet.getNumberOfUpdates(), "Updates", averageUpdatesTime, updatesPercentile, updatesThroughput))
+        .append(String.format(OPERATION_RESULT, operationsSet.getNumberOfDeletes(), "Deletes", averageDeletesTime, deletesPercentile, deletesThroughput))
+        .append("\n");
+
+    return results.toString();
+  }
+
+  /**
+   * computes the percentile of the average time compared to all the times
+   *
+   * @param averageTime
+   * @param operationsExecutorResults
+   * @return
+   */
+  private int getPercentile(double averageTime, List<Long> operationsExecutorResults) {
+    int average = (int) (averageTime * 1000);
+    Collections.sort(operationsExecutorResults);
+    int j = 0;
+    for (; j < operationsExecutorResults.size(); j++) {
+      Long value = operationsExecutorResults.get(j);
+      if (value > average) {
+        break;
+      }
     }
+    return (int) (100 * (j / (float) operationsExecutorResults.size()));
+  }
 
-    @Override
-    public String toString() {
+  private double computeAverage(long totalOperationTime) {
+    return (totalOperationTime / (double) (threadsNumber * iterationsNumber)) / 1000;
+  }
 
-        StringBuilder results = new StringBuilder();
-        results.append("OrientDB Stress Test v")
-                .append(OConstants.VERSION)
-                .append("\n")
-                .append(getParameters())
-                .append("\n");
-
-        if (totalTime != 0) {
-            results.append("\nTotal execution time: ")
-                    .append(String.format("%.2f", totalTime / 1000f))
-                    .append(" seconds.");
-        }
-
-        times = threadsNumber * iterationsNumber;
-        long totalCreatesTime = 1;
-        long totalReadsTime = 1;
-        long totalUpdatesTime = 1;
-        long totalDeletesTime = 1;
-
-        for (int j = 0; j < operationsExecutorCreatesResults.size(); j++) {
-            totalCreatesTime += operationsExecutorCreatesResults.get(j);
-            totalReadsTime += operationsExecutorReadsResults.get(j);
-            totalUpdatesTime += operationsExecutorUpdatesResults.get(j);
-            totalDeletesTime += operationsExecutorDeletesResults.get(j);
-        }
-
-        final double averageCreatesTime = computeAverage(totalCreatesTime);
-        final double averageReadsTime = computeAverage(totalReadsTime);
-        final double averageUpdatesTime = computeAverage(totalUpdatesTime);
-        final double averageDeletesTime = computeAverage(totalDeletesTime);
-
-        final int createsPercentile = getPercentile(averageCreatesTime, operationsExecutorCreatesResults);
-        final int readsPercentile = getPercentile(averageReadsTime, operationsExecutorReadsResults);
-        final int updatesPercentile = getPercentile(averageUpdatesTime, operationsExecutorUpdatesResults);
-        final int deletesPercentile = getPercentile(averageDeletesTime, operationsExecutorDeletesResults);
-
-        final long createsThroughput = (int) ((operationsSet.getNumberOfCreates() / (float) averageCreatesTime));
-        final long readsThroughput = (int) ((operationsSet.getNumberOfReads() / (float) averageReadsTime));
-        final long updatesThroughput = (int) ((operationsSet.getNumberOfUpdates() / (float) averageUpdatesTime));
-        final long deletesThroughput = (int) ((operationsSet.getNumberOfDeletes() / (float) averageDeletesTime));
-
-        results.append(String.format(OPERATION_RESULT, operationsSet.getNumberOfCreates(), "Creates", averageCreatesTime, createsPercentile, createsThroughput))
-                .append(String.format(OPERATION_RESULT, operationsSet.getNumberOfReads(), "Reads", averageReadsTime, readsPercentile, readsThroughput))
-                .append(String.format(OPERATION_RESULT, operationsSet.getNumberOfReads(), "Updates", averageUpdatesTime, updatesPercentile, updatesThroughput))
-                .append(String.format(OPERATION_RESULT, operationsSet.getNumberOfReads(), "Deletes", averageDeletesTime, deletesPercentile, deletesThroughput))
-                .append("\n");
-
-        return results.toString();
-    }
-
-    /**
-     * computes the percentile of the average time compared to all the times
-     *
-     * @param averageTime
-     * @param operationsExecutorResults
-     * @return
-     */
-    private int getPercentile(double averageTime, List<Long> operationsExecutorResults) {
-        int average = (int) (averageTime * 1000);
-        Collections.sort(operationsExecutorResults);
-        int j = 0;
-        for (; j < operationsExecutorResults.size(); j++) {
-            Long value = operationsExecutorResults.get(j);
-            if (value > average) {
-                break;
-            }
-        }
-        return (int) (100*(j / (float) operationsExecutorResults.size()));
-    }
-
-    private double computeAverage(long totalOperationTime) {
-        return (totalOperationTime / (double) (times)) / 1000;
-    }
-
-    private StringBuilder getParameters() {
-        return new StringBuilder("OMode: ")
-                .append(mode.toString())
-                .append(", Threads: ")
-                .append(threadsNumber)
-                .append(", Iterations: ")
-                .append(iterationsNumber)
-                .append(", Operations: ")
-                .append(operationsSet.toString());
-    }
+  private StringBuilder getParameters() {
+    return new StringBuilder("Mode: ").append(mode.toString()).append(", Threads: ").append(threadsNumber).append(", Iterations: ")
+        .append(iterationsNumber).append(", Operations: ").append(operationsSet.toString());
+  }
 }

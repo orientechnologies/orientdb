@@ -79,6 +79,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   @Override
   public void load(OETLPipeline pipeline, final Object input, OCommandContext context) {
+
     if (input == null)
       return;
 
@@ -96,16 +97,19 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     }
 
     if (input instanceof OrientVertex) {
+
       final OrientVertex v = (OrientVertex) input;
 
       v.save(clusterName);
 
     } else if (input instanceof ODocument) {
+
       final ODocument doc = (ODocument) input;
 
       doc.setClassName(className);
 
       doc.save(clusterName);
+
     }
 
     progress.incrementAndGet();

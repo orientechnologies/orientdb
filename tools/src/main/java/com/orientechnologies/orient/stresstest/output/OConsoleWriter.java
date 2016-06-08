@@ -48,6 +48,10 @@ public class OConsoleWriter {
         totalDeletes = operationsSet.getNumberOfDeletes() * threadsNumber * iterationsNumber;
     }
 
+    public void printMessage(String message) {
+        System.out.println(message);
+    }
+
     private void updateConsole() {
         System.out.print(String.format(
                 "\rStress test in progress %d%% [Creates: %d%% - Reads: %d%% - Updates: %d%% - Deletes: %d%%]",

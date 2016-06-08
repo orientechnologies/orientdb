@@ -14,8 +14,8 @@ public class OClientSessions {
   private byte[]                  binaryToken;
 
   public OClientSessions(byte[] binaryToken, OToken token) {
-    this.token = token;
     this.binaryToken = binaryToken;
+    this.token = token;
   }
 
   public void addConnection(OClientConnection conn) {

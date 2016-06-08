@@ -29,7 +29,5 @@ else
 fi
 export JAVA
 
-echo "orient $ORIENTDB_HOME"
-
 exec "$JAVA" -cp "$ORIENTDB_HOME/lib/*" \
     com.orientechnologies.orient.stresstest.OStressTester $*

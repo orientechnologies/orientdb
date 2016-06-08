@@ -60,8 +60,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     try {
       final ODatabaseDocumentInternal db = getDatabase();
       execInSeparateDatabase(new OCallable() {
-        @Override
-        public Object call(Object iArgument) {
+        @Override public Object call(Object iArgument) {
           return execDb = ((ODatabaseDocumentTx) db).copy();
         }
       });
@@ -120,7 +119,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     } finally {
       if (oldThreadLocal == null) {
         ODatabaseRecordThreadLocal.INSTANCE.remove();
-      }else{
+      } else {
         ODatabaseRecordThreadLocal.INSTANCE.set(oldThreadLocal);
       }
     }
@@ -210,8 +209,20 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
   }
 
   public void onLiveResultEnd() {
-    ((OLiveResultListener) request.getResultListener()).onUnsubscribe(token);
-    execDb.close();
+    if (request.getResultListener() instanceof OLiveResultListener) {
+      ((OLiveResultListener) request.getResultListener()).onUnsubscribe(token);
+    }
+
+    if (execDb != null) {
+      ODatabaseDocumentInternal oldThreadDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      execDb.activateOnCurrentThread();
+      execDb.close();
+      if (oldThreadDB == null) {
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
+      } else {
+        ODatabaseRecordThreadLocal.INSTANCE.set(oldThreadDB);
+      }
+    }
   }
 
   @Override public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {

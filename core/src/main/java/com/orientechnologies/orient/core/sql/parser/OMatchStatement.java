@@ -289,6 +289,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
       }
 
+      if(nextNodes.isEmpty()){
+        break;
+      }
       while (!nextNodes.isEmpty()) {
         PatternNode node = nextNodes.remove(0);
         traversedNodes.add(node);

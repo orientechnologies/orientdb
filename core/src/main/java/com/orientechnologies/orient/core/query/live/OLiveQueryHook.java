@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseListener {
 
-  static class OLiveQueryOps implements OCloseable {
+  public static class OLiveQueryOps implements OCloseable {
 
     protected Map<ODatabaseDocument, List<ORecordOperation>> pendingOps  = new ConcurrentHashMap<ODatabaseDocument, List<ORecordOperation>>();
     private OLiveQueryQueueThread                            queueThread = new OLiveQueryQueueThread();
@@ -61,6 +61,10 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
       }
       pendingOps.clear();
     }
+
+    public OLiveQueryQueueThread getQueueThread() {
+      return queueThread;
+    }
   }
 
   public OLiveQueryHook(ODatabaseDocumentInternal db) {
@@ -69,7 +73,7 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
     db.registerListener(this);
   }
 
-  private static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
+  public static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
     return (OLiveQueryOps) db.getStorage().getResource("LiveQueryOps", new Callable<Object>() {
       @Override
       public Object call() throws Exception {
