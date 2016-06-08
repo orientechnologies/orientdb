@@ -285,7 +285,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           connection.validateSession(bytes, server.getTokenHandler(), this);
         } else {
           connection.validateSession(bytes, server.getTokenHandler(), this);
-          server.getClientConnectionManager().disconnect(server, clientTxId);
+          server.getClientConnectionManager().disconnect(clientTxId);
           connection = server.getClientConnectionManager().reConnect(this, connection.getTokenBytes(), connection.getToken());
           connection.acquire();
         }
@@ -299,12 +299,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       }
     } catch (RuntimeException e) {
       if (connection != null)
-        server.getClientConnectionManager().disconnect(this.getServer(), connection);
+        server.getClientConnectionManager().disconnect(connection);
       ODatabaseRecordThreadLocal.INSTANCE.remove();
       throw e;
     } catch (IOException e) {
       if (connection != null)
-        server.getClientConnectionManager().disconnect(this.getServer(), connection);
+        server.getClientConnectionManager().disconnect(connection);
       ODatabaseRecordThreadLocal.INSTANCE.remove();
       throw e;
     }
@@ -705,7 +705,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     try {
       connection.setDatabase((ODatabaseDocumentTx) server.openDatabase(dbURL, user, passwd, connection.getData()));
     } catch (OException e) {
-      server.getClientConnectionManager().disconnect(server, connection);
+      server.getClientConnectionManager().disconnect(connection);
       throw e;
     }
 
@@ -1169,7 +1169,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     setDataCommandInfo(connection, "Close Database");
 
     if (connection != null) {
-      server.getClientConnectionManager().disconnect(server, connection);
+      server.getClientConnectionManager().disconnect(connection);
     }
   }
 
@@ -2414,7 +2414,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   private boolean isConnectionAlive(OClientConnection connection) {
     if (connection == null || connection.getDatabase() == null) {
       // CONNECTION/DATABASE CLOSED, KILL IT
-      server.getClientConnectionManager().kill(server, connection);
+      server.getClientConnectionManager().kill(connection);
       return false;
     }
     return true;

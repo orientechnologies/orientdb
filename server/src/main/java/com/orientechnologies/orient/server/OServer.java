@@ -289,7 +289,7 @@ public class OServer {
 
     Orient.instance();
 
-    clientConnectionManager = new OClientConnectionManager();
+    clientConnectionManager = new OClientConnectionManager(this);
 
     initFromConfiguration();
 

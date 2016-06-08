@@ -209,7 +209,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       channel.close();
 
     } finally {
-      server.getClientConnectionManager().disconnect(server, connection.getId());
+      server.getClientConnectionManager().disconnect(connection.getId());
 
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "Connection closed");

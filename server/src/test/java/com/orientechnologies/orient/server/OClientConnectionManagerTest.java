@@ -38,12 +38,12 @@ public class OClientConnectionManagerTest {
 
   @Test
   public void testSimpleConnectDisconnect() throws IOException {
-    OClientConnectionManager manager = new OClientConnectionManager();
+    OClientConnectionManager manager = new OClientConnectionManager(server);
     OClientConnection ret = manager.connect(protocol);
     assertNotNull(ret);
     OClientConnection ret1 = manager.getConnection(ret.getId(), protocol);
     assertSame(ret, ret1);
-    manager.disconnect(server, ret);
+    manager.disconnect(ret);
 
     OClientConnection ret2 = manager.getConnection(ret.getId(), protocol);
     assertNull(ret2);
@@ -53,7 +53,7 @@ public class OClientConnectionManagerTest {
   public void testTokenConnectDisconnect() throws IOException {
     byte[] atoken = new byte[] {};
 
-    OClientConnectionManager manager = new OClientConnectionManager();
+    OClientConnectionManager manager = new OClientConnectionManager(server);
     OClientConnection ret = manager.connect(protocol);
     manager.connect(protocol, ret, atoken, handler);
     assertNotNull(ret);
@@ -65,13 +65,13 @@ public class OClientConnectionManagerTest {
     OClientConnection ret2 = manager.reConnect(protocol, atoken, token);
     assertNotSame(ret1, ret2);
     assertEquals(sess.getConnections().size(), 2);
-    manager.disconnect(server, ret);
+    manager.disconnect(ret);
 
     assertEquals(sess.getConnections().size(), 1);
     OClientConnection ret3 = manager.getConnection(ret.getId(), protocol);
     assertNull(ret3);
 
-    manager.disconnect(server, ret2);
+    manager.disconnect(ret2);
     assertEquals(sess.getConnections().size(), 0);
     OClientConnection ret4 = manager.getConnection(ret2.getId(), protocol);
     assertNull(ret4);
