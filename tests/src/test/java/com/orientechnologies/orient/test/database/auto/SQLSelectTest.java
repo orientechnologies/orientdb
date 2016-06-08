@@ -1732,6 +1732,12 @@ public class SQLSelectTest extends AbstractSelectTest {
         new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1'"));
     Assert.assertEquals(result.size(), 3);
 
+    Map<Object, Object> params = new HashMap<Object, Object>();
+    params.put("values", Arrays.asList(new String[]{"2", "3", "antani"}));
+    result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select expand(out()[name in :values]) from TestExpandSkip where name = '1'"), params);
+    Assert.assertEquals(result.size(), 2);
+
     result = database.query(
         new OSQLSynchQuery<OIdentifiable>("select expand(out()) from TestExpandSkip where name = '1' skip 1"));
     Assert.assertEquals(result.size(), 2);
