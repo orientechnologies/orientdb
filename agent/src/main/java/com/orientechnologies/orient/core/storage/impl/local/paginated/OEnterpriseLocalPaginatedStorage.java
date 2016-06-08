@@ -48,11 +48,11 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
-  private final AtomicBoolean backupInProgress              = new AtomicBoolean(false);
+  private final AtomicBoolean backupInProgress = new AtomicBoolean(false);
 
-  public static final String  IBU_EXTENSION                 = ".ibu";
-  public static final String  CONF_ENTRY_NAME               = "database.ocf";
-  public static final String  INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
+  public static final String IBU_EXTENSION                 = ".ibu";
+  public static final String CONF_ENTRY_NAME               = "database.ocf";
+  public static final String INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
 
   public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache)
       throws IOException {
@@ -243,8 +243,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       final long freezeId;
 
       if (!isWriteAllowedDuringIncrementalBackup())
-        freezeId = atomicOperationsManager.freezeAtomicOperations(OModificationOperationProhibitedException.class,
-            "Incremental backup in progress");
+        freezeId = atomicOperationsManager
+            .freezeAtomicOperations(OModificationOperationProhibitedException.class, "Incremental backup in progress");
       else
         freezeId = -1;
 
@@ -374,8 +374,9 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
     try {
       final String[] files = fetchIBUFiles(backupDirectory);
       if (files.length == 0) {
-        throw new OStorageException("Cannot find incremental backup files (files with extension '" + IBU_EXTENSION
-            + "') in directory '" + backupDirectory.getAbsolutePath() + "'");
+        throw new OStorageException(
+            "Cannot find incremental backup files (files with extension '" + IBU_EXTENSION + "') in directory '" + backupDirectory
+                .getAbsolutePath() + "'");
       }
 
       stateLock.acquireWriteLock();
@@ -419,6 +420,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       closeIndexes(false);
 
       sbTreeCollectionManager.clear();
+      sharedContainer.clearResources();
 
       final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
       final ZipInputStream zipInputStream = new ZipInputStream(bufferedInputStream, Charset.forName(configuration.getCharset()));
@@ -441,7 +443,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
       final File walTempDir = createWalTempDirectory();
 
-      entryLoop: while ((zipEntry = zipInputStream.getNextEntry()) != null) {
+      entryLoop:
+      while ((zipEntry = zipInputStream.getNextEntry()) != null) {
         if (zipEntry.getName().equals(CONF_ENTRY_NAME)) {
           replaceConfiguration(zipInputStream);
 
@@ -549,8 +552,10 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       currentFiles.removeAll(processedFiles);
 
       for (String file : currentFiles) {
-        final long fileId = readCache.openFile(file, writeCache);
-        readCache.deleteFile(fileId, writeCache);
+        if (writeCache.exists(file)) {
+          final long fileId = readCache.openFile(file, writeCache);
+          readCache.deleteFile(fileId, writeCache);
+        }
       }
 
       final OWriteAheadLog restoreLog = createWalFromIBUFiles(walTempDir);
