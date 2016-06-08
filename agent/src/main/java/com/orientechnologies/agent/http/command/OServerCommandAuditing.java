@@ -97,6 +97,9 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     if (isNotNullNotEmpty(params, "db")) {
       whereConditions.add("database = :db");
     }
+    if (isNull(params, "db")) {
+      whereConditions.add("database is null");
+    }
     if (isNotNullNotEmpty(params, "note")) {
       String note = params.field("note");
       note = "%" + note + "%";
@@ -113,6 +116,11 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
 
     query = query.replace(":limit", "" + limit);
     return query;
+  }
+
+  private boolean isNull(ODocument params, String db) {
+    return params.containsField(db) && params.field(db) == null;
+
   }
 
   private boolean isNotNullNotEmpty(ODocument params, String field) {

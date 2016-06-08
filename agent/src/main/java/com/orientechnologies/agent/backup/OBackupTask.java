@@ -78,7 +78,14 @@ public class OBackupTask implements OBackupListener {
       task.cancel();
     }
     strategy.deleteLastScheduled();
-    strategy = config.strategy(doc, strategy.getLogger());
+
+    OBackupStrategy strategy = config.strategy(doc, this.strategy.getLogger());
+
+    if (!this.strategy.equals(strategy)) {
+      strategy.markLastBackup();
+    }
+
+    this.strategy = strategy;
 
     schedule();
   }

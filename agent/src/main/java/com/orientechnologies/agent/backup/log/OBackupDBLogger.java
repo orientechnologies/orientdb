@@ -22,9 +22,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -43,7 +45,7 @@ import java.util.Map;
  */
 public class OBackupDBLogger implements OBackupLogger {
 
-  OBackupLogFactory          factory;
+  OBackupLogFactory factory;
 
   public static final String CLASS_NAME = "OBackupLog";
 
@@ -204,8 +206,8 @@ public class OBackupDBLogger implements OBackupLogger {
       }
     };
     if (params != null && params.size() > 0) {
-      query = String.format("select * from %s where uuid = :uuid and unitId = :unitId and op= :op order by timestamp desc ",
-          CLASS_NAME);
+      query = String
+          .format("select * from %s where uuid = :uuid and unitId = :unitId and op= :op order by timestamp desc ", CLASS_NAME);
       for (Map.Entry<String, String> entry : params.entrySet()) {
         queryParams.put(entry.getKey(), entry.getValue());
       }
@@ -325,8 +327,8 @@ public class OBackupDBLogger implements OBackupLogger {
   @Override
   public void deleteByUUIDAndUnitIdAndTx(final String uuid, final Long unitId, final Long txId) throws IOException {
 
-    final String selectQuery = String.format("select from %s where uuid = :uuid and unitId = :unitId and txId >= :txId",
-        CLASS_NAME);
+    final String selectQuery = String
+        .format("select from %s where uuid = :uuid and unitId = :unitId and txId >= :txId", CLASS_NAME);
 
     final String query = String.format("delete from %s where uuid = :uuid and unitId = :unitId and txId >= :txId", CLASS_NAME);
     final Map<String, Object> queryParams = new HashMap<String, Object>() {
@@ -402,8 +404,8 @@ public class OBackupDBLogger implements OBackupLogger {
         put("limit", pageSize);
       }
     };
-    String query = String.format("select * from %s where  uuid = :uuid  group by unitId  order by timestamp desc limit :limit",
-        CLASS_NAME);
+    String query = String
+        .format("select * from %s where  uuid = :uuid  group by unitId  order by timestamp desc limit :limit", CLASS_NAME);
 
     final List<ODocument> results = (List<ODocument>) getDatabase().execute(new OCallable<Object, Object>() {
       @Override
@@ -437,6 +439,22 @@ public class OBackupDBLogger implements OBackupLogger {
       @Override
       public Void call(ODatabase iArgument) {
         iArgument.command(new OCommandSQL(query)).execute(queryParams);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void updateLog(final OBackupLog log) {
+
+    getDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
+      @Override
+      public Void call(ODatabase iArgument) {
+        ODocument document = log.toDoc();
+        ODocument dbVersion = (ODocument) iArgument.load(new ORecordId(log.getInternalId()));
+        ORecordInternal.setIdentity(document, new ORecordId(log.getInternalId()));
+        ORecordInternal.setVersion(document, dbVersion.getVersion());
+        iArgument.save(document);
         return null;
       }
     });

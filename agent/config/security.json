@@ -2,7 +2,8 @@
   "enabled": true,
   "debug": false,
   "server": {
-    "createDefaultUsers": true
+    "createDefaultUsers": true,
+    "enabled": true
   },
   "authentication": {
     "enabled": true,
@@ -26,7 +27,7 @@
       {
         "name": "Kerberos",
         "class": "com.orientechnologies.security.kerberos.OKerberosAuthenticator",
-        "enabled": false,
+        "enabled": true,
         "debug": false,
         "krb5_config": "/etc/krb5.conf",
         "service": {"ktname":"/etc/keytab/kerberosuser","principal":"kerberosuser/kerberos.domain.com@REALM.COM"},
@@ -43,52 +44,20 @@
         "class": "com.orientechnologies.orient.server.security.authenticator.OSystemUserAuthenticator",
         "enabled": true
       }
-    ],
-    "enabled": true
+    ]
   },
   "passwordValidator": {
     "class": "com.orientechnologies.security.password.ODefaultPasswordValidator",
-    "enabled": false,
     "minimumLength": 10,
     "numberRegEx": "(?:[0-9].*){2}",
     "uppercaseRegEx": "(?:[A-Z].*){3}",
     "specialRegEx": "(?:[^a-zA-Z0-9 ].*){2}",
+    "enabled": false,
     "ignoreUUID": true
   },
   "auditing": {
     "class": "com.orientechnologies.security.auditing.ODefaultAuditing",
-    "enabled": false,
+    "enabled": true,
     "distributed": {"onNodeJoinedEnabled":true,"onNodeJoinedMessage":"Node ${node} has joined...","onNodeLeftEnabled":false,"onNodeLeftMessage":"Node ${node} has left..."}
-  },
-  "ldapImporter": {
-    "enabled": false,
-    "class": "com.orientechnologies.security.ldap.OLDAPImporter",
-    "debug": false,
-    "period": 60,
-    "databases": [
-      {
-        "database": "MarioDB",
-        "ignoreLocal": true,
-        "domains": [
-          {
-            "domain": "test.domain.com",
-            "authenticator": "Kerberos",
-            "servers": [
-              {
-                "url": "ldap://alias.ad.domain.com:389",
-                "isAlias": false
-              }
-            ],
-            "users": [
-              {
-                "baseDN": "CN=Users,DC=ad,DC=domain,DC=com",
-                "filter": "(&(objectCategory=person)(objectclass=user)(memberOf=CN=ODBUser,CN=Users,DC=ad,DC=domain,DC=com))",
-                "roles": ["reader","writer"]
-              }
-            ]
-          }
-        ]
-      }
-    ]
   }
 }
