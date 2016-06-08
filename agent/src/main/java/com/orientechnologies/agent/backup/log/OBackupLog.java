@@ -27,13 +27,16 @@ import java.util.Date;
  */
 public abstract class OBackupLog {
 
-  public static final String OP        = "op";
-  public static final String UNITID    = "unitId";
-  public static final String TXID      = "txId";
-  public static final String UUID      = "uuid";
-  public static final String DBNAME    = "dbName";
-  public static final String MODE      = "mode";
-  public static final String TIMESTAMP = "timestamp";
+  public static final String INTERNAL_ID = "internalId";
+  public static final String OP          = "op";
+  public static final String UNITID      = "unitId";
+  public static final String TXID        = "txId";
+  public static final String UUID        = "uuid";
+  public static final String DBNAME      = "dbName";
+  public static final String MODE        = "mode";
+  public static final String TIMESTAMP   = "timestamp";
+
+  private String internalId;
   private long   unitId;
   private String mode;
   private long   txId;
@@ -66,6 +69,7 @@ public abstract class OBackupLog {
 
   public void fromDoc(ODocument doc) {
     unitId = doc.field(UNITID);
+    internalId = doc.getIdentity().toString();
     txId = doc.field(TXID);
     uuid = doc.field(UUID);
     dbName = doc.field(DBNAME);
@@ -91,5 +95,9 @@ public abstract class OBackupLog {
 
   public String getMode() {
     return mode;
+  }
+
+  public String getInternalId() {
+    return internalId;
   }
 }

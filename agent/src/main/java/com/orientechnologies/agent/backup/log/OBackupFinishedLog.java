@@ -25,10 +25,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class OBackupFinishedLog extends OBackupLog {
 
-  public String fileName;
-  public String path;
-  public long   elapsedTime = 0;
-  public long   fileSize    = 0;
+  public String  fileName;
+  public String  path;
+  public long    elapsedTime = 0;
+  public long    fileSize    = 0;
+  public Boolean prevChange;
 
   public OBackupFinishedLog(long unitId, long opsId, String uuid, String dbName, String mode) {
     super(unitId, opsId, uuid, dbName, mode);
@@ -41,6 +42,7 @@ public class OBackupFinishedLog extends OBackupLog {
     doc.field("fileName", fileName);
     doc.field("elapsedTime", elapsedTime);
     doc.field("fileSize", fileSize);
+    doc.field("prevChange", prevChange);
     return doc;
   }
 
@@ -52,6 +54,7 @@ public class OBackupFinishedLog extends OBackupLog {
     fileName = doc.field("fileName");
     elapsedTime = doc.field("elapsedTime");
     fileSize = doc.field("fileSize");
+    prevChange = doc.field("prevChange");
   }
 
   @Override

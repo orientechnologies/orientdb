@@ -47,4 +47,6 @@ public interface OBackupLogger {
   public List<OBackupLog> findAllLatestByUUID(String uuid, int page, int pageSize) throws IOException;
 
   void deleteLog(OBackupLog scheduled);
+
+  void updateLog(OBackupLog log);
 }

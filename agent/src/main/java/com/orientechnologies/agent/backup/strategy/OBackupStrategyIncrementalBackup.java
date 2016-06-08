@@ -20,15 +20,13 @@ package com.orientechnologies.agent.backup.strategy;
 
 import com.orientechnologies.agent.backup.OBackupConfig;
 import com.orientechnologies.agent.backup.OBackupListener;
-import com.orientechnologies.agent.backup.log.OBackupLog;
-import com.orientechnologies.agent.backup.log.OBackupLogType;
-import com.orientechnologies.agent.backup.log.OBackupLogger;
-import com.orientechnologies.agent.backup.log.OBackupScheduledLog;
+import com.orientechnologies.agent.backup.log.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
 import com.orientechnologies.orient.server.handler.OAutomaticBackup;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.Date;
 
@@ -48,9 +46,29 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
 
   protected String calculatePath() {
 
+    OBackupFinishedLog last = null;
+    try {
+      last = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    if (last != null && !Boolean.TRUE.equals(last.prevChange)) {
+      return last.getPath();
+    }
+
+    long begin = System.currentTimeMillis();
+    try {
+      OBackupLog lastScheduled = logger.findLast(OBackupLogType.BACKUP_SCHEDULED, getUUID());
+      if (last != null) {
+        begin = lastScheduled.getUnitId();
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
     String basePath = cfg.field(OBackupConfig.DIRECTORY);
     String dbName = cfg.field(OBackupConfig.DBNAME);
-    return basePath + File.separator + dbName + "-incremental";
+    return basePath + File.separator + dbName + "-incremental-" + begin;
 
   }
 
@@ -67,12 +85,10 @@ public class OBackupStrategyIncrementalBackup extends OBackupStrategy {
         Date nextExecution = expression.getNextValidTimeAfter(new Date());
         Long unitId = logger.nextOpId();
         try {
-          OBackupLog lastCompleted = logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
-
-          if (lastCompleted != null) {
+          OBackupFinishedLog lastCompleted = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
+          if (lastCompleted != null && !Boolean.TRUE.equals(lastCompleted.prevChange)) {
             unitId = lastCompleted.getUnitId();
           }
-
         } catch (Exception e) {
           e.printStackTrace();
         }

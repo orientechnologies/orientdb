@@ -97,15 +97,14 @@ public abstract class OBackupStrategy {
     listener.onEvent(cfg, end);
   }
 
-  public void doRestore(OBackupListener listener, ODocument doc) {
+  public void doRestore(final OBackupListener listener, ODocument doc) {
 
-    String databaseName = doc.field("target");
+    final String databaseName = doc.field("target");
     Long unitId = doc.field("unitId");
     OServer server = OServerMain.server();
     ODatabaseDocumentTx database = null;
-    ORestoreStartedLog restoreStartedLog = null;
 
-    String url = "plocal:" + server.getDatabaseDirectory() + databaseName;
+    final String url = "plocal:" + server.getDatabaseDirectory() + databaseName;
     database = new ODatabaseDocumentTx(url);
 
     if (database.exists()) {
@@ -113,14 +112,37 @@ public abstract class OBackupStrategy {
     }
     try {
 
-      OBackupFinishedLog finished = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID(), unitId);
+      final OBackupFinishedLog finished = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID(), unitId);
+
+      File f = new File(finished.getPath());
+      if (!f.exists()) {
+        throw new IllegalArgumentException("Cannot restore the backup from path (" + finished.getPath() + ").");
+      }
+
+      new Thread(new Runnable() {
+        @Override
+        public void run() {
+          doRestoreBackup(url, finished, databaseName, listener);
+        }
+      }).start();
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error finding backup log for " + getUUID(), e);
+    }
+  }
+
+  private void doRestoreBackup(String url, OBackupFinishedLog finished, String databaseName, OBackupListener listener) {
+    ORestoreStartedLog restoreStartedLog = null;
+    ODatabaseDocumentTx db = null;
+    try {
+
+      db = new ODatabaseDocumentTx(url);
+
       restoreStartedLog = new ORestoreStartedLog(finished.getUnitId(), logger.nextOpId(), getUUID(), getDbName(),
           finished.getMode());
       logger.log(restoreStartedLog);
-      if (!database.exists()) {
-        database.create(finished.getPath());
+      if (!db.exists()) {
+        db.create(finished.getPath());
       }
-
       ORestoreFinishedLog finishedLog = new ORestoreFinishedLog(restoreStartedLog.getUnitId(), restoreStartedLog.getTxId(),
           getUUID(), getDbName(), restoreStartedLog.getMode());
 
@@ -141,8 +163,8 @@ public abstract class OBackupStrategy {
         listener.onEvent(cfg, error);
       }
     } finally {
-      if (database != null) {
-        database.close();
+      if (db != null) {
+        db.close();
       }
     }
   }
@@ -271,5 +293,26 @@ public abstract class OBackupStrategy {
     if (scheduled != null) {
       logger.deleteLog(scheduled);
     }
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return this.getClass().isInstance(obj);
+  }
+
+  public void markLastBackup() {
+
+    try {
+      OBackupFinishedLog lastCompleted = (OBackupFinishedLog) logger.findLast(OBackupLogType.BACKUP_FINISHED, getUUID());
+
+      if(lastCompleted!=null) {
+        lastCompleted.prevChange = true;
+        logger.updateLog(lastCompleted);
+      }
+
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error updating lob backups for UUID : " + getUUID(), e);
+    }
+
   }
 }
