@@ -12,9 +12,9 @@
           <div class="col-md-12">
             <div class="studio-well">
               <p>
-                The selected backup event (<b>{{restored.log.mode}}</b>) is part of an incremental backup.
-                Below are the files (<b>{{unitLogs.length}}</b>) involved . The restore will use all al this file to
-                restore the database.
+                The selected backup event (<b>{{restored.log.mode}}</b>) is part of a backup.
+                Below are the files (<b>{{unitLogs.length}}</b>) involved. All the backups done after
+                the selected (<b> {{ restored.log.fileName }} </b>) backup will be deleted (Marked in red).
               </p>
             </div>
           </div>
