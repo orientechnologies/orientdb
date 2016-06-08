@@ -1205,8 +1205,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   private void clearOwner() {
-    final Thread current = Thread.currentThread();
-    owner.compareAndSet(current, null);
+    owner.set(null);
   }
 
   @Override
