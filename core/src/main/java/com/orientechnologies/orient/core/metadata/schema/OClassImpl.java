@@ -1705,6 +1705,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       } else {
         String customName = stringValue.substring(0, indx).trim();
         String customValue = stringValue.substring(indx + 1).trim();
+        if (isQuoted(customValue)) {
+          customValue = removeQuotes(customValue);
+        }
         if (customValue.isEmpty())
           removeCustom(customName);
         else
@@ -1721,6 +1724,23 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
+  private String removeQuotes(String s) {
+    s = s.trim();
+    return s.substring(1, s.length() - 1);
+  }
+
+  private boolean isQuoted(String s) {
+    s = s.trim();
+    if (s.startsWith("\"") && s.endsWith("\""))
+      return true;
+    if (s.startsWith("'") && s.endsWith("'"))
+      return true;
+    if (s.startsWith("`") && s.endsWith("`"))
+      return true;
+
+    return false;
+  }
+  
   public OClassImpl setEncryption(final String iValue) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
