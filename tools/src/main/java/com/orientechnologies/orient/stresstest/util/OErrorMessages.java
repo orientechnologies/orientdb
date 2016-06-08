@@ -42,7 +42,7 @@ public class OErrorMessages {
   public static final String COMMAND_LINE_PARSER_TX_GREATER_THAN_CREATES         = "The number of operationsPerTransactions (parameter -x) [%d] is greater than the number of creates [%d] divided by iterationsNumber and ThreadsNumber.";
   public static final String COMMAND_LINE_PARSER_EXISTING_OUTPUT_FILE            = "The resultOutputFile [%s] already exists.";
   public static final String COMMAND_LINE_PARSER_NOT_EXISTING_OUTPUT_DIRECTORY   = "The directory where to write the resultOutputFile [%s] doesn't exist.";
-  public static final String COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE = "You don't have the permissions for writing the resultOutputFile on directory [%s].";
+  public static final String COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE = "You don't have the permissions for writing on directory [%s] the resultOutputFile.";
   public static final String COMMAND_LINE_PARSER_MISSING_REMOTE_IP               =
       "The mode is [" + OMode.REMOTE + "] but the param --" + OConstants.OPTION_REMOTE_IP + " wasn't passed.";
   public static final String ERROR_OPENING_CONSOLE                               =

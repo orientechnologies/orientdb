@@ -66,13 +66,21 @@ public class OStressTesterCommandLineParser {
       if (outputFile.exists()) {
         throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_EXISTING_OUTPUT_FILE, resultOutputFile));
       }
-      if (!outputFile.getParentFile().exists()) {
-        throw new OInitException(
-            String.format(OErrorMessages.COMMAND_LINE_PARSER_NOT_EXISTING_OUTPUT_DIRECTORY, outputFile.getParentFile().getAbsoluteFile()));
+
+      File parentFile = outputFile.getParentFile();
+
+      // if the filename does not contain a path (both relative and absolute)
+      if (parentFile == null) {
+        parentFile = new File(".");
       }
-      if (!outputFile.getParentFile().canWrite()) {
+
+      if (!parentFile.exists()) {
         throw new OInitException(
-            String.format(OErrorMessages.COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE, outputFile.getParentFile().getAbsoluteFile()));
+            String.format(OErrorMessages.COMMAND_LINE_PARSER_NOT_EXISTING_OUTPUT_DIRECTORY, parentFile.getAbsoluteFile()));
+      }
+      if (!parentFile.canWrite()) {
+        throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE,
+            parentFile.getAbsoluteFile()));
       }
     }
 
