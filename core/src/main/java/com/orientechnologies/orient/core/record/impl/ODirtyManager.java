@@ -39,7 +39,7 @@ public class ODirtyManager {
 
   public void setDirty(ORecord record) {
     ODirtyManager real = getReal();
-    if (record.getIdentity().isNew()) {
+    if (record.getIdentity().isNew() && !record.getIdentity().isTemporary()) {
       if (real.newRecords == null)
         real.newRecords = Collections.newSetFromMap(new IdentityHashMap<ORecord, Boolean>());
       real.newRecords.add(record);

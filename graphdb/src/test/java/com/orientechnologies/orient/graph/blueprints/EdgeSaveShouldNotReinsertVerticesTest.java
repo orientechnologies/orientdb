@@ -24,18 +24,31 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Sergey Sitnikov
  */
 public class EdgeSaveShouldNotReinsertVerticesTest {
 
-  @Test
-  public void test() {
-    final OrientGraphFactory factory = new OrientGraphFactory("memory:" + EdgeSaveShouldNotReinsertVerticesTest.class.getSimpleName());
+  private OrientGraphFactory factory;
+
+  @Before
+  public void before() {
+    factory = new OrientGraphFactory("memory:" + EdgeSaveShouldNotReinsertVerticesTest.class.getSimpleName());
     factory.setAutoStartTx(false);
     factory.setUseClassForEdgeLabel(false);
+  }
+
+  @After
+  public void after() {
+    factory.drop();
+  }
+
+  @Test
+  public void test() {
 
     final OrientGraph graph = factory.getTx();
     graph.createVertexType("Person").createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
