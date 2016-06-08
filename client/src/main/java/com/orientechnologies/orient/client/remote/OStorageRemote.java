@@ -1610,7 +1610,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
           final String nodeStatus = m.field("status");
 
-          if (m != null && !"OFFLINE".equals(nodeStatus)) {
+          if (m != null && !"OFFLINE".equals(nodeStatus) && 
+              OGlobalConfiguration.NETWORK_BINARY_DNS_FALLBACK_SERVERS_ENABLED.getValueAsBoolean()) {
             final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
             if (listeners != null)
               for (Map<String, Object> listener : listeners) {

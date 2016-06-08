@@ -413,6 +413,9 @@ public enum OGlobalConfiguration {
   NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT("network.binary.loadBalancing.timeout",
       "Maximum time (in ms) to wait for the answer from DNS about the TXT record for load balancing", Integer.class, 2000, true),
 
+  NETWORK_BINARY_DNS_FALLBACK_SERVERS_ENABLED("network.binary.fallbackServers.enabled",
+      "In case the connected server becomes unreachable, the client automatically connects to the next available one", Boolean.class, Boolean.TRUE, true),
+
   NETWORK_BINARY_MAX_CONTENT_LENGTH("network.binary.maxLength", "TCP/IP max content length (in KB) of BINARY requests",
       Integer.class, 16384, true),
 
