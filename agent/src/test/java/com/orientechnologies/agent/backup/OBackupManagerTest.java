@@ -143,8 +143,27 @@ public class OBackupManagerTest {
 
     checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
 
-    deleteAndCheck(uuid, list, 17, 15);
+    deleteAndCheck(uuid, list, 17, 18 - calculateToDelete(list, 17));
 
+  }
+
+  private int calculateToDelete(List<ODocument> list, int start) {
+
+    int counter = 0;
+    Long last = null;
+    do {
+      ODocument document = list.get(start);
+      Long val = document.field("unitId");
+      if (last == null) {
+        last = val;
+      }
+      if (!last.equals(val)) {
+        break;
+      }
+      start--;
+      counter++;
+    } while (start >= 0);
+    return counter;
   }
 
   @Test
