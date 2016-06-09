@@ -54,6 +54,7 @@ public class OStressTesterCommandLineParser {
     OMode mode = OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());
     String rootPassword = options.get(OConstants.OPTION_ROOT_PASSWORD);
     String resultOutputFile = options.get(OConstants.OPTION_OUTPUT_FILE);
+    String plocalPath = options.get(OConstants.OPTION_PLOCAL_PATH);
     int iterationsNumber = getNumber(options.get(OConstants.OPTION_ITERATIONS), "iterations");
     int operationsPerTransaction = getNumber(options.get(OConstants.OPTION_TRANSACTIONS), "transactions");
     int threadsNumber = getNumber(options.get(OConstants.OPTION_THREADS), "threads");
@@ -61,7 +62,24 @@ public class OStressTesterCommandLineParser {
     String remoteIp = options.get(OConstants.OPTION_REMOTE_IP);
     int remotePort = 2424;
 
+    if (plocalPath!= null) {
+      if (plocalPath.endsWith(File.separator)) {
+        plocalPath = plocalPath.substring(0, plocalPath.length() - File.separator.length());
+      }
+      File plocalFile = new File(plocalPath);
+      if (!plocalFile.exists()) {
+        throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_NOT_EXISTING_PLOCAL_PATH, plocalPath));
+      }
+      if (!plocalFile.canWrite()) {
+        throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_PLOCAL_PATH, plocalPath));
+      }
+      if (!plocalFile.isDirectory()) {
+        throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_PLOCAL_PATH_IS_NOT_DIRECTORY, plocalPath));
+      }
+    }
+
     if (resultOutputFile != null) {
+
       File outputFile = new File(resultOutputFile);
       if (outputFile.exists()) {
         throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_EXISTING_OUTPUT_FILE, resultOutputFile));
@@ -114,7 +132,7 @@ public class OStressTesterCommandLineParser {
       }
     }
 
-    ODatabaseIdentifier databaseIdentifier = new ODatabaseIdentifier(mode, dbName, rootPassword, remoteIp, remotePort);
+    ODatabaseIdentifier databaseIdentifier = new ODatabaseIdentifier(mode, dbName, rootPassword, remoteIp, remotePort, plocalPath);
     return new OStressTester(databaseIdentifier, operationsSet, iterationsNumber, threadsNumber, operationsPerTransaction,
         resultOutputFile);
   }

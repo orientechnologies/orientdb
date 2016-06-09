@@ -42,10 +42,15 @@ public class OErrorMessages {
   public static final String COMMAND_LINE_PARSER_TX_GREATER_THAN_CREATES         = "The number of operationsPerTransactions (parameter -x) [%d] is greater than the number of creates [%d] divided by iterationsNumber and ThreadsNumber.";
   public static final String COMMAND_LINE_PARSER_EXISTING_OUTPUT_FILE            = "The resultOutputFile [%s] already exists.";
   public static final String COMMAND_LINE_PARSER_NOT_EXISTING_OUTPUT_DIRECTORY   = "The directory where to write the resultOutputFile [%s] doesn't exist.";
+  public static final String COMMAND_LINE_PARSER_NOT_EXISTING_PLOCAL_PATH        = "The plocal directory (param -d) doesn't exist [%s].";
   public static final String COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE = "You don't have the permissions for writing on directory [%s] the resultOutputFile.";
+  public static final String COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_PLOCAL_PATH = "You don't have the permissions for writing on plocal directory [%s].";
+  public static final String COMMAND_LINE_PARSER_PLOCAL_PATH_IS_NOT_DIRECTORY    = "The plocal path [%s] is not a directory.";
+
   public static final String COMMAND_LINE_PARSER_MISSING_REMOTE_IP               =
       "The mode is [" + OMode.REMOTE + "] but the param --" + OConstants.OPTION_REMOTE_IP + " wasn't passed.";
-  public static final String ERROR_OPENING_CONSOLE                               =
+
+  public static final String ERROR_OPENING_CONSOLE =
       "An error has occurred opening the console. Please supply the root password as the -" + OConstants.OPTION_ROOT_PASSWORD
           + " parameter.";
 }
