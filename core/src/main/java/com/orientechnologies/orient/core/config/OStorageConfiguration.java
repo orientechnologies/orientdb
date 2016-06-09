@@ -411,6 +411,8 @@ public class OStorageConfiguration implements OSerializableStream {
       // DEFAULT = 1
       minimumClusters = 1;
 
+    autoInitClusters();
+
     if (version >= 10) {
       recordSerializer = read(values[index++]);
       recordSerializerVersion = Integer.parseInt(read(values[index++]));
