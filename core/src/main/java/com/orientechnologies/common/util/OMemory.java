@@ -65,11 +65,20 @@ public class OMemory {
       memorySize.setAccessible(true);
       osMemory = (Long) memorySize.invoke(mxBean);
     } catch (NoSuchMethodException e) {
-      OLogManager.instance().error(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+      if (!OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+      else
+        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
     } catch (InvocationTargetException e) {
-      OLogManager.instance().error(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+      if (!OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+      else
+        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
     } catch (IllegalAccessException e) {
-      OLogManager.instance().error(OMemory.class, "Unable to determine the amount of installed RAM.", e);
+      if (!OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().warn(OMemory.class, "Unable to determine the amount of installed RAM.");
+      else
+        OLogManager.instance().debug(OMemory.class, "Unable to determine the amount of installed RAM.", e);
     }
 
     return osMemory;

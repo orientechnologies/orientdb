@@ -60,13 +60,15 @@ public class ODistributedOutput {
 
         final Date date = m.field("startedOn");
 
-        final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
-        if (sdf.format(date).equals(sdf.format(new Date())))
-          // TODAY, PUT ONLY THE HOUR
-          serverRow.field("StartedOn", new SimpleDateFormat("HH:mm:ss").format(date));
-        else
-          // ANY OTHER DAY, PUT FULL DATE
-          serverRow.field("StartedOn", date);
+        if( date != null ) {
+          final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
+          if (sdf.format(date).equals(sdf.format(new Date())))
+            // TODAY, PUT ONLY THE HOUR
+            serverRow.field("StartedOn", new SimpleDateFormat("HH:mm:ss").format(date));
+          else
+            // ANY OTHER DAY, PUT FULL DATE
+            serverRow.field("StartedOn", date);
+        }
 
         final Collection<Map> listeners = m.field("listeners");
         if (listeners != null) {
