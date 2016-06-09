@@ -87,7 +87,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
       assignClusterOwnership(iDatabase, cfg, iClass, cluster, node);
     }
 
-    // MOVE THE UNASSIGNED CLUSTERS TO THE ORIGINAL SET TO BE REALLOCATED FROM THE EXTERNAL
+    // MOVE THE UNASSIGNED CLUSTERS TO THE ORIGINAL SET TO BE REALLOCATED FROM THE EXTERNAL (SHOULD NEVER HAPPEN)
     clustersToReassign.addAll(clustersOfClassToReassign);
 
     Collection<String> allClusterNames = iDatabase.getClusterNames();

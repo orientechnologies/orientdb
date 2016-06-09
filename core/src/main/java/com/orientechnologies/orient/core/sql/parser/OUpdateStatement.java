@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.storage.OStorage;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +21,7 @@ public class OUpdateStatement extends OStatement {
 
   public OWhereClause               whereClause;
 
-  public boolean                    lockRecord   = false;
+  public OStorage.LOCKING_STRATEGY lockRecord = null;
 
   public OLimit                     limit;
   public OTimeout                   timeout;
@@ -64,8 +66,22 @@ public class OUpdateStatement extends OStatement {
       whereClause.toString(params, builder);
     }
 
-    if (lockRecord) {
-      builder.append(" LOCK RECORD");
+    if (lockRecord!=null) {
+      builder.append(" LOCK ");
+      switch (lockRecord){
+      case DEFAULT:
+        builder.append("DEFAULT");
+        break;
+      case EXCLUSIVE_LOCK:
+        builder.append("RECORD");
+        break;
+      case SHARED_LOCK:
+        builder.append("SHARED");
+        break;
+      case NONE:
+        builder.append("NONE");
+        break;
+      }
     }
     if (limit != null) {
       limit.toString(params, builder);

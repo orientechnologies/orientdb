@@ -103,7 +103,17 @@ public class OClientConnection {
    * Returns the remote network address in the format <ip>:<port>.
    */
   public String getRemoteAddress() {
-    final Socket socket = getProtocol().getChannel().socket;
+    Socket socket = null;
+    if (getProtocol() != null) {
+      socket = getProtocol().getChannel().socket;
+    } else {
+      for (ONetworkProtocol protocol : this.protocols) {
+        socket = protocol.getChannel().socket;
+        if (socket != null)
+          break;
+      }
+    }
+
     if (socket != null) {
       final InetSocketAddress remoteAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
       return remoteAddress.getAddress().getHostAddress() + ":" + remoteAddress.getPort();
@@ -199,7 +209,6 @@ public class OClientConnection {
     stats.lastCommandDetail = data.commandDetail;
 
     data.commandDetail = "-";
-
     release();
 
   }

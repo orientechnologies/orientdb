@@ -157,7 +157,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
         }
       } catch (Exception e) {
         OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, protocol.getRemoteAddress());
-        protocol.getServer().getClientConnectionManager().disconnect(protocol.getServer(), connection);
+        protocol.getServer().getClientConnectionManager().disconnect(connection);
         OLiveQueryHook.unsubscribe(iToken, connection.getDatabase());
         break;
       }
@@ -204,7 +204,7 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
         }
       } catch (Exception e) {
         OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, protocol.getRemoteAddress());
-        protocol.getServer().getClientConnectionManager().disconnect(protocol.getServer(), connection);
+        protocol.getServer().getClientConnectionManager().disconnect(connection);
         break;
       }
 

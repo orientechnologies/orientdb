@@ -39,7 +39,7 @@ public class OServerCommandPostConnection extends OServerCommandAuthenticatedSer
     iRequest.data.commandDetail = urlParts[1];
 
     if ("KILL".equalsIgnoreCase(urlParts[1]))
-      server.getClientConnectionManager().kill(server, Integer.parseInt(urlParts[2]));
+      server.getClientConnectionManager().kill(Integer.parseInt(urlParts[2]));
     else if ("INTERRUPT".equalsIgnoreCase(urlParts[1]))
       server.getClientConnectionManager().interrupt(Integer.parseInt(urlParts[2]));
     else
