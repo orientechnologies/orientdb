@@ -160,7 +160,7 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
       if (iEvaluate)
         if (iParameters[i] != null) {
-          if (iParameters[i] instanceof String && !iParameters[i].toString().startsWith("[")) {
+          if (iParameters[i] instanceof String) {
             final Object v = OSQLHelper.parseValue(null, null, iParameters[i].toString(), null);
             if (v == OSQLHelper.VALUE_NOT_PARSED
                 || (v != null && OMultiValue.isMultiValue(v) && OMultiValue.getFirstValue(v) == OSQLHelper.VALUE_NOT_PARSED))

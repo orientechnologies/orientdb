@@ -694,7 +694,19 @@ public class OSelectStatementTest {
 
   public void testLetMatch(){
     checkRightSyntax("select $a let $a = (MATCH {class:Foo, as:bar, where:(name = 'foo')} return $elements)");
+  }
 
+  public void testLockRecord() {
+    checkRightSyntax("Select from foo lock record");
+    checkRightSyntax("Select from foo lock none");
+    checkRightSyntax("Select from foo lock shared");
+    checkRightSyntax("Select from foo lock default");
+    checkRightSyntax("Select from foo LOCK RECORD");
+    checkRightSyntax("Select from foo LOCK NONE");
+    checkRightSyntax("Select from foo LOCK SHARED");
+    checkRightSyntax("Select from foo LOCK DEFAULT");
+
+    checkWrongSyntax("Select from foo LOCK Foo");
   }
 
 

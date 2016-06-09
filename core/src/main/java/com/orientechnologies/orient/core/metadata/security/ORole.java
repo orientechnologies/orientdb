@@ -52,7 +52,7 @@ public class ORole extends OIdentity implements OSecurityRole {
   public final static int                   PERMISSION_DELETE  = registerPermissionBit(3, "Delete");
   public final static int                   PERMISSION_EXECUTE = registerPermissionBit(4, "Execute");
   public final static int                   PERMISSION_ALL     = PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
-                                                                  + PERMISSION_DELETE;
+                                                                  + PERMISSION_DELETE + PERMISSION_EXECUTE;
   protected final static byte               STREAM_DENY        = 0;
   protected final static byte               STREAM_ALLOW       = 1;
   private static final long                 serialVersionUID   = 1L;

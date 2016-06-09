@@ -30,57 +30,66 @@ import java.io.File;
  */
 public class ODatabaseIdentifier {
 
+  private final OMode  mode;
+  private final String remoteIp;
+  private final int    remotePort;
+  private       String dbName;
+  private       String rootPassword;
+  private       String plocalPath;
 
-    private final OMode mode;
-    private final String remoteIp;
-    private final int remotePort;
-    private String dbName;
-    private String rootPassword;
+  public ODatabaseIdentifier(OMode mode, String dbName, String rootPassword, String remoteIp, int remotePort, String plocalPath) {
+    this.mode = mode;
+    this.dbName = dbName;
+    this.rootPassword = rootPassword;
+    this.remotePort = remotePort;
+    this.remoteIp = remoteIp;
+    this.plocalPath = plocalPath;
+  }
 
-    public ODatabaseIdentifier(OMode mode, String dbName, String rootPassword, String remoteIp, int remotePort) {
-        this.mode = mode;
-        this.dbName = dbName;
-        this.rootPassword = rootPassword;
-        this.remotePort = remotePort;
-        this.remoteIp = remoteIp;
+  public String getUrl() {
+
+    switch (mode) {
+    case MEMORY:
+      return "memory:" + dbName;
+    case REMOTE:
+      return "remote:" + remoteIp + ":" + remotePort + "/" + dbName;
+    case DISTRIBUTED:
+      return null;
+    case PLOCAL:
+    default:
+      String basePath = System.getProperty("java.io.tmpdir");
+      if (plocalPath != null) {
+        basePath = plocalPath;
+      }
+      return "plocal:" + basePath + File.separator + dbName;
     }
+  }
 
-    public String getUrl() {
+  public OMode getMode() {
+    return mode;
+  }
 
-        switch (mode) {
-            case MEMORY:
-                return "memory:" + dbName;
-            case REMOTE:
-                return "remote:" + remoteIp + ":" + remotePort + "/" + dbName;
-            case DISTRIBUTED:
-                return null;
-            case PLOCAL:
-            default:
-                return "plocal:" + System.getProperty("java.io.tmpdir") + File.separator + dbName;
-        }
-    }
+  public String getPassword() {
+    return rootPassword;
+  }
 
-    public OMode getMode() {
-        return mode;
-    }
+  public String getName() {
+    return dbName;
+  }
 
-    public String getPassword() {
-        return rootPassword;
-    }
+  public void setPassword(String password) {
+    this.rootPassword = password;
+  }
 
-    public String getName() {
-        return dbName;
-    }
+  public String getRemoteIp() {
+    return remoteIp;
+  }
 
-    public void setPassword(String password) {
-        this.rootPassword = password;
-    }
+  public int getRemotePort() {
+    return remotePort;
+  }
 
-    public String getRemoteIp() {
-        return remoteIp;
-    }
-
-    public int getRemotePort() {
-        return remotePort;
-    }
+  public String getPlocalPath() {
+    return plocalPath;
+  }
 }

@@ -37,76 +37,115 @@ import java.util.concurrent.Callable;
  */
 public class OOperationsExecutor implements Callable {
 
-    private OOperationsSet operationsSet;
-    private OConsoleWriter consoleWriter;
-    private List<ODocument> insertedDocs;
-    private ODatabaseIdentifier databaseIdentifier;
+  private OOperationsSet      operationsSet;
+  private int                 txNumber;
+  private OConsoleWriter      consoleWriter;
+  private ODatabaseIdentifier databaseIdentifier;
 
-    public OOperationsExecutor(ODatabaseIdentifier databaseIdentifier, OOperationsSet operationsSet, OConsoleWriter consoleWriter) {
-        this.databaseIdentifier = databaseIdentifier;
-        this.consoleWriter = consoleWriter;
-        this.operationsSet = operationsSet;
-        insertedDocs = new ArrayList<ODocument>();
+  public OOperationsExecutor(ODatabaseIdentifier databaseIdentifier, OOperationsSet operationsSet, int txNumber,
+      OConsoleWriter consoleWriter) {
+    this.databaseIdentifier = databaseIdentifier;
+    this.txNumber = txNumber;
+    this.consoleWriter = consoleWriter;
+    this.operationsSet = operationsSet;
+  }
+
+  @Override
+  public Object call() throws Exception {
+
+    // the database must be opened in the executing thread
+    ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
+
+    // executes all the operations defined for this test
+    long start = System.currentTimeMillis();
+    List<ODocument> insertedDocs = executeCreates(operationsSet.getNumberOfCreates(), txNumber, database);
+    long createsTime = (System.currentTimeMillis() - start);
+
+    start = System.currentTimeMillis();
+    executeReads(operationsSet.getNumberOfReads(), database);
+    long insertsTime = (System.currentTimeMillis() - start);
+
+    start = System.currentTimeMillis();
+    executeUpdates(operationsSet.getNumberOfUpdates(), txNumber, database, insertedDocs);
+    long updatesTime = (System.currentTimeMillis() - start);
+
+    start = System.currentTimeMillis();
+    executeDeletes(operationsSet.getNumberOfDeletes(), txNumber, database, insertedDocs);
+    long deletesTime = (System.currentTimeMillis() - start);
+
+    // and return the timings of this run of the test
+    return new OOperationsExecutorResults(createsTime, insertsTime, updatesTime, deletesTime);
+  }
+
+  private List<ODocument> executeOperations(int number, int operationsInTx, ODatabase database,
+      Invokable<ODocument, Integer, ODocument> operationToExecute) throws Exception {
+
+    List<ODocument> insertedDocs = new ArrayList<ODocument>();
+    int txCounter = 1;
+    if (operationsInTx > 0) {
+      database.begin();
     }
-
-
-    @Override
-    public Object call() throws Exception {
-
-        // the database must be opened in the executing thread
-        ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
-
-        // executes all the operations defined for this test
-        long start = System.currentTimeMillis();
-        executeCreates(operationsSet.getNumberOfCreates());
-        long createsTime = (System.currentTimeMillis() - start);
-
-        start = System.currentTimeMillis();
-        executeReads(operationsSet.getNumberOfReads(), database);
-        long insertsTime = (System.currentTimeMillis() - start);
-
-        start = System.currentTimeMillis();
-        executeUpdates(operationsSet.getNumberOfUpdates());
-        long updatesTime = (System.currentTimeMillis() - start);
-
-        start = System.currentTimeMillis();
-        executeDeletes(operationsSet.getNumberOfDeletes());
-        long deletesTime = (System.currentTimeMillis() - start);
-
-        // and return the timings of this run of the test
-        return new OOperationsExecutorResults(
-                createsTime,
-                insertsTime,
-                updatesTime,
-                deletesTime);
+    for (int j = 0; j < number; j++) {
+      if (operationsInTx > 0 && txCounter % operationsInTx == 0) {
+        database.commit();
+        database.begin();
+      }
+      ODocument doc = operationToExecute.invoke(j, null);
+      if (doc != null) {
+        insertedDocs.add(doc);
+      }
     }
-
-    private void executeCreates(int number) {
-        for (int j = 0; j < number; j++) {
-            insertedDocs.add(ODatabaseUtils.createOperation(j));
-            consoleWriter.addCreate();
-        }
+    if (operationsInTx > 0) {
+      database.commit();
     }
+    return insertedDocs;
+  }
 
-    private void executeReads(int number, ODatabase database) throws Exception {
-        for (int j = 0; j < number; j++) {
-            ODatabaseUtils.readOperation(database, j);
-            consoleWriter.addRead();
-        }
-    }
+  private List<ODocument> executeCreates(int number, int operationsInTx, ODatabase database) throws Exception {
+    return executeOperations(number, operationsInTx, database, new Invokable<ODocument, Integer, ODocument>() {
+      @Override
+      public ODocument invoke(Integer value, ODocument doc) {
+        consoleWriter.addCreate();
+        return ODatabaseUtils.createOperation(value);
+      }
+    });
+  }
 
-    private void executeUpdates(int number) {
-        for (int j = 0; j < number; j++) {
-            ODatabaseUtils.updateOperation(insertedDocs.get(j % insertedDocs.size()), j);
-            consoleWriter.addUpdate();
-        }
-    }
+  private void executeReads(int number, final ODatabase database) throws Exception {
+    executeOperations(number, 0, database, new Invokable<ODocument, Integer, ODocument>() {
+      @Override
+      public ODocument invoke(Integer value, ODocument doc) throws Exception {
+        ODatabaseUtils.readOperation(database, value);
+        consoleWriter.addRead();
+        return null;
+      }
+    });
+  }
 
-    private void executeDeletes(int number) {
-        for (int j = 0; j < number; j++) {
-            ODatabaseUtils.deleteOperation(insertedDocs.get(j));
-            consoleWriter.addDelete();
-        }
-    }
+  private void executeUpdates(int number, int operationsInTx, final ODatabase database, final List<ODocument> insertedDocs) throws Exception {
+    executeOperations(number, operationsInTx, database, new Invokable<ODocument, Integer, ODocument>() {
+      @Override
+      public ODocument invoke(Integer value, ODocument doc) throws Exception {
+        ODatabaseUtils.updateOperation(insertedDocs.get(value % insertedDocs.size()), value);
+        consoleWriter.addUpdate();
+        return null;
+      }
+    });
+  }
+
+  private void executeDeletes(int number, int operationsInTx, final ODatabase database, final List<ODocument> insertedDocs) throws Exception {
+    executeOperations(number, operationsInTx, database, new Invokable<ODocument, Integer, ODocument>() {
+      @Override
+      public ODocument invoke(Integer value, ODocument doc) throws Exception {
+        ODatabaseUtils.deleteOperation(insertedDocs.get(value));
+        consoleWriter.addDelete();
+        return null;
+      }
+    });
+  }
+
+  interface Invokable<T, V, Z> {
+    T invoke(V first, Z second) throws Exception;
+  }
 
 }

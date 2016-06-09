@@ -26,28 +26,36 @@ package com.orientechnologies.orient.stresstest.util;
  */
 public class OConstants {
 
-    public final static String OPTION_MODE = "m";
-    public final static String OPTION_ITERATIONS = "n";
-    public final static String OPTION_THREADS = "t";
-    public final static String OPTION_OPERATIONS = "s";
-    public final static String OPTION_ROOT_PASSWORD = "root-password";
-    public final static String OPTION_REMOTE_IP = "remote-ip";
-    public final static String OPTION_REMOTE_PORT = "remote-port";
-    public final static String MAIN_OPTIONS = OPTION_MODE + OPTION_ITERATIONS + OPTION_THREADS + OPTION_OPERATIONS;
+  public final static String OPTION_MODE          = "m";
+  public final static String OPTION_ITERATIONS    = "n";
+  public final static String OPTION_THREADS       = "t";
+  public final static String OPTION_TRANSACTIONS  = "x";
+  public final static String OPTION_OPERATIONS    = "s";
+  public final static String OPTION_OUTPUT_FILE   = "o";
+  public static final String OPTION_PLOCAL_PATH   = "d";
+  public final static String OPTION_ROOT_PASSWORD = "root-password";
+  public final static String OPTION_REMOTE_IP     = "remote-ip";
+  public final static String OPTION_REMOTE_PORT   = "remote-port";
 
-    public static final String SYNTAX = "StressTester " +
-            "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" +
-            "\n\t-n iterationsNumber " +
-            "\n\t-s operationSet " +
-            "\n\t-t threadsNumber " +
-            "\n\t--root-password rootPassword (optional)" +
-            "\n\t--remote-ip ipOrHostname(optional)" +
-            "\n\t--remote-port portNumber(optional)" +
-            "\n";
-    public static final String TEMP_DATABASE_NAME = "stress-test-db-";
-    public static final String CLASS_NAME = "StressTestDoc";
-    public static final String INDEX_NAME = CLASS_NAME + ".Index";
+  public final static String MAIN_OPTIONS       =
+      OPTION_MODE + OPTION_ITERATIONS + OPTION_THREADS + OPTION_OPERATIONS + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE
+          + OPTION_PLOCAL_PATH;
+  public static final String SYNTAX             = "StressTester " +
+      "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" +
+      "\n\t-n iterationsNumber " +
+      "\n\t-s operationSet" +
+      "\n\t-t threadsNumber" +
+      "\n\t-x operationsPerTransaction" +
+      "\n\t-o resultOutputFile" +
+      "\n\t-d plocalDirectory" +
+      "\n\t--root-password rootPassword" +
+      "\n\t--remote-ip ipOrHostname" +
+      "\n\t--remote-port portNumber" +
+      "\n";
+  public static final String TEMP_DATABASE_NAME = "stress-test-db-";
+  public static final String CLASS_NAME         = "StressTestDoc";
 
-    public static final String VERSION = "0.1";
-    public static final String CONSOLE_REMOTE_PASSWORD_PROMPT = "OrientDB Server (%s:%d) - Please insert the root password to create the test database: ";
+  public static final String INDEX_NAME                     = CLASS_NAME + ".Index";
+  public static final String VERSION                        = "0.1";
+  public static final String CONSOLE_REMOTE_PASSWORD_PROMPT = "OrientDB Server (%s:%d) - Please insert the root password to create the test database: ";
 }

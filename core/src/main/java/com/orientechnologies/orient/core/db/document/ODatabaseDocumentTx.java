@@ -372,7 +372,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     final OStorage storage = getStorage();
     storage.restoreFromIncrementalBackup(incrementalBackupPath);
-    getMetadata().reload();
+
+    metadata = new OMetadataDefault(this);
+    metadata.load();
 
     return (DB) this;
   }
@@ -410,9 +412,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       // since 2.1 newly created databases use strict SQL validation by default
       getStorage().getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
-
-      // @SINCE 2.2 USES THE GLOBAL CONFIG FOR MINIMUM CLUSTERS
-      set(ATTRIBUTES.MINIMUMCLUSTERS, ctxCfg.getValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS));
 
       getStorage().getConfiguration().update();
 
@@ -1205,8 +1204,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   private void clearOwner() {
-    final Thread current = Thread.currentThread();
-    owner.compareAndSet(current, null);
+    owner.set(null);
   }
 
   @Override

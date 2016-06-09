@@ -67,18 +67,18 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     storageThreadGroup = new ThreadGroup(parentThreadGroup, "OrientDB Storage");
   }
 
-  protected final String                              url;
-  protected final String                              mode;
-  protected final OSharedResourceAdaptiveExternal     dataLock;
-  protected final OReadersWriterSpinLock              stateLock;
+  protected final String                          url;
+  protected final String                          mode;
+  protected final OSharedResourceAdaptiveExternal dataLock;
+  protected final OReadersWriterSpinLock          stateLock;
 
   protected volatile OStorageConfiguration            configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
-  protected String                                    name;
-  protected AtomicLong                                version         = new AtomicLong();
-  protected volatile STATUS                           status          = STATUS.CLOSED;
+  protected          String                           name;
+  protected          AtomicLong version = new AtomicLong();
+  protected volatile STATUS     status  = STATUS.CLOSED;
 
-  private final OSharedContainerImpl                  sharedContainer = new OSharedContainerImpl();
+  protected final OSharedContainerImpl sharedContainer = new OSharedContainerImpl();
 
   public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
     this.name = normalizeName(name);

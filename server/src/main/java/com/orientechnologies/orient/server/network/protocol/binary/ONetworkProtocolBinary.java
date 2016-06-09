@@ -109,13 +109,13 @@ import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected final    Level                logClientExceptions;
   protected final    boolean              logClientFullStackTrace;
-  protected          OChannelBinaryServer channel;
+  protected          OChannelBinary       channel;
   protected volatile int                  requestType;
   protected          int                  clientTxId;
   protected          boolean              okSent;
-  private            boolean              tokenConnection=false;
-  private long distributedRequests  = 0;
-  private long distributedResponses = 0;
+  private boolean tokenConnection      = false;
+  private long    distributedRequests  = 0;
+  private long    distributedResponses = 0;
 
   public ONetworkProtocolBinary() {
     this("OrientDB <- BinaryClient/?");
@@ -127,12 +127,23 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     logClientFullStackTrace = OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE.getValueAsBoolean();
   }
 
+  /**
+   * Internal varialbe injection useful for testing.
+   * @param server
+   * @param channel
+   */
+  public void initVariables(final OServer server, OChannelBinaryServer channel){
+    this.server = server;
+    this.channel = channel;
+  }
+
   @Override
   public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
       final OContextConfiguration iConfig) throws IOException {
 
-    server = iServer;
-    channel = new OChannelBinaryServer(iSocket, iConfig);
+
+    OChannelBinaryServer channel = new OChannelBinaryServer(iSocket, iConfig);
+    initVariables(iServer, channel);
 
     // SEND PROTOCOL VERSION
     channel.writeShort((short) getVersion());
@@ -274,7 +285,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           connection.validateSession(bytes, server.getTokenHandler(), this);
         } else {
           connection.validateSession(bytes, server.getTokenHandler(), this);
-          server.getClientConnectionManager().disconnect(server, clientTxId);
+          server.getClientConnectionManager().disconnect(clientTxId);
           connection = server.getClientConnectionManager().reConnect(this, connection.getTokenBytes(), connection.getToken());
           connection.acquire();
         }
@@ -288,12 +299,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       }
     } catch (RuntimeException e) {
       if (connection != null)
-        server.getClientConnectionManager().disconnect(this.getServer(), connection);
+        server.getClientConnectionManager().disconnect(connection);
       ODatabaseRecordThreadLocal.INSTANCE.remove();
       throw e;
     } catch (IOException e) {
       if (connection != null)
-        server.getClientConnectionManager().disconnect(this.getServer(), connection);
+        server.getClientConnectionManager().disconnect(connection);
       ODatabaseRecordThreadLocal.INSTANCE.remove();
       throw e;
     }
@@ -694,7 +705,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     try {
       connection.setDatabase((ODatabaseDocumentTx) server.openDatabase(dbURL, user, passwd, connection.getData()));
     } catch (OException e) {
-      server.getClientConnectionManager().disconnect(server, connection);
+      server.getClientConnectionManager().disconnect(connection);
       throw e;
     }
 
@@ -1158,7 +1169,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     setDataCommandInfo(connection, "Close Database");
 
     if (connection != null) {
-      server.getClientConnectionManager().disconnect(server, connection);
+      server.getClientConnectionManager().disconnect(connection);
     }
   }
 
@@ -1343,7 +1354,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       OCommandResultListener cmdResultListener = command.getResultListener();
 
       if (live) {
-        liveListener = new OLiveCommandResultListener(connection, clientTxId, cmdResultListener);
+        liveListener = new OLiveCommandResultListener(server, connection, clientTxId, cmdResultListener);
         listener = new OSyncCommandResultListener(null);
         command.setResultListener(liveListener);
       } else if (asynch) {
@@ -2403,7 +2414,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   private boolean isConnectionAlive(OClientConnection connection) {
     if (connection == null || connection.getDatabase() == null) {
       // CONNECTION/DATABASE CLOSED, KILL IT
-      server.getClientConnectionManager().kill(server, connection);
+      server.getClientConnectionManager().kill(connection);
       return false;
     }
     return true;

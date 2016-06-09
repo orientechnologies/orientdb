@@ -965,36 +965,48 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (!(cluster instanceof OPaginatedCluster))
       throw new IllegalArgumentException("Cluster '" + iClusterName + "' (type=" + cluster.getClass() + ") does not support scan");
 
+    final long scanBatchSize = OGlobalConfiguration.QUERY_SCAN_BATCH_SIZE.getValueAsLong();
+
     if (transaction.get() != null) {
       final long timer = Orient.instance().getProfiler().startChrono();
       try {
-        ((OPaginatedCluster) cluster).scan(iAscendingOrder, iFrom, iTo, 0, iCallback);
+        if (scanBatchSize > 0) {
+          long lastPos;
+          if (iAscendingOrder) {
+            do {
+              lastPos = ((OPaginatedCluster) cluster).scan(true, iFrom, iTo, scanBatchSize, iCallback);
+              iFrom = lastPos;
+            } while (lastPos > 0);
+          } else {
+            do {
+              lastPos = ((OPaginatedCluster) cluster).scan(false, iFrom, iTo, scanBatchSize, iCallback);
+              iTo = lastPos;
+            } while (lastPos > 0);
+          }
+        } else
+          ((OPaginatedCluster) cluster).scan(iAscendingOrder, iFrom, iTo, 0, iCallback);
+
+        return;
       } finally {
         Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
       }
     }
 
-    final long scanBatchSize = OGlobalConfiguration.QUERY_SCAN_BATCH_SIZE.getValueAsLong();
-
     if (scanBatchSize > 0) {
-      long lastPos = -1;
+      long lastPos;
       if (iAscendingOrder) {
         do {
-          lastPos = scanClusterInLock(iAscendingOrder, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
+          lastPos = scanClusterInLock(true, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
           iFrom = lastPos;
         } while (lastPos > 0);
       } else {
         do {
-          lastPos = scanClusterInLock(iAscendingOrder, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
+          lastPos = scanClusterInLock(false, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
           iTo = lastPos;
         } while (lastPos > 0);
       }
-
-    } else {
-
+    } else
       scanClusterInLock(iAscendingOrder, (OPaginatedCluster) cluster, iFrom, iTo, 0, iCallback);
-
-    }
   }
 
   protected long scanClusterInLock(final boolean iAscendingOrder, final OPaginatedCluster cluster, final long iFrom, final long iTo,
@@ -1744,8 +1756,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void clearIndex(int indexId) {
-    if (transaction.get() != null)
+    if (transaction.get() != null) {
       doClearIndex(indexId);
+      return;
+    }
 
     checkOpeness();
 
@@ -1902,8 +1916,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void putIndexValue(int indexId, Object key, Object value) {
-    if (transaction.get() != null)
+    if (transaction.get() != null) {
       doPutIndexValue(indexId, key, value);
+      return;
+    }
 
     checkOpeness();
 
