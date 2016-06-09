@@ -692,8 +692,11 @@ public class OServerAdmin {
     try {
       //TODO:replace this api with one that get connection for only the specified url.
       network = storage.getNetwork(storage.getCurrentServerURL());
-      return operation.execute(network, storage.getCurrentSession());
+      T res = operation.execute(network, storage.getCurrentSession());
+      storage.connectionManager.release(network);
+      return res;
     } catch (Exception e) {
+      storage.connectionManager.release(network);
       storage.close(true, false);
       throw OException.wrapException(new OStorageException(errorMessage), e);
     }

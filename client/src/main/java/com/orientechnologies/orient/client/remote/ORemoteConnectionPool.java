@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * Created by tglman on 01/10/15.
  */
-public class ORemoteConnectionPool implements OResourcePoolListener<String, OChannelBinaryAsynchClient>, OChannelListener {
+public class ORemoteConnectionPool implements OResourcePoolListener<String, OChannelBinaryAsynchClient> {
 
   private OResourcePool<String, OChannelBinaryAsynchClient> pool;
   private ORemoteConnectionPushListener                     listener;
@@ -58,9 +58,6 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
       final OChannelBinaryAsynchClient ch = new OChannelBinaryAsynchClient(remoteHost, remotePort, databaseName,
           clientConfiguration, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, listener);
 
-      // REGISTER MYSELF AS LISTENER TO REMOVE THE CHANNEL FROM THE POOL IN CASE OF CLOSING
-      ch.registerListener(this);
-
       return ch;
 
     } catch (OIOException e) {
@@ -94,16 +91,6 @@ public class ORemoteConnectionPool implements OResourcePoolListener<String, OCha
     return pool;
   }
 
-  @Override
-  public void onChannelClose(final OChannel channel) {
-    OChannelBinaryAsynchClient conn = (OChannelBinaryAsynchClient) channel;
-
-    if (pool == null)
-      throw new IllegalStateException("Connection cannot be released because the pool doesn't exist anymore");
-
-    pool.remove(conn);
-
-  }
 
   public OChannelBinaryAsynchClient acquire(final String iServerURL, final long timeout,
       final OContextConfiguration clientConfiguration, final Map<String, Object> iConfiguration,

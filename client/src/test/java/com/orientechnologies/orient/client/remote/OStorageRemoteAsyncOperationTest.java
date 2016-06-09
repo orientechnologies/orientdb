@@ -40,7 +40,7 @@ public class OStorageRemoteAsyncOperationTest {
     final OStorageRemoteSession session = new OStorageRemoteSession(10);
     storage = new OStorageRemote("mock", "mock", "mock") {
       @Override
-      public <T> T networkOperation(OStorageRemoteOperation<T> operation, String errorMessage) {
+      public <T> T baseNetworkOperation(OStorageRemoteOperation<T> operation, String errorMessage) {
         try {
           return operation.execute(channel, session);
         } catch (IOException e) {
