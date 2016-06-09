@@ -760,62 +760,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     lastClusterChangeOn = System.currentTimeMillis();
   }
 
-  /**
-   * Elects current node as new coordinator.
-   *
-   * @param cfg
-   * @param nodeLeftName
-   */
-  protected boolean electCurrentNodeAsNewCoordinator(final ODistributedConfiguration cfg, final String nodeLeftName,
-      final String databaseName) {
-    // TODO: ALL THE NODES SHOULD CONCUR TO ELECTION IN CASE THE 2ND IN CHARGE DIES BEFORE TO BE ELECTED
-    return executeInDistributedDatabaseLock(databaseName, new OCallable<Boolean, ODistributedConfiguration>() {
-      @Override
-      public Boolean call(final ODistributedConfiguration cfg) {
-        String nextServer = getNextEligibleServerCoordinator(cfg);
-        while (!isNodeAvailable(nextServer)) {
-          // SET THE SERVER AS OFFLINE IN CFG
-          cfg.setServerOffline(nextServer, null);
-
-          // GET THE NEXT ONE
-          final String nextCandidate = getNextEligibleServerCoordinator(cfg);
-          if (nextServer.equals(nextCandidate)) {
-            // NO MORE CANDIDATES, SET LOCAL NODE
-            nextServer = nodeName;
-            break;
-          }
-
-          nextServer = nextCandidate;
-        }
-
-        return electCurrentNodeAsNewCoordinator(nodeLeftName, nextServer, databaseName, cfg);
-      }
-    });
-  }
-
-  protected boolean electCurrentNodeAsNewCoordinator(final String nodeLeftName, final String nodeToElect, final String databaseName,
-      final ODistributedConfiguration cfg) {
-    boolean modifiedCfg = false;
-
-    final String coordinator = getCoordinatorServer(cfg);
-    if (nodeLeftName.equals(coordinator)) {
-      if (nodeName.equals(nodeToElect)) {
-        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Electing node '%s' as new coordinator", nodeName);
-
-        // ELECT CURRENT NODE AS NEW COORDINATOR
-        cfg.setServerOffline(nodeLeftName, nodeName);
-        modifiedCfg = true;
-      }
-
-      // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
-      final Set<String> clustersWithNotAvailableOwner = cfg.getClustersOwnedByServer(nodeLeftName);
-      if (reassignClustersOwnership(nodeName, cfg, databaseName, clustersWithNotAvailableOwner, false))
-        modifiedCfg = true;
-    }
-
-    return modifiedCfg;
-  }
-
   protected boolean reassignClustersOwnership(final String iNode, final ODistributedConfiguration cfg, final String databaseName,
       final Set<String> clustersWithNotAvailableOwner, final boolean rebalance) {
 
@@ -832,37 +776,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     } finally {
       database.close();
     }
-  }
-
-  protected String getCoordinatorServer(final ODistributedConfiguration cfg) {
-    final List<String> servers = cfg.getServers("*");
-    if (servers == null || servers.isEmpty())
-      return null;
-
-    String next = servers.get(0);
-    if (ODistributedConfiguration.NEW_NODE_TAG.equals(next)) {
-      // GET THE NEXT ONE
-      next = servers.size() > 1 ? servers.get(1) : null;
-    }
-
-    return next;
-  }
-
-  /**
-   * Returns the next eligible server coordinator (2nd in server list).
-   */
-  private String getNextEligibleServerCoordinator(final ODistributedConfiguration cfg) {
-    final List<String> servers = cfg.getServers("*");
-    if (servers.size() < 2)
-      return null;
-
-    String next = servers.get(1);
-    if (ODistributedConfiguration.NEW_NODE_TAG.equals(next)) {
-      // GET THE NEXT ONE
-      next = servers.size() > 2 ? servers.get(2) : null;
-    }
-
-    return next;
   }
 
   @Override
@@ -1443,7 +1356,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   protected synchronized boolean rebalanceClusterOwnership(final String iNode, final ODatabaseInternal iDatabase,
-      final ODistributedConfiguration cfg, Set<String> clustersWithNotAvailableOwner, final boolean rebalance) {
+      final ODistributedConfiguration cfg, final Set<String> clustersWithNotAvailableOwner, final boolean rebalance) {
+    if (!rebalance && clustersWithNotAvailableOwner.isEmpty())
+      return false;
+
     final ODistributedConfiguration.ROLES role = cfg.getServerRole(iNode);
     if (role != ODistributedConfiguration.ROLES.MASTER)
       // NO MASTER, DON'T CREATE LOCAL CLUSTERS
@@ -1454,6 +1370,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Reassigning cluster ownership for database %s",
         iDatabase.getName());
+
+    // REMOVE ALL THE CLUSTERS WITH STICKY OWNER CONFIGURED
+    for (Iterator<String> it = clustersWithNotAvailableOwner.iterator(); it.hasNext();) {
+      final String cluster = it.next();
+      if (cfg.getConfiguredClusterOwner(cluster) != null)
+        it.remove();
+    }
 
     // OVERWRITE CLUSTER SELECTION STRATEGY BY SUFFIX
     boolean distributedCfgDirty = false;

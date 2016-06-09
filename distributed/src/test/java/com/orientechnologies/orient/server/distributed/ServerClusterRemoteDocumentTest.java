@@ -34,7 +34,7 @@ public class ServerClusterRemoteDocumentTest extends AbstractServerClusterTest {
   final static int SERVERS = 3;
 
   public String getDatabaseName() {
-    return "distributed-remote-docs";
+    return "distributed-remote-docs3";
   }
 
   @Test

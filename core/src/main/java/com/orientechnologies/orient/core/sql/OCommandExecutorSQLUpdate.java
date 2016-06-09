@@ -206,8 +206,22 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
             selectString.append(" ");
             updateStm.timeout.toString(params, selectString);
           }
-          if(updateStm.lockRecord) {
-            selectString.append(" LOCK RECORD");
+          if (updateStm.lockRecord != null) {
+            selectString.append(" LOCK ");
+            switch (updateStm.lockRecord) {
+            case DEFAULT:
+              selectString.append("DEFAULT");
+              break;
+            case EXCLUSIVE_LOCK:
+              selectString.append("RECORD");
+              break;
+            case SHARED_LOCK:
+              selectString.append("SHARED");
+              break;
+            case NONE:
+              selectString.append("NONE");
+              break;
+            }
           }
 
           query = new OSQLAsynchQuery<ODocument>(selectString.toString(), this);
