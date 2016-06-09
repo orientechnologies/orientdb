@@ -112,8 +112,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private int                               defaultClusterId;
   private OStorageRemoteAsynchEventListener asynchEventListener;
   private Map<String, Object>               connectionOptions;
-  private OEngineRemote                     engine;
   private String                            recordFormat;
+  protected ORemoteConnectionManager        connectionManager;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     this(iClientId, iURL, iMode, null, true);
@@ -137,7 +137,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     asynchExecutor = Executors.newSingleThreadScheduledExecutor();
 
-    engine = (OEngineRemote) Orient.instance().getRunningEngine(OEngineRemote.NAME);
+    OEngineRemote engine = (OEngineRemote) Orient.instance().getRunningEngine(OEngineRemote.NAME);
+    connectionManager = engine.getConnectionManager();
   }
 
   public <T> T asyncNetworkOperation(final OStorageRemoteOperationWrite write, final OStorageRemoteOperationRead<T> read, int mode,
@@ -167,14 +168,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               try {
                 T inRes = read.execute(network, session);
                 callback.call(recordId, inRes);
-              } catch (IOException e) {
+              } catch (Throwable e) {
                 OLogManager.instance().error(this, "Exception on async query", e);
               }
             }
           });
         } else {
           //NO RESPONSE
-          engine.getConnectionManager().release(network);
+          connectionManager.release(network);
           res = null;
         }
         return res;
@@ -249,7 +250,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private int handleIOException(int retry, OChannelBinaryAsynchClient network, Exception e) {
     OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", e.getMessage());
     OLogManager.instance().debug(this, "I/O error stack: ", e);
-    engine.getConnectionManager().remove(network);
+    connectionManager.remove(network);
     if (--retry <= 0)
       throw OException.wrapException(new OIOException(e.getMessage()), e);
     else {
@@ -399,7 +400,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               network = getNetwork(nodeSession.getServerURL());
               network.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE, session);
               endRequest(network);
-              engine.getConnectionManager().release(network);
+              connectionManager.release(network);
             } catch (OIOException ex) {
               // IGNORING IF THE SERVER IS DOWN OR NOT REACHABLE THE SESSION IS AUTOMATICALLY CLOSED.
               OLogManager.instance().debug(this, "Impossible to comunicate to the server for close: %s", ex);
@@ -420,7 +421,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       status = STATUS.CLOSING;
       // CLOSE ALL THE CONNECTIONS
       for (String url : serverURLs) {
-        engine.getConnectionManager().closePool(url);
+        connectionManager.closePool(url);
       }
       sbTreeCollectionManager.close();
 
@@ -1172,7 +1173,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                   } else {
                     OLiveResultListener listener = (OLiveResultListener) iCommand.getResultListener();
                     // TODO pass db copy!!!
-                    ORemoteConnectionPool pool = OStorageRemote.this.engine.getConnectionManager().getPool(network.getServerURL());
+                    ORemoteConnectionPool pool = OStorageRemote.this.connectionManager.getPool(network.getServerURL());
                     OStorageRemote.this.asynchEventListener.registerLiveListener(pool, token, listener);
                   }
                 } else {
@@ -1533,7 +1534,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       iNetwork.flush();
       iNetwork.releaseWriteLock();
     } catch (IOException e) {
-      engine.getConnectionManager().remove(iNetwork);
+      connectionManager.remove(iNetwork);
       throw e;
     }
   }
@@ -1544,9 +1545,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public void endResponse(final OChannelBinaryAsynchClient iNetwork) {
     try {
       iNetwork.endResponse();
-      engine.getConnectionManager().release(iNetwork);
+      connectionManager.release(iNetwork);
     } catch (IOException e) {
-      engine.getConnectionManager().remove(iNetwork);
+      connectionManager.remove(iNetwork);
       OLogManager.instance().warn(this, "dirty data left in the socket closing", e);
     }
   }
@@ -1641,10 +1642,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return OEngineRemote.NAME;
   }
 
-  public OEngineRemote getEngine() {
-    return engine;
-  }
-
   @Override
   public String getUserName() {
     OStorageRemoteSession session = getCurrentSession();
@@ -1692,14 +1689,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         } catch (OIOException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
-            engine.getConnectionManager().remove(network);
+            connectionManager.remove(network);
           }
 
           OLogManager.instance().error(this, "Cannot open database with url " + currentURL, e);
         } catch (OOfflineNodeException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
-            engine.getConnectionManager().remove(network);
+            connectionManager.remove(network);
           }
 
           OLogManager.instance().debug(this, "Cannot open database with url " + currentURL, e);
@@ -1711,7 +1708,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             try {
-              engine.getConnectionManager().remove(network);
+              connectionManager.remove(network);
             } catch (Exception e) {
               // IGNORE ANY EXCEPTION
               OLogManager.instance().debug(this, "Cannot remove connection or database url=" + currentURL, e);
@@ -1726,14 +1723,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             try {
-              engine.getConnectionManager().remove(network);
+              connectionManager.remove(network);
             } catch (Exception ex) {
               // IGNORE ANY EXCEPTION
               OLogManager.instance().debug(this, "Cannot remove connection or database url=" + currentURL, e);
             }
           }
         }
-      } while (engine.getConnectionManager().getAvailableConnections(currentURL) > 0);
+      } while (connectionManager.getAvailableConnections(currentURL) > 0);
 
       currentURL = useNewServerURL(currentURL);
 
@@ -1816,7 +1813,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         } catch (OIOException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
-            engine.getConnectionManager().remove(network);
+            connectionManager.remove(network);
             network = null;
           }
 
@@ -1830,7 +1827,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             try {
-              engine.getConnectionManager().remove(network);
+              connectionManager.remove(network);
             } catch (Exception ex) {
               // IGNORE ANY EXCEPTION
               OLogManager.instance().debug(this, "Cannot remove connection or database url=" + currentURL, e);
@@ -1840,7 +1837,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
           OLogManager.instance().error(this, "Cannot open database url=" + currentURL, e);
         }
-      } while (engine.getConnectionManager().getReusableConnections(currentURL) > 0);
+      } while (connectionManager.getReusableConnections(currentURL) > 0);
 
       currentURL = useNewServerURL(currentURL);
 
@@ -2073,14 +2070,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     OChannelBinaryAsynchClient network;
     do {
       try {
-        network = engine.getConnectionManager().acquire(iCurrentURL, clientConfiguration, connectionOptions, asynchEventListener);
+        network = connectionManager.acquire(iCurrentURL, clientConfiguration, connectionOptions, asynchEventListener);
       } catch (Exception cause) {
         throw OException.wrapException(new OStorageException("Cannot open a connection to remote server: " + iCurrentURL), cause);
       }
       if (!network.tryLock()) {
         // CANNOT LOCK IT, MAYBE HASN'T BE CORRECTLY UNLOCKED BY PREVIOUS USER
         OLogManager.instance().error(this, "Removing locked network channel '%s'...", iCurrentURL);
-        engine.getConnectionManager().remove(network);
+        connectionManager.remove(network);
         network = null;
       }
     } while (network == null);
