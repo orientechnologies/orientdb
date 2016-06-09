@@ -721,6 +721,7 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
       }
     }, function (error) {
       Spinner.stopSpinnerPopup();
+      Notification.push({content: error, error: true});
       $scope.$hide();
     });
 
