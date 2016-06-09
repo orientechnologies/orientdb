@@ -83,7 +83,6 @@ public class OrientGraphMultithreadRemoteTest {
   }
 
   @Test
-  @Ignore
   public void testThreadingInsert() throws InterruptedException {
     List<Thread> threads = new ArrayList<Thread>();
     int threadCount = 8;
