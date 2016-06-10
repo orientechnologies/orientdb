@@ -101,7 +101,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       if (lastDeployment != null && lastDeployment.longValue() == random) {
         // SKIP IT
         ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-            "skip deploying delta database '%s' because already executed", databaseName);
+            "Skip deploying delta database '%s' because already executed", databaseName);
         return Boolean.FALSE;
       }
 
@@ -111,13 +111,13 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
       ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-          "deploying database %s with delta of changes...", databaseName);
+          "Deploying database %s with delta of changes...", databaseName);
 
       // CREATE A BACKUP OF DATABASE
       final File backupFile = new File(Orient.getTempPath() + "/backup_" + getNodeSource() + "_" + database.getName() + ".zip");
 
       ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-          "creating delta backup of database '%s' (startLSN=%s) in directory: %s...", databaseName, startLSN,
+          "Creating delta backup of database '%s' (startLSN=%s) in directory: %s...", databaseName, startLSN,
           backupFile.getAbsolutePath());
 
       if (backupFile.exists())
@@ -189,7 +189,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
     } finally {
       ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-          "deploy delta database task completed");
+          "Deploy delta database task completed");
     }
   }
 

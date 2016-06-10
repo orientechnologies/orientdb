@@ -958,8 +958,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
           final File uniqueClustersBackupDirectory = getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
 
-          backupCurrentDatabase(databaseName);
-
           installDatabaseFromNetwork(dbPath, databaseName, distrDatabase, r.getKey(), (ODistributedDatabaseChunk) value, true,
               uniqueClustersBackupDirectory);
 
@@ -1423,7 +1421,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     dumpServersStatus();
   }
 
-  protected synchronized boolean rebalanceClusterOwnership(final String iNode, final ODatabaseInternal iDatabase,
+  protected boolean rebalanceClusterOwnership(final String iNode, final ODatabaseInternal iDatabase,
       final ODistributedConfiguration cfg, final Set<String> clustersWithNotAvailableOwner, final boolean rebalance) {
     if (!rebalance && clustersWithNotAvailableOwner.isEmpty())
       return false;
