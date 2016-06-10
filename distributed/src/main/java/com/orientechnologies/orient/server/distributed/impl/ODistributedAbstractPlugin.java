@@ -1340,11 +1340,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (iClass.isAbstract())
       return false;
 
-    final int[] clusterIds = iClass.getClusterIds();
-    final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
-    for (int clusterId : clusterIds)
-      clusterNames.add(iDatabase.getClusterNameById(clusterId));
-
     return executeInDistributedDatabaseLock(databaseName, new OCallable<Boolean, ODistributedConfiguration>() {
       @Override
       public Boolean call(final ODistributedConfiguration lastCfg) {
@@ -1455,6 +1450,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     boolean distributedCfgDirty = false;
 
     final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
+
+    cfg.addNewNodeInServerList(nodeName);
+    updateCachedDatabaseConfiguration(iDatabase.getName(), cfg.getDocument(), false, false);
 
     final OSchema schema = ((ODatabaseInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
     for (final OClass clazz : schema.getClasses()) {
