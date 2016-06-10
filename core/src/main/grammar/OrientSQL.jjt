@@ -939,6 +939,9 @@ OStatement StatementInternal():
                 LOOKAHEAD(TruncateRecordStatement())
                 result = TruncateRecordStatement()
                 |
+                LOOKAHEAD(2)
+                result = AlterSequenceStatement()
+                |
                 LOOKAHEAD(AlterClassStatement())
                 result = AlterClassStatement()
                 |
@@ -4435,6 +4438,21 @@ OCreateSequenceStatement CreateSequenceStatement():
             }
         }
 
+        [ <START> jjtThis.start = Expression() ]
+        [ <INCREMENT> jjtThis.start = Expression() ]
+        [ <CACHE> jjtThis.start = Expression() ]
+    )
+    { return jjtThis; }
+}
+
+OAlterSequenceStatement AlterSequenceStatement():
+{
+ OIdentifier lastIdentifier;
+}
+{
+    (
+        <ALTER> <SEQUENCE>
+        jjtThis.name = Identifier()
         [ <START> jjtThis.start = Expression() ]
         [ <INCREMENT> jjtThis.start = Expression() ]
         [ <CACHE> jjtThis.start = Expression() ]
