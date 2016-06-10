@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -35,10 +36,13 @@ public class AlterClassClusterTest {
     clazz = db.getMetadata().getSchema().getClass("Test");
     assertEquals(clazz.getDefaultClusterId(), db.getClusterIdByName("TestOneMore"));
 
-    clazz.removeClusterId(db.getClusterIdByName("TestOneMore"));
-    assertEquals(clazz.getDefaultClusterId(), -1);
   }
 
+  @Test(expectedExceptions = ODatabaseException.class)
+  public void testRemoveLastClassCluster() {
+    OClass clazz = db.getMetadata().getSchema().createClass("Test", 1, null);
+    clazz.removeClusterId(db.getClusterIdByName("Test"));
+  }
 
   @Test(expectedExceptions = OSchemaException.class)
   public void testAddClusterToAbstracClass() {
@@ -52,8 +56,6 @@ public class AlterClassClusterTest {
     int id = db.addCluster("TestOneMore");
     clazz.addClusterId(id);
   }
-
-
 
 }
 
