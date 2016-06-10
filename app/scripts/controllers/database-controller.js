@@ -201,6 +201,11 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
           item.query = selection;
         }
 
+        if (data.result.length > $scope.limit) {
+          item.limit = data.result.length;
+        } else {
+          item.limit = $scope.limit;
+        }
         item.language = $scope.language;
         item.selectedRequestType = $scope.config.selectedRequestType;
         item.selectedRequestLanguage = $scope.config.selectedRequestLanguage;
