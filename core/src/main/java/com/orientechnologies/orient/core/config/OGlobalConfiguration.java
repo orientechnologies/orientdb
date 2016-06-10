@@ -504,7 +504,7 @@ public enum OGlobalConfiguration {
         }
       }),
 
-  LOG_FILE_LEVEL("log.file.level", "File logging level", String.class, "fine", new OConfigurationChangeCallback() {
+  LOG_FILE_LEVEL("log.file.level", "File logging level", String.class, "info", new OConfigurationChangeCallback() {
     public void change(final Object iCurrentValue, final Object iNewValue) {
       OLogManager.instance().setLevel((String) iNewValue, FileHandler.class);
     }
