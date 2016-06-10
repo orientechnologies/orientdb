@@ -100,7 +100,7 @@ public class OStressTesterCommandLineParserTest {
 
     String tmpDir = System.getProperty("java.io.tmpdir");
     if (tmpDir.endsWith(File.separator)) {
-      tmpDir = tmpDir.substring(0, File.separator.length());
+      tmpDir = tmpDir.substring(0, tmpDir.length() - File.separator.length());
     }
 
     stressTester = OStressTesterCommandLineParser
