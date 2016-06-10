@@ -312,6 +312,9 @@ public enum OType {
     if (iValue == null)
       return null;
 
+    if (iTargetClass == null)
+      return iValue;
+
     if (iValue.getClass().equals(iTargetClass))
       // SAME TYPE: DON'T CONVERT IT
       return iValue;

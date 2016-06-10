@@ -884,7 +884,10 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       setLinkedClass(getDatabase().getMetadata().getSchema().getClass(stringValue));
       break;
     case LINKEDTYPE:
-      setLinkedType(OType.valueOf(stringValue));
+      if(stringValue == null)
+        setLinkedType(null);
+      else
+        setLinkedType(OType.valueOf(stringValue));
       break;
     case MIN:
       setMin(stringValue);
