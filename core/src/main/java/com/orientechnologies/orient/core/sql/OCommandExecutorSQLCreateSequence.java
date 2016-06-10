@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence;
@@ -18,64 +17,70 @@ import java.util.Map;
  * @since 2/28/2015
  */
 public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
-  public static final String     KEYWORD_CREATE    = "CREATE";
-  public static final String     KEYWORD_SEQUENCE  = "SEQUENCE";
-  public static final String     KEYWORD_TYPE      = "TYPE";
-  public static final String     KEYWORD_START     = "START";
-  public static final String     KEYWORD_INCREMENT = "INCREMENT";
-  public static final String     KEYWORD_CACHE     = "CACHE";
+  public static final String KEYWORD_CREATE    = "CREATE";
+  public static final String KEYWORD_SEQUENCE  = "SEQUENCE";
+  public static final String KEYWORD_TYPE      = "TYPE";
+  public static final String KEYWORD_START     = "START";
+  public static final String KEYWORD_INCREMENT = "INCREMENT";
+  public static final String KEYWORD_CACHE     = "CACHE";
 
   private String                 sequenceName;
   private SEQUENCE_TYPE          sequenceType;
   private OSequence.CreateParams params;
 
-  @Override
-  public OCommandExecutorSQLCreateSequence parse(OCommandRequest iRequest) {
-    init((OCommandRequestText) iRequest);
+  @Override public OCommandExecutorSQLCreateSequence parse(OCommandRequest iRequest) {
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    final ODatabaseDocumentInternal database = getDatabase();
-    final StringBuilder word = new StringBuilder();
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      queryText = preParse(queryText, iRequest);
+      textRequest.setText(queryText);
 
-    parserRequiredKeyword(KEYWORD_CREATE);
-    parserRequiredKeyword(KEYWORD_SEQUENCE);
-    this.sequenceName = parserRequiredWord(false, "Expected <sequence name>");
-    this.params = new OSequence.CreateParams().setDefaults();
+      init((OCommandRequestText) iRequest);
 
-    String temp;
-    while ((temp = parseOptionalWord(true)) != null) {
-      if (parserIsEnded()) {
-        break;
-      }
+      parserRequiredKeyword(KEYWORD_CREATE);
+      parserRequiredKeyword(KEYWORD_SEQUENCE);
+      this.sequenceName = parserRequiredWord(false, "Expected <sequence name>");
+      this.params = new OSequence.CreateParams().setDefaults();
 
-      if (temp.equals(KEYWORD_TYPE)) {
-        String typeAsString = parserRequiredWord(true, "Expected <sequence type>");
-        try {
-          this.sequenceType = OSequenceHelper.getSequenceTyeFromString(typeAsString);
-        } catch (IllegalArgumentException e) {
-          throw new OCommandSQLParsingException("Unknown sequence type '" + typeAsString + "'. Supported attributes are: "
-              + Arrays.toString(SEQUENCE_TYPE.values()));
+      String temp;
+      while ((temp = parseOptionalWord(true)) != null) {
+        if (parserIsEnded()) {
+          break;
         }
-      } else if (temp.equals(KEYWORD_START)) {
-        String startAsString = parserRequiredWord(true, "Expected <start value>");
-        this.params.start = Long.parseLong(startAsString);
-      } else if (temp.equals(KEYWORD_INCREMENT)) {
-        String incrementAsString = parserRequiredWord(true, "Expected <increment value>");
-        this.params.increment = Integer.parseInt(incrementAsString);
-      } else if (temp.equals(KEYWORD_CACHE)) {
-        String cacheAsString = parserRequiredWord(true, "Expected <cache value>");
-        this.params.cacheSize = Integer.parseInt(cacheAsString);
+
+        if (temp.equals(KEYWORD_TYPE)) {
+          String typeAsString = parserRequiredWord(true, "Expected <sequence type>");
+          try {
+            this.sequenceType = OSequenceHelper.getSequenceTyeFromString(typeAsString);
+          } catch (IllegalArgumentException e) {
+            throw new OCommandSQLParsingException(
+                "Unknown sequence type '" + typeAsString + "'. Supported attributes are: " + Arrays
+                    .toString(SEQUENCE_TYPE.values()));
+          }
+        } else if (temp.equals(KEYWORD_START)) {
+          String startAsString = parserRequiredWord(true, "Expected <start value>");
+          this.params.start = Long.parseLong(startAsString);
+        } else if (temp.equals(KEYWORD_INCREMENT)) {
+          String incrementAsString = parserRequiredWord(true, "Expected <increment value>");
+          this.params.increment = Integer.parseInt(incrementAsString);
+        } else if (temp.equals(KEYWORD_CACHE)) {
+          String cacheAsString = parserRequiredWord(true, "Expected <cache value>");
+          this.params.cacheSize = Integer.parseInt(cacheAsString);
+        }
       }
-    }
 
-    if (this.sequenceType == null) {
-      this.sequenceType = OSequenceHelper.DEFAULT_SEQUENCE_TYPE;
+      if (this.sequenceType == null) {
+        this.sequenceType = OSequenceHelper.DEFAULT_SEQUENCE_TYPE;
+      }
+    } finally {
+      textRequest.setText(originalQuery);
     }
-
     return this;
   }
 
-  @Override
-  public Object execute(Map<Object, Object> iArgs) {
+  @Override public Object execute(Map<Object, Object> iArgs) {
     if (this.sequenceName == null) {
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
     }
@@ -87,13 +92,11 @@ public class OCommandExecutorSQLCreateSequence extends OCommandExecutorSQLAbstra
     return database.getMetadata().getSequenceLibrary().getSequenceCount();
   }
 
-  @Override
-  public String getSyntax() {
+  @Override public String getSyntax() {
     return "CREATE SEQUENCE <sequence> [TYPE <CACHED|ORDERED>] [START <value>] [INCREMENT <value>] [CACHE <value>]";
   }
 
-  @Override
-  public QUORUM_TYPE getQuorumType() {
+  @Override public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
   }
 }
