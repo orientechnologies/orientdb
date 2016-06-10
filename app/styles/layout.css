@@ -190,11 +190,16 @@ body div.container-studio {
 }
 
 .aside-form {
+  overflow: auto;
+  height: 80%;
   background-color: #30333a;
   color: #c5c5c5;
   padding-top: 5px;
 }
 
+.vertex-aside {
+  height: 100%;
+}
 .asideVertex {
   width: 320px;
 }
@@ -220,7 +225,7 @@ body div.container-studio {
 
 .aside-list {
   overflow: auto;
-  height: 100%;
+  height: 90%;
 }
 
 .aside .container-fluid {
@@ -231,9 +236,9 @@ body div.container-studio {
   height: 100%;
 }
 
-.aside-list-container .row:first-child {
-  height: 20%;
-}
+/*.aside-list-container .row:first-child {*/
+  /*height: 20%;*/
+/*}*/
 
 .aside-list-container .row:last-child {
   height: 80%;
