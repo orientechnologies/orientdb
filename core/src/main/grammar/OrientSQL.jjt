@@ -945,6 +945,9 @@ OStatement StatementInternal():
                 LOOKAHEAD(AlterClassStatement())
                 result = AlterClassStatement()
                 |
+                LOOKAHEAD(2)
+                result = DropSequenceStatement()
+                |
                 LOOKAHEAD(DropClassStatement())
                 result = DropClassStatement()
                 |
@@ -4456,6 +4459,19 @@ OAlterSequenceStatement AlterSequenceStatement():
         [ <START> jjtThis.start = Expression() ]
         [ <INCREMENT> jjtThis.start = Expression() ]
         [ <CACHE> jjtThis.start = Expression() ]
+    )
+    { return jjtThis; }
+}
+
+
+ODropSequenceStatement DropSequenceStatement():
+{
+ OIdentifier lastIdentifier;
+}
+{
+    (
+        <DROP> <SEQUENCE>
+        jjtThis.name = Identifier()
     )
     { return jjtThis; }
 }
