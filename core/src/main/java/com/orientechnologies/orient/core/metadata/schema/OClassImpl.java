@@ -1209,6 +1209,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public OClass removeClusterId(final int clusterId) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
+    if (clusterIds.length == 1 && clusterId == clusterIds[0])
+      throw new ODatabaseException(" Impossible to remove the last cluster of class '" + getName() + "' drop the class instead");
+
     acquireSchemaWriteLock();
     try {
       final ODatabaseDocumentInternal database = getDatabase();
