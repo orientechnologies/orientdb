@@ -1,8 +1,6 @@
 package com.orientechnologies.orient.graph.blueprints;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
@@ -49,7 +47,7 @@ public class EdgeBug {
         + "<entry name=\"orientdb.www.path\" value=\"/Users/curtis/orientdb-graphed-1.3.0/www/\"/>"
         + "<entry name=\"orientdb.config.file\" value=\"/Users/curtis/orientdb-graphed-1.3.0/config/orientdb-server-config.xml\"/>"
         + "<entry name=\"server.cache.staticResources\" value=\"false\"/>" + "<entry name=\"log.console.level\" value=\"info\"/>"
-        + "<entry name=\"log.file.level\" value=\"fine\"/>" + "</properties>" + "<isAfterFirstTime>true</isAfterFirstTime></orient-server>");
+        + "<entry name=\"log.file.level\" value=\"info\"/>" + "</properties>" + "<isAfterFirstTime>true</isAfterFirstTime></orient-server>");
     return ret;
   }
 

@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -220,15 +221,25 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
 
       OZIPCompressionUtil.uncompressDirectory(new FileInputStream(tempFile), tempDirectory.getAbsolutePath(), null);
 
-      final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying();
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final boolean openDatabaseHere = db == null;
+      if (db == null)
+        db = serverInstance.openDatabase("plocal:" + dbPath, "", "", null, true);
 
-      final OPaginatedCluster cluster = (OPaginatedCluster) stg.getClusterByName(clusterName);
+      try {
+        final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) db.getStorage().getUnderlying();
 
-      final File tempClusterFile = new File(tempDirectoryPath + "/" + clusterName + OPaginatedCluster.DEF_EXTENSION);
+        final OPaginatedCluster cluster = (OPaginatedCluster) stg.getClusterByName(clusterName);
 
-      cluster.replaceFile(tempClusterFile);
+        final File tempClusterFile = new File(tempDirectoryPath + "/" + clusterName + OPaginatedCluster.DEF_EXTENSION);
 
-      getDatabase().getLocalCache().invalidate();
+        cluster.replaceFile(tempClusterFile);
+
+        db.getLocalCache().invalidate();
+      } finally {
+        if (openDatabaseHere)
+          db.close();
+      }
 
       return String.format("Cluster correctly replaced, transferred %d bytes", fileSize);
 

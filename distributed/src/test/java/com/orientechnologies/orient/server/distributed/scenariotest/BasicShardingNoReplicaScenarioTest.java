@@ -45,6 +45,8 @@ import static org.junit.Assert.*;
  * - check availability no-replica (you can retry only records in shard1 and shard2)
  * - restart server3
  * - check availability no-replica (you can retry records of all the shards)
+ * - this test checks also the full restore of database that doesn't overwrite the client_asia
+ *   cluster because owned only by asia server
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>
@@ -123,6 +125,9 @@ public class BasicShardingNoReplicaScenarioTest extends AbstractShardingScenario
         final String uniqueId = "client_asia-s2-t10-v0";
         Iterable<Vertex> it = graphNoTx.command(new OCommandSQL("select from Client where name = '" + uniqueId + "'")).execute();
         List<OrientVertex> result = new LinkedList<OrientVertex>();
+        for (Vertex v : it) {
+          result.add((OrientVertex) v);
+        }
         assertEquals(0, result.size());
         System.out.println("Done");
         graphNoTx.getRawGraph().close();

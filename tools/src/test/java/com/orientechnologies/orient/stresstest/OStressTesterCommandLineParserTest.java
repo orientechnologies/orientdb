@@ -98,22 +98,27 @@ public class OStressTesterCommandLineParserTest {
     assertEquals("127.0.0.1", stressTester.getDatabaseIdentifier().getRemoteIp());
     assertEquals(1025, stressTester.getDatabaseIdentifier().getRemotePort());
 
+    String tmpDir = System.getProperty("java.io.tmpdir");
+    if (tmpDir.endsWith(File.separator)) {
+      tmpDir = tmpDir.substring(0, tmpDir.length() - File.separator.length());
+    }
+
     stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-n", "100", "-t", "4", "-m", "plocal", "--root-password", "foo", "-d", System.getProperty("java.io.tmpdir") });
+        .getStressTester(new String[] { "-n", "100", "-t", "4", "-m", "plocal", "--root-password", "foo", "-d", tmpDir });
     assertEquals(100, stressTester.getIterationsNumber());
     assertEquals(4, stressTester.getThreadsNumber());
     assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());
     assertEquals("foo", stressTester.getPassword());
-    assertEquals(System.getProperty("java.io.tmpdir"), stressTester.getDatabaseIdentifier().getPlocalPath());
+    assertEquals(tmpDir, stressTester.getDatabaseIdentifier().getPlocalPath());
 
     stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-n", "100", "-t", "4", "-m", "plocal", "--root-password", "foo", "-x", "12", "-d", System.getProperty("java.io.tmpdir") + File.separator});
+        .getStressTester(new String[] { "-n", "100", "-t", "4", "-m", "plocal", "--root-password", "foo", "-x", "12", "-d", tmpDir + File.separator});
     assertEquals(100, stressTester.getIterationsNumber());
     assertEquals(4, stressTester.getThreadsNumber());
     assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());
     assertEquals("foo", stressTester.getPassword());
     assertEquals(12, stressTester.getTransactionsNumber());
-    assertEquals(System.getProperty("java.io.tmpdir"), stressTester.getDatabaseIdentifier().getPlocalPath());
+    assertEquals(tmpDir, stressTester.getDatabaseIdentifier().getPlocalPath());
 
     stressTester = OStressTesterCommandLineParser
         .getStressTester(new String[] { "-n", "100", "-t", "4", "-m", "plocal", "-s", "c1r1u1d1", "--root-password", "foo" });

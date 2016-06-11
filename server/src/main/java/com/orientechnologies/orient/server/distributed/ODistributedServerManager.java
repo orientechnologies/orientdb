@@ -93,6 +93,9 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
+  boolean reassignClustersOwnership(String iNode, String databaseName, Set<String> clustersWithNotAvailableOwner,
+      boolean rebalance);
+
   /**
    * Available means not OFFLINE, so ONLINE or SYNCHRONIZING.
    */

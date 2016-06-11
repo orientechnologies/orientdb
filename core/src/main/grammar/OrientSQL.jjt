@@ -194,6 +194,8 @@ TOKEN:
     |
     < LET: ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) >
     |
+    < CACHE: ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
+    |
     < NOCACHE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
     |
     < UNSAFE: ( "u" | "U" ) ( "n" | "N" ) ( "s" | "S" ) ( "a" | "A" ) ( "f" | "F" ) ( "e" | "E" ) >
@@ -339,6 +341,10 @@ TOKEN:
     < SHARED: ( "S" | "s") ( "H" | "h") ( "A" | "a") ( "R" | "r") ( "E" | "e") ( "D" | "d") >
     |
     < DEFAULT_: ( "D" | "d") ( "E" | "e") ( "F" | "f") ( "A" | "a") ( "U" | "u") ( "L" | "l") ( "T" | "t") >
+	|
+	< SEQUENCE: ( "S" | "s") ( "E" | "e") ( "Q" | "q") ( "U" | "u") ( "E" | "e") ( "N" | "n") ( "C" | "c") ( "E" | "e") >
+	|
+	< START: ( "S" | "s") ( "T" | "t") ( "A" | "a") ( "R" | "r") ( "T" | "t") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -777,6 +783,12 @@ OIdentifier Identifier():
     |
     token = <DEFAULT_>
     |
+    token = <SEQUENCE>
+    |
+    token = <CACHE>
+    |
+    token = <START>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -892,6 +904,9 @@ OStatement StatementInternal():
                 LOOKAHEAD(2)
                 result = CreateFunctionStatement()
                 |
+                LOOKAHEAD(2)
+                result = CreateSequenceStatement()
+                |
                 LOOKAHEAD(CreateVertexStatementNoTarget())
                 result = CreateVertexStatementNoTarget()
                 |
@@ -924,8 +939,14 @@ OStatement StatementInternal():
                 LOOKAHEAD(TruncateRecordStatement())
                 result = TruncateRecordStatement()
                 |
+                LOOKAHEAD(2)
+                result = AlterSequenceStatement()
+                |
                 LOOKAHEAD(AlterClassStatement())
                 result = AlterClassStatement()
+                |
+                LOOKAHEAD(2)
+                result = DropSequenceStatement()
                 |
                 LOOKAHEAD(DropClassStatement())
                 result = DropClassStatement()
@@ -4398,6 +4419,61 @@ OConsoleStatement ConsoleStatement():
         <CONSOLE> <DOT>
         jjtThis.logLevel = Identifier()
         jjtThis.message = Expression()
+    )
+    { return jjtThis; }
+}
+
+
+OCreateSequenceStatement CreateSequenceStatement():
+{
+ OIdentifier lastIdentifier;
+}
+{
+    (
+        <CREATE> <SEQUENCE>
+        jjtThis.name = Identifier()
+        <TYPE>
+        lastIdentifier = Identifier(){
+            if(lastIdentifier.getStringValue().equalsIgnoreCase("cached")){
+                jjtThis.type = OCreateSequenceStatement.TYPE_CACHED;
+            }else if(lastIdentifier.getStringValue().equalsIgnoreCase("ordered")){
+                jjtThis.type = OCreateSequenceStatement.TYPE_ORDERED;
+            }else{
+                throw new ParseException();
+            }
+        }
+
+        [ <START> jjtThis.start = Expression() ]
+        [ <INCREMENT> jjtThis.start = Expression() ]
+        [ <CACHE> jjtThis.start = Expression() ]
+    )
+    { return jjtThis; }
+}
+
+OAlterSequenceStatement AlterSequenceStatement():
+{
+ OIdentifier lastIdentifier;
+}
+{
+    (
+        <ALTER> <SEQUENCE>
+        jjtThis.name = Identifier()
+        [ <START> jjtThis.start = Expression() ]
+        [ <INCREMENT> jjtThis.start = Expression() ]
+        [ <CACHE> jjtThis.start = Expression() ]
+    )
+    { return jjtThis; }
+}
+
+
+ODropSequenceStatement DropSequenceStatement():
+{
+ OIdentifier lastIdentifier;
+}
+{
+    (
+        <DROP> <SEQUENCE>
+        jjtThis.name = Identifier()
     )
     { return jjtThis; }
 }

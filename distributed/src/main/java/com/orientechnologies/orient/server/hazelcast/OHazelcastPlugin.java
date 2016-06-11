@@ -389,7 +389,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             }
 
             // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
-            if (reassignClustersOwnership(nodeName, cfg, databaseName, clustersWithNotAvailableOwner, false))
+            if (reassignClustersOwnership(nodeName, databaseName, clustersWithNotAvailableOwner, false))
               updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
 
             ddb.setOnline();
@@ -710,7 +710,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
             // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
             final Set<String> clustersWithNotAvailableOwner = cfg.getClustersOwnedByServer(nodeLeftName);
-            if (reassignClustersOwnership(nodeName, cfg, databaseName, clustersWithNotAvailableOwner, false))
+            if (reassignClustersOwnership(nodeName, databaseName, clustersWithNotAvailableOwner, false))
               updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
 
           }

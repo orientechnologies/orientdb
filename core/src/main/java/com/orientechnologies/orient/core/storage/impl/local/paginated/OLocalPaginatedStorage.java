@@ -61,24 +61,24 @@ import java.util.zip.ZipOutputStream;
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorageComponent {
 
-  private static String[] ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet", ".fl",
-      ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
+  private static String[]                  ALL_FILE_EXTENSIONS = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx", ".ocs", ".oef",
+      ".oem", ".oet", ".fl", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
       OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
       OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION, O2QCache.CACHE_STATISTIC_FILE_EXTENSION };
 
-  private static final int ONE_KB = 1024;
+  private static final int                 ONE_KB              = 1024;
 
-  private final int DELETE_MAX_RETRIES;
-  private final int DELETE_WAIT_TIME;
+  private final int                        DELETE_MAX_RETRIES;
+  private final int                        DELETE_WAIT_TIME;
 
   private final OStorageVariableParser     variableParser;
   private final OPaginatedStorageDirtyFlag dirtyFlag;
 
-  private final String          storagePath;
-  private       ExecutorService checkpointExecutor;
+  private final String                     storagePath;
+  private ExecutorService                  checkpointExecutor;
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode, final int id, OReadCache readCache)
       throws IOException {
@@ -176,9 +176,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
-        return OZIPCompressionUtil
-            .compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" }, iOutput,
-                compressionLevel);
+        return OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" },
+            iOutput, compressionLevel);
       } finally {
         if (bufferSize > 0) {
           bo.flush();
@@ -197,6 +196,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       close(true, false);
 
     OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
+
+    if (callable != null)
+      try {
+        callable.call();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on calling callback on database restore");
+      }
 
     open(null, null, null);
   }
@@ -357,8 +363,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     try {
       if (writeAheadLog != null) {
         checkpointExecutor.shutdown();
-        if (!checkpointExecutor
-            .awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.SECONDS))
+        if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
+            TimeUnit.SECONDS))
           throw new OStorageException("Cannot terminate full checkpoint task");
       }
     } catch (InterruptedException e) {

@@ -910,7 +910,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         continue;
       }
       OType type;
-      if (linkedType == null)
+      if (linkedType == null || linkedType == OType.ANY)
         type = getTypeFromValueEmbedded(itemValue);
       else
         type = linkedType;

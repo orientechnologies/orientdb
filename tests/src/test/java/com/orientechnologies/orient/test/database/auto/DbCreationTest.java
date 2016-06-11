@@ -58,6 +58,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
   @AfterClass
   @Override
   public void afterClass() throws Exception {
+    pool.close();
   }
 
   @BeforeMethod
@@ -202,6 +203,9 @@ public class DbCreationTest extends ObjectDBBaseTest {
 
     ODatabaseHelper.createDatabase(db, url, getStorageType());
 
+    if (pool != null) {
+      pool.close();
+    }
     pool = new OPartitionedDatabasePool(url, "admin", "admin");
 
     // Get connection from pool
@@ -224,7 +228,9 @@ public class DbCreationTest extends ObjectDBBaseTest {
       ODatabaseHelper.createDatabase(db, url, getStorageType());
       db.close();
     }
-
+    if (pool != null) {
+      pool.close();
+    }
     pool = new OPartitionedDatabasePool(url, "admin", "admin");
 
     for (int i = 0; i < 500; i++) {

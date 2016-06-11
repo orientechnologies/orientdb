@@ -49,7 +49,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   protected int             baseCount             = 0;
   protected int             expected;
   protected OIndex<?>       idx;
-  protected int             maxRetries            = 1;
+  protected int             maxRetries            = 5;
   protected boolean         useTransactions       = false;
   protected List<ServerRun> executeTestsOnServers = serverInstance;
   protected String          className             = "Person";
