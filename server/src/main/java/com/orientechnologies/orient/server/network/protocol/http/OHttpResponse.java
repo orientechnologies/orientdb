@@ -31,6 +31,7 @@ import com.orientechnologies.orient.server.OClientConnection;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.GZIPOutputStream;
 
@@ -43,6 +44,15 @@ public class OHttpResponse {
   public static final String   JSON_FORMAT       = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
   public static final char[]   URL_SEPARATOR     = { '/' };
   private static final Charset utf8              = Charset.forName("utf8");
+  
+  // Set up a date formatter that prints the date in the Http-date format as
+  // per RFC 7231, section 7.1.1.1
+  private static final SimpleDateFormat sdf;
+  static {
+    sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+    sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+  }
+      
   public final String          httpVersion;
   private final OutputStream   out;
   public String                headers;
@@ -144,7 +154,7 @@ public class OHttpResponse {
       writeLine(headers);
     }
 
-    writeLine("Date: " + new Date());
+    writeLine("Date: " + sdf.format(new Date()));
     writeLine("Content-Type: " + iContentType + "; charset=" + characterSet);
     writeLine("Server: " + serverInfo);
     writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
