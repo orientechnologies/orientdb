@@ -204,7 +204,7 @@ public class ODefaultServerSecurity implements OSecurityFactory, OServerLifecycl
             if (sah != null && sah.trim().length() > 0) {
               // If we're not the first authenticator, then append "\n".
               if (sb.length() > 0) {
-                sb.append("\n");
+                sb.append("\r\n");
               }
               sb.append(sah);
             }
