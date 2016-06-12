@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
@@ -34,6 +28,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
+import java.io.Serializable;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Asynchronous response manager
@@ -58,6 +59,7 @@ public class ODistributedResponseManager {
   private final Condition                        synchronousResponsesArrived      = synchronousResponsesLock.newCondition();
   private final int                              quorum;
   private final boolean                          waitForLocalNode;
+  private ODistributedResponse                   localResponse;
   private volatile int                           receivedResponses                = 0;
   private volatile boolean                       receivedCurrentNode;
 
@@ -500,7 +502,7 @@ public class ODistributedResponseManager {
           int responsesForQuorum = 0;
           for (ODistributedResponse r : group) {
             if (nodesConcurInQuorum.contains(r.getExecutorNodeName()))
-              if (++responsesForQuorum >= quorum)
+              if (!(r.getPayload() instanceof Throwable) && ++responsesForQuorum >= quorum)
                 // QUORUM REACHED
                 break;
           }
@@ -630,11 +632,15 @@ public class ODistributedResponseManager {
   protected void undoRequest() {
     // DETERMINE IF ANY CREATE FAILED TO RESTORE RIDS
     for (ODistributedResponse r : getReceivedResponses()) {
-      // if (r.getPayload() instanceof Throwable)
-      // // NO NEED TO UNDO AN OPERATION THAT RETURNED EXCEPTION
-      // // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
-      // continue;
-      //
+      if (r.getPayload() instanceof Throwable)
+        // NO NEED TO UNDO AN OPERATION THAT RETURNED EXCEPTION
+        // TODO: CONSIDER DIFFERENT TYPE OF EXCEPTION, SOME OF THOSE COULD REQUIRE AN UNDO
+        continue;
+
+      if (r == localResponse)
+        // SKIP LOCAL SERVER (IT'S MANAGED APART)
+        continue;
+
       final String targetNode = r.getExecutorNodeName();
       if (targetNode.equals(dManager.getLocalNodeName()))
         // AVOID TO UNDO LOCAL NODE BECAUSE THE OPERATION IS MANAGED APART
@@ -724,5 +730,10 @@ public class ODistributedResponseManager {
       }
     }
     return false;
+  }
+
+  public void setLocalResult(final String localNodeName, final Serializable localResult) {
+    localResponse = new ODistributedResponse(request.getId(), localNodeName, localNodeName, localResult);
+    collectResponse(localResponse);
   }
 }
