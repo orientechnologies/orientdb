@@ -59,7 +59,7 @@
   "sec.passwordValidator.enabled": "When checked and a password is changed, the password will be validated using the specified regular expressions",
   "sec.passwordValidator.ignoreUUID": "When checked and a password is detected as a valid UUID, password validation is ignored",
   "sec.passwordValidator.minimumLength": "Defines the minimum number of characters required in the password",
-  "sec.passwordValidator.numberRegex": "Defines the regular expression for the minimum count of required numbers and what symbols are considered numbers",
-  "sec.passwordValidator.upperCaseRegex": "Defines the regular expression for the minimum count of required uppercase characters and what symbols are considered uppercase characters",
-  "sec.passwordValidator.specialRegex": "Defines the regular expression for the minimum count of special characters and what symbols are considered special characters"
+  "sec.passwordValidator.numberRegEx": "Defines the regular expression for the minimum count of required numbers and what symbols are considered numbers",
+  "sec.passwordValidator.uppercaseRegEx": "Defines the regular expression for the minimum count of required uppercase characters and what symbols are considered uppercase characters",
+  "sec.passwordValidator.specialRegEx": "Defines the regular expression for the minimum count of special characters and what symbols are considered special characters"
 }
