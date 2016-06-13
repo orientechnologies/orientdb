@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -61,7 +62,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     return false;
   }
 
-  private void doPut(OHttpRequest iRequest, OHttpResponse iResponse, String[] parts) throws IOException {
+  private void doPut(final OHttpRequest iRequest, final OHttpResponse iResponse, final String[] parts) throws IOException {
 
     final String command = parts[1];
     final String id = parts.length > 2 ? parts[2] : null;
@@ -69,12 +70,20 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     if (command.equalsIgnoreCase("database")) {
 
       final OHazelcastPlugin manager = (OHazelcastPlugin) server.getDistributedManager();
-      ODocument doc = new ODocument().fromJSON(iRequest.content, "noMap");
 
-      Integer version = doc.field("version");
-      version++;
-      doc.field("version", version);
-      manager.updateCachedDatabaseConfiguration(id, doc, true, true);
+      manager.executeInDistributedDatabaseLock(id, new OCallable<Object, ODistributedConfiguration>() {
+        @Override
+        public Object call(final ODistributedConfiguration cfg) {
+          final ODocument doc = cfg.getDocument().fromJSON(iRequest.content, "noMap");
+
+          Integer version = doc.field("version");
+          version++;
+          doc.field("version", version);
+
+          return null;
+        }
+      });
+
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
 
     }
@@ -132,7 +141,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         });
       }
 
-    }  else if (command.equalsIgnoreCase("database")) {
+    } else if (command.equalsIgnoreCase("database")) {
 
       ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
       doc = cfg.getDocument();
