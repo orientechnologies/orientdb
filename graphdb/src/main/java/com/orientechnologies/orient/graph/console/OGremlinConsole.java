@@ -137,10 +137,13 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   }
 
   @Override
+  @ConsoleCommand(description = "Export a database", splitInWords = false, onlineHelp = "Console-Command-Export")
   public void exportDatabase(@ConsoleParameter(name = "options", description = "Export options") String iText) throws IOException {
     checkForDatabase();
 
-    if (iText != null && (iText.endsWith(".graphml") || iText.endsWith(".xml"))) {
+    final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
+    final String fileName = items.size() <= 1 || items.get(1).charAt(0) == '-' ? null : items.get(1);
+    if (fileName != null && (fileName.endsWith(".graphml") || fileName.endsWith(".xml"))) {
       message("\nExporting database in GRAPHML format to " + iText + "...");
 
       try {
@@ -149,11 +152,14 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
         g.setWarnOnForceClosingTx(false);
 
         // CREATE THE EXPORT FILE IF NOT EXIST YET
-        final File f = new File(iText);
-        f.getParentFile().mkdirs();
+        final File f = new File(fileName);
+
+        if (f.getParentFile() != null) {
+          f.getParentFile().mkdirs();
+        }
         f.createNewFile();
 
-        new GraphMLWriter(g).outputGraph(iText);
+        new GraphMLWriter(g).outputGraph(fileName);
 
       } catch (ODatabaseImportException e) {
         printError(e);
