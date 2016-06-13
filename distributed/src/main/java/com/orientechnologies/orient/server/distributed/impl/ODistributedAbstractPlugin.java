@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
@@ -67,15 +76,6 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedDatabase
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -1320,7 +1320,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     for (OClass c : iDatabase.getMetadata().getSchema().getClasses()) {
       if (!(c.getClusterSelection() instanceof OLocalClusterStrategy))
         // INSTALL ONLY ON NON-ENHANCED CLASSES
-        installClustersOfClass(iDatabase, c);
+        ((OClassImpl) c).setClusterSelectionInternal(new OLocalClusterStrategy(this, iDatabase.getName(), c));
     }
   }
 
