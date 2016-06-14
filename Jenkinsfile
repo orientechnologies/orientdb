@@ -27,9 +27,9 @@ parallel(
             node("openjdk-7-slave") {
                 sh "rm -rf *"
                 unstash 'source'
-                def mvnHome = tool 'mvn'
-
-                sh "${mvnHome}/bin/mvn --batch-mode -V -U clean compile  -Dmaven.test.failure.ignore=true"
+//                def mvnHome = tool 'mvn'
+//
+  //              sh "${mvnHome}/bin/mvn --batch-mode -V -U clean compile  -Dmaven.test.failure.ignore=true"
             }
         }
 )
