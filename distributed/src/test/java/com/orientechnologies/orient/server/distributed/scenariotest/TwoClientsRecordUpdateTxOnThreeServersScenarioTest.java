@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -33,7 +32,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -73,7 +71,6 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioTest extends Abstract
                                             }
                                           };
 
-  @Ignore
   @Test
   public void test() throws Exception {
     init(3);
