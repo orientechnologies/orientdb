@@ -1306,7 +1306,7 @@ public class OCommandExecutorSQLSelectTest {
     //issue #5671
     List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select '1'.asLong() as long"));
     assertEquals(results.size(), 1);
-    assertEquals(results.get(0).field("long"), 1L);
+    assertEquals(results.get(0).<Object>field("long"), 1L);
   }
 
   @Test

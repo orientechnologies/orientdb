@@ -211,7 +211,7 @@ public class OETLProcessor {
       //projecting cluster info to transformers
       if (iLoader.containsField("cluster")) {
         for (ODocument aTransformer : iTransformers) {
-          aTransformer.field("cluster", iLoader.field("cluster"));
+          aTransformer.field("cluster", iLoader.<Object>field("cluster"));
         }
       }
       configureTransformers(iTransformers, iContext);

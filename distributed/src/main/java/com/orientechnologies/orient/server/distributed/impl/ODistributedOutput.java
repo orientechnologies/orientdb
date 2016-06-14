@@ -154,7 +154,7 @@ public class ODistributedOutput {
 
         final String serverName = m.field("name");
         buffer.append(serverName);
-        buffer.append(m.field("status"));
+        buffer.append(m.<Object>field("status"));
 
         final Collection<String> databases = m.field("databases");
         if (databases != null) {
