@@ -223,7 +223,7 @@ public class OClusterPositionMap extends ODurableComponent {
         } catch (Exception e) {
           endAtomicOperation(true, e);
           throw OException.wrapException(new OClusterPositionMapException(
-              "Error during creation of mapping between logical adn physical record position", this), e);
+              "Error during creation of mapping between logical and physical record position", this), e);
         } finally {
           cacheEntry.releaseExclusiveLock();
           releasePage(atomicOperation, cacheEntry);
