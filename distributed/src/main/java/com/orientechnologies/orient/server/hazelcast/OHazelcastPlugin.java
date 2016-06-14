@@ -778,7 +778,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       final Set<String> servers = cfg.getAllConfiguredServers();
       if (servers.size() > 1) {
-        while (true) {
+        int retry = 0;
+        for (; retry < 100; ++retry) {
           boolean allServersAreOnline = true;
           for (String server : servers) {
             if (!isNodeOnline(server, dbName)) {
@@ -798,6 +799,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             throw new ODistributedException("Error on creating database '" + dbName + "' on distributed nodes");
           }
         }
+
+        if (retry >= 100)
+          ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Timeout waiting for all nodes to be up for database %s", dbName);
       }
 
       onOpen(iDatabase);
