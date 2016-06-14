@@ -3966,7 +3966,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } else if (walRecord instanceof OFileCreatedWALRecord) {
         OFileCreatedWALRecord fileCreatedCreatedWALRecord = (OFileCreatedWALRecord) walRecord;
         if (writeCache.exists(fileCreatedCreatedWALRecord.getFileName())) {
-          readCache.openFile(fileCreatedCreatedWALRecord.getFileName(), fileCreatedCreatedWALRecord.getFileId(), writeCache);
+          writeCache.loadFile(fileCreatedCreatedWALRecord.getFileName(), fileCreatedCreatedWALRecord.getFileId());
         } else {
           readCache.addFile(fileCreatedCreatedWALRecord.getFileName(), fileCreatedCreatedWALRecord.getFileId(), writeCache);
         }
@@ -3976,7 +3976,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         long fileId = updatePageRecord.getFileId();
 
         final long pageIndex = updatePageRecord.getPageIndex();
-        fileId = readCache.openFile(fileId, writeCache);
+        fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
 
         OCacheEntry cacheEntry = readCache.load(fileId, pageIndex, true, writeCache, 1);
         if (cacheEntry == null) {

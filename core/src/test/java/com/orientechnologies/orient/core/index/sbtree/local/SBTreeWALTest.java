@@ -296,7 +296,7 @@ public class SBTreeWALTest extends SBTreeTest {
             final String fileName = fileCreatedCreatedRecord.getFileName().replace("actualSBTree", "expectedSBTree");
 
             if (expectedWriteCache.exists(fileName))
-              expectedReadCache.openFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
+              expectedWriteCache.loadFile(fileName, fileCreatedCreatedRecord.getFileId());
             else
               expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
           } else {
@@ -304,9 +304,6 @@ public class SBTreeWALTest extends SBTreeTest {
 
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
-
-            if (!expectedWriteCache.isOpen(fileId))
-              expectedReadCache.openFile(fileId, expectedWriteCache);
 
             OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
             if (cacheEntry == null) {

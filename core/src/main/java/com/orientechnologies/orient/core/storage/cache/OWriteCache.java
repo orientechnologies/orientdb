@@ -39,15 +39,52 @@ public interface OWriteCache {
 
   long bookFileId(String fileName) throws IOException;
 
-  long openFile(String fileName) throws IOException;
+  /**
+   * Registers new file in write cache and returns file id assigned to this file.
+   * <p>
+   * File id consist of two parts:
+   * <ol>
+   * <li>Internal id is permanent and can not be changed during life of storage {@link #internalFileId(long)}</li>
+   * <li>Write cache id  which is changed between storage open/close cycles</li>
+   * </ol>
+   * <p>
+   * If file with the same name is deleted and then new file is created this file with have the same internal id.
+   *
+   * @param fileName Name of file to register inside storage.
+   * @return Id of registered file
+   */
+  long loadFile(String fileName) throws IOException;
 
-  void openFile(long fileId) throws IOException;
-
-  void openFile(String fileName, long fileId) throws IOException;
+  /**
+   * Registers new file in write cache and assigns id to this file.
+   * <p>
+   * File id consist of two parts:
+   * <ol>
+   * <li>Internal id is permanent and can not be changed during life of storage {@link #internalFileId(long)}</li>
+   * <li>Write cache id  which is changed between storage open/close cycles</li>
+   * </ol>
+   * <p>
+   * If file with the same name is deleted and then new file is created this file with have the same internal id.
+   * If file with same internal id exists inside of write cache exception will be thrown.
+   * <p>
+   * Real file id may be different but internal part of this id will be the same.
+   *
+   * @param fileName Name of file to register inside storage.
+   * @param fileId   File id.
+   */
+  void loadFile(String fileName, long fileId) throws IOException;
 
   long addFile(String fileName) throws IOException;
 
   long addFile(String fileName, long fileId) throws IOException;
+
+  /**
+   * Returns id associated with given file or value &lt; 0 if such file does not exist.
+   *
+   * @param fileName File name id of which has to be returned.
+   * @return  id associated with given file or value &lt; 0 if such file does not exist.
+   */
+  long fileIdByName(String fileName);
 
   boolean checkLowDiskSpace();
 
@@ -73,8 +110,6 @@ public interface OWriteCache {
   long getFilledUpTo(long fileId) throws IOException;
 
   long getExclusiveWriteCachePagesSize();
-
-  boolean isOpen(long fileId);
 
   Long isOpen(String fileName) throws IOException;
 
