@@ -301,7 +301,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return firstIntId == secondIntId;
   }
 
-  public long openFile(final String fileName) throws IOException {
+  public long loadFile(final String fileName) throws IOException {
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
@@ -338,7 +338,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         }
       }
 
-      openFile(fileClassic);
+      loadFile(fileClassic);
 
       return composeFileId(id, fileId);
     } finally {
@@ -378,6 +378,16 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   @Override
+  public long fileIdByName(String fileName) {
+    final Integer intId = nameIdMap.get(fileName);
+
+    if (intId == null || intId < 0)
+      return -1;
+
+    return composeFileId(id, intId);
+  }
+
+  @Override
   public int internalFileId(long fileId) {
     return extractFileId(fileId);
   }
@@ -387,7 +397,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return composeFileId(id, fileId);
   }
 
-  public void openFile(String fileName, long fileId) throws IOException {
+  public void loadFile(String fileName, long fileId) throws IOException {
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
@@ -406,7 +416,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         throw new OStorageException("File with name " + fileName + " does not exist in storage " + storageLocal.getName());
       }
 
-      openFile(fileClassic);
+      loadFile(fileClassic);
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -499,7 +509,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       if (fileClassic == null)
         throw new OStorageException("File with id " + fileId + " does not exist.");
 
-      openFile(fileClassic);
+      loadFile(fileClassic);
 
     } finally {
       filesLock.releaseWriteLock();
@@ -1040,7 +1050,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     return exclusiveWriteCacheSize.get();
   }
 
-  private void openFile(final OFileClassic fileClassic) throws IOException {
+  private void loadFile(final OFileClassic fileClassic) throws IOException {
     if (fileClassic.exists()) {
       if (!fileClassic.isOpen())
         fileClassic.open();

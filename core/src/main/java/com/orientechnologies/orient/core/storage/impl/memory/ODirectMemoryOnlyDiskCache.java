@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.memory;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -111,6 +110,20 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
+  public long fileIdByName(String fileName) {
+    metadataLock.lock();
+    try {
+      Integer fileId = fileNameIdMap.get(fileName);
+      if (fileId != null)
+        return fileId;
+    } finally {
+      metadataLock.unlock();
+    }
+
+    return -1;
+  }
+
+  @Override
   public int internalFileId(long fileId) {
     return extractFileId(fileId);
   }
@@ -131,8 +144,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     }
   }
 
-  @Override
-  public long openFile(String fileName, OWriteCache writeCache) {
+  public long loadFile(String fileName, OWriteCache writeCache) {
     metadataLock.lock();
     try {
       Integer fileId = fileNameIdMap.get(fileName);
@@ -147,8 +159,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     }
   }
 
-  @Override
-  public long openFile(long fileId, OWriteCache writeCache) {
+  public long loadFile(long fileId, OWriteCache writeCache) {
     int intId = extractFileId(fileId);
     final MemoryFile memoryFile = files.get(intId);
 
@@ -158,8 +169,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     return composeFileId(id, intId);
   }
 
-  @Override
-  public long openFile(String fileName, long fileId, OWriteCache writeCache) {
+  public long loadFile(String fileName, long fileId, OWriteCache writeCache) {
     throw new UnsupportedOperationException();
   }
 
@@ -389,11 +399,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public boolean isOpen(long fileId) {
-    return files.get(extractFileId(fileId)) != null;
-  }
-
-  @Override
   public boolean exists(String name) {
     metadataLock.lock();
     try {
@@ -575,8 +580,8 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public long openFile(String fileName) {
-    return openFile(fileName, null);
+  public long loadFile(String fileName) {
+    return loadFile(fileName, null);
   }
 
   @Override
@@ -585,18 +590,13 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   }
 
   @Override
-  public void openFile(String fileName, long fileId) {
-    openFile(fileName, fileId, null);
+  public void loadFile(String fileName, long fileId) {
+    loadFile(fileName, fileId, null);
   }
 
   @Override
   public long addFile(String fileName, long fileId) {
     return addFile(fileName, fileId, null);
-  }
-
-  @Override
-  public void openFile(long fileId) {
-    openFile(fileId, null);
   }
 
   @Override

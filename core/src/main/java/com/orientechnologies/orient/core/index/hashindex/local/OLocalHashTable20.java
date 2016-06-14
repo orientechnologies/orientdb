@@ -675,10 +675,6 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
             .getObjectSerializer(page.getKeySerializerId());
         valueSerializer = (OBinarySerializer<V>) storage.getComponentsFactory().binarySerializerFactory
             .getObjectSerializer(page.getValueSerializerId());
-
-        for (int i = 0; i < HASH_CODE_SIZE; i++)
-          if (!page.isRemoved(i))
-            openFile(atomicOperation, page.getFileId(i));
       } finally {
         releasePage(atomicOperation, hashStateEntry);
       }
@@ -713,7 +709,6 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
           for (int i = 0; i < HASH_CODE_SIZE; i++) {
             if (!metadataPage.isRemoved(i)) {
               final long fileId = metadataPage.getFileId(i);
-              openFile(atomicOperation, fileId);
               deleteFile(atomicOperation, fileId);
             }
           }
