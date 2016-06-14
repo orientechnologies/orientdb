@@ -910,7 +910,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         continue;
       }
       OType type;
-      if (linkedType == null)
+      if (linkedType == null || linkedType == OType.ANY)
         type = getTypeFromValueEmbedded(itemValue);
       else
         type = linkedType;
@@ -1005,7 +1005,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     toCalendar.set(Calendar.YEAR, fromCalendar.get(Calendar.YEAR));
     toCalendar.set(Calendar.MONTH, fromCalendar.get(Calendar.MONTH));
     toCalendar.set(Calendar.DAY_OF_MONTH, fromCalendar.get(Calendar.DAY_OF_MONTH));
-    toCalendar.set(Calendar.HOUR, 0);
+    toCalendar.set(Calendar.HOUR_OF_DAY, 0);
     toCalendar.set(Calendar.MINUTE, 0);
     toCalendar.set(Calendar.SECOND, 0);
     toCalendar.set(Calendar.MILLISECOND, 0);

@@ -18,7 +18,7 @@ public class OMethodCall extends SimpleNode {
   static Set<String>          graphMethods         = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "outE",
       "inE", "bothE", "bothV", "outV", "inV"      }));
 
-  static Set<String>          bidirectionalMethods = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both" }));
+  static Set<String>          bidirectionalMethods = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "oute", "ine", "inv", "outv" }));
 
   protected OIdentifier       methodName;
   protected List<OExpression> params               = new ArrayList<OExpression>();
@@ -104,6 +104,22 @@ public class OMethodCall extends SimpleNode {
 
     if (straightName.equalsIgnoreCase("both")) {
       return execute(targetObjects, ctx, "both", params, null);
+    }
+
+    if (straightName.equalsIgnoreCase("outE")) {
+      return execute(targetObjects, ctx, "outV", params, null);
+    }
+
+    if (straightName.equalsIgnoreCase("outV")) {
+      return execute(targetObjects, ctx, "outE", params, null);
+    }
+
+    if (straightName.equalsIgnoreCase("inE")) {
+      return execute(targetObjects, ctx, "inV", params, null);
+    }
+
+    if (straightName.equalsIgnoreCase("inV")) {
+      return execute(targetObjects, ctx, "inE", params, null);
     }
 
     throw new UnsupportedOperationException("Invalid reverse traversal: " + methodName);

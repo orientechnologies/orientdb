@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
@@ -75,7 +76,7 @@ public class ODocumentInternal {
     document.clearTrackData();
   }
 
-  public static void checkClass(ODocument doc, ODatabaseDocumentTx database) {
+  public static void checkClass(ODocument doc, ODatabaseDocumentInternal database) {
     doc.checkClass(database);
 
   }

@@ -24,16 +24,20 @@ public class OUpdateStatementTest {
     try {
       SimpleNode result = osql.parse();
       if (!isCorrect) {
+        System.out.println(query);
+        if (result != null) {
+          System.out.println("->");
+          System.out.println(result.toString());
+          System.out.println("............");
+        }
         fail();
       }
-//      System.out.println(query);
-//      System.out.println("->");
-//      System.out.println(result.toString());
-//      System.out.println("............");
+
 
       return result;
     } catch (Exception e) {
       if (isCorrect) {
+        System.out.println(query);
         e.printStackTrace();
         fail();
       }
@@ -100,6 +104,19 @@ public class OUpdateStatementTest {
   public void testDottedTarget() {
     //issue #5397
     checkRightSyntax("update $publishedVersionEdge.row set isPublished = false");
+  }
+
+  public void testLockRecord() {
+    checkRightSyntax("update foo set bar = 1 lock record");
+    checkRightSyntax("update foo set bar = 1 lock none");
+    checkRightSyntax("update foo set bar = 1 lock shared");
+    checkRightSyntax("update foo set bar = 1 lock default");
+    checkRightSyntax("update foo set bar = 1 LOCK RECORD");
+    checkRightSyntax("update foo set bar = 1 LOCK NONE");
+    checkRightSyntax("update foo set bar = 1 LOCK SHARED");
+    checkRightSyntax("update foo set bar = 1 LOCK DEFAULT");
+
+    checkWrongSyntax("update foo set bar = 1 LOCK Foo");
   }
 
   private void printTree(String s) {

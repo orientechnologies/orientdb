@@ -30,17 +30,21 @@ public class OSelectStatementTest {
     try {
       SimpleNode result = osql.parse();
       if (!isCorrect) {
+        System.out.println(query);
+        if(result!= null ) {
+          System.out.println("->");
+          StringBuilder builer = new StringBuilder();
+          result.toString(null, builer);
+          System.out.println(builer.toString());
+          System.out.println("............");
+        }
         fail();
       }
-      System.out.println(query);
-      System.out.println("->");
-      StringBuilder builer = new StringBuilder();
-      result.toString(null, builer);
-      System.out.println(builer.toString());
-      System.out.println("............");
+
       return result;
     } catch (Exception e) {
       if (isCorrect) {
+        System.out.println(query);
         e.printStackTrace();
         fail();
       }
@@ -686,6 +690,23 @@ public class OSelectStatementTest {
   public void testAppendParams(){
     checkRightSyntax("select from User where Account.Name like :name + '%'");
 
+  }
+
+  public void testLetMatch(){
+    checkRightSyntax("select $a let $a = (MATCH {class:Foo, as:bar, where:(name = 'foo')} return $elements)");
+  }
+
+  public void testLockRecord() {
+    checkRightSyntax("Select from foo lock record");
+    checkRightSyntax("Select from foo lock none");
+    checkRightSyntax("Select from foo lock shared");
+    checkRightSyntax("Select from foo lock default");
+    checkRightSyntax("Select from foo LOCK RECORD");
+    checkRightSyntax("Select from foo LOCK NONE");
+    checkRightSyntax("Select from foo LOCK SHARED");
+    checkRightSyntax("Select from foo LOCK DEFAULT");
+
+    checkWrongSyntax("Select from foo LOCK Foo");
   }
 
 

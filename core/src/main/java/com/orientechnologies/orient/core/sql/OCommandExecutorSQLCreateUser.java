@@ -128,15 +128,20 @@ public class OCommandExecutorSQLCreateUser extends OCommandExecutorSQLAbstract i
     sb.append(" WHERE ");
     sb.append(ROLE_FIELD_NAME);
     sb.append(" IN [");
-    for (int i = 0; i < this.roles.size() - 1; ++i) {
-      sb.append("'");
-      sb.append(this.roles.get(i));
-      sb.append("', ");
+    for (int i = 0; i < this.roles.size(); ++i) {
+      if (i > 0) {
+        sb.append(", ");
+      }
+      String role = roles.get(i);
+      if (role.startsWith("'") || role.startsWith("\"")) {
+        sb.append(this.roles.get(i));
+      } else {
+        sb.append("'");
+        sb.append(this.roles.get(i));
+        sb.append("'");
+      }
     }
-    sb.append("'");
-    sb.append(this.roles.get(this.roles.size() - 1));
-    sb.append("'])");
-
+    sb.append("])");
     return getDatabase().command(new OCommandSQL(sb.toString())).execute();
   }
 

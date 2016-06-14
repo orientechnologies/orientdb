@@ -1157,10 +1157,8 @@ public class OMatchStatementExecutionTest {
     query.append(".out('IndexedEdge'){class:IndexedVertex, as: two, where: (uid = 1)}");
     query.append("return one, two");
 
-    long begin = System.currentTimeMillis();
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
-    System.out.println("took " + (System.currentTimeMillis() - begin));// TODO
   }
 
   @Test
@@ -1171,10 +1169,8 @@ public class OMatchStatementExecutionTest {
     query.append("-IndexedEdge->{class:IndexedVertex, as: two, where: (uid = 1)}");
     query.append("return one, two");
 
-    long begin = System.currentTimeMillis();
     List<?> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
-    System.out.println("took " + (System.currentTimeMillis() - begin));// TODO
   }
 
   @Test
@@ -1239,6 +1235,79 @@ public class OMatchStatementExecutionTest {
     //    ODocument doc = result.get(0);
     //    assertEquals("foo", doc.field("name"));
     //    assertEquals(0, doc.field("sub[0].uuid"));
+  }
+
+
+  @Test
+  public void testManagedElements() {
+    List<OIdentifiable> managedByB = getManagedElements("b");
+    assertEquals(6, managedByB.size());
+    Set<String> expectedNames = new HashSet<String>();
+    expectedNames.add("b");
+    expectedNames.add("p2");
+    expectedNames.add("p3");
+    expectedNames.add("p6");
+    expectedNames.add("p7");
+    expectedNames.add("p11");
+    Set<String> names = new HashSet<String>();
+    for (OIdentifiable id : managedByB) {
+      ODocument doc = id.getRecord();
+      String name = doc.field("name");
+      names.add(name);
+    }
+    assertEquals(expectedNames, names);
+  }
+
+  private List<OIdentifiable> getManagedElements(String managerName) {
+    StringBuilder query = new StringBuilder();
+    query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");
+    query.append("  -ManagerOf->{}<-ParentDepartment-{");
+    query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
+    query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
+    query.append("  }<-WorksAt-{as: managed}");
+    query.append("  return $elements");
+
+
+    return db.command(new OCommandSQL(query.toString())).execute();
+  }
+
+
+
+  @Test
+  public void testManagedPathElements() {
+    List<OIdentifiable> managedByB = getManagedPathElements("b");
+    assertEquals(10, managedByB.size());
+    Set<String> expectedNames = new HashSet<String>();
+    expectedNames.add("department1");
+    expectedNames.add("department3");
+    expectedNames.add("department4");
+    expectedNames.add("department8");
+    expectedNames.add("b");
+    expectedNames.add("p2");
+    expectedNames.add("p3");
+    expectedNames.add("p6");
+    expectedNames.add("p7");
+    expectedNames.add("p11");
+    Set<String> names = new HashSet<String>();
+    for (OIdentifiable id : managedByB) {
+      ODocument doc = id.getRecord();
+      String name = doc.field("name");
+      names.add(name);
+    }
+    assertEquals(expectedNames, names);
+  }
+
+  private List<OIdentifiable> getManagedPathElements(String managerName) {
+    StringBuilder query = new StringBuilder();
+    query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");
+    query.append("  -ManagerOf->{}<-ParentDepartment-{");
+    query.append("      while: ($depth = 0 or in('ManagerOf').size() = 0),");
+    query.append("      where: ($depth = 0 or in('ManagerOf').size() = 0)");
+    query.append("  }<-WorksAt-{as: managed}");
+    query.append("  return $pathElements");
+
+
+    return db.command(new OCommandSQL(query.toString())).execute();
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

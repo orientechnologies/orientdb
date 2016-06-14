@@ -30,6 +30,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -102,31 +103,39 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
     for (int c : clusterIds)
       clusterNames.add(db.getClusterNameById(c).toLowerCase());
 
-    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+    ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
-    final List<String> bestClusters = cfg.getOwnedClustersByServer(clusterNames, nodeName);
+    List<String> bestClusters = cfg.getOwnedClustersByServer(clusterNames, nodeName);
     if (bestClusters.isEmpty()) {
+      // REBALANCE THE CLUSTERS
+      manager.reassignClustersOwnership(nodeName, databaseName, new HashSet<String>(clusterNames), true);
 
-      // FILL THE MAP CLUSTER/SERVERS
-      final StringBuilder buffer = new StringBuilder();
-      for (String c : clusterNames) {
-        if (buffer.length() > 0)
+      cfg = manager.getDatabaseConfiguration(databaseName);
+      bestClusters = cfg.getOwnedClustersByServer(clusterNames, nodeName);
+
+      if (bestClusters.isEmpty()) {
+        // FILL THE MAP CLUSTER/SERVERS
+        final StringBuilder buffer = new StringBuilder();
+        for (String c : clusterNames) {
+          if (buffer.length() > 0)
+            buffer.append(" ");
+
           buffer.append(" ");
+          buffer.append(c);
+          buffer.append(":");
+          buffer.append(cfg.getServers(c, null));
+        }
 
-        buffer.append(" ");
-        buffer.append(c);
-        buffer.append(":");
-        buffer.append(cfg.getServers(c, null));
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s (dCfgVersion=%d)", cls.getName(),
+            clusterNames, buffer.toString(), cfg.getVersion());
+
+        throw new ODatabaseException("Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName
+            + "'. ClusterStrategy=" + getName() + " dCfgVersion=" + cfg.getVersion());
       }
-
-      ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s (dCfgVersion=%d)", cls.getName(),
-          clusterNames, buffer.toString(), cfg.getVersion());
-
-      throw new ODatabaseException(
-          "Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName + "'. ClusterStrategy=" + getName()
-              + " dCfgVersion=" + cfg.getVersion());
     }
+
+    db.activateOnCurrentThread();
 
     final List<Integer> newBestClusters = new ArrayList<Integer>();
     for (String c : bestClusters)

@@ -194,6 +194,8 @@ TOKEN:
     |
     < LET: ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) >
     |
+    < CACHE: ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
+    |
     < NOCACHE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
     |
     < UNSAFE: ( "u" | "U" ) ( "n" | "N" ) ( "s" | "S" ) ( "a" | "A" ) ( "f" | "F" ) ( "e" | "E" ) >
@@ -308,6 +310,8 @@ TOKEN:
     |
     < READ: ( "R" | "r") ( "E" | "e")  ( "A" | "a") ( "D" | "d")>
     |
+    < EXECUTE: ( "E" | "e") ( "X" | "x") ( "E" | "e") ( "C" | "c")  ( "U" | "u")  ( "T" | "t") ( "E" | "e")>
+    |
     < ALL: ( "A" | "a") ( "L" | "l") ( "L" | "l")>
     |
     < NONE: ( "N" | "n") ( "O" | "o")  ( "N" | "n") ( "E" | "e")>
@@ -333,6 +337,14 @@ TOKEN:
     < CONSOLE: ( "C" | "c") ( "O" | "o") ( "N" | "n") ( "S" | "s") ( "O" | "o")  ( "L" | "l") ( "E" | "e")>
     |
     < BLOB: ( "B" | "b") ( "L" | "l") ( "O" | "o") ( "B" | "b") >
+    |
+    < SHARED: ( "S" | "s") ( "H" | "h") ( "A" | "a") ( "R" | "r") ( "E" | "e") ( "D" | "d") >
+    |
+    < DEFAULT_: ( "D" | "d") ( "E" | "e") ( "F" | "f") ( "A" | "a") ( "U" | "u") ( "L" | "l") ( "T" | "t") >
+	|
+	< SEQUENCE: ( "S" | "s") ( "E" | "e") ( "Q" | "q") ( "U" | "u") ( "E" | "e") ( "N" | "n") ( "C" | "c") ( "E" | "e") >
+	|
+	< START: ( "S" | "s") ( "T" | "t") ( "A" | "a") ( "R" | "r") ( "T" | "t") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -739,6 +751,8 @@ OIdentifier Identifier():
     |
     token = <READ>
     |
+    token = <EXECUTE>
+    |
     token = <ALL>
     |
     token = <NONE>
@@ -764,6 +778,16 @@ OIdentifier Identifier():
     token = <CONSOLE>
     |
     token = <BLOB>
+    |
+    token = <SHARED>
+    |
+    token = <DEFAULT_>
+    |
+    token = <SEQUENCE>
+    |
+    token = <CACHE>
+    |
+    token = <START>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -880,6 +904,9 @@ OStatement StatementInternal():
                 LOOKAHEAD(2)
                 result = CreateFunctionStatement()
                 |
+                LOOKAHEAD(2)
+                result = CreateSequenceStatement()
+                |
                 LOOKAHEAD(CreateVertexStatementNoTarget())
                 result = CreateVertexStatementNoTarget()
                 |
@@ -901,8 +928,6 @@ OStatement StatementInternal():
                 LOOKAHEAD(UpdateStatement())
                 result = UpdateStatement()
                 |
-                result = MatchStatement()
-                |
                 result = ProfileStorageStatement()
                 |
                 LOOKAHEAD(TruncateClassStatement())
@@ -911,14 +936,17 @@ OStatement StatementInternal():
                 LOOKAHEAD(TruncateClusterStatement())
                 result = TruncateClusterStatement()
                 |
-                LOOKAHEAD(FindReferencesStatement())
-                result = FindReferencesStatement()
-                |
                 LOOKAHEAD(TruncateRecordStatement())
                 result = TruncateRecordStatement()
                 |
+                LOOKAHEAD(2)
+                result = AlterSequenceStatement()
+                |
                 LOOKAHEAD(AlterClassStatement())
                 result = AlterClassStatement()
+                |
+                LOOKAHEAD(2)
+                result = DropSequenceStatement()
                 |
                 LOOKAHEAD(DropClassStatement())
                 result = DropClassStatement()
@@ -985,6 +1013,11 @@ OStatement QueryStatement():
         result = SelectWithoutTargetStatement()
         |
         result = TraverseStatement()
+        |
+        result = MatchStatement()
+        |
+        LOOKAHEAD( FindReferencesStatement() )
+        result = FindReferencesStatement()
     ){ return result; }
 }
 
@@ -1005,7 +1038,17 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
 		)
     	[ jjtThis.fetchPlan = FetchPlan() ]
     	[ jjtThis.timeout = Timeout() ]
-        [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
+        [ <LOCK>
+            (
+                <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
+                |
+                <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
+                |
+                <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
+                |
+                <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
+            )
+        ]
         [ <PARALLEL> { jjtThis.parallel = true; } ]
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
@@ -1037,7 +1080,17 @@ OSelectStatement SelectStatement():
         )
         [ jjtThis.fetchPlan = FetchPlan() ]
         [ jjtThis.timeout = Timeout() ]
-        [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
+        [ <LOCK>
+            (
+                <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
+                |
+                <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
+                |
+                <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
+                |
+                <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
+            )
+        ]
         [ <PARALLEL> { jjtThis.parallel = true; } ]
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
@@ -1427,7 +1480,17 @@ OUpdateEdgeStatement UpdateEdgeStatement():
 		]
 	]
 	[ <WHERE> jjtThis.whereClause = WhereClause() ]
-	[ <LOCK> <RECORD> { jjtThis.lockRecord = true; } ]
+	[ <LOCK>
+        (
+            <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
+            |
+            <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
+            |
+            <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
+            |
+            <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
+        )
+    ]
 	[ jjtThis.limit = Limit() ]
 	[ jjtThis.timeout = Timeout() ]
   )
@@ -1451,7 +1514,17 @@ OUpdateStatement UpdateStatement():
     	    ]
     	]
     	[ <WHERE> jjtThis.whereClause = WhereClause() ]
-    	[ <LOCK> <RECORD> { jjtThis.lockRecord = true; } ]
+    	[ <LOCK>
+            (
+                <RECORD> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK;}
+                |
+                <NONE> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.NONE;}
+                |
+                <SHARED> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.SHARED_LOCK;}
+                |
+                <DEFAULT_> {jjtThis.lockRecord = com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY.DEFAULT;}
+            )
+        ]
     	[ jjtThis.limit = Limit() ]
     	[ jjtThis.timeout = Timeout() ]
     )
@@ -1761,69 +1834,11 @@ OCreateEdgeStatement CreateEdgeStatement():
 	[ jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]]
 	<FROM>
 	(
-	    jjtThis.leftRid = Rid()
-	    |
-	    (
-	        <LBRACKET>
-	        [
-	            lastRid = Rid()
-	            {
-	                jjtThis.leftRids=new ArrayList();
-	                jjtThis.leftRids.add(lastRid);
-	            }
-	            (
-	                <COMMA>
-	                lastRid = Rid() { jjtThis.leftRids.add(lastRid); }
-	            )*
-	        ] <RBRACKET>
-	    )
-	    |
-	    (
-	        <LPAREN>
-	        (
-	            LOOKAHEAD(SelectStatement()) jjtThis.leftStatement = SelectStatement()
-	            |
-	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.leftStatement = SelectWithoutTargetStatement()
-	        )
-	        <RPAREN>
-	    )
-	    |
-	    jjtThis.leftParam = InputParameter()
-	    |
-	    jjtThis.leftIdentifier = Identifier()
+	    jjtThis.leftExpression = Expression()
 	)
 	<TO>
 	(
-        jjtThis.rightRid = Rid()
-	    |
-	    (
-	        <LBRACKET>
-	        [
-	            lastRid = Rid()
-	            {
-	                jjtThis.rightRids=new ArrayList();
-	                jjtThis.rightRids.add(lastRid);
-	            }
-	            (
-	                <COMMA>
-	                lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
-	            )*
-	        ] <RBRACKET>
-	    )
-	    |
-	    (
-	        <LPAREN>
-	        (
-	            LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
-	            |
-	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
-	        )
-	        <RPAREN>
-	    )
-	    |
-	    jjtThis.rightParam = InputParameter()
-	    |
-	    jjtThis.rightIdentifier = Identifier()
+	    jjtThis.rightExpression = Expression()
 	)
     [ jjtThis.body = InsertBody() ]
     [ jjtThis.retry = Retry() ]
@@ -2190,9 +2205,10 @@ OMathExpression ParenthesisExpression():
     (
 	    <LPAREN>
 	    (
-	        jjtThis.expression = Expression()
+	        LOOKAHEAD(2)
+	        jjtThis.statement = QueryStatement()
 	        |
-	        jjtThis.statement = SelectStatement()
+	        jjtThis.expression = Expression()
 	        |
             jjtThis.statement = InsertStatement()
         )
@@ -2271,13 +2287,7 @@ OLetItem LetItem():
     	    (
     	        <LPAREN>
     	        (
-    	            LOOKAHEAD( SelectStatement() )
-    	            jjtThis.query = SelectStatement()
-    	            |
-    	            LOOKAHEAD( SelectWithoutTargetStatement() )
-    	            jjtThis.query = SelectWithoutTargetStatement()
-    	            |
-    	            jjtThis.query = TraverseStatement()
+    	            jjtThis.query = QueryStatement()
     	        )
     	        <RPAREN>
     	    )
@@ -2312,17 +2322,7 @@ OFromItem FromItem():
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	<LPAREN> (
-    	            LOOKAHEAD(SelectStatement()) jjtThis.statement = SelectStatement()
-    	            |
-    	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.statement = SelectWithoutTargetStatement()
-    	            |
-    	            jjtThis.statement = TraverseStatement()
-    	            |
-                    jjtThis.statement = MatchStatement()
-					|
-					jjtThis.statement = FindReferencesStatement()
-    	) <RPAREN>
+    	<LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
     	|
     	jjtThis.inputParam = InputParameter()
     	|
@@ -4223,6 +4223,8 @@ OPermission Permission():
         |
         <DELETE> { jjtThis.permission = "DELETE"; }
         |
+        <EXECUTE> { jjtThis.permission = "EXECUTE"; }
+        |
         <ALL> { jjtThis.permission = "ALL"; }
         |
         <NONE> { jjtThis.permission = "NONE"; }
@@ -4415,6 +4417,61 @@ OConsoleStatement ConsoleStatement():
         <CONSOLE> <DOT>
         jjtThis.logLevel = Identifier()
         jjtThis.message = Expression()
+    )
+    { return jjtThis; }
+}
+
+
+OCreateSequenceStatement CreateSequenceStatement():
+{
+ OIdentifier lastIdentifier;
+}
+{
+    (
+        <CREATE> <SEQUENCE>
+        jjtThis.name = Identifier()
+        <TYPE>
+        lastIdentifier = Identifier(){
+            if(lastIdentifier.getStringValue().equalsIgnoreCase("cached")){
+                jjtThis.type = OCreateSequenceStatement.TYPE_CACHED;
+            }else if(lastIdentifier.getStringValue().equalsIgnoreCase("ordered")){
+                jjtThis.type = OCreateSequenceStatement.TYPE_ORDERED;
+            }else{
+                throw new ParseException();
+            }
+        }
+
+        [ <START> jjtThis.start = Expression() ]
+        [ <INCREMENT> jjtThis.start = Expression() ]
+        [ <CACHE> jjtThis.start = Expression() ]
+    )
+    { return jjtThis; }
+}
+
+OAlterSequenceStatement AlterSequenceStatement():
+{
+ OIdentifier lastIdentifier;
+}
+{
+    (
+        <ALTER> <SEQUENCE>
+        jjtThis.name = Identifier()
+        [ <START> jjtThis.start = Expression() ]
+        [ <INCREMENT> jjtThis.start = Expression() ]
+        [ <CACHE> jjtThis.start = Expression() ]
+    )
+    { return jjtThis; }
+}
+
+
+ODropSequenceStatement DropSequenceStatement():
+{
+ OIdentifier lastIdentifier;
+}
+{
+    (
+        <DROP> <SEQUENCE>
+        jjtThis.name = Identifier()
     )
     { return jjtThis; }
 }

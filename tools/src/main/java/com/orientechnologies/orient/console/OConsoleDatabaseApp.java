@@ -94,8 +94,6 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-  protected static final int    DEFAULT_WIDTH        = 150;
-
   protected ODatabaseDocumentTx currentDatabase;
   protected String              currentDatabaseName;
   protected ORecord             currentRecord;
@@ -103,7 +101,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected List<OIdentifiable> currentResultSet;
   protected Object              currentResult;
   protected OServerAdmin        serverAdmin;
-  private int                   windowSize           = DEFAULT_WIDTH;
   private int                   lastPercentStep;
   private String                currentDatabaseUserName;
   private String                currentDatabaseUserPassword;
@@ -886,6 +883,43 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
 
     iQueryText = "select " + iQueryText;
+
+    final int queryLimit;
+    final int displayLimit;
+    if (iQueryText.toLowerCase().contains(" limit ")) {
+      queryLimit = -1;
+      displayLimit = -1;
+    } else {
+      // USE LIMIT + 1 TO DISCOVER IF MORE ITEMS ARE PRESENT
+      displayLimit = Integer.parseInt(properties.get("limit"));
+      queryLimit = displayLimit + 1;
+    }
+
+    final long start = System.currentTimeMillis();
+    setResultset(
+        (List<OIdentifiable>) currentDatabase.query(new OSQLSynchQuery<ODocument>(iQueryText, queryLimit).setFetchPlan("*:0")));
+
+    float elapsedSeconds = getElapsedSecs(start);
+
+    dumpResultSet(displayLimit);
+
+    long tot = displayLimit > -1 ? Math.min(currentResultSet.size(), displayLimit) : currentResultSet.size();
+    message("\n\n" + tot + " item(s) found. Query executed in " + elapsedSeconds + " sec(s).");
+  }
+
+  @ConsoleCommand(splitInWords = false, description = "Execute a MATCH query against the database and display the results", onlineHelp = "SQL-Match")
+  public void match(@ConsoleParameter(name = "query-text", description = "The query to execute") String iQueryText) {
+    checkForDatabase();
+
+    if (iQueryText == null)
+      return;
+
+    iQueryText = iQueryText.trim();
+
+    if (iQueryText.length() == 0 || iQueryText.equalsIgnoreCase("match"))
+      return;
+
+    iQueryText = "match " + iQueryText;
 
     final int queryLimit;
     final int displayLimit;
@@ -1938,7 +1972,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
     }
     currentResultSet = servers;
-    new OTableFormatter(this).setMaxWidthSize(getWindowSize()).writeRecords(servers, -1);
+    new OTableFormatter(this).setMaxWidthSize(getConsoleWidth()).writeRecords(servers, -1);
   }
 
   @ConsoleCommand(description = "Loook up a record using the dictionary. If found, set it as the current record", onlineHelp = "Console-Command-Dictionary-Get")
@@ -2674,7 +2708,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     // DISABLE THE NETWORK AND STORAGE TIMEOUTS
     properties.put("limit", "20");
-    properties.put("width", "150");
     properties.put("debug", "false");
     properties.put("collectionMaxItems", "10");
     properties.put("maxBinaryDisplay", "150");
@@ -2699,7 +2732,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   protected void dumpResultSet(final int limit) {
-    new OTableFormatter(this).setMaxWidthSize(getWindowSize()).setMaxMultiValueEntries(getMaxMultiValueEntries())
+    new OTableFormatter(this).setMaxWidthSize(getConsoleWidth()).setMaxMultiValueEntries(getMaxMultiValueEntries())
         .writeRecords(currentResultSet, limit);
   }
 
@@ -2832,12 +2865,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return options;
   }
 
-  protected int getWindowSize() {
-    if (properties.containsKey("width"))
-      return Integer.parseInt(properties.get("width"));
-    return windowSize;
-  }
-
   public int getMaxMultiValueEntries() {
     if (properties.containsKey("maxMultiValueEntries"))
       return Integer.parseInt(properties.get("maxMultiValueEntries"));
@@ -2913,7 +2940,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   private void browseRecords(final OIdentifiableIterator<?> it) {
     final int limit = Integer.parseInt(properties.get("limit"));
 
-    final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(getWindowSize())
+    final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(getConsoleWidth())
         .setMaxMultiValueEntries(maxMultiValueEntries);
 
     setResultset(new ArrayList<OIdentifiable>());

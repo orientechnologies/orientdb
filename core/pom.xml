@@ -76,6 +76,9 @@
                 <exclude.test.6>**/LocalPaginatedClusterTest.java</exclude.test.6>
                 <exclude.test.7>**/WOWCacheTest.java</exclude.test.7>
                 <exclude.test.8>**/OLocalHashTableWALTest.java</exclude.test.8>
+                <exclude.test.9>**/SBTreeWALTest.java</exclude.test.9>
+                <exclude.test.10>**/LocalPaginatedClusterWithWALTest.java</exclude.test.10>
+                <exclude.test.11>**/OSBTreeBonsaiWALTest.java</exclude.test.11>
             </properties>
         </profile>
 
@@ -96,6 +99,9 @@
                 <exclude.test.6>empty.java</exclude.test.6>
                 <exclude.test.7>empty.java</exclude.test.7>
                 <exclude.test.8>empty.java</exclude.test.8>
+                <exclude.test.9>empty.java</exclude.test.9>
+                <exclude.test.10>empty.java</exclude.test.10>
+                <exclude.test.11>empty.java</exclude.test.11>
             </properties>
 
         </profile>
@@ -116,6 +122,9 @@
                 <exclude.test.6>empty.java</exclude.test.6>
                 <exclude.test.7>empty.java</exclude.test.7>
                 <exclude.test.8>empty.java</exclude.test.8>
+                <exclude.test.9>empty.java</exclude.test.9>
+                <exclude.test.10>empty.java</exclude.test.10>
+                <exclude.test.11>empty.java</exclude.test.11>
             </properties>
 
         </profile>
@@ -172,6 +181,9 @@
                         <exclude>${exclude.test.6}</exclude>
                         <exclude>${exclude.test.7}</exclude>
                         <exclude>${exclude.test.8}</exclude>
+                        <exclude>${exclude.test.9}</exclude>
+                        <exclude>${exclude.test.10}</exclude>
+                        <exclude>${exclude.test.11}</exclude>
                     </excludes>
                 </configuration>
             </plugin>

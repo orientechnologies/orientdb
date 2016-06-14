@@ -6,15 +6,18 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
@@ -28,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static org.mockito.Matchers.shortThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -37,16 +41,12 @@ import static org.mockito.Mockito.when;
  */
 @Test
 public class LocalPaginatedClusterTest {
-  private static final int           RECORD_SYSTEM_INFORMATION = 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
-      + OLongSerializer.LONG_SIZE;
-  public OPaginatedCluster           paginatedCluster;
-  protected String                   buildDirectory;
+  OPaginatedCluster paginatedCluster;
+  protected String buildDirectory;
 
-  protected O2QCache                 readCache;
-  protected OWriteCache              writeCache;
+  ODatabaseDocumentTx databaseDocumentTx;
 
-  protected OAtomicOperationsManager atomicOperationsManager;
-  private OContextConfiguration      contextConfiguration      = new OContextConfiguration();
+  OAtomicOperationsManager atomicOperationsManager;
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -57,39 +57,16 @@ public class LocalPaginatedClusterTest {
 
     buildDirectory += "/localPaginatedClusterTest";
 
-    OLocalPaginatedStorage storage = mock(OLocalPaginatedStorage.class);
-    OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
+    databaseDocumentTx = new ODatabaseDocumentTx(
+        "plocal:" + buildDirectory + File.separator + LocalPaginatedClusterTest.class.getSimpleName());
+    if (databaseDocumentTx.exists()) {
+      databaseDocumentTx.open("admin", "admin");
+      databaseDocumentTx.drop();
+    }
 
-    storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
-    storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
-    storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
-    when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
-    when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
-    when(storageConfiguration.getContextConfiguration()).thenReturn(contextConfiguration);
-    when(storage.getStoragePath()).thenReturn(buildDirectory);
+    databaseDocumentTx.create();
 
-    OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
-    when(storage.getVariableParser()).thenReturn(variableParser);
-    when(storage.getPerformanceStatisticManager()).thenReturn(new OPerformanceStatisticManager(storage, 10000000, 10000000));
-
-    writeCache = new OWOWCache(false, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024,
-        new OByteBufferPool(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024), 1000000, null, 100,
-        2648L * 1024 * 1024, 2648L * 1024 * 1024 + 400L * 1024 * 1024 * 1024, storage, true, 1);
-
-    readCache = new O2QCache(400L * 1024 * 1024 * 1024, OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, false,
-        20);
-
-    atomicOperationsManager = new OAtomicOperationsManager(storage);
-
-    when(storage.getReadCache()).thenReturn(readCache);
-    when(storage.getWriteCache()).thenReturn(writeCache);
-
-    when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
-
-    when(storage.getConfiguration()).thenReturn(storageConfiguration);
-    when(storage.getMode()).thenReturn("rw");
-
-    when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) databaseDocumentTx.getStorage();
 
     paginatedCluster = new OPaginatedCluster("paginatedClusterTest", storage);
     paginatedCluster.configure(storage, 5, "paginatedClusterTest", buildDirectory, -1);
@@ -100,11 +77,7 @@ public class LocalPaginatedClusterTest {
   public void afterClass() throws IOException {
     paginatedCluster.delete();
 
-    readCache.deleteStorage(writeCache);
-
-    File file = new File(buildDirectory);
-    Assert.assertTrue(file.delete());
-
+    databaseDocumentTx.drop();
     System.out.println("End LocalPaginatedClusterTest");
   }
 
@@ -1183,78 +1156,6 @@ public class LocalPaginatedClusterTest {
     }
   }
 
-  @Test(enabled = false)
-  public void testRecordGrowFactor() throws Exception {
-    paginatedCluster.set(OCluster.ATTRIBUTES.COMPRESSION, ONothingCompression.NAME);
-    paginatedCluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 1.5);
-
-    byte[] record = new byte[100];
-    Random random = new Random();
-    random.nextBytes(record);
-
-    OPhysicalPosition physicalPosition = paginatedCluster.createRecord(record, 0, (byte) 1, null);
-
-    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache, 0);
-    OClusterPage page = new OClusterPage(cacheEntry, false, null);
-    int recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
-
-    Assert.assertEquals(page.getRecordSize(recordIndex), ((int) (record.length * 1.5)) + RECORD_SYSTEM_INFORMATION);
-    readCache.release(cacheEntry, writeCache);
-
-    paginatedCluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 2);
-    physicalPosition = paginatedCluster.createRecord(record, 0, (byte) 1, null);
-
-    recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
-    cacheEntry = readCache.load(1, 1, false, writeCache, 0);
-    page = new OClusterPage(cacheEntry, false, null);
-
-    Assert.assertEquals(page.getRecordSize(recordIndex), record.length * 2 + RECORD_SYSTEM_INFORMATION);
-    readCache.release(cacheEntry, writeCache);
-  }
-
-  @Test(enabled = false)
-  public void testRecordOverflowGrowFactor() throws Exception {
-    paginatedCluster.set(OCluster.ATTRIBUTES.COMPRESSION, ONothingCompression.NAME);
-    paginatedCluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 1.5);
-    paginatedCluster.set(OCluster.ATTRIBUTES.RECORD_OVERFLOW_GROW_FACTOR, 2.5);
-
-    byte[] record = new byte[100];
-    Random random = new Random();
-    random.nextBytes(record);
-
-    int version = 0;
-    OPhysicalPosition physicalPosition = paginatedCluster.createRecord(record, version, (byte) 1, null);
-
-    record = new byte[150];
-    random.nextBytes(record);
-
-    paginatedCluster.updateRecord(physicalPosition.clusterPosition, record, version, (byte) 1);
-
-    OCacheEntry cacheEntry = readCache.load(1, 1, false, writeCache, 0);
-    int recordIndex = (int) (physicalPosition.clusterPosition & 0xFFFF);
-    OClusterPage page = new OClusterPage(cacheEntry, false, null);
-
-    Assert.assertEquals(page.getRecordSize(recordIndex), record.length + RECORD_SYSTEM_INFORMATION);
-    readCache.release(cacheEntry, writeCache);
-
-    record = new byte[200];
-    random.nextBytes(record);
-
-    paginatedCluster.updateRecord(physicalPosition.clusterPosition, record, version, (byte) 1);
-
-    cacheEntry = readCache.load(1, 1, false, writeCache, 0);
-    page = new OClusterPage(cacheEntry, false, null);
-
-    int fullContentSize = 500 + OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE; // type + real size
-
-    Assert.assertEquals(page.getRecordSize(recordIndex), 150 + RECORD_SYSTEM_INFORMATION);
-    fullContentSize -= 150 + RECORD_SYSTEM_INFORMATION - OByteSerializer.BYTE_SIZE - OLongSerializer.LONG_SIZE;
-
-    Assert.assertEquals(page.getRecordSize(recordIndex + 1),
-        fullContentSize + (OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE));
-    readCache.release(cacheEntry, writeCache);
-  }
-
   public void testResurrectRecord() throws IOException {
     byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
     int recordVersion = 0;
@@ -1264,8 +1165,8 @@ public class LocalPaginatedClusterTest {
     OPhysicalPosition physicalPosition = paginatedCluster.createRecord(smallRecord, recordVersion, (byte) 1, null);
     Assert.assertEquals(physicalPosition.clusterPosition, 0);
 
-    Assert.assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition),
-        OPaginatedCluster.RECORD_STATUS.PRESENT);
+    Assert
+        .assertEquals(paginatedCluster.getRecordStatus(physicalPosition.clusterPosition), OPaginatedCluster.RECORD_STATUS.PRESENT);
 
     for (int i = 0; i < 1000; ++i) {
       recordVersion++;

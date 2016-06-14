@@ -87,7 +87,7 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
       assignClusterOwnership(iDatabase, cfg, iClass, cluster, node);
     }
 
-    // MOVE THE UNASSIGNED CLUSTERS TO THE ORIGINAL SET TO BE REALLOCATED FROM THE EXTERNAL
+    // MOVE THE UNASSIGNED CLUSTERS TO THE ORIGINAL SET TO BE REALLOCATED FROM THE EXTERNAL (SHOULD NEVER HAPPEN)
     clustersToReassign.addAll(clustersOfClassToReassign);
 
     Collection<String> allClusterNames = iDatabase.getClusterNames();
@@ -186,15 +186,30 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
         while (ownedClusters.size() < targetClustersPerNode && !clustersOfClassToReassign.isEmpty()) {
           // POP THE FIRST ITEM
           final Iterator<String> it = clustersOfClassToReassign.iterator();
-          final String cluster = it.next();
-          it.remove();
 
-          clusterToAssignOwnership.put(cluster, server);
-          ownedClusters.add(cluster);
+          boolean reassigned = false;
+          while (it.hasNext()) {
+            final String cluster = it.next();
+
+            final List<String> serverPerClusterList = cfg.getServers(cluster);
+
+            if (serverPerClusterList != null && serverPerClusterList.contains(server)) {
+              it.remove();
+              clusterToAssignOwnership.put(cluster, server);
+              ownedClusters.add(cluster);
+              reassigned = true;
+              break;
+            }
+          }
+
+          if (!reassigned)
+            // CANNOT REASSIGN CURRENT CLUSTERS ON AVAILABLE NODES (CASE OF SHARDING)
+            break;
         }
       }
     }
     return clusterToAssignOwnership;
+
   }
 
   private void assignClusterOwnership(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg, final OClass iClass,

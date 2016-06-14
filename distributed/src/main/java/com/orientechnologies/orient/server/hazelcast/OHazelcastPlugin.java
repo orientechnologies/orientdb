@@ -40,7 +40,10 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.impl.*;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstractPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedMessageServiceImpl;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -372,16 +375,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
             final ODistributedDatabaseImpl ddb = messageService.registerDatabase(databaseName);
 
-            // 1ST NODE TO HAVE THE DATABASE: FORCE THE COORDINATOR TO BE LOCAL NODE
+            // 1ST NODE TO HAVE THE DATABASE
             cfg.addNewNodeInServerList(nodeName);
 
-            final String coordinator = getCoordinatorServer(cfg);
-            if (!nodeName.equals(coordinator)) {
-              ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-                  "First load of database '%s' in the cluster, set local node as coordinator (was '%s')", databaseName,
-                  coordinator);
-              electCurrentNodeAsNewCoordinator(cfg, coordinator, databaseName);
+            final Set<String> clustersWithNotAvailableOwner = new HashSet<String>();
+
+            // COLLECT ALL THE CLUSTERS OWNED BY OFFLINE SERVERS (ALL BUT CURRENT ONE BECAUSE IT'S 1ST RUN)
+            final Set<String> servers = cfg.getAllConfiguredServers();
+            for (String server : servers) {
+              if (!nodeName.equals(server)) {
+                clustersWithNotAvailableOwner.addAll(cfg.getClustersOwnedByServer(server));
+              }
             }
+
+            // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
+            if (reassignClustersOwnership(nodeName, databaseName, clustersWithNotAvailableOwner, false))
+              updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
 
             ddb.setOnline();
             return null;
@@ -531,6 +540,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
         activeNodesNamesByMemberId.put(iEvent.getMember().getUuid(), (String) cfg.field("name"));
 
+        dumpServersStatus();
+
       } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
           final String databaseName = key.substring(CONFIG_DATABASE_PREFIX.length());
@@ -579,6 +590,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         }
 
         updateLastClusterChange();
+
+        dumpServersStatus();
 
       } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
         final String dbName = key.substring(CONFIG_DATABASE_PREFIX.length());
@@ -696,9 +709,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           for (String databaseName : getManagedDatabases()) {
             final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
-            final String coordinator = getCoordinatorServer(cfg);
-            if (nodeLeftName.equals(coordinator))
-              electCurrentNodeAsNewCoordinator(cfg, nodeLeftName, databaseName);
+            // COLLECT ALL THE CLUSTERS WITH REMOVED NODE AS OWNER
+            final Set<String> clustersWithNotAvailableOwner = cfg.getClustersOwnedByServer(nodeLeftName);
+            if (reassignClustersOwnership(nodeName, databaseName, clustersWithNotAvailableOwner, false))
+              updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
+
           }
         } finally {
           // REMOVE NODE IN DB CFG

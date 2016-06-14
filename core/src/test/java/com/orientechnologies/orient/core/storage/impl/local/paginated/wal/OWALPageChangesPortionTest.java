@@ -229,5 +229,23 @@ public class OWALPageChangesPortionTest {
     Assert.assertEquals(content, expected);
   }
 
+  public void testMultiPortionReadIfFirstPortionIsNotChanged() {
+    final byte[] data = new byte[OWALPageChangesPortion.PORTION_BYTES * 4];
+    final ByteBuffer pointer = ByteBuffer.wrap(data);
+    final OWALPageChangesPortion changes = new OWALPageChangesPortion(data.length);
+
+    final byte[] smallChange = new byte[32];
+    Random random = new Random();
+    random.nextBytes(smallChange);
+
+    changes.setBinaryValue(pointer, smallChange, OWALPageChangesPortion.PORTION_BYTES + 37);
+
+    final byte[] actual = changes.getBinaryValue(pointer, 0, OWALPageChangesPortion.PORTION_BYTES * 2);
+
+    final byte[] expected = new byte[OWALPageChangesPortion.PORTION_BYTES * 2];
+    System.arraycopy(smallChange, 0, expected, OWALPageChangesPortion.PORTION_BYTES + 37, smallChange.length);
+
+    Assert.assertEquals(actual, expected);
+  }
 
 }

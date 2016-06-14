@@ -19,28 +19,31 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
+
+import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Ask for synchronization of delta of chanegs on database from a remote node.
@@ -66,7 +69,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
   @Override
   public Object execute(final ODistributedRequestId requestId, final OServer iServer, final ODistributedServerManager iManager,
-      final ODatabaseDocumentTx database) throws Exception {
+      final ODatabaseDocumentInternal database) throws Exception {
 
     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
       if (database == null)
@@ -90,7 +93,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   protected Object deltaBackup(final ODistributedRequestId requestId, final ODistributedServerManager iManager,
-      final ODatabaseDocumentTx database, final String databaseName) throws IOException, InterruptedException {
+      final ODatabaseDocumentInternal database, final String databaseName) throws IOException, InterruptedException {
 
     try {
 
@@ -98,7 +101,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       if (lastDeployment != null && lastDeployment.longValue() == random) {
         // SKIP IT
         ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-            "skip deploying delta database '%s' because already executed", databaseName);
+            "Skip deploying delta database '%s' because already executed", databaseName);
         return Boolean.FALSE;
       }
 
@@ -108,13 +111,13 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
       ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-          "deploying database %s with delta of changes...", databaseName);
+          "Deploying database %s with delta of changes...", databaseName);
 
       // CREATE A BACKUP OF DATABASE
       final File backupFile = new File(Orient.getTempPath() + "/backup_" + getNodeSource() + "_" + database.getName() + ".zip");
 
       ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-          "creating delta backup of database '%s' (startLSN=%s) in directory: %s...", databaseName, startLSN,
+          "Creating delta backup of database '%s' (startLSN=%s) in directory: %s...", databaseName, startLSN,
           backupFile.getAbsolutePath());
 
       if (backupFile.exists())
@@ -143,9 +146,9 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
         if (endLSN.get() == null)
           // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
           exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
-
-        ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "Delta backup of database '%s' completed. range=%s-%s...", databaseName, startLSN, endLSN);
+        else
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+              "Delta backup of database '%s' completed. range=%s-%s...", databaseName, startLSN, endLSN);
 
       } catch (Exception e) {
         // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
@@ -186,7 +189,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
     } finally {
       ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-          "deploy delta database task completed");
+          "Deploy delta database task completed");
     }
   }
 

@@ -271,7 +271,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (localResult != null)
         // COLLECT LOCAL RESULT
         currentResponseMgr
-            .collectResponse(new ODistributedResponse(iRequest.getId(), localNodeName, localNodeName, (Serializable) localResult));
+            .setLocalResult(localNodeName, (Serializable) localResult);
 
       if (!(iNodes instanceof List))
         iNodes = new ArrayList<String>(iNodes);
@@ -450,6 +450,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         if (pReq != null) {
           tasks += pReq.rollback(database);
           rollbacks++;
+          pReq.destroy();
         }
       }
     } finally {

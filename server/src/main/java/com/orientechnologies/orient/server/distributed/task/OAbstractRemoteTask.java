@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -50,7 +51,7 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
 
   @Override
   public abstract Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
-      ODatabaseDocumentTx database) throws Exception;
+      ODatabaseDocumentInternal database) throws Exception;
 
   @Override
   public int getPartitionKey() {

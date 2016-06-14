@@ -39,7 +39,7 @@ public class TestGetProperties {
     v.save();
 
     Map<String, Object> props = v.getProperties();
-    Assert.assertEquals(5, props.size());
+    Assert.assertEquals(3, props.size());
     Assert.assertEquals("test", props.get("test"));
     Assert.assertEquals("test1", props.get("test1"));
     Assert.assertNotNull(props.get("testMap"));
@@ -58,7 +58,7 @@ public class TestGetProperties {
     e.setProperty("test", "test");
     e.setProperty("test1", "test1");
     Map<String, Object> props = e.getProperties();
-    Assert.assertEquals(6, props.size());
+    Assert.assertEquals(2, props.size());
     Assert.assertEquals("test", props.get("test"));
     Assert.assertEquals("test1", props.get("test1"));
   }

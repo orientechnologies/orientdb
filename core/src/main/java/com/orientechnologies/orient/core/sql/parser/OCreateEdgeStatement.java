@@ -2,7 +2,6 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import java.util.List;
 import java.util.Map;
 
 public class OCreateEdgeStatement extends OStatement {
@@ -12,19 +11,9 @@ public class OCreateEdgeStatement extends OStatement {
   protected OIdentifier       targetClass;
   protected OIdentifier       targetClusterName;
 
-  protected ORid              leftRid;
-  protected List<ORid>        leftRids;
-  protected OSelectStatement  leftStatement;
-  protected OInputParameter   leftParam;
-  protected Object            leftParamValue  = unset;
-  protected OIdentifier       leftIdentifier;
+  protected OExpression leftExpression;
 
-  protected ORid              rightRid;
-  protected List<ORid>        rightRids;
-  protected OSelectStatement  rightStatement;
-  protected OInputParameter   rightParam;
-  protected Object            rightParamValue = unset;
-  protected OIdentifier       rightIdentifier;
+  protected OExpression rightExpression;
 
   protected OInsertBody       body;
   protected Number            retry;
@@ -50,51 +39,11 @@ public class OCreateEdgeStatement extends OStatement {
       }
     }
     builder.append(" FROM ");
-    if (leftRid != null) {
-      leftRid.toString(params, builder);
-    } else if (leftRids != null) {
-      builder.append("[");
-      boolean first = true;
-      for (ORid rid : leftRids) {
-        if (!first) {
-          builder.append(", ");
-        }
-        rid.toString(params, builder);
-        first = false;
-      }
-      builder.append("]");
-    } else if (leftStatement != null) {
-      builder.append("(");
-      leftStatement.toString(params, builder);
-      builder.append(")");
-    } else if (leftParam != null) {
-      leftParam.toString(params, builder);
-    } else if (leftIdentifier != null) {
-      leftIdentifier.toString(params, builder);
-    }
+    leftExpression.toString(params, builder);
+
     builder.append(" TO ");
-    if (rightRid != null) {
-      rightRid.toString(params, builder);
-    } else if (rightRids != null) {
-      builder.append("[");
-      boolean first = true;
-      for (ORid rid : rightRids) {
-        if (!first) {
-          builder.append(", ");
-        }
-        rid.toString(params, builder);
-        first = false;
-      }
-      builder.append("]");
-    } else if (rightStatement != null) {
-      builder.append("(");
-      rightStatement.toString(params, builder);
-      builder.append(")");
-    } else if (rightParam != null) {
-      rightParam.toString(params, builder);
-    } else if (rightIdentifier != null) {
-      rightIdentifier.toString(params, builder);
-    }
+    rightExpression.toString(params, builder);
+
     if (body != null) {
       builder.append(" ");
       body.toString(params, builder);

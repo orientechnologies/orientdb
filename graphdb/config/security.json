@@ -5,6 +5,7 @@
     "createDefaultUsers": true
   },
   "authentication": {
+    "enabled": true,
     "allowDefault": true,
     "authenticators": [
       {

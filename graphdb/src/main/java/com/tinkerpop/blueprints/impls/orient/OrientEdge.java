@@ -20,14 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -38,6 +30,11 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.*;
 
 /**
  * OrientDB Edge implementation of TinkerPop Blueprints standard. Edges can be classic or lightweight. Lightweight edges have no
@@ -50,9 +47,9 @@ import com.tinkerpop.blueprints.util.StringFactory;
 public class OrientEdge extends OrientElement implements Edge {
   private static final long serialVersionUID = 1L;
 
-  protected OIdentifiable vOut;
-  protected OIdentifiable vIn;
-  protected String        label;
+  protected OIdentifiable   vOut;
+  protected OIdentifiable   vIn;
+  protected String          label;
 
   /**
    * (Internal) Called by serialization
@@ -317,6 +314,26 @@ public class OrientEdge extends OrientElement implements Edge {
       if (!field.equals(OrientBaseGraph.CONNECTION_OUT) && !field.equals(OrientBaseGraph.CONNECTION_IN)
           && (settings.isUseClassForEdgeLabel() || !field.equals(OrientElement.LABEL_FIELD_NAME)))
         result.add(field);
+
+    return result;
+  }
+
+  @Override
+  public Map<String, Object> getProperties() {
+    if (this.rawElement == null)
+      return null;
+    final ODocument raw = this.rawElement.getRecord();
+    if (raw == null)
+      return null;
+
+    final OrientBaseGraph graph = setCurrentGraphInThreadLocal();
+
+    final Map<String, Object> result = new HashMap<String, Object>();
+
+    for (String field : raw.fieldNames())
+      if (!field.equals(OrientBaseGraph.CONNECTION_OUT) && !field.equals(OrientBaseGraph.CONNECTION_IN)
+          && (settings.isUseClassForEdgeLabel() || !field.equals(OrientElement.LABEL_FIELD_NAME)))
+        result.put(field, raw.field(field));
 
     return result;
   }

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
@@ -51,7 +52,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
     iRequest.data.commandInfo = "Query";
     iRequest.data.commandDetail = text;
 
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
 
     final List<OIdentifiable> response;
 

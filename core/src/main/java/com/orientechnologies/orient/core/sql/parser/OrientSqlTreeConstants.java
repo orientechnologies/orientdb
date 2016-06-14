@@ -171,6 +171,9 @@ public interface OrientSqlTreeConstants
   public int JJTIFSTATEMENT = 165;
   public int JJTSLEEPSTATEMENT = 166;
   public int JJTCONSOLESTATEMENT = 167;
+  public int JJTCREATESEQUENCESTATEMENT = 168;
+  public int JJTALTERSEQUENCESTATEMENT = 169;
+  public int JJTDROPSEQUENCESTATEMENT = 170;
 
 
   public String[] jjtNodeName = {
@@ -342,6 +345,9 @@ public interface OrientSqlTreeConstants
     "IfStatement",
     "SleepStatement",
     "ConsoleStatement",
+    "CreateSequenceStatement",
+    "AlterSequenceStatement",
+    "DropSequenceStatement",
   };
 }
-/* JavaCC - OriginalChecksum=469eb6299259891d2e8aa04bd521db9d (do not edit this line) */
+/* JavaCC - OriginalChecksum=645f013c99acf29fc2f43fdbc94e5861 (do not edit this line) */

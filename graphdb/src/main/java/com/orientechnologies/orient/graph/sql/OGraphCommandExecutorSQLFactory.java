@@ -141,12 +141,12 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
 
     if (result != null) {
-      final ODatabaseDocumentTx graphDb = result.getRawGraph();
+      final ODatabaseDocument graphDb = result.getRawGraph();
 
       // CHECK IF THE DATABASE + USER IN TL IS THE SAME IN ORDER TO USE IT
       if (canReuseActiveGraph(graphDb, database)) {
         if (!graphDb.isClosed()) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+          graphDb.activateOnCurrentThread();
           shouldBeShutDown.setValue(false);
           return result;
         }

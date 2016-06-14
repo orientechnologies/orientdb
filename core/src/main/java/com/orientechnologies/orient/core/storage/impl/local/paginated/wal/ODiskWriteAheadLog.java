@@ -58,6 +58,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final int              maxPagesCacheSize;
   private final int              commitDelay;
   private final long             maxSegmentSize;
+  private final long             preferredSegmentCount;
   private final File             walLocation;
   private final RandomAccessFile masterRecordLSNHolder;
 
@@ -143,6 +144,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
+    this.preferredSegmentCount = walSizeLimit / maxSegmentSize;
     this.storage = storage;
     this.performanceStatisticManager = storage.getPerformanceStatisticManager();
 
@@ -742,6 +744,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   @Override
   public void preventCutTill(OLogSequenceNumber lsn) throws IOException {
     preventCutTill = lsn;
+  }
+
+  @Override
+  public long getPreferredSegmentCount() {
+    return preferredSegmentCount;
   }
 
   private OLogSegment removeHeadSegmentFromList() {

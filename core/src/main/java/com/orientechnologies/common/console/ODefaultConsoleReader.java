@@ -32,13 +32,14 @@ import java.io.InputStreamReader;
 public class ODefaultConsoleReader implements OConsoleReader {
   final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-  private class EraserThread extends OSoftThread {
+  private static class EraserThread extends OSoftThread {
     @Override
     protected void execute() throws Exception {
       System.out.print("\010*");
       try {
-        Thread.currentThread().sleep(1);
+        Thread.sleep(1);
       } catch (InterruptedException ie) {
+        // om nom nom
       }
     }
   }
@@ -72,10 +73,12 @@ public class ODefaultConsoleReader implements OConsoleReader {
     }
   }
 
-  public OConsoleApplication getConsole() {
-    return null;
+  @Override
+  public void setConsole(OConsoleApplication console) {
   }
 
-  public void setConsole(OConsoleApplication console) {
+  @Override
+  public int getConsoleWidth() {
+    return OConsoleReader.FALLBACK_CONSOLE_WIDTH;
   }
 }

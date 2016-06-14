@@ -23,7 +23,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.common.util.OMemory;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.ORecordCacheWeakRefs;
@@ -31,7 +30,6 @@ import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -106,11 +104,9 @@ public enum OGlobalConfiguration {
         @Override
         public void change(Object currentValue, Object newValue) {
           final OEngineLocalPaginated engineLocalPaginated = (OEngineLocalPaginated) Orient.instance()
-              .getEngine(OEngineLocalPaginated.NAME);
-
-          if (engineLocalPaginated != null) {
+              .getEngineIfRunning(OEngineLocalPaginated.NAME);
+          if (engineLocalPaginated != null)
             engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
-          }
         }
       }),
 
@@ -507,7 +503,7 @@ public enum OGlobalConfiguration {
     }
   }),
 
-  LOG_FILE_LEVEL("log.file.level", "File logging level", String.class, "fine", new OConfigurationChangeCallback() {
+  LOG_FILE_LEVEL("log.file.level", "File logging level", String.class, "info", new OConfigurationChangeCallback() {
     public void change(final Object iCurrentValue, final Object iNewValue) {
       OLogManager.instance().setLevel((String) iNewValue, FileHandler.class);
     }
@@ -829,11 +825,8 @@ public enum OGlobalConfiguration {
   private final Boolean                      canChangeAtRuntime;
   private final boolean                      hidden;
 
-  // AT STARTUP AUTO-CONFIG
   static {
     readConfiguration();
-    autoConfig();
-    fixCommonConfigurationProblems();
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
@@ -931,66 +924,6 @@ public enum OGlobalConfiguration {
       if (prop != null)
         config.setValue(prop);
     }
-  }
-
-  private static void autoConfig() {
-    if (System.getProperty(DISK_CACHE_SIZE.key) == null)
-      autoConfigDiskCacheSize();
-
-    if (System.getProperty(WAL_RESTORE_BATCH_SIZE.key) == null) {
-      final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
-      if (jvmMaxMemory > 2 * OFileUtils.GIGABYTE)
-        // INCREASE WAL RESTORE BATCH SIZE TO 50K INSTEAD OF DEFAULT 1K
-        WAL_RESTORE_BATCH_SIZE.setValue(50000);
-      else if (jvmMaxMemory > 512 * OFileUtils.MEGABYTE)
-        // INCREASE WAL RESTORE BATCH SIZE TO 10K INSTEAD OF DEFAULT 1K
-        WAL_RESTORE_BATCH_SIZE.setValue(10000);
-    }
-  }
-
-  private static void autoConfigDiskCacheSize() {
-    final long osMemory = OMemory.getPhysicalMemorySize();
-    final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
-    final long maxDirectMemory = OMemory.getConfiguredMaxDirectMemory();
-
-    if (maxDirectMemory == -1) {
-      final long diskCacheInMB = jvmMaxMemory / 1024 / 1024;
-      OLogManager.instance().info(null,
-          "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB direct=%,dMB os=%,dMB), assuming maximum direct memory size "
-              + "equals to maximum JVM heap size", diskCacheInMB, diskCacheInMB, diskCacheInMB, osMemory / 1024 / 1024);
-      DISK_CACHE_SIZE.setValue(diskCacheInMB);
-      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB * 1024 * 1024, MEMORY_CHUNK_SIZE.getValueAsLong()));
-      return;
-    }
-
-    final long maxDirectMemoryInMB = maxDirectMemory / 1024 / 1024;
-
-    // DISK-CACHE IN MB = OS MEMORY - MAX HEAP JVM MEMORY - 2 GB
-    long diskCacheInMB = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
-    if (diskCacheInMB > 0) {
-      diskCacheInMB = Math.min(diskCacheInMB, maxDirectMemoryInMB);
-      OLogManager.instance().info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB direct=%,dMB os=%,dMB)", diskCacheInMB,
-          jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB, osMemory / 1024 / 1024);
-
-      DISK_CACHE_SIZE.setValue(diskCacheInMB);
-      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB * 1024 * 1024, MEMORY_CHUNK_SIZE.getValueAsLong()));
-    } else {
-      // LOW MEMORY: SET IT TO 256MB ONLY
-      diskCacheInMB = Math.min(O2QCache.MIN_CACHE_SIZE, maxDirectMemoryInMB);
-      OLogManager.instance().warn(null,
-          "Not enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB direct=%,dMB). Set lower Maximum Heap (-Xmx "
-              + "setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + diskCacheInMB + "MB", osMemory / 1024 / 1024,
-          jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB);
-      DISK_CACHE_SIZE.setValue(diskCacheInMB);
-      MEMORY_CHUNK_SIZE.setValue(Math.min(diskCacheInMB * 1024 * 1024, MEMORY_CHUNK_SIZE.getValueAsLong()));
-
-      OLogManager.instance().info(null, "OrientDB config DISKCACHE=%,dMB (heap=%,dMB direct=%,dMB os=%,dMB)", diskCacheInMB,
-          jvmMaxMemory / 1024 / 1024, maxDirectMemoryInMB, osMemory / 1024 / 1024);
-    }
-  }
-
-  private static void fixCommonConfigurationProblems() {
-    OMemory.fixCommonConfigurationProblems();
   }
 
   public Object getValue() {

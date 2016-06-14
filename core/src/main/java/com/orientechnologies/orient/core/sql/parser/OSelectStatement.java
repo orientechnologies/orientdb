@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -37,7 +38,7 @@ public class OSelectStatement extends OStatement {
 
   protected OLimit       limit;
 
-  protected Boolean      lockRecord;
+  protected OStorage.LOCKING_STRATEGY lockRecord = null;
 
   protected OFetchPlan   fetchPlan;
 
@@ -122,11 +123,11 @@ public class OSelectStatement extends OStatement {
     this.limit = limit;
   }
 
-  public Boolean getLockRecord() {
+  public OStorage.LOCKING_STRATEGY getLockRecord() {
     return lockRecord;
   }
 
-  public void setLockRecord(Boolean lockRecord) {
+  public void setLockRecord(OStorage.LOCKING_STRATEGY lockRecord) {
     this.lockRecord = lockRecord;
   }
 
@@ -191,8 +192,22 @@ public class OSelectStatement extends OStatement {
       limit.toString(params, builder);
     }
 
-    if (Boolean.TRUE.equals(lockRecord)) {
-      builder.append(" LOCK RECORD");
+    if (lockRecord!=null) {
+      builder.append(" LOCK ");
+      switch (lockRecord){
+      case DEFAULT:
+        builder.append("DEFAULT");
+        break;
+      case EXCLUSIVE_LOCK:
+        builder.append("RECORD");
+        break;
+      case SHARED_LOCK:
+        builder.append("SHARED");
+        break;
+      case NONE:
+        builder.append("NONE");
+        break;
+      }
     }
 
     if (fetchPlan != null) {
@@ -214,7 +229,7 @@ public class OSelectStatement extends OStatement {
   }
 
   public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
-    
+
   }
 
   private boolean isClassTarget(OFromClause target) {
@@ -288,7 +303,7 @@ public class OSelectStatement extends OStatement {
     final ORID[] range = new ORID[2];// TODO
     boolean useCache = false;// TODO
     if (iAscendentOrder)
-      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, useCache).setRange(range[0],
+      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, useCache, false).setRange(range[0],
           range[1]);
     else
       return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic).setRange(range[0],

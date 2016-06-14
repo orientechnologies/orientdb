@@ -25,18 +25,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 public class OTraverseContext extends OBasicCommandContext {
-  private Memory                      memory  = new StackMemory();
-  private Set<ORID>                   history = new HashSet<ORID>();
+  private Memory    memory  = new StackMemory();
+  private Set<ORID> history = new HashSet<ORID>();
 
   private OTraverseAbstractProcess<?> currentProcess;
 
@@ -61,9 +54,14 @@ public class OTraverseContext extends OBasicCommandContext {
       return getDepth();
     else if (name.startsWith("PATH"))
       return ODocumentHelper.getFieldValue(getPath(), iName.substring("PATH".length()));
-    else if (name.startsWith("STACK"))
-      return ODocumentHelper.getFieldValue(memory.getUnderlying(), iName.substring("STACK".length()));
-    else if (name.startsWith("HISTORY"))
+    else if (name.startsWith("STACK")) {
+
+      Object result = ODocumentHelper.getFieldValue(memory.getUnderlying(), iName.substring("STACK".length()));
+      if (result instanceof ArrayDeque) {
+        result = ((ArrayDeque) result).clone();
+      }
+      return result;
+    } else if (name.startsWith("HISTORY"))
       return ODocumentHelper.getFieldValue(history, iName.substring("HISTORY".length()));
     else
       // DELEGATE
@@ -179,28 +177,23 @@ public class OTraverseContext extends OBasicCommandContext {
       deque = new ArrayDeque<OTraverseAbstractProcess<?>>(memory.getUnderlying());
     }
 
-    @Override
-    public OTraverseAbstractProcess<?> next() {
+    @Override public OTraverseAbstractProcess<?> next() {
       return deque.peek();
     }
 
-    @Override
-    public void dropFrame() {
+    @Override public void dropFrame() {
       deque.removeFirst();
     }
 
-    @Override
-    public void clear() {
+    @Override public void clear() {
       deque.clear();
     }
 
-    @Override
-    public boolean isEmpty() {
+    @Override public boolean isEmpty() {
       return deque.isEmpty();
     }
 
-    @Override
-    public Collection<OTraverseAbstractProcess<?>> getUnderlying() {
+    @Override public Collection<OTraverseAbstractProcess<?>> getUnderlying() {
       return deque;
     }
   }
@@ -214,8 +207,7 @@ public class OTraverseContext extends OBasicCommandContext {
       super(memory);
     }
 
-    @Override
-    public void add(final OTraverseAbstractProcess<?> iProcess) {
+    @Override public void add(final OTraverseAbstractProcess<?> iProcess) {
       deque.push(iProcess);
     }
   }
@@ -225,8 +217,7 @@ public class OTraverseContext extends OBasicCommandContext {
       super(memory);
     }
 
-    @Override
-    public void add(final OTraverseAbstractProcess<?> iProcess) {
+    @Override public void add(final OTraverseAbstractProcess<?> iProcess) {
       deque.addLast(iProcess);
     }
   }

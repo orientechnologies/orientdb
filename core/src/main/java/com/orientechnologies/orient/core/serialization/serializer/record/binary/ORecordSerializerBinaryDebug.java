@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 import java.util.ArrayList;
 
 import com.orientechnologies.common.exception.OSystemException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
@@ -12,7 +13,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ORecordSerializerBinaryDebug extends ORecordSerializerBinaryV0 {
 
-  public ORecordSerializationDebug deserializeDebug(final byte[] iSource, ODatabaseDocumentTx db) {
+  public ORecordSerializationDebug deserializeDebug(final byte[] iSource, ODatabaseDocumentInternal db) {
     ORecordSerializationDebug debugInfo = new ORecordSerializationDebug();
     OImmutableSchema schema = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot();
     BytesContainer bytes = new BytesContainer(iSource);

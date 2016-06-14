@@ -52,6 +52,11 @@ public class OConsoleDatabaseAppTest {
       resetOutput();
     }
 
+    ConsoleTest(String [] args) {
+      console = new OConsoleDatabaseApp(args);
+      resetOutput();
+    }
+
     public OConsoleDatabaseApp console() {
       return console;
     }
@@ -93,6 +98,7 @@ public class OConsoleDatabaseAppTest {
     String dbUrl = "memory:OConsoleDatabaseAppTest";
     StringBuilder builder = new StringBuilder();
     builder.append("create database " + dbUrl + ";\n");
+    builder.append("profile storage on;\n");
     builder.append("create class foo;\n");
     builder.append("config;\n");
     builder.append("list classes;\n");
@@ -128,13 +134,15 @@ public class OConsoleDatabaseAppTest {
 
     builder.append("traverse out() from V;\n");
 
-    builder.append("create user TestUser identified by passwd ROLE ['reader','writer'];\n");
+//    builder.append("create user TestUser identified by password ROLE ['reader','writer'];\n");
 
     builder.append("drop user TestUser;\n");
 
-    builder.append("repair database -v;\n");
+    builder.append("profile storage off;\n");
 
-    OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
+    builder.append("repair database -v;\n");
+    ConsoleTest c = new ConsoleTest(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = c.console();
 
     try {
       console.run();
@@ -172,6 +180,7 @@ public class OConsoleDatabaseAppTest {
 
   @Test
   public void testWrongCommand() {
+
     String dbUrl = "memory:OConsoleDatabaseAppTest2";
     StringBuilder builder = new StringBuilder();
     builder.append("create database " + dbUrl + ";\n");
@@ -180,7 +189,8 @@ public class OConsoleDatabaseAppTest {
     builder.append("insert into foo set name = 'bla';\n");
     builder.append("blabla;\n");// <- wrong command, this should break the console
     builder.append("update foo set surname = 'bar' where name = 'foo';\n");
-    OConsoleDatabaseApp console = new OConsoleDatabaseApp(new String[] { builder.toString() });
+    ConsoleTest c = new ConsoleTest(new String[] { builder.toString() });
+    OConsoleDatabaseApp console = c.console();
 
     try {
       console.run();
@@ -204,10 +214,6 @@ public class OConsoleDatabaseAppTest {
   @Test
   public void testDisplayRawRecord() {
     String dbUrl = "memory:OConsoleDatabaseAppTestDisplayRawRecord";
-    StringBuilder builder = new StringBuilder();
-    builder.append("create database " + dbUrl + ";\n");
-    builder.append("create class foo;\n");
-    builder.append("insert into foo set name = 'foo';\n");
 
     // builder.append("display raw record " + rid);
 

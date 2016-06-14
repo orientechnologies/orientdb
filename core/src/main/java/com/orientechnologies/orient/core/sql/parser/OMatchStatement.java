@@ -125,8 +125,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    * @param <RET>
    * @return
    */
-  @Override
-  public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
+  @Override public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
     if (iRequest instanceof OSQLSynchQuery) {
       request = (OSQLSynchQuery<ODocument>) iRequest;
@@ -226,8 +225,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
    * @param iArgs Optional variable arguments to pass to the command.
    * @return
    */
-  @Override
-  public Object execute(Map<Object, Object> iArgs) {
+  @Override public Object execute(Map<Object, Object> iArgs) {
     this.context.setInputParameters(iArgs);
     return execute(this.request, this.context, this.progressListener);
   }
@@ -291,6 +289,9 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
       }
 
+      if(nextNodes.isEmpty()){
+        break;
+      }
       while (!nextNodes.isEmpty()) {
         PatternNode node = nextNodes.remove(0);
         traversedNodes.add(node);
@@ -468,7 +469,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
             leftValues = Collections.singleton(leftValues);
           }
           for (OIdentifiable leftValue : (Iterable<OIdentifiable>) leftValues) {
-            if(leftValue==null){
+            if (leftValue == null) {
               continue; //broken graph? null reference
             }
             Iterable<OIdentifiable> prevMatchedRightValues = matchContext.candidates.get(inEdge.out.alias);
@@ -559,7 +560,27 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   private boolean addResult(MatchContext matchContext, OSQLAsynchQuery<ODocument> request, OCommandContext ctx) {
 
     ODocument doc = null;
-    if (returnsMatches()) {
+    if (returnsElements()) {
+      for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
+        if (isExplicitAlias(entry.getKey()) && entry.getValue() != null) {
+          ORecord record = entry.getValue().getRecord();
+          if (request.getResultListener() != null && record != null) {
+            if (!addSingleResult(request, (OBasicCommandContext) ctx, record))
+              return false;
+          }
+        }
+      }
+    } else if (returnsPathElements()) {
+      for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
+        if (entry.getValue() != null) {
+          ORecord record = entry.getValue().getRecord();
+          if (request.getResultListener() != null && record != null) {
+            if (!addSingleResult(request, (OBasicCommandContext) ctx, record))
+              return false;
+          }
+        }
+      }
+    } else if (returnsMatches()) {
       doc = getDatabase().newInstance();
       for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
         if (isExplicitAlias(entry.getKey())) {
@@ -594,20 +615,68 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
 
     if (request.getResultListener() != null && doc != null) {
-      if (((OBasicCommandContext) context).addToUniqueResult(doc)) {
-        request.getResultListener().result(doc);
-        long currentCount = ((OBasicCommandContext) ctx).getResultsProcessed().incrementAndGet();
-        long limitValue = limitFromProtocol;
-        if (limit != null) {
-          limitValue = limit.num.getValue().longValue();
-        }
-        if (limitValue > -1 && limitValue <= currentCount) {
-          return false;
-        }
-      }
+      if (!addSingleResult(request, (OBasicCommandContext) ctx, doc))
+        return false;
     }
 
     return true;
+  }
+
+  /**
+   * @param request
+   * @param ctx
+   * @param record
+   * @return false if limit was reached
+   */
+  private boolean addSingleResult(OSQLAsynchQuery<ODocument> request, OBasicCommandContext ctx, ORecord record) {
+    if (((OBasicCommandContext) context).addToUniqueResult(record)) {
+      request.getResultListener().result(record);
+      long currentCount = ctx.getResultsProcessed().incrementAndGet();
+      long limitValue = limitFromProtocol;
+      if (limit != null) {
+        limitValue = limit.num.getValue().longValue();
+      }
+      if (limitValue > -1 && limitValue <= currentCount) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean returnsPathElements() {
+    for (OExpression item : returnItems) {
+      if (item.toString().equalsIgnoreCase("$pathElements")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean returnsElements() {
+    for (OExpression item : returnItems) {
+      if (item.toString().equalsIgnoreCase("$elements")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean returnsMatches() {
+    for (OExpression item : returnItems) {
+      if (item.toString().equalsIgnoreCase("$matches")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean returnsPaths() {
+    for (OExpression item : returnItems) {
+      if (item.toString().equalsIgnoreCase("$paths")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean returnsJson() {
@@ -631,24 +700,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       return false;
     }
     return true;
-  }
-
-  private boolean returnsMatches() {
-    for (OExpression item : returnItems) {
-      if (item.toString().equals("$matches")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean returnsPaths() {
-    for (OExpression item : returnItems) {
-      if (item.toString().equals("$paths")) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private Iterator<OIdentifiable> query(String className, OWhereClause oWhereClause, OCommandContext ctx) {
@@ -799,80 +850,65 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return null;
   }
 
-  @Override
-  public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
+  @Override public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
     this.progressListener = progressListener;
     return (RET) this;
   }
 
-  @Override
-  public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
+  @Override public <RET extends OCommandExecutor> RET setLimit(int iLimit) {
     limitFromProtocol = iLimit;
     return (RET) this;
   }
 
-  @Override
-  public String getFetchPlan() {
+  @Override public String getFetchPlan() {
     return null;
   }
 
-  @Override
-  public Map<Object, Object> getParameters() {
+  @Override public Map<Object, Object> getParameters() {
     return null;
   }
 
-  @Override
-  public OCommandContext getContext() {
+  @Override public OCommandContext getContext() {
     return context;
   }
 
-  @Override
-  public void setContext(OCommandContext context) {
+  @Override public void setContext(OCommandContext context) {
     this.context = context;
   }
 
-  @Override
-  public boolean isIdempotent() {
+  @Override public boolean isIdempotent() {
     return true;
   }
 
-  @Override
-  public Set<String> getInvolvedClusters() {
+  @Override public Set<String> getInvolvedClusters() {
     return Collections.EMPTY_SET;
   }
 
-  @Override
-  public int getSecurityOperationType() {
+  @Override public int getSecurityOperationType() {
     return ORole.PERMISSION_READ;
   }
 
-  @Override
-  public boolean involveSchema() {
+  @Override public boolean involveSchema() {
     return false;
   }
 
-  @Override
-  public String getSyntax() {
+  @Override public String getSyntax() {
     return "MATCH <match-statement> [, <match-statement] RETURN <alias>[, <alias>]";
   }
 
-  @Override
-  public boolean isLocalExecution() {
+  @Override public boolean isLocalExecution() {
     return true;
   }
 
-  @Override
-  public boolean isCacheable() {
+  @Override public boolean isCacheable() {
     return false;
   }
 
-  @Override
-  public long getDistributedTimeout() {
+  @Override public long getDistributedTimeout() {
     return -1;
   }
 
-  @Override
-  public Object mergeResults(Map<String, Object> results) throws Exception {
+  @Override public Object mergeResults(Map<String, Object> results) throws Exception {
     return results;
   }
 
@@ -901,8 +937,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
   }
 
-  @Override
-  public Iterator<OIdentifiable> iterator(Map<Object, Object> iArgs) {
+  @Override public Iterator<OIdentifiable> iterator(Map<Object, Object> iArgs) {
     if (context == null) {
       context = new OBasicCommandContext();
     }

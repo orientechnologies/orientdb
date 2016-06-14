@@ -1,6 +1,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -25,7 +26,7 @@ import java.util.Set;
  */
 public class OBonsaiTreeRepair {
 
-  public void repairDatabaseRidbags(ODatabaseDocumentTx db, OCommandOutputListener outputListener) {
+  public void repairDatabaseRidbags(ODatabaseDocument db, OCommandOutputListener outputListener) {
     message(outputListener, "Repair of ridbags is started ...\n");
 
     final OMetadata metadata = db.getMetadata();

@@ -208,6 +208,12 @@ public class OETLProcessor {
 
       configureLoader(iLoader, iContext);
 
+      //projecting cluster info to transformers
+      if (iLoader.containsField("cluster")) {
+        for (ODocument aTransformer : iTransformers) {
+          aTransformer.field("cluster", iLoader.field("cluster"));
+        }
+      }
       configureTransformers(iTransformers, iContext);
 
       configureEndBlocks(iEndBlocks, iContext);

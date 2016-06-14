@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.token;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -74,7 +75,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     throw new UnsupportedOperationException();
   }
 
-  public byte[] getSignedWebToken(final ODatabaseDocumentInternal db, final OSecurityUser user) {
+  public byte[] getSignedWebToken(final ODatabaseDocument db, final OSecurityUser user) {
     throw new UnsupportedOperationException();
   }
 

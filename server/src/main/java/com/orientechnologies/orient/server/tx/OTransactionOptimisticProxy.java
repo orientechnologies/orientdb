@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.tx;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -60,7 +61,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final OClientConnection           connection;
 
   public OTransactionOptimisticProxy(OClientConnection connection, ONetworkProtocolBinary protocolBinary) throws IOException {
-    super(connection.getDatabase());
+    super((ODatabaseDocumentTx) connection.getDatabase());
     channel = protocolBinary.getChannel();
     clientTxId = channel.readInt();
     this.protocolVersion = connection.getData().protocolVersion;

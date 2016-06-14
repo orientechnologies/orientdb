@@ -2703,7 +2703,7 @@ public class ODocument extends ORecordAbstract
     }
   }
 
-  protected void checkClass(ODatabaseDocumentTx database) {
+  protected void checkClass(ODatabaseDocumentInternal database) {
     if (_className == null)
       fetchClassName();
 

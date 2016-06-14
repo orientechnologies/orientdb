@@ -137,7 +137,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     asynchExecutor = Executors.newSingleThreadScheduledExecutor();
 
-    engine = (OEngineRemote) Orient.instance().getEngine(OEngineRemote.NAME);
+    engine = (OEngineRemote) Orient.instance().getRunningEngine(OEngineRemote.NAME);
   }
 
   public <T> T networkOperation(final OStorageRemoteOperation<T> operation, final String errorMessage) {

@@ -247,7 +247,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
 
     if (database instanceof ODatabaseDocumentTx) {
       ODatabaseDocumentInternal currentThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      final ODatabaseDocumentTx db = ((ODatabaseDocumentTx) database).copy();
+      final ODatabaseDocumentInternal db = ((ODatabaseDocumentTx) database).copy();
       if (currentThreadLocal != null) {
         currentThreadLocal.activateOnCurrentThread();
       } else {

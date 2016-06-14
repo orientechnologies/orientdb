@@ -19,6 +19,7 @@
   */
 package com.orientechnologies.orient.server.network.protocol.http.command.delete;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -36,7 +37,7 @@ public class OServerCommandDeleteIndex extends OServerCommandDocumentAbstract {
 
     iRequest.data.commandInfo = "Index remove";
 
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
 
     try {
       db = getProfiledDatabaseInstance(iRequest);

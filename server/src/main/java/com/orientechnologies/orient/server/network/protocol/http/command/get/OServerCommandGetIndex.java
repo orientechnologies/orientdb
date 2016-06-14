@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -39,7 +40,7 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
 
     iRequest.data.commandInfo = "Index get";
 
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
 
     try {
       db = getProfiledDatabaseInstance(iRequest);

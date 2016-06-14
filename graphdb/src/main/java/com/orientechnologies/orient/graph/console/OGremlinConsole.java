@@ -30,7 +30,9 @@ import com.tinkerpop.blueprints.impls.orient.OBonsaiTreeRepair;
 import com.tinkerpop.blueprints.impls.orient.OGraphRepair;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.util.io.graphml.GraphMLWriter;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -132,6 +134,39 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       }
     } else
       super.importDatabase(text);
+  }
+
+  @Override
+  @ConsoleCommand(description = "Export a database", splitInWords = false, onlineHelp = "Console-Command-Export")
+  public void exportDatabase(@ConsoleParameter(name = "options", description = "Export options") String iText) throws IOException {
+    checkForDatabase();
+
+    final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
+    final String fileName = items.size() <= 1 || items.get(1).charAt(0) == '-' ? null : items.get(1);
+    if (fileName != null && (fileName.endsWith(".graphml") || fileName.endsWith(".xml"))) {
+      message("\nExporting database in GRAPHML format to " + iText + "...");
+
+      try {
+        final OrientGraph g = new OrientGraph(currentDatabase);
+        g.setUseLog(false);
+        g.setWarnOnForceClosingTx(false);
+
+        // CREATE THE EXPORT FILE IF NOT EXIST YET
+        final File f = new File(fileName);
+
+        if (f.getParentFile() != null) {
+          f.getParentFile().mkdirs();
+        }
+        f.createNewFile();
+
+        new GraphMLWriter(g).outputGraph(fileName);
+
+      } catch (ODatabaseImportException e) {
+        printError(e);
+      }
+    } else
+      // BASE EXPORT
+      super.exportDatabase(iText);
   }
 
   @Override
