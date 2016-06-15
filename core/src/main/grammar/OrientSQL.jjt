@@ -4442,8 +4442,8 @@ OCreateSequenceStatement CreateSequenceStatement():
         }
 
         [ <START> jjtThis.start = Expression() ]
-        [ <INCREMENT> jjtThis.start = Expression() ]
-        [ <CACHE> jjtThis.start = Expression() ]
+        [ <INCREMENT> jjtThis.increment = Expression() ]
+        [ <CACHE> jjtThis.cache = Expression() ]
     )
     { return jjtThis; }
 }
@@ -4457,8 +4457,8 @@ OAlterSequenceStatement AlterSequenceStatement():
         <ALTER> <SEQUENCE>
         jjtThis.name = Identifier()
         [ <START> jjtThis.start = Expression() ]
-        [ <INCREMENT> jjtThis.start = Expression() ]
-        [ <CACHE> jjtThis.start = Expression() ]
+        [ <INCREMENT> jjtThis.increment = Expression() ]
+        [ <CACHE> jjtThis.cache = Expression() ]
     )
     { return jjtThis; }
 }
