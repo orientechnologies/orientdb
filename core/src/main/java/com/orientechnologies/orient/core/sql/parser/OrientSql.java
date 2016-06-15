@@ -17186,7 +17186,7 @@ Token token;
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case INCREMENT:
         jj_consume_token(INCREMENT);
-        jjtn000.start = Expression();
+        jjtn000.increment = Expression();
         break;
       default:
         jj_la1[346] = jj_gen;
@@ -17195,7 +17195,7 @@ Token token;
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case CACHE:
         jj_consume_token(CACHE);
-        jjtn000.start = Expression();
+        jjtn000.cache = Expression();
         break;
       default:
         jj_la1[347] = jj_gen;
@@ -17250,7 +17250,7 @@ Token token;
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case INCREMENT:
         jj_consume_token(INCREMENT);
-        jjtn000.start = Expression();
+        jjtn000.increment = Expression();
         break;
       default:
         jj_la1[349] = jj_gen;
@@ -17259,7 +17259,7 @@ Token token;
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case CACHE:
         jj_consume_token(CACHE);
-        jjtn000.start = Expression();
+        jjtn000.cache = Expression();
         break;
       default:
         jj_la1[350] = jj_gen;
