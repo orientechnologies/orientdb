@@ -9,7 +9,7 @@ import scala.collection.JavaConversions._
 
 abstract class OrientSpecBehaviours extends WordSpec with ShouldMatchers with BeforeAndAfterEach {
 
-  val graph: ScalaGraph[OrientGraph]
+  val graph: ScalaGraph
 
   val testLabel = "testLabel"
   val testProperty = Key[String]("testProperty")
@@ -219,7 +219,8 @@ abstract class OrientSpecBehaviours extends WordSpec with ShouldMatchers with Be
       graph.addVertex()
     }
 
-    val results: Seq[_] = graph.asJava.executeSql("select from V limit 10") match {
+    val javaGraph = graph.asJava.asInstanceOf[OrientGraph]
+    val results: Seq[_] = javaGraph.executeSql("select from V limit 10") match {
       case lst: JArrayList[_] ⇒ lst.toSeq
       case r: OResultSet[_]   ⇒ r.iterator().toSeq
       case other              ⇒ println(other.getClass()); println(other); ???
