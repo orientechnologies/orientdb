@@ -8,7 +8,7 @@ jdk:
 install:
   - mvn install dependency:go-offline -Pskip-formatter -DskipTests=true -q -f driver/pom.xml -Dfailsafe.timeout=0
 
-before-script:
+before-install:
  - "echo $JAVA_OPTS"
  - "export JAVA_OPTS=-Xmx3G"
 
