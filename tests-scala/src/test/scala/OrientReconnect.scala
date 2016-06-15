@@ -29,7 +29,7 @@ class OrientReconnect extends WordSpec with ShouldMatchers {
       .connect(user, pass)
       .createDatabase(dbName, dbType, dbStorage).close()
 
-  def getGraph: gremlin.scala.ScalaGraph[OrientGraph] =
+  def getGraph: gremlin.scala.ScalaGraph =
     new OrientGraphFactory(url + "/" + dbName)
       .setupPool(5)
       .getNoTx.asScala
