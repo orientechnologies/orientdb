@@ -124,6 +124,13 @@ public class ORemoteConnectionManager {
   }
 
   public void remove(final OChannelBinaryAsynchClient conn) {
+
+    final ORemoteConnectionPool pool = connections.get(conn.getServerURL());
+    if (pool == null)
+      throw new IllegalStateException("Connection cannot be released because the pool doesn't exist anymore");
+
+    pool.getPool().remove(conn);
+
     try {
       conn.unlock();
     } catch (Exception e) {
@@ -135,12 +142,6 @@ public class ORemoteConnectionManager {
     } catch (Exception e) {
       OLogManager.instance().debug(this, "Cannot close connection", e);
     }
-
-    final ORemoteConnectionPool pool = connections.get(conn.getServerURL());
-    if (pool == null)
-      throw new IllegalStateException("Connection cannot be released because the pool doesn't exist anymore");
-
-    pool.getPool().remove(conn);
 
   }
 
@@ -193,7 +194,6 @@ public class ORemoteConnectionManager {
     for (OChannelBinaryAsynchClient c : conns)
       try {
         // Unregister the listener that make the connection return to the closing pool.
-        c.unregisterListener(pool);
         c.close();
       } catch (Exception e) {
         OLogManager.instance().debug(this, "Cannot close binary channel", e);

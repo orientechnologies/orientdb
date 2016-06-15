@@ -19,7 +19,6 @@
   */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.Collection;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -33,7 +32,7 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
  */
 public class OTransactionIndexChanges {
 
-  public static enum OPERATION {
+  public enum OPERATION {
     PUT, REMOVE, CLEAR
   }
 

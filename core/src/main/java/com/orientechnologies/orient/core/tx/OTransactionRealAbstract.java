@@ -322,17 +322,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     if (iOperation == OPERATION.CLEAR)
       indexEntry.setCleared();
     else {
-      if (iOperation == OPERATION.REMOVE && iValue != null && iValue.getIdentity().isTemporary()) {
-
-        // TEMPORARY RECORD: JUST REMOVE IT
-        for (OTransactionIndexChangesPerKey changes : indexEntry.changesPerKey.values())
-          for (int i = 0; i < changes.entries.size(); ++i)
-            if (changes.entries.get(i).value.equals(iValue)) {
-              changes.entries.remove(i);
-              break;
-            }
-      }
-
       OTransactionIndexChangesPerKey changes = indexEntry.getChangesPerKey(key);
       changes.clientTrackOnly = clientTrackOnly;
       changes.add(iValue, iOperation);

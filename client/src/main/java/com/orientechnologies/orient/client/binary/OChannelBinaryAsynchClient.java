@@ -189,7 +189,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
             readCondition.signalAll();
             releaseReadLock();
             readLock = false;
-            close();
 
             throw e;
           } finally {
@@ -207,11 +206,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
                 iRequesterId, currentSessionId);
 
           if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout) {
-            // CLOSE THE SOCKET TO CHANNEL TO AVOID FURTHER DIRTY DATA
-            close();
             readLock = false;
 
-            throw new OTimeoutException("Timeout on reading response from the server "
+            throw new IOException("Timeout on reading response from the server "
                 + (socket != null ? socket.getRemoteSocketAddress() : "") + " for the request " + iRequesterId);
           }
 
@@ -221,7 +218,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
               OLogManager.instance().info(this, "Unread responses %d > %d, consider the buffer as dirty: clean it", unreadResponse,
                   maxUnreadResponses);
 
-            close();
             readLock = false;
 
             throw new IOException("Timeout on reading response");
