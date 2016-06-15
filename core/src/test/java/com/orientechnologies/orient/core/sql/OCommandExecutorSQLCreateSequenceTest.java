@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -30,19 +31,22 @@ import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 
-@Test public class OCommandExecutorSQLCreateSequenceTest {
+@Test
+public class OCommandExecutorSQLCreateSequenceTest {
   private static String DB_STORAGE = "memory";
   private static String DB_NAME    = "OCommandExecutorSQLCreateSequenceTest";
 
   ODatabaseDocumentTx db;
 
-  @BeforeClass public void beforeClass() throws Exception {
+  @BeforeClass
+  public void beforeClass() throws Exception {
     db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
     db.create();
 
   }
 
-  @AfterClass public void afterClass() throws Exception {
+  @AfterClass
+  public void afterClass() throws Exception {
     if (db.isClosed()) {
       db.open("admin", "admin");
     }
@@ -51,83 +55,86 @@ import static org.testng.Assert.assertEquals;
     db.close();
   }
 
-  @Test public void testSimple() {
+  @Test
+  public void testSimple() {
     db.command(new OCommandSQL("CREATE SEQUENCE Sequence1 TYPE ORDERED")).execute();
-
     List<ODocument> results = db.query(new OSQLSynchQuery("select sequence('Sequence1').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 1L);
+      assertEquals((long) result.field("val"), 1L);
     }
     results = db.query(new OSQLSynchQuery("select sequence('Sequence1').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 2L);
+      assertEquals((long) result.field("val"), 2L);
     }
     results = db.query(new OSQLSynchQuery("select sequence('Sequence1').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 3L);
+      assertEquals((long) result.field("val"), 3L);
     }
   }
 
-  @Test public void testIncrement() {
+  @Test
+  public void testIncrement() {
     db.command(new OCommandSQL("CREATE SEQUENCE SequenceIncrement TYPE ORDERED INCREMENT 3")).execute();
 
     List<ODocument> results = db.query(new OSQLSynchQuery("select sequence('SequenceIncrement').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 3L);
+      assertEquals((long) result.field("val"), 3L);
     }
     results = db.query(new OSQLSynchQuery("select sequence('SequenceIncrement').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 6L);
+      assertEquals((long) result.field("val"), 6L);
     }
     results = db.query(new OSQLSynchQuery("select sequence('SequenceIncrement').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 9L);
+      assertEquals((long) result.field("val"), 9L);
     }
   }
 
-  @Test public void testStart() {
+  @Test
+  public void testStart() {
     db.command(new OCommandSQL("CREATE SEQUENCE SequenceStart TYPE ORDERED START 3")).execute();
 
     List<ODocument> results = db.query(new OSQLSynchQuery("select sequence('SequenceStart').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 4L);
+      assertEquals((long) result.field("val"), 4L);
     }
     results = db.query(new OSQLSynchQuery("select sequence('SequenceStart').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 5L);
+      assertEquals((long) result.field("val"), 5L);
     }
     results = db.query(new OSQLSynchQuery("select sequence('SequenceStart').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 6L);
+      assertEquals((long) result.field("val"), 6L);
     }
   }
 
-  @Test public void testStartIncrement() {
+  @Test
+  public void testStartIncrement() {
     db.command(new OCommandSQL("CREATE SEQUENCE SequenceStartIncrement TYPE ORDERED START 3 INCREMENT 10")).execute();
 
     List<ODocument> results = db.query(new OSQLSynchQuery("select sequence('SequenceStartIncrement').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 13L);
+      assertEquals((long) result.field("val"), 13L);
     }
     results = db.query(new OSQLSynchQuery("select sequence('SequenceStartIncrement').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 23L);
+      assertEquals((long) result.field("val"), 23L);
     }
     results = db.query(new OSQLSynchQuery("select sequence('SequenceStartIncrement').next() as val"));
     assertEquals(results.size(), 1);
     for (ODocument result : results) {
-      assertEquals(result.field("val"), 33L);
+      assertEquals((long) result.field("val"), 33L);
     }
   }
 
