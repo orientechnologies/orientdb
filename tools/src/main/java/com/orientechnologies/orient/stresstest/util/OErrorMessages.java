@@ -39,7 +39,7 @@ public class OErrorMessages {
   public static final String COMMAND_LINE_PARSER_READS_GT_CREATES                = "The number of reads [%d] is greater than the number of creates [%d].";
   public static final String COMMAND_LINE_PARSER_INVALID_REMOTE_PORT_NUMBER      = "Invalid remote port [%d]. The port number has to be lesser than 65536.";
   public static final String COMMAND_LINE_PARSER_MODE_PARAM_MANDATORY            = "The mode param [-m] is mandatory.";
-  public static final String COMMAND_LINE_PARSER_TX_GREATER_THAN_CREATES         = "The number of operationsPerTransactions (parameter -x) [%d] is greater than the number of creates [%d] divided by iterationsNumber and ThreadsNumber.";
+  public static final String COMMAND_LINE_PARSER_TX_GREATER_THAN_CREATES         = "The number of operationsPerTransactions (parameter -x) [%d] is greater than the number of creates [%d] divided by ThreadsNumber.";
   public static final String COMMAND_LINE_PARSER_EXISTING_OUTPUT_FILE            = "The resultOutputFile [%s] already exists.";
   public static final String COMMAND_LINE_PARSER_NOT_EXISTING_OUTPUT_DIRECTORY   = "The directory where to write the resultOutputFile [%s] doesn't exist.";
   public static final String COMMAND_LINE_PARSER_NOT_EXISTING_PLOCAL_PATH        = "The plocal directory (param -d) doesn't exist [%s].";
@@ -47,7 +47,7 @@ public class OErrorMessages {
   public static final String COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_PLOCAL_PATH = "You don't have the permissions for writing on plocal directory [%s].";
   public static final String COMMAND_LINE_PARSER_PLOCAL_PATH_IS_NOT_DIRECTORY    = "The plocal path [%s] is not a directory.";
 
-  public static final String COMMAND_LINE_PARSER_MISSING_REMOTE_IP               =
+  public static final String COMMAND_LINE_PARSER_MISSING_REMOTE_IP =
       "The mode is [" + OMode.REMOTE + "] but the param --" + OConstants.OPTION_REMOTE_IP + " wasn't passed.";
 
   public static final String ERROR_OPENING_CONSOLE =

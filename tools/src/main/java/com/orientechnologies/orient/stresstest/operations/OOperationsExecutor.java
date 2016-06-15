@@ -21,133 +21,161 @@ package com.orientechnologies.orient.stresstest.operations;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.stresstest.output.OConsoleWriter;
-import com.orientechnologies.orient.stresstest.output.OOperationsExecutorResults;
+import com.orientechnologies.orient.stresstest.output.OConsoleProgressWriter;
+import com.orientechnologies.orient.stresstest.output.OStressTestResults;
 import com.orientechnologies.orient.stresstest.util.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.util.ODatabaseUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
- * This class is the one that executes the operations of the test. There will be as many instances of this class as the defined number of threads.
+ * This class is the one that executes the operations of the test.
+ * There will be as many instances of this class as the defined number of threads.
  *
  * @author Andrea Iacono
  */
 public class OOperationsExecutor implements Callable {
 
-  private OOperationsSet      operationsSet;
-  private int                 txNumber;
-  private OConsoleWriter      consoleWriter;
-  private ODatabaseIdentifier databaseIdentifier;
+  private OOperationsSet         operationsSet;
+  private OConsoleProgressWriter consoleProgressWriter;
+  private OStressTestResults     stressTestResults;
+  private int                    txNumber;
+  private int                    threads;
+  private ODatabaseIdentifier    databaseIdentifier;
 
-  public OOperationsExecutor(ODatabaseIdentifier databaseIdentifier, OOperationsSet operationsSet, int txNumber,
-      OConsoleWriter consoleWriter) {
+  public OOperationsExecutor(ODatabaseIdentifier databaseIdentifier, OOperationsSet operationsSet, int txNumber, int threads,
+      OConsoleProgressWriter consoleProgressWriter, OStressTestResults stressTestResults) {
     this.databaseIdentifier = databaseIdentifier;
     this.txNumber = txNumber;
-    this.consoleWriter = consoleWriter;
+    this.threads = threads;
     this.operationsSet = operationsSet;
+    this.consoleProgressWriter = consoleProgressWriter;
+    this.stressTestResults = stressTestResults;
   }
 
-  @Override
-  public Object call() throws Exception {
+  @Override public Object call() throws Exception {
+
+    Map<OOperationType, Long> times = new HashMap<OOperationType, Long>();
 
     // the database must be opened in the executing thread
     ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
 
     // executes all the operations defined for this test
     long start = System.currentTimeMillis();
-    List<ODocument> insertedDocs = executeCreates(operationsSet.getNumberOfCreates(), txNumber, database);
-    long createsTime = (System.currentTimeMillis() - start);
+    List<ODocument> insertedDocs = executeCreates(operationsSet.getNumber(OOperationType.CREATE) / threads, txNumber, database);
+    times.put(OOperationType.CREATE, System.currentTimeMillis() - start);
 
     start = System.currentTimeMillis();
-    executeReads(operationsSet.getNumberOfReads(), database);
-    long insertsTime = (System.currentTimeMillis() - start);
+    executeReads(operationsSet.getNumber(OOperationType.READ) / threads, database);
+    times.put(OOperationType.READ, System.currentTimeMillis() - start);
 
     start = System.currentTimeMillis();
-    executeUpdates(operationsSet.getNumberOfUpdates(), txNumber, database, insertedDocs);
-    long updatesTime = (System.currentTimeMillis() - start);
+    executeUpdates(operationsSet.getNumber(OOperationType.UPDATE) / threads, txNumber, database, insertedDocs);
+    times.put(OOperationType.UPDATE, System.currentTimeMillis() - start);
 
     start = System.currentTimeMillis();
-    executeDeletes(operationsSet.getNumberOfDeletes(), txNumber, database, insertedDocs);
-    long deletesTime = (System.currentTimeMillis() - start);
-    
-    consoleWriter.updateConsole();
+    executeDeletes(operationsSet.getNumber(OOperationType.DELETE) / threads, txNumber, database, insertedDocs);
+    times.put(OOperationType.DELETE, System.currentTimeMillis() - start);
 
-    // and return the timings of this run of the test
-    return new OOperationsExecutorResults(createsTime, insertsTime, updatesTime, deletesTime);
+    consoleProgressWriter.stopProgress();
+
+    // and return the timings of execution the test
+    return times;
   }
 
-  private List<ODocument> executeOperations(int number, int operationsInTx, ODatabase database,
-      Invokable<ODocument, Integer, ODocument> operationToExecute) throws Exception {
+  // an helper method for all the operations types
+  private List<ODocument> executeOperations(OOperationType operationType, long numberOfOperations, int operationsInTx,
+      ODatabase database, Invokable<ODocument, Integer> operationToExecute) throws Exception {
+
+    // divides the set of operations into smaller sets (to compute percentile)
+    int percentileFrequency = operationsInTx > 0 ? operationsInTx : ((int) (numberOfOperations / 100));
 
     List<ODocument> insertedDocs = new ArrayList<ODocument>();
-    int txCounter = 1;
     if (operationsInTx > 0) {
       database.begin();
     }
-    for (int j = 0; j < number; j++) {
-      if (operationsInTx > 0 && txCounter % operationsInTx == 0) {
+    long percentileStartTiming = System.currentTimeMillis();
+    for (int j = 1; j <= numberOfOperations; j++) {
+
+      if (operationsInTx > 0 && j % operationsInTx == 0) {
         database.commit();
         database.begin();
       }
-      ODocument doc = operationToExecute.invoke(j, null);
+
+      ODocument doc = operationToExecute.invoke(j - 1);
+
+      if (j % percentileFrequency == 0) {
+        stressTestResults.addPartialResult(operationType, System.currentTimeMillis() - percentileStartTiming);
+        stressTestResults.setTestProgress(operationType, percentileFrequency);
+        percentileStartTiming = System.currentTimeMillis();
+      }
       if (doc != null) {
         insertedDocs.add(doc);
       }
     }
     if (operationsInTx > 0) {
       database.commit();
+      stressTestResults.setTestProgress(operationType, (int) (numberOfOperations % percentileFrequency));
     }
     return insertedDocs;
   }
 
-  private List<ODocument> executeCreates(int number, int operationsInTx, ODatabase database) throws Exception {
-    return executeOperations(number, operationsInTx, database, new Invokable<ODocument, Integer, ODocument>() {
-      @Override
-      public ODocument invoke(Integer value, ODocument doc) {
-        consoleWriter.addCreate();
+  private List<ODocument> executeCreates(long number, int operationsInTx, ODatabase database) throws Exception {
+    if (number == 0) {
+      return new ArrayList<ODocument>();
+    }
+    return executeOperations(OOperationType.CREATE, number, operationsInTx, database, new Invokable<ODocument, Integer>() {
+      @Override public ODocument invoke(Integer value) {
         return ODatabaseUtils.createOperation(value);
       }
     });
   }
 
-  private void executeReads(int number, final ODatabase database) throws Exception {
-    executeOperations(number, 0, database, new Invokable<ODocument, Integer, ODocument>() {
-      @Override
-      public ODocument invoke(Integer value, ODocument doc) throws Exception {
+  private void executeReads(long number, final ODatabase database) throws Exception {
+    if (number == 0) {
+      return;
+    }
+    executeOperations(OOperationType.READ, number, 0, database, new Invokable<ODocument, Integer>() {
+      @Override public ODocument invoke(Integer value) throws Exception {
         ODatabaseUtils.readOperation(database, value);
-        consoleWriter.addRead();
         return null;
       }
     });
   }
 
-  private void executeUpdates(int number, int operationsInTx, final ODatabase database, final List<ODocument> insertedDocs) throws Exception {
-    executeOperations(number, operationsInTx, database, new Invokable<ODocument, Integer, ODocument>() {
-      @Override
-      public ODocument invoke(Integer value, ODocument doc) throws Exception {
+  private void executeUpdates(long number, int operationsInTx, final ODatabase database, final List<ODocument> insertedDocs)
+      throws Exception {
+    if (number == 0) {
+      return;
+    }
+    executeOperations(OOperationType.UPDATE, number, operationsInTx, database, new Invokable<ODocument, Integer>() {
+      @Override public ODocument invoke(Integer value) throws Exception {
         ODatabaseUtils.updateOperation(insertedDocs.get(value % insertedDocs.size()), value);
-        consoleWriter.addUpdate();
         return null;
       }
     });
   }
 
-  private void executeDeletes(int number, int operationsInTx, final ODatabase database, final List<ODocument> insertedDocs) throws Exception {
-    executeOperations(number, operationsInTx, database, new Invokable<ODocument, Integer, ODocument>() {
-      @Override
-      public ODocument invoke(Integer value, ODocument doc) throws Exception {
+  private void executeDeletes(long number, int operationsInTx, final ODatabase database, final List<ODocument> insertedDocs)
+      throws Exception {
+    if (number == 0) {
+      return;
+    }
+    executeOperations(OOperationType.DELETE, number, operationsInTx, database, new Invokable<ODocument, Integer>() {
+      @Override public ODocument invoke(Integer value) throws Exception {
         ODatabaseUtils.deleteOperation(insertedDocs.get(value));
-        consoleWriter.addDelete();
         return null;
       }
     });
   }
 
-  interface Invokable<T, V, Z> {
-    T invoke(V first, Z second) throws Exception;
+  // a new interface because I need to throw an exception
+  interface Invokable<T, V> {
+    T invoke(V param) throws Exception;
   }
 
 }

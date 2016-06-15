@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.stresstest;
 
+import com.orientechnologies.orient.stresstest.operations.OOperationType;
 import com.orientechnologies.orient.stresstest.operations.OOperationsSet;
 import com.orientechnologies.orient.stresstest.util.OConstants;
 import com.orientechnologies.orient.stresstest.util.ODatabaseIdentifier;
@@ -55,14 +56,13 @@ public class OStressTesterCommandLineParser {
     String rootPassword = options.get(OConstants.OPTION_ROOT_PASSWORD);
     String resultOutputFile = options.get(OConstants.OPTION_OUTPUT_FILE);
     String plocalPath = options.get(OConstants.OPTION_PLOCAL_PATH);
-    int iterationsNumber = getNumber(options.get(OConstants.OPTION_ITERATIONS), "iterations");
     int operationsPerTransaction = getNumber(options.get(OConstants.OPTION_TRANSACTIONS), "transactions");
     int threadsNumber = getNumber(options.get(OConstants.OPTION_THREADS), "threads");
-    OOperationsSet operationsSet = new OOperationsSet(options.get(OConstants.OPTION_OPERATIONS), threadsNumber, iterationsNumber);
+    OOperationsSet operationsSet = new OOperationsSet(options.get(OConstants.OPTION_OPERATIONS));
     String remoteIp = options.get(OConstants.OPTION_REMOTE_IP);
     int remotePort = 2424;
 
-    if (plocalPath!= null) {
+    if (plocalPath != null) {
       if (plocalPath.endsWith(File.separator)) {
         plocalPath = plocalPath.substring(0, plocalPath.length() - File.separator.length());
       }
@@ -97,14 +97,14 @@ public class OStressTesterCommandLineParser {
             String.format(OErrorMessages.COMMAND_LINE_PARSER_NOT_EXISTING_OUTPUT_DIRECTORY, parentFile.getAbsoluteFile()));
       }
       if (!parentFile.canWrite()) {
-        throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE,
-            parentFile.getAbsoluteFile()));
+        throw new OInitException(
+            String.format(OErrorMessages.COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE, parentFile.getAbsoluteFile()));
       }
     }
 
-    if (operationsPerTransaction > operationsSet.getNumberOfCreates()) {
+    if (operationsPerTransaction > operationsSet.getNumber(OOperationType.CREATE) / threadsNumber) {
       throw new OInitException(String.format(OErrorMessages.COMMAND_LINE_PARSER_TX_GREATER_THAN_CREATES, operationsPerTransaction,
-          operationsSet.getNumberOfCreates()));
+          operationsSet.getNumber(OOperationType.CREATE)));
     }
 
     if (options.get(OConstants.OPTION_REMOTE_PORT) != null) {
@@ -133,8 +133,7 @@ public class OStressTesterCommandLineParser {
     }
 
     ODatabaseIdentifier databaseIdentifier = new ODatabaseIdentifier(mode, dbName, rootPassword, remoteIp, remotePort, plocalPath);
-    return new OStressTester(databaseIdentifier, operationsSet, iterationsNumber, threadsNumber, operationsPerTransaction,
-        resultOutputFile);
+    return new OStressTester(databaseIdentifier, operationsSet, threadsNumber, operationsPerTransaction, resultOutputFile);
   }
 
   private static int getNumber(String value, String option) throws OInitException {
@@ -156,10 +155,9 @@ public class OStressTesterCommandLineParser {
     }
 
     options = setDefaultIfNotPresent(options, OConstants.OPTION_MODE, OMode.PLOCAL.name());
-    options = setDefaultIfNotPresent(options, OConstants.OPTION_ITERATIONS, "10");
     options = setDefaultIfNotPresent(options, OConstants.OPTION_THREADS, "4");
     options = setDefaultIfNotPresent(options, OConstants.OPTION_TRANSACTIONS, "0");
-    options = setDefaultIfNotPresent(options, OConstants.OPTION_OPERATIONS, "C5000R5000U5000D5000");
+    options = setDefaultIfNotPresent(options, OConstants.OPTION_OPERATIONS, "C25000R25000U25000D25000");
 
     try {
       OMode.valueOf(options.get(OConstants.OPTION_MODE).toUpperCase());

@@ -25,5 +25,5 @@ package com.orientechnologies.orient.stresstest;
  * @author Andrea Iacono
  */
 public enum OMode {
-    PLOCAL, MEMORY, REMOTE, DISTRIBUTED
+  PLOCAL, MEMORY, REMOTE, DISTRIBUTED
 }

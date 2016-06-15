@@ -9,8 +9,7 @@ import static org.junit.Assert.*;
 
 public class OStressTesterCommandLineParserTest {
 
-  @Test
-  public void testCommandLineArgs() throws Exception {
+  @Test public void testCommandLineArgs() throws Exception {
     try {
       OStressTesterCommandLineParser.getStressTester(new String[] { "" });
       fail();
@@ -54,23 +53,22 @@ public class OStressTesterCommandLineParserTest {
     }
 
     try {
-      OStressTesterCommandLineParser
-          .getStressTester(new String[] { "-m", "memory", "-x", "4", "-n", "10", "-t", "2", "-s", "C60R60U60D60" });
+      OStressTesterCommandLineParser.getStressTester(new String[] { "-m", "memory", "-x", "30", "-t", "2", "-s", "C60R60U60D60" });
+      OStressTesterCommandLineParser.getStressTester(new String[] { "-m", "memory", "-x", "31", "-t", "2", "-s", "C60R60U60D60" });
       fail();
     } catch (Exception ex) {
-      assertTrue(ex.getMessage().contains(String.format(OErrorMessages.COMMAND_LINE_PARSER_TX_GREATER_THAN_CREATES, 4, 3)));
+      assertTrue(ex.getMessage().contains(String.format(OErrorMessages.COMMAND_LINE_PARSER_TX_GREATER_THAN_CREATES, 31, 60)));
     }
 
     try {
-      OStressTesterCommandLineParser.getStressTester(new String[] { "-n", "10" });
+      OStressTesterCommandLineParser.getStressTester(new String[] { "-x", "10" });
       fail();
     } catch (Exception ex) {
       assertTrue(ex.getMessage().contains(OErrorMessages.COMMAND_LINE_PARSER_MODE_PARAM_MANDATORY));
     }
 
     OStressTester stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-n", "100", "--root-password", "foo", "-m", "plocal" });
-    assertEquals(100, stressTester.getIterationsNumber());
+        .getStressTester(new String[] { "--root-password", "foo", "-m", "plocal" });
     assertEquals("foo", stressTester.getPassword());
     assertEquals(OMode.PLOCAL, stressTester.getDatabaseIdentifier().getMode());
     assertNull(stressTester.getDatabaseIdentifier().getPlocalPath());
@@ -80,8 +78,7 @@ public class OStressTesterCommandLineParserTest {
     assertEquals(OMode.MEMORY, stressTester.getDatabaseIdentifier().getMode());
 
     stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-n", "100", "-t", "4", "--root-password", "foo", "-m", "plocal" });
-    assertEquals(100, stressTester.getIterationsNumber());
+        .getStressTester(new String[] { "-t", "4", "--root-password", "foo", "-m", "plocal" });
     assertEquals(4, stressTester.getThreadsNumber());
     assertNull(stressTester.getDatabaseIdentifier().getRemoteIp());
     assertEquals(2424, stressTester.getDatabaseIdentifier().getRemotePort());
@@ -104,16 +101,14 @@ public class OStressTesterCommandLineParserTest {
     }
 
     stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-n", "100", "-t", "4", "-m", "plocal", "--root-password", "foo", "-d", tmpDir });
-    assertEquals(100, stressTester.getIterationsNumber());
+        .getStressTester(new String[] { "-t", "4", "-m", "plocal", "--root-password", "foo", "-d", tmpDir });
     assertEquals(4, stressTester.getThreadsNumber());
     assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());
     assertEquals("foo", stressTester.getPassword());
     assertEquals(tmpDir, stressTester.getDatabaseIdentifier().getPlocalPath());
 
-    stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-n", "100", "-t", "4", "-m", "plocal", "--root-password", "foo", "-x", "12", "-d", tmpDir + File.separator});
-    assertEquals(100, stressTester.getIterationsNumber());
+    stressTester = OStressTesterCommandLineParser.getStressTester(
+        new String[] { "-t", "4", "-m", "plocal", "--root-password", "foo", "-x", "12", "-d", tmpDir + File.separator });
     assertEquals(4, stressTester.getThreadsNumber());
     assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());
     assertEquals("foo", stressTester.getPassword());
@@ -121,10 +116,11 @@ public class OStressTesterCommandLineParserTest {
     assertEquals(tmpDir, stressTester.getDatabaseIdentifier().getPlocalPath());
 
     stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-n", "100", "-t", "4", "-m", "plocal", "-s", "c1r1u1d1", "--root-password", "foo" });
-    assertEquals(100, stressTester.getIterationsNumber());
+        .getStressTester(new String[] { "-t", "4", "-m", "plocal", "-s", "c1r1u1d1", "--root-password", "foo" });
     assertEquals(4, stressTester.getThreadsNumber());
     assertEquals(com.orientechnologies.orient.stresstest.OMode.PLOCAL, stressTester.getMode());
     assertEquals("foo", stressTester.getPassword());
+
+    // TODO: add tests for checking value of creates/reads to check the remotion of iteration had no impact
   }
 }

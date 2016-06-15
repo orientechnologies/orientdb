@@ -34,76 +34,74 @@ import java.util.List;
  */
 public class ODatabaseUtils {
 
-    public static void createDatabase(ODatabaseIdentifier databaseIdentifier) throws Exception {
-        switch (databaseIdentifier.getMode()) {
-            case PLOCAL:
-            case MEMORY:
-                new ODatabaseDocumentTx(databaseIdentifier.getUrl()).create();
-                break;
-            case REMOTE:
-                new OServerAdmin(databaseIdentifier.getUrl())
-                        .connect("root", databaseIdentifier.getPassword())
-                        .createDatabase(databaseIdentifier.getName(), "document", "plocal");
-                break;
-        }
+  public static void createDatabase(ODatabaseIdentifier databaseIdentifier) throws Exception {
+    switch (databaseIdentifier.getMode()) {
+    case PLOCAL:
+    case MEMORY:
+      new ODatabaseDocumentTx(databaseIdentifier.getUrl()).create();
+      break;
+    case REMOTE:
+      new OServerAdmin(databaseIdentifier.getUrl()).connect("root", databaseIdentifier.getPassword())
+          .createDatabase(databaseIdentifier.getName(), "document", "plocal");
+      break;
+    }
+  }
+
+  public static ODatabase openDatabase(ODatabaseIdentifier databaseIdentifier) {
+    switch (databaseIdentifier.getMode()) {
+    case PLOCAL:
+    case MEMORY:
+      return new ODatabaseDocumentTx(databaseIdentifier.getUrl()).open("admin", "admin");
+    case REMOTE:
+      return new ODatabaseDocumentTx(databaseIdentifier.getUrl()).open("root", databaseIdentifier.getPassword());
     }
 
-    public static ODatabase openDatabase(ODatabaseIdentifier databaseIdentifier) {
-        switch (databaseIdentifier.getMode()) {
-            case PLOCAL:
-            case MEMORY:
-                return new ODatabaseDocumentTx(databaseIdentifier.getUrl()).open("admin", "admin");
-            case REMOTE:
-                return new ODatabaseDocumentTx(databaseIdentifier.getUrl()).open("root", databaseIdentifier.getPassword());
-        }
+    return null;
+  }
 
-        return null;
+  public static void dropDatabase(ODatabaseIdentifier databaseIdentifier) throws Exception {
+
+    switch (databaseIdentifier.getMode()) {
+    case PLOCAL:
+    case MEMORY:
+      openDatabase(databaseIdentifier).drop();
+      break;
+    case REMOTE:
+      new OServerAdmin(databaseIdentifier.getUrl()).connect("root", databaseIdentifier.getPassword())
+          .dropDatabase(databaseIdentifier.getName(), "plocal");
+      break;
     }
+  }
 
-    public static void dropDatabase(ODatabaseIdentifier databaseIdentifier) throws Exception {
+  public static ODocument createOperation(int n) {
+    ODocument doc = new ODocument(OConstants.CLASS_NAME);
+    doc.field("name", getThreadValue(n));
+    doc.save();
+    return doc;
+  }
 
-        switch (databaseIdentifier.getMode()) {
-            case PLOCAL:
-            case MEMORY:
-                openDatabase(databaseIdentifier).drop();
-                break;
-            case REMOTE:
-                new OServerAdmin(databaseIdentifier.getUrl())
-                        .connect("root", databaseIdentifier.getPassword())
-                        .dropDatabase(databaseIdentifier.getName(), "plocal");
-                break;
-        }
+  public static void readOperation(ODatabase database, int n) throws Exception {
+    String query = String.format("SELECT FROM %s WHERE name = ?", OConstants.CLASS_NAME);
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(query)).execute(getThreadValue(n));
+    if (result.size() != 1) {
+      throw new Exception(String.format("The query [%s] result size is %d. Expected size is 1.", query, result.size()));
     }
+  }
 
-    public static ODocument createOperation(int n) {
-        ODocument doc = new ODocument(OConstants.CLASS_NAME);
-        doc.field("name", getThreadValue(n));
-        doc.save();
-        return doc;
-    }
+  public static void deleteOperation(ODocument doc) {
+    doc.delete();
+  }
 
-    public static void readOperation(ODatabase database, int n) throws Exception {
-        String query = String.format("SELECT FROM %s WHERE name = ?", OConstants.CLASS_NAME);
-        List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(query)).execute(getThreadValue(n));
-        if (result.size() != 1) {
-            throw new Exception(String.format("The query [%s] result size is %d. Expected size is 1.", query, result.size()));
-        }
-    }
+  public static void updateOperation(ODocument doc, int n) {
+    doc.field("name", getThreadValue(n, "new"));
+    doc.save();
+  }
 
-    public static void deleteOperation(ODocument doc) {
-        doc.delete();
-    }
+  private static String getThreadValue(int n) {
+    return getThreadValue(n, "");
+  }
 
-    public static void updateOperation(ODocument doc, int n) {
-        doc.field("name", getThreadValue(n, "new"));
-        doc.save();
-    }
-
-    private static String getThreadValue(int n) {
-        return getThreadValue(n, "");
-    }
-
-    private static String getThreadValue(int n, String prefix) {
-        return prefix + "value-" + Thread.currentThread().getId() + "-" + n;
-    }
+  private static String getThreadValue(int n, String prefix) {
+    return prefix + "value-" + Thread.currentThread().getId() + "-" + n;
+  }
 }

@@ -17,16 +17,19 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.stresstest.util;
+package com.orientechnologies.orient.stresstest.operations;
 
 /**
- * This exception is thrown when an error occurs during the init phase of the StressTester.
+ * the operation type
  *
  * @author Andrea Iacono
  */
-public class OInitException extends Exception {
+public enum OOperationType {
 
-  public OInitException(String message) {
-    super(OConstants.SYNTAX + "\n" + message);
+  CREATE, READ, UPDATE, DELETE;
+
+  // return the name of the type with the first letter uppercase and the others in lower case
+  public String getName() {
+    return this.toString().charAt(0) + this.toString().substring(1).toLowerCase();
   }
 }

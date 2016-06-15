@@ -73,12 +73,12 @@ public class ODatabaseIdentifier {
     return rootPassword;
   }
 
-  public String getName() {
-    return dbName;
-  }
-
   public void setPassword(String password) {
     this.rootPassword = password;
+  }
+
+  public String getName() {
+    return dbName;
   }
 
   public String getRemoteIp() {

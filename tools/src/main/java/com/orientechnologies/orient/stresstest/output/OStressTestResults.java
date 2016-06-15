@@ -20,12 +20,12 @@
 package com.orientechnologies.orient.stresstest.output;
 
 import com.orientechnologies.orient.stresstest.OMode;
+import com.orientechnologies.orient.stresstest.operations.OOperationType;
 import com.orientechnologies.orient.stresstest.operations.OOperationsSet;
 import com.orientechnologies.orient.stresstest.util.OConstants;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The output of the entire test.
@@ -34,39 +34,37 @@ import java.util.List;
  */
 public class OStressTestResults {
 
-  final private String     OPERATION_RESULT                 = "\nAverage time for %,d %s: %.2f secs [%dth percentile] - Throughput: %,d/s.";
-  final private List<Long> operationsExecutorCreatesResults = new ArrayList<Long>();
-  final private List<Long> operationsExecutorReadsResults   = new ArrayList<Long>();
-  final private List<Long> operationsExecutorUpdatesResults = new ArrayList<Long>();
-  final private List<Long> operationsExecutorDeletesResults = new ArrayList<Long>();
+  final private StringBuilder testParameters;
+  final private Map<OOperationType, AtomicLong> progress                 = new HashMap<OOperationType, AtomicLong>();
+  final private Map<OOperationType, List<Long>> operationsPartialResults = new HashMap<OOperationType, List<Long>>();
 
-  // public fields are used for mapping to JSON for output results
-  public final OOperationsSet operationsSet;
-  public final OMode          mode;
-  public       int            threadsNumber;
-  public       int            iterationsNumber;
-  public       long           totalTime;
+  // public fields are used for automatic mapping to JSON in output results
+  public long totalTime;
 
-  public double averageCreatesTime;
-  public double averageReadsTime;
-  public double averageUpdatesTime;
-  public double averageDeletesTime;
+  final public OOperationsSet operationsSet;
+  final public OMode          mode;
+  final public int            threadsNumber;
+  final public int            operationsPerTransaction;
 
-  public int createsPercentile;
-  public int readsPercentile;
-  public int updatesPercentile;
-  public int deletesPercentile;
+  final public Map<OOperationType, Long>       totalTimesInMillisecs     = new HashMap<OOperationType, Long>();
+  final public Map<OOperationType, Double>     actualTotalTimesInSeconds = new HashMap<OOperationType, Double>();
+  final public Map<OOperationType, Long>       throughputs               = new HashMap<OOperationType, Long>();
+  final public Map<OOperationType, Integer>    percentiles               = new HashMap<OOperationType, Integer>();
 
-  public long createsThroughput;
-  public long readsThroughput;
-  public long updatesThroughput;
-  public long deletesThroughput;
 
-  public OStressTestResults(OOperationsSet operationsSet, OMode mode, int threadsNumber, int iterationsNumber) {
+  public OStressTestResults(OOperationsSet operationsSet, OMode mode, int threadsNumber, int operationsPerTransaction) {
     this.operationsSet = operationsSet;
     this.mode = mode;
     this.threadsNumber = threadsNumber;
-    this.iterationsNumber = iterationsNumber;
+    this.operationsPerTransaction = operationsPerTransaction;
+    testParameters = getTestParameters(mode, threadsNumber, operationsPerTransaction, operationsSet);
+
+    // init maps
+    for (OOperationType type : OOperationType.values()) {
+      operationsPartialResults.put(type, new ArrayList<Long>());
+      progress.put(type, new AtomicLong(0));
+      totalTimesInMillisecs.put(type, 0L);
+    }
   }
 
   public void addTotalExecutionTime(long totalTime) {
@@ -75,90 +73,90 @@ public class OStressTestResults {
 
   /**
    * Adds the output of a single executor. It will be called N times
-   * (where N is the number of threads defined for the test by the number of iterations)
-   *
-   * @param operationsExecutorResults
+   * (where N is the number of threads defined for the test)
    */
-  public void addThreadResults(OOperationsExecutorResults operationsExecutorResults) {
-    operationsExecutorCreatesResults.add(operationsExecutorResults.getCreatesTime());
-    operationsExecutorReadsResults.add(operationsExecutorResults.getReadsTime());
-    operationsExecutorUpdatesResults.add(operationsExecutorResults.getUpdatesTime());
-    operationsExecutorDeletesResults.add(operationsExecutorResults.getDeletesTime());
+  public void addThreadResults(Map<OOperationType, Long> partialTimes) {
+    for (OOperationType type : OOperationType.values()) {
+      totalTimesInMillisecs.put(type, totalTimesInMillisecs.get(type) + partialTimes.get(type));
+    }
   }
 
-  @Override
-  public String toString() {
+  public void addPartialResult(OOperationType type, long value) {
+    operationsPartialResults.get(type).add(value);
+  }
 
-    StringBuilder results = new StringBuilder();
-    results.append("OrientDB Stress Test v").append(OConstants.VERSION).append("\n").append(getParameters()).append("\n");
+  @Override public String toString() {
 
-    if (totalTime != 0) {
-      results.append("\nTotal execution time: ").append(String.format("%.2f", totalTime / 1000f)).append(" seconds.");
+    StringBuilder results = new StringBuilder("OrientDB Stress Test v")
+        .append(OConstants.VERSION)
+        .append("\n")
+        .append(testParameters)
+        .append("\n\nTotal execution time: ")
+        .append(String.format("%.2f", totalTime / 1000d))
+        .append(" seconds.");
+
+    for (OOperationType type : OOperationType.values()) {
+
+      // divides the total time of operations by 1000 (for transforming
+      // the timings from millisecs to secs) and by the thread number (e.g. if
+      // total time of 4 threads is 20 secs, the time actually spent is
+      // 5 secs since the threads had run in parallel)
+      actualTotalTimesInSeconds.put(type, totalTimesInMillisecs.get(type) / (1000d * threadsNumber));
+
+      percentiles.put(type, getPercentile(totalTimesInMillisecs.get(type), operationsPartialResults.get(type)));
+      throughputs.put(type, getThroughput(operationsSet.getNumber(type), actualTotalTimesInSeconds.get(type)));
+
+      // appends values to results string
+      results.append(String.format(
+          "\nTime for %,d %s: %.2f secs [%dth percentile] - Throughput: %,d/s.",
+          operationsSet.getNumber(type),
+          type.getName(),
+          actualTotalTimesInSeconds.get(type),
+          percentiles.get(type),
+          throughputs.get(type))
+      );
     }
-
-    long totalCreatesTime = 1;
-    long totalReadsTime = 1;
-    long totalUpdatesTime = 1;
-    long totalDeletesTime = 1;
-
-    for (int j = 0; j < operationsExecutorCreatesResults.size(); j++) {
-      totalCreatesTime += operationsExecutorCreatesResults.get(j);
-      totalReadsTime += operationsExecutorReadsResults.get(j);
-      totalUpdatesTime += operationsExecutorUpdatesResults.get(j);
-      totalDeletesTime += operationsExecutorDeletesResults.get(j);
-    }
-
-    averageCreatesTime = computeAverage(totalCreatesTime);
-    averageReadsTime = computeAverage(totalReadsTime);
-    averageUpdatesTime = computeAverage(totalUpdatesTime);
-    averageDeletesTime = computeAverage(totalDeletesTime);
-
-    createsPercentile = getPercentile(averageCreatesTime, operationsExecutorCreatesResults);
-    readsPercentile = getPercentile(averageReadsTime, operationsExecutorReadsResults);
-    updatesPercentile = getPercentile(averageUpdatesTime, operationsExecutorUpdatesResults);
-    deletesPercentile = getPercentile(averageDeletesTime, operationsExecutorDeletesResults);
-
-    createsThroughput = (int) ((operationsSet.getNumberOfCreates() / (float) averageCreatesTime));
-    readsThroughput = (int) ((operationsSet.getNumberOfReads() / (float) averageReadsTime));
-    updatesThroughput = (int) ((operationsSet.getNumberOfUpdates() / (float) averageUpdatesTime));
-    deletesThroughput = (int) ((operationsSet.getNumberOfDeletes() / (float) averageDeletesTime));
-
-    results.append(
-        String.format(OPERATION_RESULT, operationsSet.getNumberOfCreates(), "Creates", averageCreatesTime, createsPercentile, createsThroughput))
-        .append(String.format(OPERATION_RESULT, operationsSet.getNumberOfReads(), "Reads", averageReadsTime, readsPercentile, readsThroughput))
-        .append(String.format(OPERATION_RESULT, operationsSet.getNumberOfUpdates(), "Updates", averageUpdatesTime, updatesPercentile, updatesThroughput))
-        .append(String.format(OPERATION_RESULT, operationsSet.getNumberOfDeletes(), "Deletes", averageDeletesTime, deletesPercentile, deletesThroughput))
-        .append("\n");
 
     return results.toString();
   }
 
   /**
-   * computes the percentile of the average time compared to all the times
-   *
-   * @param averageTime
-   * @param operationsExecutorResults
-   * @return
+   * computes the percentile of the average time compared to all the partial times
    */
-  private int getPercentile(double averageTime, List<Long> operationsExecutorResults) {
-    int average = (int) (averageTime * 1000);
-    Collections.sort(operationsExecutorResults);
+  private int getPercentile(double totalTime, List<Long> partialResults) {
+    int average = (int) (totalTime / partialResults.size());
+    Collections.sort(partialResults);
     int j = 0;
-    for (; j < operationsExecutorResults.size(); j++) {
-      Long value = operationsExecutorResults.get(j);
+    for (; j < partialResults.size(); j++) {
+      Long value = partialResults.get(j);
       if (value > average) {
         break;
       }
     }
-    return (int) (100 * (j / (float) operationsExecutorResults.size()));
+    return (int) (100 * (j / (float) partialResults.size()));
   }
 
-  private double computeAverage(long totalOperationTime) {
-    return (totalOperationTime / (double) (threadsNumber * iterationsNumber)) / 1000;
+  private long getThroughput(long numberOfOperations, double totalOperationTime) {
+    return (long) (numberOfOperations / totalOperationTime);
   }
 
-  private StringBuilder getParameters() {
-    return new StringBuilder("Mode: ").append(mode.toString()).append(", Threads: ").append(threadsNumber).append(", Iterations: ")
-        .append(iterationsNumber).append(", Operations: ").append(operationsSet.toString());
+  private StringBuilder getTestParameters(OMode mode, int threadsNumber, int operationsPerTransaction,
+      OOperationsSet operationsSet) {
+    return new StringBuilder("Mode: ")
+        .append(mode.toString())
+        .append(", Threads: ")
+        .append(threadsNumber)
+        .append(", Operations: ")
+        .append(operationsSet.toString())
+        .append(", OperationsPerTx: ")
+        .append(operationsPerTransaction == 0 ? "No Tx" : operationsPerTransaction);
+  }
+
+  public void setTestProgress(OOperationType operationType, int numberOfOperations) {
+    progress.get(operationType).addAndGet(numberOfOperations);
+  }
+
+  Map<OOperationType, AtomicLong> getProgress() {
+    return progress;
   }
 }

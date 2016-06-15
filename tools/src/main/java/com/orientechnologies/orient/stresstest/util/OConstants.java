@@ -27,7 +27,6 @@ package com.orientechnologies.orient.stresstest.util;
 public class OConstants {
 
   public final static String OPTION_MODE          = "m";
-  public final static String OPTION_ITERATIONS    = "n";
   public final static String OPTION_THREADS       = "t";
   public final static String OPTION_TRANSACTIONS  = "x";
   public final static String OPTION_OPERATIONS    = "s";
@@ -38,11 +37,9 @@ public class OConstants {
   public final static String OPTION_REMOTE_PORT   = "remote-port";
 
   public final static String MAIN_OPTIONS       =
-      OPTION_MODE + OPTION_ITERATIONS + OPTION_THREADS + OPTION_OPERATIONS + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE
-          + OPTION_PLOCAL_PATH;
+      OPTION_MODE + OPTION_THREADS + OPTION_OPERATIONS + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH;
   public static final String SYNTAX             = "StressTester " +
       "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" +
-      "\n\t-n iterationsNumber " +
       "\n\t-s operationSet" +
       "\n\t-t threadsNumber" +
       "\n\t-x operationsPerTransaction" +
