@@ -48,6 +48,11 @@ public class OEmbeddedFactory extends OrientFactory {
   }
 
   @Override
+  public Pool<ODatabaseDocument> open(String name, String user, String password, Map<String, Object> poolSettings) {
+    return null;
+  }
+
+  @Override
   public void close() {
 
   }

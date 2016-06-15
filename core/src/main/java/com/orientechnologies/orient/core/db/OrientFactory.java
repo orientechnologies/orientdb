@@ -93,6 +93,8 @@ public abstract class OrientFactory implements AutoCloseable {
 
   public abstract Map<String, String> listDatabases(String user, String password);
 
+  public abstract Pool<ODatabaseDocument> openPool(String name, String user, String password,Map<String,Object> poolSettings);
+
   public abstract void close();
 
 }
