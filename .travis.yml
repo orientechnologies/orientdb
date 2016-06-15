@@ -5,9 +5,10 @@ os:
 jdk:
   - oraclejdk8
  
+before_script:
+  - echo "MAVEN_OPTS='-Xmx3g'" > ~/.mavenrc
+
 install:
-  - echo $JAVA_OPTS
-  - export JAVA_OPTS=-Xmx3G
   - mvn install dependency:go-offline -Pskip-formatter -DskipTests=true -q -f driver/pom.xml -Dfailsafe.timeout=0
 
 script:
