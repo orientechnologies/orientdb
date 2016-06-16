@@ -72,6 +72,8 @@ public class OOperationsExecutor implements Callable {
     start = System.currentTimeMillis();
     executeDeletes(operationsSet.getNumberOfDeletes(), txNumber, database, insertedDocs);
     long deletesTime = (System.currentTimeMillis() - start);
+    
+    consoleWriter.updateConsole();
 
     // and return the timings of this run of the test
     return new OOperationsExecutorResults(createsTime, insertsTime, updatesTime, deletesTime);

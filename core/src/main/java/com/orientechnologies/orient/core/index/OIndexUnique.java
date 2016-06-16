@@ -21,16 +21,15 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 /**
  * Index implementation that allows only one value for a key.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OIndexUnique extends OIndexOneValue {
   public OIndexUnique(String name, String typeId, String algorithm, int version, OAbstractPaginatedStorage storage,
@@ -59,19 +58,16 @@ public class OIndexUnique extends OIndexOneValue {
           // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
           if (!value.equals(iSingleValue)) {
             final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
-            if (mergeSameKey != null && mergeSameKey)
-              // IGNORE IT, THE EXISTENT KEY HAS BEEN MERGED
-              ;
-            else
-              throw new ORecordDuplicatedException(String.format(
-                  "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                  iSingleValue.getIdentity(), key, getName(), value.getIdentity()), getName(), value.getIdentity());
+            if (mergeSameKey == null || !mergeSameKey)
+              throw new ORecordDuplicatedException(String
+                  .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                      iSingleValue.getIdentity(), key, getName(), value.getIdentity()), getName(), value.getIdentity());
           } else
             return this;
         }
 
         if (!iSingleValue.getIdentity().isPersistent())
-          ((ORecord) iSingleValue.getRecord()).save();
+          iSingleValue.getRecord().save();
 
         storage.putIndexValue(indexId, key, iSingleValue.getIdentity());
         return this;
@@ -93,5 +89,11 @@ public class OIndexUnique extends OIndexOneValue {
   @Override
   public boolean supportsOrderedIterations() {
     return storage.hasIndexRangeQuerySupport(indexId);
+  }
+
+  @Override
+  protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+      OTransactionIndexChangesPerKey changes) {
+    return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.Unique);
   }
 }

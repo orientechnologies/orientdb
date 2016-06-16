@@ -25,8 +25,8 @@ public abstract class OSequence extends ODocumentWrapper {
   public static final int     DEFAULT_INCREMENT = 1;
   public static final int     DEFAULT_CACHE     = 20;
 
-  protected static final int  DEF_MAX_RETRY     = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
-  public static final String  CLASS_NAME        = "OSequence";
+  protected static final int    DEF_MAX_RETRY = OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
+  public static final    String CLASS_NAME    = "OSequence";
 
   private static final String FIELD_START       = "start";
   private static final String FIELD_INCREMENT   = "incr";

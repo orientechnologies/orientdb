@@ -48,9 +48,11 @@ public class OSecurityExternal extends OSecurityShared
 
 			if(username != null)
 			{
-            user = getUser(username);
+				user = getUser(username);
 
-			   if(user == null) throw new OSecurityAccessException(dbName, "User or password not valid for username: " + username + ", database: '" + dbName + "'");
+				if (user == null)
+					throw new OSecurityAccessException(dbName,
+							"User or password not valid for username: " + username + ", database: '" + dbName + "'");
 				
 				if(user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE) throw new OSecurityAccessException(dbName, "User '" + username + "' is not active");				
 			}
@@ -79,20 +81,21 @@ public class OSecurityExternal extends OSecurityShared
 		}
 
 		return user;
-	}	
+	}
 
-  @Override
-  public OUser getUser(final String username) {
-    OUser user = null;
-    
-    if (Orient.instance().getSecurity() != null) {
-      // See if there's a system user first.
-      user = Orient.instance().getSecurity().getSystemUser(username, getDatabase().getName());
-    }
-		
-    // If not found, try the local database.
-    if(user == null) user = super.getUser(username);
-  
-    return user;
-  }
+	@Override
+	public OUser getUser(final String username) {
+		OUser user = null;
+
+		if (Orient.instance().getSecurity() != null) {
+			// See if there's a system user first.
+			user = Orient.instance().getSecurity().getSystemUser(username, getDatabase().getName());
+		}
+
+		// If not found, try the local database.
+		if (user == null)
+			user = super.getUser(username);
+
+		return user;
+	}
 }

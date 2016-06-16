@@ -86,7 +86,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 3);
 
     Integer records = database.command(new OCommandSQL("update Profile set salary = 133.00 where @rid = ?")).execute(
-        result.get(0).field("rid"));
+        result.get(0).<Object>field("rid"));
 
     Assert.assertEquals(records.intValue(), 1);
 
@@ -141,7 +141,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
       Assert.assertEquals(((List<?>) loadedDoc.field("addresses")).size(), 3);
       Assert.assertEquals(((OIdentifiable) ((List<?>) loadedDoc.field("addresses")).get(0)).getIdentity().toString(), "#"
           + addressClusterId + ":" + positions.get(0));
-      loadedDoc.field("addresses", doc.field("addresses"));
+      loadedDoc.field("addresses", doc.<Object>field("addresses"));
       database.save(loadedDoc);
     }
 
@@ -285,14 +285,14 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     result1 = database.command(new OCommandSQL(sqlString)).execute();
     Assert.assertEquals(result1.size(), 1);
     Assert.assertTrue(result1.get(0).containsField("value"));
-    Assert.assertEquals(result1.get(0).field("value"), 101);
+    Assert.assertEquals(result1.get(0).<Object>field("value"), 101);
     // check exclude + WHERE + LIMIT
     sqlString = "UPDATE " + doc.getIdentity().toString()
         + " INCREMENT Age = 100 RETURN AFTER $current.Exclude('really_big_field') WHERE Age=101 LIMIT 1";
     result1 = database.command(new OCommandSQL(sqlString)).execute();
     Assert.assertEquals(result1.size(), 1);
     Assert.assertTrue(result1.get(0).containsField("Age"));
-    Assert.assertEquals(result1.get(0).field("Age"), 201);
+    Assert.assertEquals(result1.get(0).<Object>field("Age"), 201);
     Assert.assertFalse(result1.get(0).containsField("really_big_field"));
 
   }
@@ -369,7 +369,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
       float salary1 = result1.get(i).field("salary");
       float salary2 = result2.get(i).field("salary2");
       Assert.assertEquals(salary2, salary1);
-      Assert.assertEquals(result2.get(i).field("checkpoint"), true);
+      Assert.assertEquals(result2.get(i).<Object>field("checkpoint"), true);
     }
 
   }
@@ -462,7 +462,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 2);
 
     for (ODocument doc : result) {
-      Assert.assertEquals(doc.field("sum"), 3);
+      Assert.assertEquals(doc.<Object>field("sum"), 3);
     }
 
     database.command(new OCommandSQL("update UpdateVertexContent content {value : 'val'} where @rid = " + vOneId)).execute();
@@ -473,7 +473,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 2);
 
     for (ODocument doc : result) {
-      Assert.assertEquals(doc.field("sum"), 3);
+      Assert.assertEquals(doc.<Object>field("sum"), 3);
     }
 
     result = database.query(new OSQLSynchQuery<ODocument>("select from UpdateVertexContent"));

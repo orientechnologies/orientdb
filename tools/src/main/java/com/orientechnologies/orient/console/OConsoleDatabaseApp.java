@@ -1941,10 +1941,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       for (ODocument m : members) {
         final ODocument server = new ODocument();
 
-        server.field("Name", m.field("name"));
-        server.field("Status", m.field("status"));
-        server.field("Connections", m.field("connections"));
-        server.field("StartedOn", m.field("startedOn"));
+        server.field("Name", m.<Object>field("name"));
+        server.field("Status", m.<Object>field("status"));
+        server.field("Connections", m.<Object>field("connections"));
+        server.field("StartedOn", m.<Object>field("startedOn"));
 
         final Collection<Map> listeners = m.field("listeners");
         if (listeners != null) {

@@ -949,7 +949,7 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     for (int i = 0; i < 4; i++) {
       final ODocument document = result.get(i);
 
-      Assert.assertEquals(document.field("firstProp"), 6 + i / 2);
+      Assert.assertEquals(document.<Object>field("firstProp"), 6 + i / 2);
     }
 
     final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -969,7 +969,7 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     for (int i = 0; i < 4; i++) {
       final ODocument document = result.get(i);
 
-      Assert.assertEquals(document.field("firstProp"), 45 - i / 2);
+      Assert.assertEquals(document.<Object>field("firstProp"), 45 - i / 2);
     }
 
     final ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -989,7 +989,7 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     for (int i = 0; i < 4; i++) {
       final ODocument document = result.get(i);
 
-      Assert.assertEquals(document.field("secondProp"), 6 + i / 2);
+      Assert.assertEquals(document.<Object>field("secondProp"), 6 + i / 2);
 
       int thirdPropertyIndex;
       if (i % 2 == 0)
@@ -1016,7 +1016,7 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     for (int i = 0; i < 4; i++) {
       final ODocument document = result.get(i);
 
-      Assert.assertEquals(document.field("secondProp"), 45 - i / 2);
+      Assert.assertEquals(document.<Object>field("secondProp"), 45 - i / 2);
 
       int thirdPropertyIndex;
       if (i % 2 == 0)
@@ -1043,7 +1043,7 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     for (int i = 0; i < 4; i++) {
       final ODocument document = result.get(i);
 
-      Assert.assertEquals(document.field("secondProp"), 6 + i / 2);
+      Assert.assertEquals(document.<Object>field("secondProp"), 6 + i / 2);
 
       int thirdPropertyIndex;
       if (i % 2 == 0)
@@ -1069,7 +1069,7 @@ public class OrderByIndexReuseTest extends DocumentDBBaseTest {
     for (int i = 0; i < 4; i++) {
       final ODocument document = result.get(i);
 
-      Assert.assertEquals(document.field("secondProp"), 45 - i / 2);
+      Assert.assertEquals(document.<Object>field("secondProp"), 45 - i / 2);
 
       int thirdPropertyIndex;
       if (i % 2 == 0)

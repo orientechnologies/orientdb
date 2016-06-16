@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.After;
@@ -31,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.function.ObjDoubleConsumer;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -73,7 +75,7 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
     Assert.assertEquals(coll.size(), 1);
     Assert.assertEquals(idx.getSize(), 1);
     OIdentifiable next = (OIdentifiable) coll.iterator().next();
-    doc = databaseDocumentTx.load(next.getRecord());
+    doc = databaseDocumentTx.load(next.<ORecord>getRecord());
 
     databaseDocumentTx.delete(doc);
 

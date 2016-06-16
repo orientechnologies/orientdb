@@ -155,7 +155,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
     r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
 
-    assertEquals(1, r1onServer1.field("@version"));
+    assertEquals((Integer) 1, r1onServer1.field("@version"));
     assertEquals("R001", r1onServer1.field("id"));
     assertEquals("Luke", r1onServer1.field("firstName"));
     assertEquals("Skywalker", r1onServer1.field("lastName"));
@@ -169,7 +169,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     assertEquals("R001", r1onServer3.field("id"));
     assertEquals("Darth", r1onServer3.field("firstName"));
     assertEquals("Vader", r1onServer3.field("lastName"));
-    assertEquals(initialVersion + 1, r1onServer3.field("@version"));
+    assertEquals(Integer.valueOf(initialVersion + 1), r1onServer3.field("@version"));
 
     // shutdown server1
     System.out.println("Network fault on server1.\n");
@@ -193,7 +193,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     r1onServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), "R001");
     r1onServer2 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), "R001");
 
-    assertEquals(1, r1onServer1.field("@version"));
+    assertEquals((Integer) 1, r1onServer1.field("@version"));
     assertEquals("R001", r1onServer1.field("id"));
     assertEquals("Luke", r1onServer1.field("firstName"));
     assertEquals("Skywalker", r1onServer1.field("lastName"));
@@ -206,7 +206,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     // r1* is still present on server3
     r1onServer3 = retrieveRecord(getDatabaseURL(serverInstance.get(2)), "R001");
 
-    assertEquals(2, r1onServer3.field("@version"));
+    assertEquals((Integer) 2, r1onServer3.field("@version"));
     assertEquals("R001", r1onServer3.field("id"));
     assertEquals("Darth", r1onServer3.field("firstName"));
     assertEquals("Vader", r1onServer3.field("lastName"));

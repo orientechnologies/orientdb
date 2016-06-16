@@ -46,7 +46,7 @@ public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiV
 
   @Override
   public Object getDocumentValueToIndex(ODocument iDocument) {
-    return createValue(iDocument.field(field));
+    return createValue(iDocument.<Object>field(field));
   }
 
   @Override

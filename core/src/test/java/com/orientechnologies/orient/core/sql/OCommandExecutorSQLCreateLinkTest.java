@@ -31,10 +31,10 @@ import java.util.List;
 
 @Test
 public class OCommandExecutorSQLCreateLinkTest {
-  private static String DB_STORAGE             = "memory";
-  private static String DB_NAME                = "OCommandExecutorSQLCreateLinkTest";
+  private static String DB_STORAGE = "memory";
+  private static String DB_NAME    = "OCommandExecutorSQLCreateLinkTest";
 
-  ODatabaseDocumentTx   db;
+  ODatabaseDocumentTx db;
 
   @BeforeClass
   public void beforeClass() throws Exception {
@@ -95,13 +95,13 @@ public class OCommandExecutorSQLCreateLinkTest {
     Object otherKeys = result.get(0).field("other");
     Assert.assertNotNull(otherKeys);
     Assert.assertTrue(otherKeys instanceof List);
-    Assert.assertEquals(((List)otherKeys).get(0), "pkb1_1");
+    Assert.assertEquals(((List) otherKeys).get(0), "pkb1_1");
 
     otherKeys = result.get(1).field("other");
     Assert.assertNotNull(otherKeys);
     Assert.assertTrue(otherKeys instanceof List);
-    Assert.assertEquals(((List)otherKeys).size(), 2);
-    Assert.assertTrue(((List)otherKeys).contains("pkb1_2"));
-    Assert.assertTrue(((List)otherKeys).contains("pkb1_3"));
+    Assert.assertEquals(((List) otherKeys).size(), 2);
+    Assert.assertTrue(((List) otherKeys).contains("pkb1_2"));
+    Assert.assertTrue(((List) otherKeys).contains("pkb1_3"));
   }
 }

@@ -60,19 +60,19 @@ import java.util.concurrent.locks.Lock;
  */
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object> {
 
-  public static final String           CONFIG_DATABASE_PREFIX = "database.";
+  public static final String CONFIG_DATABASE_PREFIX = "database.";
 
-  protected static final String        CONFIG_NODE_PREFIX     = "node.";
-  protected static final String        CONFIG_DBSTATUS_PREFIX = "dbstatus.";
-  protected static final String        CONFIG_REGISTEREDNODES = "registeredNodes";
+  protected static final String CONFIG_NODE_PREFIX     = "node.";
+  protected static final String CONFIG_DBSTATUS_PREFIX = "dbstatus.";
+  protected static final String CONFIG_REGISTEREDNODES = "registeredNodes";
 
-  protected String                     hazelcastConfigFile    = "hazelcast.xml";
-  protected String                     membershipListenerRegistration;
-  protected String                     membershipListenerMapRegistration;
+  protected String hazelcastConfigFile = "hazelcast.xml";
+  protected          String            membershipListenerRegistration;
+  protected          String            membershipListenerMapRegistration;
   protected volatile HazelcastInstance hazelcastInstance;
 
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
-  protected OHazelcastDistributedMap   configurationMap;
+  protected OHazelcastDistributedMap configurationMap;
 
   public OHazelcastPlugin() {
   }
@@ -673,7 +673,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
           // UNREGISTER DB STATUSES
           final HashSet<String> entriesToRemove = new HashSet<String>();
-          for (Iterator<String> it = map.keySet().iterator(); it.hasNext();) {
+          for (Iterator<String> it = map.keySet().iterator(); it.hasNext(); ) {
             final String n = it.next();
 
             if (n.startsWith(CONFIG_DBSTATUS_PREFIX)) {
@@ -682,8 +682,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               if (pos > -1) {
                 // CHECK ANY DB STATUS OF THE LEFT NODE
                 if (part.substring(0, pos).equals(nodeLeftName)) {
-                  ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
-                      "Removing dbstatus for the node %s that just left: %s", nodeLeftName, n);
+                  ODistributedServerLog
+                      .debug(this, nodeName, null, DIRECTION.NONE, "Removing dbstatus for the node %s that just left: %s",
+                          nodeLeftName, n);
                   entriesToRemove.add(n);
                 }
               }
@@ -777,7 +778,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       final Set<String> servers = cfg.getAllConfiguredServers();
       if (servers.size() > 1) {
-        while (true) {
+        int retry = 0;
+        for (; retry < 100; ++retry) {
           boolean allServersAreOnline = true;
           for (String server : servers) {
             if (!isNodeOnline(server, dbName)) {
@@ -797,6 +799,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             throw new ODistributedException("Error on creating database '" + dbName + "' on distributed nodes");
           }
         }
+
+        if (retry >= 100)
+          ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Timeout waiting for all nodes to be up for database %s", dbName);
       }
 
       onOpen(iDatabase);
@@ -825,8 +831,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (availableNodes == 0) {
         // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
         configurationMap.remove(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "Dropped last copy of database %s, removing it from the cluster", dbName);
+        ODistributedServerLog
+            .info(this, getLocalNodeName(), null, DIRECTION.NONE, "Dropped last copy of database %s, removing it from the cluster",
+                dbName);
       }
     }
   }

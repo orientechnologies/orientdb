@@ -48,8 +48,8 @@ public class TestNetworkSerializerIndipendency {
       dbTx.commit();
       ODocument doc = dbTx.load(document.getIdentity());
       assertEquals(doc.fields(), document.fields());
-      assertEquals(doc.field("name"), document.field("name"));
-      assertEquals(doc.field("surname"), document.field("surname"));
+      assertEquals(doc.<Object>field("name"), document.field("name"));
+      assertEquals(doc.<Object>field("surname"), document.field("surname"));
     } finally {
       if (dbTx != null) {
         dbTx.close();
@@ -91,8 +91,8 @@ public class TestNetworkSerializerIndipendency {
       dbTx.commit();
       ODocument doc = dbTx.load(document.getIdentity());
       assertEquals(doc.fields(), document.fields());
-      assertEquals(doc.field("name"), document.field("name"));
-      assertEquals(doc.field("surname"), document.field("surname"));
+      assertEquals(doc.<Object>field("name"), document.field("name"));
+      assertEquals(doc.<Object>field("surname"), document.field("surname"));
     } finally {
       if (dbTx != null) {
         dbTx.close();

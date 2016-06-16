@@ -63,7 +63,6 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
     testConnectAutoDisconnect();
   }
 
-
   protected void testConnectAutoDisconnect() throws Exception {
     if (isInDevelopmentMode())
       // SKIP IT

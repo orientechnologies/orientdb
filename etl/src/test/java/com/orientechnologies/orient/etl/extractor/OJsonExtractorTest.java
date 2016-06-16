@@ -74,7 +74,7 @@ public class OJsonExtractorTest extends OETLBaseTest {
       assertEquals(3, doc.fields());
       assertEquals(names[i], doc.field("name"));
       assertEquals(surnames[i], doc.field("surname"));
-      assertEquals(i, doc.field("id"));
+      assertEquals(i, doc.<Object>field("id"));
       i++;
     }
   }

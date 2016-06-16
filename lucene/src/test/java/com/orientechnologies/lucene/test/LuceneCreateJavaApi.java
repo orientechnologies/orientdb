@@ -71,7 +71,7 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
 
     assertThat(lucene.getMetadata().containsField("analyzer")).isTrue();
 
-    assertThat(lucene.getMetadata().field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
+    assertThat(lucene.getMetadata().<Object>field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
 
   }
 
@@ -88,7 +88,7 @@ public class LuceneCreateJavaApi extends BaseLuceneTest {
 
     assertThat(lucene.getMetadata().containsField("analyzer")).isTrue();
 
-    assertThat(lucene.getMetadata().field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
+    assertThat(lucene.getMetadata().<Object>field("analyzer")).isEqualTo(StandardAnalyzer.class.getName());
 
   }
 

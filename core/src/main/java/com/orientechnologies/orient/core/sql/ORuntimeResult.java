@@ -114,7 +114,7 @@ public class ORuntimeResult {
             if (inputDocument != null && value != null && inputDocument instanceof ODocument && value instanceof ODocument) {
               // COPY FIELDS WITH PROJECTION NAME AS PREFIX
               for (String fieldName : ((ODocument) value).fieldNames()) {
-                iValue.field(prjName + fieldName, ((ODocument) value).field(fieldName));
+                iValue.field(prjName + fieldName, ((ODocument) value).<Object>field(fieldName));
               }
             }
             projectionValue = null;
@@ -138,7 +138,7 @@ public class ORuntimeResult {
           if (projectionValue instanceof ORidBag)
             iValue.field(prjName, new ORidBag((ORidBag) projectionValue));
           else if (projectionValue instanceof OIdentifiable && !(projectionValue instanceof ORID) && !(projectionValue instanceof ORecord))
-            iValue.field(prjName, ((OIdentifiable) projectionValue).getRecord());
+            iValue.field(prjName, ((OIdentifiable) projectionValue).<ORecord>getRecord());
           else if (projectionValue instanceof Iterator) {
             boolean link = true;
             // make temporary value typical case graph database elemenet's iterator edges

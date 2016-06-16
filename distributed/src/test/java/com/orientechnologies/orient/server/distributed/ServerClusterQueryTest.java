@@ -102,8 +102,8 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
         final OrientVertex r2 = it.next();
         Assert.assertFalse(it.hasNext());
 
-        Assert.assertEquals(r1.getProperty("d"), 0);
-        Assert.assertEquals(r2.getProperty("d"), 1);
+        Assert.assertEquals(r1.<Object>getProperty("d"), 0);
+        Assert.assertEquals(r2.<Object>getProperty("d"), 1);
 
       } finally {
         g.shutdown();
@@ -124,7 +124,7 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
         Assert.assertTrue(it.hasNext());
 
         final OrientVertex r1 = it.next();
-        Assert.assertEquals(r1.getProperty("total"), 46);
+        Assert.assertEquals(r1.<Object>getProperty("total"), 46);
 
       } finally {
         g.shutdown();
@@ -151,9 +151,9 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
         OrientVertex r3 = it.next();
         Assert.assertFalse(it.hasNext());
 
-        Assert.assertEquals(10, r1.getProperty("amount"));
-        Assert.assertEquals(15, r2.getProperty("amount"));
-        Assert.assertEquals(21, r3.getProperty("amount"));
+        Assert.assertEquals(10, r1.<Object>getProperty("amount"));
+        Assert.assertEquals(15, r2.<Object>getProperty("amount"));
+        Assert.assertEquals(21, r3.<Object>getProperty("amount"));
 
         result = g.command(new OCommandSQL("select amount from v order by amount desc")).execute(v2.getIdentity());
 
@@ -167,9 +167,9 @@ public class ServerClusterQueryTest extends AbstractServerClusterTest {
         r3 = it.next();
         Assert.assertFalse(it.hasNext());
 
-        Assert.assertEquals(21, r1.getProperty("amount"));
-        Assert.assertEquals(15, r2.getProperty("amount"));
-        Assert.assertEquals(10, r3.getProperty("amount"));
+        Assert.assertEquals(21, r1.<Object>getProperty("amount"));
+        Assert.assertEquals(15, r2.<Object>getProperty("amount"));
+        Assert.assertEquals(10, r3.<Object>getProperty("amount"));
 
       } finally {
         g.shutdown();

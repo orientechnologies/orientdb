@@ -479,33 +479,25 @@ public class IndexManagerTest extends DocumentDBBaseTest {
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.createClass(className);
 
-
     oClass.createProperty("one", OType.STRING);
     oClass.createProperty("two", OType.STRING);
     oClass.createProperty("three", OType.STRING);
 
-    indexManager.createIndex(className+"_indexOne_notunique", OClass.INDEX_TYPE.NOTUNIQUE.toString(), new OPropertyIndexDefinition(className,
-        "one", OType.STRING), oClass.getClusterIds(), null, null);
+    indexManager.createIndex(className + "_indexOne_notunique", OClass.INDEX_TYPE.NOTUNIQUE.toString(),
+        new OPropertyIndexDefinition(className, "one", OType.STRING), oClass.getClusterIds(), null, null);
 
-    indexManager.createIndex(
-        className+"_indexOneTwo_notunique",
-        OClass.INDEX_TYPE.NOTUNIQUE.toString(),
-        new OCompositeIndexDefinition(className, Arrays.asList(
-            new OPropertyIndexDefinition(className, "one", OType.STRING),
+    indexManager.createIndex(className + "_indexOneTwo_notunique", OClass.INDEX_TYPE.NOTUNIQUE.toString(),
+        new OCompositeIndexDefinition(className, Arrays.asList(new OPropertyIndexDefinition(className, "one", OType.STRING),
             new OPropertyIndexDefinition(className, "two", OType.STRING)
 
         ), -1), oClass.getClusterIds(), null, null);
 
-    indexManager.createIndex(
-        className+"_indexOneTwoThree_notunique",
-        OClass.INDEX_TYPE.NOTUNIQUE.toString(),
-        new OCompositeIndexDefinition(className, Arrays.asList(
-            new OPropertyIndexDefinition(className, "one", OType.STRING),
+    indexManager.createIndex(className + "_indexOneTwoThree_notunique", OClass.INDEX_TYPE.NOTUNIQUE.toString(),
+        new OCompositeIndexDefinition(className, Arrays.asList(new OPropertyIndexDefinition(className, "one", OType.STRING),
             new OPropertyIndexDefinition(className, "two", OType.STRING),
             new OPropertyIndexDefinition(className, "three", OType.STRING)
 
         ), -1), oClass.getClusterIds(), null, null);
-
 
     Set<OIndex<?>> result = indexManager.getClassInvolvedIndexes(className, Arrays.asList("one"));
     assertEquals(result.size(), 3);

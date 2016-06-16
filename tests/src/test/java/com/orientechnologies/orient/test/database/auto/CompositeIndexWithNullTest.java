@@ -52,8 +52,8 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 5);
     for (int k = 0; k < 5; k++) {
       ODocument document = result.get(k);
-      Assert.assertEquals(document.field("prop1"), 1);
-      Assert.assertEquals(document.field("prop2"), 2);
+      Assert.assertEquals(document.<Object>field("prop1"), 1);
+      Assert.assertEquals(document.<Object>field("prop2"), 2);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -103,8 +103,8 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 5);
     for (int k = 0; k < 5; k++) {
       ODocument document = result.get(k);
-      Assert.assertEquals(document.field("prop1"), 1);
-      Assert.assertEquals(document.field("prop2"), 2);
+      Assert.assertEquals(document.<Object>field("prop1"), 1);
+      Assert.assertEquals(document.<Object>field("prop2"), 2);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -156,8 +156,8 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     for (int k = 0; k < 5; k++) {
       ODocument document = result.get(k);
-      Assert.assertEquals(document.field("prop1"), 1);
-      Assert.assertEquals(document.field("prop2"), 2);
+      Assert.assertEquals(document.<Object>field("prop1"), 1);
+      Assert.assertEquals(document.<Object>field("prop2"), 2);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -206,7 +206,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 5);
     for (int k = 0; k < 5; k++) {
       ODocument document = result.get(k);
-      Assert.assertEquals(document.field("prop1"), 1);
+      Assert.assertEquals(document.<Object>field("prop1"), 1);
       Assert.assertTrue(document.<Integer> field("prop2") > 2);
     }
 
@@ -257,7 +257,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 5);
     for (int k = 0; k < 5; k++) {
       ODocument document = result.get(k);
-      Assert.assertEquals(document.field("prop1"), 1);
+      Assert.assertEquals(document.<Object>field("prop1"), 1);
       Assert.assertTrue(document.<Integer> field("prop2") > 2);
     }
 
@@ -306,7 +306,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 10);
     for (int k = 0; k < 10; k++) {
       ODocument document = result.get(k);
-      Assert.assertEquals(document.field("prop1"), 1);
+      Assert.assertEquals(document.<Object>field("prop1"), 1);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -317,7 +317,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(result.size(), 5);
     for (ODocument document : result) {
-      Assert.assertEquals(document.field("prop1"), 1);
+      Assert.assertEquals(document.<Object>field("prop1"), 1);
       Assert.assertNull(document.field("prop2"));
     }
 
@@ -368,7 +368,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 10);
     for (int k = 0; k < 10; k++) {
       ODocument document = result.get(k);
-      Assert.assertEquals(document.field("prop1"), 1);
+      Assert.assertEquals(document.<Object>field("prop1"), 1);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -380,7 +380,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(result.size(), 5);
     for (ODocument document : result) {
-      Assert.assertEquals(document.field("prop1"), 1);
+      Assert.assertEquals(document.<Object>field("prop1"), 1);
       Assert.assertNull(document.field("prop2"));
     }
 
@@ -430,7 +430,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 10);
     for (int k = 0; k < 10; k++) {
       ODocument document = result.get(k);
-      Assert.assertEquals(document.field("prop1"), 1);
+      Assert.assertEquals(document.<Object>field("prop1"), 1);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
@@ -470,7 +470,7 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 10);
     for (int k = 0; k < 10; k++) {
       ODocument document = result.get(k);
-      Assert.assertEquals(document.field("prop1"), 1);
+      Assert.assertEquals(document.<Object>field("prop1"), 1);
     }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();

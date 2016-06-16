@@ -54,9 +54,9 @@ public class ODistributedOutput {
         final String serverName = m.field("name");
 
         serverRow.field("Name", serverName + (manager.getLocalNodeName().equals(serverName) ? "*" : ""));
-        serverRow.field("Status", m.field("status"));
+        serverRow.field("Status", m.<String>field("status"));
         serverRow.field("Databases", (String) null);
-        serverRow.field("Conns", m.field("connections"));
+        serverRow.field("Conns", m.<String>field("connections"));
 
         final Date date = m.field("startedOn");
 
@@ -154,7 +154,7 @@ public class ODistributedOutput {
 
         final String serverName = m.field("name");
         buffer.append(serverName);
-        buffer.append(m.field("status"));
+        buffer.append(m.<Object>field("status"));
 
         final Collection<String> databases = m.field("databases");
         if (databases != null) {

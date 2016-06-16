@@ -83,20 +83,20 @@ public class OSessionStoragePerformanceStatisticTest {
 
     final ODocument doc = sessionStoragePerformanceStatistic.toDocument();
 
-    Assert.assertEquals(doc.field("amountOfPagesReadFromCache"), 150L);
-    Assert.assertEquals(doc.field("readSpeedFromCacheInPages"), 10000000L);
+    Assert.assertEquals(doc.<Object>field("amountOfPagesReadFromCache"), 150L);
+    Assert.assertEquals(doc.<Object>field("readSpeedFromCacheInPages"), 10000000L);
 
     final ODocument docC1PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c1po");
 
-    Assert.assertEquals(docC1PO.field("amountOfPagesReadFromCache"), 100L);
-    Assert.assertEquals(docC1PO.field("readSpeedFromCacheInPages"), 10000000L);
-    Assert.assertEquals(docC1PO.field("amountOfPagesPerOperation"), 2L);
+    Assert.assertEquals(docC1PO.<Object>field("amountOfPagesReadFromCache"), 100L);
+    Assert.assertEquals(docC1PO.<Object>field("readSpeedFromCacheInPages"), 10000000L);
+    Assert.assertEquals(docC1PO.<Object>field("amountOfPagesPerOperation"), 2L);
 
     final ODocument docC2PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c2po");
 
-    Assert.assertEquals(docC2PO.field("amountOfPagesReadFromCache"), 50L);
-    Assert.assertEquals(docC2PO.field("readSpeedFromCacheInPages"), 6666666L);
-    Assert.assertEquals(docC2PO.field("amountOfPagesPerOperation"), 1L);
+    Assert.assertEquals(docC2PO.<Object>field("amountOfPagesReadFromCache"), 50L);
+    Assert.assertEquals(docC2PO.<Object>field("readSpeedFromCacheInPages"), 6666666L);
+    Assert.assertEquals(docC2PO.<Object>field("amountOfPagesPerOperation"), 1L);
   }
 
   public void testReadFromFile() {
@@ -157,18 +157,18 @@ public class OSessionStoragePerformanceStatisticTest {
 
     final ODocument doc = sessionStoragePerformanceStatistic.toDocument();
 
-    Assert.assertEquals(doc.field("amountOfPagesReadFromFile"), 1500L);
-    Assert.assertEquals(doc.field("readSpeedFromFileInPages"), 100000000L);
+    Assert.assertEquals(doc.<Object>field("amountOfPagesReadFromFile"), 1500L);
+    Assert.assertEquals(doc.<Object>field("readSpeedFromFileInPages"), 100000000L);
 
     final ODocument docC1PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c1po");
 
-    Assert.assertEquals(docC1PO.field("amountOfPagesReadFromFile"), 1000L);
-    Assert.assertEquals(docC1PO.field("readSpeedFromFileInPages"), 100000000L);
+    Assert.assertEquals(docC1PO.<Object>field("amountOfPagesReadFromFile"), 1000L);
+    Assert.assertEquals(docC1PO.<Object>field("readSpeedFromFileInPages"), 100000000L);
 
     final ODocument docC2PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c2po");
 
-    Assert.assertEquals(docC2PO.field("amountOfPagesReadFromFile"), 500L);
-    Assert.assertEquals(docC2PO.field("readSpeedFromFileInPages"), 66666666L);
+    Assert.assertEquals(docC2PO.<Object>field("amountOfPagesReadFromFile"), 500L);
+    Assert.assertEquals(docC2PO.<Object>field("readSpeedFromFileInPages"), 66666666L);
   }
 
   public void testWriteInCache() {
@@ -228,18 +228,18 @@ public class OSessionStoragePerformanceStatisticTest {
 
     ODocument doc = sessionStoragePerformanceStatistic.toDocument();
 
-    Assert.assertEquals(doc.field("amountOfPagesWrittenInCache"), 150L);
-    Assert.assertEquals(doc.field("writeSpeedInCacheInPages"), 10000000L);
+    Assert.assertEquals(doc.<Object>field("amountOfPagesWrittenInCache"), 150L);
+    Assert.assertEquals(doc.<Object>field("writeSpeedInCacheInPages"), 10000000L);
 
     final ODocument docC1PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c1po");
 
-    Assert.assertEquals(docC1PO.field("amountOfPagesWrittenInCache"), 100L);
-    Assert.assertEquals(docC1PO.field("writeSpeedInCacheInPages"), 10000000L);
+    Assert.assertEquals(docC1PO.<Object>field("amountOfPagesWrittenInCache"), 100L);
+    Assert.assertEquals(docC1PO.<Object>field("writeSpeedInCacheInPages"), 10000000L);
 
     final ODocument docC2PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c2po");
 
-    Assert.assertEquals(docC2PO.field("amountOfPagesWrittenInCache"), 50L);
-    Assert.assertEquals(docC2PO.field("writeSpeedInCacheInPages"), 6666666L);
+    Assert.assertEquals(docC2PO.<Object>field("amountOfPagesWrittenInCache"), 50L);
+    Assert.assertEquals(docC2PO.<Object>field("writeSpeedInCacheInPages"), 6666666L);
   }
 
   public void testCommitCount() {
@@ -268,7 +268,7 @@ public class OSessionStoragePerformanceStatisticTest {
 
     final ODocument doc = sessionStoragePerformanceStatistic.toDocument();
 
-    Assert.assertEquals(doc.field("commitTime"), 100L);
+    Assert.assertEquals(doc.<Object>field("commitTime"), 100L);
   }
 
   public void testCacheHit() {
@@ -311,13 +311,13 @@ public class OSessionStoragePerformanceStatisticTest {
 
     final ODocument doc = sessionStoragePerformanceStatistic.toDocument();
 
-    Assert.assertEquals(doc.field("cacheHits"), 50);
+    Assert.assertEquals(doc.<Object>field("cacheHits"), 50);
 
     final ODocument docC1PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c1po");
-    Assert.assertEquals(docC1PO.field("cacheHits"), 75);
+    Assert.assertEquals(docC1PO.<Object>field("cacheHits"), 75);
 
     final ODocument docC2PO = doc.<Map<String, ODocument>>field("dataByComponent").get("c2po");
-    Assert.assertEquals(docC2PO.field("cacheHits"), 100);
+    Assert.assertEquals(docC2PO.<Object>field("cacheHits"), 100);
   }
 
   public void testPushComponentCounters() {

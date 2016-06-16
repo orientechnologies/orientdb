@@ -103,7 +103,7 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e3.getClassName(), OrientEdgeType.CLASS_NAME);
     Assert.assertEquals(e3.field("out"), v1);
     Assert.assertEquals(e3.field("in"), v4);
-    Assert.assertEquals(e3.field("weight"), 3);
+    Assert.assertEquals(e3.<Object>field("weight"), 3);
 
     edges = database.command(
         new OCommandSQL("create edge E1 from " + v2.getIdentity() + " to " + v3.getIdentity() + " set weight = 10")).execute();
@@ -112,7 +112,7 @@ public class SQLCreateVertexAndEdgeTest {
     Assert.assertEquals(e4.getClassName(), "E1");
     Assert.assertEquals(e4.field("out"), v2);
     Assert.assertEquals(e4.field("in"), v3);
-    Assert.assertEquals(e4.field("weight"), 10);
+    Assert.assertEquals(e4.<Object>field("weight"), 10);
 
     edges = database
         .command(

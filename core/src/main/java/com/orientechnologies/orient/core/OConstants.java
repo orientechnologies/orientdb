@@ -20,10 +20,10 @@
 package com.orientechnologies.orient.core;
 
 public class OConstants {
-  public static final String  ORIENT_VERSION       = "2.2.1-SNAPSHOT";
+  public static final String  ORIENT_VERSION       = "3.0.0-SNAPSHOT";
 
-  public static final int     ORIENT_VERSION_MAJOR = 2;
-  public static final int     ORIENT_VERSION_MINOR = 2;
+  public static final int     ORIENT_VERSION_MAJOR = 3;
+  public static final int     ORIENT_VERSION_MINOR = 0;
   public static final int     ORIENT_VERSION_HOFIX = 0;
   public static final boolean SNAPSHOT             = true;
 
@@ -49,7 +49,7 @@ public class OConstants {
   }
 
   /**
-   * Returns current OrientDB version as array with 3 integers: major, minor and hotfix numbers. Example: [2,2,0].
+   * Returns current OrientDB version as array with 3 integers: major, minor and hotfix numbers. Example: [3,0,0].
    */
   public static int[] getVersionNumber() {
     return new int[] { ORIENT_VERSION_MAJOR, ORIENT_VERSION_MINOR, ORIENT_VERSION_HOFIX };

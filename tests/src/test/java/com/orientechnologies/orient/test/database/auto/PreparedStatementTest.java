@@ -96,7 +96,7 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     for (ODocument doc : result) {
       found = true;
       Assert.assertEquals(doc.getIdentity(), record.getIdentity());
-      Assert.assertEquals(doc.field("name"), record.field("name"));
+      Assert.assertEquals(doc.<Object>field("name"), record.field("name"));
     }
     Assert.assertTrue(found);
 
@@ -115,7 +115,7 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     for (ODocument doc : result) {
       found = true;
       Assert.assertEquals(doc.getIdentity(), record.getIdentity());
-      Assert.assertEquals(doc.field("name"), record.field("name"));
+      Assert.assertEquals(doc.<Object>field("name"), record.field("name"));
     }
     Assert.assertTrue(found);
 
@@ -137,7 +137,7 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     for (ODocument doc : result) {
       found = true;
       Assert.assertEquals(doc.getIdentity(), record.getIdentity());
-      Assert.assertEquals(doc.field("name"), record.field("name"));
+      Assert.assertEquals(doc.<Object>field("name"), record.field("name"));
     }
     Assert.assertTrue(found);
 
@@ -156,7 +156,7 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     for (ODocument doc : result) {
       found = true;
       Assert.assertEquals(doc.getIdentity(), record.getIdentity());
-      Assert.assertEquals(doc.field("name"), record.field("name"));
+      Assert.assertEquals(doc.<Object>field("name"), record.field("name"));
     }
     Assert.assertTrue(found);
 
@@ -294,7 +294,7 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     boolean found = false;
     for (ODocument doc : result) {
       found = true;
-      Assert.assertEquals(doc.field("maximo"), 3);
+      Assert.assertEquals(doc.<Object>field("maximo"), 3);
     }
     Assert.assertTrue(found);
 

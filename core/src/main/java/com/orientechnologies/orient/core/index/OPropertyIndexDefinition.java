@@ -75,7 +75,7 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
       else
         return null;
     }
-    return createValue(iDocument.field(field));
+    return createValue(iDocument.<Object>field(field));
   }
 
   @Override

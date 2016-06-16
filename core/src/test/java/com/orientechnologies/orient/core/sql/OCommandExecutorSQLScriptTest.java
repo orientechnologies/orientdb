@@ -150,7 +150,7 @@ public class OCommandExecutorSQLScriptTest {
     script.append("UPDATE TestCounter INCREMENT weight = $counter[0].count RETURN AfTER @this;\n");
     List<ODocument> qResult = db.command(new OCommandScript("sql", script.toString())).execute();
 
-    Assert.assertEquals(qResult.get(0).field("weight"), 4l);
+    Assert.assertEquals(qResult.get(0).<Object>field("weight"), 4l);
   }
 
   @Test

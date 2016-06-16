@@ -82,7 +82,7 @@ public class IndexCrashRestoreSingleValueIT {
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory,  "-DmutexFile=" + mutexFile.getCanonicalPath(), RemoteDBRunner.class.getName());
+        "-DORIENTDB_HOME=" + buildDirectory, "-DmutexFile=" + mutexFile.getCanonicalPath(), RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     serverProcess = processBuilder.start();

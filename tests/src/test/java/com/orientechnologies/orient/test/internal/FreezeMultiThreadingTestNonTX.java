@@ -195,7 +195,7 @@ public class FreezeMultiThreadingTestNonTX {
               System.out.println(Thread.currentThread() + " : after search cycle(update) " + updateCounter);
 
             ODocument document = execute.get(0);
-            document.field("counter2", document.field("counter"));
+            document.field("counter2", document.<Object>field("counter"));
             try {
               document.save();
 
@@ -275,7 +275,7 @@ public class FreezeMultiThreadingTestNonTX {
             database.begin();
 
             ODocument document = execute.get(0);
-            document.field("counter2", document.field("counter"));
+            document.field("counter2", document.<Object>field("counter"));
             try {
               document.save();
 

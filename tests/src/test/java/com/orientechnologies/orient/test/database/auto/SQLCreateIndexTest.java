@@ -425,7 +425,7 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
 
     ODocument metadata = index.getMetadata();
 
-    Assert.assertEquals(metadata.field("v1"), 23);
+    Assert.assertEquals(metadata.<Object>field("v1"), 23);
     Assert.assertEquals(metadata.field("v2"), "val2");
   }
 
@@ -448,7 +448,7 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
 
     ODocument metadata = index.getMetadata();
 
-    Assert.assertEquals(metadata.field("v1"), 23);
+    Assert.assertEquals(metadata.<Object>field("v1"), 23);
     Assert.assertEquals(metadata.field("v2"), "val2");
   }
 
@@ -473,7 +473,7 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
     Assert.assertEquals(index.getType(), "UNIQUE");
 
     ODocument metadata = index.getMetadata();
-    Assert.assertEquals(metadata.field("v1"), 23);
+    Assert.assertEquals(metadata.<Object>field("v1"), 23);
     Assert.assertEquals(metadata.field("v2"), "val2");
   }
 
@@ -488,7 +488,7 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
 
     ODocument metadata = index.getMetadata();
 
-    Assert.assertEquals(metadata.field("v1"), 23);
+    Assert.assertEquals(metadata.<Object>field("v1"), 23);
     Assert.assertEquals(metadata.field("v2"), "val2");
   }
 
@@ -503,7 +503,7 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
     Assert.assertNotNull(index);
 
     ODocument metadata = index.getMetadata();
-    Assert.assertEquals(metadata.field("v1"), 23);
+    Assert.assertEquals(metadata.<Object>field("v1"), 23);
     Assert.assertEquals(metadata.field("v2"), "val2");
   }
 }

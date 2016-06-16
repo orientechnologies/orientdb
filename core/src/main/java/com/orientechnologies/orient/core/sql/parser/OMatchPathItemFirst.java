@@ -35,6 +35,6 @@ public class OMatchPathItemFirst extends OMatchPathItem {
   protected Iterable<OIdentifiable> traversePatternEdge(OMatchStatement.MatchContext matchContext, OIdentifiable startingPoint,
       OCommandContext iCommandContext) {
     Object qR = this.function.execute(startingPoint, iCommandContext);
-    return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton(qR);
+    return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
   }
 }

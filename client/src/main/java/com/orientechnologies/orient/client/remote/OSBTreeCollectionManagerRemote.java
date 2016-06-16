@@ -86,16 +86,17 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
       final OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
       return storage.networkOperation(new OStorageRemoteOperation<OSBTreeBonsaiRemote<OIdentifiable, Integer>>() {
         @Override
-        public OSBTreeBonsaiRemote<OIdentifiable, Integer> execute(final OChannelBinaryAsynchClient client) throws IOException {
+        public OSBTreeBonsaiRemote<OIdentifiable, Integer> execute(final OChannelBinaryAsynchClient client,
+            OStorageRemoteSession session) throws IOException {
           try {
-            storage.beginRequest(client, OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI);
+            storage.beginRequest(client, OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI, session);
             client.writeInt(clusterId);
           }finally {
             storage.endRequest(client);
           }
           OBonsaiCollectionPointer pointer;
           try {
-            storage.beginResponse(client);
+            storage.beginResponse(client, session);
             pointer = networkSerializer.readCollectionPointer(client);
           } finally {
             storage.endResponse(client);

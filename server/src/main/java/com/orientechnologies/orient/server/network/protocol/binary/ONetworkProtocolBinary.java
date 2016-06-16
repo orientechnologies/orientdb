@@ -19,17 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -105,6 +94,17 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.logging.Level;
 
 public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected final    Level                logClientExceptions;
@@ -877,7 +877,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       throw new IOException("Error on unmarshalling of remote task", e);
     }
 
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getSenderNodeName(), ODistributedServerLog.DIRECTION.IN,
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), ODistributedServerLog.DIRECTION.IN,
         "Executing distributed response %s", response);
 
     manager.getMessageService().dispatchResponseToThread(response);

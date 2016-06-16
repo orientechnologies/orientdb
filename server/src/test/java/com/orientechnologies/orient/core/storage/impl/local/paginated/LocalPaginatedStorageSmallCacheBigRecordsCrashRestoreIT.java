@@ -66,7 +66,8 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-XX:MaxDirectMemorySize=512g", "-classpath",
-        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+        System.getProperty("java.class.path"), "-DmutexFile=" + mutexFile.getCanonicalPath(), "-DORIENTDB_HOME=" + buildDirectory,
+        RemoteDBRunner.class.getName());
     processBuilder.inheritIO();
 
     process = processBuilder.start();
@@ -201,12 +202,12 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestoreIT {
         } else {
           ODocument testDocument = testDocuments.get(0);
 
-          assertThat(testDocument.field("id")).as("id:: %s", testDocument.field("id")).isEqualTo(baseDocument.field("id"));
-          assertThat(testDocument.field("timestamp")).as("documents:: %s - %s", testDocument, baseDocument)
+          assertThat(testDocument.<Object>field("id")).as("id:: %s", testDocument.field("id")).isEqualTo(baseDocument.field("id"));
+          assertThat(testDocument.<Object>field("timestamp")).as("documents:: %s - %s", testDocument, baseDocument)
               .isEqualTo(baseDocument.field("timestamp"));
-          assertThat(testDocument.field("stringValue")).as("id:: %s", testDocument.field("id"))
+          assertThat(testDocument.<Object>field("stringValue")).as("id:: %s", testDocument.field("id"))
               .isEqualTo(baseDocument.field("stringValue"));
-          assertThat(testDocument.field("binaryValue")).as("id:: %s", testDocument.field("id"))
+          assertThat(testDocument.<Object>field("binaryValue")).as("id:: %s", testDocument.field("id"))
               .isEqualTo(baseDocument.field("binaryValue"));
 
           recordsRestored++;

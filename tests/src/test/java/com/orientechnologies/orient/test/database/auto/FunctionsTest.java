@@ -59,7 +59,7 @@ public class FunctionsTest extends DocumentDBBaseTest {
     OResultSet<OIdentifiable> res1 = database.command(new OCommandSQL("select testCall()")).execute();
     Assert.assertNotNull(res1);
     Assert.assertNotNull(res1.get(0));
-    Assert.assertEquals(((ODocument) res1.get(0)).field("testCall"), 0);
+    Assert.assertEquals(((ODocument) res1.get(0)).<Object>field("testCall"), 0);
   }
 
   @Test
@@ -70,7 +70,7 @@ public class FunctionsTest extends DocumentDBBaseTest {
     OResultSet<OIdentifiable> res1 = database.command(new OCommandSQL("select testCache()")).execute();
     Assert.assertNotNull(res1);
     Assert.assertNotNull(res1.get(0));
-    Assert.assertEquals(((ODocument) res1.get(0)).field("testCache"), 1);
+    Assert.assertEquals(((ODocument) res1.get(0)).<Object>field("testCache"), 1);
 
     ODocument func = f.getRecord();
     func.field("code", "return 2;");
@@ -79,7 +79,7 @@ public class FunctionsTest extends DocumentDBBaseTest {
     OResultSet<OIdentifiable> res2 = database.command(new OCommandSQL("select testCache()")).execute();
     Assert.assertNotNull(res2);
     Assert.assertNotNull(res2.get(0));
-    Assert.assertEquals(((ODocument) res2.get(0)).field("testCache"), 2);
+    Assert.assertEquals(((ODocument) res2.get(0)).<Object>field("testCache"), 2);
   }
 
   @Test
@@ -105,7 +105,7 @@ public class FunctionsTest extends DocumentDBBaseTest {
             OResultSet<OIdentifiable> res1 = database.command(new OCommandSQL("select testMTCall()")).execute();
             Assert.assertNotNull(res1);
             Assert.assertNotNull(res1.get(0));
-            Assert.assertEquals(((ODocument) res1.get(0)).field("testMTCall"), 3);
+            Assert.assertEquals(((ODocument) res1.get(0)).<Object>field("testMTCall"), 3);
 
             counter.incrementAndGet();
           }

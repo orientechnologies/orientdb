@@ -280,7 +280,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     ODocument record = result.getRecord();
 
-    Assert.assertEquals(record.field("id"), 3232);
+    Assert.assertEquals(record.<Object>field("id"), 3232);
     Assert.assertEquals(record.field("name"), "my name");
     Map<String, String> map = record.field("map");
     Assert.assertTrue(map.get("key").equals("value"));
@@ -357,7 +357,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(res_sql3.size(), 1);
     Assert.assertTrue(((List) res_sql3).get(0) instanceof ODocument);
     final ODocument sql3doc = (ODocument) (((List) res_sql3).get(0));
-    Assert.assertEquals(sql3doc.field("Bingo"), 1);
+    Assert.assertEquals(sql3doc.<Object>field("Bingo"), 1);
     Assert.assertEquals(sql3doc.field("Name"), "Bingo owner");
   }
 
@@ -544,7 +544,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(doc.field("like") instanceof OIdentifiable);
     Assert.assertEquals(((ODocument) doc.field("like")).getClassName(), "EmbeddedWithRecordAttributes_Like");
-    Assert.assertEquals(((ODocument) doc.field("like")).field("count"), 0);
+    Assert.assertEquals(((ODocument) doc.field("like")).<Object>field("count"), 0);
   }
 
   public void testInsertEmbeddedWithRecordAttributes2() {
@@ -559,7 +559,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(doc.field("like") instanceof OIdentifiable);
     Assert.assertEquals(((ODocument) doc.field("like")).getClassName(), "EmbeddedWithRecordAttributes2_Like");
-    Assert.assertEquals(((ODocument) doc.field("like")).field("count"), 0);
+    Assert.assertEquals(((ODocument) doc.field("like")).<Object>field("count"), 0);
   }
 
   public void testInsertWithClusterAsFieldName() {

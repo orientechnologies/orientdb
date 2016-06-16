@@ -82,8 +82,8 @@ public class CheckHookCallCountTest {
       doc.field("b", 2);
       doc.save();
       doc.reload();
-      assertEquals(2, doc.field("a"));
-      assertEquals(2, doc.field("b"));
+      assertEquals(2, doc.<Object>field("a"));
+      assertEquals(2, doc.<Object>field("b"));
       assertNull(doc.field("c"));
       db.registerHook(new ODocumentHookAbstract(db) {
 
@@ -101,7 +101,7 @@ public class CheckHookCallCountTest {
           String script = "select sum(a, b) as value from " + iDocument.getIdentity();
           List<ODocument> calculated = database.query(new OSQLSynchQuery<Object>(script));
           if (calculated != null && !calculated.isEmpty()) {
-            iDocument.field("c", calculated.get(0).field("value"));
+            iDocument.field("c", calculated.get(0).<Object>field("value"));
           }
         }
 
@@ -111,18 +111,18 @@ public class CheckHookCallCountTest {
         }
       });
       doc.reload();
-      assertEquals(2, doc.field("a"));
-      assertEquals(2, doc.field("b"));
-      assertEquals(4, doc.field("c"));
+      assertEquals(2, doc.<Object>field("a"));
+      assertEquals(2, doc.<Object>field("b"));
+      assertEquals(4, doc.<Object>field("c"));
 
       doc = new ODocument(oClass);
       doc.field("a", 3);
       doc.field("b", 3);
       doc.save(); // FAILING here: infinite recursion
 
-      assertEquals(3, doc.field("a"));
-      assertEquals(3, doc.field("b"));
-      assertEquals(6, doc.field("c"));
+      assertEquals(3, doc.<Object>field("a"));
+      assertEquals(3, doc.<Object>field("b"));
+      assertEquals(6, doc.<Object>field("c"));
     } finally {
       db.drop();
     }

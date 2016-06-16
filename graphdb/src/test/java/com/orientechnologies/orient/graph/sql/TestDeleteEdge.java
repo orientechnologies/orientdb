@@ -58,7 +58,7 @@ public class TestDeleteEdge {
 
       Iterable<OrientVertex> edges = graph.command(new OCommandSQL("select count(*) from TestEdge where based_on = '0001'")).execute();
       assertTrue(edges.iterator().hasNext());
-      assertEquals(edges.iterator().next().getProperty("count"), 0l);
+      assertEquals(edges.iterator().next().<Object>getProperty("count"), 0l);
     }
 
   }
@@ -84,7 +84,7 @@ public class TestDeleteEdge {
 
     Iterable<OrientVertex> edges = graph.command(new OCommandSQL("select count(*) from TestEdge where based_on = '0001'")).execute();
     assertTrue(edges.iterator().hasNext());
-    assertEquals(edges.iterator().next().getProperty("count"), 0l);
+    assertEquals(edges.iterator().next().<Object>getProperty("count"), 0l);
 
   }
 

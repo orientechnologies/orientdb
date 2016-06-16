@@ -45,7 +45,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
   public void setUp() throws Exception {
     customer = graph.getVertexType("Customer");
     if (customer != null) {
-      graph.command(new OCommandSQL("delete vertex Customer"));
+      graph.command(new OCommandSQL("delete vertex Customer")).execute();
       graph.dropVertexType("Customer");
     }
 
@@ -58,7 +58,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
 
     provider = graph.getVertexType("Provider");
     if (provider != null) {
-      graph.command(new OCommandSQL("delete vertex Provider"));
+      graph.command(new OCommandSQL("delete vertex Provider")).execute();
       graph.dropVertexType("Provider");
     }
 
@@ -66,7 +66,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
 
     knows = graph.getEdgeType("Knows");
     if (knows != null) {
-      graph.command(new OCommandSQL("delete edge Knows"));
+      graph.command(new OCommandSQL("delete edge Knows")).execute();
       graph.dropVertexType("Knows");
     }
     knows = graph.createEdgeType("Knows");
@@ -282,7 +282,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
 
       Assert.assertEquals(newDocument.field("city"), "Rome");
       Assert.assertEquals(newDocument.field("a"), "test3");
-      Assert.assertEquals(newDocument.field("b"), 5);
+      Assert.assertEquals(newDocument.<Object>field("b"), 5);
     }
 
     Assert.assertEquals(tot, 2);

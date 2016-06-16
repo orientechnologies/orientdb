@@ -83,8 +83,9 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
           pRequest.commit();
         else {
           // UNABLE TO FIND TX CONTEXT
-          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Error on committing transaction %s db=%s", requestId, database.getName());
+          ODistributedServerLog
+              .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Error on committing transaction %s db=%s",
+                  requestId, database.getName());
         }
 
       } else if (fixTasks.isEmpty()) {
@@ -93,8 +94,9 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
           pRequest.rollback(database);
         else {
           // UNABLE TO FIND TX CONTEXT
-          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Error on rolling back transaction %s db=%s", requestId, database.getName());
+          ODistributedServerLog
+              .debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "Error on rolling back transaction %s db=%s",
+                  requestId, database.getName());
         }
       } else {
 
@@ -160,6 +162,8 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
 
   @Override
   public String toString() {
-    return getName() + " type: " + (success ? "commit" : (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) [" + fixTasks + "]"));
+    return getName() + " type: " + (success ?
+        "commit" :
+        (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) [" + fixTasks + "]"));
   }
 }

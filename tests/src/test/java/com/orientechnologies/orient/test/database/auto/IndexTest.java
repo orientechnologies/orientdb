@@ -787,7 +787,8 @@ public class IndexTest extends ObjectDBBaseTest {
     if (!db.getMetadata().getSchema().existsClass("IndexTestTerm")) {
       final OClass termClass = db.getMetadata().getSchema().createClass("IndexTestTerm", 1, null);
       termClass.createProperty("label", OType.STRING);
-      termClass.createIndex("idxTerm", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "label"});
+      termClass.createIndex("idxTerm", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true),
+          new String[] { "label" });
 
       db.getMetadata().getSchema().save();
     }
@@ -808,7 +809,8 @@ public class IndexTest extends ObjectDBBaseTest {
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
       final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexTest", 1, null);
       termClass.createProperty("label", OType.STRING);
-      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "label"});
+      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null,
+          new ODocument().fields("ignoreNullValues", true), new String[] { "label" });
       db.getMetadata().getSchema().save();
     }
 
@@ -844,7 +846,8 @@ public class IndexTest extends ObjectDBBaseTest {
     if (!db.getMetadata().getSchema().existsClass("TransactionUniqueIndexTest")) {
       final OClass termClass = db.getMetadata().getSchema().createClass("TransactionUniqueIndexTest", 1, null);
       termClass.createProperty("label", OType.STRING);
-      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "label"});
+      termClass.createIndex("idxTransactionUniqueIndexTest", INDEX_TYPE.UNIQUE.toString(), null,
+          new ODocument().fields("ignoreNullValues", true), new String[] { "label" });
       db.getMetadata().getSchema().save();
     }
 
@@ -966,7 +969,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     result = database.command(new OCommandSQL("select rid from index:Profile.nick where key = ?"))
-        .execute(firstProfile.field("nick"));
+        .execute(firstProfile.<Object>field("nick"));
 
     Assert.assertNotNull(result);
     Assert.assertEquals(result.get(0).field("rid"), firstProfile.getIdentity());
@@ -974,7 +977,7 @@ public class IndexTest extends ObjectDBBaseTest {
     firstProfile.delete();
 
     result = database.command(new OCommandSQL("select rid from index:Profile.nick where key = ?"))
-        .execute(firstProfile.field("nick"));
+        .execute(firstProfile.<Object>field("nick"));
     Assert.assertTrue(result.isEmpty());
 
   }
@@ -1023,12 +1026,12 @@ public class IndexTest extends ObjectDBBaseTest {
     result = db.command(new OSQLSynchQuery("select * from ChildTestClass where testParentProperty = 10")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(1, result.size());
-    Assert.assertEquals(10L, result.get(0).field("testParentProperty"));
+    Assert.assertEquals(10L, result.get(0).<Object>field("testParentProperty"));
 
     result = db.command(new OCommandSQL("select * from AnotherChildTestClass where testParentProperty = 11")).execute();
     Assert.assertNotNull(result);
     Assert.assertEquals(1, result.size());
-    Assert.assertEquals(11L, result.get(0).field("testParentProperty"));
+    Assert.assertEquals(11L, result.get(0).<Object>field("testParentProperty"));
   }
 
   @Test
@@ -1213,7 +1216,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
-    database.delete(database.detach(loadedProfile, true));
+    database.delete(database.<Object>detach(loadedProfile, true));
 
     Assert.assertFalse(nickIndex.contains("NonProxiedObjectToDelete"));
   }
@@ -1229,7 +1232,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertTrue(nickIndex.contains("NonProxiedObjectToDelete"));
 
     final Profile loadedProfile = database.load(new ORecordId(profile.getId()));
-    database.delete(database.detachAll(loadedProfile, true));
+    database.delete(database.<Object>detachAll(loadedProfile, true));
 
     Assert.assertFalse(nickIndex.contains("NonProxiedObjectToDelete"));
   }
@@ -1237,7 +1240,8 @@ public class IndexTest extends ObjectDBBaseTest {
   @Test(dependsOnMethods = "testIndexRebuildDuringDetachAllNonProxiedObjectDelete")
   public void testRestoreUniqueIndex() {
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").dropIndexes();
-    database.command(new OCommandSQL("CREATE INDEX Profile.nick on Profile (nick) UNIQUE METADATA {ignoreNullValues: true}")).execute();
+    database.command(new OCommandSQL("CREATE INDEX Profile.nick on Profile (nick) UNIQUE METADATA {ignoreNullValues: true}"))
+        .execute();
     database.getMetadata().reload();
   }
 
@@ -1290,8 +1294,8 @@ public class IndexTest extends ObjectDBBaseTest {
 
     for (int i = 0; i < 2; i++) {
       final ODocument document = result.get(i);
-      Assert.assertEquals(document.field("val"), 1);
-      Assert.assertEquals(document.field("index"), 15 + i);
+      Assert.assertEquals(document.<Object>field("val"), 1);
+      Assert.assertEquals(document.<Object>field("index"), 15 + i);
     }
   }
 
@@ -1937,7 +1941,8 @@ public class IndexTest extends ObjectDBBaseTest {
     clazz.createProperty("reg", OType.LONG);
     clazz.createProperty("no", OType.INTEGER);
 
-    clazz.createIndex("MultikeyWithoutFieldIndexNoNullSupport", INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{  "state", "users", "time", "reg", "no"});
+    clazz.createIndex("MultikeyWithoutFieldIndexNoNullSupport", INDEX_TYPE.UNIQUE.toString(), null,
+        new ODocument().fields("ignoreNullValues", true), new String[] { "state", "users", "time", "reg", "no" });
 
     ODocument document = new ODocument("TestMultikeyWithoutFieldNoNullSupport");
     document.field("state", (byte) 1);
@@ -2046,9 +2051,13 @@ public class IndexTest extends ObjectDBBaseTest {
       OrientEdgeType edgeType = graphNoTx.createEdgeType("CustomEdge");
       edgeType.createProperty("out", OType.LINK, vertexType);
       edgeType.createProperty("in", OType.LINK, vertexType);
-      edgeType.createIndex("CustomEdge.in", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{  "in"});
-      edgeType.createIndex("CustomEdge.out", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{  "out"});
-      edgeType.createIndex("CustomEdge.compositeInOut", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true), new String[]{ "out", "in"});
+      edgeType
+          .createIndex("CustomEdge.in", OClass.INDEX_TYPE.UNIQUE.toString(), null, new ODocument().fields("ignoreNullValues", true),
+              new String[] { "in" });
+      edgeType.createIndex("CustomEdge.out", OClass.INDEX_TYPE.UNIQUE.toString(), null,
+          new ODocument().fields("ignoreNullValues", true), new String[] { "out" });
+      edgeType.createIndex("CustomEdge.compositeInOut", OClass.INDEX_TYPE.UNIQUE.toString(), null,
+          new ODocument().fields("ignoreNullValues", true), new String[] { "out", "in" });
     }
     // graphNoTx.shutdown();
 

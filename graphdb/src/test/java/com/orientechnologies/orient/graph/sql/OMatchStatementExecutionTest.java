@@ -933,9 +933,9 @@ public class OMatchStatementExecutionTest {
     ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
     ODocument friend2 = ((OIdentifiable) doc.field("friend2")).getRecord();
     ODocument friend3 = ((OIdentifiable) doc.field("friend3")).getRecord();
-    assertEquals(0, friend1.field("uid"));
-    assertEquals(1, friend2.field("uid"));
-    assertEquals(2, friend3.field("uid"));
+    assertEquals(0, friend1.<Object>field("uid"));
+    assertEquals(1, friend2.<Object>field("uid"));
+    assertEquals(2, friend3.<Object>field("uid"));
   }
 
   @Test
@@ -955,9 +955,9 @@ public class OMatchStatementExecutionTest {
     ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
     ODocument friend2 = ((OIdentifiable) doc.field("friend2")).getRecord();
     ODocument friend3 = ((OIdentifiable) doc.field("friend3")).getRecord();
-    assertEquals(0, friend1.field("uid"));
-    assertEquals(1, friend2.field("uid"));
-    assertEquals(2, friend3.field("uid"));
+    assertEquals(0, friend1.<Object>field("uid"));
+    assertEquals(1, friend2.<Object>field("uid"));
+    assertEquals(2, friend3.<Object>field("uid"));
   }
 
   @Test
@@ -1033,7 +1033,7 @@ public class OMatchStatementExecutionTest {
     List<OIdentifiable> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(2, result.size());
     for (OIdentifiable d : result) {
-      assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).field("uid"), 1);
+      assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).<Object>field("uid"), 1);
     }
   }
 
@@ -1048,7 +1048,7 @@ public class OMatchStatementExecutionTest {
     List<OIdentifiable> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());
     for (OIdentifiable d : result) {
-      assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).field("uid"), 1);
+      assertEquals(((ODocument) ((ODocument) d.getRecord()).field("friend1")).<Object>field("uid"), 1);
     }
   }
 
@@ -1146,7 +1146,7 @@ public class OMatchStatementExecutionTest {
     assertTrue(foo instanceof List);
     assertEquals(1, ((List) foo).size());
     Vertex resultVertex = (Vertex) ((List) foo).get(0);
-    assertEquals(2, resultVertex.getProperty("uid"));
+    assertEquals(2, resultVertex.<Object>getProperty("uid"));
   }
 
   @Test

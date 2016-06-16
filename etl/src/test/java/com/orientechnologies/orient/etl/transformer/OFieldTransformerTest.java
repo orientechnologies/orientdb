@@ -40,7 +40,7 @@ public class OFieldTransformerTest extends OETLBaseTest {
     assertEquals(3, doc.fields());
     assertEquals("Jay", doc.field("name"));
     assertEquals("Miner", doc.field("surname"));
-    assertEquals(33, doc.field("test"));
+    assertEquals(33, doc.<Object>field("test"));
   }
 
   @Test

@@ -94,7 +94,7 @@ public class ConcurrentDistributedUpdateTest extends AbstractScenarioTest {
                     log("[" + id + "/" + i + "/" + k + "] Distributed lock Exception " + ex + " for vertex " + vtx1 + " \n");
                     ex.printStackTrace();
                     update = false;
-//                    isRunning = false;
+                    //                    isRunning = false;
                     break;
                   } catch (Exception ex) {
                     log("[" + id + "/" + i + "/" + k + "] Exception " + ex + " for vertex " + vtx1 + "\n\n");

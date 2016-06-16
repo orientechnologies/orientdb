@@ -119,7 +119,7 @@ public class DistributedIndexes extends AbstractServerClusterTest {
       } catch (Exception e) {
         // CHECK DB COHERENCY
         final Iterable<ODocument> result = db.command(new OCommandSQL("select count(*) from DistributedIndexTest")).execute();
-        Assert.assertEquals(result.iterator().next().field("count"), 2l);
+        Assert.assertEquals(result.iterator().next().<Object>field("count"), 2l);
       }
 
       final ODocument test4 = new ODocument("DistributedIndexTest");
@@ -134,10 +134,11 @@ public class DistributedIndexes extends AbstractServerClusterTest {
       } catch (Exception e) {
         // CHECK DB COHERENCY
         final Iterable<ODocument> result = db.command(new OCommandSQL("select count(*) from DistributedIndexTest")).execute();
-        Assert.assertEquals(result.iterator().next().field("count"), 2l);
+        Assert.assertEquals(result.iterator().next().<Object>field("count"), 2l);
       }
 
     } catch (Exception e) {
+      e.printStackTrace();
       Assert.fail(e.toString());
     }
   }

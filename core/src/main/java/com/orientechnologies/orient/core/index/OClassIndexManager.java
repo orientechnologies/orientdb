@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -56,6 +57,11 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
     Orient.instance().registerWeakOrientStartupListener(this);
     Orient.instance().registerWeakOrientShutdownListener(this);
+  }
+
+  @Override
+  public SCOPE[] getScopes() {
+    return new SCOPE[] { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
   }
 
   @Override
@@ -93,10 +99,10 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
           final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
 
           if (!indexDefinition.isNullValuesIgnored() || origValue != null)
-            removeFromIndex(index,origValue,iRecord);
+            removeFromIndex(index, origValue, iRecord);
 
           if (!indexDefinition.isNullValuesIgnored() || newValue != null)
-            putInIndex(index,newValue,iRecord.getIdentity());
+            putInIndex(index, newValue, iRecord.getIdentity());
         } else {
           final OMultiValueChangeTimeLine<?, ?> multiValueChangeTimeLine = iRecord.getCollectionTimeLine(multiValueField);
           if (multiValueChangeTimeLine == null) {
@@ -122,10 +128,10 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
               }
 
               for (final Object keyToRemove : keysToRemove.keySet())
-                removeFromIndex(index,keyToRemove,iRecord);
+                removeFromIndex(index, keyToRemove, iRecord);
 
               for (final Object keyToAdd : keysToAdd.keySet())
-                putInIndex(index,keyToAdd,iRecord.getIdentity());
+                putInIndex(index, keyToAdd, iRecord.getIdentity());
             } else {
               final OTrackedMultiValue fieldValue = iRecord.field(multiValueField);
               final Object restoredMultiValue = fieldValue
@@ -170,7 +176,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
         removeFromIndex(index, keyToRemove, iRecord);
 
       for (final Object keyToAdd : keysToAdd.keySet())
-        putInIndex(index,keyToAdd,iRecord.getIdentity());
+        putInIndex(index, keyToAdd, iRecord.getIdentity());
 
     } else {
       final Object origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
@@ -193,13 +199,13 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
       for (final Object valueToRemove : valuesToRemove) {
         if (!indexDefinition.isNullValuesIgnored() || valueToRemove != null) {
-          removeFromIndex(index,valueToRemove,iRecord);
+          removeFromIndex(index, valueToRemove, iRecord);
         }
       }
 
       for (final Object valueToAdd : valuesToAdd) {
         if (!indexDefinition.isNullValuesIgnored() || valueToAdd != null) {
-          putInIndex(index,valueToAdd,iRecord);
+          putInIndex(index, valueToAdd, iRecord);
         }
       }
     } else {

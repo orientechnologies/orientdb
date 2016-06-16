@@ -19,9 +19,9 @@
  */
 package com.orientechnologies.orient.core.query.live;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -34,7 +34,7 @@ public class OLiveQueryQueueThread extends Thread {
 
   private final BlockingQueue<ORecordOperation>            queue;
   private final ConcurrentMap<Integer, OLiveQueryListener> subscribers;
-  private boolean                                stopped = false;
+  private boolean                                          stopped = false;
 
   private OLiveQueryQueueThread(BlockingQueue<ORecordOperation> queue, ConcurrentMap<Integer, OLiveQueryListener> subscribers) {
     this.queue = queue;
@@ -65,7 +65,12 @@ public class OLiveQueryQueueThread extends Thread {
       }
       for (OLiveQueryListener listener : subscribers.values()) {
         // TODO filter data
-        listener.onLiveResult(next);
+        try {
+          listener.onLiveResult(next);
+        } catch (Exception e) {
+          OLogManager.instance().warn(this, "Error executing live query subscriber.", e);
+        }
+
       }
     }
   }
@@ -86,12 +91,12 @@ public class OLiveQueryQueueThread extends Thread {
 
   public void unsubscribe(Integer id) {
     OLiveQueryListener res = subscribers.remove(id);
-    if(res != null){
+    if (res != null) {
       res.onLiveResultEnd();
     }
   }
 
-  public boolean hasListeners(){
+  public boolean hasListeners() {
     return !subscribers.isEmpty();
   }
 
