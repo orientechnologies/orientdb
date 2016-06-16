@@ -14,6 +14,14 @@ public class OCreatePropertyStatementTest extends OParserTestAbstract {
     checkRightSyntax("CREATE PROPERTY Foo.bar LINK Bar unsafe");
 
     checkRightSyntax("CREATE PROPERTY `Foo bar`.`bar baz` LINK Bar unsafe");
+    
+    
+    checkRightSyntax("CREATE PROPERTY Foo.bar Integer (MANDATORY, READONLY, NOTNULL, MAX 5, MIN 3, DEFAULT 7) UNSAFE");
+    checkRightSyntax("CREATE PROPERTY Foo.bar Integer (MANDATORY, READONLY, NOTNULL, MAX 5, MIN 3, DEFAULT 7)");
+    
+    checkRightSyntax("CREATE PROPERTY Foo.bar LINK Bar (MANDATORY, READONLY, NOTNULL, MAX 5, MIN 3, DEFAULT 7)");
+    
+    checkRightSyntax("CREATE PROPERTY Foo.bar LINK Bar (MANDATORY true, READONLY false, NOTNULL true, MAX 5, MIN 3, DEFAULT 7) UNSAFE");
   }
 
 }
