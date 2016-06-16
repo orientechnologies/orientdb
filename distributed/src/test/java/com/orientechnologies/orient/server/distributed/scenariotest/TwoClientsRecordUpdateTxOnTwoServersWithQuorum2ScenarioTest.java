@@ -89,9 +89,9 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioTest extends
     // retrieves record from server1 and checks they're equal
     ODocument recordServer1 = retrieveRecord(getDatabaseURL(serverInstance.get(1)), RECORD_ID);
     assertEquals(recordServer1.getVersion(), recordServer0.getVersion());
-    assertEquals(recordServer1.field("id"), recordServer0.field("id"));
-    assertEquals(recordServer1.field("firstName"), recordServer0.field("firstName"));
-    assertEquals(recordServer1.field("lastName"), recordServer0.field("lastName"));
+    assertEquals(recordServer1.<String>field("id"), recordServer0.<String>field("id"));
+    assertEquals(recordServer1.<String>field("firstName"), recordServer0.<String>field("firstName"));
+    assertEquals(recordServer1.<String>field("lastName"), recordServer0.<String>field("lastName"));
 
     // gets the actual version of record from server0
     int actualVersion = recordServer0.getVersion();
