@@ -45,6 +45,7 @@ public class ODefaultPasswordValidator implements OPasswordValidator {
 
   // OSecurityComponent
   public void active() {
+    OLogManager.instance().info(this, "ODefaultPasswordValidator is active");
   }
 
   // OSecurityComponent
