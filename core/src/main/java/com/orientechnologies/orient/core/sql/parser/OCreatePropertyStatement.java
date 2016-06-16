@@ -39,11 +39,7 @@ public class OCreatePropertyStatement extends OStatement {
       builder.append(" (");
       for (int i = 0; i < attributes.size(); i++) {
         OCreatePropertyAttributeStatement att = attributes.get(i);
-        builder.append(att.settingName.value);
-        if (att.settingValue != null) {
-          builder.append(" ");
-          builder.append(att.settingValue.value);
-        }
+        att.toString(params, builder);
         
         if (i < attributes.size() - 1) {
           builder.append(", ");

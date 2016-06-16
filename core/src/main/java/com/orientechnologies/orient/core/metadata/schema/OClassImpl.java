@@ -956,7 +956,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     final Collection<ODocument> storedProperties = document.field("properties");
 
     if (storedProperties != null)
-      for (ODocument p : storedProperties) {
+      for (OIdentifiable id : storedProperties) {
+        ODocument p = id.getRecord();
         prop = new OPropertyImpl(this, p);
         prop.fromStream();
 
