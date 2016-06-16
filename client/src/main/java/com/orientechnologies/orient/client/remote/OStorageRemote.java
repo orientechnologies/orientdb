@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -1376,7 +1377,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           network.writeByte((byte) 0);
 
           // OLD SEND INDEX ENTRIES, NON NEEDED, CALCULATED SERVER SIDE
-          network.writeBytes(iTx.getIndexChanges().toStream());
+          network.writeBytes(iTx.getIndexChanges((Map<String, OIndex<?>>) null).toStream());
         } finally {
           endRequest(network);
         }

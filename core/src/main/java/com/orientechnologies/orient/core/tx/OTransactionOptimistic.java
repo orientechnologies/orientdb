@@ -28,17 +28,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -55,10 +50,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -79,7 +71,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     @Override
     public void run() {
-      final ODocument indexEntries = getIndexChanges();
+      final ODocument indexEntries = getIndexChanges(indexes);
       if (indexEntries != null) {
         final Map<String, OIndexInternal<?>> indexesToCommit = new HashMap<String, OIndexInternal<?>>();
 

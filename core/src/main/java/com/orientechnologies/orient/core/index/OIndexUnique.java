@@ -21,11 +21,10 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 /**
  * Index implementation that allows only one value for a key.
@@ -58,10 +57,7 @@ public class OIndexUnique extends OIndexOneValue {
           // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
           if (!value.equals(iSingleValue)) {
             final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
-            if (mergeSameKey != null && mergeSameKey)
-              // IGNORE IT, THE EXISTENT KEY HAS BEEN MERGED
-              ;
-            else
+            if (mergeSameKey == null || !mergeSameKey)
               throw new ORecordDuplicatedException(String
                   .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
                       iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
@@ -70,7 +66,7 @@ public class OIndexUnique extends OIndexOneValue {
         }
 
         if (!iSingleValue.getIdentity().isPersistent())
-          ((ORecord) iSingleValue.getRecord()).save();
+          iSingleValue.getRecord().save();
 
         markStorageDirty();
 
@@ -94,5 +90,11 @@ public class OIndexUnique extends OIndexOneValue {
   @Override
   public boolean supportsOrderedIterations() {
     return indexEngine.hasRangeQuerySupport();
+  }
+
+  @Override
+  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+      OTransactionIndexChangesPerKey changes) {
+    return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.Unique);
   }
 }

@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -53,6 +52,7 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -1052,6 +1052,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         }
       }
     }
+  }
+
+  @Override
+  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+      OTransactionIndexChangesPerKey changes) {
+    return changes.entries;
   }
 
   private void applyIndexTxEntry(Map<Object, Object> snapshot, ODocument entry) {
