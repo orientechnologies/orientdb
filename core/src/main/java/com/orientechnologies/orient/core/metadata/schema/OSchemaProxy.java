@@ -200,6 +200,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
   }
 
   public void close() {
+    // DO NOTHING THE DELEGATE CLOSE IS MANAGED IN A DIFFERENT CONTEXT
   }
 
   public String toString() {

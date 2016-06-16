@@ -60,7 +60,7 @@ public class OSchedulerProxy extends OProxedResource<OScheduler> implements OSch
 
   @Override
   public void close() {
-    delegate.close();
+    //DO NOTHING THE DELEGATE CLOSE IS MANAGED IN A DIFFERENT CONTEXT
   }
 
   @Override

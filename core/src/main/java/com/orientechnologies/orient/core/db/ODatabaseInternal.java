@@ -91,4 +91,6 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
 
   OUncompletedCommit<Void> initiateCommit(boolean force);
 
+  OSharedContext getSharedContext();
+
 }

@@ -125,8 +125,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private   OMetadataDefault     metadata;
   private   OImmutableUser       user;
   private   byte                 recordType;
-  @Deprecated
-  private   String               recordFormat;
   private final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   private       boolean                                     retainRecords = true;
   private OLocalRecordCache                localCache;
@@ -140,6 +138,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   protected ODatabaseSessionMetadata sessionMetadata;
 
   private final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
+  private OSharedContext sharedContext;
 
   /**
    * Creates a new connection to the database.
@@ -479,7 +478,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       storage.delete();
       storage = null;
-
+      sharedContext = null;
       status = STATUS.CLOSED;
       ODatabaseRecordThreadLocal.INSTANCE.remove();
       clearOwner();
@@ -1202,7 +1201,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       currentIntent.end(this);
       currentIntent = null;
     }
-
+    sharedContext = null;
     status = STATUS.CLOSED;
 
     localCache.clear();
@@ -2866,8 +2865,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     getStorage().restore(in, options, callable, iListener);
 
-    if (!isClosed())
-      getMetadata().reload();
+    if (!isClosed()) {
+      getMetadata().load();
+      sharedContext = null;
+    }
   }
 
   /**
@@ -3016,8 +3017,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     metadata = new OMetadataDefault(this);
     metadata.load();
-
-    recordFormat = DEF_RECORD_FORMAT;
 
     if (!(getStorage() instanceof OStorageProxy)) {
       if (metadata.getIndexManager().autoRecreateIndexesAfterCrash()) {
@@ -3353,4 +3352,17 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
+  @Override
+  public OSharedContext getSharedContext() {
+    // NOW NEED TO GET THE CONTEXT FROM RESOURCES IN FUTURE WILL BE NOT NEEDED
+    if(sharedContext == null){
+      sharedContext = storage.getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+        @Override
+        public OSharedContext call() throws Exception {
+          throw new ODatabaseException("Accessing to the database context before the database has bean initialized");
+        }
+      });
+    }
+    return sharedContext;
+  }
 }

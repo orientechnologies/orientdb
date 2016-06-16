@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -79,7 +80,7 @@ public class AlterSuperclassTest {
     OClass classChild = schema.createClass("ChildClass1", classA);
     assertEquals(classChild.getSuperClasses(), Arrays.asList(classA));
 
-    OSchemaShared schemaShared = db.getStorage().getResource(OSchema.class.getSimpleName(), null);
+    OSchemaShared schemaShared = db.getSharedContext().getSchema();
 
     final ODocument doc = schemaShared.toStream();
     final Collection<ODocument> classes = doc.field("classes");

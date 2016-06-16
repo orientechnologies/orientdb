@@ -65,6 +65,7 @@ public interface OMetadata {
   /**
    * Closes internal objects
    */
+  @Deprecated
   void close();
 
   OFunctionLibrary getFunctionLibrary();
