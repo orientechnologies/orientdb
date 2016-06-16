@@ -33,7 +33,6 @@ package com.orientechnologies.orient.server.distributed.scenariotest;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.scenariotest.AbstractScenarioTest;
 import org.junit.Test;
 
 /**
@@ -42,6 +41,10 @@ import org.junit.Test;
  * - 5 threads for each server write 100 records
  * - check consistency
  * - no faults
+ *
+ * @author Gabriele Ponzi
+ * @email  <gabriele.ponzi--at--gmail.com>
+
  */
 
 public class BasicScenarioTest extends AbstractScenarioTest {

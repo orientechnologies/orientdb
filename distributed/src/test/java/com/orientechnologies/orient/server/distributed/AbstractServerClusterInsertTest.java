@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
   protected static final int delayWriter           = 0;
   protected static final int delayReader           = 1000;
-  protected static final int writerCount           = 5;
+  protected static int writerCount                 = 5;
   protected int              baseCount             = 0;
   protected int              expected;
   protected OIndex<?>        idx;
