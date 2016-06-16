@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -36,6 +29,13 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
@@ -277,31 +277,40 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
     // CREATE IT LOCALLY
     OPropertyImpl internalProp = sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, unsafe);
+    boolean toSave = false;
     if (readonly) {
       internalProp.setReadonly(true);
+      toSave = true;
     }
 
     if (mandatory) {
       internalProp.setMandatory(true);
+      toSave = true;
     }
 
     if (notnull) {
       internalProp.setNotNull(true);
+      toSave = true;
     }
 
     if (max != null) {
       internalProp.setMax(max);
+      toSave = true;
     }
 
     if (min != null) {
       internalProp.setMin(min);
+      toSave = true;
     }
 
     if (defaultValue != null) {
       internalProp.setDefaultValue(defaultValue);
+      toSave = true;
     }
 
-    internalProp.save();
+    if(toSave) {
+      internalProp.save();
+    }
 
     return sourceClass.properties().size();
   }

@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OCreatePropertyAttributeStatement extends SimpleNode {
   public OIdentifier settingName;
   public OExpression settingValue;
@@ -18,6 +20,14 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
+    settingName.toString(params, builder);
+    if(settingValue!=null){
+      builder.append(" ");
+      settingValue.toString(params, builder);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=6a7964c2b9dad541ca962eecea00651b (do not edit this line) */
