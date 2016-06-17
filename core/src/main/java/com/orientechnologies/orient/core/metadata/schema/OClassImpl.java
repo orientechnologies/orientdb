@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -1068,8 +1069,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void setPolymorphicClusterIds(final int[] iClusterIds) {
-    polymorphicClusterIds = iClusterIds;
-    Arrays.sort(polymorphicClusterIds);
+    Set<Integer> set = new TreeSet<Integer>();
+    for (int iClusterId : iClusterIds) {
+      set.add(iClusterId);
+    }
+    polymorphicClusterIds = new int[set.size()];
+    int i = 0;
+    for (Integer clusterId : set) {
+      polymorphicClusterIds[i] = clusterId;
+      i++;
+    }
   }
 
   public void renameProperty(final String iOldName, final String iNewName) {
@@ -2729,29 +2738,26 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Add different cluster id to the "polymorphic cluster ids" array.
    */
   private void addPolymorphicClusterIds(final OClassImpl iBaseClass) {
-    boolean found;
-    for (int i : iBaseClass.polymorphicClusterIds) {
-      found = false;
-      for (int k : polymorphicClusterIds) {
-        if (i == k) {
-          found = true;
-          break;
-        }
-      }
+    Set<Integer> clusters = new TreeSet<Integer>();
 
-      if (!found) {
-        int[] oldClusterId = polymorphicClusterIds;
-        // ADD IT
-        polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
-        polymorphicClusterIds[polymorphicClusterIds.length - 1] = i;
-        Arrays.sort(polymorphicClusterIds);
+    for (int clusterId : polymorphicClusterIds) {
+      clusters.add(clusterId);
+    }
+    for (int clusterId : iBaseClass.polymorphicClusterIds) {
+      if (clusters.add(clusterId)) {
         try {
-          addClusterIdToIndexes(i);
-        } catch (Exception e) {
-          polymorphicClusterIds = oldClusterId;
+          addClusterIdToIndexes(clusterId);
+        } catch (RuntimeException e) {
+          OLogManager.instance().warn(this, "Error adding clusterId '%i' to index of class '%s'", e, clusterId, getName());
+          clusters.remove(clusterId);
         }
       }
-
+    }
+    polymorphicClusterIds = new int[clusters.size()];
+    int i = 0;
+    for (Integer cluster : clusters) {
+      polymorphicClusterIds[i] = cluster;
+      i++;
     }
   }
 
