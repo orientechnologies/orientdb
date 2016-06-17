@@ -1595,8 +1595,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final String originalName = engineName;
       engineName = engineName.toLowerCase(configuration.getLocaleInstance());
 
-      if (indexEngineNameMap.containsKey(engineName))
-        throw new OIndexException("Index with name " + engineName + " already exists");
+      if (indexEngineNameMap.containsKey(engineName)) {
+        // OLD INDEX FILE ARE PRESENT: THIS IS THE CASE OF PARTIAL/BROKEN INDEX
+        OLogManager.instance().warn(this, "Index with name '%s' already exists, removing it and re-create the index", engineName);
+        final OIndexEngine engine = indexEngineNameMap.remove(engineName);
+        if( engine != null ) {
+          indexEngines.remove(engine);
+          configuration.deleteIndexEngine(engineName);
+          engine.delete();
+        }
+      }
 
       makeStorageDirty();
 
