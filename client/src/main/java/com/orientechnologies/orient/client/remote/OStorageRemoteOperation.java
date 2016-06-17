@@ -28,7 +28,7 @@ import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
  */
 public interface OStorageRemoteOperation<T> {
 
-  T execute(final OChannelBinaryAsynchClient network) throws IOException;
+  T execute(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException;
 
 }
 
