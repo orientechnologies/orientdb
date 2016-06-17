@@ -17,7 +17,7 @@ configModule.controller("ConfigurationController", ['$scope', '$routeParams', '$
   $scope.tabsI18n = new Array;
 
   if ($scope.active == "structure") {
-    Database.setWiki("Structure.html");
+    Database.setWiki("Clusters.html");
   }
 
   else if ($scope.active == "configuration") {
