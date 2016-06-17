@@ -1262,3 +1262,8 @@ table.table-backup {
   width: 25%;
 }
 
+
+.noty_bar {
+  max-height: 100px;
+  overflow: auto;
+}
