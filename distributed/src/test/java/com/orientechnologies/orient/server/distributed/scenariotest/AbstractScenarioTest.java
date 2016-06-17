@@ -30,8 +30,8 @@ import com.orientechnologies.orient.server.distributed.ServerRun;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * It represents an abstract scenario test.
@@ -145,24 +145,28 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
 
-  // checks the consistency in the cluster after the writes in a simple distributed scenario
+  /**
+   * Verifies the consistency in the cluster after the writes in a simple distributed scenario:
+   * checks that all the records written on the servers contained in the list 'writerServer' are consistent on the servers contained in the list 'checkConsistencyOnServers'.
+   */
+
   protected void checkWritesAboveCluster(List<ServerRun> checkConsistencyOnServers, List<ServerRun> writerServer) {
 
     String checkOnServer = "";
-    for(ServerRun server: checkConsistencyOnServers) {
+    for (ServerRun server : checkConsistencyOnServers) {
       checkOnServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
     }
-    checkOnServer = checkOnServer.substring(0,checkOnServer.length()-1);
+    checkOnServer = checkOnServer.substring(0, checkOnServer.length() - 1);
 
     String writtenServer = "";
-    for(ServerRun server: writerServer) {
+    for (ServerRun server : writerServer) {
       writtenServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
     }
-    writtenServer = writtenServer.substring(0,writtenServer.length()-1);
+    writtenServer = writtenServer.substring(0, writtenServer.length() - 1);
 
     List<ODatabaseDocumentTx> dbs = new LinkedList<ODatabaseDocumentTx>();
 
-    for(ServerRun server: checkConsistencyOnServers) {
+    for (ServerRun server : checkConsistencyOnServers) {
       dbs.add(poolFactory.get(getPlocalDatabaseURL(server), "admin", "admin").acquire());
     }
 
@@ -172,61 +176,72 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     int lastThread = 0;
     int serverIndex = 0;
 
-    for(ServerRun server: writerServer) {
-      serverIndex2thresholdThread.put(serverIndex, lastThread+5);
+    for (ServerRun server : writerServer) {
+      serverIndex2thresholdThread.put(serverIndex, lastThread + writerCount);
       serverIndex++;
-      lastThread += 5;
+      lastThread += writerCount;
     }
 
     serverIndex = 0;
 
-    for(ServerRun server: writerServer) {
+    for (ServerRun server : writerServer) {
       serverIndex2serverName.put(serverIndex, server.getServerInstance().getDistributedManager().getLocalNodeName());
       serverIndex++;
     }
 
     List<ODocument> docsToCompare = new LinkedList<ODocument>();
 
-    super.banner("Checking consistency among servers...\nChecking on servers {" + checkOnServer + "} that all the records written on {" + writtenServer + "} are consistent.");
+    super.banner("Checking consistency among servers...\nChecking on servers {" + checkOnServer
+        + "} that all the records written on {" + writtenServer + "} are consistent.");
 
     try {
 
       int index = 0;
       String serverName = null;
 
-      for(int serverId: serverIndex2thresholdThread.keySet()) {
+      for (int serverId : serverIndex2thresholdThread.keySet()) {
 
         serverName = serverIndex2serverName.get(serverId);
         System.out.println("Checking records originally inserted on server " + serverName + "...");
 
         // checking records inserted on server0
         int i;
-        if(serverId == 0)
+        if (serverId == 0)
           i = 0;
         else
-          i = serverIndex2thresholdThread.get(serverId-1);
+          i = serverIndex2thresholdThread.get(serverId - 1);
 
         while (i < serverIndex2thresholdThread.get(serverId)) {
-          for (int j = 0; j < 100; j++) {
+          for (int j = 0; j < count; j++) {
 
             // load records to compare
-            for(ODatabaseDocumentTx db: dbs) {
+            for (ODatabaseDocumentTx db : dbs) {
               docsToCompare.add(loadRecord(db, serverId, i, j + baseCount));
             }
 
             // checking that record is present on each server db
-            for(ODocument doc: docsToCompare) {
+            for (ODocument doc : docsToCompare) {
               assertTrue(doc != null);
             }
 
             // checking that all the records have the same version and values (each record is equal to the next one)
             int k = 0;
-            while(k <= docsToCompare.size() -2) {
-              assertEquals(docsToCompare.get(k).field("@version"), docsToCompare.get(k+1).field("@version"));
-              assertEquals(docsToCompare.get(k).field("name"), docsToCompare.get(k+1).field("name"));
-              assertEquals(docsToCompare.get(k).field("surname"), docsToCompare.get(k+1).field("surname"));
-              assertEquals(docsToCompare.get(k).field("birthday"), docsToCompare.get(k+1).field("birthday"));
-              assertEquals(docsToCompare.get(k).field("children"), docsToCompare.get(k+1).field("children"));
+            while (k <= docsToCompare.size() - 2) {
+              assertTrue(
+                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
+                  docsToCompare.get(k).field("@version") == docsToCompare.get(k + 1).field("@version"));
+              assertTrue(
+                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
+                  docsToCompare.get(k).field("name").equals(docsToCompare.get(k + 1).field("name")));
+              assertTrue(
+                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
+                  docsToCompare.get(k).field("surname").equals(docsToCompare.get(k + 1).field("surname")));
+              assertTrue(
+                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
+                  docsToCompare.get(k).field("birthday").equals(docsToCompare.get(k + 1).field("birthday")));
+              assertTrue(
+                  "Inconsistency detected. Record: " + docsToCompare.get(k).toString() + " ; Servers: " + (k + 1) + "," + (k + 2),
+                  docsToCompare.get(k).field("children").equals(docsToCompare.get(k + 1).field("children")));
               k++;
             }
             docsToCompare.clear();
@@ -238,11 +253,12 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         index++;
       }
 
-    } catch(Exception e) {
+    } catch (Exception e) {
       e.printStackTrace();
+      fail(e.getMessage());
     } finally {
 
-      for(ODatabaseDocumentTx db: dbs) {
+      for (ODatabaseDocumentTx db : dbs) {
         ODatabaseRecordThreadLocal.INSTANCE.set(db);
         db.close();
         ODatabaseRecordThreadLocal.INSTANCE.set(null);
