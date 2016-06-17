@@ -239,7 +239,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       onIndexEngineChange(indexId);
 
       if (rebuild)
-        fillIndex(progressListener);
+        fillIndex(progressListener, false);
 
       updateConfiguration();
     } catch (Exception e) {
@@ -460,7 +460,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
     acquireSharedLock();
     try {
-      documentIndexed = fillIndex(iProgressListener);
+      documentIndexed = fillIndex(iProgressListener, true);
     } catch (final Exception e) {
       try {
         if (indexId >= 0)
@@ -483,7 +483,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     return documentIndexed;
   }
 
-  private long fillIndex(OProgressListener iProgressListener) {
+  private long fillIndex(final OProgressListener iProgressListener, final boolean rebuild) {
     long documentIndexed = 0;
     try {
       long documentNum = 0;
@@ -493,7 +493,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         documentTotal += getDatabase().countClusterElements(cluster);
 
       if (iProgressListener != null)
-        iProgressListener.onBegin(this, documentTotal, true);
+        iProgressListener.onBegin(this, documentTotal, rebuild);
 
       // INDEX ALL CLUSTERS
       for (final String clusterName : clustersToIndex) {
