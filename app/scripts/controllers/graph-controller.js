@@ -463,18 +463,32 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
           $scope.showModalNewEdge(v1, v2);
         }
       });
+
+      function openEdge(scope, e) {
+        scope.doc = e.edge;
+        var title = "Edge (" + e.label + ")";
+        Aside.show({
+          scope: scope,
+          title: title,
+          template: 'views/database/graph/asideEdge.html',
+          show: true,
+          fullscreen: scope.fullscreen
+        });
+      }
+
       $scope.graph.on('edge/click', function (e) {
 
-        if (Aside.isOpen()) {
-          var title = "Edge (" + e.label + ")";
-          $scope.doc = e.edge;
-          Aside.show({
-            scope: $scope,
-            title: title,
-            template: 'views/database/graph/asideEdge.html',
-            show: true,
-            fullscreen: $scope.fullscreen
+
+        if (typeof e.edge == 'string') {
+          DocumentApi.get({database: $routeParams.database, document: e.edge}, function (doc) {
+            e.edge = doc;
+            if (Aside.isOpen()) {
+              openEdge($scope, e.edge);
+            }
           });
+        }
+        if (Aside.isOpen()) {
+          openEdge($scope, e.edge);
         }
 
 
@@ -806,7 +820,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     modalScope.cancelSave = function (error) {
 
       $scope.graph.endEdgeCreation();
-      if(error){
+      if (error) {
         Notification.push({content: error, error: true, autoHide: true});
       }
     }
