@@ -20,9 +20,9 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.common.log.OLogManager;
 import org.apache.commons.configuration.Configuration;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -125,7 +125,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public OrientTransactionalGraph setUseLog(final boolean useLog) {
     makeActive();
 
-    settings.setUseLog( useLog );
+    settings.setUseLog(useLog);
     return this;
   }
 
@@ -133,13 +133,14 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void setAutoStartTx(boolean autoStartTx) {
     makeActive();
 
-    final boolean showWarning = !autoStartTx && isAutoStartTx() && getDatabase() != null && getDatabase().getTransaction().isActive();
+    final boolean showWarning = !autoStartTx && isAutoStartTx() && getDatabase() != null
+        && getDatabase().getTransaction().isActive();
     super.setAutoStartTx(autoStartTx);
 
     if (showWarning)
       OLogManager.instance().warn(this,
-          "Auto transaction starting is turned off for the graph, but already started transaction is left open."
-              + "Commit it manually or consider disabling auto transactions while creating the graph or its factory.");
+          "Auto Transaction for graphs setting has been turned off, but a transaction was already started."
+              + " Commit it manually or consider disabling auto transactions while creating the graph.");
   }
 
   /**
