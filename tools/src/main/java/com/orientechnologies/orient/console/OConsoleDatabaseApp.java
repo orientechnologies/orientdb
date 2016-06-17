@@ -1713,6 +1713,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
       final OTableFormatter formatter = new OTableFormatter(this);
+      formatter.setColumnAlignment("RECORDS", OTableFormatter.ALIGNMENT.RIGHT);
 
       final ODocument footer = new ODocument();
       footer.field("NAME", "TOTAL");

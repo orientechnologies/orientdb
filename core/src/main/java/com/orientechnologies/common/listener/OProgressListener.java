@@ -19,8 +19,6 @@
   */
 package com.orientechnologies.common.listener;
 
-import com.orientechnologies.orient.core.index.OIndex;
-
 /**
  * Listener interface called on task execution.
  * 
@@ -28,9 +26,9 @@ import com.orientechnologies.orient.core.index.OIndex;
  * 
  */
 public interface OProgressListener {
-	public void onBegin(Object iTask, long iTotal, Object iMetadata);
+  void onBegin(Object iTask, long iTotal, Object iMetadata);
 
-	public boolean onProgress(Object iTask, long iCounter, float iPercent);
+  boolean onProgress(Object iTask, long iCounter, float iPercent);
 
-	public void onCompletition(Object iTask, boolean iSucceed);
+  void onCompletition(Object iTask, boolean iSucceed);
 }

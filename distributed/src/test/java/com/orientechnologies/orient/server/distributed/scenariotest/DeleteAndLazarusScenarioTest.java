@@ -16,8 +16,6 @@
 
 package com.orientechnologies.orient.server.distributed.scenariotest;
 
-import static org.junit.Assert.*;
-
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -28,6 +26,11 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+
+import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * It checks the consistency in the cluster with the following scenario: - 3 servers (writeQuorum=majority) - record r1 (version x)
@@ -103,12 +106,12 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
 
     final ORecordId r1Rid = (ORecordId) r1onServer1.getIdentity();
 
-    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
+    assertEquals((Integer)r1onServer1.field("@version"), (Integer)r1onServer2.field("@version"));
     assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
     assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
     assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
 
-    assertEquals(r1onServer2.field("@version"), r1onServer3.field("@version"));
+    assertEquals((Integer)r1onServer2.field("@version"),(Integer) r1onServer3.field("@version"));
     assertEquals(r1onServer2.field("id"), r1onServer3.field("id"));
     assertEquals(r1onServer2.field("firstName"), r1onServer3.field("firstName"));
     assertEquals(r1onServer2.field("lastName"), r1onServer3.field("lastName"));
@@ -160,7 +163,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     assertEquals("Luke", r1onServer1.field("firstName"));
     assertEquals("Skywalker", r1onServer1.field("lastName"));
 
-    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
+    assertEquals((Integer)r1onServer1.field("@version"), (Integer)r1onServer2.field("@version"));
     assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
     assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
     assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
@@ -169,7 +172,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     assertEquals("R001", r1onServer3.field("id"));
     assertEquals("Darth", r1onServer3.field("firstName"));
     assertEquals("Vader", r1onServer3.field("lastName"));
-    assertEquals(Integer.valueOf(initialVersion + 1), r1onServer3.field("@version"));
+    assertEquals(Integer.valueOf(initialVersion + 1),(Integer) r1onServer3.field("@version"));
 
     // shutdown server1
     System.out.println("Network fault on server1.\n");
@@ -198,7 +201,7 @@ public class DeleteAndLazarusScenarioTest extends AbstractScenarioTest {
     assertEquals("Luke", r1onServer1.field("firstName"));
     assertEquals("Skywalker", r1onServer1.field("lastName"));
 
-    assertEquals(r1onServer1.field("@version"), r1onServer2.field("@version"));
+    assertEquals((Integer)r1onServer1.field("@version"), (Integer)r1onServer2.field("@version"));
     assertEquals(r1onServer1.field("id"), r1onServer2.field("id"));
     assertEquals(r1onServer1.field("firstName"), r1onServer2.field("firstName"));
     assertEquals(r1onServer1.field("lastName"), r1onServer2.field("lastName"));
