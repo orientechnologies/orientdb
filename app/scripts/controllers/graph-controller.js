@@ -803,16 +803,24 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
       $scope.graph.endEdgeCreation();
       $scope.graph.data(docs).redraw();
     }
-    modalScope.cancelSave = function () {
+    modalScope.cancelSave = function (error) {
+
       $scope.graph.endEdgeCreation();
+      if(error){
+        Notification.push({content: error, error: true, autoHide: true});
+      }
     }
-    $modal({
+    var modalPromise = $modal({
       template: 'views/database/modalNewEdge.html',
       persist: false,
-      show: true,
+      show: false,
       scope: modalScope,
       modalClass: 'editEdge'
     });
+
+
+    modalPromise.$promise.then(modalPromise.show);
+
 
   };
   $scope.showModalNew = function () {

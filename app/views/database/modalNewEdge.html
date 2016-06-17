@@ -1,73 +1,76 @@
 <div class="modal" ng-controller="DocumentModalEdgeController" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" ng-click="$hide();cancelSave()"
-                        aria-hidden="true">×
-                </button>
-                <h5>New Edge from {{source["@rid"]}} to {{target["@rid"]}}</h5>
-            </div>
-            <div ng-if="!showEdgeForm()">
-                <div class="modal-body document">
-                    <ng-include src="'views/database/record.html'">
-                    </ng-include>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-sm pull-left" data-placement="right"
-                            data-template="views/database/newFieldPopOver.html" bs-popover>Add Field
-                    </button>
-                    <button type="button" class="btn btn-sm" ng-click="$hide()">Close</button>
-                    <button class="btn btn-primary btn-sm" ng-click="modal.saved=true;$hide();save()">Create Edge
-                    </button>
-                </div>
-            </div>
-            <div ng-if="showEdgeForm()">
-                <div class="modal-body document">
-                    <form class="form-horizontal" role="form">
-                        <div class="form-group">
-                            <label class="control-label col-md-2">Class</label>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" ng-click="$hide();cancelSave()"
+                aria-hidden="true">×
+        </button>
+        <h5>New Edge from {{source["@rid"]}} to {{target["@rid"]}}</h5>
+      </div>
+      <div ng-show="!selectClass">
 
-                            <div class="col-md-10">
-                                <select ng-model="selectedClass" class="form-control"
-                                        ng-options="p.toString() for p in listClasses">
-                                    <option value=""></option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-md-2">Lightweight</label>
+        <div ng-if="doc['@class']" class="modal-body document">
 
-                            <div class="col-md-10">
-                                <input type="checkbox" ng-model="lightweight">
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
 
-                    <div class="btn-toolbar pull-right">
-                        <div class="btn-group">
-                            <button type="button"
-                                    class="btn btn-sm "
-                                    ng-click="$hide();cancelSave()"> Cancel
-                            </button>
-                        </div>
-                        <div class="btn-group">
-                            <button type="button" ng-show="lightweight" ng-disabled="!selectedClass"
-                                    class="btn btn-sm "
-                                    ng-click="createLightEdge(selectedClass)"> Create Edge
-                            </button>
-                        </div>
-                        <div class="btn-group">
-                            <button type="button" ng-show="!lightweight" ng-disabled="!selectedClass"
-                                    class="btn btn-sm "
-                                    ng-click="setSelectClass(selectedClass)"> Next
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
+          <ng-include src="'views/database/record.html'">
+          </ng-include>
         </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm pull-left" data-placement="right"
+                  data-template="views/database/newFieldPopOver.html" bs-popover>Add Field
+          </button>
+          <button type="button" class="btn btn-sm" ng-click="$hide();cancelSave()">Close</button>
+          <button class="btn btn-primary btn-sm" ng-click="modal.saved=true;$hide();save()">Create Edge
+          </button>
+        </div>
+      </div>
+      <div ng-show="selectClass">
+        <div class="modal-body document">
+          <form class="form-horizontal" role="form">
+            <div class="form-group">
+              <label class="control-label col-md-2">Class</label>
+
+              <div class="col-md-10">
+                <select ng-model="selectedClass" class="form-control"
+                        ng-options="p.toString() for p in listClasses">
+                  <option value=""></option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-md-2">Lightweight</label>
+
+              <div class="col-md-10">
+                <input type="checkbox" ng-model="lightweight">
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+
+          <div class="btn-toolbar pull-right">
+            <div class="btn-group">
+              <button type="button"
+                      class="btn btn-sm "
+                      ng-click="$hide();cancelSave()"> Cancel
+              </button>
+            </div>
+            <div class="btn-group">
+              <button type="button" ng-show="lightweight" ng-disabled="!selectedClass"
+                      class="btn btn-sm "
+                      ng-click="createLightEdge(selectedClass);$hide()"> Create Edge
+              </button>
+            </div>
+            <div class="btn-group">
+              <button type="button" ng-show="!lightweight" ng-disabled="!selectedClass"
+                      class="btn btn-sm "
+                      ng-click="setSelectClass(selectedClass)"> Next
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 </div>

@@ -149,8 +149,11 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
   }
   $scope.setSelectClass = function (cls) {
     $scope.doc = DocumentApi.createNewDoc(cls);
+
     $scope.headers = Database.getPropertyFromDoc($scope.doc);
     $scope.selectClass = false;
+
+
   }
   $scope.deleteField = function (name) {
     delete $scope.doc[name];
@@ -208,6 +211,10 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
       verbose: false
     }, function (data) {
       $scope.confirmSave(data.result);
+      $scope.$hide();
+    },function(err){
+      $scope.$hide();
+      $scope.cancelSave(err);
     });
   }
   $scope.createLightEdge = function (cls) {
