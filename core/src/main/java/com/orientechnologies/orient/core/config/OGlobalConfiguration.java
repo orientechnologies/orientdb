@@ -374,10 +374,6 @@ public enum OGlobalConfiguration {
 
   FILE_DELETE_RETRY("file.deleteRetry", "Number of retries to delete a locked file", Integer.class, 50),
 
-  JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
-      "This property disables using JNA, should it be installed on your system. (Default true) To use JNA bundled with database",
-      boolean.class, true),
-
   // SECURITY
       SECURITY_USER_PASSWORD_SALT_ITERATIONS("security.userPasswordSaltIterations",
           "Number of iterations to generate the salt or user password. Changing this setting does not affect stored passwords",
@@ -734,6 +730,14 @@ public enum OGlobalConfiguration {
    */
   @OApi(maturity = OApi.MATURITY.NEW) SERVER_SECURITY_FILE("server.security.file",
       "Location of the OrientDB security.json configuration file", String.class, null),
+
+  /**
+   * Deprecated in v2.2.0
+   */
+  @Deprecated
+  JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
+      "This property disables using JNA, should it be installed on your system. (Default true) To use JNA bundled with database",
+      boolean.class, true),
 
   @Deprecated DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout",
       "Maximum timeout (in ms) to wait for the response in replication", Long.class, 500000l, true),
