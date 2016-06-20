@@ -382,6 +382,11 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
             val = null;
           }
           var idx = result;
+          if (properties[result].type === "DATE" || properties[result].type === "DATETIME") {
+            if (v === 'min' || v === 'max') {
+              val = "'" + val + "'";
+            }
+          }
           PropertyAlterApi.changeProperty($routeParams.database, {
             clazz: $scope.class2show,
             property: keyName,
@@ -715,7 +720,18 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
       }
       var i = 1;
       for (entry in prop) {
-        var sql = 'ALTER PROPERTY ' + $scope.classInject + '.' + propName + ' ' + entry + ' ' + prop[entry];
+
+
+        var val = prop[entry];
+        
+        if (propType === "DATE" || propType === "DATETIME") {
+
+
+          if (entry === 'min' || entry === 'max') {
+            val = "'" + val + "'";
+          }
+        }
+        var sql = 'ALTER PROPERTY ' + $scope.classInject + '.' + propName + ' ' + entry + ' ' + val;
         addCommandToExecute(sql, i, len);
         i++;
       }

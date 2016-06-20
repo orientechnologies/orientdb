@@ -127,16 +127,34 @@
                   <input type="text" ng-model="result['min']" ng-change="modificato(result,'min')"
                          ng-show="result['type'] != 'DATE' && result['type'] != 'DATETIME'">
                   <input type="text" bs-datepicker ng-model="result['min']"
-                         ng-change="modificato(result,'min')"
-                         ng-show="result['type'] == 'DATE' || result['type'] == 'DATETIME'">
+                         ng-change="modificato(result,'min')" orientdate
+                         ng-show="result['type'] == 'DATE'">
+
+
+
+                  <input type="text" bs-datepicker ng-model="result['min']"
+                         ng-change="modificato(result,'min')" orientdatetime
+                         ng-show="result['type'] == 'DATETIME'">
+
+                  <input type="text" bs-timepicker ng-model="result['min']"
+                         ng-change="modificato(result,'min')" orientdatetime
+                         ng-show="result['type'] == 'DATETIME'">
 
                 </td>
                 <td>
                   <input type="text" ng-model="result['max']" ng-change="modificato(result,'max')"
                          ng-show="result['type'] != 'DATE' && result['type'] != 'DATETIME'">
                   <input type="text" bs-datepicker ng-model="result['max']"
-                         ng-change="modificato(result,'max')"
-                         ng-show="result['type'] == 'DATE' || result['type'] == 'DATETIME'">
+                         ng-change="modificato(result,'max')" orientdate
+                         ng-show="result['type'] == 'DATE'">
+
+                  <input type="text" bs-datepicker ng-model="result['max']"
+                         ng-change="modificato(result,'max')" orientdatetime
+                         ng-show="result['type'] == 'DATETIME'">
+
+                  <input type="text" bs-timepicker ng-model="result['max']"
+                         ng-change="modificato(result,'max')" orientdatetime
+                         ng-show="result['type'] == 'DATETIME'">
                 </td>
                 <td>
                   <select ng-model="result['collate']" ng-options="p.toString() for p in collateTypes"
