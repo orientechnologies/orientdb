@@ -81,9 +81,14 @@ fi
 
 # DEBUG OPTS, SIMPLY USE 'server.sh debug'
 DEBUG_OPTS=""
-if [ -n $1 ] && [ $1 = "debug" ]; then
-    DEBUG_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=1044"
-fi
+ARGS='';
+for var in "$@"; do
+    if [ "$var" = "debug" ]; then
+        DEBUG_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=1044"
+    else
+        ARGS="$ARGS $var"
+    fi
+done
 
 # ORIENTDB memory options, default to 512 of heap.
 if [ -z "$ORIENTDB_OPTS_MEMORY" ] ; then
@@ -92,7 +97,7 @@ fi
 
 # ORIENTDB SETTINGS LIKE DISKCACHE, ETC
 if [ -z "$ORIENTDB_SETTINGS" ]; then
-    ORIENTDB_SETTINGS=""
+    ORIENTDB_SETTINGS="" # HERE YOU CAN PUT YOUR DEFAULT SETTINGS
 fi
 
 echo $$ > $ORIENTDB_PID
@@ -103,4 +108,4 @@ exec "$JAVA" $JAVA_OPTS $ORIENTDB_OPTS_MEMORY $JAVA_OPTS_SCRIPT $ORIENTDB_SETTIN
     -Dorientdb.www.path="$WWW_PATH" \
     -Dorientdb.build.number="@BUILD@" \
     -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*:$ORIENTDB_HOME/plugins/*" \
-    com.orientechnologies.orient.server.OServerMain
+    $ARGS com.orientechnologies.orient.server.OServerMain
