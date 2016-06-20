@@ -666,7 +666,7 @@ var OrientGraph = (function () {
 
       this.circle.exit().remove();
       this.viewport.call(d3.behavior.zoom()
-        .scaleExtent([0.5, 5])
+        .scaleExtent([0.005, 500])
         .on("zoom", this.zoom));
     }
 
