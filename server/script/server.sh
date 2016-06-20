@@ -71,7 +71,6 @@ export JAVA
 
 LOG_FILE=$ORIENTDB_HOME/config/orientdb-server-log.properties
 WWW_PATH=$ORIENTDB_HOME/www
-ORIENTDB_SETTINGS="-Dprofiler.enabled=true"
 JAVA_OPTS_SCRIPT="-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -XX:MaxDirectMemorySize=512g -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9"
 ORIENTDB_PID=$ORIENTDB_HOME/bin/orient.pid
 
@@ -80,24 +79,33 @@ if [ -f "$ORIENTDB_PID" ]; then
     rm "$ORIENTDB_PID"
 fi
 
-# TO DEBUG ORIENTDB SERVER RUN IT WITH THESE OPTIONS:
-# -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=1044
-# AND ATTACH TO THE CURRENT HOST, PORT 1044
+# DEBUG OPTS, SIMPLY USE 'server.sh debug'
+DEBUG_OPTS=""
+ARGS='';
+for var in "$@"; do
+    if [ "$var" = "debug" ]; then
+        DEBUG_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=1044"
+    else
+        ARGS="$ARGS $var"
+    fi
+done
 
 # ORIENTDB memory options, default to 512 of heap.
-
 if [ -z "$ORIENTDB_OPTS_MEMORY" ] ; then
     ORIENTDB_OPTS_MEMORY="-Xms512m -Xmx512m"
 fi
-# ORIENTDB MAXIMUM DISKCACHE IN MB, EXAMPLE, ENTER -Dstorage.diskCache.bufferSize=8192 FOR 8GB
-MAXDISKCACHE=""
+
+# ORIENTDB SETTINGS LIKE DISKCACHE, ETC
+if [ -z "$ORIENTDB_SETTINGS" ]; then
+    ORIENTDB_SETTINGS="" # HERE YOU CAN PUT YOUR DEFAULT SETTINGS
+fi
 
 echo $$ > $ORIENTDB_PID
 
-exec "$JAVA" $JAVA_OPTS $ORIENTDB_OPTS_MEMORY $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS $MAXDISKCACHE \
+exec "$JAVA" $JAVA_OPTS $ORIENTDB_OPTS_MEMORY $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS $DEBUG_OPTS \
     -Djava.util.logging.config.file="$LOG_FILE" \
     -Dorientdb.config.file="$CONFIG_FILE" \
     -Dorientdb.www.path="$WWW_PATH" \
     -Dorientdb.build.number="@BUILD@" \
     -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*:$ORIENTDB_HOME/plugins/*" \
-    $* com.orientechnologies.orient.server.OServerMain
+    $ARGS com.orientechnologies.orient.server.OServerMain

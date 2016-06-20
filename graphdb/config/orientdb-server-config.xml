@@ -134,7 +134,7 @@
         <entry name="db.pool.max" value="50"/>
 
         <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size> -->
-        <entry name="profiler.enabled" value="true"/>
+        <entry name="profiler.enabled" value="false"/>
         <!-- <entry name="profiler.config" value="30,10,10" /> -->
     </properties>
 </orient-server>
