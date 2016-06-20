@@ -24,6 +24,7 @@ import com.orientechnologies.agent.backup.OBackupTask;
 import com.orientechnologies.agent.backup.log.*;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -102,7 +103,7 @@ public abstract class OBackupStrategy {
     final String databaseName = doc.field("target");
     Long unitId = doc.field("unitId");
     OServer server = OServerMain.server();
-    ODatabaseDocumentTx database = null;
+    ODatabaseDocument database = null;
 
     final String url = "plocal:" + server.getDatabaseDirectory() + databaseName;
     database = new ODatabaseDocumentTx(url);
@@ -132,7 +133,7 @@ public abstract class OBackupStrategy {
 
   private void doRestoreBackup(String url, OBackupFinishedLog finished, String databaseName, OBackupListener listener) {
     ORestoreStartedLog restoreStartedLog = null;
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
     try {
 
       db = new ODatabaseDocumentTx(url);
@@ -171,7 +172,7 @@ public abstract class OBackupStrategy {
 
   protected OBackupFinishedLog doBackup(OBackupStartedLog start) {
 
-    ODatabaseDocumentTx db = null;
+    ODatabaseDocument db = null;
     try {
       db = getDatabase();
       db.activateOnCurrentThread();
@@ -205,7 +206,7 @@ public abstract class OBackupStrategy {
     return logger;
   }
 
-  protected ODatabaseDocumentTx getDatabase() {
+  protected ODatabaseDocument getDatabase() {
 
     String dbName = cfg.field(OBackupConfig.DBNAME);
 
@@ -213,7 +214,7 @@ public abstract class OBackupStrategy {
 
     String url = server.getAvailableStorageNames().get(dbName);
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    ODatabaseDocument db = new ODatabaseDocumentTx(url);
 
     db.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
     db.open("admin", "aaa");

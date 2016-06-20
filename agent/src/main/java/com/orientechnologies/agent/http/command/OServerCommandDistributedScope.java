@@ -4,6 +4,7 @@ import com.orientechnologies.agent.proxy.HttpProxy;
 import com.orientechnologies.agent.proxy.HttpProxyListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -43,13 +44,13 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
     }
   }
 
-  protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
+  protected ODatabaseDocument getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
     ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
     if (localDatabase == null) {
       final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, parts.get(0), parts.get(1));
+      localDatabase = (ODatabaseDocumentInternal) server.openDatabase(iRequest.databaseName, parts.get(0), parts.get(1));
     } else {
 
       String currentUserId = iRequest.data.currentUserId;
@@ -63,7 +64,7 @@ public abstract class OServerCommandDistributedScope extends OServerCommandDistr
 
     iRequest.data.lastDatabase = localDatabase.getName();
     iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
-    return (ODatabaseDocumentTx) ((ODatabaseDocumentInternal) localDatabase).getDatabaseOwner();
+    return (ODatabaseDocument) ((ODatabaseDocumentInternal) localDatabase).getDatabaseOwner();
   }
 
   @Override

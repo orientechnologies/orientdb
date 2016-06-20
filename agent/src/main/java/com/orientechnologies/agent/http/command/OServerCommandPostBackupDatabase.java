@@ -17,6 +17,7 @@ package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.proxy.HttpProxyListener;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -44,7 +45,7 @@ public class OServerCommandPostBackupDatabase extends OServerCommandDistributedS
 
       if (isLocalNode(iRequest)) {
 
-        final ODatabaseDocumentTx database = getProfiledDatabaseInstance(iRequest);
+        final ODatabaseDocument database = getProfiledDatabaseInstance(iRequest);
 
         try {
           iResponse.writeStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);

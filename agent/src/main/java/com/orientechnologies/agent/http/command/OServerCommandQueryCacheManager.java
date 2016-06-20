@@ -19,6 +19,7 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -70,7 +71,7 @@ public class OServerCommandQueryCacheManager extends OServerCommandDistributedSc
             String command = urlParts[2];
             if ("results".equalsIgnoreCase(command)) {
                 iRequest.databaseName = urlParts[1];
-                ODatabaseDocumentTx profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+                ODatabaseDocument profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
                 OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
                 ODocument query = new ODocument().fromJSON(iRequest.content);
                 String q = query.field("query");
@@ -90,7 +91,7 @@ public class OServerCommandQueryCacheManager extends OServerCommandDistributedSc
             } else if ("purge".equalsIgnoreCase(command)) {
 
                 iRequest.databaseName = urlParts[1];
-                ODatabaseDocumentTx profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+                ODatabaseDocument profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
                 OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
                 commandCache.clear();
                 iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, null);
@@ -104,7 +105,7 @@ public class OServerCommandQueryCacheManager extends OServerCommandDistributedSc
     private void doPut(OHttpRequest iRequest, OHttpResponse iResponse, String[] urlParts) throws InterruptedException, IOException {
 
         iRequest.databaseName = urlParts[1];
-        ODatabaseDocumentTx profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+        ODatabaseDocument profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
         OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
 
         if (urlParts.length == 2) {
@@ -135,7 +136,7 @@ public class OServerCommandQueryCacheManager extends OServerCommandDistributedSc
 
         iRequest.databaseName = urlParts[1];
 
-        ODatabaseDocumentTx profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
+        ODatabaseDocument profiledDatabaseInstance = getProfiledDatabaseInstance(iRequest);
 
         OCommandCacheSoftRefs commandCache = (OCommandCacheSoftRefs) profiledDatabaseInstance.getMetadata().getCommandCache();
         if (urlParts.length > 2 && urlParts[2].equalsIgnoreCase("results")) {

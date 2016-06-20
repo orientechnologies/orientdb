@@ -21,6 +21,7 @@ package com.orientechnologies.agent.event;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParserListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
@@ -157,7 +158,7 @@ public class EventHelper {
     return text;
   }
 
-  public static ODocument findOrCreateMailUserConfiguration(ODatabaseDocumentTx database) {
+  public static ODocument findOrCreateMailUserConfiguration(ODatabaseDocument database) {
     String sql = "select from UserConfiguration where user.name = 'admin'";
     OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(sql);
     final List<ODocument> response = database.query(osqlQuery);
