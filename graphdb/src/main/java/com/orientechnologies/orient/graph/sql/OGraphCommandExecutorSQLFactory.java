@@ -78,7 +78,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
 
     if (result != null && (result instanceof OrientGraph)) {
-      final ODatabaseDocumentTx graphDb = result.getRawGraph();
+      final ODatabaseDocumentInternal graphDb = result.getRawGraph();
 
       // CHECK IF THE DATABASE + USER IN TL IS THE SAME IN ORDER TO USE IT
       if (canReuseActiveGraph(graphDb, database)) {
@@ -112,7 +112,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
 
     if (result != null && (result instanceof OrientGraphNoTx)) {
-      final ODatabaseDocumentTx graphDb = result.getRawGraph();
+      final ODatabaseDocumentInternal graphDb = result.getRawGraph();
 
       // CHECK IF THE DATABASE + USER IN TL IS THE SAME IN ORDER TO USE IT
       if (canReuseActiveGraph(graphDb, database)) {

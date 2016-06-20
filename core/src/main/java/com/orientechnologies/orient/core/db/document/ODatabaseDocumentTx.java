@@ -101,8 +101,6 @@ import java.util.concurrent.atomic.AtomicReference;
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  @Deprecated
-  private static final String DEF_RECORD_FORMAT = "csv";
   protected static ORecordSerializer defaultSerializer;
 
   static {
@@ -3178,36 +3176,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     else {
       OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation");
       return null;
-    }
-  }
-
-  /**
-   * @Internal
-   */
-  public interface RecordReader {
-    ORawBuffer readRecord(OStorage storage, ORecordId rid, String fetchPlan, boolean ignoreCache, final int recordVersion)
-        throws ORecordNotFoundException;
-  }
-
-  /**
-   * @Internal
-   */
-  public static final class SimpleRecordReader implements RecordReader {
-    @Override
-    public ORawBuffer readRecord(OStorage storage, ORecordId rid, String fetchPlan, boolean ignoreCache, final int recordVersion)
-        throws ORecordNotFoundException {
-      return storage.readRecord(rid, fetchPlan, ignoreCache, null).getResult();
-    }
-  }
-
-  /**
-   * @Internal
-   */
-  public static final class LatestVersionRecordReader implements RecordReader {
-    @Override
-    public ORawBuffer readRecord(OStorage storage, ORecordId rid, String fetchPlan, boolean ignoreCache, final int recordVersion)
-        throws ORecordNotFoundException {
-      return storage.readRecordIfVersionIsNotLatest(rid, fetchPlan, ignoreCache, recordVersion).getResult();
     }
   }
 

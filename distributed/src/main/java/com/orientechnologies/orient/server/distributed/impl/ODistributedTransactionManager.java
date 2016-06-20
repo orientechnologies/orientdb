@@ -75,7 +75,7 @@ public class ODistributedTransactionManager {
     this.localDistributedDatabase = iDDatabase;
   }
 
-  public List<ORecordOperation> commit(final ODatabaseDocumentTx database, final OTransaction iTx, final Runnable callback,
+  public List<ORecordOperation> commit(final ODatabaseDocumentInternal database, final OTransaction iTx, final Runnable callback,
       final ODistributedStorageEventListener eventListener) {
     final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
 

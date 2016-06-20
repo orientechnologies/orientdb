@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 import java.util.Collection;
@@ -245,9 +246,9 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
 
     final ONonBlockingQueryFuture future = new ONonBlockingQueryFuture();
 
-    if (database instanceof ODatabaseDocumentTx) {
+    if (database instanceof ODatabaseDocument) {
       ODatabaseDocumentInternal currentThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      final ODatabaseDocumentInternal db = ((ODatabaseDocumentTx) database).copy();
+      final ODatabaseDocumentInternal db = database.copy();
       if (currentThreadLocal != null) {
         currentThreadLocal.activateOnCurrentThread();
       } else {

@@ -21,10 +21,8 @@ package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
-import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -63,14 +61,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx, T>
+public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentInternal, T>
     implements ODatabaseSchemaAware<T>, ODatabaseInternal<T> {
   protected IdentityHashMap<Object, ODocument> objects2Records = new IdentityHashMap<Object, ODocument>();
   protected IdentityHashMap<ODocument, T>      records2Objects = new IdentityHashMap<ODocument, T>();
   protected HashMap<ORID, ODocument>           rid2Records     = new HashMap<ORID, ODocument>();
   protected boolean                            retainObjects   = true;
 
-  public ODatabasePojoAbstract(final ODatabaseDocumentTx iDatabase) {
+  public ODatabasePojoAbstract(final ODatabaseDocumentInternal iDatabase) {
     super(iDatabase);
     iDatabase.setDatabaseOwner(this);
   }

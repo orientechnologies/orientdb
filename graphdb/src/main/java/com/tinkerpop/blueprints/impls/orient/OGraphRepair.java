@@ -2,6 +2,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -64,7 +65,7 @@ public class OGraphRepair {
   }
 
   protected void repairEdges(OrientBaseGraph graph, ORepairStats stats, OCommandOutputListener outputListener) {
-    final ODatabaseDocumentTx db = graph.getRawGraph();
+    final ODatabaseDocument db = graph.getRawGraph();
     final OMetadata metadata = db.getMetadata();
     final OSchema schema = metadata.getSchema();
     final OrientConfigurableGraph.Settings settings = graph.settings;
@@ -157,7 +158,7 @@ public class OGraphRepair {
   }
 
   protected void repairVertices(OrientBaseGraph graph, ORepairStats stats, OCommandOutputListener outputListener) {
-    final ODatabaseDocumentTx db = graph.getRawGraph();
+    final ODatabaseDocument db = graph.getRawGraph();
     final OMetadata metadata = db.getMetadata();
     final OSchema schema = metadata.getSchema();
 

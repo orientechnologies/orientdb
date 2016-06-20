@@ -20,6 +20,7 @@ import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -116,7 +117,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       try {
         final Map<String, List<String>> opts = parseOptions(options);
 
-        final OrientGraph g = new OrientGraph(currentDatabase);
+        final OrientGraph g = new OrientGraph((ODatabaseDocumentTx) currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
 
@@ -147,7 +148,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       message("\nExporting database in GRAPHML format to " + iText + "...");
 
       try {
-        final OrientGraph g = new OrientGraph(currentDatabase);
+        final OrientGraph g = new OrientGraph((ODatabaseDocumentTx) currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
 
@@ -178,7 +179,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     final boolean fix_graph = iOptions == null || iOptions.contains("--fix-graph");
     if (fix_graph) {
       // REPAIR GRAPH
-      new OGraphRepair().repair(new OrientGraphNoTx(currentDatabase), this);
+      new OGraphRepair().repair(new OrientGraphNoTx((ODatabaseDocumentTx) currentDatabase), this);
     }
 
     final boolean fix_links = iOptions == null || iOptions.contains("--fix-links");

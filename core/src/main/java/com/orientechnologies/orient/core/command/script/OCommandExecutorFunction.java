@@ -74,8 +74,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
     final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(), f.getLanguage());
     final ScriptEngine scriptEngine = entry.object;
     try {
-      final Bindings binding = scriptManager.bind(scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), (ODatabaseDocumentTx) db,
-          iContext, iArgs);
+      final Bindings binding = scriptManager.bind(scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), db, iContext, iArgs);
 
       try {
         final Object result;

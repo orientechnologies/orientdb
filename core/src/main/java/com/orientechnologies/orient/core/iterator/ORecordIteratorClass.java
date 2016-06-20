@@ -45,14 +45,6 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
   protected final OClass targetClass;
   protected boolean      polymorphic;
 
-  /**
-   * This method is only to maintain the retro compatibility with TinkerPop BP 2.2
-   */
-  public ORecordIteratorClass(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
-      final String iClassName, final boolean iPolymorphic) {
-    this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, true);
-  }
-
   public ORecordIteratorClass(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final String iClassName, final boolean iPolymorphic) {
     this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, true);

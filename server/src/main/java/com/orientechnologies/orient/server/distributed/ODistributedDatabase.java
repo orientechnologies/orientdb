@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -85,5 +86,5 @@ public interface ODistributedDatabase {
 
   ODistributedServerManager getManager();
 
-  ODatabaseDocumentTx getDatabaseInstance();
+  ODatabaseDocumentInternal getDatabaseInstance();
 }

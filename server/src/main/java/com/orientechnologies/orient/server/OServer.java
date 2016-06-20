@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -570,7 +571,7 @@ public class OServer {
 
       OLogManager.instance().info(this, "Opening database '%s' at startup...", databaseName);
 
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath + databaseName);
+      final ODatabaseDocumentInternal db = new ODatabaseDocumentTx("plocal:" + dbPath + databaseName);
       try {
         try {
           openDatabaseBypassingSecurity(db, null, "internal");
@@ -853,10 +854,10 @@ public class OServer {
     return this;
   }
 
-  public ODatabase<?> openDatabase(final String iDbUrl, final OToken iToken) {
+  public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final OToken iToken) {
     final String path = getStoragePath(iDbUrl);
 
-    final ODatabaseInternal<?> database = new ODatabaseDocumentTx(path);
+    final ODatabaseDocumentInternal database = new ODatabaseDocumentTx(path);
     if (database.isClosed()) {
       final OStorage storage = database.getStorage();
       if (storage instanceof ODirectMemoryStorage && !storage.exists())
@@ -868,24 +869,24 @@ public class OServer {
     return database;
   }
 
-  public ODatabase<?> openDatabase(final String iDbUrl, final String user, final String password) {
+  public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final String user, final String password) {
     return openDatabase(iDbUrl, user, password, null, false);
   }
 
-  public ODatabase<?> openDatabase(final String iDbUrl, final String user, final String password, ONetworkProtocolData data) {
+  public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final String user, final String password, ONetworkProtocolData data) {
     return openDatabase(iDbUrl, user, password, data, false);
   }
 
-  public ODatabaseDocumentTx openDatabase(final String iDbUrl, final String user, final String password, ONetworkProtocolData data,
+  public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final String user, final String password, ONetworkProtocolData data,
       final boolean iBypassAccess) {
     final String path = getStoragePath(iDbUrl);
 
-    final ODatabaseDocumentTx database = new ODatabaseDocumentTx(path);
+    final ODatabaseDocumentInternal database = new ODatabaseDocumentTx(path);
 
     return openDatabase(database, user, password, data, iBypassAccess);
   }
 
-  public ODatabaseDocumentTx openDatabase(final ODatabaseDocumentTx database, final String user, final String password,
+  public ODatabaseDocumentInternal openDatabase(final ODatabaseDocumentInternal database, final String user, final String password,
       final ONetworkProtocolData data, final boolean iBypassAccess) {
     final OStorage storage = database.getStorage();
     if (database.isClosed()) {

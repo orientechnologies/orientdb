@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -148,7 +149,7 @@ public class OSystemDatabase {
     final ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
 
-      ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDatabasePath());
+      ODatabaseDocument sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDatabasePath());
 
       if (!sysDB.exists()) {
         OLogManager.instance().info(this, "Creating the system database '%s' for current server", SYSTEM_DB_NAME);
@@ -194,7 +195,7 @@ public class OSystemDatabase {
     final ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
 
-      ODatabaseDocumentTx sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDatabasePath());
+      ODatabaseDocument sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDatabasePath());
 
       return sysDB.exists();
 

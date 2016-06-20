@@ -40,8 +40,10 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.db.tool.*;
@@ -94,16 +96,16 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-  protected ODatabaseDocumentTx currentDatabase;
-  protected String              currentDatabaseName;
-  protected ORecord             currentRecord;
-  protected int                 currentRecordIdx;
-  protected List<OIdentifiable> currentResultSet;
-  protected Object              currentResult;
-  protected OServerAdmin        serverAdmin;
-  private int                   lastPercentStep;
-  private String                currentDatabaseUserName;
-  private String                currentDatabaseUserPassword;
+  protected ODatabaseDocumentInternal currentDatabase;
+  protected String                    currentDatabaseName;
+  protected ORecord                   currentRecord;
+  protected int                       currentRecordIdx;
+  protected List<OIdentifiable>       currentResultSet;
+  protected Object                    currentResult;
+  protected OServerAdmin              serverAdmin;
+  private   int                       lastPercentStep;
+  private   String                    currentDatabaseUserName;
+  private   String                    currentDatabaseUserPassword;
   private int                   maxMultiValueEntries = 10;
 
   public OConsoleDatabaseApp(final String[] args) {
@@ -2493,7 +2495,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   /**
    * Pass an existent database instance to be used as current.
    */
-  public OConsoleDatabaseApp setCurrentDatabase(final ODatabaseDocumentTx iCurrentDatabase) {
+  public OConsoleDatabaseApp setCurrentDatabase(final ODatabaseDocumentInternal iCurrentDatabase) {
     currentDatabase = iCurrentDatabase;
     currentDatabaseName = iCurrentDatabase.getName();
     return this;
@@ -2553,7 +2555,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     checkForDatabase();
 
     currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, -1, iFetchPlan, true, false, false,
-        OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
+        OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader());
     displayRecord(null);
 
     message("\nOK");

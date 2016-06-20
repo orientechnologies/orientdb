@@ -703,7 +703,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     final String user = channel.readString();
     final String passwd = channel.readString();
     try {
-      connection.setDatabase((ODatabaseDocumentTx) server.openDatabase(dbURL, user, passwd, connection.getData()));
+      connection.setDatabase(server.openDatabase(dbURL, user, passwd, connection.getData()));
     } catch (OException e) {
       server.getClientConnectionManager().disconnect(connection);
       throw e;
@@ -980,7 +980,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     checkServerAccess("database.copy", connection);
 
-    final ODatabaseDocument db = (ODatabaseDocumentTx) server.openDatabase(dbUrl, dbUser, dbPassword);
+    final ODatabaseDocument db = server.openDatabase(dbUrl, dbUser, dbPassword);
 
     beginResponse();
     try {

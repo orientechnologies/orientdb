@@ -4,6 +4,8 @@ import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -30,7 +32,7 @@ public class OInternalGraphImporter {
     if (dbURL == null)
       throw new OSystemException("needed an database location as second argument");
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbURL);
+    ODatabaseDocumentInternal db = new ODatabaseDocumentTx(dbURL);
     ODatabaseHelper.deleteDatabase(db, db.getStorage().getType());
 
     OrientBaseGraph g = new OrientGraphNoTx(dbURL);

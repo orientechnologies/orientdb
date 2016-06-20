@@ -25,6 +25,7 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -51,7 +52,7 @@ public class ODistributedWorker extends Thread {
   protected final ArrayBlockingQueue<ODistributedRequest> localQueue;
   protected final int                                     id;
 
-  protected volatile ODatabaseDocumentTx                  database;
+  protected volatile ODatabaseDocumentInternal            database;
   protected volatile OUser                                lastUser;
   protected volatile boolean                              running              = true;
 
@@ -163,7 +164,7 @@ public class ODistributedWorker extends Thread {
     }
   }
 
-  public ODatabaseDocumentTx getDatabase() {
+  public ODatabaseDocumentInternal getDatabase() {
     return database;
   }
 

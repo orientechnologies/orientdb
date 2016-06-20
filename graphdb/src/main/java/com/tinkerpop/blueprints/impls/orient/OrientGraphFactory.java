@@ -2,6 +2,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -202,7 +203,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * @return true if database is exists
    */
   public boolean exists() {
-    final ODatabaseDocumentTx db = getDatabase(false, false);
+    final ODatabaseDocument db = getDatabase(false, false);
     try {
       return db.exists();
     } finally {
@@ -255,7 +256,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   protected void initGraph(final OrientBaseGraph g) {
     if (used.compareAndSet(false, true)) {
       // EXECUTE ONLY ONCE
-      final ODatabaseDocumentTx db = g.getRawGraph();
+      final ODatabaseDocument db = g.getRawGraph();
       boolean txActive = db.getTransaction().isActive();
 
       if (txActive)

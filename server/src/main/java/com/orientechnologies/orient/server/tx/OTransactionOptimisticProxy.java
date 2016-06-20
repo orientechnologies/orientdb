@@ -61,7 +61,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final OClientConnection           connection;
 
   public OTransactionOptimisticProxy(OClientConnection connection, ONetworkProtocolBinary protocolBinary) throws IOException {
-    super((ODatabaseDocumentTx) connection.getDatabase());
+    super(connection.getDatabase());
     channel = protocolBinary.getChannel();
     clientTxId = channel.readInt();
     this.protocolVersion = connection.getData().protocolVersion;

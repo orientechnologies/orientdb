@@ -61,7 +61,7 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
       final ODatabaseDocumentInternal db = getDatabase();
       execInSeparateDatabase(new OCallable() {
         @Override public Object call(Object iArgument) {
-          return execDb = ((ODatabaseDocumentTx) db).copy();
+          return execDb = db.copy();
         }
       });
 

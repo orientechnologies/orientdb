@@ -1664,7 +1664,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
-    final boolean res = execParallelWithPool((ORecordIteratorClusters) iTarget, (ODatabaseDocumentTx) db);
+    final boolean res = execParallelWithPool((ORecordIteratorClusters) iTarget, db);
 
     if (OLogManager.instance().isDebugEnabled())
       OLogManager.instance().debug(this, "Parallel query '%s' completed", parserText);
@@ -1703,7 +1703,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
-  private boolean execParallelWithPool(final ORecordIteratorClusters iTarget, final ODatabaseDocumentTx db) {
+  private boolean execParallelWithPool(final ORecordIteratorClusters iTarget, final ODatabaseDocumentInternal db) {
     final int[] clusterIds = iTarget.getClusterIds();
 
     final List<String> clusterList = new ArrayList<String>();

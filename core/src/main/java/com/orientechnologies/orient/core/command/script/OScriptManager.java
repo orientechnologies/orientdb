@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFor
 import com.orientechnologies.orient.core.command.script.formatter.OSQLScriptFormatter;
 import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -223,7 +224,7 @@ public class OScriptManager {
     return result;
   }
 
-  public Bindings bind(final Bindings binding, final ODatabaseDocumentTx db, final OCommandContext iContext,
+  public Bindings bind(final Bindings binding, final ODatabaseDocumentInternal db, final OCommandContext iContext,
       final Map<Object, Object> iArgs) {
     if (db != null) {
       // BIND FIXED VARIABLES

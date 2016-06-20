@@ -767,7 +767,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final Set<String> clustersWithNotAvailableOwner, final boolean rebalance) {
 
     // REASSIGN CLUSTERS WITHOUT AN OWNER, AVOIDING TO REBALANCE EXISTENT
-    final ODatabaseDocumentTx database = serverInstance.openDatabase(databaseName, "internal", "internal", null, true);
+    final ODatabaseDocumentInternal database = serverInstance.openDatabase(databaseName, "internal", "internal", null, true);
     try {
       return executeInDistributedDatabaseLock(databaseName, new OCallable<Boolean, ODistributedConfiguration>() {
         @Override
@@ -1256,7 +1256,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
     }
 
-    final ODatabaseDocumentTx db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
+    final ODatabaseDocumentInternal db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
         uniqueClustersBackupDirectory);
     if (db != null) {
       try {
@@ -1577,7 +1577,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return chunk.buffer.length;
   }
 
-  protected ODatabaseDocumentTx installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode,
+  protected ODatabaseDocumentInternal installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode,
       final String iDatabaseCompressedFile, final boolean delta, final File uniqueClustersBackupDirectory) {
     ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "Installing database '%s' to: %s...", databaseName, dbPath);
 
@@ -1586,7 +1586,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final File fCompleted = new File(iDatabaseCompressedFile + ".completed");
 
       new File(dbPath).mkdirs();
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath);
+      final ODatabaseDocumentInternal db = new ODatabaseDocumentTx("plocal:" + dbPath);
 
       // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)
       final FileInputStream in = new FileInputStream(f) {

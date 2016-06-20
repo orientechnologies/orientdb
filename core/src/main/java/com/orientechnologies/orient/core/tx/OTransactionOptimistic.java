@@ -24,8 +24,11 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.LatestVersionRecordReader;
+import com.orientechnologies.orient.core.db.document.RecordReader;
+import com.orientechnologies.orient.core.db.document.SimpleRecordReader;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -37,9 +40,6 @@ import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -51,10 +51,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,7 +62,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   private boolean              usingLog = true;
   private int                  txStartCounter;
 
-  public OTransactionOptimistic(final ODatabaseDocumentTx iDatabase) {
+  public OTransactionOptimistic(final ODatabaseDocumentInternal iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
   }
 
@@ -221,7 +218,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record = database.executeReadRecord((ORecordId) rid, iRecord, -1, fetchPlan, ignoreCache, iUpdateCache,
-        loadTombstone, lockingStrategy, new ODatabaseDocumentTx.SimpleRecordReader());
+        loadTombstone, lockingStrategy, new SimpleRecordReader());
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -252,7 +249,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record = database.executeReadRecord((ORecordId) rid, null, recordVersion, fetchPlan, ignoreCache, !ignoreCache,
-        false, OStorage.LOCKING_STRATEGY.NONE, new ODatabaseDocumentTx.SimpleRecordReader());
+        false, OStorage.LOCKING_STRATEGY.NONE, new SimpleRecordReader());
 
     if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
       // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
@@ -291,11 +288,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record;
     try {
-      final ODatabaseDocumentTx.RecordReader recordReader;
+      final RecordReader recordReader;
       if (force) {
-        recordReader = new ODatabaseDocumentTx.SimpleRecordReader();
+        recordReader = new SimpleRecordReader();
       } else {
-        recordReader = new ODatabaseDocumentTx.LatestVersionRecordReader();
+        recordReader = new LatestVersionRecordReader();
       }
 
       ORecord loadedRecord = database.executeReadRecord((ORecordId) rid, passedRecord, -1, fetchPlan, ignoreCache, !ignoreCache,

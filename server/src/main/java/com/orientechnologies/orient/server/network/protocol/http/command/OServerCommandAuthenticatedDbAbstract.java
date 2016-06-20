@@ -219,7 +219,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
     ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (localDatabase == null) {
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, iRequest.bearerToken);
+      localDatabase = server.openDatabase(iRequest.databaseName, iRequest.bearerToken);
     } else {
       ORID currentUserId = iRequest.bearerToken.getUserId();
       if (currentUserId != null && localDatabase != null && localDatabase.getUser() != null) {
@@ -232,7 +232,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
     iRequest.data.lastDatabase = localDatabase.getName();
     iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
-    return (ODatabaseDocumentTx) localDatabase.getDatabaseOwner();
+    return (ODatabaseDocumentInternal) localDatabase.getDatabaseOwner();
   }
 
   protected ODatabaseDocumentInternal getProfiledDatabaseInstanceBasic(final OHttpRequest iRequest) throws InterruptedException {
@@ -245,7 +245,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
     if (localDatabase == null) {
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase(iRequest.databaseName, session.getUserName(),
+      localDatabase = server.openDatabase(iRequest.databaseName, session.getUserName(),
           session.getUserPassword());
     } else {
 
@@ -260,7 +260,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
 
     iRequest.data.lastDatabase = localDatabase.getName();
     iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
-    return (ODatabaseDocumentTx) localDatabase.getDatabaseOwner();
+    return (ODatabaseDocumentInternal) localDatabase.getDatabaseOwner();
   }
 
   private void init() {

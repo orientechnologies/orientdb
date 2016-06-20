@@ -2275,7 +2275,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   protected OStorageRemoteSession getCurrentSession() {
-    ODatabaseDocumentTx db = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db == null)
       return null;
     OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(db);
@@ -2296,8 +2296,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return session.getAll().isEmpty();
   }
 
-  @Override
-  public OStorageRemote copy(ODatabaseDocumentTx source, ODatabaseDocumentTx dest) {
+  public OStorageRemote copy(ODatabaseDocument source, ODatabaseDocument dest) {
     ODatabaseDocumentInternal origin = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
     OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(source);
