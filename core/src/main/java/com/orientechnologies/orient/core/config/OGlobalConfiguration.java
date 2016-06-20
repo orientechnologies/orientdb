@@ -547,7 +547,7 @@ public enum OGlobalConfiguration {
 
   QUERY_SCAN_BATCH_SIZE("query.scanBatchSize",
       "Scan clusters in blocks of records. This setting reduces the lock time on the cluster during scans. A high value mean a faster execution, but also a lower concurrency level. Set to 0 to disable batch scanning. Disabling batch scanning is suggested for read-only databases only",
-      Long.class, 100000),
+      Long.class, 1000),
 
   QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip",
       "If the total number of records scanned in a query exceeds this setting, then a warning is given. (Use 0 to disable)",
