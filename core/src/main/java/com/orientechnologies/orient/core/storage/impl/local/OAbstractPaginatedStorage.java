@@ -1286,11 +1286,28 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
 
+    final Set<ORecordOperation> newRecords = new TreeSet<ORecordOperation>(new Comparator<ORecordOperation>() {
+      @Override
+      public int compare(ORecordOperation o1, ORecordOperation o2) {
+        long diff = (o1.getRecord().getIdentity().getClusterPosition() - o2.getRecord().getIdentity().getClusterPosition());
+        //convert long to int comparation
+        if (diff == 0)
+          return 0;
+        else if (diff < 0)
+          return -1;
+        else
+          return 1;
+      }
+    });
+
     for (ORecordOperation txEntry : entries) {
       if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
         final ORecord record = txEntry.getRecord();
         if (record instanceof ODocument)
           ((ODocument) record).validate();
+      }
+      if (txEntry.type == ORecordOperation.CREATED) {
+        newRecords.add(txEntry);
       }
     }
 
@@ -1311,10 +1328,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           startStorageTx(clientTx);
 
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
-          for (ORecordOperation txEntry : entries) {
+          for (ORecordOperation txEntry : newRecords) {
             ORecord rec = txEntry.getRecord();
 
-            if (txEntry.type == ORecordOperation.CREATED && rec.isDirty()) {
+            if (rec.isDirty()) {
               ORecordId rid = (ORecordId) rec.getIdentity().copy();
               ORecordId oldRID = rid.copy();
               int clusterId = rid.clusterId;
