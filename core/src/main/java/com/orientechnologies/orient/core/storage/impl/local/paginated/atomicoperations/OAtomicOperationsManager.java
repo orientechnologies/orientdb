@@ -85,10 +85,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final OPerformanceStatisticManager performanceStatisticManager;
 
   /**
-   * Flag which indicates whether we work in unsafe mode for current thread.
-   * Unsafe mode means that all operations in this thread may violate violate ACID properties but system performance will be faster.
-   * <p>
-   * To start unsafe mode call {@link #switchOnUnsafeMode()}, to stop unsafe mode call {@link #switchOffUnsafeMode()}.
+   * Flag which indicates whether we work in unsafe mode for current thread. Unsafe mode means that all operations in this thread
+   * may violate violate ACID properties but system performance will be faster.
+   *
+   * <p>To start unsafe mode call {@link #switchOnUnsafeMode()}, to stop unsafe mode call {@link #switchOffUnsafeMode()}.
    */
   private static final ThreadLocal<Boolean> unsafeMode = new ThreadLocal<Boolean>() {
     @Override
@@ -143,24 +143,27 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   /**
-   * Starts atomic operation inside of current thread.
-   * If atomic operation has been already started , current atomic operation instance will be returned.
-   * All durable components have to call this method at the beginning of any data modification operation.
-   * <p>
-   * In current implementation of atomic operation, each component which is participated in atomic operation is hold under exclusive
-   * lock till atomic operation will not be completed (committed or rollbacked).
-   * <p>
-   * If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link #acquireReadLock(ODurableComponent)}
-   * , otherwise data consistency will be compromised.
-   * <p>
-   * Atomic operation may be delayed if start of atomic operations is prohibited by call of {@link #freezeAtomicOperations(Class, String)}
-   * method. If mentioned above method is called then execution of current method will be stopped till call of {@link #releaseAtomicOperations(long)}
-   * method or exception will be thrown. Concrete behaviour depends on real values of parameters of {@link #freezeAtomicOperations(Class, String)} method.
+   * Starts atomic operation inside of current thread. If atomic operation has been already started, current atomic operation
+   * instance will be returned. All durable components have to call this method at the beginning of any data modification
+   * operation.
    *
-   * @param trackNonTxOperations If this flag set to <code>true</code> then special record {@link ONonTxOperationPerformedWALRecord} will be added to
-   *                             WAL in case of atomic operation is started outside of active storage transaction. During storage restore procedure
-   *                             this record is monitored and if given record is present then rebuild of all indexes is performed.
+   * <p>In current implementation of atomic operation, each component which is participated in atomic operation is hold under
+   * exclusive lock till atomic operation will not be completed (committed or rollbacked).
+   *
+   * <p>If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link
+   * #acquireReadLock(ODurableComponent)}, otherwise data consistency will be compromised.
+   *
+   * <p>Atomic operation may be delayed if start of atomic operations is prohibited by call of {@link
+   * #freezeAtomicOperations(Class, String)} method. If mentioned above method is called then execution of current method will be
+   * stopped till call of {@link #releaseAtomicOperations(long)} method or exception will be thrown. Concrete behaviour depends on
+   * real values of parameters of {@link #freezeAtomicOperations(Class, String)} method.
+   *
+   * @param trackNonTxOperations If this flag set to <code>true</code> then special record {@link ONonTxOperationPerformedWALRecord}
+   *                             will be added to WAL in case of atomic operation is started outside of active storage transaction.
+   *                             During storage restore procedure this record is monitored and if given record is present then
+   *                             rebuild of all indexes is performed.
    * @param lockName             Name of lock (usually name of component) which is going participate in atomic operation.
+   *
    * @return Instance of active atomic operation.
    */
   public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
@@ -220,10 +223,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   /**
-   * Switch off unsafe mode. During this mode it is not guaranteed that operations will support
-   * ACID properties but system performance will be faster.
-   * <p>
-   * To switch off unsafe mode call {@link #switchOffUnsafeMode()}
+   * Switch off unsafe mode. During this mode it is not guaranteed that operations will support ACID properties but system
+   * performance will be faster.
+   *
+   * <p>To switch off unsafe mode call {@link #switchOffUnsafeMode()}
    */
   public void switchOnUnsafeMode() {
     unsafeMode.set(true);
@@ -463,6 +466,15 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     lockManager.acquireLock(fullName, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
     operation.addLockedObject(fullName);
+  }
+
+  /**
+   * Acquires exclusive lock in the active atomic operation running on the current thread for the {@code durableComponent}.
+   */
+  public void acquireExclusiveLockTillOperationComplete(ODurableComponent durableComponent) {
+    final OAtomicOperation operation = currentOperation.get();
+    assert operation != null;
+    acquireExclusiveLockTillOperationComplete(operation, durableComponent.getFullName());
   }
 
   public void acquireReadLock(ODurableComponent durableComponent) {

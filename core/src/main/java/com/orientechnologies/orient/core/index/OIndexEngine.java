@@ -39,7 +39,8 @@ public interface OIndexEngine {
   void flush();
 
   void create(OBinarySerializer valueSerializer, boolean isAutomatic, OType[] keyTypes, boolean nullPointerSupport,
-      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties, ODocument metadata);
+      OBinarySerializer keySerializer, int keySize, Set<String> clustersToIndex, Map<String, String> engineProperties,
+      ODocument metadata);
 
   void delete();
 
@@ -85,6 +86,11 @@ public interface OIndexEngine {
   int getVersion();
 
   String getName();
+
+  /**
+   * Acquires exclusive lock in the active atomic operation running on the current thread for this index engine.
+   */
+  void acquireAtomicExclusiveLock();
 
   interface ValuesTransformer {
     Collection<OIdentifiable> transformFromValue(Object value);
