@@ -941,7 +941,7 @@ public enum OGlobalConfiguration {
 
   public boolean getValueAsBoolean() {
     final Object v = value != null ? value : defValue;
-    return v instanceof Boolean ? ((Boolean) v).booleanValue() : Boolean.parseBoolean(v.toString());
+    return v instanceof Boolean ? (Boolean) v : Boolean.parseBoolean(v.toString());
   }
 
   public String getValueAsString() {
@@ -960,7 +960,7 @@ public enum OGlobalConfiguration {
 
   public float getValueAsFloat() {
     final Object v = value != null ? value : defValue;
-    return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
+    return v instanceof Float ? (Float) v : Float.parseFloat(v.toString());
   }
 
   public String getKey() {

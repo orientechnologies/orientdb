@@ -925,6 +925,13 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
+  /**
+   * Acquires exclusive lock in the active atomic operation running on the current thread for this SB-tree.
+   */
+  public void acquireAtomicExclusiveLock() {
+    atomicOperationsManager.acquireExclusiveLockTillOperationComplete(this);
+  }
+
   private void checkNullSupport(K key) {
     if (key == null && !nullPointerSupport)
       throw new OSBTreeException("Null keys are not supported.", this);
@@ -1796,8 +1803,8 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   /**
-   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest
-   * or highest partially matched key should be used.
+   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether
+   * lowest or highest partially matched key should be used.
    */
   private static enum PartialSearchMode {
     /**

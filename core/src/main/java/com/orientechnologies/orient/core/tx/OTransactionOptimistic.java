@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleter;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -38,9 +37,6 @@ import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -51,12 +47,8 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -66,6 +58,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   private boolean              usingLog = true;
   private int                  txStartCounter;
+
+  private ORecordCallback<Long>    recordCreatedCallback  = null;
+  private ORecordCallback<Integer> recordUpdatedCallback  = null;
 
   public OTransactionOptimistic(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
@@ -339,6 +334,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   public ORecord saveRecord(final ORecord iRecord, final String iClusterName, final OPERATION_MODE iMode,
       final boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       final ORecordCallback<Integer> iRecordUpdatedCallback) {
+
+    this.recordCreatedCallback = (ORecordCallback<Long>) iRecordCreatedCallback;
+    this.recordUpdatedCallback = iRecordUpdatedCallback;
+
     if (iRecord == null)
       return null;
 
@@ -539,6 +538,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
   }
 
+  @Override
+  public void close() {
+    recordCreatedCallback = null;
+    recordUpdatedCallback = null;
+    super.close();
+  }
+
   private void doCommit() {
     if (status == TXSTATUS.ROLLED_BACK || status == TXSTATUS.ROLLBACKING)
       throw new ORollbackException("Given transaction was rolled back and cannot be used.");
@@ -567,9 +573,25 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       }
     }
 
+    invokeCallbacks();
+
     close();
 
     status = TXSTATUS.COMPLETED;
+  }
+
+  private void invokeCallbacks() {
+    if (recordCreatedCallback != null || recordUpdatedCallback != null) {
+      for (ORecordOperation operation : allEntries.values()) {
+        final ORecord record = operation.getRecord();
+        final ORID identity = record.getIdentity();
+
+        if (operation.type == ORecordOperation.CREATED && recordCreatedCallback != null)
+          recordCreatedCallback.call(new ORecordId(identity), identity.getClusterPosition());
+        else if (operation.type == ORecordOperation.UPDATED && recordUpdatedCallback != null)
+          recordUpdatedCallback.call(new ORecordId(identity), record.getVersion());
+      }
+    }
   }
 
   private OUncompletedCommit<Void> doInitiateCommit() {
@@ -621,6 +643,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
       if (nestedCommit != null)
         nestedCommit.complete();
+
+      invokeCallbacks();
 
       close();
       status = TXSTATUS.COMPLETED;

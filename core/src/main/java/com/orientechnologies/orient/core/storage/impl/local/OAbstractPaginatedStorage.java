@@ -60,6 +60,7 @@ import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
@@ -716,7 +717,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   /**
-   * This method finds all the records which were updated starting from (but not including) current LSN and write result in provided
+   * This method finds all the records which were updated starting from (but not including) current LSN and write result in
+   * provided
    * output stream. In output stream will be included all thw records which were updated/deleted/created since passed in LSN till
    * the current moment.
    * <p>
@@ -737,8 +739,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param lsn                LSN from which we should find changed records
    * @param stream             Stream which will contain found records
    * @param excludedClusterIds Array of cluster ids to exclude from the export
+   *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
+   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
@@ -1300,6 +1304,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
 
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
+    final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<Integer, OCluster>();
+    final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<ORecordOperation, Integer>();
 
     final Set<ORecordOperation> newRecords = new TreeSet<ORecordOperation>(new Comparator<ORecordOperation>() {
       @Override
@@ -1314,26 +1320,46 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         if (record instanceof ODocument)
           ((ODocument) record).validate();
       }
-      if (txEntry.type == ORecordOperation.CREATED) {
+
+      if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.DELETED) {
+        final int clusterId = txEntry.getRecord().getIdentity().getClusterId();
+        clustersToLock.put(clusterId, getClusterById(clusterId));
+      } else if (txEntry.type == ORecordOperation.CREATED) {
         newRecords.add(txEntry);
+
+        final ORecord record = txEntry.getRecord();
+        final ORID rid = record.getIdentity();
+
+        if (record.isDirty() && rid.getClusterId() == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
+          // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
+
+          final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+          if (class_ != null) {
+            final int clusterId = class_.getClusterForNewInstance((ODocument) record);
+            clusterOverrides.put(txEntry, clusterId);
+            clustersToLock.put(clusterId, getClusterById(clusterId));
+          }
+        } else {
+          final int clusterId = rid.getClusterId();
+          clustersToLock.put(clusterId, getClusterById(clusterId));
+        }
       }
     }
 
     final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
-
     stateLock.acquireReadLock();
     try {
       try {
-        dataLock.acquireExclusiveLock();
         try {
 
           checkOpeness();
 
-          if (writeAheadLog == null && clientTx.isUsingLog())
-            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
-
           makeStorageDirty();
           startStorageTx(clientTx);
+          for (OCluster cluster : clustersToLock.values())
+            cluster.acquireAtomicExclusiveLock();
+          for (OIndexInternal<?> index : getSortedIndexes(indexesToCommit))
+            index.acquireAtomicExclusiveLock();
 
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : newRecords) {
@@ -1342,13 +1368,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             if (rec.isDirty()) {
               ORecordId rid = (ORecordId) rec.getIdentity().copy();
               ORecordId oldRID = rid.copy();
-              int clusterId = rid.clusterId;
-              if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
-                  && ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)) != null) {
-                // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
-                final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec));
-                clusterId = schemaClass.getClusterForNewInstance((ODocument) rec);
-              }
+
+              final Integer clusterOverride = clusterOverrides.get(txEntry);
+              final int clusterId = clusterOverride == null ? rid.clusterId : clusterOverride;
 
               final OCluster cluster = getClusterById(clusterId);
               OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
@@ -1382,7 +1404,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           makeRollback(clientTx, e);
         } finally {
           transaction.set(null);
-          dataLock.releaseExclusiveLock();
         }
       } finally {
         ((OMetadataInternal) databaseRecord.getMetadata()).clearThreadLocalSchemaSnapshot();
@@ -1439,6 +1460,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return indexesToCommit;
   }
 
+  private OIndexInternal[] getSortedIndexes(Map<String, OIndexInternal<?>> indexes) {
+    final OIndexInternal[] sortedIndexes = indexes.values().toArray(new OIndexInternal[indexes.size()]);
+    Arrays.sort(sortedIndexes, OIndexInternal.ID_COMPARATOR);
+    return sortedIndexes;
+  }
+
   @Override
   public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction clientTx, Runnable callback) {
     boolean success = false;
@@ -1451,12 +1478,51 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
+    final Set<ORecordOperation> newRecords = new TreeSet<ORecordOperation>(new Comparator<ORecordOperation>() {
+      @Override
+      public int compare(ORecordOperation o1, ORecordOperation o2) {
+        long diff = (o1.getRecord().getIdentity().getClusterPosition() - o2.getRecord().getIdentity().getClusterPosition());
+        //convert long to int comparation
+        if (diff == 0)
+          return 0;
+        else if (diff < 0)
+          return -1;
+        else
+          return 1;
+      }
+    });
+    final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<Integer, OCluster>();
+    final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<ORecordOperation, Integer>();
 
     for (ORecordOperation txEntry : entries) {
       if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
         final ORecord record = txEntry.getRecord();
         if (record instanceof ODocument)
           ((ODocument) record).validate();
+      }
+
+      if (txEntry.type == ORecordOperation.UPDATED || txEntry.type == ORecordOperation.DELETED) {
+        final int clusterId = txEntry.getRecord().getIdentity().getClusterId();
+        clustersToLock.put(clusterId, getClusterById(clusterId));
+      } else if (txEntry.type == ORecordOperation.CREATED) {
+        newRecords.add(txEntry);
+
+        final ORecord record = txEntry.getRecord();
+        final ORID rid = record.getIdentity();
+
+        if (record.isDirty() && rid.getClusterId() == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
+          // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
+
+          final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
+          if (class_ != null) {
+            final int clusterId = class_.getClusterForNewInstance((ODocument) record);
+            clusterOverrides.put(txEntry, clusterId);
+            clustersToLock.put(clusterId, getClusterById(clusterId));
+          }
+        } else {
+          final int clusterId = rid.getClusterId();
+          clustersToLock.put(clusterId, getClusterById(clusterId));
+        }
       }
     }
 
@@ -1465,30 +1531,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     stateLock.acquireReadLock();
     try {
       try {
-        dataLock.acquireExclusiveLock();
         try {
           checkOpeness();
 
-          if (writeAheadLog == null && clientTx.isUsingLog())
-            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
-
           makeStorageDirty();
           startStorageTx(clientTx);
+          for (OCluster cluster : clustersToLock.values())
+            cluster.acquireAtomicExclusiveLock();
+          for (OIndexInternal<?> index : getSortedIndexes(indexesToCommit))
+            index.acquireAtomicExclusiveLock();
 
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
-          for (ORecordOperation txEntry : entries) {
+          for (ORecordOperation txEntry : newRecords) {
             ORecord rec = txEntry.getRecord();
 
-            if (txEntry.type == ORecordOperation.CREATED && rec.isDirty()) {
+            if (rec.isDirty()) {
               ORecordId rid = (ORecordId) rec.getIdentity().copy();
               ORecordId oldRID = rid.copy();
-              int clusterId = rid.clusterId;
-              if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
-                  && ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)) != null) {
-                // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
-                final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec));
-                clusterId = schemaClass.getClusterForNewInstance((ODocument) rec);
-              }
+
+              final Integer clusterOverride = clusterOverrides.get(txEntry);
+              final int clusterId = clusterOverride == null ? rid.clusterId : clusterOverride;
 
               final OCluster cluster = getClusterById(clusterId);
               OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
@@ -1520,8 +1582,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           makeRollback(clientTx, ioe);
         } catch (RuntimeException e) {
           makeRollback(clientTx, e);
-        } finally {
-          dataLock.releaseExclusiveLock();
         }
       } finally {
         if (!success)
@@ -2724,14 +2784,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void acquireWriteLock(final ORID rid) {
-    assert !dataLock.assertSharedLockHold() && !dataLock
-        .assertExclusiveLockHold() : " a record lock should not be taken inside a storage lock";
     lockManager.acquireLock(rid, OComparableLockManager.LOCK.EXCLUSIVE, RECORD_LOCK_TIMEOUT);
   }
 
   public void releaseWriteLock(final ORID rid) {
-    assert !dataLock.assertSharedLockHold() && !dataLock
-        .assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
     lockManager.releaseLock(this, rid, OComparableLockManager.LOCK.EXCLUSIVE);
   }
 
@@ -2740,8 +2796,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void releaseReadLock(final ORID rid) {
-    assert !dataLock.assertSharedLockHold() && !dataLock
-        .assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
     lockManager.releaseLock(this, rid, OComparableLockManager.LOCK.SHARED);
   }
 
@@ -2985,9 +3039,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private void startStorageTx(OTransaction clientTx) throws IOException {
-    if (writeAheadLog == null)
-      return;
-
     final OStorageTransaction storageTx = transaction.get();
     if (storageTx != null && storageTx.getClientTx().getId() != clientTx.getId())
       rollback(clientTx);
@@ -3368,7 +3419,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
+   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
+   *
    * @throws IOException
    */
   private int registerCluster(final OCluster cluster) throws IOException {
@@ -3635,24 +3688,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           ORecordInternal.setVersion(rec, ppos.recordVersion);
         } else {
           // USE -2 AS VERSION TO AVOID INCREMENTING THE VERSION
-          ORecordInternal.setVersion(rec,
-              updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, -2, ORecordInternal.getRecordType(rec), -1, null)
-                  .getResult());
+          final OStorageOperationResult<Integer> updateRes = updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, -2,
+              ORecordInternal.getRecordType(rec), -1, null);
+          ORecordInternal.setVersion(rec, updateRes.getResult());
+          if (updateRes.getModifiedRecordContent() != null)
+            ORecordInternal.fill(rec, rid, updateRes.getResult(), updateRes.getModifiedRecordContent(), false);
         }
-        txEntry.getRecord().fromStream(stream);
+
         break;
       }
 
       case ORecordOperation.UPDATED: {
         final byte[] stream = rec.toStream();
 
-        OStorageOperationResult<Integer> updateRes = doUpdateRecord(rid, ORecordInternal.isContentChanged(rec), stream,
+        final OStorageOperationResult<Integer> updateRes = doUpdateRecord(rid, ORecordInternal.isContentChanged(rec), stream,
             rec.getVersion(), ORecordInternal.getRecordType(rec), null, cluster);
         ORecordInternal.setVersion(rec, updateRes.getResult());
-        if (updateRes.getModifiedRecordContent() != null) {
+        if (updateRes.getModifiedRecordContent() != null)
           ORecordInternal.fill(rec, rid, updateRes.getResult(), updateRes.getModifiedRecordContent(), false);
-        } else
-          txEntry.getRecord().fromStream(stream);
 
         break;
       }

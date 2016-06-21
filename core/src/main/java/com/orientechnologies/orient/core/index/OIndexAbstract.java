@@ -948,6 +948,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     updateConfiguration();
   }
 
+  @Override
+  public void acquireAtomicExclusiveLock() {
+    storage.getIndexEngine(indexId).acquireAtomicExclusiveLock();
+  }
+
   protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }

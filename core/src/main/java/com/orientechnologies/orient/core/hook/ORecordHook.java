@@ -23,10 +23,10 @@ import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Hook interface to catch all events regarding records.
- * 
+ *
  * @author Luca Garulli
  * @see ORecordHookAbstract
- * 
+ *
  */
 public interface ORecordHook {
   enum DISTRIBUTED_EXECUTION_MODE {
