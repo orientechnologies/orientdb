@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -945,12 +946,88 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testMassiveOrderAscSkipLimit() {
     int skip = 1000;
+
+    OSQLSynchQuery sql0 = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc limit "+skip);
+    List<ODocument> results0 = db.query(sql0);
+    assertEquals(results0.size(), 1000);
+    for (int i = 0; i < results0.size(); i++) {
+      ODocument doc = results0.get(i);
+      assertEquals(doc.<Object>field("nnum"), i);
+    }
+
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 5);
     for (int i = 0; i < results.size(); i++) {
       ODocument doc = results.get(i);
       assertEquals(doc.<Object>field("nnum"), skip + i);
+      assertFalse(results0.contains(doc));
+    }
+  }
+
+  @Test
+  public void testMassiveOrderAscSkipLimitBatchSize() {
+    int skip = OGlobalConfiguration.QUERY_SCAN_BATCH_SIZE.getValueAsInteger();
+
+    OSQLSynchQuery sql0 = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc limit "+skip);
+    List<ODocument> results0 = db.query(sql0);
+    assertEquals(results0.size(), skip);
+    for (int i = 0; i < results0.size(); i++) {
+      ODocument doc = results0.get(i);
+      assertEquals(doc.<Object>field("nnum"), i);
+    }
+
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 5);
+    for (int i = 0; i < results.size(); i++) {
+      ODocument doc = results.get(i);
+      assertEquals(doc.<Object>field("nnum"), skip + i);
+      assertFalse(results0.contains(doc));
+    }
+  }
+
+  @Test
+  public void testMassiveOrderAscSkipLimitBatchSizePlusOne() {
+    int skip = OGlobalConfiguration.QUERY_SCAN_BATCH_SIZE.getValueAsInteger()+1;
+
+    OSQLSynchQuery sql0 = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc limit "+skip);
+    List<ODocument> results0 = db.query(sql0);
+    assertEquals(results0.size(), skip);
+    for (int i = 0; i < results0.size(); i++) {
+      ODocument doc = results0.get(i);
+      assertEquals(doc.<Object>field("nnum"), i);
+    }
+
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 5);
+    for (int i = 0; i < results.size(); i++) {
+      ODocument doc = results.get(i);
+      assertEquals(doc.<Object>field("nnum"), skip + i);
+      assertFalse(results0.contains(doc));
+    }
+  }
+
+  @Test
+  public void testMassiveOrderAscSkipLimitBatchSizeMinusOne() {
+    int skip = OGlobalConfiguration.QUERY_SCAN_BATCH_SIZE.getValueAsInteger()-1;
+
+    OSQLSynchQuery sql0 = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc limit "+skip);
+    List<ODocument> results0 = db.query(sql0);
+    assertEquals(results0.size(), skip);
+    for (int i = 0; i < results0.size(); i++) {
+      ODocument doc = results0.get(i);
+      assertEquals(doc.<Object>field("nnum"), i);
+    }
+
+    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
+    List<ODocument> results = db.query(sql);
+    assertEquals(results.size(), 5);
+    for (int i = 0; i < results.size(); i++) {
+      ODocument doc = results.get(i);
+      assertEquals(doc.<Object>field("nnum"), skip + i);
+      assertFalse(results0.contains(doc));
     }
   }
 
