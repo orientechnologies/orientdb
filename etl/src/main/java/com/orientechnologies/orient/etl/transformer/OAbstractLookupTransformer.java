@@ -48,8 +48,8 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure( final ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
 
     joinFieldName = iConfiguration.field("joinFieldName");
 

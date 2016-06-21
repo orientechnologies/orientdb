@@ -8,7 +8,6 @@ import com.orientechnologies.orient.etl.OExtractedItem;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import sun.misc.FloatConsts;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -64,8 +63,8 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
 
     csvFormat = CSVFormat.newFormat(',').withNullString(NULL_STRING).withEscape('\\').withQuote('"');
 
@@ -262,7 +261,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
    * choosing Java 1.8 as minimal supported
    **/
   protected boolean isFinite(Float f) {
-    return Math.abs(f) <= FloatConsts.MAX_VALUE;
+    return Math.abs(f) <= Float.MAX_VALUE;
   }
 
   @Override

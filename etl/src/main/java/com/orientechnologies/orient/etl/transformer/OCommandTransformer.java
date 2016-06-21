@@ -41,8 +41,8 @@ public class OCommandTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(final ODocument iConfiguration, final OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
 
     if (iConfiguration.containsField("language"))
       language = ((String) iConfiguration.field("language")).toLowerCase();

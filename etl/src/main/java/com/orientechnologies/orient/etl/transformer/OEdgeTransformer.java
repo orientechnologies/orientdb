@@ -35,33 +35,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OEdgeTransformer extends OAbstractLookupTransformer {
-  private String    edgeClass      = OrientEdgeType.CLASS_NAME;
-  private boolean   directionOut   = true;
+  private String  edgeClass    = OrientEdgeType.CLASS_NAME;
+  private boolean directionOut = true;
   private ODocument targetVertexFields;
   private ODocument edgeFields;
-  private boolean   skipDuplicates = false;
+  private boolean skipDuplicates = false;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument()
-        .fromJSON("{parameters:["
-            + getCommonConfigurationParameters()
-            + ","
-            + "{joinValue:{optional:true,description:'value to use for join'}},"
-            + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
-            + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
-            + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
-            + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
-            + "{targetVertexFields:{optional:true,description:'Map of fields to set in target vertex. Use ${$input.<field>} to get input field values'}},"
-            + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
-            + "{skipDuplicates:{optional:true,description:'Duplicated edges (with a composite index built on both out and in properties) are skipped', default:false}},"
-            + "{unresolvedLinkAction:{optional:true,description:'action when the target vertex is not found',values:"
-            + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OrientVertex'],output:'OrientVertex'}");
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
+        + "{joinValue:{optional:true,description:'value to use for join'}},"
+        + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
+        + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
+        + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
+        + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
+        + "{targetVertexFields:{optional:true,description:'Map of fields to set in target vertex. Use ${$input.<field>} to get input field values'}},"
+        + "{edgeFields:{optional:true,description:'Map of fields to set in edge. Use ${$input.<field>} to get input field values'}},"
+        + "{skipDuplicates:{optional:true,description:'Duplicated edges (with a composite index built on both out and in properties) are skipped', default:false}},"
+        + "{unresolvedLinkAction:{optional:true,description:'action when the target vertex is not found',values:"
+        + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OrientVertex'],output:'OrientVertex'}");
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, final OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(final ODocument iConfiguration, final OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
     edgeClass = iConfiguration.field("class");
     if (iConfiguration.containsField("direction")) {
       final String direction = iConfiguration.field("direction");

@@ -18,11 +18,11 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
+import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -74,7 +74,8 @@ public class OJsonExtractorTest extends OETLBaseTest {
       assertEquals(3, doc.fields());
       assertEquals(names[i], doc.field("name"));
       assertEquals(surnames[i], doc.field("surname"));
-      assertEquals(i, doc.<Object>field("id"));
+
+      assertThat(doc.<Integer>field("id")).isEqualTo(i);
       i++;
     }
   }

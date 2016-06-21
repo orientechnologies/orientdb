@@ -34,9 +34,9 @@ import java.net.URL;
  * Extracts data from HTTP endpoint.
  */
 public class OHttpSource extends OAbstractSource {
-  protected BufferedReader    reader;
-  protected String            url;
-  protected String            method = "GET";
+  protected BufferedReader reader;
+  protected String         url;
+  protected String method = "GET";
   protected HttpURLConnection conn;
   protected ODocument         headers;
 
@@ -48,8 +48,8 @@ public class OHttpSource extends OAbstractSource {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
     url = iConfiguration.field("url");
     if (url == null || url.isEmpty())
       throw new OConfigurationException("HTTP Source missing URL");

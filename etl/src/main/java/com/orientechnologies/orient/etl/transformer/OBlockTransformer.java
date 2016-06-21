@@ -22,8 +22,8 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLComponentFactory;
 import com.orientechnologies.orient.etl.OETLPipeline;
-import com.orientechnologies.orient.etl.OETLProcessor;
 import com.orientechnologies.orient.etl.block.OBlock;
 
 /**
@@ -34,21 +34,29 @@ public class OBlockTransformer extends OAbstractTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{block:{optional:false,description:'Block to execute'}}]}");
+    return new ODocument().fromJSON(
+        "{parameters:[" + getCommonConfigurationParameters() + "," + "{block:{optional:false,description:'Block to execute'}}]}");
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
-    final String[] fieldNames = iConfiguration.fieldNames();
+  public void configure(final ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
+  }
+
+  @Override
+  public void begin() {
+    super.begin();
+
+    final String[] fieldNames = configuration.fieldNames();
 
     try {
-      block = processor.getFactory().getBlock(fieldNames[0]);
-      block.configure(processor, (ODocument) iConfiguration.field(fieldNames[0]), context);
+      String fieldName = fieldNames[0];
+      block = new OETLComponentFactory().getBlock(fieldName);
+      block.configure(configuration.<ODocument>field(fieldName), context);
     } catch (Exception e) {
       throw OException.wrapException(new OConfigurationException("[Block transformer] Error on configuring inner block"), e);
     }
+
   }
 
   @Override

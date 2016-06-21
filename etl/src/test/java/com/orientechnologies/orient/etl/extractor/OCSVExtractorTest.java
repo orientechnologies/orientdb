@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.etl.extractor;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.transformer.OCSVTransformer;
@@ -49,7 +48,8 @@ public class OCSVExtractorTest extends OETLBaseTest {
       assertEquals(3, doc.fields());
       assertEquals(names[i], doc.field("name"));
       assertEquals(surnames[i], doc.field("surname"));
-      assertEquals(i, doc.<Object>field("id"));
+      assertThat(doc.<Integer>field("id")).isEqualTo(i);
+
       i++;
     }
   }
@@ -118,7 +118,9 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.<Object>field("firstNumber"));
+    //    assertEquals(10.78f, doc.field("firstNumber"));
+    assertThat(doc.<Float>field("firstNumber")).isEqualTo(10.78f);
+
   }
 
   @Test
@@ -128,7 +130,9 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.<Object>field("firstNumber"));
+    //    assertEquals(10.78f, doc.field("firstNumber"));
+    assertThat(doc.<Float>field("firstNumber")).isEqualTo(10.78f);
+
   }
 
   @Test
@@ -138,7 +142,9 @@ public class OCSVExtractorTest extends OETLBaseTest {
     List<ODocument> res = getResult();
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
-    assertEquals(10.78f, doc.<Object>field("firstNumber"));
+    //    assertEquals(10.78f, doc.field("firstNumber"));
+    assertThat(doc.<Float>field("firstNumber")).isEqualTo(10.78f);
+
   }
 
   @Test
@@ -277,7 +283,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
     assertEquals(new Integer(1), (Integer) doc.field("id"));
-    assertThat(doc.<Object>field("title")).isNull();
+    assertThat(doc.<String>field("title")).isNull();
     // assertEquals("", (String) doc.field("title"));
     assertEquals("Hello", (String) doc.field("text"));
   }
@@ -290,7 +296,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
     assertEquals(new Integer(1), (Integer) doc.field("id"));
-    assertThat(doc.<Object>field("title")).isNull();
+    assertThat(doc.<String>field("title")).isNull();
     assertEquals("Hello", (String) doc.field("text"));
   }
 
@@ -327,7 +333,7 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertFalse(res.isEmpty());
     ODocument doc = res.get(0);
     assertThat(doc.<Integer>field("id ")).isEqualTo(1);
-    assertThat(doc.<Object>field("text")).isNull();
+    assertThat(doc.<String>field("text")).isNull();
     assertThat(doc.<String>field("text ")).isEqualTo("my test text");
     assertThat(doc.<Integer>field("num ")).isEqualTo(1);
   }
@@ -377,7 +383,6 @@ public class OCSVExtractorTest extends OETLBaseTest {
     assertThat(doc.<Float>field("id")).isEqualTo(-1.0f);
   }
 
-
   @Test
   public void testLinkType() {
     String cfgJson = "{source: { content: { value: 'id\n#1:1'} }, extractor : { csv : {'columns':['id:LINK']} }, loader : { test: {} } }";
@@ -388,7 +393,6 @@ public class OCSVExtractorTest extends OETLBaseTest {
     System.out.println(doc.toJSON());
 
     assertThat(doc.<String>field("id")).isEqualTo("#1:1");
-
 
   }
 }

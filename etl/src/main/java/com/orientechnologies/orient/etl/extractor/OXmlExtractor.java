@@ -21,25 +21,15 @@ package com.orientechnologies.orient.etl.extractor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLProcessor;
 import com.orientechnologies.orient.etl.OExtractedItem;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public class OXmlExtractor extends OAbstractSourceExtractor {
   protected List               items           = new ArrayList();
@@ -47,19 +37,19 @@ public class OXmlExtractor extends OAbstractSourceExtractor {
   private String rootNode;
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
 
     if (iConfiguration.containsField("rootNode"))
-      rootNode = (String) iConfiguration.field("rootNode");
+      rootNode = iConfiguration.field("rootNode");
 
     if (iConfiguration.containsField("tagsAsAttribute"))
-      tagsAsAttribute = (Collection<String>) iConfiguration.field("tagsAsAttribute");
+      tagsAsAttribute = iConfiguration.<Collection<String>>field("tagsAsAttribute");
   }
 
   @Override
   public boolean hasNext() {
-    return current<items.size();
+    return current < items.size();
   }
 
   @Override
@@ -107,7 +97,7 @@ public class OXmlExtractor extends OAbstractSourceExtractor {
 
     final NamedNodeMap attrs = xmlDocument.getAttributes();
     if (attrs != null)
-      for (int i = 0; i<attrs.getLength(); ++i) {
+      for (int i = 0; i < attrs.getLength(); ++i) {
         final Node item = attrs.item(i);
         switch (item.getNodeType()) {
         case Node.ATTRIBUTE_NODE: {
@@ -120,7 +110,7 @@ public class OXmlExtractor extends OAbstractSourceExtractor {
 
     final NodeList children = xmlDocument.getChildNodes();
     if (children != null) {
-      for (int i = 0; i<children.getLength(); ++i) {
+      for (int i = 0; i < children.getLength(); ++i) {
         final Node child = children.item(i);
         switch (child.getNodeType()) {
         case Node.ELEMENT_NODE: {
@@ -131,7 +121,7 @@ public class OXmlExtractor extends OAbstractSourceExtractor {
           if (tagsAsAttribute.contains(iPath)) {
 
             final NodeList subChildren = element.getChildNodes();
-            if (subChildren.getLength()>0) {
+            if (subChildren.getLength() > 0) {
               final Node fieldContent = subChildren.item(0);
               doc.field(element.getNodeName(), fieldContent.getTextContent());
             }

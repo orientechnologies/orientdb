@@ -42,8 +42,8 @@ public class OConsoleBlock extends OAbstractBlock {
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(final ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
     if (iConfiguration.containsField("file"))
       file = iConfiguration.field("file");
 

@@ -39,7 +39,6 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
 
   @Ignore
   public void testNonParallel() {
-    proc.getFactory().registerExtractor(OETLStubRandomExtractor.class);
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10} }, "
         + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
@@ -56,7 +55,6 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
 
   @Test
   public void testParallel() {
-    proc.getFactory().registerExtractor(OETLStubRandomExtractor.class);
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
         + "loader: { orientdb: { dbURL: 'plocal:./target/OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "

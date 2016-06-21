@@ -323,8 +323,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument conf, final OCommandContext iContext) {
-    super.configure(iProcessor, conf, iContext);
+  public void configure(final ODocument conf, final OCommandContext iContext) {
+    super.configure(conf, iContext);
 
     if (conf.containsField("dbURL"))
       dbURL = (String) resolve(conf.field("dbURL"));

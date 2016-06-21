@@ -39,22 +39,19 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument()
-        .fromJSON("{parameters:["
-            + getCommonConfigurationParameters()
-            + ","
-            + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
-            + "{joinValue:{optional:true,description:'value to use in lookup query'}},"
-            + "{linkFieldName:{optional:false,description:'field name containing the link to set'}},"
-            + "{linkFieldType:{optional:true,description:'field type containing the link to set. Use LINK for single link and LINKSET or LINKLIST for many'}},"
-            + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
-            + "{unresolvedLinkAction:{optional:true,description:'action when a unresolved link is found',values:"
-            + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument'],output:'ODocument'}");
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
+        + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
+        + "{joinValue:{optional:true,description:'value to use in lookup query'}},"
+        + "{linkFieldName:{optional:false,description:'field name containing the link to set'}},"
+        + "{linkFieldType:{optional:true,description:'field type containing the link to set. Use LINK for single link and LINKSET or LINKLIST for many'}},"
+        + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
+        + "{unresolvedLinkAction:{optional:true,description:'action when a unresolved link is found',values:" + stringArray2Json(
+        ACTION.values()) + "}}]," + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public void configure(final ODocument iConfiguration, OCommandContext iContext) {
+    super.configure(iConfiguration, iContext);
 
     joinValue = iConfiguration.field("joinValue");
     linkFieldName = iConfiguration.field("linkFieldName");
@@ -70,7 +67,8 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
   @Override
   public Object executeTransform(final Object input) {
     if (!(input instanceof OIdentifiable)) {
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "skip because input value is not a record, but rather an instance of class: %s", input.getClass());
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "skip because input value is not a record, but rather an instance of class: %s",
+          input.getClass());
       return null;
     }
 
