@@ -1324,19 +1324,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecord record = txEntry.getRecord();
         final ORID rid = record.getIdentity();
 
-        int clusterId = rid.getClusterId();
-
-        if (record.isDirty() && clusterId == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
+        if (record.isDirty() && rid.getClusterId() == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
           // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
 
           final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
           if (class_ != null) {
-            clusterId = class_.getClusterForNewInstance((ODocument) record);
+            final int clusterId = class_.getClusterForNewInstance((ODocument) record);
             clusterOverrides.put(txEntry, clusterId);
+            clustersToLock.put(clusterId, getClusterById(clusterId));
           }
+        } else {
+          final int clusterId = rid.getClusterId();
+          clustersToLock.put(clusterId, getClusterById(clusterId));
         }
-
-        clustersToLock.put(clusterId, getClusterById(clusterId));
       }
     }
 
@@ -1514,19 +1514,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecord record = txEntry.getRecord();
         final ORID rid = record.getIdentity();
 
-        int clusterId = rid.getClusterId();
-
-        if (record.isDirty() && clusterId == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
+        if (record.isDirty() && rid.getClusterId() == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
           // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
 
           final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
           if (class_ != null) {
-            clusterId = class_.getClusterForNewInstance((ODocument) record);
+            final int clusterId = class_.getClusterForNewInstance((ODocument) record);
             clusterOverrides.put(txEntry, clusterId);
+            clustersToLock.put(clusterId, getClusterById(clusterId));
           }
+        } else {
+          final int clusterId = rid.getClusterId();
+          clustersToLock.put(clusterId, getClusterById(clusterId));
         }
-
-        clustersToLock.put(clusterId, getClusterById(clusterId));
       }
     }
 

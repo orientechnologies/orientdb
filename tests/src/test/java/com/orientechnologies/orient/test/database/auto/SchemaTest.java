@@ -19,10 +19,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -143,7 +140,8 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   }
 
-  @Test(expectedExceptions = OValidationException.class)
+  // only one exception type must be chosen, see #6373
+  @Test(expectedExceptions = {OValidationException.class, OSecurityException.class})
   public void checkErrorOnUserNoPasswd() {
 
     database.getMetadata().getSecurity().createUser("error", null, (String) null);
