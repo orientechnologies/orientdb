@@ -19,19 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -80,6 +67,18 @@ import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * This object is bound to each remote ODatabase instances.
  */
@@ -104,6 +103,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private final ExecutorService asynchExecutor;
   private final ODocument clusterConfiguration = new ODocument();
   private final String                clientId;
+  private final AtomicInteger users = new AtomicInteger(0);
   private       OContextConfiguration clientConfiguration;
   private       int                   connectionRetry;
   private       int                   connectionRetryDelay;
@@ -457,17 +457,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   @Override
   public int getUsers() {
-    return dataLock.getUsers();
+    return users.get();
   }
 
   @Override
   public int addUser() {
-    return dataLock.addUser();
+    return users.incrementAndGet();
   }
 
   @Override
   public int removeUser() {
-    return dataLock.removeUser();
+    if (users.get() < 1)
+      throw new IllegalStateException("Cannot remove user of the remote storage '" + toString() + "' because no user is using it");
+
+    return users.decrementAndGet();
   }
 
   public void delete() {

@@ -395,4 +395,9 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   public void postCommit(OIndexAbstract.IndexTxSnapshot snapshots) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
+
+  @Override
+  public void acquireAtomicExclusiveLock() {
+    throw new UnsupportedOperationException("atomic locking is not supported by index recorder");
+  }
 }

@@ -30,15 +30,15 @@ import java.io.IOException;
 /**
  * Represents an offline cluster, created with the "alter cluster X status offline" command. To restore the original cluster assure
  * to have the cluster files in the right path and execute: "alter cluster X status online".
- * 
+ *
  * @author Luca Garulli
  * @since 2.0
  */
 public class OOfflineCluster implements OCluster {
 
-  private final String              name;
-  private int                       id;
-  private OAbstractPaginatedStorage storageLocal;
+  private final String                    name;
+  private       int                       id;
+  private       OAbstractPaginatedStorage storageLocal;
 
   public OOfflineCluster(final OAbstractPaginatedStorage iStorage, final int iId, final String iName) {
     storageLocal = iStorage;
@@ -139,8 +139,7 @@ public class OOfflineCluster implements OCluster {
 
   @Override
   public ORawBuffer readRecord(long clusterPosition) throws IOException {
-    throw OException.wrapException(
-        new ORecordNotFoundException(new ORecordId(id, clusterPosition),
+    throw OException.wrapException(new ORecordNotFoundException(new ORecordId(id, clusterPosition),
             "Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
         new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'"));
   }
@@ -148,8 +147,7 @@ public class OOfflineCluster implements OCluster {
   @Override
   public ORawBuffer readRecordIfVersionIsNotLatest(long clusterPosition, int recordVersion)
       throws IOException, ORecordNotFoundException {
-    throw OException.wrapException(
-        new ORecordNotFoundException(new ORecordId(id, clusterPosition),
+    throw OException.wrapException(new ORecordNotFoundException(new ORecordId(id, clusterPosition),
             "Record with rid #" + id + ":" + clusterPosition + " was not found in database"),
         new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'"));
   }
@@ -262,5 +260,10 @@ public class OOfflineCluster implements OCluster {
   @Override
   public ORecordConflictStrategy getRecordConflictStrategy() {
     return null;
+  }
+
+  @Override
+  public void acquireAtomicExclusiveLock() {
+    // do nothing, anyway there is no real data behind to lock it
   }
 }
