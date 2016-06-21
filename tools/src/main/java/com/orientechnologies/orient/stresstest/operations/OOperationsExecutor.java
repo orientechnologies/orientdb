@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.stresstest.operations;
 
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.output.OConsoleProgressWriter;
 import com.orientechnologies.orient.stresstest.output.OStressTestResults;
@@ -66,7 +67,7 @@ public class OOperationsExecutor implements Callable {
 
     // executes all the operations defined for this test
     long start = System.currentTimeMillis();
-    List<ODocument> insertedDocs = executeCreates(operationsSet.getNumber(OOperationType.CREATE) / threads, txNumber, database);
+    List<OIdentifiable> insertedDocs = executeCreates(operationsSet.getNumber(OOperationType.CREATE) / threads, txNumber, database);
     times.put(OOperationType.CREATE, System.currentTimeMillis() - start);
 
     start = System.currentTimeMillis();
@@ -88,13 +89,15 @@ public class OOperationsExecutor implements Callable {
   }
 
   // an helper method for all the operations types
-  private List<ODocument> executeOperations(OOperationType operationType, long numberOfOperations, int operationsInTx,
+  private List<OIdentifiable> executeOperations(OOperationType operationType, long numberOfOperations, int operationsInTx,
       ODatabase database, Invokable<ODocument, Integer> operationToExecute) throws Exception {
 
     // divides the set of operations into smaller sets (to compute percentile)
     int percentileFrequency = operationsInTx > 0 ? operationsInTx : ((int) (numberOfOperations / 100));
+    if( percentileFrequency == 0 )
+      percentileFrequency = 1;
 
-    List<ODocument> insertedDocs = new ArrayList<ODocument>();
+    List<OIdentifiable> insertedDocs = new ArrayList<OIdentifiable>();
     if (operationsInTx > 0) {
       database.begin();
     }
@@ -114,7 +117,7 @@ public class OOperationsExecutor implements Callable {
         percentileStartTiming = System.currentTimeMillis();
       }
       if (doc != null) {
-        insertedDocs.add(doc);
+        insertedDocs.add(doc.getIdentity().copy());
       }
     }
     if (operationsInTx > 0) {
@@ -124,9 +127,9 @@ public class OOperationsExecutor implements Callable {
     return insertedDocs;
   }
 
-  private List<ODocument> executeCreates(long number, int operationsInTx, ODatabase database) throws Exception {
+  private List<OIdentifiable> executeCreates(long number, int operationsInTx, ODatabase database) throws Exception {
     if (number == 0) {
-      return new ArrayList<ODocument>();
+      return new ArrayList<OIdentifiable>();
     }
     return executeOperations(OOperationType.CREATE, number, operationsInTx, database, new Invokable<ODocument, Integer>() {
       @Override public ODocument invoke(Integer value) {
@@ -147,7 +150,7 @@ public class OOperationsExecutor implements Callable {
     });
   }
 
-  private void executeUpdates(long number, int operationsInTx, final ODatabase database, final List<ODocument> insertedDocs)
+  private void executeUpdates(long number, int operationsInTx, final ODatabase database, final List<OIdentifiable> insertedDocs)
       throws Exception {
     if (number == 0) {
       return;
@@ -160,7 +163,7 @@ public class OOperationsExecutor implements Callable {
     });
   }
 
-  private void executeDeletes(long number, int operationsInTx, final ODatabase database, final List<ODocument> insertedDocs)
+  private void executeDeletes(long number, int operationsInTx, final ODatabase database, final List<OIdentifiable> insertedDocs)
       throws Exception {
     if (number == 0) {
       return;

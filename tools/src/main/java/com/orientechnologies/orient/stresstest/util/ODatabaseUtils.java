@@ -21,7 +21,9 @@ package com.orientechnologies.orient.stresstest.util;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -88,11 +90,12 @@ public class ODatabaseUtils {
     }
   }
 
-  public static void deleteOperation(ODocument doc) {
-    doc.delete();
+  public static void deleteOperation(final OIdentifiable rec) {
+    ODatabaseRecordThreadLocal.INSTANCE.get().delete( rec.getIdentity() );
   }
 
-  public static void updateOperation(ODocument doc, int n) {
+  public static void updateOperation(final OIdentifiable rec, int n) {
+    final ODocument doc = rec.getRecord();
     doc.field("name", getThreadValue(n, "new"));
     doc.save();
   }
