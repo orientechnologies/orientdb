@@ -137,19 +137,16 @@ public class HookTxTest extends ORecordHookAbstract {
   }
 
   @Test(dependsOnMethods = "testHookCallsDelete")
-  public void testHookCannotBeginTx() throws IOException {
-    final AtomicBoolean exc = new AtomicBoolean(false);
+  public void testHookCanBeginTx() throws IOException {
     database.activateOnCurrentThread();
     database.registerHook(new ORecordHookAbstract() {
       @Override
       public RESULT onRecordBeforeCreate(ORecord iRecord) {
-        try {
-          database.activateOnCurrentThread();
-          database.begin();
-        } catch (IllegalStateException e) {
-          exc.set(true);
-        }
-        return null;
+        database.activateOnCurrentThread();
+        database.begin();
+        ((ODocument) iRecord).field("test-hook", false).save();
+        database.commit();
+        return RESULT.RECORD_CHANGED;
       }
 
       @Override
@@ -158,9 +155,8 @@ public class HookTxTest extends ORecordHookAbstract {
       }
     });
 
-    Assert.assertFalse(exc.get());
-    new ODocument().field("test-hook", true).save();
-    Assert.assertTrue(exc.get());
+    final ODocument doc = new ODocument().field("test-hook", true).save();
+    Assert.assertFalse(doc.field("test-hook"));
 
     database.activateOnCurrentThread();
     database.close();

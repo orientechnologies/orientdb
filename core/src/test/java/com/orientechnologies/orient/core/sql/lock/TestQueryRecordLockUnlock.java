@@ -45,6 +45,7 @@ public class TestQueryRecordLockUnlock {
             db = new ODatabaseDocumentTx("memory:" + TestQueryRecordLockUnlock.class.getSimpleName());
             db.open("admin", "admin");
             for (int j = 0; j < 10; j++) {
+              db.getLocalCache().deleteRecord(id);
               String asql = "update " + id.toString() + " INCREMENT count = 1 where count < 50 lock record";
               db.command(new OCommandSQL(asql)).execute(id);
             }

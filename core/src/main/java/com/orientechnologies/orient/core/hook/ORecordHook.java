@@ -24,10 +24,9 @@ import com.orientechnologies.orient.core.record.ORecord;
 /**
  * Hook interface to catch all events regarding records.
  *
- * @see ORecordHookAbstract
- *
  * @author Luca Garulli – initial contribution
- * @author Sergey Sitnikov – scoped hooks
+ * @author Sergey Sitnikov – scoped hooks, deletion finalization
+ * @see ORecordHookAbstract
  */
 public interface ORecordHook {
   enum DISTRIBUTED_EXECUTION_MODE {
@@ -55,35 +54,33 @@ public interface ORecordHook {
   /**
    * <p>Defines available scopes for scoped hooks.
    *
-   * <p>Basically, each scope defines some subset of {@link ORecordHook.TYPE}, this
-   * limits the set of events the hook interested in and lowers the number of useless hook invocations.
+   * <p>Basically, each scope defines some subset of {@link ORecordHook.TYPE}, this limits the set of events the hook interested in
+   * and lowers the number of useless hook invocations.
    *
    * @see ORecordHook#getScopes()
    */
   enum SCOPE {
     /**
-     * The create scope, includes: {@link ORecordHook.TYPE#BEFORE_CREATE}, {@link ORecordHook.TYPE#AFTER_CREATE},
-     * {@link ORecordHook.TYPE#FINALIZE_CREATION}, {@link ORecordHook.TYPE#CREATE_REPLICATED} and
-     * {@link ORecordHook.TYPE#CREATE_FAILED}.
+     * The create scope, includes: {@link ORecordHook.TYPE#BEFORE_CREATE}, {@link ORecordHook.TYPE#AFTER_CREATE}, {@link
+     * ORecordHook.TYPE#FINALIZE_CREATION}, {@link ORecordHook.TYPE#CREATE_REPLICATED} and {@link ORecordHook.TYPE#CREATE_FAILED}.
      */
     CREATE,
 
     /**
-     * The read scope, includes: {@link ORecordHook.TYPE#BEFORE_READ}, {@link ORecordHook.TYPE#AFTER_READ},
-     * {@link ORecordHook.TYPE#READ_REPLICATED} and {@link ORecordHook.TYPE#READ_FAILED}.
+     * The read scope, includes: {@link ORecordHook.TYPE#BEFORE_READ}, {@link ORecordHook.TYPE#AFTER_READ}, {@link
+     * ORecordHook.TYPE#READ_REPLICATED} and {@link ORecordHook.TYPE#READ_FAILED}.
      */
     READ,
 
     /**
-     * The update scope, includes: {@link ORecordHook.TYPE#BEFORE_UPDATE}, {@link ORecordHook.TYPE#AFTER_UPDATE},
-     * {@link ORecordHook.TYPE#FINALIZE_UPDATE}, {@link ORecordHook.TYPE#UPDATE_REPLICATED} and
-     * {@link ORecordHook.TYPE#UPDATE_FAILED}.
+     * The update scope, includes: {@link ORecordHook.TYPE#BEFORE_UPDATE}, {@link ORecordHook.TYPE#AFTER_UPDATE}, {@link
+     * ORecordHook.TYPE#FINALIZE_UPDATE}, {@link ORecordHook.TYPE#UPDATE_REPLICATED} and {@link ORecordHook.TYPE#UPDATE_FAILED}.
      */
     UPDATE,
 
     /**
-     * The delete scope, includes: {@link ORecordHook.TYPE#BEFORE_DELETE}, {@link ORecordHook.TYPE#AFTER_DELETE},
-     * {@link ORecordHook.TYPE#DELETE_REPLICATED} and {@link ORecordHook.TYPE#DELETE_FAILED}.
+     * The delete scope, includes: {@link ORecordHook.TYPE#BEFORE_DELETE}, {@link ORecordHook.TYPE#AFTER_DELETE}, {@link
+     * ORecordHook.TYPE#DELETE_REPLICATED} and {@link ORecordHook.TYPE#DELETE_FAILED}.
      */
     DELETE;
 
@@ -91,6 +88,7 @@ public interface ORecordHook {
      * Maps the {@link ORecordHook.TYPE} to {@link ORecordHook.SCOPE}.
      *
      * @param type the hook type to map.
+     *
      * @return the mapped scope.
      */
     public static SCOPE typeToScope(TYPE type) {
@@ -134,18 +132,16 @@ public interface ORecordHook {
   DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode();
 
   /**
-   * <p>Returns the array of scopes this hook interested in.
-   * By default, all available scopes are returned, implement/override this method to limit
-   * the scopes this hook may participate to lower the number of useless invocations of this hook.
+   * <p>Returns the array of scopes this hook interested in. By default, all available scopes are returned, implement/override this
+   * method to limit the scopes this hook may participate to lower the number of useless invocations of this hook.
    *
-   * <p>Limiting the hook to proper scopes may give huge performance boost, especially if
-   * the hook's {@link #onTrigger(TYPE, ORecord)} dispatcher implementation is heavy. In extreme cases,
-   * you may override the {@link #onTrigger(TYPE, ORecord)} to act directly on event's {@link ORecordHook.TYPE} and
-   * exit early, scopes are just a more handy alternative to this.
-   *
-   * @see ORecordHook.SCOPE
+   * <p>Limiting the hook to proper scopes may give huge performance boost, especially if the hook's {@link #onTrigger(TYPE,
+   * ORecord)} dispatcher implementation is heavy. In extreme cases, you may override the {@link #onTrigger(TYPE, ORecord)} to act
+   * directly on event's {@link ORecordHook.TYPE} and exit early, scopes are just a more handy alternative to this.
    *
    * @return the scopes of this hook.
+   *
+   * @see ORecordHook.SCOPE
    */
   default SCOPE[] getScopes() {
     return SCOPE.values();

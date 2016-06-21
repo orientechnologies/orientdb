@@ -1,3 +1,22 @@
+/*
+ *
+ *  *  Copyright 2016 OrientDB LTD (info(at)orientdb.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientdb.com
+ */
+
 package com.orientechnologies.orient.test.internal.index;
 
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -7,7 +26,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -73,7 +91,7 @@ public class IndexUniqueTest {
 
     for (int i = 0; i < cores; i++) {
       phaser.register();
-      futures.add(executor.submit(new Populator("plocal:./uniqueIndexTest")));
+      futures.add(executor.submit(new Populator("plocal:./uniqueIndexTest", random.nextBoolean())));
     }
 
     int sum = 0;
@@ -100,9 +118,11 @@ public class IndexUniqueTest {
 
   public final class Populator implements Callable<Integer> {
     private final String url;
+    private final boolean tx;
 
-    public Populator(String url) {
+    public Populator(String url, boolean tx) {
       this.url = url;
+      this.tx = tx;
     }
 
     @Override
@@ -114,12 +134,19 @@ public class IndexUniqueTest {
         db.open("admin", "admin");
         try {
           i++;
+
+          if (tx)
+            db.begin();
+
           ODocument document = new ODocument("indexTest");
 
           for (int n = 0; n < 10; n++)
             document.field("prop" + n, propValues[n].get());
 
           document.save();
+
+          if (tx)
+            db.commit();
 
           success++;
         } catch (ORecordDuplicatedException e) {

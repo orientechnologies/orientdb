@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -41,43 +40,30 @@ public class OIndexUnique extends OIndexOneValue {
   public OIndexOneValue put(Object key, final OIdentifiable iSingleValue) {
     key = getCollatingValue(key);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive) {
-      keyLockManager.acquireExclusiveLock(key);
-    }
-
+    acquireSharedLock();
     try {
+      final OIdentifiable value = (OIdentifiable) storage.getIndexValue(indexId, key);
 
-      acquireSharedLock();
-      try {
-        final OIdentifiable value = (OIdentifiable) storage.getIndexValue(indexId, key);
-
-        if (value != null) {
-          // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-          if (!value.equals(iSingleValue)) {
-            final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
-            if (mergeSameKey == null || !mergeSameKey)
-              throw new ORecordDuplicatedException(String
-                  .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                      iSingleValue.getIdentity(), key, getName(), value.getIdentity()), getName(), value.getIdentity());
-          } else
-            return this;
-        }
-
-        if (!iSingleValue.getIdentity().isPersistent())
-          iSingleValue.getRecord().save();
-
-        storage.putIndexValue(indexId, key, iSingleValue.getIdentity());
-        return this;
-
-      } finally {
-        releaseSharedLock();
+      if (value != null) {
+        // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
+        if (!value.equals(iSingleValue)) {
+          final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
+          if (mergeSameKey == null || !mergeSameKey)
+            throw new ORecordDuplicatedException(String
+                .format("Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                    iSingleValue.getIdentity(), key, getName(), value.getIdentity()), getName(), value.getIdentity());
+        } else
+          return this;
       }
+
+      if (!iSingleValue.getIdentity().isPersistent())
+        iSingleValue.getRecord().save();
+
+      storage.putIndexValue(indexId, key, iSingleValue.getIdentity());
+      return this;
+
     } finally {
-      if (!txIsActive)
-        keyLockManager.releaseExclusiveLock(key);
+      releaseSharedLock();
     }
   }
 

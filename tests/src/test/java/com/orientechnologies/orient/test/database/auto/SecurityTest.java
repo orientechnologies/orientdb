@@ -70,6 +70,7 @@ public class SecurityTest extends DocumentDBBaseTest {
     }
   }
 
+  @Test(enabled = false)
   public void testSecurityAccessWriter() throws IOException {
     database.open("writer", "writer");
 
