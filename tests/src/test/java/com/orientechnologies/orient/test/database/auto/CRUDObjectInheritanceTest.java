@@ -176,7 +176,7 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
 
     OClass klass1 = database.getMetadata().getSchema().createClass("Extends_Not", klass);
     Assert.assertEquals(1,klass1.getSuperClasses().size(),1);
-    Assert.assertEquals(1,klass1.getSuperClasses().get(0).getName(),"Not");
+    Assert.assertEquals("Not",klass1.getSuperClasses().get(0).getName());
   }
 
 
