@@ -696,7 +696,8 @@ public class OServerAdmin {
       storage.connectionManager.release(network);
       return res;
     } catch (Exception e) {
-      storage.connectionManager.release(network);
+      if(network != null)
+        storage.connectionManager.release(network);
       storage.close(true, false);
       throw OException.wrapException(new OStorageException(errorMessage), e);
     }
