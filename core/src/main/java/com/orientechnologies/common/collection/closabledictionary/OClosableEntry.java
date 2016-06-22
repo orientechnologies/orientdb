@@ -1,18 +1,50 @@
 package com.orientechnologies.common.collection.closabledictionary;
 
+import javax.annotation.concurrent.GuardedBy;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class OClosableEntry<K, E> {
-  private final AtomicReference<E> item;
+class OClosableEntry<K, V> {
+  @GuardedBy("lruLock")
+  private OClosableEntry<K, V> next;
+
+  @GuardedBy("lruLock")
+  private OClosableEntry<K, V> prev;
+
+  @GuardedBy("lruLock")
+  public OClosableEntry<K, V> getNext() {
+    return next;
+  }
+
+  @GuardedBy("lruLock")
+  public void setNext(OClosableEntry<K, V> next) {
+    this.next = next;
+  }
+
+  @GuardedBy("lruLock")
+  public OClosableEntry<K, V> getPrev() {
+    return prev;
+  }
+
+  @GuardedBy("lruLock")
+  public void setPrev(OClosableEntry<K, V> prev) {
+    this.prev = prev;
+  }
+
+  private final AtomicReference<V> item;
 
   private AtomicReference<State> state = new AtomicReference<State>(State.ALIVE);
 
-  public OClosableEntry(E item) {
-    this.item = new AtomicReference<E>(item);
+  public OClosableEntry(V item) {
+    this.item = new AtomicReference<V>(item);
   }
 
-  public E get() {
+  public V get() {
     return item.get();
+  }
+
+
+  public boolean makeAcquired() {
+    return state.compareAndSet(State.ALIVE, State.ACQUIRED);
   }
 
   public void makeRetired() {
@@ -24,7 +56,12 @@ public class OClosableEntry<K, E> {
   }
 
   public boolean isAlive() {
-    return state.get().equals(State.ALIVE);
+    final State s = state.get();
+    return s.equals(State.OPEN) || s.equals(State.ACQUIRED);
+  }
+
+  public boolean isClosed() {
+    return state.get().equals(State.CLOSED);
   }
 
   public boolean isRetired() {
@@ -36,6 +73,6 @@ public class OClosableEntry<K, E> {
   }
 
   private enum State {
-    ALIVE, RETIRED, DEAD
+    OPEN, ACQUIRED, CLOSED, RETIRED, DEAD
   }
 }
