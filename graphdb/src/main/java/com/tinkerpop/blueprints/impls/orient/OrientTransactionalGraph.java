@@ -51,7 +51,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       final Settings iConfiguration) {
     super(iDatabase, iUserName, iUserPasswd, iConfiguration);
     setCurrentGraphInThreadLocal();
-    this.setAutoStartTx(isAutoStartTx());
+    super.setAutoStartTx(isAutoStartTx());
 
     if (isAutoStartTx())
       ensureTransaction();
@@ -61,7 +61,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       final String iUserPasswd) {
     super(iDatabase, iUserName, iUserPasswd, null);
     setCurrentGraphInThreadLocal();
-    this.setAutoStartTx(iAutoStartTx);
+    super.setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
       ensureTransaction();
