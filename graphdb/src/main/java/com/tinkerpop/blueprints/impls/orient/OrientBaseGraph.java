@@ -890,21 +890,23 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public Iterable<Vertex> getVertices(final String label, final String[] iKey, Object[] iValue) {
     makeActive();
     final OClass clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(label);
-    Set<OIndex<?>> indexes = clazz.getInvolvedIndexes(Arrays.asList(iKey));
-    if (indexes.iterator().hasNext()) {
-      final OIndex<?> idx = indexes.iterator().next();
-      if (idx != null) {
-        List<Object> keys = Arrays.asList(convertKeys(idx, iValue));
-        Object key;
-        if (keys.size() == 1) {
-          key = keys.get(0);
-        } else {
-          key = new OCompositeKey(keys);
+    if(clazz != null) {
+      Set<OIndex<?>> indexes = clazz.getInvolvedIndexes(Arrays.asList(iKey));
+      if (indexes.iterator().hasNext()) {
+        final OIndex<?> idx = indexes.iterator().next();
+        if (idx != null) {
+          List<Object> keys = Arrays.asList(convertKeys(idx, iValue));
+          Object key;
+          if (keys.size() == 1) {
+            key = keys.get(0);
+          } else {
+            key = new OCompositeKey(keys);
+          }
+          Object indexValue = idx.get(key);
+          if (indexValue != null && !(indexValue instanceof Iterable<?>))
+            indexValue = Arrays.asList(indexValue);
+          return new OrientElementIterable<Vertex>(this, (Iterable<?>) indexValue);
         }
-        Object indexValue = idx.get(key);
-        if (indexValue != null && !(indexValue instanceof Iterable<?>))
-          indexValue = Arrays.asList(indexValue);
-        return new OrientElementIterable<Vertex>(this, (Iterable<?>) indexValue);
       }
     }
     // NO INDEX: EXECUTE A QUERY
