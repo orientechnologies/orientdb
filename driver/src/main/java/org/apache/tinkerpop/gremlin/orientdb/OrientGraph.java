@@ -33,6 +33,7 @@ import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -262,28 +263,42 @@ public final class OrientGraph implements Graph {
     }
 
     public Stream<OrientVertex> getIndexedVertices(OIndex<Object> index, Optional<Object> valueOption) {
+        return getIndexedElements(index, valueOption, OrientVertex::new, OrientVertex::new);
+    }
+
+    public Stream<OrientEdge> getIndexedEdges(OIndex<Object> index, Optional<Object> valueOption) {
+        return getIndexedElements(index, valueOption, OrientEdge::new, OrientEdge::new);
+    }
+
+    private <ElementType extends OrientElement> Stream<ElementType> getIndexedElements(OIndex<Object> index, Optional<Object> valueOption,
+            BiFunction<OrientGraph, OIdentifiable, ElementType> newElementById, BiFunction<OrientGraph, ODocument, ElementType> newElementByDoc) {
         return executeWithConnectionCheck(() -> {
             makeActive();
 
             if (index == null) {
                 // NO INDEX
-                return Collections.<OrientVertex> emptyList().stream();
+                return Collections.<ElementType> emptyList().stream();
             } else {
                 if (!valueOption.isPresent()) {
-                    return index.cursor().toValues().stream().map(id -> new OrientVertex(this, id));
+                    return index.cursor().toValues().stream().map(id -> newElementById.apply(this, id));
                 } else {
                     Object value = convertValue(index, valueOption.get());
                     Object indexValue = index.get(value);
                     if (indexValue == null) {
-                        return Collections.<OrientVertex> emptyList().stream();
+                        return Collections.<ElementType> emptyList().stream();
                     } else if (!(indexValue instanceof Iterable<?>)) {
                         indexValue = Collections.singletonList(indexValue);
                     }
+
+                    // The index value is iterable, but some indices will give ORecordId 
+                    // objects (e.g. OIndexTxAwareOneValue and OIndexTxAwareMultiValue) whilst others will 
+                    // give ORecord objects (e.g. OIndexRemoteMultiValue). 
+                    // Thankfully both ORecordId and ORecord implement OIdentifiable.
                     @SuppressWarnings("unchecked")
-                    Iterable<ORecordId> iterableIds = (Iterable<ORecordId>) indexValue;
-                    Stream<ORecordId> ids = StreamSupport.stream(iterableIds.spliterator(), false);
+                    Iterable<OIdentifiable> iterableVals = (Iterable<OIdentifiable>) indexValue;
+                    Stream<OIdentifiable> ids = StreamSupport.stream(iterableVals.spliterator(), false);
                     Stream<ORecord> records = ids.map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
-                    return records.map(r -> new OrientVertex(this, getRawDocument(r)));
+                    return records.map(r -> newElementByDoc.apply(this, getRawDocument(r)));
                 }
             }
         });

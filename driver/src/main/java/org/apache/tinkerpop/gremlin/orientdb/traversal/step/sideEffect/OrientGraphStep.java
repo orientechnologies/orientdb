@@ -7,9 +7,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.tinkerpop.gremlin.orientdb.OrientEdge;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientIndexQuery;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
@@ -22,6 +26,7 @@ import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
+import org.apache.tinkerpop.gremlin.util.function.TriFunction;
 import org.javatuples.Pair;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -45,34 +50,54 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
     }
 
     private Iterator<? extends Vertex> vertices() {
+        return elements(OrientGraph::vertices, OrientGraph::getIndexedVertices, OrientGraph::vertices);
+    }
+
+    private Iterator<? extends Edge> edges() {
+        return elements(OrientGraph::edges, OrientGraph::getIndexedEdges, OrientGraph::edges);
+    }
+
+    /**
+     * Gets an iterator over those vertices/edges that have the specific IDs
+     * wanted, or those that have indexed properties with the wanted values, or
+     * failing that by just getting all of the vertices or edges.
+     * 
+     * @param getElementsByIds
+     *            Function that will return an iterator over all the
+     *            vertices/edges in the graph that have the specific IDs
+     * @param getElementsByIndex
+     *            Function that returns a stream of all the vertices/edges in
+     *            the graph that have an indexed property with a specific value
+     * @param getAllElements
+     *            Function that returns an iterator of all the vertices or all
+     *            the edges (i.e. full scan)
+     * @return An iterator for all the vertices/edges for this step
+     */
+    private <ElementType extends Element> Iterator<? extends ElementType> elements(BiFunction<OrientGraph, Object[], Iterator<ElementType>> getElementsByIds,
+            TriFunction<OrientGraph, OIndex<Object>, Optional<Object>, Stream<? extends ElementType>> getElementsByIndex,
+            Function<OrientGraph, Iterator<ElementType>> getAllElements) {
         final OrientGraph graph = getGraph();
 
         if (this.ids != null && this.ids.length > 0) {
-            return this.iteratorList(graph.vertices(this.ids));
+            /** Got some element IDs, so just get the elements using those */
+            return this.iteratorList(getElementsByIds.apply(graph, this.ids));
         } else {
+            /** Have no element IDs. See if there's an indexed property to use */
             Optional<OrientIndexQuery> indexQueryOption = findIndex();
             if (indexQueryOption.isPresent()) {
                 OrientIndexQuery indexQuery = indexQueryOption.get();
                 OLogManager.instance().debug(this, "using " + indexQuery);
-                Stream<OrientVertex> indexedVertices = graph.getIndexedVertices(indexQuery.index, indexQuery.value);
-                return indexedVertices
-                        .filter(vertex -> HasContainer.testAll(vertex, this.hasContainers))
-                        .collect(Collectors.<Vertex> toList())
-                        .iterator();
-            } else {
-                OLogManager.instance().warn(this, "scanning through all vertices without using an index for Traversal " + getTraversal());
-                return this.iteratorList(graph.vertices());
-            }
-        }
-    }
 
-    // TODO: indexed edges
-    private Iterator<? extends Edge> edges() {
-        final OrientGraph graph = getGraph();
-        if (this.ids != null && this.ids.length > 0) {
-            return this.iteratorList(graph.edges(this.ids));
-        } else {
-            return this.iteratorList(graph.edges());
+                Stream<? extends ElementType> indexedElements = getElementsByIndex.apply(graph, indexQuery.index, indexQuery.value);
+                return indexedElements
+                        .filter(element -> HasContainer.testAll(element, this.hasContainers))
+                        .collect(Collectors.<ElementType> toList())
+                        .iterator();
+
+            } else {
+                OLogManager.instance().warn(this, "scanning through all elements without using an index for Traversal " + getTraversal());
+                return this.iteratorList(getAllElements.apply(graph));
+            }
         }
     }
 
@@ -116,7 +141,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
             String key = indexedKeyAndValue.get().getValue0();
             Object value = indexedKeyAndValue.get().getValue1();
 
-            String className = graph.labelToClassName(elementLabel.get(), OImmutableClass.VERTEX_CLASS_NAME);
+            String className = graph.labelToClassName(elementLabel.get(), isVertexStep() ? OImmutableClass.VERTEX_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME);
             Set<OIndex<?>> classIndexes = indexManager.getClassIndexes(className);
             Iterator<OIndex<?>> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key)).iterator();
 

@@ -49,6 +49,10 @@ public final class OrientEdge extends OrientElement implements Edge {
         this(graph, rawDocument, rawDocument.getClassName());
     }
 
+    public OrientEdge(final OrientGraph graph, final OIdentifiable rawElement) {
+        this(graph, (rawElement instanceof ODocument) ? ((ODocument) rawElement) : new ODocument(rawElement.getIdentity()));
+    }
+
     public static OIdentifiable getConnection(final ODocument iEdgeRecord, final Direction iDirection) {
         return iEdgeRecord.rawField(iDirection == Direction.OUT ? OrientGraphUtils.CONNECTION_OUT : OrientGraphUtils.CONNECTION_IN);
     }
