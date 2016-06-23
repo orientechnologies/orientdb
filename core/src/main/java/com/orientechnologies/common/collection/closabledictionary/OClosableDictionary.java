@@ -123,29 +123,31 @@ public class OClosableDictionary<K, V extends OClosableItem> {
     if (entry == null)
       return null;
 
-    while (true) {
+    boolean logOpen = false;
+    entry.acquireStateLock();
+    try {
       if (entry.isRetired() || entry.isDead()) {
         return null;
       } else if (entry.isClosed()) {
-        if (entry.makeAcquiredFromClosed(entry.get())) {
-          assert entry.get().isOpen();
-          logOpen(entry);
-          return entry;
-        }
+        entry.makeAcquiredFromClosed(entry.get());
+        logOpen = true;
       } else if (entry.isOpen()) {
-        if (entry.makeAcquiredFromOpen()) {
-          logAcquire(entry);
-          assert entry.get().isOpen();
-          return entry;
-        }
+        entry.makeAcquiredFromOpen();
       } else {
-        if (entry.incrementAcquired()) {
-          logAcquire(entry);
-          assert entry.get().isOpen();
-          return entry;
-        }
+        entry.incrementAcquired();
       }
+    } finally {
+      entry.releaseStateLock();
     }
+
+    if (logOpen) {
+      logOpen(entry);
+    } else {
+      logAcquire(entry);
+    }
+
+    assert entry.get().isOpen();
+    return entry;
   }
 
   public void release(OClosableEntry<K, V> entry) {
@@ -216,8 +218,6 @@ public class OClosableDictionary<K, V extends OClosableItem> {
     return lruList.size() == lruCapacity;
   }
 
-
-
   boolean checkAllOpenItemsInLRUList() {
     lruLock.lock();
     try {
@@ -273,7 +273,6 @@ public class OClosableDictionary<K, V extends OClosableItem> {
 
     return true;
   }
-
 
   private void emptyWriteBuffer() {
     Runnable task = writeBuffer.poll();

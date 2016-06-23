@@ -53,35 +53,30 @@ public class OClosableEntry<K, V> {
     return item;
   }
 
-  boolean makeAcquiredFromClosed(OClosableItem item) {
+  public void acquireStateLock() {
     stateLock.lock();
-    try {
-      final long s = state;
-      if (s != STATUS_CLOSED)
-        return false;
-
-      final long acquiredState = 1L << ACQUIRED_OFFSET;
-      item.open();
-
-      state = acquiredState;
-      return true;
-    } finally {
-      stateLock.unlock();
-    }
-
   }
 
-  boolean makeAcquiredFromOpen() {
-    stateLock.lock();
-    try {
-      if (state != STATUS_OPEN)
-        return false;
+  public void releaseStateLock() {
+    stateLock.unlock();
+  }
 
-      state = 1L << ACQUIRED_OFFSET;
-      return true;
-    } finally {
-      stateLock.unlock();
-    }
+  void makeAcquiredFromClosed(OClosableItem item) {
+    final long s = state;
+    if (s != STATUS_CLOSED)
+      throw new IllegalStateException();
+
+    final long acquiredState = 1L << ACQUIRED_OFFSET;
+    item.open();
+
+    state = acquiredState;
+  }
+
+  void makeAcquiredFromOpen() {
+    if (state != STATUS_OPEN)
+      throw new IllegalStateException();
+
+    state = 1L << ACQUIRED_OFFSET;
   }
 
   void releaseAcquired() {
@@ -103,29 +98,32 @@ public class OClosableEntry<K, V> {
     }
   }
 
-  boolean incrementAcquired() {
+  void incrementAcquired() {
+    long acquireCount = state >>> ACQUIRED_OFFSET;
+
+    if (acquireCount < 1)
+      throw new IllegalStateException();
+
+    acquireCount++;
+    state = acquireCount << ACQUIRED_OFFSET;
+  }
+
+  void makeRetired() {
     stateLock.lock();
     try {
-      long acquireCount = state >>> ACQUIRED_OFFSET;
-
-      if (acquireCount < 1)
-        return false;
-
-      acquireCount++;
-      state = acquireCount << ACQUIRED_OFFSET;
-
-      return true;
+      state = STATUS_RETIRED;
     } finally {
       stateLock.unlock();
     }
   }
 
-  void makeRetired() {
-    state = STATUS_RETIRED;
-  }
-
   void makeDead() {
-    state = STATUS_DEAD;
+    stateLock.lock();
+    try {
+      state = STATUS_DEAD;
+    } finally {
+      stateLock.unlock();
+    }
   }
 
   boolean makeClosed(OClosableItem item) {
