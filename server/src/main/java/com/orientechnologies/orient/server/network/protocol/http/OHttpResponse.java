@@ -356,7 +356,7 @@ public class OHttpResponse {
       else
         iFormat = JSON_FORMAT + "," + iFormat;
 
-      if(size > streamingThreshold ) {
+      if(size <= streamingThreshold ) {
         final StringWriter buffer = new StringWriter();
         writeRecordsOnStream(iFetchPlan, iFormat, iAdditionalProperties, it, buffer);
         send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
