@@ -17,12 +17,12 @@ public class OClosableDictionaryTest {
 
     dictionary.add(1L, closableItem);
 
-    OClosableHolder<OClosableItem> holder = dictionary.acquire(0L);
-    Assert.assertNull(holder);
+    OClosableEntry<Long, OClosableItem> entry = dictionary.acquire(0L);
+    Assert.assertNull(entry);
 
-    holder = dictionary.acquire(1L);
-    Assert.assertNotNull(holder);
-    dictionary.release(holder);
+    entry = dictionary.acquire(1L);
+    Assert.assertNotNull(entry);
+    dictionary.release(entry);
 
     Assert.assertTrue(dictionary.checkAllLRUListItemsInMap());
     Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList());
@@ -36,12 +36,12 @@ public class OClosableDictionaryTest {
       dictionary.add((long) i, closableItem);
     }
 
-    OClosableHolder<OClosableItem> holder = dictionary.acquire(10L);
-    Assert.assertNull(holder);
+    OClosableEntry<Long, OClosableItem> entry = dictionary.acquire(10L);
+    Assert.assertNull(entry);
 
     for (int i = 0; i < 5; i++) {
-      holder = dictionary.acquire((long) i);
-      dictionary.release(holder);
+      entry = dictionary.acquire((long) i);
+      dictionary.release(entry);
     }
 
     dictionary.emptyBuffers();
@@ -69,78 +69,30 @@ public class OClosableDictionaryTest {
     Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList());
   }
 
-  public void testAccessLastClosedItemsAndOpenThem() {
-    final OClosableDictionary<Long, CItem> dictionary = new OClosableDictionary<Long, CItem>(10);
-
-    for (int i = 0; i < 10; i++) {
-      final CItem closableItem = new CItem(i);
-      dictionary.add((long) i, closableItem);
-    }
-
-    for (int i = 0; i < 5; i++) {
-      OClosableHolder<CItem> holder = dictionary.acquire((long) i);
-      dictionary.release(holder);
-    }
-
-    dictionary.emptyBuffers();
-
-    for (int i = 0; i < 5; i++) {
-      dictionary.add(10L + i, new CItem(10 + i));
-    }
-
-    for (int i = 5; i < 10; i++) {
-      Assert.assertTrue(!dictionary.get((long) i).isOpen());
-    }
-
-    for (int i = 5; i < 10; i++) {
-      OClosableHolder<CItem> holder = dictionary.acquire((long) i);
-      dictionary.release(holder);
-    }
-
-    dictionary.emptyBuffers();
-
-    for (int i = 5; i < 10; i++) {
-      Assert.assertTrue(!dictionary.get((long) i).isOpen());
-    }
-
-    for (int i = 5; i < 10; i++) {
-      OClosableHolder<CItem> holder = dictionary.acquire((long) i);
-      holder.get().open();
-      dictionary.release(holder);
-    }
-
-    dictionary.emptyBuffers();
-
-    for (int i = 5; i < 10; i++) {
-      Assert.assertTrue(dictionary.get((long) i).isOpen());
-    }
-
-    Assert.assertTrue(dictionary.checkAllLRUListItemsInMap());
-    Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList());
-  }
-
   public void testMultipleThreadsConsistency() throws Exception {
-    ExecutorService executor = Executors.newFixedThreadPool(8);
+    ExecutorService executor = Executors.newCachedThreadPool();
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
     CountDownLatch latch = new CountDownLatch(1);
 
     int limit = 60000;
 
     OClosableDictionary<Long, CItem> dictionary = new OClosableDictionary<Long, CItem>(500);
-    futures.add(executor.submit(new Adder(dictionary, latch, limit / 3)));
-    // futures.add(executor.submit(new Adder(dictionary, latch, limit / 3)));
+    futures.add(executor.submit(new Adder(dictionary, latch, 0, limit / 3)));
+    futures.add(executor.submit(new Adder(dictionary, latch, limit / 3, 2 * limit / 3)));
 
     AtomicBoolean stop = new AtomicBoolean();
 
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 16; i++) {
       futures.add(executor.submit(new Acquier(dictionary, latch, limit, stop)));
     }
 
     latch.countDown();
 
-    Thread.sleep(10000);
+    Thread.sleep(60000);
 
-    // futures.add(executor.submit(new Adder(dictionary, latch, limit / 3)));
+    futures.add(executor.submit(new Adder(dictionary, latch, 2 * limit / 3, limit)));
+
+    Thread.sleep(10 * 60000);
 
     stop.set(true);
     for (Future<Void> future : futures) {
@@ -151,17 +103,22 @@ public class OClosableDictionaryTest {
 
     Assert.assertTrue(dictionary.checkAllLRUListItemsInMap());
     Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList());
+    Assert.assertTrue(dictionary.checkNoClosedItemsInLRUList());
+    Assert.assertTrue(dictionary.checkLRUSize());
+    Assert.assertTrue(dictionary.checkLRUSizeEqualsToCapacity());
   }
 
   private class Adder implements Callable<Void> {
     private final OClosableDictionary<Long, CItem> dictionary;
     private final CountDownLatch                   latch;
-    private final int                              limit;
+    private final int                              from;
+    private final int                              to;
 
-    public Adder(OClosableDictionary<Long, CItem> dictionary, CountDownLatch latch, int limit) {
+    public Adder(OClosableDictionary<Long, CItem> dictionary, CountDownLatch latch, int from, int to) {
       this.dictionary = dictionary;
       this.latch = latch;
-      this.limit = limit;
+      this.from = from;
+      this.to = to;
     }
 
     @Override
@@ -169,13 +126,15 @@ public class OClosableDictionaryTest {
       latch.await();
 
       try {
-        for (int i = 0; i < limit; i++) {
+        for (int i = from; i < to; i++) {
           dictionary.add((long) i, new CItem(i));
         }
       } catch (Exception e) {
         e.printStackTrace();
         throw e;
       }
+
+      System.out.println("Add from " + from + " to " + to + " completed");
 
       return null;
     }
@@ -198,16 +157,19 @@ public class OClosableDictionaryTest {
     public Void call() throws Exception {
       latch.await();
 
+      long counter = 0;
+      long start = System.nanoTime();
+
       try {
         Random random = new Random();
 
         while (!stop.get()) {
           int index = random.nextInt(limit);
-
-          final OClosableHolder<CItem> holder = dictionary.acquire((long) index);
-          if (holder != null) {
-            holder.get().open();
-            dictionary.release(holder);
+          final OClosableEntry<Long, CItem> entry = dictionary.acquire((long) index);
+          if (entry != null) {
+            Assert.assertTrue(entry.get().isOpen());
+            counter++;
+            dictionary.release(entry);
           }
         }
 
@@ -216,6 +178,9 @@ public class OClosableDictionaryTest {
         throw e;
       }
 
+      long end = System.nanoTime();
+
+      System.out.println("Files processed " + counter + " nanos per item " + (end - start) / counter);
       return null;
     }
   }

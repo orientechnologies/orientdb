@@ -18,12 +18,18 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
 
     if (prev != null) {
       assert prev.getNext() == entry;
-      prev.setNext(next);
     }
 
     if (next != null) {
       assert next.getPrev() == entry;
-      next.setPrev(next);
+    }
+
+    if (next != null) {
+      next.setPrev(prev);
+    }
+
+    if (prev != null) {
+      prev.setNext(next);
     }
 
     if (head == entry) {
@@ -90,9 +96,6 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
 
     if (newEntry)
       size++;
-
-    assert assertForwardStructure();
-    assert assertBackwardStructure();
   }
 
   int size() {
@@ -121,15 +124,13 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
 
     size--;
 
-    assert assertForwardStructure();
-    assert assertBackwardStructure();
-
     return entry;
   }
 
   public Iterator<OClosableEntry<K, E>> iterator() {
     return new Iterator<OClosableEntry<K, E>>() {
-      private OClosableEntry<K, E> next = tail;
+      private OClosableEntry<K, E> next = head;
+      private OClosableEntry<K, E> current = null;
 
       @Override
       public boolean hasNext() {
@@ -142,19 +143,24 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
           throw new NoSuchElementException();
         }
 
-        OClosableEntry<K, E> result = next;
-        next = next.getPrev();
-        return result;
+        current = next;
+        next = next.getNext();
+        return current;
       }
 
       @Override
       public void remove() {
-        throw new UnsupportedOperationException();
+        if (current == null) {
+          throw new IllegalStateException("Method next was not called");
+        }
+
+        OClosableLRUList.this.remove(current);
+        current = null;
       }
     };
   }
 
-  private boolean assertForwardStructure() {
+  boolean assertForwardStructure() {
     if (head == null)
       return tail == null;
 
@@ -178,7 +184,7 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
     return current == tail;
   }
 
-  private boolean assertBackwardStructure() {
+  boolean assertBackwardStructure() {
     if (tail == null)
       return head == null;
 

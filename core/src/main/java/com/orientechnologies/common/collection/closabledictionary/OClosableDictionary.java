@@ -1,6 +1,7 @@
 package com.orientechnologies.common.collection.closabledictionary;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -116,26 +117,39 @@ public class OClosableDictionary<K, V extends OClosableItem> {
     return null;
   }
 
-  public OClosableHolder<V> acquire(K key) {
+  public OClosableEntry<K, V> acquire(K key) {
     final OClosableEntry<K, V> entry = data.get(key);
 
-    if (entry != null) {
-      final OClosableHolder<V> holder = new OClosableHolder<V>(entry.get().isOpen(), entry);
-      logAcquire(entry);
+    if (entry == null)
+      return null;
 
-      return holder;
+    while (true) {
+      if (entry.isRetired() || entry.isDead()) {
+        return null;
+      } else if (entry.isClosed()) {
+        if (entry.makeAcquiredFromClosed(entry.get())) {
+          assert entry.get().isOpen();
+          logOpen(entry);
+          return entry;
+        }
+      } else if (entry.isOpen()) {
+        if (entry.makeAcquiredFromOpen()) {
+          logAcquire(entry);
+          assert entry.get().isOpen();
+          return entry;
+        }
+      } else {
+        if (entry.incrementAcquired()) {
+          logAcquire(entry);
+          assert entry.get().isOpen();
+          return entry;
+        }
+      }
     }
-
-    return null;
   }
 
-  public void release(OClosableHolder holder) {
-    final OClosableItem item = holder.get();
-    final OClosableEntry<K, V> entry = holder.getEntry();
-
-    if (!holder.wasOpen && item.isOpen()) {
-      logRelease(entry);
-    }
+  public void release(OClosableEntry<K, V> entry) {
+    entry.releaseAcquired();
   }
 
   public OClosableItem get(K key) {
@@ -194,6 +208,16 @@ public class OClosableDictionary<K, V extends OClosableItem> {
     return true;
   }
 
+  boolean checkLRUSize() {
+    return lruList.size() <= lruCapacity;
+  }
+
+  boolean checkLRUSizeEqualsToCapacity() {
+    return lruList.size() == lruCapacity;
+  }
+
+
+
   boolean checkAllOpenItemsInLRUList() {
     lruLock.lock();
     try {
@@ -221,6 +245,35 @@ public class OClosableDictionary<K, V extends OClosableItem> {
 
     return true;
   }
+
+  boolean checkNoClosedItemsInLRUList() {
+    lruLock.lock();
+    try {
+      emptyWriteBuffer();
+      emptyReadBuffers();
+
+      for (OClosableEntry<K, V> entry : data.values()) {
+        boolean contains = false;
+
+        if (entry.get().isOpen())
+          continue;
+
+        for (OClosableEntry<K, V> lruEntry : lruList) {
+          if (lruEntry == entry) {
+            contains = true;
+          }
+        }
+
+        if (contains)
+          return false;
+      }
+    } finally {
+      lruLock.unlock();
+    }
+
+    return true;
+  }
+
 
   private void emptyWriteBuffer() {
     Runnable task = writeBuffer.poll();
@@ -266,6 +319,10 @@ public class OClosableDictionary<K, V extends OClosableItem> {
 
   }
 
+  private void logOpen(OClosableEntry<K, V> entry) {
+    afterWrite(new LogOpen(entry));
+  }
+
   /**
    * Put the entry at the tail of LRU list if it is absent
    *
@@ -273,15 +330,6 @@ public class OClosableDictionary<K, V extends OClosableItem> {
    */
   private void logAdd(OClosableEntry<K, V> entry) {
     afterWrite(new LogAdd(entry));
-  }
-
-  /**
-   * Put entry at the tail of LRU list only if it is absent.
-   *
-   * @param entry LRU entry
-   */
-  private void logRelease(OClosableEntry<K, V> entry) {
-    afterWrite(new LogRelease(entry));
   }
 
   /**
@@ -380,9 +428,10 @@ public class OClosableDictionary<K, V extends OClosableItem> {
   }
 
   private void applyRead(OClosableEntry<K, V> entry) {
-    if (entry.isAlive() && lruList.contains(entry)) {
+    if (lruList.contains(entry)) {
       lruList.moveToTheTail(entry);
     }
+    evict();
   }
 
   private void drainWriteBuffer() {
@@ -417,50 +466,30 @@ public class OClosableDictionary<K, V extends OClosableItem> {
     return (int) (threadId & READ_BUFFERS_MASK);
   }
 
-  public class LogRelease implements Runnable {
-    private final OClosableEntry<K, V> entry;
-
-    public LogRelease(OClosableEntry<K, V> entry) {
-      this.entry = entry;
-    }
-
-    @Override
-    public void run() {
-      if (entry.isAlive() && !lruList.contains(entry)) {
-        lruList.moveToTheTail(entry);
-        evict();
-      }
-    }
-  }
-
   private void evict() {
-    while (lruCapacity < lruList.size()) {
-      final OClosableEntry<K, V> entry = lruList.poll();
-      if (entry != null)
-        entry.get().close();
-    }
-  }
+    while (lruList.size() > lruCapacity) {
+      Iterator<OClosableEntry<K, V>> iterator = lruList.iterator();
 
-  public class LogAcquire implements Runnable {
-    private final OClosableEntry<K, V> entry;
+      boolean entryClosed = false;
 
-    public LogAcquire(OClosableEntry<K, V> entry) {
-      this.entry = entry;
-    }
-
-    @Override
-    public void run() {
-      if (entry.isAlive()) {
-        lruList.moveToTheTail(entry);
-        evict();
+      while (iterator.hasNext()) {
+        OClosableEntry<K, V> entry = iterator.next();
+        if (entry.makeClosed(entry.get())) {
+          iterator.remove();
+          entryClosed = true;
+          break;
+        }
       }
+
+      if (!entryClosed)
+        break;
     }
   }
 
-  public class LogAdd implements Runnable {
+  private class LogAdd implements Runnable {
     private final OClosableEntry<K, V> entry;
 
-    public LogAdd(OClosableEntry<K, V> entry) {
+    private LogAdd(OClosableEntry<K, V> entry) {
       this.entry = entry;
     }
 
@@ -468,17 +497,17 @@ public class OClosableDictionary<K, V extends OClosableItem> {
     public void run() {
       //despite of the fact that status can be change it is safe to proceed because it means
       //that LogRemove entree will be after LogAdd entree (we call markRetired firs and then only log entry removal)
-      if (entry.isAlive()) {
+      if (!entry.isDead() && !entry.isRetired()) {
         lruList.moveToTheTail(entry);
         evict();
       }
     }
   }
 
-  public class LogRemoved implements Runnable {
+  private class LogRemoved implements Runnable {
     private final OClosableEntry<K, V> entry;
 
-    public LogRemoved(OClosableEntry<K, V> entry) {
+    private LogRemoved(OClosableEntry<K, V> entry) {
       this.entry = entry;
     }
 
@@ -487,6 +516,22 @@ public class OClosableDictionary<K, V extends OClosableItem> {
       if (entry.isRetired()) {
         lruList.remove(entry);
         entry.makeDead();
+      }
+    }
+  }
+
+  private class LogOpen implements Runnable {
+    private final OClosableEntry<K, V> entry;
+
+    private LogOpen(OClosableEntry<K, V> entry) {
+      this.entry = entry;
+    }
+
+    @Override
+    public void run() {
+      if (!entry.isRetired() && !entry.isDead()) {
+        lruList.moveToTheTail(entry);
+        evict();
       }
     }
   }
