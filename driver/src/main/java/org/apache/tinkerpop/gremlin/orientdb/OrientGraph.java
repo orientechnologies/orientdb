@@ -263,15 +263,15 @@ public final class OrientGraph implements Graph {
     }
 
     public Stream<OrientVertex> getIndexedVertices(OIndex<Object> index, Optional<Object> valueOption) {
-        return getIndexedElements(index, valueOption, OrientVertex::new, OrientVertex::new);
+        return getIndexedElements(index, valueOption, OrientVertex::new);
     }
 
     public Stream<OrientEdge> getIndexedEdges(OIndex<Object> index, Optional<Object> valueOption) {
-        return getIndexedElements(index, valueOption, OrientEdge::new, OrientEdge::new);
+        return getIndexedElements(index, valueOption, OrientEdge::new);
     }
 
     private <ElementType extends OrientElement> Stream<ElementType> getIndexedElements(OIndex<Object> index, Optional<Object> valueOption,
-            BiFunction<OrientGraph, OIdentifiable, ElementType> newElementById, BiFunction<OrientGraph, ODocument, ElementType> newElementByDoc) {
+            BiFunction<OrientGraph, OIdentifiable, ElementType> newElement) {
         return executeWithConnectionCheck(() -> {
             makeActive();
 
@@ -280,7 +280,7 @@ public final class OrientGraph implements Graph {
                 return Collections.<ElementType> emptyList().stream();
             } else {
                 if (!valueOption.isPresent()) {
-                    return index.cursor().toValues().stream().map(id -> newElementById.apply(this, id));
+                    return index.cursor().toValues().stream().map(id -> newElement.apply(this, id));
                 } else {
                     Object value = convertValue(index, valueOption.get());
                     Object indexValue = index.get(value);
@@ -298,7 +298,7 @@ public final class OrientGraph implements Graph {
                     Iterable<OIdentifiable> iterableVals = (Iterable<OIdentifiable>) indexValue;
                     Stream<OIdentifiable> ids = StreamSupport.stream(iterableVals.spliterator(), false);
                     Stream<ORecord> records = ids.map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
-                    return records.map(r -> newElementByDoc.apply(this, getRawDocument(r)));
+                    return records.map(r -> newElement.apply(this, getRawDocument(r)));
                 }
             }
         });
