@@ -1,6 +1,14 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import  java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Callable;
+
+import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.ConcurrentLRUList;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.LRUList;
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
@@ -122,7 +130,7 @@ public class ConcurrentLRUListConcurrentTest {
         @Override
         public Integer call() throws Exception {
           for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            list.putToMRU(new OCacheEntry(threadNumber, i, null, false));
+            list.putToMRU(new OCacheEntryImpl(threadNumber, i, null, false));
           }
           return AMOUNT_OF_OPERATIONS;
         }
@@ -161,7 +169,7 @@ public class ConcurrentLRUListConcurrentTest {
         public Integer call() throws Exception {
           Random r = new Random();
           for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            list.putToMRU(new OCacheEntry(0, r.nextInt(200), null, false));
+            list.putToMRU(new OCacheEntryImpl(0, r.nextInt(200), null, false));
             consumeCPU(r.nextInt(500) + 1000);
           }
           return AMOUNT_OF_OPERATIONS;
@@ -180,7 +188,7 @@ public class ConcurrentLRUListConcurrentTest {
         public Integer call() throws Exception {
           Random r = new Random();
           for (int i = 0; i < AMOUNT_OF_OPERATIONS; i++) {
-            list.putToMRU(new OCacheEntry(0, 0, null, false));
+            list.putToMRU(new OCacheEntryImpl(0, 0, null, false));
             consumeCPU(r.nextInt(500) + 1000);
           }
           return AMOUNT_OF_OPERATIONS;

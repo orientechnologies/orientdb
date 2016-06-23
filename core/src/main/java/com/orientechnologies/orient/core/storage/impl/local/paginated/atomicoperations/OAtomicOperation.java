@@ -23,10 +23,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
@@ -99,7 +96,7 @@ public class OAtomicOperation {
 
     if (changesContainer.isNew) {
       if (pageIndex <= changesContainer.maxNewPageIndex)
-        return new OCacheEntry(fileId, pageIndex, new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, pageIndex),
+        return new OCacheEntryImpl(fileId, pageIndex, new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, pageIndex),
             false);
       else
         return null;
@@ -115,7 +112,7 @@ public class OAtomicOperation {
         }
 
         if (pageChangesContainer.isNew)
-          return new OCacheEntry(fileId, pageIndex,
+          return new OCacheEntryImpl(fileId, pageIndex,
               new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, pageIndex), false);
         else
           return readCache.load(fileId, pageIndex, checkPinnedPages, writeCache, pageCount);
@@ -184,7 +181,7 @@ public class OAtomicOperation {
     changesContainer.pageChangesMap.put(filledUpTo, pageChangesContainer);
     changesContainer.maxNewPageIndex = filledUpTo;
 
-    return new OCacheEntry(fileId, filledUpTo, new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, filledUpTo),
+    return new OCacheEntryImpl(fileId, filledUpTo, new OCachePointer(null, null, new OLogSequenceNumber(-1, -1), fileId, filledUpTo),
         false);
   }
 

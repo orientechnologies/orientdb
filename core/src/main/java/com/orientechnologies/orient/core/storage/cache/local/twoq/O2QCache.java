@@ -735,7 +735,7 @@ public class O2QCache implements OReadCache {
       final long pageIndex = dataInputStream.readLong();
       try {
         final long fileId = writeCache.externalFileId(internalFileId);
-        final OCacheEntry cacheEntry = new OCacheEntry(fileId, pageIndex, null, false);
+        final OCacheEntry cacheEntry = new OCacheEntryImpl(fileId, pageIndex, null, false);
 
         Set<Long> pages = filePages.get(fileId);
         if (pages == null) {
@@ -785,7 +785,7 @@ public class O2QCache implements OReadCache {
       final long pageIndex = dataInputStream.readLong();
       try {
         final long fileId = writeCache.externalFileId(internalFileId);
-        final OCacheEntry entry = new OCacheEntry(fileId, pageIndex, null, false);
+        final OCacheEntry entry = new OCacheEntryImpl(fileId, pageIndex, null, false);
         filePositionMap.put(new PageKey(fileId, pageIndex), new OPair<Long, OCacheEntry>(position, entry));
         queuePositionMap.put(position, entry);
 
@@ -1063,7 +1063,7 @@ public class O2QCache implements OReadCache {
 
   private UpdateCacheResult entryIsAbsentInQueues(long fileId, long pageIndex, OCachePointer dataPointer) {
     OCacheEntry cacheEntry;
-    cacheEntry = new OCacheEntry(fileId, pageIndex, dataPointer, false);
+    cacheEntry = new OCacheEntryImpl(fileId, pageIndex, dataPointer, false);
     a1in.putToMRU(cacheEntry);
 
     Set<Long> pages = filePages.get(fileId);
