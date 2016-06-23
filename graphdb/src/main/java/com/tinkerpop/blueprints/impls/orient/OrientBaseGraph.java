@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -98,7 +99,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   private final OPartitionedDatabasePool pool;
-  protected ODatabaseDocumentTx          database;
+  protected ODatabaseDocumentInternal    database;
   private String                         url;
   private String                         username;
   private String                         password;
@@ -109,7 +110,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientBaseGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPassword,
+  public OrientBaseGraph(final ODatabaseDocumentInternal iDatabase, final String iUserName, final String iUserPassword,
       final Settings iConfiguration) {
     this.pool = null;
     this.username = iUserName;
@@ -1096,7 +1097,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iDatabase
    *          Underlying database object
    */
-  public OrientBaseGraph reuse(final ODatabaseDocumentTx iDatabase) {
+  public OrientBaseGraph reuse(final ODatabaseDocumentInternal iDatabase) {
     ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
     this.url = iDatabase.getURL();
     database = iDatabase;
@@ -1185,7 +1186,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Returns the underlying Database instance as ODatabaseDocumentTx instance.
    */
   public ODatabaseDocumentTx getRawGraph() {
-    return getDatabase();
+    return (ODatabaseDocumentTx) getDatabase();
   }
 
   /**
@@ -1989,11 +1990,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
   }
 
-  protected ODatabaseDocumentTx getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     if (database == null) {
       throw new ODatabaseException("Database is closed");
     }
-    return database;
+    return (ODatabaseDocumentTx) database;
   }
 
   private static class InitializationStackThreadLocal extends ThreadLocal<Deque<OrientBaseGraph>> {

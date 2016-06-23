@@ -75,7 +75,7 @@ public class OGremlinHelper {
   }
 
   @SuppressWarnings("unchecked")
-  public static Object execute(final ODatabaseDocumentTx iDatabase, final String iText,
+  public static Object execute(final ODatabaseDocumentInternal iDatabase, final String iText,
       final Map<Object, Object> iConfiguredParameters, Map<Object, Object> iCurrentParameters, final List<Object> iResult,
       final OGremlinCallback iBeforeExecution, final OGremlinCallback iAfterExecution) {
     return execute(OGremlinHelper.global().acquireGraph(iDatabase), iText, iConfiguredParameters, iCurrentParameters, iResult,
@@ -325,7 +325,7 @@ public class OGremlinHelper {
   public void releaseEngine(final ScriptEngine engine) {
   }
 
-  public OrientGraph acquireGraph(final ODatabaseDocumentTx database) {
+  public OrientGraph acquireGraph(final ODatabaseDocumentInternal database) {
     return new OrientGraph(database);
   }
 

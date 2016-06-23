@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.graph.sql.functions;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -58,7 +59,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
-    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
+    final ODatabaseDocumentInternal db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 
     result = new ArrayList<Object>();
 

@@ -63,7 +63,7 @@ public class OHttpGraphResponse extends OHttpResponse {
     if (accept != null && accept.contains("text/csv"))
       throw new IllegalArgumentException("Graph mode cannot accept '" + accept + "'");
 
-    final OrientGraphNoTx graph = new OrientGraphNoTx((ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.get());
+    final OrientGraphNoTx graph = new OrientGraphNoTx(ODatabaseRecordThreadLocal.INSTANCE.get());
 
     // DIVIDE VERTICES FROM EDGES
     final Set<OrientVertex> vertices = new HashSet<OrientVertex>();

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.graph.script;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -215,7 +216,7 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     graph.removeEdge(edge);
   }
 
-  public OrientBaseGraph reuse(final ODatabaseDocumentTx iDatabase) {
+  public OrientBaseGraph reuse(final ODatabaseDocumentInternal iDatabase) {
     return graph.reuse(iDatabase);
   }
 

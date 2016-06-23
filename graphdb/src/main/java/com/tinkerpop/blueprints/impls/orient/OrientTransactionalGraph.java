@@ -20,6 +20,7 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -43,11 +44,11 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * @param iDatabase
    *          Underlying database object to attach
    */
-  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
+  protected OrientTransactionalGraph(final ODatabaseDocumentInternal iDatabase) {
     this(iDatabase, true, null, null);
   }
 
-  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPasswd,
+  protected OrientTransactionalGraph(final ODatabaseDocumentInternal iDatabase, final String iUserName, final String iUserPasswd,
       final Settings iConfiguration) {
     super(iDatabase, iUserName, iUserPasswd, iConfiguration);
     setCurrentGraphInThreadLocal();
@@ -57,7 +58,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       ensureTransaction();
   }
 
-  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx, final String iUserName,
+  protected OrientTransactionalGraph(final ODatabaseDocumentInternal iDatabase, final boolean iAutoStartTx, final String iUserName,
       final String iUserPasswd) {
     super(iDatabase, iUserName, iUserPasswd, null);
     setCurrentGraphInThreadLocal();

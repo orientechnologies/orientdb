@@ -179,7 +179,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * @return database
    */
   public ODatabaseDocumentTx getDatabase(final boolean iCreate, final boolean iOpen) {
-    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+    final ODatabaseDocument db = new ODatabaseDocumentTx(url);
 
     final String connMode = settings.getConnectionStrategy();
     db.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
@@ -192,7 +192,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     } else if (iOpen)
       db.open(user, password);
 
-    return db;
+    return (ODatabaseDocumentTx) db;
   }
 
   /**

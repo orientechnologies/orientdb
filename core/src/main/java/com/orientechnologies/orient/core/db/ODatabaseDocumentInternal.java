@@ -73,6 +73,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
       final String fetchPlan, final boolean ignoreCache, final boolean iUpdateCache, final boolean loadTombstones,
       final OStorage.LOCKING_STRATEGY lockingStrategy, RecordReader recordReader);
 
+
   <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final int ver,
       final OPERATION_MODE mode, boolean forceCreate, final ORecordCallback<? extends Number> recordCreatedCallback,
       ORecordCallback<Integer> recordUpdatedCallback);

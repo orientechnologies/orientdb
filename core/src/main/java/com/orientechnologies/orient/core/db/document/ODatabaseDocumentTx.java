@@ -104,11 +104,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   protected static ORecordSerializer defaultSerializer;
 
   static {
-    defaultSerializer = ORecordSerializerFactory.instance()
-        .getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
-    if (defaultSerializer == null)
-      throw new ODatabaseException(
-          "Impossible to find serializer with name " + OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+    defaultSerializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
   }
 
   private final Map<String, Object> properties = new HashMap<String, Object>();

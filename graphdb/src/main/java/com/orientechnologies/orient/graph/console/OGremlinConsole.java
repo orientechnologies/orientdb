@@ -117,7 +117,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       try {
         final Map<String, List<String>> opts = parseOptions(options);
 
-        final OrientGraph g = new OrientGraph((ODatabaseDocumentTx) currentDatabase);
+        final OrientGraph g = new OrientGraph(currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
 
@@ -148,7 +148,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       message("\nExporting database in GRAPHML format to " + iText + "...");
 
       try {
-        final OrientGraph g = new OrientGraph((ODatabaseDocumentTx) currentDatabase);
+        final OrientGraph g = new OrientGraph(currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
 
@@ -179,7 +179,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     final boolean fix_graph = iOptions == null || iOptions.contains("--fix-graph");
     if (fix_graph) {
       // REPAIR GRAPH
-      new OGraphRepair().repair(new OrientGraphNoTx((ODatabaseDocumentTx) currentDatabase), this);
+      new OGraphRepair().repair(new OrientGraphNoTx(currentDatabase), this);
     }
 
     final boolean fix_links = iOptions == null || iOptions.contains("--fix-links");
