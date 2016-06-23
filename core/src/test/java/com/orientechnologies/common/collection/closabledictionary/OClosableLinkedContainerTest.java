@@ -10,10 +10,10 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Test
-public class OClosableDictionaryTest {
+public class OClosableLinkedContainerTest {
   public void testSingleItemAddRemove() {
     final OClosableItem closableItem = new CItem(0);
-    final OClosableDictionary<Long, OClosableItem> dictionary = new OClosableDictionary<Long, OClosableItem>(10);
+    final OClosableLinkedContainer<Long, OClosableItem> dictionary = new OClosableLinkedContainer<Long, OClosableItem>(10);
 
     dictionary.add(1L, closableItem);
 
@@ -29,7 +29,7 @@ public class OClosableDictionaryTest {
   }
 
   public void testCloseHalfOfTheItems() {
-    final OClosableDictionary<Long, OClosableItem> dictionary = new OClosableDictionary<Long, OClosableItem>(10);
+    final OClosableLinkedContainer<Long, OClosableItem> dictionary = new OClosableLinkedContainer<Long, OClosableItem>(10);
 
     for (int i = 0; i < 10; i++) {
       final OClosableItem closableItem = new CItem(i);
@@ -76,7 +76,7 @@ public class OClosableDictionaryTest {
 
     int limit = 60000;
 
-    OClosableDictionary<Long, CItem> dictionary = new OClosableDictionary<Long, CItem>(500);
+    OClosableLinkedContainer<Long, CItem> dictionary = new OClosableLinkedContainer<Long, CItem>(500);
     futures.add(executor.submit(new Adder(dictionary, latch, 0, limit / 3)));
     futures.add(executor.submit(new Adder(dictionary, latch, limit / 3, 2 * limit / 3)));
 
@@ -109,12 +109,12 @@ public class OClosableDictionaryTest {
   }
 
   private class Adder implements Callable<Void> {
-    private final OClosableDictionary<Long, CItem> dictionary;
-    private final CountDownLatch                   latch;
-    private final int                              from;
-    private final int                              to;
+    private final OClosableLinkedContainer<Long, CItem> dictionary;
+    private final CountDownLatch                        latch;
+    private final int                                   from;
+    private final int                                   to;
 
-    public Adder(OClosableDictionary<Long, CItem> dictionary, CountDownLatch latch, int from, int to) {
+    public Adder(OClosableLinkedContainer<Long, CItem> dictionary, CountDownLatch latch, int from, int to) {
       this.dictionary = dictionary;
       this.latch = latch;
       this.from = from;
@@ -141,12 +141,12 @@ public class OClosableDictionaryTest {
   }
 
   private class Acquier implements Callable<Void> {
-    private final OClosableDictionary<Long, CItem> dictionary;
-    private final CountDownLatch                   latch;
-    private final int                              limit;
-    private final AtomicBoolean                    stop;
+    private final OClosableLinkedContainer<Long, CItem> dictionary;
+    private final CountDownLatch                        latch;
+    private final int                                   limit;
+    private final AtomicBoolean                         stop;
 
-    public Acquier(OClosableDictionary<Long, CItem> dictionary, CountDownLatch latch, int limit, AtomicBoolean stop) {
+    public Acquier(OClosableLinkedContainer<Long, CItem> dictionary, CountDownLatch latch, int limit, AtomicBoolean stop) {
       this.dictionary = dictionary;
       this.latch = latch;
       this.limit = limit;

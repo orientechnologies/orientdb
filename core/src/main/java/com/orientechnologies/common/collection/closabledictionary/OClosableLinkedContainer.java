@@ -11,12 +11,23 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Dictionary which holds items in open/close states.
+ * Container for the elements which may be in open/closed state.
+ * But only limited amount of elements are hold by given container may be in open state.
+ * <p>
+ * Elements are added in this container in open state,as result after addition of some elements other
+ * rarely used elements will be closed.
+ * <p>
+ * When you want to use elements from container you should acquire them {@link #acquire(Object)}. So element still will be inside of container
+ * but in acquired state. As result it will not be automatically closed when container will try to close rarely used items.
+ * <p>
+ * Container uses LRU eviction policy to choose item to be closed.
+ * <p>
+ * When you finish to work with element from container you should release (@link {@link #release(OClosableEntry)}) element back to container.
  *
- * @param <K>
- * @param <V>
+ * @param <K> Key associated with entry stored inside of container.
+ * @param <V> Value which may be in open/closed stated and associated with key.
  */
-public class OClosableDictionary<K, V extends OClosableItem> {
+public class OClosableLinkedContainer<K, V extends OClosableItem> {
   /**
    * The number of CPUs
    */
@@ -57,22 +68,58 @@ public class OClosableDictionary<K, V extends OClosableItem> {
    */
   private static final int READ_BUFFER_INDEX_MASK = READ_BUFFER_SIZE - 1;
 
+  /**
+   * Last indexes of buffers on which buffer flush procedure was stopped
+   */
   private final long[] readBufferReadCount = new long[NUMBER_OF_READ_BUFFERS];
-  private final AtomicLong[]                              readBufferWriteCount;
-  private final AtomicLong[]                              readBufferDrainAtWriteCount;
+
+  /**
+   * Next indexes of buffers on which threads will write new entries during logging of acquire operations
+   */
+  private final AtomicLong[] readBufferWriteCount;
+
+  /**
+   * Values of {@link #readBufferWriteCount} on which buffers were flushed.
+   */
+  private final AtomicLong[] readBufferDrainAtWriteCount;
+
+  /**
+   * Read buffers are used to lot {@link #acquire(Object)} operations when item is not switched from closed to open states.
+   * So in cases when amount of items inside of {@link #lruList} is not going to be changed, but only information about recency
+   * of items should be modified.
+   */
   private final AtomicReference<OClosableEntry<K, V>>[][] readBuffers;
-  private final Lock                                       lruLock = new ReentrantLock();
-  private final ConcurrentHashMap<K, OClosableEntry<K, V>> data    = new ConcurrentHashMap<K, OClosableEntry<K, V>>();
 
-  private final ConcurrentLinkedQueue<Runnable> writeBuffer = new ConcurrentLinkedQueue<Runnable>();
+  /**
+   * Lock which wraps all buffer flush operations and as result protects changes of {@link #lruList}.
+   */
+  private final Lock lruLock = new ReentrantLock();
 
-  private final int lruCapacity;
-
+  /**
+   * LRU list to updated statistic of recency of contained items.
+   */
   private final OClosableLRUList<K, V> lruList = new OClosableLRUList<K, V>();
+
+  /**
+   * Main source of truth of container if value is absent in this field it is absent in container.
+   */
+  private final ConcurrentHashMap<K, OClosableEntry<K, V>> data = new ConcurrentHashMap<K, OClosableEntry<K, V>>();
+
+  /**
+   * Buffer which contains operation which includes changes of states from closed to open, and from any state to retired.
+   * In other words this buffer contains information about operations which affect amount of items inside of {@link #lruList} and
+   * this operations can not be lost.
+   */
+  private final ConcurrentLinkedQueue<Runnable> stateBuffer = new ConcurrentLinkedQueue<Runnable>();
+
+  /**
+   * Maximum amount of open items inside of container.
+   */
+  private final int lruCapacity;
 
   private final AtomicReference<DrainStatus> drainStatus = new AtomicReference<DrainStatus>(DrainStatus.IDLE);
 
-  public OClosableDictionary(final int lruCapacity) {
+  public OClosableLinkedContainer(final int lruCapacity) {
     this.lruCapacity = lruCapacity;
 
     AtomicLong[] rbwc = new AtomicLong[NUMBER_OF_READ_BUFFERS];
@@ -178,7 +225,7 @@ public class OClosableDictionary<K, V extends OClosableItem> {
         readBufferDrainAtWriteCount[n].set(0);
       }
 
-      writeBuffer.clear();
+      stateBuffer.clear();
 
       while (lruList.poll() != null)
         ;
@@ -275,10 +322,10 @@ public class OClosableDictionary<K, V extends OClosableItem> {
   }
 
   private void emptyWriteBuffer() {
-    Runnable task = writeBuffer.poll();
+    Runnable task = stateBuffer.poll();
     while (task != null) {
       task.run();
-      task = writeBuffer.poll();
+      task = stateBuffer.poll();
     }
   }
 
@@ -350,7 +397,7 @@ public class OClosableDictionary<K, V extends OClosableItem> {
   }
 
   private void afterWrite(Runnable task) {
-    writeBuffer.add(task);
+    stateBuffer.add(task);
     drainStatus.lazySet(DrainStatus.REQUIRED);
     tryToDrainBuffers();
   }
@@ -373,7 +420,7 @@ public class OClosableDictionary<K, V extends OClosableItem> {
     return counter + 1;
   }
 
-  public void drainReadBuffersIfNeeded(int bufferIndex, long writeCount) {
+  private void drainReadBuffersIfNeeded(int bufferIndex, long writeCount) {
     final AtomicLong lastDrainWriteCount = readBufferDrainAtWriteCount[bufferIndex];
     final boolean bufferOverflow = (writeCount - lastDrainWriteCount.get()) > READ_BUFFER_THRESHOLD;
     if (drainStatus.get().shouldBeDrained(bufferOverflow)) {
@@ -435,7 +482,7 @@ public class OClosableDictionary<K, V extends OClosableItem> {
 
   private void drainWriteBuffer() {
     for (int i = 0; i < WRITE_BUFFER_DRAIN_THRESHOLD; i++) {
-      Runnable task = writeBuffer.poll();
+      Runnable task = stateBuffer.poll();
       if (task == null)
         break;
 

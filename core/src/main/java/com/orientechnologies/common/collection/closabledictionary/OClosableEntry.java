@@ -1,10 +1,9 @@
 package com.orientechnologies.common.collection.closabledictionary;
 
 import javax.annotation.concurrent.GuardedBy;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
 
 public class OClosableEntry<K, V> {
   private static final long STATUS_OPEN    = 1;
