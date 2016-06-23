@@ -711,35 +711,36 @@ public class ODocumentHelper {
   }
 
   public static Object getIdentifiableValue(final OIdentifiable iCurrent, final String iFieldName) {
-    if (iFieldName == null || iFieldName.length() == 0)
+    if (iFieldName == null)
       return null;
 
-    final char begin = iFieldName.charAt(0);
-    if (begin == '@') {
-      // RETURN AN ATTRIBUTE
-      if (iFieldName.equalsIgnoreCase(ATTRIBUTE_THIS))
-        return iCurrent.getRecord();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID))
-        return iCurrent.getIdentity();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_ID))
-        return iCurrent.getIdentity().getClusterId();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_POS))
-        return iCurrent.getIdentity().getClusterPosition();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
-        return iCurrent.getRecord().getVersion();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
-        return ((ODocument) iCurrent.getRecord()).getClassName();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
-        return Orient.instance().getRecordFactoryManager().getRecordTypeName(ORecordInternal.getRecordType(iCurrent.getRecord()));
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
-        final byte[] stream = iCurrent.getRecord().toStream();
-        return stream != null ? stream.length : 0;
-      } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
-        return ((ODocument) iCurrent.getRecord()).fieldNames();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
-        return new String(iCurrent.getRecord().toStream());
+    if(iFieldName.length() > 0) {
+      final char begin = iFieldName.charAt(0);
+      if (begin == '@') {
+        // RETURN AN ATTRIBUTE
+        if (iFieldName.equalsIgnoreCase(ATTRIBUTE_THIS))
+          return iCurrent.getRecord();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID))
+          return iCurrent.getIdentity();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_ID))
+          return iCurrent.getIdentity().getClusterId();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RID_POS))
+          return iCurrent.getIdentity().getClusterPosition();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
+          return iCurrent.getRecord().getVersion();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
+          return ((ODocument) iCurrent.getRecord()).getClassName();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
+          return Orient.instance().getRecordFactoryManager().getRecordTypeName(ORecordInternal.getRecordType(iCurrent.getRecord()));
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
+          final byte[] stream = iCurrent.getRecord().toStream();
+          return stream != null ? stream.length : 0;
+        } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
+          return ((ODocument) iCurrent.getRecord()).fieldNames();
+        else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
+          return new String(iCurrent.getRecord().toStream());
+      }
     }
-
     if (iCurrent == null)
       return null;
 

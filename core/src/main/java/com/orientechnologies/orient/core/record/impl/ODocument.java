@@ -203,6 +203,182 @@ public class ODocument extends ORecordAbstract
     field(iFieldName, iFieldValue);
   }
 
+  /**
+   * retrieves a property value from the current document
+   * @param iFieldName The field name, it can contain any character (it's not evaluated as an expression, as in #eval()
+   * @param <RET>
+   * @return the field value. Null if the field does not exist.
+   */
+  public <RET> RET getProperty(final String iFieldName) {
+    if (iFieldName == null)
+      return null;
+
+    checkForLoading();
+    RET value = (RET) ODocumentHelper.getIdentifiableValue(this, iFieldName);
+
+    if (!iFieldName.startsWith("@") && _lazyLoad && value instanceof ORID && (((ORID) value).isPersistent() || ((ORID) value)
+        .isNew()) && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
+      // CREATE THE DOCUMENT OBJECT IN LAZY WAY
+      RET newValue = (RET) getDatabase().load((ORID) value);
+      if (newValue != null) {
+        unTrack((ORID) value);
+        track((OIdentifiable) newValue);
+        value = newValue;
+        ORecordInternal.setDirtyManager((ORecord) value, this.getDirtyManager());
+
+        ODocumentEntry entry = _fields.get(iFieldName);
+        removeCollectionChangeListener(entry, entry.value);
+        entry.value = value;
+        addCollectionChangeListener(entry);
+      }
+    }
+
+    return value;
+  }
+
+  /**
+   * sets a property value on current document
+   * @param iFieldName The property name
+   * @param iPropertyValue The property value
+   */
+  public void setProperty(final String iFieldName, Object iPropertyValue) {
+    setProperty(iFieldName, iPropertyValue, OCommonConst.EMPTY_TYPES_ARRAY);
+  }
+
+  /**
+   * Sets
+   * @param iPropetyName The property name
+   * @param iPropertyValue The property value
+   * @param iFieldType Forced type (not auto-determined)
+   */
+  public void setProperty(String iPropetyName, Object iPropertyValue, OType... iFieldType) {
+    if (iPropetyName == null)
+      throw new IllegalArgumentException("Field is null");
+
+
+    if (ODocumentHelper.ATTRIBUTE_CLASS.equals(iPropetyName)) {
+      setClassName(iPropertyValue.toString());
+      return;
+    } else if (ODocumentHelper.ATTRIBUTE_RID.equals(iPropetyName)) {
+      _recordId.fromString(iPropertyValue.toString());
+      return;
+    } else if (ODocumentHelper.ATTRIBUTE_VERSION.equals(iPropetyName)) {
+      if (iPropertyValue != null) {
+        int v = _recordVersion;
+
+        if (iPropertyValue instanceof Number)
+          v = ((Number) iPropertyValue).intValue();
+        else
+          v = Integer.parseInt(iPropertyValue.toString());
+
+        _recordVersion = v;
+      }
+      return;
+    }
+
+    checkForLoading();
+    checkForFields();
+
+    ODocumentEntry entry = _fields.get(iPropetyName);
+    final boolean knownProperty;
+    final Object oldValue;
+    final OType oldType;
+    if (entry == null) {
+      entry = new ODocumentEntry();
+      _fieldSize++;
+      _fields.put(iPropetyName, entry);
+      entry.setCreated(true);
+      knownProperty = false;
+      oldValue = null;
+      oldType = null;
+    } else {
+      knownProperty = entry.exist();
+      oldValue = entry.value;
+      oldType = entry.type;
+    }
+    OType fieldType = deriveFieldType(iPropetyName, entry, iFieldType);
+    if (iPropertyValue != null && fieldType != null) {
+      iPropertyValue = ODocumentHelper.convertField(this, iPropetyName, fieldType, null, iPropertyValue);
+    } else if (iPropertyValue instanceof Enum)
+      iPropertyValue = iPropertyValue.toString();
+
+    if (knownProperty)
+      // CHECK IF IS REALLY CHANGED
+      if (iPropertyValue == null) {
+        if (oldValue == null)
+          // BOTH NULL: UNCHANGED
+          return;
+      } else {
+
+        try {
+          if (iPropertyValue.equals(oldValue)) {
+            if (fieldType == oldType) {
+              if (!(iPropertyValue instanceof ORecordElement))
+                // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
+                setDirty();
+
+              // SAVE VALUE: UNCHANGED
+              return;
+            }
+          }
+        } catch (Exception e) {
+          OLogManager.instance()
+              .warn(this, "Error on checking the value of property %s against the record %s", e, iPropetyName, getIdentity());
+        }
+      }
+
+    if (oldValue instanceof ORidBag) {
+      final ORidBag ridBag = (ORidBag) oldValue;
+      ridBag.setOwner(null);
+    } else if (oldValue instanceof ODocument) {
+      ((ODocument) oldValue).removeOwner(this);
+    }
+
+    if (oldValue instanceof OIdentifiable) {
+      unTrack((OIdentifiable) oldValue);
+    }
+
+    if (iPropertyValue != null) {
+      if (iPropertyValue instanceof ODocument) {
+        if (OType.EMBEDDED.equals(fieldType)) {
+          final ODocument embeddedDocument = (ODocument) iPropertyValue;
+          ODocumentInternal.addOwner(embeddedDocument, this);
+        }
+      }
+      if (iPropertyValue instanceof OIdentifiable) {
+        track((OIdentifiable) iPropertyValue);
+      }
+
+      if (iPropertyValue instanceof ORidBag) {
+        final ORidBag ridBag = (ORidBag) iPropertyValue;
+        ridBag.setOwner(null); // in order to avoid IllegalStateException when ridBag changes the owner (ODocument.merge)
+        ridBag.setOwner(this);
+      }
+    }
+
+    if (oldType != fieldType && oldType != null) {
+      // can be made in a better way, but "keeping type" issue should be solved before
+      if (iPropertyValue == null || fieldType != null || oldType != OType.getTypeByValue(iPropertyValue))
+        entry.type = fieldType;
+    }
+    removeCollectionChangeListener(entry, oldValue);
+    entry.value = iPropertyValue;
+    if (!entry.exist()) {
+      entry.setExist(true);
+      _fieldSize++;
+    }
+    addCollectionChangeListener(entry);
+
+    if (_status != STATUS.UNMARSHALLING) {
+      setDirty();
+      if (!entry.isChanged()) {
+        entry.original = oldValue;
+        entry.setChanged(true);
+      }
+    }
+
+  }
+
   protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {
     final Object fieldValue;
     ODocumentEntry entry = iRecord._fields.get(p.getName());

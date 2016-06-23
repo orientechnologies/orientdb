@@ -1,9 +1,5 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import org.testng.annotations.Test;
-
-import java.util.*;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -12,6 +8,12 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.testng.Assert.*;
 
@@ -327,4 +329,31 @@ public class ODocumentTest {
     doc.convertAllMultiValuesToTrackedVersions();
   }
 
+
+  @Test
+  public void testGetSetProperty() {
+    ODocument doc = new ODocument();
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("foo", "valueInTheMap");
+    doc.field("theMap", map);
+    doc.setProperty("theMap.foo", "bar");
+
+    assertEquals(doc.getProperty("theMap"), map);
+    assertEquals(doc.getProperty("theMap.foo"), "bar");
+    assertEquals(doc.eval("theMap.foo"), "valueInTheMap");
+
+    doc.setProperty("", "foo");
+    assertEquals(doc.getProperty(""), "foo");
+
+    doc.setProperty(",", "comma");
+    assertEquals(doc.getProperty(","), "comma");
+
+
+    doc.setProperty(",.,/;:'\"", "strange");
+    assertEquals(doc.getProperty(",.,/;:'\""), "strange");
+
+
+    doc.setProperty("   ", "spaces");
+    assertEquals(doc.getProperty("   "), "spaces");
+  }
 }
