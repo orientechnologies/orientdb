@@ -61,7 +61,7 @@ public class OHttpResponse {
   public boolean               keepAlive         = true;
   public boolean               jsonErrorResponse = true;
   public OClientConnection     connection;
-  private int streamingThreshold = OGlobalConfiguration.NETWORK_HTTP_STREAMING_THRESHOLD.getValueAsInteger();
+  private boolean streaming = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction,
@@ -132,42 +132,6 @@ public class OHttpResponse {
 
     flush();
   }
-
-
-  public void sendStreamed(final int iCode, final String iReason, final String iContentType, OCallable<Void,OutputStream> stream, final String iHeaders)
-      throws IOException {
-    keepAlive = false;
-    if (sendStarted) {
-      // AVOID TO SEND RESPONSE TWICE
-      return;
-    }
-    sendStarted = true;
-
-    if (contentType == null || contentType.length() == 0) {
-      contentType = iContentType;
-    }
-    writeStatus(iCode, iReason);
-    writeHeaders(contentType, keepAlive);
-
-    if (iHeaders != null) {
-      writeLine(iHeaders);
-    }
-    if (sessionId != null)
-      writeLine("Set-Cookie: " + OHttpUtils.OSESSIONID + "=" + sessionId + "; Path=/; HttpOnly");
-
-    writeLine(null);
-    if (contentEncoding != null && contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
-      GZIPOutputStream gout = new GZIPOutputStream(out, 16384); // 16KB
-      stream.call(gout);
-      gout.finish();
-    } else {
-      stream.call(out);
-    }
-
-    flush();
-  }
-
-
 
   public void writeStatus(final int iStatus, final String iReason) throws IOException {
     writeLine(httpVersion + " " + iStatus + " " + iReason);
@@ -356,15 +320,11 @@ public class OHttpResponse {
       else
         iFormat = JSON_FORMAT + "," + iFormat;
 
-      if(size <= streamingThreshold ) {
-        final StringWriter buffer = new StringWriter();
-        writeRecordsOnStream(iFetchPlan, iFormat, iAdditionalProperties, it, buffer);
-        send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
-      } else {
-        final String sendFormat = iFormat;
-        sendStreamed(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, new OCallable<Void, OutputStream>() {
+      final String sendFormat = iFormat;
+      if (streaming) {
+        sendStream(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, new OCallable<Void, OChunkedResponse>() {
           @Override
-          public Void call(OutputStream iArgument) {
+          public Void call(OChunkedResponse iArgument) {
             try {
               OutputStreamWriter writer = new OutputStreamWriter(iArgument);
               writeRecordsOnStream(iFetchPlan, sendFormat, iAdditionalProperties, it, writer);
@@ -374,7 +334,11 @@ public class OHttpResponse {
             }
             return null;
           }
-        }, null);
+        });
+      } else {
+        final StringWriter buffer = new StringWriter();
+        writeRecordsOnStream(iFetchPlan, iFormat, iAdditionalProperties, it, buffer);
+        send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
       }
     }
   }
