@@ -11,28 +11,28 @@ public class OCRUDWorkloadTest {
       new OCRUDWorkload().parseParameters("");
       fail();
     } catch (Exception e) {
-      assertTrue(e.getMessage().contains(OCRUDWorkload.OPERATION_SET_INVALID_FORM_MESSAGE));
+      assertTrue(e.getMessage().contains(OCRUDWorkload.INVALID_FORM_MESSAGE));
     }
 
     try {
       new OCRUDWorkload().parseParameters("crd");
       fail();
     } catch (Exception e) {
-      assertTrue(e.getMessage().contains(OCRUDWorkload.OPERATION_SET_INVALID_FORM_MESSAGE));
+      assertTrue(e.getMessage().contains(OCRUDWorkload.INVALID_FORM_MESSAGE));
     }
 
     try {
       new OCRUDWorkload().parseParameters("c0r0u0d0");
       fail();
     } catch (Exception e) {
-      assertTrue(e.getMessage().contains(OCRUDWorkload.OPERATION_SET_INVALID_FORM_MESSAGE));
+      assertTrue(e.getMessage().contains(OCRUDWorkload.INVALID_FORM_MESSAGE));
     }
 
     try {
       new OCRUDWorkload().parseParameters("c1r1u1d1p1");
       fail();
     } catch (Exception e) {
-      assertTrue(e.getMessage().contains(OCRUDWorkload.OPERATION_SET_INVALID_FORM_MESSAGE));
+      assertTrue(e.getMessage().contains(OCRUDWorkload.INVALID_FORM_MESSAGE));
     }
 
     OCRUDWorkload workload = new OCRUDWorkload();

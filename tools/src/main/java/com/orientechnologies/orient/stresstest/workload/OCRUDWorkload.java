@@ -42,22 +42,23 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class OCRUDWorkload extends OBaseWorkload {
 
-  public static final String CLASS_NAME                         = "StressTestCRUD";
-  public static final String INDEX_NAME                         = CLASS_NAME + ".Index";
+  public static final String CLASS_NAME           = "StressTestCRUD";
+  public static final String INDEX_NAME           = CLASS_NAME + ".Index";
 
-  static final String        OPERATION_SET_INVALID_FORM_MESSAGE = "CRUD workload must be in form of CxIxUxDx where x is a valid number.";
+  static final String        INVALID_FORM_MESSAGE = "CRUD workload must be in form of CxIxUxDx where x is a valid number.";
+  static final String        INVALID_NUMBERS      = "Reads, Updates and Deletes must be less or equals to the Creates";
 
-  private int                total                              = 0;
+  private int                total                = 0;
 
-  private int                creates                            = 0;
-  private int                reads                              = 0;
-  private int                updates                            = 0;
-  private int                deletes                            = 0;
+  private int                creates              = 0;
+  private int                reads                = 0;
+  private int                updates              = 0;
+  private int                deletes              = 0;
 
-  private AtomicInteger      currentCreates                     = new AtomicInteger();
-  private AtomicInteger      currentReads                       = new AtomicInteger();
-  private AtomicInteger      currentUpdates                     = new AtomicInteger();
-  private AtomicInteger      currentDeletes                     = new AtomicInteger();
+  private AtomicInteger      currentCreates       = new AtomicInteger();
+  private AtomicInteger      currentReads         = new AtomicInteger();
+  private AtomicInteger      currentUpdates       = new AtomicInteger();
+  private AtomicInteger      currentDeletes       = new AtomicInteger();
 
   private OWorkLoadResult    createsResult;
   private OWorkLoadResult    readsResult;
@@ -83,15 +84,17 @@ public class OCRUDWorkload extends OBaseWorkload {
       } else if (c >= '0' && c <= '9')
         number.append(c);
       else
-        throw new IllegalArgumentException(
-            "Character '" + c + "' is not valid on CRUD workload. " + OPERATION_SET_INVALID_FORM_MESSAGE);
+        throw new IllegalArgumentException("Character '" + c + "' is not valid on CRUD workload. " + INVALID_FORM_MESSAGE);
     }
     assignState(state, number, ' ');
 
     total = creates + reads + updates + deletes;
 
+    if (reads > creates || updates > creates || deletes > creates)
+      throw new IllegalArgumentException(INVALID_NUMBERS);
+
     if (total == 0)
-      throw new IllegalArgumentException(OPERATION_SET_INVALID_FORM_MESSAGE);
+      throw new IllegalArgumentException(INVALID_FORM_MESSAGE);
   }
 
   @Override
@@ -155,12 +158,12 @@ public class OCRUDWorkload extends OBaseWorkload {
       if (!schema.existsClass(OCRUDWorkload.CLASS_NAME)) {
         final OClass cls = schema.createClass(OCRUDWorkload.CLASS_NAME);
         cls.createProperty("name", OType.STRING);
-//        cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(), (OProgressListener) null, (ODocument) null,
-//            "AUTOSHARDING", new String[] { "name" });
-//        cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(), (OProgressListener) null, (ODocument) null,
-//            null, new String[] { "name" });
-        cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null,
-            null, new String[] { "name" });
+        // cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(), (OProgressListener) null, (ODocument) null,
+        // "AUTOSHARDING", new String[] { "name" });
+        // cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(), (OProgressListener) null, (ODocument) null,
+        // null, new String[] { "name" });
+        cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null, null,
+            new String[] { "name" });
       }
     } finally {
       database.close();
