@@ -1975,6 +1975,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       ORecordCallback<Integer> recordUpdatedCallback) {
     checkOpeness();
     checkIfActive();
+    checkLowDiskSpaceAndFullCheckpointRequests();
+
     if (!record.isDirty())
       return (RET) record;
 
@@ -2100,6 +2102,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       boolean prohibitTombstones) {
     checkOpeness();
     checkIfActive();
+    checkLowDiskSpaceAndFullCheckpointRequests();
 
     final ORecordId rid = (ORecordId) record.getIdentity();
 
@@ -3326,4 +3329,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
+  private void checkLowDiskSpaceAndFullCheckpointRequests() {
+    if (!(storage instanceof OAbstractPaginatedStorage))
+      return;
+    final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
+    paginatedStorage.checkLowDiskSpaceAndFullCheckpointRequests();
+  }
 }
