@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -34,7 +33,10 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -139,21 +141,15 @@ public class OTxTask extends OAbstractReplicatedTask {
 
       return result;
 
-    } catch (ONeedRetryException e) {
+    } catch (Throwable e) {
       database.rollback();
-      return e;
-    } catch (OTransactionException e) {
-      database.rollback();
-      return e;
-    } catch (ORecordDuplicatedException e) {
-      database.rollback();
-      return e;
-    } catch (ORecordNotFoundException e) {
-      database.rollback();
-      return e;
-    } catch (Exception e) {
-      database.rollback();
-      ODistributedServerLog.info(this, getNodeSource(), null, DIRECTION.NONE, "Error on distributed transaction commit", e);
+      reqContext.unlock();
+
+      if (!(e instanceof ONeedRetryException || e instanceof OTransactionException || e instanceof ORecordDuplicatedException
+          || e instanceof ORecordNotFoundException))
+        // DUMP ONLY GENERIC EXCEPTIONS
+        ODistributedServerLog.info(this, getNodeSource(), null, DIRECTION.NONE, "Error on distributed transaction commit", e);
+
       return e;
     }
   }

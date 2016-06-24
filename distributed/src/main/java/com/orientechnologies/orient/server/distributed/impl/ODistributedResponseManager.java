@@ -245,7 +245,11 @@ public class ODistributedResponseManager {
       while (currentTimeout > 0 && receivedResponses < totalExpectedResponses && !isMinimumQuorumReached()) {
 
         // WAIT FOR THE RESPONSES
-        synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS);
+        try {
+          synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+          // IGNORE IT
+        }
 
         if (isMinimumQuorumReached() || receivedResponses >= totalExpectedResponses)
           // OK
