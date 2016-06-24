@@ -29,6 +29,40 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class OClosableLinkedContainer<K, V extends OClosableItem> {
   /**
+   * Design of container consist of several major parts.
+   *
+   * Operation buffers.
+   *
+   * Operation buffers are needed to log all events inside of container which may cause changes in content and order
+   * of LRU items. Following operations are logged:
+   * 1. Add.
+   * 2. Remove.
+   * 3. Acquire.
+   *
+   * Instead of logging all of these operations using single buffer (logger) we split logging by several buffers.
+   * So only few threads are logging at any buffer at the same moment reducing chance of contention.
+   *
+   * There are two types of buffers : state buffer and read buffers. State buffer is used to log messages which can not be lost such
+   * as add and remove. Read buffers are used to log operations small part of which may be lost.
+   *
+   * As result write buffer is implemented as concurrent linked queue and read buffers are implemented as arrays with
+   * three types of counters. So in nutshell read buffer is array based implementation of ring buffers.
+   * Related counters have following meaning : write counter - next position inside of array which is used to write in buffer entry
+   * which was accessed as result of acquire operation, read counter - next position inside of array which is used to read data from
+   * buffer during flushing of data. So this buffer is the implementation of Lamport queue algorithm not taking into account that we may work
+   * with several producers. To decrease contention between threads we do not perform CAS operations on write counter during
+   * operation logging. As result threads may overwrite logs of each other which is acceptable because part of statistic
+   * may be lost.
+   * Content of buffers is processed (flushed) when one of the buffers will be reached threshold between position of write counter during
+   * last buffer flush (this position is stored at "drain at write count" field associated with each buffer)
+   *
+   *
+   *
+   * There is no common lock between of operations with data and logging of this operations to buffers.
+   *
+   */
+
+  /**
    * The number of CPUs
    */
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
