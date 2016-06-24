@@ -19,11 +19,31 @@
  */
 package com.orientechnologies.orient.stresstest;
 
+import com.orientechnologies.common.thread.OSoftThread;
+import com.orientechnologies.orient.stresstest.workload.OWorkload;
+
 /**
- * The access mode to the database
+ * Takes care of updating the console with a completion percentage while the stress test is working; it takes the data to show from
+ * the OStressTestResults class.
  *
  * @author Andrea Iacono
  */
-public enum OMode {
-  PLOCAL, MEMORY, REMOTE, DISTRIBUTED
+public class OConsoleProgressWriter extends OSoftThread {
+
+  final private OWorkload workload;
+
+  public OConsoleProgressWriter(final OWorkload workload) {
+    this.workload = workload;
+  }
+
+  public void printMessage(final String message) {
+    System.out.println(message);
+  }
+
+  @Override
+  protected void execute() throws Exception {
+    final String result = workload.getPartialResult();
+    if (result != null)
+      System.out.print("\rStress test in progress " + result);
+  }
 }

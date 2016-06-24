@@ -17,9 +17,7 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.stresstest.util;
-
-import com.orientechnologies.orient.stresstest.OMode;
+package com.orientechnologies.orient.stresstest;
 
 import java.io.File;
 
@@ -30,14 +28,14 @@ import java.io.File;
  */
 public class ODatabaseIdentifier {
 
-  private final OMode  mode;
-  private final String remoteIp;
-  private final int    remotePort;
-  private       String dbName;
-  private       String rootPassword;
-  private       String plocalPath;
+  private final OStressTester.OMode mode;
+  private final String              remoteIp;
+  private final int                 remotePort;
+  private       String              dbName;
+  private       String              rootPassword;
+  private       String              plocalPath;
 
-  public ODatabaseIdentifier(OMode mode, String dbName, String rootPassword, String remoteIp, int remotePort, String plocalPath) {
+  public ODatabaseIdentifier(OStressTester.OMode mode, String dbName, String rootPassword, String remoteIp, int remotePort, String plocalPath) {
     this.mode = mode;
     this.dbName = dbName;
     this.rootPassword = rootPassword;
@@ -61,11 +59,15 @@ public class ODatabaseIdentifier {
       if (plocalPath != null) {
         basePath = plocalPath;
       }
-      return "plocal:" + basePath + File.separator + dbName;
+
+      if( !basePath.endsWith(File.separator))
+        basePath += File.separator;
+
+      return "plocal:" + basePath + dbName;
     }
   }
 
-  public OMode getMode() {
+  public OStressTester.OMode getMode() {
     return mode;
   }
 

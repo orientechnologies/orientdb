@@ -17,23 +17,33 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.stresstest.output;
+package com.orientechnologies.orient.stresstest.workload;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * This class formats the results of the stress tester to JSON format
+ * Factory of workloads.
  *
- * @author Andrea Iacono
+ * @author Luca Garulli
  */
-public class OJsonResultsFormatter {
+public class OWorkloadFactory {
+  private Map<String, OWorkload> registered = new HashMap<String, OWorkload>();
 
-  public static String format(OStressTestResults stressTestResults) throws JsonProcessingException {
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.PUBLIC_ONLY);
-    return mapper.writeValueAsString(stressTestResults);
+  public OWorkloadFactory() {
+    register(new OCRUDWorkload());
+  }
+
+  public OWorkload get(final String name) {
+    return registered.get(name.toUpperCase());
+  }
+
+  public void register(final OWorkload workload) {
+    registered.put(workload.getName().toUpperCase(), workload);
+  }
+
+  public Set<String> getRegistered() {
+    return registered.keySet();
   }
 }

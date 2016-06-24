@@ -17,17 +17,11 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.stresstest.util;
+package com.orientechnologies.orient.stresstest;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
-import java.util.List;
 
 /**
  * A collection of static methods for interacting with OrientDB
@@ -73,38 +67,5 @@ public class ODatabaseUtils {
           .dropDatabase(databaseIdentifier.getName(), "plocal");
       break;
     }
-  }
-
-  public static ODocument createOperation(int n) {
-    ODocument doc = new ODocument(OConstants.CLASS_NAME);
-    doc.field("name", getThreadValue(n));
-    doc.save();
-    return doc;
-  }
-
-  public static void readOperation(ODatabase database, int n) throws Exception {
-    String query = String.format("SELECT FROM %s WHERE name = ?", OConstants.CLASS_NAME);
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(query)).execute(getThreadValue(n));
-    if (result.size() != 1) {
-      throw new Exception(String.format("The query [%s] result size is %d. Expected size is 1.", query, result.size()));
-    }
-  }
-
-  public static void deleteOperation(final OIdentifiable rec) {
-    ODatabaseRecordThreadLocal.INSTANCE.get().delete( rec.getIdentity() );
-  }
-
-  public static void updateOperation(final OIdentifiable rec, int n) {
-    final ODocument doc = rec.getRecord();
-    doc.field("name", getThreadValue(n, "new"));
-    doc.save();
-  }
-
-  private static String getThreadValue(int n) {
-    return getThreadValue(n, "");
-  }
-
-  private static String getThreadValue(int n, String prefix) {
-    return prefix + "value-" + Thread.currentThread().getId() + "-" + n;
   }
 }
