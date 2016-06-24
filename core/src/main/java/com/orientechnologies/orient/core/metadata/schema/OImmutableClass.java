@@ -385,7 +385,7 @@ public class OImmutableClass implements OClass {
 
   @Override
   public int[] getPolymorphicClusterIds() {
-    return polymorphicClusterIds;
+    return Arrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length);
   }
 
   public OImmutableSchema getSchema() {
