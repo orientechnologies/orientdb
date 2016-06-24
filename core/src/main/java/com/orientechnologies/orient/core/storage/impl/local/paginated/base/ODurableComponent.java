@@ -127,7 +127,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     if (atomicOperation == null)
       return null;
 
-    return atomicOperation.getChanges(entry.getFileId(), entry.getPageIndex());
+    return entry.getChanges();
   }
 
   protected long getFilledUpTo(OAtomicOperation atomicOperation, long fileId) throws IOException {

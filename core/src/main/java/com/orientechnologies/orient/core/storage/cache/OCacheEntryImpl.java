@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.storage.cache;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+
 /**
  * Created by tglman on 23/06/16.
  */
@@ -86,6 +88,11 @@ public class OCacheEntryImpl implements OCacheEntry{
 
   public void decrementUsages() {
     usagesCount--;
+  }
+
+  @Override
+  public OWALChanges getChanges() {
+    return null;
   }
 
   @Override
