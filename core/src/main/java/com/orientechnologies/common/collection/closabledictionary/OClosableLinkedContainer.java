@@ -1,5 +1,6 @@
 package com.orientechnologies.common.collection.closabledictionary;
 
+import javax.annotation.concurrent.GuardedBy;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
@@ -14,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * Container for the elements which may be in open/closed state.
  * But only limited amount of elements are hold by given container may be in open state.
  * <p>
- * Elements are added in this container in open state,as result after addition of some elements other
+ * Elements may be added in this container only in open state,as result after addition of some elements other
  * rarely used elements will be closed.
  * <p>
  * When you want to use elements from container you should acquire them {@link #acquire(Object)}. So element still will be inside of container
@@ -42,24 +43,46 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    * Instead of logging all of these operations using single buffer (logger) we split logging by several buffers.
    * So only few threads are logging at any buffer at the same moment reducing chance of contention.
    *
-   * There are two types of buffers : state buffer and read buffers. State buffer is used to log messages which can not be lost such
+   * There are two types of buffers : state buffer and read buffers. State buffer is used to log operations which can not be lost such
    * as add and remove. Read buffers are used to log operations small part of which may be lost.
    *
    * As result write buffer is implemented as concurrent linked queue and read buffers are implemented as arrays with
-   * three types of counters. So in nutshell read buffer is array based implementation of ring buffers.
-   * Related counters have following meaning : write counter - next position inside of array which is used to write in buffer entry
+   * two types of counters. So in nutshell read buffer is array based implementation of ring buffer.
+   * Counters have following meaning : write counter - next position inside of array which is used to write in buffer entry
    * which was accessed as result of acquire operation, read counter - next position inside of array which is used to read data from
    * buffer during flushing of data. So this buffer is the implementation of Lamport queue algorithm not taking into account that we may work
    * with several producers. To decrease contention between threads we do not perform CAS operations on write counter during
    * operation logging. As result threads may overwrite logs of each other which is acceptable because part of statistic
    * may be lost.
-   * Content of buffers is processed (flushed) when one of the buffers will be reached threshold between position of write counter during
-   * last buffer flush (this position is stored at "drain at write count" field associated with each buffer)
    *
+   * Content of all buffers is processed (flushed) when one of the read buffers is reached threshold between position of write
+   * counter during last buffer flush (this position is stored at "drain at write count" field associated with each buffer)
+   * and current position of write counter. Buffers also flushed when we log any operation in write buffer.
    *
+   * There is no common lock between of operations with data and logging of those operations to buffers so related records can be reordered
+   * during processing of buffers. For example we may add item in t1 thread and remove item in t2 thread. But operations logged in buffers
+   * may be processed in different order and record removed from cache may stay in LRU list forever. To avoid given situation state machine
+   * was introduced.
    *
-   * There is no common lock between of operations with data and logging of this operations to buffers.
+   * Each entry has following states: open, closed, retired (removed from map but not from LRU list), dead(completely removed),
+   * acquired.
    *
+   * Following state transitions are allowed:
+   *
+   * open->(evict() method is called during buffer flush)->close
+   * closed->(acquire() method is called)->acquired
+   * acquired->(release())->open
+   *
+   * open->(remove())->retired
+   * closed->(remove())->retired
+   * acquired->(remove())->retired
+   *
+   * It is seen from state flow that it is impossible to close item in "acquired" state.
+   * Also during of processing of "add" operation, item will be added into LRU list only if it is in
+   *
+   * LRU list is modified during flush of the buffers , to make those modifications safe flush of the buffer
+   * is performed under exclusive lock. To avoid contention between threads any thread which has been noticed that read buffer should
+   * be drained calls tryLock but not lock operation.
    */
 
   /**
@@ -105,6 +128,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   /**
    * Last indexes of buffers on which buffer flush procedure was stopped
    */
+  @GuardedBy("lruLock")
   private final long[] readBufferReadCount = new long[NUMBER_OF_READ_BUFFERS];
 
   /**
@@ -132,6 +156,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   /**
    * LRU list to updated statistic of recency of contained items.
    */
+  @GuardedBy("lruLock")
   private final OClosableLRUList<K, V> lruList = new OClosableLRUList<K, V>();
 
   /**
@@ -142,19 +167,27 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   /**
    * Buffer which contains operation which includes changes of states from closed to open, and from any state to retired.
    * In other words this buffer contains information about operations which affect amount of items inside of {@link #lruList} and
-   * this operations can not be lost.
+   * those operations can not be lost.
    */
   private final ConcurrentLinkedQueue<Runnable> stateBuffer = new ConcurrentLinkedQueue<Runnable>();
 
   /**
    * Maximum amount of open items inside of container.
    */
-  private final int lruCapacity;
+  private final int openLimit;
 
+  /**
+   * Status which indicates whether flush of buffers should be performed or may be delayed.
+   */
   private final AtomicReference<DrainStatus> drainStatus = new AtomicReference<DrainStatus>(DrainStatus.IDLE);
 
-  public OClosableLinkedContainer(final int lruCapacity) {
-    this.lruCapacity = lruCapacity;
+  /**
+   * Creates new instance of container and set limit of open files which may be hold by container.
+   *
+   * @param openLimit Limit of open files hold by container.
+   */
+  public OClosableLinkedContainer(final int openLimit) {
+    this.openLimit = openLimit;
 
     AtomicLong[] rbwc = new AtomicLong[NUMBER_OF_READ_BUFFERS];
     AtomicLong[] rbdawc = new AtomicLong[NUMBER_OF_READ_BUFFERS];
@@ -175,7 +208,17 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     readBuffers = rbs;
   }
 
+  /**
+   * Adds item to the container.
+   * Item should be in open state.
+   *
+   * @param key  Key associated with given item.
+   * @param item Item associated with passed in key.
+   */
   public void add(K key, V item) {
+    if (!item.isOpen())
+      throw new IllegalArgumentException("All passed in items should be in open state");
+
     final OClosableEntry<K, V> closableEntry = new OClosableEntry<K, V>(item);
     final OClosableEntry<K, V> oldEntry = data.putIfAbsent(key, closableEntry);
 
@@ -186,6 +229,12 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     logAdd(closableEntry);
   }
 
+  /**
+   * Removes item associated with passed in key.
+   *
+   * @param key Key associated with item to remove.
+   * @return Removed item.
+   */
   public V remove(K key) {
     final OClosableEntry<K, V> removed = data.remove(key);
 
@@ -198,6 +247,14 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     return null;
   }
 
+  /**
+   * Acquires item associated with passed in key in container.
+   * It is guarantied that item will not be closed if limit of open items will be exceeded and container will close rarely used
+   * items.
+   *
+   * @param key Key associated with item
+   * @return Acquired item if key exists into container or <code>null</code> if there is no item associated with given container
+   */
   public OClosableEntry<K, V> acquire(K key) {
     final OClosableEntry<K, V> entry = data.get(key);
 
@@ -231,10 +288,22 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     return entry;
   }
 
+  /**
+   * Releases item acquired by call of {@link #acquire(Object)} method.
+   * After this call container is free to close given item if limit of open files exceeded and this item is rarely used.
+   *
+   * @param entry Entry to release
+   */
   public void release(OClosableEntry<K, V> entry) {
     entry.releaseAcquired();
   }
 
+  /**
+   * Returns item without acquiring it. State of item is not guarantied in such case.
+   *
+   * @param key Key associated with required item.
+   * @return Item associated with given key.
+   */
   public OClosableItem get(K key) {
     final OClosableEntry<K, V> entry = data.get(key);
     if (entry != null)
@@ -243,6 +312,9 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     return null;
   }
 
+  /**
+   * Clears all content.
+   */
   public void clear() {
     lruLock.lock();
     try {
@@ -268,6 +340,9 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     }
   }
 
+  /**
+   * @return Set of keys contained inside of container.
+   */
   public Set<K> keySet() {
     return Collections.unmodifiableSet(data.keySet());
   }
@@ -292,11 +367,11 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   boolean checkLRUSize() {
-    return lruList.size() <= lruCapacity;
+    return lruList.size() <= openLimit;
   }
 
   boolean checkLRUSizeEqualsToCapacity() {
-    return lruList.size() == lruCapacity;
+    return lruList.size() == openLimit;
   }
 
   boolean checkAllOpenItemsInLRUList() {
@@ -355,6 +430,11 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     return true;
   }
 
+  /**
+   * Read content of write buffer and adds/removes LRU entries to update internal statistic.
+   * Method has to be wrapped by LRU lock.
+   */
+  @GuardedBy("lruLock")
   private void emptyWriteBuffer() {
     Runnable task = stateBuffer.poll();
     while (task != null) {
@@ -363,6 +443,11 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     }
   }
 
+  /**
+   * Read content of all read buffers and reorder elements inside of LRU list to update internal statistic.
+   * Method has to be wrapped by LRU lock.
+   */
+  @GuardedBy("lruLock")
   private void emptyReadBuffers() {
     for (int n = 0; n < NUMBER_OF_READ_BUFFERS; n++) {
       AtomicReference<OClosableEntry<K, V>>[] buffer = readBuffers[n];
@@ -399,12 +484,17 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
 
   }
 
+  /**
+   * Put the entry to the tail of LRU list if entry is not in "retired" or "acquired" state.
+   *
+   * @param entry Entry to process.
+   */
   private void logOpen(OClosableEntry<K, V> entry) {
     afterWrite(new LogOpen(entry));
   }
 
   /**
-   * Put the entry at the tail of LRU list if it is absent
+   * Put the entry at the tail of LRU list if if entry is not in "retired" or "acquired" state.
    *
    * @param entry LRU entry
    */
@@ -413,7 +503,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   /**
-   * Put entry at the tail of LRU list
+   * Put entry at the tail of LRU list if entry is already inside of LRU list.
    *
    * @param entry LRU entry
    */
@@ -430,23 +520,46 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     afterWrite(new LogRemoved(entry));
   }
 
+  /**
+   * Method is used to log operations which change content of the container.
+   * Such changes should be flushed immediately to update content of LRU list.
+   *
+   * @param task Task which contains code is used to manipulate LRU list
+   */
   private void afterWrite(Runnable task) {
     stateBuffer.add(task);
     drainStatus.lazySet(DrainStatus.REQUIRED);
     tryToDrainBuffers();
   }
 
+  /**
+   * Method is used to log operations which do not change LRU list content but affect order of items inside of LRU list.
+   * Such changes may be delayed till buffer will be full.
+   *
+   * @param entry Entry which was affected by operation.
+   */
   private void afterRead(OClosableEntry<K, V> entry) {
     final int bufferIndex = readBufferIndex();
     final long writeCount = putEntryInReadBuffer(entry, bufferIndex);
     drainReadBuffersIfNeeded(bufferIndex, writeCount);
   }
 
+  /**
+   * Adds entry to the read buffer with selected index and returns amount of writes to this buffer since creation of this container.
+   *
+   * @param entry       LRU entry to add.
+   * @param bufferIndex Index of buffer
+   * @return Amount of writes to the buffer since creation of this container.
+   */
   private long putEntryInReadBuffer(OClosableEntry<K, V> entry, int bufferIndex) {
+    //next index to write for this buffer
     AtomicLong writeCounter = readBufferWriteCount[bufferIndex];
     final long counter = writeCounter.get();
 
+    //we do not use CAS operations to limit contention between threads
+    //it is normal that because of duplications of indexes some of items will be lost
     writeCounter.lazySet(counter + 1);
+
     final AtomicReference<OClosableEntry<K, V>>[] buffer = readBuffers[bufferIndex];
     AtomicReference<OClosableEntry<K, V>> bufferEntry = buffer[(int) (counter & READ_BUFFER_INDEX_MASK)];
     bufferEntry.lazySet(entry);
@@ -454,9 +567,15 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     return counter + 1;
   }
 
+  /**
+   * @param bufferIndex Read buffer index
+   * @param writeCount  Amount of writes performed for given buffer
+   */
   private void drainReadBuffersIfNeeded(int bufferIndex, long writeCount) {
+    //amount of writes to the buffer at the last time when buffer was flushed
     final AtomicLong lastDrainWriteCount = readBufferDrainAtWriteCount[bufferIndex];
     final boolean bufferOverflow = (writeCount - lastDrainWriteCount.get()) > READ_BUFFER_THRESHOLD;
+
     if (drainStatus.get().shouldBeDrained(bufferOverflow)) {
       tryToDrainBuffers();
     }
@@ -465,9 +584,12 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   private void tryToDrainBuffers() {
     if (lruLock.tryLock()) {
       try {
+        //optimization to avoid to call tryLock if it is not needed
         drainStatus.lazySet(DrainStatus.IN_PROGRESS);
         drainBuffers();
       } finally {
+        //cas operation because we do not want to overwrite REQUIRED status and to avoid false optimization of
+        //drain buffer by IN_PROGRESS status
         drainStatus.compareAndSet(DrainStatus.IN_PROGRESS, DrainStatus.IDLE);
         lruLock.unlock();
       }
@@ -487,8 +609,10 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   private void drainReadBuffer(int bufferIndex) {
+    //amount of writes to the buffer at the moment
     final long bufferWriteCount = readBufferWriteCount[bufferIndex].get();
     final AtomicReference<OClosableEntry<K, V>>[] buffer = readBuffers[bufferIndex];
+    //position of previous flush
     long bufferCounter = readBufferReadCount[bufferIndex];
 
     for (int n = 0; n < READ_BUFFER_DRAIN_THRESHOLD; n++) {
@@ -500,6 +624,8 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
 
       bufferCounter++;
       applyRead(entry);
+
+      //GC optimization
       bufferEntry.lazySet(null);
     }
 
@@ -542,12 +668,14 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   private static int readBufferIndex() {
+    //partition buffers between threads
     final long threadId = Thread.currentThread().getId();
     return (int) (threadId & READ_BUFFERS_MASK);
   }
 
   private void evict() {
-    while (lruList.size() > lruCapacity) {
+    while (lruList.size() > openLimit) {
+      //we may only close items in open state so we "peek" them first
       Iterator<OClosableEntry<K, V>> iterator = lruList.iterator();
 
       boolean entryClosed = false;
@@ -561,6 +689,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
         }
       }
 
+      //there are no items in open state stop evictaion
       if (!entryClosed)
         break;
     }
