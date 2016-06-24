@@ -4,13 +4,37 @@ import javax.annotation.concurrent.GuardedBy;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-
+/**
+ * Internal presentation of entry inside of {@link OClosableLinkedContainer}
+ *
+ * @param <K> Key type.
+ * @param <V> Value type.
+ */
 public class OClosableEntry<K, V> {
-  private static final long STATUS_OPEN    = 1;
-  private static final long STATUS_CLOSED  = 2;
-  private static final long STATUS_RETIRED = 4;
-  private static final long STATUS_DEAD    = 5;
+  /**
+   * Constant for open state of entries state machine.
+   */
+  private static final long STATUS_OPEN = 1;
 
+  /**
+   * Constant for closed state of entries state machine.
+   */
+  private static final long STATUS_CLOSED = 2;
+
+  /**
+   * Constant for retired state of entries state machine.
+   */
+  private static final long STATUS_RETIRED = 4;
+
+  /**
+   * Constant for dead state of entry state machine.
+   */
+  private static final long STATUS_DEAD = 5;
+
+  /**
+   * Because entry may be acquired by several threads acquired status instead of single constant is presented as number of
+   * acquires and is stored in 4 most significant bytes of {@link #state} field.
+   */
   private static final long ACQUIRED_OFFSET = 32;
 
   @GuardedBy("lruLock")
@@ -41,6 +65,10 @@ public class OClosableEntry<K, V> {
 
   private final V item;
 
+  /**
+   * Current state of state machine
+   */
+  @GuardedBy("stateLock")
   private volatile long state     = STATUS_OPEN;
   private final    Lock stateLock = new ReentrantLock();
 
@@ -60,6 +88,7 @@ public class OClosableEntry<K, V> {
     stateLock.unlock();
   }
 
+  @GuardedBy("stateLock")
   void makeAcquiredFromClosed(OClosableItem item) {
     final long s = state;
     if (s != STATUS_CLOSED)
@@ -71,6 +100,7 @@ public class OClosableEntry<K, V> {
     state = acquiredState;
   }
 
+  @GuardedBy("stateLock")
   void makeAcquiredFromOpen() {
     if (state != STATUS_OPEN)
       throw new IllegalStateException();
@@ -97,6 +127,7 @@ public class OClosableEntry<K, V> {
     }
   }
 
+  @GuardedBy("stateLock")
   void incrementAcquired() {
     long acquireCount = state >>> ACQUIRED_OFFSET;
 

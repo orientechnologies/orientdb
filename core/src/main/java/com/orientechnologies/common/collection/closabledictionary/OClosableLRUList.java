@@ -3,6 +3,12 @@ package com.orientechnologies.common.collection.closabledictionary;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * LRU list is used inside of {@link OClosableLinkedContainer}.
+ *
+ * @param <K> Key type
+ * @param <E> Value type
+ */
 class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
   private int size;
 
@@ -127,6 +133,9 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
     return entry;
   }
 
+  /**
+   * @return Iterator to iterate from head to the tail.
+   */
   public Iterator<OClosableEntry<K, E>> iterator() {
     return new Iterator<OClosableEntry<K, E>>() {
       private OClosableEntry<K, E> next = head;
