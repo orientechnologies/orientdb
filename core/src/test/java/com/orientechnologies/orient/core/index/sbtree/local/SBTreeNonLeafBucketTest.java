@@ -31,11 +31,11 @@ public class SBTreeNonLeafBucketTest {
     cachePointer.incrementReferrer();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, false,
-        OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
+        OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertFalse(treeBucket.isLeaf());
 
-    treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
+    treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertFalse(treeBucket.isLeaf());
     Assert.assertEquals(treeBucket.getLeftSibling(), -1);
@@ -65,7 +65,7 @@ public class SBTreeNonLeafBucketTest {
     cachePointer.incrementReferrer();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, false,
-        OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
+        OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE);
 
     int index = 0;
     Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
@@ -131,7 +131,7 @@ public class SBTreeNonLeafBucketTest {
     cachePointer.incrementReferrer();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, false,
-        OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, null);
+        OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE);
 
     int index = 0;
     for (Long key : keys) {

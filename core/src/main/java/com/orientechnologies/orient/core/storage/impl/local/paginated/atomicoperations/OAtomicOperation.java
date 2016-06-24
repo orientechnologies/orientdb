@@ -206,21 +206,6 @@ public class OAtomicOperation {
     }
   }
 
-  public OWALChanges getChanges(long fileId, long pageIndex) {
-    fileId = checkFileIdCompatibilty(fileId, storageId);
-
-    if (deletedFiles.contains(fileId))
-      throw new OStorageException("File with id " + fileId + " is deleted.");
-
-    final FileChanges changesContainer = fileChanges.get(fileId);
-    assert changesContainer != null;
-
-    final OCacheEntryChanges pageChangesContainer = changesContainer.pageChangesMap.get(pageIndex);
-    assert pageChangesContainer != null;
-
-    return pageChangesContainer.changes;
-  }
-
   public long filledUpTo(long fileId) throws IOException {
     fileId = checkFileIdCompatibilty(fileId, storageId);
 
@@ -436,7 +421,7 @@ public class OAtomicOperation {
 
           cacheEntry.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cacheEntry, null);
+            ODurablePage durablePage = new ODurablePage(cacheEntry);
             durablePage.restoreChanges(filePageChanges.changes);
 
             durablePage.setLsn(filePageChanges.lsn);
@@ -620,7 +605,7 @@ public class OAtomicOperation {
 
             cacheEntry.acquireExclusiveLock();
             try {
-              ODurablePage durablePage = new ODurablePage(cacheEntry, null);
+              ODurablePage durablePage = new ODurablePage(cacheEntry);
               durablePage.restoreChanges(filePageChanges.changes);
 
               durablePage.setLsn(filePageChanges.lsn);

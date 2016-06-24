@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.io.IOException;
 
@@ -53,8 +52,8 @@ public class OSysBucket extends OBonsaiBucketAbstract {
    */
   private static final byte SYS_MAGIC               = (byte) 41;
 
-  public OSysBucket(OCacheEntry cacheEntry, OWALChanges changes) {
-    super(cacheEntry, changes);
+  public OSysBucket(OCacheEntry cacheEntry) {
+    super(cacheEntry);
   }
 
   public void init() throws IOException {
