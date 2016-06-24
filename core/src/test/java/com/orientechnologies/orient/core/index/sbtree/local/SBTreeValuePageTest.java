@@ -28,7 +28,7 @@ public class SBTreeValuePageTest {
 
     OCacheEntry cacheEntryOne = new OCacheEntryImpl(0, 0, cachePointerOne, false);
     cacheEntryOne.acquireExclusiveLock();
-    OSBTreeValuePage valuePageOne = new OSBTreeValuePage(cacheEntryOne, null, true);
+    OSBTreeValuePage valuePageOne = new OSBTreeValuePage(cacheEntryOne, true);
 
     byte[] data = new byte[ODurablePage.MAX_PAGE_SIZE_BYTES + 100];
     Random random = new Random();
@@ -44,7 +44,7 @@ public class SBTreeValuePageTest {
     OCacheEntry cacheEntryTwo = new OCacheEntryImpl(0, 0, cachePointerTwo, false);
     cacheEntryTwo.acquireExclusiveLock();
 
-    OSBTreeValuePage valuePageTwo = new OSBTreeValuePage(cacheEntryTwo, null, true);
+    OSBTreeValuePage valuePageTwo = new OSBTreeValuePage(cacheEntryTwo, true);
     offset = valuePageTwo.fillBinaryContent(data, offset);
 
     Assert.assertEquals(offset, data.length);
@@ -79,7 +79,7 @@ public class SBTreeValuePageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
 
-    OSBTreeValuePage valuePage = new OSBTreeValuePage(cacheEntry, null, true);
+    OSBTreeValuePage valuePage = new OSBTreeValuePage(cacheEntry, true);
     valuePage.setNextFreeListPage(124);
     Assert.assertEquals(valuePage.getNextFreeListPage(), 124);
 

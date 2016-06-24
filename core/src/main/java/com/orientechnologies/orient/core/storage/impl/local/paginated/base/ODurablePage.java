@@ -72,7 +72,7 @@ public class ODurablePage {
 
   private final OCachePointer pointer;
 
-  public ODurablePage(OCacheEntry cacheEntry, OWALChanges changes) {
+  public ODurablePage(OCacheEntry cacheEntry) {
     assert cacheEntry != null || changes != null;
 
     this.cacheEntry = cacheEntry;
@@ -82,7 +82,7 @@ public class ODurablePage {
     } else
       this.pointer = null;
 
-    this.changes = changes;
+    this.changes = cacheEntry.getChanges();
   }
 
   public static OLogSequenceNumber getLogSequenceNumberFromPage(ByteBuffer buffer) {

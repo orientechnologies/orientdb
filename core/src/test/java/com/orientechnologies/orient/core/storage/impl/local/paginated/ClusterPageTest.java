@@ -5,9 +5,9 @@ import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntryImpl;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OCacheEntryChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -42,8 +42,8 @@ public class ClusterPageTest {
     OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
     directCacheEntry.acquireExclusiveLock();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       addOneRecord(localPage);
       addOneRecord(directLocalPage);
@@ -96,8 +96,8 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
 
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       addThreeRecords(localPage);
       addThreeRecords(directLocalPage);
@@ -169,8 +169,8 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
 
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       addFullPage(localPage);
       addFullPage(directLocalPage);
@@ -236,8 +236,8 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
 
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       deleteAddLowerVersion(localPage);
       deleteAddLowerVersion(directLocalPage);
@@ -292,8 +292,8 @@ public class ClusterPageTest {
     OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
     directCacheEntry.acquireExclusiveLock();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       deleteAddBiggerVersion(localPage);
       deleteAddBiggerVersion(directLocalPage);
@@ -353,8 +353,8 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
 
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       deleteAddEqualVersion(localPage);
       deleteAddEqualVersion(directLocalPage);
@@ -406,8 +406,8 @@ public class ClusterPageTest {
     OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
     directCacheEntry.acquireExclusiveLock();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       deleteAddEqualVersionKeepTombstoneVersion(localPage);
       deleteAddEqualVersionKeepTombstoneVersion(directLocalPage);
@@ -459,8 +459,8 @@ public class ClusterPageTest {
     OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
     directCacheEntry.acquireExclusiveLock();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       deleteTwoOutOfFour(localPage);
       deleteTwoOutOfFour(directLocalPage);
@@ -550,8 +550,8 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
 
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       addFullPageDeleteAndAddAgain(localPage);
       addFullPageDeleteAndAddAgain(directLocalPage);
@@ -646,8 +646,8 @@ public class ClusterPageTest {
     try {
       final long seed = System.currentTimeMillis();
 
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       addBigRecordDeleteAndAddSmallRecords(seed, localPage);
       addBigRecordDeleteAndAddSmallRecords(seed, directLocalPage);
@@ -732,8 +732,8 @@ public class ClusterPageTest {
 
     final long seed = System.currentTimeMillis();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       findFirstRecord(seed, localPage);
       findFirstRecord(seed, directLocalPage);
@@ -822,8 +822,8 @@ public class ClusterPageTest {
 
     final long seed = System.currentTimeMillis();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       findLastRecord(seed, localPage);
       findLastRecord(seed, directLocalPage);
@@ -907,8 +907,8 @@ public class ClusterPageTest {
     OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
     directCacheEntry.acquireExclusiveLock();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       setGetNextPage(localPage);
       setGetNextPage(directLocalPage);
@@ -946,8 +946,8 @@ public class ClusterPageTest {
     OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
     directCacheEntry.acquireExclusiveLock();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       setGetPrevPage(localPage);
       setGetPrevPage(directLocalPage);
@@ -986,8 +986,8 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
 
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       replaceOneRecordWithBiggerSize(localPage);
       replaceOneRecordWithBiggerSize(directLocalPage);
@@ -1045,8 +1045,8 @@ public class ClusterPageTest {
     OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
     directCacheEntry.acquireExclusiveLock();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       replaceOneRecordWithEqualSize(localPage);
       replaceOneRecordWithEqualSize(directLocalPage);
@@ -1105,8 +1105,8 @@ public class ClusterPageTest {
     directCacheEntry.acquireExclusiveLock();
 
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       replaceOneRecordWithSmallerSize(localPage);
       replaceOneRecordWithSmallerSize(directLocalPage);
@@ -1164,8 +1164,8 @@ public class ClusterPageTest {
     OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
     directCacheEntry.acquireExclusiveLock();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       replaceOneRecordNoVersionUpdate(localPage);
       replaceOneRecordNoVersionUpdate(directLocalPage);
@@ -1223,8 +1223,8 @@ public class ClusterPageTest {
     OCacheEntry directCacheEntry = new OCacheEntryImpl(0, 0, directCachePointer, false);
     directCacheEntry.acquireExclusiveLock();
     try {
-      OClusterPage localPage = new OClusterPage(cacheEntry, true, new OWALChangesTree());
-      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true, null);
+      OClusterPage localPage = new OClusterPage(new OCacheEntryChanges(cacheEntry), true);
+      OClusterPage directLocalPage = new OClusterPage(directCacheEntry, true);
 
       replaceOneRecordLowerVersion(localPage);
       replaceOneRecordLowerVersion(directLocalPage);
@@ -1271,7 +1271,7 @@ public class ClusterPageTest {
     OCacheEntry cacheEntry = new OCacheEntryImpl(0, 0, cachePointer, false);
     cacheEntry.acquireExclusiveLock();
     try {
-      OClusterPage restoredPage = new OClusterPage(cacheEntry, false, null);
+      OClusterPage restoredPage = new OClusterPage(cacheEntry, false);
 
       OWALChanges changes = localPage.getChanges();
       restoredPage.restoreChanges(changes);

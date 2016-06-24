@@ -17,6 +17,9 @@ public class OCacheEntryChanges implements OCacheEntry {
   protected boolean            isNew   = false;
   protected boolean            pinPage = false;
 
+  public OCacheEntryChanges(OCacheEntry entry) {
+    delegate = entry;
+  }
   public OCacheEntryChanges(){
 
   }
