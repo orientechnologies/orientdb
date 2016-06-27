@@ -1254,8 +1254,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (clusterName.length() == 0)
       throw new IllegalArgumentException("Cluster name is empty");
 
-    if (Character.isDigit(clusterName.charAt(0)))
-      return Integer.parseInt(clusterName);
+//    if (Character.isDigit(clusterName.charAt(0)))
+//      return Integer.parseInt(clusterName);
 
     stateLock.acquireReadLock();
     try {

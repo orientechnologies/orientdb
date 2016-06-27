@@ -1797,10 +1797,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (name == null || name.length() == 0)
       throw new OSchemaException("Found property name null");
 
-    final Character wrongCharacter = OSchemaShared.checkFieldNameIfValid(name);
-    if (wrongCharacter != null)
-      throw new OSchemaException("Invalid property name '" + name + "'. Character '" + wrongCharacter + "' cannot be used");
-
     if (!unsafe)
       checkPersistentPropertyType(getDatabase(), name, type);
 

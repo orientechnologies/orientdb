@@ -129,19 +129,19 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     if (iName == null)
       throw new IllegalArgumentException("Name is null");
 
-    iName = iName.trim();
-
-    final int nameSize = iName.length();
-
-    if (nameSize == 0)
-      throw new IllegalArgumentException("Name is empty");
-
-    for (int i = 0; i < nameSize; ++i) {
-      final char c = iName.charAt(i);
-      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '@' || c == '=' || c == '.' || c == '#')
-        // INVALID CHARACTER
-        return c;
-    }
+//    iName = iName.trim();
+//
+//    final int nameSize = iName.length();
+//
+//    if (nameSize == 0)
+//      throw new IllegalArgumentException("Name is empty");
+//
+//    for (int i = 0; i < nameSize; ++i) {
+//      final char c = iName.charAt(i);
+//      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '@' || c == '=' || c == '.' || c == '#')
+//        // INVALID CHARACTER
+//        return c;
+//    }
 
     return null;
   }
@@ -1131,13 +1131,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass
     try {
       if (className == null || className.length() == 0)
         throw new OSchemaException("Found class name null or empty");
-
-      if (Character.isDigit(className.charAt(0)))
-        throw new OSchemaException("Found invalid class name. Cannot start with numbers");
-
-      final Character wrongCharacter = checkClassNameIfValid(className);
-      if (wrongCharacter != null)
-        throw new OSchemaException("Found invalid class name. Character '" + wrongCharacter + "' cannot be used in class name.");
 
       final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
