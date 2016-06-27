@@ -51,12 +51,12 @@ public class OConsoleProgressWriter extends OSoftThread {
   }
 
   @Override
-  public void shutdown() {
+  public void sendShutdown() {
     try {
-      execute(); // flushes the final result, if we miss it
+      execute(); // flushes the final result, if we missed it
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-    super.shutdown();
+    super.sendShutdown();
   }
 }
