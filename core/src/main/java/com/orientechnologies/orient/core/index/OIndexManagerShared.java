@@ -57,8 +57,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
   protected volatile transient Thread recreateIndexesThread = null;
   private volatile boolean            rebuildCompleted      = false;
 
-  public OIndexManagerShared(final ODatabaseDocument iDatabase) {
-    super(iDatabase);
+  public OIndexManagerShared() {
+    super();
   }
 
   public OIndex<?> getIndexInternal(final String name) {

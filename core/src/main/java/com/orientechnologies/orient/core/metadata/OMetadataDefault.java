@@ -75,7 +75,7 @@ public class OMetadataDefault implements OMetadataInternal {
 
     try {
       OSharedContext shared = init();
-      shared.load(database);
+      shared.load(database.getStorage());
     } finally {
       PROFILER.stopChrono(PROFILER.getDatabaseMetric(getDatabase().getName(), "metadata.load"), "Loading of database metadata",
           timer, "db.*.metadata.load");
@@ -141,7 +141,7 @@ public class OMetadataDefault implements OMetadataInternal {
     OSharedContext shared = database.getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
       @Override
       public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContext(database);
+        OSharedContext shared = new OSharedContext(database.getStorage());
         return shared;
       }
     });

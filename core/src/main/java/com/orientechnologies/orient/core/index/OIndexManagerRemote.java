@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -38,8 +37,8 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   private static final String QUERY_DROP       = "drop index %s";
   private static final long   serialVersionUID = -6570577338095096235L;
 
-  public OIndexManagerRemote(final ODatabaseDocument iDatabase) {
-    super(iDatabase);
+  public OIndexManagerRemote() {
+    super();
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,

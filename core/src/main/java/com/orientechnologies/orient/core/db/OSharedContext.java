@@ -13,9 +13,8 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-
-import java.io.Closeable;
 
 /**
  * Created by tglman on 15/06/16.
@@ -34,31 +33,31 @@ public class OSharedContext implements OCloseable {
 
   private volatile boolean loaded = false;
 
-  public OSharedContext(ODatabaseDocumentInternal database) {
-    schema = new OSchemaShared(database.getStorageVersions().classesAreDetectedByClusterId());
+  public OSharedContext(OStorage storage) {
+    schema = new OSchemaShared(storage.getComponentsFactory().classesAreDetectedByClusterId());
 
     security = OSecurityManager.instance().newSecurity();
 
-    if (database.getStorage() instanceof OStorageProxy)
-      indexManager = new OIndexManagerRemote(database);
+    if (storage instanceof OStorageProxy)
+      indexManager = new OIndexManagerRemote();
     else
-      indexManager = new OIndexManagerShared(database);
+      indexManager = new OIndexManagerShared();
 
     functionLibrary = new OFunctionLibraryImpl();
     scheduler = new OSchedulerImpl();
     sequenceLibrary = new OSequenceLibraryImpl();
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
-    commandCache = new OCommandCacheSoftRefs(database.getName());
+    commandCache = new OCommandCacheSoftRefs(storage.getName());
     statementCache = new OStatementCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
   }
 
 
-  public synchronized void load(ODatabaseDocumentInternal database) {
+  public synchronized void load(OStorage storage) {
     if (!loaded) {
       schema.load();
       security.load();
       indexManager.load();
-      if (!(database.getStorage() instanceof OStorageProxy)) {
+      if (!(storage instanceof OStorageProxy)) {
         functionLibrary.load();
         scheduler.load();
       }
