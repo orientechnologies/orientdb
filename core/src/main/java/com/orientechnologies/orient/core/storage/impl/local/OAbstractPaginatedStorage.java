@@ -1288,15 +1288,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     final Set<ORecordOperation> newRecords = new TreeSet<ORecordOperation>(new Comparator<ORecordOperation>() {
       @Override
-      public int compare(ORecordOperation o1, ORecordOperation o2) {
-        long diff = (o1.getRecord().getIdentity().getClusterPosition() - o2.getRecord().getIdentity().getClusterPosition());
-        //convert long to int comparation
-        if (diff == 0)
-          return 0;
-        else if (diff < 0)
-          return -1;
-        else
-          return 1;
+      public int compare(final ORecordOperation o1, final ORecordOperation o2) {
+        return o1.getRecord().getIdentity().compareTo(o2.getRecord().getIdentity());
       }
     });
 
