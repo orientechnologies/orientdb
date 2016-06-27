@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -50,6 +51,7 @@ import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageRecoverListener;
@@ -888,21 +890,23 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public Iterable<Vertex> getVertices(final String label, final String[] iKey, Object[] iValue) {
     makeActive();
     final OClass clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(label);
-    Set<OIndex<?>> indexes = clazz.getInvolvedIndexes(Arrays.asList(iKey));
-    if (indexes.iterator().hasNext()) {
-      final OIndex<?> idx = indexes.iterator().next();
-      if (idx != null) {
-        List<Object> keys = Arrays.asList(convertKeys(idx, iValue));
-        Object key;
-        if (keys.size() == 1) {
-          key = keys.get(0);
-        } else {
-          key = new OCompositeKey(keys);
+    if(clazz != null) {
+      Set<OIndex<?>> indexes = clazz.getInvolvedIndexes(Arrays.asList(iKey));
+      if (indexes.iterator().hasNext()) {
+        final OIndex<?> idx = indexes.iterator().next();
+        if (idx != null) {
+          List<Object> keys = Arrays.asList(convertKeys(idx, iValue));
+          Object key;
+          if (keys.size() == 1) {
+            key = keys.get(0);
+          } else {
+            key = new OCompositeKey(keys);
+          }
+          Object indexValue = idx.get(key);
+          if (indexValue != null && !(indexValue instanceof Iterable<?>))
+            indexValue = Arrays.asList(indexValue);
+          return new OrientElementIterable<Vertex>(this, (Iterable<?>) indexValue);
         }
-        Object indexValue = idx.get(key);
-        if (indexValue != null && !(indexValue instanceof Iterable<?>))
-          indexValue = Arrays.asList(indexValue);
-        return new OrientElementIterable<Vertex>(this, (Iterable<?>) indexValue);
       }
     }
     // NO INDEX: EXECUTE A QUERY
@@ -1341,9 +1345,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public void dropVertexType(final String iTypeName) {
     makeActive();
 
+    if (getDatabase().countClass(iTypeName) > 0)
+      throw new OCommandExecutionException("cannot drop vertex type '" + iTypeName
+          + "' because it contains Vertices. Use 'DELETE VERTEX' command first to remove data");
+
     executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
       @Override public OClass call(final OrientBaseGraph g) {
-        getRawGraph().getMetadata().getSchema().dropClass(iTypeName);
+        ODatabaseDocumentTx rawGraph = getRawGraph();
+        rawGraph.command(new OCommandSQL("delete vertex " + iTypeName)).execute();
+        rawGraph.getMetadata().getSchema().dropClass(iTypeName);
         return null;
       }
     }, "drop vertex type '", iTypeName, "'");
@@ -1485,6 +1495,10 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    */
   public void dropEdgeType(final String iTypeName) {
     makeActive();
+    if (getDatabase().countClass(iTypeName) > 0)
+      throw new OCommandExecutionException(
+          "cannot drop edge type '" + iTypeName + "' because it contains Edges. Use 'DELETE EDGE' command first to remove data");
+
 
     executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
       @Override public OClass call(final OrientBaseGraph g) {

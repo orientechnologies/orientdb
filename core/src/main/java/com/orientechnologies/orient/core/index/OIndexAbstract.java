@@ -735,8 +735,22 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     }
   }
 
+  /**
+   * Interprets transaction index changes for a certain key. Override it to customize index behaviour on interpreting index changes.
+   * This may be viewed as an optimization, but in some cases this is a requirement. For example, if you put multiple values under
+   * the same key during the transaction for single-valued/unique index, but remove all of them except one before commit, there is
+   * no point in throwing {@link com.orientechnologies.orient.core.storage.ORecordDuplicatedException} while applying index changes.
+   *
+   * @param changes the changes to interpret.
+   * @return the interpreted index key changes.
+   */
+  protected Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+      OTransactionIndexChangesPerKey changes) {
+    return changes.entries;
+  }
+
   private void applyIndexTxEntry(Map<Object, Object> snapshot, OTransactionIndexChangesPerKey entry) {
-    for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op : entry.entries) {
+    for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op : interpretTxKeyChanges(entry)) {
       switch (op.operation) {
       case PUT:
         putInSnapshot(entry.key, op.value, snapshot);

@@ -1,12 +1,25 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class OrientLightWeightEdgeTest {
 
+  private OrientGraph graph;
+
+  @Before
+  public void before() {
+    graph = new OrientGraph("memory:" + OrientLightWeightEdgeTest.class.getSimpleName());
+  }
+
+  @After
+  public void after() {
+    graph.drop();
+  }
+
   @Test
   public void testLiteweightToEavyMigration() throws Exception {
-    OrientGraph graph = new OrientGraph("memory:" + OrientLightWeightEdgeTest.class.getSimpleName());
     graph.setUseLightweightEdges(true);
     graph.setAutoScaleEdgeType(true);
     OrientVertex vertex = graph.addVertex(null);

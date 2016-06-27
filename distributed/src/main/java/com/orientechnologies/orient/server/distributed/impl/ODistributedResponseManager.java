@@ -27,6 +27,7 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.Serializable;
@@ -244,7 +245,11 @@ public class ODistributedResponseManager {
       while (currentTimeout > 0 && receivedResponses < totalExpectedResponses && !isMinimumQuorumReached()) {
 
         // WAIT FOR THE RESPONSES
-        synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS);
+        try {
+          synchronousResponsesArrived.await(currentTimeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+          // IGNORE IT
+        }
 
         if (isMinimumQuorumReached() || receivedResponses >= totalExpectedResponses)
           // OK
@@ -501,10 +506,17 @@ public class ODistributedResponseManager {
         if (group.size() >= quorum) {
           int responsesForQuorum = 0;
           for (ODistributedResponse r : group) {
-            if (nodesConcurInQuorum.contains(r.getExecutorNodeName()))
-              if (!(r.getPayload() instanceof Throwable) && ++responsesForQuorum >= quorum)
+            if (nodesConcurInQuorum.contains(r.getExecutorNodeName())) {
+              final Object payload = r.getPayload();
+
+              if (payload instanceof Throwable) {
+                if (payload instanceof ODistributedRecordLockedException)
+                  // JUST ONE ODistributedRecordLockedException IS ENOUGH TO FAIL THE OPERATION BECAUSE RESOURCES CANNOT BE LOCKED
+                  return false;
+              } else if (++responsesForQuorum >= quorum)
                 // QUORUM REACHED
                 break;
+            }
           }
 
           return responsesForQuorum >= quorum;
@@ -577,6 +589,12 @@ public class ODistributedResponseManager {
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
 
     undoRequest();
+
+    // CHECK IF THERE IS AT LEAST ONE ODistributedRecordLockedException
+    for (Object r : responses.values()) {
+      if (r instanceof ODistributedRecordLockedException)
+        throw (ODistributedRecordLockedException) r;
+    }
 
     final Object goodResponsePayload = bestResponsesGroup.isEmpty() ? null : bestResponsesGroup.get(0).getPayload();
     if (goodResponsePayload instanceof RuntimeException)

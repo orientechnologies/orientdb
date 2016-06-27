@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -44,15 +42,8 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   /**
@@ -322,17 +313,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     if (iOperation == OPERATION.CLEAR)
       indexEntry.setCleared();
     else {
-      if (iOperation == OPERATION.REMOVE && iValue != null && iValue.getIdentity().isTemporary()) {
-
-        // TEMPORARY RECORD: JUST REMOVE IT
-        for (OTransactionIndexChangesPerKey changes : indexEntry.changesPerKey.values())
-          for (int i = 0; i < changes.entries.size(); ++i)
-            if (changes.entries.get(i).value.equals(iValue)) {
-              changes.entries.remove(i);
-              break;
-            }
-      }
-
       OTransactionIndexChangesPerKey changes = indexEntry.getChangesPerKey(key);
       changes.clientTrackOnly = clientTrackOnly;
       changes.add(iValue, iOperation);

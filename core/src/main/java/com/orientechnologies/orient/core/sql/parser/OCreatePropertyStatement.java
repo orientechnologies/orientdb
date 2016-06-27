@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class OCreatePropertyStatement extends OStatement {
@@ -10,6 +12,7 @@ public class OCreatePropertyStatement extends OStatement {
   public OIdentifier propertyType;
   public OIdentifier linkedType;
   public boolean unsafe = false;
+  public List<OCreatePropertyAttributeStatement> attributes = new ArrayList<OCreatePropertyAttributeStatement>();
 
   public OCreatePropertyStatement(int id) {
     super(id);
@@ -31,6 +34,20 @@ public class OCreatePropertyStatement extends OStatement {
       builder.append(" ");
       linkedType.toString(params, builder);
     }
+    
+    if (!attributes.isEmpty()) {
+      builder.append(" (");
+      for (int i = 0; i < attributes.size(); i++) {
+        OCreatePropertyAttributeStatement att = attributes.get(i);
+        att.toString(params, builder);
+        
+        if (i < attributes.size() - 1) {
+          builder.append(", ");
+        }
+      }
+      builder.append(")");
+    }
+    
     if (unsafe) {
       builder.append(" UNSAFE");
     }

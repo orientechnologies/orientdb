@@ -5,12 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-import java.util.Collection;
-import java.util.Iterator;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OContainsCondition extends OBooleanExpression {
 
@@ -54,16 +49,18 @@ public class OContainsCondition extends OBooleanExpression {
       left = ((Iterable) left).iterator();
     }
     if (left instanceof Iterator) {
-      if (right instanceof Iterable) {
-        right = ((Iterable) right).iterator();
+      if(!(right instanceof Iterable)){
+        right = Collections.singleton(right);
       }
-      Iterator leftIterator = (Iterator) right;
-      Iterator rightIterator = (Iterator) left;
-      while (leftIterator.hasNext()) {
-        Object leftItem = leftIterator.next();
+      right = ((Iterable) right).iterator();
+
+      Iterator leftIterator = (Iterator) left;
+      Iterator rightIterator = (Iterator) right;
+      while (rightIterator.hasNext()) {
+        Object leftItem = rightIterator.next();
         boolean found = false;
-        while (rightIterator.hasNext()) {
-          Object rightItem = rightIterator.next();
+        while (leftIterator.hasNext()) {
+          Object rightItem = leftIterator.next();
           if (leftItem != null && leftItem.equals(rightItem)) {
             found = true;
             break;

@@ -1666,8 +1666,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               break;
             }
 
-            if (limit > 0 && browsed++ > limit)
-              // LIMIT REACHED, RETURN TRUE TO CONTINUE
+            if (++browsed == limit)
+              // LIMIT REACHED
               return clusterPosition;
           } finally {
             if (statistic != null)

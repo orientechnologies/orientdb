@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.network.protocol.http;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -60,6 +61,7 @@ public class OHttpResponse {
   public boolean               keepAlive         = true;
   public boolean               jsonErrorResponse = true;
   public OClientConnection     connection;
+  private boolean streaming = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction,
@@ -243,7 +245,7 @@ public class OHttpResponse {
       final Map<String, Object> iAdditionalProperties, final String mode) throws IOException {
     if (iRecords == null)
       return;
-
+    final int size = OMultiValue.getSize(iRecords);
     final Iterator<Object> it = OMultiValue.getMultiValueIterator(iRecords);
 
     if (accept != null && accept.contains("text/csv")) {
@@ -318,37 +320,59 @@ public class OHttpResponse {
       else
         iFormat = JSON_FORMAT + "," + iFormat;
 
-      final StringWriter buffer = new StringWriter();
-      final OJSONWriter json = new OJSONWriter(buffer, iFormat);
-      json.beginObject();
-
-      final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
-
-      // WRITE RECORDS
-      json.beginCollection(-1, true, "result");
-      formatMultiValue(it, buffer, format);
-      json.endCollection(-1, true);
-
-      if (iAdditionalProperties != null) {
-        for (Map.Entry<String, Object> entry : iAdditionalProperties.entrySet()) {
-
-          final Object v = entry.getValue();
-          if (OMultiValue.isMultiValue(v)) {
-            json.beginCollection(-1, true, entry.getKey());
-            formatMultiValue(OMultiValue.getMultiValueIterator(v), buffer, format);
-            json.endCollection(-1, true);
-          } else
-            json.writeAttribute(entry.getKey(), v);
-
-          if (Thread.currentThread().isInterrupted())
-            break;
-
-        }
+      final String sendFormat = iFormat;
+      if (streaming) {
+        sendStream(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, new OCallable<Void, OChunkedResponse>() {
+          @Override
+          public Void call(OChunkedResponse iArgument) {
+            try {
+              OutputStreamWriter writer = new OutputStreamWriter(iArgument);
+              writeRecordsOnStream(iFetchPlan, sendFormat, iAdditionalProperties, it, writer);
+              writer.flush();
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+            return null;
+          }
+        });
+      } else {
+        final StringWriter buffer = new StringWriter();
+        writeRecordsOnStream(iFetchPlan, iFormat, iAdditionalProperties, it, buffer);
+        send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
       }
-
-      json.endObject();
-      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     }
+  }
+
+  private void writeRecordsOnStream(String iFetchPlan, String iFormat, Map<String, Object> iAdditionalProperties, Iterator<Object> it,
+      Writer buffer) throws IOException {
+    final OJSONWriter json = new OJSONWriter(buffer, iFormat);
+    json.beginObject();
+
+    final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
+
+    // WRITE RECORDS
+    json.beginCollection(-1, true, "result");
+    formatMultiValue(it, buffer, format);
+    json.endCollection(-1, true);
+
+    if (iAdditionalProperties != null) {
+      for (Map.Entry<String, Object> entry : iAdditionalProperties.entrySet()) {
+
+        final Object v = entry.getValue();
+        if (OMultiValue.isMultiValue(v)) {
+          json.beginCollection(-1, true, entry.getKey());
+          formatMultiValue(OMultiValue.getMultiValueIterator(v), buffer, format);
+          json.endCollection(-1, true);
+        } else
+          json.writeAttribute(entry.getKey(), v);
+
+        if (Thread.currentThread().isInterrupted())
+          break;
+
+      }
+    }
+
+    json.endObject();
   }
 
   private void checkConnection() throws IOException {
@@ -363,7 +387,7 @@ public class OHttpResponse {
     }
   }
 
-  public void formatMultiValue(final Iterator<?> iIterator, final StringWriter buffer, final String format) throws IOException {
+  public void formatMultiValue(final Iterator<?> iIterator, final Writer buffer, final String format) throws IOException {
     if (iIterator != null) {
       int counter = 0;
       String objectJson;

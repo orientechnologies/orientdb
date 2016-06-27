@@ -42,7 +42,9 @@ import com.orientechnologies.orient.core.metadata.security.OIdentity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetwork;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -1869,18 +1871,19 @@ public class ODocument extends ORecordAbstract
 
   @Override
   public void writeExternal(ObjectOutput stream) throws IOException {
+    ORecordSerializer serializer = ORecordSerializerFactory.instance().getFormat(ORecordSerializerNetwork.NAME);
     final byte[] idBuffer = _recordId.toStream();
     stream.writeInt(-1);
     stream.writeInt(idBuffer.length);
     stream.write(idBuffer);
     stream.writeInt(_recordVersion);
 
-    final byte[] content = toStream();
+    final byte[] content = serializer.toStream(this, false);
     stream.writeInt(content.length);
     stream.write(content);
 
     stream.writeBoolean(_dirty);
-    stream.writeObject(this._recordFormat.toString());
+    stream.writeObject(serializer.toString());
   }
 
   @Override

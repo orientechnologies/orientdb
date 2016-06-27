@@ -52,7 +52,7 @@ public class ODistributedRecordLockedException extends ONeedRetryException {
   }
 
   @Override
-  public boolean equals(Object obj) {
+  public boolean equals(final Object obj) {
     if (!(obj instanceof ODistributedRecordLockedException))
       return false;
 

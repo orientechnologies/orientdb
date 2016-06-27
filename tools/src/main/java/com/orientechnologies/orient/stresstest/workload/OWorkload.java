@@ -17,16 +17,23 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.stresstest.util;
+package com.orientechnologies.orient.stresstest.workload;
+
+import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 
 /**
- * This exception is thrown when an error occurs during the init phase of the StressTester.
+ * Represents a workload for the stress test.
  *
- * @author Andrea Iacono
+ * @author Luca Garulli
  */
-public class OInitException extends Exception {
+public interface OWorkload {
+  String getName();
+  
+  void parseParameters(String params);
 
-    public OInitException(String message) {
-        super(OConstants.SYNTAX + "\n" + message);
-    }
+  void execute(int threadsNumber, ODatabaseIdentifier databaseIdentifier);
+
+  String getPartialResult();
+
+  String getFinalResult();
 }

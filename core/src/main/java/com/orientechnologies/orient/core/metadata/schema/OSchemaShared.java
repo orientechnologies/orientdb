@@ -988,7 +988,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass
               cmd.append(" extends ");
             else
               cmd.append(", ");
-            cmd.append(superClass.getName());
+            cmd.append('`').append(superClass.getName()).append('`');
             first = false;
             superClassesList.add(superClass);
           }

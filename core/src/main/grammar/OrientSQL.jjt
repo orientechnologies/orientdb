@@ -3888,7 +3888,9 @@ ODropClassStatement DropClassStatement():
 }
 
 OCreatePropertyStatement CreatePropertyStatement():
-{}
+{
+	OCreatePropertyAttributeStatement lastAttribute;
+}
 {
 	<CREATE> <PROPERTY>
 	(
@@ -3899,8 +3901,30 @@ OCreatePropertyStatement CreatePropertyStatement():
 		[
 			jjtThis.linkedType = Identifier()
 		]
+		[
+		    <LPAREN>
+		    lastAttribute = CreatePropertyAttributeStatement() { jjtThis.attributes.add(lastAttribute); }
+		    (<COMMA> lastAttribute = CreatePropertyAttributeStatement() { jjtThis.attributes.add(lastAttribute); })*
+		    <RPAREN>
+		]
 		[ <UNSAFE> { jjtThis.unsafe = true; } ]
 	)
+	{ return jjtThis; }
+}
+
+OCreatePropertyAttributeStatement CreatePropertyAttributeStatement():
+{
+}
+{	
+    (   
+        (
+            jjtThis.settingName = Identifier()
+            [LOOKAHEAD( { getToken(1).kind != COMMA && getToken(1).kind != RPAREN} )
+               jjtThis.settingValue = Expression()
+            ]
+        )
+	)
+	
 	{ return jjtThis; }
 }
 
@@ -4442,8 +4466,8 @@ OCreateSequenceStatement CreateSequenceStatement():
         }
 
         [ <START> jjtThis.start = Expression() ]
-        [ <INCREMENT> jjtThis.start = Expression() ]
-        [ <CACHE> jjtThis.start = Expression() ]
+        [ <INCREMENT> jjtThis.increment = Expression() ]
+        [ <CACHE> jjtThis.cache = Expression() ]
     )
     { return jjtThis; }
 }
@@ -4457,8 +4481,8 @@ OAlterSequenceStatement AlterSequenceStatement():
         <ALTER> <SEQUENCE>
         jjtThis.name = Identifier()
         [ <START> jjtThis.start = Expression() ]
-        [ <INCREMENT> jjtThis.start = Expression() ]
-        [ <CACHE> jjtThis.start = Expression() ]
+        [ <INCREMENT> jjtThis.increment = Expression() ]
+        [ <CACHE> jjtThis.cache = Expression() ]
     )
     { return jjtThis; }
 }

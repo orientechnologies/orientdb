@@ -19,30 +19,28 @@
   */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.Collection;
+import com.orientechnologies.common.comparator.ODefaultComparator;
+
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-import com.orientechnologies.common.comparator.ODefaultComparator;
-
 /**
  * Collects the changes to an index for a certain key
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 public class OTransactionIndexChanges {
 
-  public static enum OPERATION {
+  public enum OPERATION {
     PUT, REMOVE, CLEAR
   }
 
-  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey  = new TreeMap<Object, OTransactionIndexChangesPerKey>(
-                                                                                 ODefaultComparator.INSTANCE);
+  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<Object, OTransactionIndexChangesPerKey>(
+      ODefaultComparator.INSTANCE);
 
-  public OTransactionIndexChangesPerKey                       nullKeyChanges = new OTransactionIndexChangesPerKey(null);
+  public OTransactionIndexChangesPerKey nullKeyChanges = new OTransactionIndexChangesPerKey(null);
 
-  public boolean                                              cleared        = false;
+  public boolean cleared = false;
 
   public OTransactionIndexChangesPerKey getChangesPerKey(final Object key) {
     if (key == null)
@@ -63,7 +61,6 @@ public class OTransactionIndexChanges {
 
     cleared = true;
   }
-
 
   public Object getFirstKey() {
     return changesPerKey.firstKey();
