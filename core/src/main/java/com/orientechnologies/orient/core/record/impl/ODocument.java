@@ -1870,7 +1870,7 @@ public class ODocument extends ORecordAbstract
   }
 
   @Override
-  public void writeExternal(ObjectOutput stream) throws IOException {
+  public void writeExternal(final ObjectOutput stream) throws IOException {
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getFormat(ORecordSerializerNetwork.NAME);
     final byte[] idBuffer = _recordId.toStream();
     stream.writeInt(-1);
@@ -1887,7 +1887,7 @@ public class ODocument extends ORecordAbstract
   }
 
   @Override
-  public void readExternal(ObjectInput stream) throws IOException, ClassNotFoundException {
+  public void readExternal(final ObjectInput stream) throws IOException, ClassNotFoundException {
     int i = stream.readInt();
     int size;
     if (i < 0)
@@ -1905,12 +1905,20 @@ public class ODocument extends ORecordAbstract
     stream.readFully(content);
 
     _dirty = stream.readBoolean();
-    if (i < 0) {
-      String str = (String) stream.readObject();
-      _recordFormat = ORecordSerializerFactory.instance().getFormat(str);
-    }
-    fromStream(content);
 
+    ORecordSerializer serializer = _recordFormat;
+    if (i < 0) {
+      final String str = (String) stream.readObject();
+      // TODO: WHEN TO USE THE SERIALIZER?
+      serializer = ORecordSerializerFactory.instance().getFormat(str);
+    }
+
+    _status = ORecordElement.STATUS.UNMARSHALLING;
+    try {
+      serializer.fromStream(content, this, null);
+    } finally {
+      _status = ORecordElement.STATUS.LOADED;
+    }
   }
 
   /**
