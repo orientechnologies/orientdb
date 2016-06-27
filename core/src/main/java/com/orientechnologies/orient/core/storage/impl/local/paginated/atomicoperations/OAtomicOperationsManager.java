@@ -295,8 +295,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public long freezeAtomicOperations(Class<? extends OException> exceptionClass, String message) {
-    if (getCurrentOperation() != null)
-      throw new IllegalStateException("atomic operation is active on current thread, can't freeze atomic operations");
 
     final long id = freezeIdGen.incrementAndGet();
 
