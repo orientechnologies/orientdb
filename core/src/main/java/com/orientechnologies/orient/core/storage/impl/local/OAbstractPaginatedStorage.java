@@ -4038,8 +4038,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void checkLowDiskSpaceAndFullCheckpointRequests() {
-    if (transaction.get() != null || atomicOperationsManager.getCurrentOperation() != null)
+  private void checkLowDiskSpaceAndFullCheckpointRequests() {
+    if (transaction.get() != null)
       return;
 
     if (lowDiskSpace != null) {
