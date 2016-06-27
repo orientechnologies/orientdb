@@ -23,10 +23,10 @@ import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Hook interface to catch all events regarding records.
- *
- * @author Luca Garulli – initial contribution
- * @author Sergey Sitnikov – scoped hooks, deletion finalization
+ * 
+ * @author Luca Garulli
  * @see ORecordHookAbstract
+ * 
  */
 public interface ORecordHook {
   enum DISTRIBUTED_EXECUTION_MODE {
@@ -42,12 +42,7 @@ public interface ORecordHook {
 
     CREATE_FAILED, READ_FAILED, UPDATE_FAILED, DELETE_FAILED, CREATE_REPLICATED, READ_REPLICATED, UPDATE_REPLICATED,
 
-    DELETE_REPLICATED, FINALIZE_UPDATE, FINALIZE_CREATION,
-
-    /**
-     * The last event in the deletion processing pipeline, will be sent to the hook regardless of the deletion success or failure.
-     */
-    FINALIZE_DELETE
+    DELETE_REPLICATED, FINALIZE_UPDATE, FINALIZE_CREATION
   }
 
   enum RESULT {

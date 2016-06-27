@@ -18,9 +18,7 @@ package com.orientechnologies.orient.test.internal.index;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -80,7 +78,7 @@ public class IndexConcurrencyTest {
     Map<String, ODocument> persons = new HashMap<String, ODocument>();
     Map<String, ORID> indexPersons = new HashMap<String, ORID>();
 
-    final List<ODocument> result = db.command(new OCommandSQL("select from Person")).execute();
+    final List<ODocument> result = db.command(new OCommandSQL("select from cluster:Person")).execute();
     for (ODocument d : result) {
       persons.put((String) d.field("name"), d);
     }
@@ -194,14 +192,14 @@ public class IndexConcurrencyTest {
 
         db.begin();
 
-        Collection<OIdentifiable> out = parent.field("out");
+        Collection<ODocument> out = parent.field("out");
         if (out.size() > 0) {
-          OIdentifiable edge = out.iterator().next();
+          ODocument edge = out.iterator().next();
           if (edge != null) {
             out.remove(edge);
-            final List<OIdentifiable> result2 = db.command(new OCommandSQL("traverse out from " + edge.getIdentity())).execute();
-            for (OIdentifiable d : result2) {
-              db.delete(d.getIdentity());
+            final List<ODocument> result2 = db.command(new OCommandSQL("traverse out from " + edge.getIdentity())).execute();
+            for (ODocument d : result2) {
+              db.delete(d);
             }
           }
         }
@@ -244,11 +242,10 @@ public class IndexConcurrencyTest {
 
         System.out.println("Recreating database");
         if (ODatabaseHelper.existsDatabase(db, "plocal")) {
-          db.setProperty("security", null);
+          db.setProperty("security", Boolean.FALSE);
           ODatabaseHelper.dropDatabase(db, url, "plocal");
         }
         ODatabaseHelper.createDatabase(db, url);
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
         db.close();
       } catch (IOException ex) {
         System.out.println("Exception: " + ex);
@@ -271,8 +268,6 @@ public class IndexConcurrencyTest {
       tree.AddRoot("A", "B");
       buildTree(tree, tree.root.getIdentity(), "A", subnodes, depth, 'A');
       db.commit();
-
-      checkIndexConsistency(db);
 
       char startLetter = 'A' + subnodes;
       try {

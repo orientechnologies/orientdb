@@ -22,8 +22,10 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
+import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -65,9 +67,10 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     storageThreadGroup = new ThreadGroup(parentThreadGroup, "OrientDB Storage");
   }
 
-  protected final String                 url;
-  protected final String                 mode;
-  protected final OReadersWriterSpinLock stateLock;
+  protected final String                          url;
+  protected final String                          mode;
+  protected final OSharedResourceAdaptiveExternal dataLock;
+  protected final OReadersWriterSpinLock          stateLock;
 
   protected volatile OStorageConfiguration            configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
@@ -86,6 +89,7 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
     url = iURL;
     this.mode = mode;
 
+    dataLock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), timeout, true);
     stateLock = new OReadersWriterSpinLock();
   }
 
@@ -169,12 +173,21 @@ public abstract class OStorageAbstract implements OStorage, OSharedContainer {
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     stateLock.acquireReadLock();
     try {
+      if (iExclusiveLock)
+        dataLock.acquireExclusiveLock();
+      else
+        dataLock.acquireSharedLock();
       try {
         return iCallable.call();
       } catch (RuntimeException e) {
         throw e;
       } catch (Exception e) {
         throw OException.wrapException(new OStorageException("Error on nested call in lock"), e);
+      } finally {
+        if (iExclusiveLock)
+          dataLock.releaseExclusiveLock();
+        else
+          dataLock.releaseSharedLock();
       }
     } finally {
       stateLock.releaseReadLock();
