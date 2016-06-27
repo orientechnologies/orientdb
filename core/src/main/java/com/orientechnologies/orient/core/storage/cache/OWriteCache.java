@@ -55,25 +55,6 @@ public interface OWriteCache {
    */
   long loadFile(String fileName) throws IOException;
 
-  /**
-   * Registers new file in write cache and assigns id to this file.
-   * <p>
-   * File id consist of two parts:
-   * <ol>
-   * <li>Internal id is permanent and can not be changed during life of storage {@link #internalFileId(long)}</li>
-   * <li>Write cache id  which is changed between storage open/close cycles</li>
-   * </ol>
-   * <p>
-   * If file with the same name is deleted and then new file is created this file with have the same internal id.
-   * If file with same internal id exists inside of write cache exception will be thrown.
-   * <p>
-   * Real file id may be different but internal part of this id will be the same.
-   *
-   * @param fileName Name of file to register inside storage.
-   * @param fileId   File id.
-   */
-  void loadFile(String fileName, long fileId) throws IOException;
-
   long addFile(String fileName) throws IOException;
 
   long addFile(String fileName, long fileId) throws IOException;
@@ -110,8 +91,6 @@ public interface OWriteCache {
   long getFilledUpTo(long fileId) throws IOException;
 
   long getExclusiveWriteCachePagesSize();
-
-  Long isOpen(String fileName) throws IOException;
 
   void deleteFile(long fileId) throws IOException;
 

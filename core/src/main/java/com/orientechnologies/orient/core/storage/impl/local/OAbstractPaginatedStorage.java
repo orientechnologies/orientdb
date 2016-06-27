@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.concur.lock.OComparableLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
@@ -70,6 +71,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cache.*;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
@@ -1616,7 +1618,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // OLD INDEX FILE ARE PRESENT: THIS IS THE CASE OF PARTIAL/BROKEN INDEX
         OLogManager.instance().warn(this, "Index with name '%s' already exists, removing it and re-create the index", engineName);
         final OIndexEngine engine = indexEngineNameMap.remove(engineName);
-        if( engine != null ) {
+        if (engine != null) {
           indexEngines.remove(engine);
           configuration.deleteIndexEngine(engineName);
           engine.delete();
@@ -3990,9 +3992,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           readCache.deleteFile(fileDeletedWALRecord.getFileId(), writeCache);
       } else if (walRecord instanceof OFileCreatedWALRecord) {
         OFileCreatedWALRecord fileCreatedCreatedWALRecord = (OFileCreatedWALRecord) walRecord;
-        if (writeCache.exists(fileCreatedCreatedWALRecord.getFileName())) {
-          writeCache.loadFile(fileCreatedCreatedWALRecord.getFileName(), fileCreatedCreatedWALRecord.getFileId());
-        } else {
+        if (!writeCache.exists(fileCreatedCreatedWALRecord.getFileName())) {
           readCache.addFile(fileCreatedCreatedWALRecord.getFileName(), fileCreatedCreatedWALRecord.getFileId(), writeCache);
         }
       } else if (walRecord instanceof OUpdatePageRecord) {

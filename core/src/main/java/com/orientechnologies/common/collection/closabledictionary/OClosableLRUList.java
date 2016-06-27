@@ -7,17 +7,17 @@ import java.util.NoSuchElementException;
  * LRU list is used inside of {@link OClosableLinkedContainer}.
  *
  * @param <K> Key type
- * @param <E> Value type
+ * @param <V> Value type
  */
-class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
+class OClosableLRUList<K, V extends OClosableItem> implements Iterable<OClosableEntry<K, V>> {
   private int size;
 
-  private OClosableEntry<K, E> head;
-  private OClosableEntry<K, E> tail;
+  private OClosableEntry<K, V> head;
+  private OClosableEntry<K, V> tail;
 
-  void remove(OClosableEntry<K, E> entry) {
-    final OClosableEntry<K, E> next = entry.getNext();
-    final OClosableEntry<K, E> prev = entry.getPrev();
+  void remove(OClosableEntry<K, V> entry) {
+    final OClosableEntry<K, V> next = entry.getNext();
+    final OClosableEntry<K, V> prev = entry.getPrev();
 
     if (!(next != null || prev != null || entry == head))
       return;
@@ -54,18 +54,18 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
     size--;
   }
 
-  boolean contains(OClosableEntry<K, E> entry) {
+  boolean contains(OClosableEntry<K, V> entry) {
     return entry.getNext() != null || entry.getPrev() != null || entry == head;
   }
 
-  void moveToTheTail(OClosableEntry<K, E> entry) {
+  void moveToTheTail(OClosableEntry<K, V> entry) {
     if (tail == entry) {
       assert entry.getNext() == null;
       return;
     }
 
-    final OClosableEntry<K, E> next = entry.getNext();
-    final OClosableEntry<K, E> prev = entry.getPrev();
+    final OClosableEntry<K, V> next = entry.getNext();
+    final OClosableEntry<K, V> prev = entry.getPrev();
 
     boolean newEntry = !(next != null || prev != null || entry == head);
 
@@ -108,13 +108,13 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
     return size;
   }
 
-  OClosableEntry<K, E> poll() {
+  OClosableEntry<K, V> poll() {
     if (head == null)
       return null;
 
-    final OClosableEntry<K, E> entry = head;
+    final OClosableEntry<K, V> entry = head;
 
-    OClosableEntry<K, E> next = head.getNext();
+    OClosableEntry<K, V> next = head.getNext();
     assert next == null || next.getPrev() == head;
 
     head = next;
@@ -138,10 +138,10 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
   /**
    * @return Iterator to iterate from head to the tail.
    */
-  public Iterator<OClosableEntry<K, E>> iterator() {
-    return new Iterator<OClosableEntry<K, E>>() {
-      private OClosableEntry<K, E> next = head;
-      private OClosableEntry<K, E> current = null;
+  public Iterator<OClosableEntry<K, V>> iterator() {
+    return new Iterator<OClosableEntry<K, V>>() {
+      private OClosableEntry<K, V> next = head;
+      private OClosableEntry<K, V> current = null;
 
       @Override
       public boolean hasNext() {
@@ -149,7 +149,7 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
       }
 
       @Override
-      public OClosableEntry<K, E> next() {
+      public OClosableEntry<K, V> next() {
         if (next == null) {
           throw new NoSuchElementException();
         }
@@ -175,11 +175,11 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
     if (head == null)
       return tail == null;
 
-    OClosableEntry<K, E> current = head;
+    OClosableEntry<K, V> current = head;
 
     while (current.getNext() != null) {
-      OClosableEntry<K, E> prev = current.getPrev();
-      OClosableEntry<K, E> next = current.getNext();
+      OClosableEntry<K, V> prev = current.getPrev();
+      OClosableEntry<K, V> next = current.getNext();
 
       if (prev != null) {
         assert prev.getNext() == current;
@@ -199,11 +199,11 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
     if (tail == null)
       return head == null;
 
-    OClosableEntry<K, E> current = tail;
+    OClosableEntry<K, V> current = tail;
 
     while (current.getPrev() != null) {
-      OClosableEntry<K, E> prev = current.getPrev();
-      OClosableEntry<K, E> next = current.getNext();
+      OClosableEntry<K, V> prev = current.getPrev();
+      OClosableEntry<K, V> next = current.getNext();
 
       if (prev != null) {
         assert prev.getNext() == current;

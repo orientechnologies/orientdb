@@ -304,7 +304,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
    * @param key Key associated with required item.
    * @return Item associated with given key.
    */
-  public OClosableItem get(K key) {
+  public V get(K key) {
     final OClosableEntry<K, V> entry = data.get(key);
     if (entry != null)
       return entry.get();
@@ -338,6 +338,24 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     } finally {
       lruLock.unlock();
     }
+  }
+
+  /**
+   * Closes item related to passed in key.
+   * Item will be closed if it exists and is not acquired.
+   *
+   * @param key Key related to item that has going to be closed.
+   * @return <code>true</code> if item was closed and <code>false</code> otherwise.
+   */
+  public boolean close(K key) {
+    emptyBuffers();
+
+    final OClosableEntry<K, V> entry = data.get(key);
+    if (entry != null && entry.makeClosed()) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -682,7 +700,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
 
       while (iterator.hasNext()) {
         OClosableEntry<K, V> entry = iterator.next();
-        if (entry.makeClosed(entry.get())) {
+        if (entry.makeClosed()) {
           iterator.remove();
           entryClosed = true;
           break;

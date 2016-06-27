@@ -85,6 +85,11 @@ public enum OGlobalConfiguration {
 
   // STORAGE
   /**
+   * Limit of amount of files which may be open simultaneously
+   */
+  OPEN_FILES_LIMIT("storage.openFiles.limit", "Limit of amount of files which may be open simultaneously", Integer.class, 800),
+
+  /**
    * Amount of cached locks is used for component lock in atomic operation to avoid constant creation of new lock instances, default
    * value is 10000.
    */

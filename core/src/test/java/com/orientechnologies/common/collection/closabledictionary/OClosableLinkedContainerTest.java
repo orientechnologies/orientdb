@@ -69,6 +69,7 @@ public class OClosableLinkedContainerTest {
     Assert.assertTrue(dictionary.checkAllOpenItemsInLRUList());
   }
 
+  @Test(enabled = false)
   public void testMultipleThreadsConsistency() throws Exception {
     ExecutorService executor = Executors.newCachedThreadPool();
     List<Future<Void>> futures = new ArrayList<Future<Void>>();

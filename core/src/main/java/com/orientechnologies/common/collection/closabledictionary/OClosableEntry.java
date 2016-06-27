@@ -10,7 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @param <K> Key type.
  * @param <V> Value type.
  */
-public class OClosableEntry<K, V> {
+public class OClosableEntry<K, V extends OClosableItem> {
   /**
    * Constant for open state of entries state machine.
    */
@@ -156,9 +156,12 @@ public class OClosableEntry<K, V> {
     }
   }
 
-  boolean makeClosed(OClosableItem item) {
+  boolean makeClosed() {
     stateLock.lock();
     try {
+      if (state == STATUS_CLOSED)
+        return true;
+
       if (state != STATUS_OPEN)
         return false;
 

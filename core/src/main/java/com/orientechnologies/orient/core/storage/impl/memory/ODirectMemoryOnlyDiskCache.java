@@ -589,10 +589,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     return addFile(fileName, null);
   }
 
-  @Override
-  public void loadFile(String fileName, long fileId) {
-    loadFile(fileName, fileId, null);
-  }
 
   @Override
   public long addFile(String fileName, long fileId) {
@@ -612,21 +608,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   @Override
   public long getExclusiveWriteCachePagesSize() {
     return 0;
-  }
-
-  @Override
-  public Long isOpen(String fileName) {
-    metadataLock.lock();
-    try {
-      Integer result = fileNameIdMap.get(fileName);
-
-      if (result == null)
-        return null;
-
-      return composeFileId(id, result);
-    } finally {
-      metadataLock.unlock();
-    }
   }
 
   @Override
