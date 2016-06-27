@@ -115,12 +115,14 @@ class OClosableLRUList<K, E> implements Iterable<OClosableEntry<K, E>> {
     final OClosableEntry<K, E> entry = head;
 
     OClosableEntry<K, E> next = head.getNext();
-    assert next.getPrev() == head;
+    assert next == null || next.getPrev() == head;
 
     head = next;
-    next.setPrev(null);
+    if (next != null) {
+      next.setPrev(null);
+    }
 
-    assert head.getPrev() == null;
+    assert head == null || head.getPrev() == null;
 
     if (head == null)
       tail = null;
