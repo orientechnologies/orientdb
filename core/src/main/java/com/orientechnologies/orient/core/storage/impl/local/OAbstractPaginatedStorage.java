@@ -976,7 +976,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             do {
               lastPos = ((OPaginatedCluster) cluster).scan(true, iFrom, iTo, scanBatchSize, iCallback);
               iFrom = lastPos + 1;
-            } while (lastPos > 0);
+            } while (lastPos >= 0);
           } else {
             do {
               lastPos = ((OPaginatedCluster) cluster).scan(false, iFrom, iTo, scanBatchSize, iCallback);
@@ -998,7 +998,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         do {
           lastPos = scanClusterInLock(true, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
           iFrom = lastPos + 1;
-        } while (lastPos > 0);
+        } while (lastPos >= 0);
       } else {
         do {
           lastPos = scanClusterInLock(false, (OPaginatedCluster) cluster, iFrom, iTo, scanBatchSize, iCallback);
