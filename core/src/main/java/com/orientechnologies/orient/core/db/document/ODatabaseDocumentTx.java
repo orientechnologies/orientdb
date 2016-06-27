@@ -2176,7 +2176,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
                 t);
       }
     } finally {
-      callbackHooks(ORecordHook.TYPE.FINALIZE_DELETE, record);
       ORecordSerializationContext.pullContext();
       getMetadata().clearThreadLocalSchemaSnapshot();
     }

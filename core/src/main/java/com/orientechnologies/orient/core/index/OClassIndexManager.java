@@ -21,7 +21,11 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OSizeable;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.*;
@@ -29,14 +33,12 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 
-import java.io.IOException;
 import java.util.*;
 
 import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
@@ -45,19 +47,32 @@ import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPD
 /**
  * Handles indexing when records change.
  *
- * @author Andrey Lomakin, Artem Orobets - initial contribution
- * @author Sergey Sitnikov – atomic operations support
+ * @author Andrey Lomakin, Artem Orobets
  */
-public class OClassIndexManager extends ODocumentHookAbstract {
-  private final ThreadLocal<Boolean> threadAtomicOperation = new ThreadLocal<>();
+public class OClassIndexManager extends ODocumentHookAbstract implements OOrientStartupListener, OOrientShutdownListener {
+  private Deque<TreeMap<OIndex<?>, List<Object>>> lockedKeys = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
 
   public OClassIndexManager(ODatabaseDocument database) {
     super(database);
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   @Override
   public SCOPE[] getScopes() {
     return new SCOPE[] { SCOPE.CREATE, SCOPE.UPDATE, SCOPE.DELETE };
+  }
+
+  @Override
+  public void onShutdown() {
+    lockedKeys = null;
+  }
+
+  @Override
+  public void onStartup() {
+    if (lockedKeys == null)
+      lockedKeys = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
   }
 
   private void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
@@ -206,7 +221,8 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     }
   }
 
-  private boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
+  private boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields,
+      final ODocument iRecord) {
     final OCompositeIndexDefinition indexDefinition = (OCompositeIndexDefinition) index.getDefinition();
 
     final String multiValueField = indexDefinition.getMultiValueField();
@@ -289,20 +305,37 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   private ODocument checkIndexedPropertiesOnCreation(final ODocument record, final Collection<OIndex<?>> indexes) {
     ODocument replaced = null;
 
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
+
+    final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
+
     for (final OIndex<?> index : indexes) {
-      if (!(index.getInternal() instanceof OIndexUnique))
-        continue;
+      if (index.getInternal() instanceof OIndexUnique) {
+        OIndexRecorder indexRecorder = new OIndexRecorder((OIndexUnique) index.getInternal());
 
-      final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexUnique) index.getInternal());
-      addIndexEntry(record, record.getIdentity(), indexRecorder);
+        addIndexEntry(record, record.getIdentity(), indexRecorder);
+        indexKeysMap.put(index, indexRecorder.getAffectedKeys());
+      }
+    }
 
-      for (Object keyItem : indexRecorder.getAffectedKeys()) {
+    for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
+      final OIndexInternal<?> index = entry.getKey().getInternal();
+      index.lockKeysForUpdateNoTx(entry.getValue());
+    }
+
+    indexKeysMapQueue.push(indexKeysMap);
+
+    for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
+      final OIndex<?> index = entry.getKey();
+
+      for (Object keyItem : entry.getValue()) {
         final ODocument r = index.checkEntry(record, keyItem);
         if (r != null)
           if (replaced == null)
             replaced = r;
-          else
+          else {
             throw new OIndexException("Cannot merge record from multiple indexes. Use this strategy when you have only one index");
+          }
       }
     }
 
@@ -310,19 +343,37 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   private void checkIndexedPropertiesOnUpdate(final ODocument record, final Collection<OIndex<?>> indexes) {
-    final Set<String> dirtyFields = new HashSet<>(Arrays.asList(record.getDirtyFields()));
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
+
+    final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
+
+    final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(record.getDirtyFields()));
     if (dirtyFields.isEmpty())
       return;
 
     for (final OIndex<?> index : indexes) {
-      if (!(index.getInternal() instanceof OIndexUnique))
-        continue;
 
-      final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexUnique) index.getInternal());
-      processIndexUpdate(record, dirtyFields, indexRecorder);
+      if (index.getInternal() instanceof OIndexUnique) {
+        final OIndexRecorder indexRecorder = new OIndexRecorder((OIndexInternal<OIdentifiable>) index.getInternal());
+        processIndexUpdate(record, dirtyFields, indexRecorder);
 
-      for (Object keyItem : indexRecorder.getAffectedKeys())
+        indexKeysMap.put(index, indexRecorder.getAffectedKeys());
+      }
+    }
+
+    for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
+      final OIndexInternal<?> index = entry.getKey().getInternal();
+      index.lockKeysForUpdateNoTx(entry.getValue());
+    }
+
+    indexKeysMapQueue.push(indexKeysMap);
+
+    for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
+      final OIndex<?> index = entry.getKey();
+
+      for (Object keyItem : entry.getValue()) {
         index.checkEntry(record, keyItem);
+      }
     }
   }
 
@@ -360,17 +411,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       final Collection<OIndex<?>> indexes = cls.getIndexes();
       addIndexesEntries(document, indexes);
     }
-    endSuccessfulAtomicOperationIfAny(document);
   }
 
   @Override
   public void onRecordCreateFailed(final ODocument iDocument) {
-    endFailedAtomicOperationIfAny(iDocument);
   }
 
   @Override
   public void onRecordCreateReplicated(final ODocument iDocument) {
-    endSuccessfulAtomicOperationIfAny(iDocument);
   }
 
   @Override
@@ -405,8 +453,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         }
       }
     }
-
-    endSuccessfulAtomicOperationIfAny(iDocument);
   }
 
   private void processIndexUpdate(ODocument iDocument, Set<String> dirtyFields, OIndex<?> index) {
@@ -418,34 +464,24 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   @Override
   public void onRecordUpdateFailed(final ODocument iDocument) {
-    endFailedAtomicOperationIfAny(iDocument);
   }
 
   @Override
   public void onRecordUpdateReplicated(final ODocument iDocument) {
-    endSuccessfulAtomicOperationIfAny(iDocument);
   }
 
   @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
-    final OClass class_ = ODocumentInternal.getImmutableSchemaClass(iDocument);
-    try {
-      startAtomicOperationIfRequired(iDocument, class_ == null ? Collections.emptyList() : class_.getIndexes());
-
-      final int version = iDocument.getVersion(); // Cache the transaction-provided value
-      if (iDocument.fields() == 0 && iDocument.getIdentity().isPersistent()) {
-        // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
-        iDocument.reload();
-        if (version > -1 && iDocument.getVersion() != version) // check for record version errors
-          if (OFastConcurrentModificationException.enabled())
-            throw OFastConcurrentModificationException.instance();
-          else
-            throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getVersion(), version,
-                ORecordOperation.DELETED);
-      }
-    } catch (Exception e) {
-      endFailedAtomicOperationIfAny(iDocument);
-      throw e;
+    final int version = iDocument.getVersion(); // Cache the transaction-provided value
+    if (iDocument.fields() == 0 && iDocument.getIdentity().isPersistent()) {
+      // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
+      iDocument.reload();
+      if (version > -1 && iDocument.getVersion() != version) // check for record version errors
+        if (OFastConcurrentModificationException.enabled())
+          throw OFastConcurrentModificationException.instance();
+        else
+          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getVersion(), version,
+              ORecordOperation.DELETED);
     }
 
     return RESULT.RECORD_NOT_CHANGED;
@@ -454,17 +490,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   @Override
   public void onRecordAfterDelete(final ODocument iDocument) {
     deleteIndexEntries(iDocument);
-    endSuccessfulAtomicOperationIfAny(iDocument);
-  }
-
-  @Override
-  public void onRecordDeleteReplicated(final ODocument iDocument) {
-    endSuccessfulAtomicOperationIfAny(iDocument);
   }
 
   @Override
   public void onRecordDeleteFailed(final ODocument iDocument) {
-    endFailedAtomicOperationIfAny(iDocument);
+  }
+
+  @Override
+  public void onRecordDeleteReplicated(final ODocument iDocument) {
   }
 
   private void addIndexesEntries(ODocument document, final Collection<OIndex<?>> indexes) {
@@ -537,47 +570,49 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
     final OClass cls = ODocumentInternal.getImmutableSchemaClass(document);
     if (cls != null) {
-      final Collection<OIndex<?>> indexes =
-          hookType == BEFORE_UPDATE ? getAffectedIndexes(cls.getIndexes(), document.getDirtyFields()) : cls.getIndexes();
-      try {
-        startAtomicOperationIfRequired(document, indexes);
-
-        switch (hookType) {
-        case BEFORE_CREATE:
-          replaced = checkIndexedPropertiesOnCreation(document, indexes);
-          break;
-        case BEFORE_UPDATE:
-          checkIndexedPropertiesOnUpdate(document, indexes);
-          break;
-        default:
-          throw new IllegalArgumentException("Invalid hook type: " + hookType);
-        }
-      } catch (Exception e) {
-        endFailedAtomicOperationIfAny(document);
-        throw e;
+      final Collection<OIndex<?>> indexes = cls.getIndexes();
+      switch (hookType) {
+      case BEFORE_CREATE:
+        replaced = checkIndexedPropertiesOnCreation(document, indexes);
+        break;
+      case BEFORE_UPDATE:
+        checkIndexedPropertiesOnUpdate(document, indexes);
+        break;
+      default:
+        throw new IllegalArgumentException("Invalid hook type: " + hookType);
       }
-    } else
-      startAtomicOperationIfRequired(document, Collections.emptyList());
+    }
 
     return replaced;
   }
 
   @Override
   public void onRecordFinalizeUpdate(ODocument document) {
-    // if atomic operation is still active at this point, this indicates an error
-    endFailedAtomicOperationIfAny(document);
+    unlockKeys();
   }
 
   @Override
   public void onRecordFinalizeCreation(ODocument document) {
-    // if atomic operation is still active at this point, this indicates an error
-    endFailedAtomicOperationIfAny(document);
+    unlockKeys();
   }
 
-  @Override
-  public void onRecordFinalizeDelete(ODocument document) {
-    // if atomic operation is still active at this point, this indicates an error
-    endFailedAtomicOperationIfAny(document);
+  private void unlockKeys() {
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
+    if (indexKeysMapQueue == null)
+      return;
+
+    final TreeMap<OIndex<?>, List<Object>> indexKeyMap = indexKeysMapQueue.poll();
+    if (indexKeyMap == null)
+      return;
+
+    for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeyMap.entrySet()) {
+      final OIndexInternal<?> index = entry.getKey().getInternal();
+      try {
+        index.releaseKeysForUpdateNoTx(entry.getValue());
+      } catch (RuntimeException e) {
+        OLogManager.instance().error(this, "Error during unlock of keys for index %s", e, index.getName());
+      }
+    }
   }
 
   protected void putInIndex(OIndex<?> index, Object key, OIdentifiable value) {
@@ -588,77 +623,4 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     index.remove(key, value);
   }
 
-  private void startAtomicOperationIfRequired(ODocument document, Collection<OIndex<?>> indexes) {
-    boolean atomicOperation =
-        !indexes.isEmpty() && !document.getDatabase().getTransaction().isActive() && document.getDatabase().getStorage()
-            .getUnderlying() instanceof OAbstractPaginatedStorage;
-    final OAbstractPaginatedStorage storage = atomicOperation ?
-        (OAbstractPaginatedStorage) document.getDatabase().getStorage().getUnderlying() :
-        null;
-    final OAtomicOperationsManager atomicOperationsManager = atomicOperation ? storage.getAtomicOperationsManager() : null;
-
-    if (atomicOperation)
-      try {
-        atomicOperation = atomicOperationsManager.startAtomicOperation((String) null, true) != null;
-      } catch (IOException e) {
-        threadAtomicOperation.set(false);
-        throw OException.wrapException(new OIOException("Failed to start atomic operation."), e);
-      }
-
-    threadAtomicOperation.set(atomicOperation);
-
-    if (atomicOperation) {
-      // lock cluster
-      storage.getClusterById(document.getIdentity().getClusterId()).acquireAtomicExclusiveLock();
-
-      // lock indexes
-      final OIndexInternal[] sortedIndexes = new OIndexInternal[indexes.size()];
-      int i = 0;
-      for (OIndex<?> index : indexes)
-        sortedIndexes[i++] = index.getInternal();
-      Arrays.sort(sortedIndexes, OIndexInternal.ID_COMPARATOR);
-      for (OIndexInternal<?> index : sortedIndexes)
-        index.acquireAtomicExclusiveLock();
-    }
-  }
-
-  private void endSuccessfulAtomicOperationIfAny(ODocument document) {
-    final Boolean atomicOperation = threadAtomicOperation.get();
-    if (atomicOperation != null && atomicOperation) {
-      final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) document.getDatabase().getStorage().getUnderlying();
-      try {
-        threadAtomicOperation.set(false);
-        storage.getAtomicOperationsManager().endAtomicOperation(false, null);
-      } catch (IOException e) {
-        throw OException.wrapException(new OIOException("Failed to end atomic operation."), e);
-      }
-    }
-  }
-
-  private void endFailedAtomicOperationIfAny(ODocument document) {
-    final Boolean atomicOperation = threadAtomicOperation.get();
-    if (atomicOperation != null && atomicOperation) {
-      final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) document.getDatabase().getStorage().getUnderlying();
-      try {
-        threadAtomicOperation.set(false);
-        storage.getAtomicOperationsManager().endAtomicOperation(true, null);
-      } catch (IOException e) {
-        throw OException.wrapException(new OIOException("Failed to end atomic operation."), e);
-      }
-    }
-  }
-
-  private Collection<OIndex<?>> getAffectedIndexes(Collection<OIndex<?>> indexes, String[] dirtyFields) {
-    if (indexes.isEmpty())
-      return indexes;
-    if (dirtyFields.length == 0) // XXX: that is possible, at least in 2.2.3 era
-      return Collections.emptyList();
-
-    final List<OIndex<?>> affectedIndexes = new ArrayList<>(indexes.size());
-    final Set<String> fields = new HashSet<>(Arrays.asList(dirtyFields));
-    for (OIndex<?> index : indexes)
-      if (!Collections.disjoint(fields, index.getDefinition().getFields()))
-        affectedIndexes.add(index);
-    return affectedIndexes;
-  }
 }
