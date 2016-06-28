@@ -69,18 +69,16 @@ public abstract class OBaseWorkload implements OWorkload {
   protected static final long MAX_ERRORS = 100;
   protected List<String>      errors     = new ArrayList<String>();
 
-  protected OWorkLoadResult executeOperation(final ODatabaseIdentifier dbIdentifier, final int operationTotal,
+  protected OWorkLoadResult executeOperation(final ODatabaseIdentifier dbIdentifier, final OWorkLoadResult result,
       final int concurrencyLevel, final OCallable<Void, OBaseWorkLoadContext> callback) {
-    final OWorkLoadResult result = new OWorkLoadResult();
-
-    if (operationTotal == 0)
+    if (result.total == 0)
       return result;
 
-    final int totalPerThread = operationTotal / concurrencyLevel;
-    final int totalPerLastThread = totalPerThread + operationTotal % concurrencyLevel;
+    final int totalPerThread = result.total / concurrencyLevel;
+    final int totalPerLastThread = totalPerThread + result.total % concurrencyLevel;
 
-    final ArrayList<Long> operationTiming = new ArrayList<Long>(operationTotal);
-    for (int i = 0; i < operationTotal; ++i)
+    final ArrayList<Long> operationTiming = new ArrayList<Long>(result.total);
+    for (int i = 0; i < result.total; ++i)
       operationTiming.add(null);
 
     final Thread[] thread = new Thread[concurrencyLevel];

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.stresstest.workload.OBaseWorkload;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * CRUD implementation of the workload.
@@ -36,8 +37,14 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 public abstract class OBaseGraphWorkload extends OBaseWorkload {
   protected boolean tx = false;
 
+  protected OBaseGraphWorkload(final boolean tx) {
+    this.tx = tx;
+  }
+
   public class OWorkLoadContext extends OBaseWorkload.OBaseWorkLoadContext {
     OrientBaseGraph graph;
+    OrientVertex    lastVertexToConnect;
+    int             lastVertexEdges;
 
     @Override
     public void init(ODatabaseIdentifier dbIdentifier) {

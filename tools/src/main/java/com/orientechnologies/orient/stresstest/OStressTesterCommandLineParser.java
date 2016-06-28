@@ -24,9 +24,7 @@ import com.orientechnologies.orient.stresstest.workload.OWorkload;
 import java.io.Console;
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This is the parser of the command line arguments passed with the invocation of OStressTester. It contains a static method that -
@@ -160,38 +158,44 @@ public class OStressTesterCommandLineParser {
       }
     }
 
-    final OWorkload workload = parseWorkload(workloadCfg);
+    final List<OWorkload> workloads = parseWorkloads(workloadCfg);
 
     final ODatabaseIdentifier databaseIdentifier = new ODatabaseIdentifier(mode, dbName, rootPassword, remoteIp, remotePort,
         plocalPath);
 
-    return new OStressTester(workload, databaseIdentifier, threadsNumber, operationsPerTransaction, resultOutputFile);
+    return new OStressTester(workloads, databaseIdentifier, threadsNumber, operationsPerTransaction, resultOutputFile);
   }
 
-  private static OWorkload parseWorkload(final String workloadConfig) {
+  private static List<OWorkload> parseWorkloads(final String workloadConfig) {
     if (workloadConfig == null || workloadConfig.isEmpty())
-      throw new IllegalArgumentException("Workload parameter is mandatory. Syntax: <workload:params>");
+      throw new IllegalArgumentException("Workload parameter is mandatory. Syntax: <workload-name:workload-params>");
 
-    String workloadName;
-    String workloadParams;
+    final List<OWorkload> result = new ArrayList<OWorkload>();
 
-    final int pos = workloadConfig.indexOf(":");
-    if (pos > -1) {
-      workloadName = workloadConfig.substring(0, pos);
-      workloadParams = workloadConfig.substring(pos + 1);
-    } else {
-      workloadName = workloadConfig;
-      workloadParams = null;
+    final String[] parts = workloadConfig.split(",");
+    for (String part : parts) {
+      String workloadName;
+      String workloadParams;
+
+      final int pos = part.indexOf(":");
+      if (pos > -1) {
+        workloadName = part.substring(0, pos);
+        workloadParams = part.substring(pos + 1);
+      } else {
+        workloadName = part;
+        workloadParams = null;
+      }
+
+      final OWorkload workload = OStressTester.getWorkloadFactory().get(workloadName);
+      if (workload == null)
+        throw new IllegalArgumentException("Workload '" + workloadName + "' is not configured. Use one of the following: "
+            + OStressTester.getWorkloadFactory().getRegistered());
+      workload.parseParameters(workloadParams);
+
+      result.add(workload);
     }
 
-    final OWorkload workload = OStressTester.getWorkloadFactory().get(workloadName);
-    if (workload == null)
-      throw new IllegalArgumentException("Workload '" + workloadName + "' is not configured. Use one of the following: "
-          + OStressTester.getWorkloadFactory().getRegistered());
-
-    workload.parseParameters(workloadParams);
-
-    return workload;
+    return result;
   }
 
   private static int getNumber(String value, String option) throws IllegalArgumentException {

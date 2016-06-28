@@ -31,7 +31,7 @@ import com.orientechnologies.orient.stresstest.workload.OWorkload;
 public class OConsoleProgressWriter extends OSoftThread {
 
   final private OWorkload workload;
-  private String lastResult = null;
+  private String          lastResult = null;
 
   public OConsoleProgressWriter(final OWorkload workload) {
     this.workload = workload;
@@ -47,7 +47,11 @@ public class OConsoleProgressWriter extends OSoftThread {
     if (lastResult == null || !lastResult.equals(result))
       System.out.print("\rStress test in progress " + result);
     lastResult = result;
-    Thread.sleep(20);
+    try {
+      Thread.sleep(200);
+    } catch (InterruptedException e) {
+      interruptCurrentOperation();
+    }
   }
 
   @Override

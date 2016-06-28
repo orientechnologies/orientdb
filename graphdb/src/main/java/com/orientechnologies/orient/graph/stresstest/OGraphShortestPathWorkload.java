@@ -20,44 +20,50 @@
 package com.orientechnologies.orient.graph.stresstest;
 
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * CRUD implementation of the workload.
  *
  * @author Luca Garulli
  */
-public class OGraphInsertWorkload extends OBaseGraphWorkload {
+public class OGraphShortestPathWorkload extends OBaseGraphWorkload {
 
-  static final String     INVALID_FORM_MESSAGE = "GRAPH INSERT workload must be in form of <vertices>F<connection-factor>.";
+  static final String     INVALID_FORM_MESSAGE = "SHORTESTPATH workload must be in form of L<limit>.";
 
-  private int             factor               = 80;
-  private OWorkLoadResult resultVertices       = new OWorkLoadResult();
-  private OWorkLoadResult resultEdges          = new OWorkLoadResult();
+  private int             limit                = -1;
+  private OWorkLoadResult result               = new OWorkLoadResult();
+  final List<ORID>        startingVertices     = new ArrayList<ORID>(limit > -1 ? limit : 1000);
 
-  public OGraphInsertWorkload() {
+  public OGraphShortestPathWorkload() {
     super(false);
   }
 
   @Override
   public String getName() {
-    return "GRAPHINSERT";
+    return "SHORTESTPATH";
   }
 
   @Override
   public void parseParameters(final String args) {
     final String ops = args.toUpperCase();
-    char state = ' ';
+    char state = 'L';
     final StringBuilder number = new StringBuilder();
 
     for (int pos = 0; pos < ops.length(); ++pos) {
       final char c = ops.charAt(pos);
 
-      if (c == ' ' || c == 'V' || c == 'F') {
+      if (c == ' ' || c == 'L') {
         state = assignState(state, number, c);
       } else if (c >= '0' && c <= '9')
         number.append(c);
@@ -67,34 +73,35 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
     }
     assignState(state, number, ' ');
 
-    if (resultVertices.total == 0)
-      throw new IllegalArgumentException(INVALID_FORM_MESSAGE);
+    result.total = 1;
   }
 
   @Override
   public void execute(final int concurrencyLevel, final ODatabaseIdentifier databaseIdentifier) {
-    executeOperation(databaseIdentifier, resultVertices, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
+    // RETRIEVE THE STARTING VERTICES
+    final OrientGraphNoTx g = getGraphNoTx(databaseIdentifier);
+    try {
+      for (OIdentifiable id : g.getRawGraph().browseClass("V")) {
+        startingVertices.add(id.getIdentity());
+        if (limit > -1 && startingVertices.size() >= limit)
+          break;
+      }
+    } finally {
+      g.shutdown();
+    }
+    result.total = startingVertices.size();
+
+    executeOperation(databaseIdentifier, result, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
       public Void call(final OBaseWorkLoadContext context) {
         final OWorkLoadContext graphContext = ((OWorkLoadContext) context);
         final OrientBaseGraph graph = graphContext.graph;
 
-        final OrientVertex v = graph.addVertex(null, "_id", resultVertices.current.get());
-
-        if (graphContext.lastVertexToConnect != null) {
-          v.addEdge("E", graphContext.lastVertexToConnect);
-          resultEdges.current.incrementAndGet();
-
-          graphContext.lastVertexEdges++;
-
-          if (graphContext.lastVertexEdges > factor) {
-            graphContext.lastVertexEdges = 0;
-            graphContext.lastVertexToConnect = v;
-          }
-        } else
-          graphContext.lastVertexToConnect = v;
-
-        resultVertices.current.incrementAndGet();
+        for (int i = 0; i < startingVertices.size(); ++i) {
+          final Object commandResult = graph.command(new OCommandSQL("select shortestPath(?,?, 'out')"))
+              .execute(startingVertices.get(context.currentIdx), startingVertices.get(i));
+        }
+        result.current.incrementAndGet();
 
         return null;
       }
@@ -103,21 +110,19 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
 
   @Override
   public String getPartialResult() {
-    return String.format("%d%% [Vertices: %d - Edges: %d]", ((100 * resultVertices.current.get() / resultVertices.total)),
-        resultVertices.current.get(), resultEdges.current.get());
+    return String.format("%d%% [Shortest paths executed: %d]", ((100 * result.current.get() / result.total)), result.current.get());
   }
 
   @Override
   public String getFinalResult() {
     final StringBuilder buffer = new StringBuilder(getErrors());
 
-    buffer.append(String.format("\nCreated %d vertices and %d edges in %.3f secs", resultVertices.current.get(),
-        resultEdges.current.get(), resultVertices.totalTime / 1000f));
+    buffer.append(String.format("\nExecuted %d shortest paths in %.3f secs", result.current.get(), result.totalTime / 1000f));
 
     buffer.append(
         String.format("\n- Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th Perc: %.3fms - 99.9th Perc: %.3fms",
-            resultVertices.total * 1000 / (float) resultVertices.totalTime, resultVertices.avgNs / 1000000f,
-            resultVertices.percentileAvg, resultVertices.percentile99Ns / 1000000f, resultVertices.percentile99_9Ns / 1000000f));
+            result.total * 1000 / (float) result.totalTime, result.avgNs / 1000000f, result.percentileAvg,
+            result.percentile99Ns / 1000000f, result.percentile99_9Ns / 1000000f));
 
     return buffer.toString();
   }
@@ -126,8 +131,7 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   public String getFinalResultAsJson() {
     final ODocument json = new ODocument();
 
-    json.field("vertices", resultVertices.toJSON(), OType.EMBEDDED);
-    json.field("edges", resultEdges.toJSON(), OType.EMBEDDED);
+    json.field("shortestPath", result.toJSON(), OType.EMBEDDED);
 
     return json.toString();
   }
@@ -136,10 +140,8 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
     if (number.length() == 0)
       number.append("0");
 
-    if (state == 'V')
-      resultVertices.total = Integer.parseInt(number.toString());
-    else if (state == 'F')
-      factor = Integer.parseInt(number.toString());
+    if (state == 'L')
+      limit = Integer.parseInt(number.toString());
 
     number.setLength(0);
     return c;
@@ -147,14 +149,14 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
 
   @Override
   protected OBaseWorkLoadContext getContext() {
-    return new OBaseGraphWorkload.OWorkLoadContext();
+    return new OWorkLoadContext();
   }
 
-  public int getVertices() {
-    return resultVertices.total;
+  public int getShortestPaths() {
+    return result.total;
   }
 
-  public int getFactor() {
-    return factor;
+  public int getLimit() {
+    return limit;
   }
 }

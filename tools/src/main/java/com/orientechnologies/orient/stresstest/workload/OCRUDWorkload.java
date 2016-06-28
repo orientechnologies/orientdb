@@ -95,7 +95,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
     for (int i = 0; i < createsResult.total; ++i)
       records.add(null);
 
-    executeOperation(databaseIdentifier, createsResult.total, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
+    executeOperation(databaseIdentifier, createsResult,concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
       public Void call(final OBaseWorkLoadContext context) {
         final ODocument doc = createOperation(context.currentIdx);
@@ -112,7 +112,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
     if (records.size() != createsResult.total)
       throw new RuntimeException("Error on creating records: found " + records.size() + " but expected " + createsResult.total);
 
-    executeOperation(databaseIdentifier, readsResult.total, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
+    executeOperation(databaseIdentifier, readsResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
       public Void call(final OBaseWorkLoadContext context) {
         readOperation(((OWorkLoadContext) context).getDb(), context.currentIdx);
@@ -121,26 +121,24 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
       }
     });
 
-    updatesResult = executeOperation(databaseIdentifier, updatesResult.total, concurrencyLevel,
-        new OCallable<Void, OBaseWorkLoadContext>() {
-          @Override
-          public Void call(final OBaseWorkLoadContext context) {
-            updateOperation(((OWorkLoadContext) context).getDb(), records.get(context.currentIdx));
-            updatesResult.current.incrementAndGet();
-            return null;
-          }
-        });
+    executeOperation(databaseIdentifier, updatesResult,  concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
+      @Override
+      public Void call(final OBaseWorkLoadContext context) {
+        updateOperation(((OWorkLoadContext) context).getDb(), records.get(context.currentIdx));
+        updatesResult.current.incrementAndGet();
+        return null;
+      }
+    });
 
-    deletesResult = executeOperation(databaseIdentifier, deletesResult.total, concurrencyLevel,
-        new OCallable<Void, OBaseWorkLoadContext>() {
-          @Override
-          public Void call(final OBaseWorkLoadContext context) {
-            deleteOperation(((OWorkLoadContext) context).getDb(), records.get(context.currentIdx));
-            records.set(context.currentIdx, null);
-            deletesResult.current.incrementAndGet();
-            return null;
-          }
-        });
+    executeOperation(databaseIdentifier, deletesResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
+      @Override
+      public Void call(final OBaseWorkLoadContext context) {
+        deleteOperation(((OWorkLoadContext) context).getDb(), records.get(context.currentIdx));
+        records.set(context.currentIdx, null);
+        deletesResult.current.incrementAndGet();
+        return null;
+      }
+    });
   }
 
   protected void createSchema(ODatabaseIdentifier databaseIdentifier) {
