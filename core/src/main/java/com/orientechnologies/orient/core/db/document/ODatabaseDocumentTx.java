@@ -367,11 +367,22 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     final OStorage storage = getStorage();
     storage.restoreFromIncrementalBackup(incrementalBackupPath);
-
-    metadata = new OMetadataDefault(this);
-    metadata.load();
+    loadMetadata();
 
     return (DB) this;
+  }
+
+  private void loadMetadata() {
+    metadata = new OMetadataDefault(this);
+    OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+      @Override
+      public OSharedContext call() throws Exception {
+        OSharedContext shared = new OSharedContext(getStorage());
+        return shared;
+      }
+    });
+    metadata.init(shared);
+    shared.load(getStorage());
   }
 
   @Override
@@ -414,9 +425,17 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (!(getStorage() instanceof OStorageProxy))
         installHooksEmbedded();
 
-      // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
       metadata = new OMetadataDefault(this);
-      metadata.create();
+      // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
+      OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+        @Override
+        public OSharedContext call() throws Exception {
+          OSharedContext shared = new OSharedContext(getStorage());
+          return shared;
+        }
+      });
+      metadata.init(shared);
+      shared.create();
 
       if (!(getStorage() instanceof OStorageProxy))
         registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
@@ -502,7 +521,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     db.serializer = this.serializer;
 
     db.componentsFactory = this.componentsFactory;
-    db.metadata = new OMetadataDefault(db);
 
     db.initialized = true;
     if (storage instanceof OStorageProxy) {
@@ -513,7 +531,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
 
     db.setStatus(STATUS.OPEN);
-    db.metadata.load();
+    db.loadMetadata();
 
     if (!(db.getStorage() instanceof OStorageProxy))
       db.installHooksEmbedded();
@@ -2860,7 +2878,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     getStorage().restore(in, options, callable, iListener);
 
     if (!isClosed()) {
-      getMetadata().load();
+      loadMetadata();
       sharedContext = null;
     }
   }
@@ -3009,8 +3027,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     user = null;
 
-    metadata = new OMetadataDefault(this);
-    metadata.load();
+    loadMetadata();
 
     if (!(getStorage() instanceof OStorageProxy)) {
       if (metadata.getIndexManager().autoRecreateIndexesAfterCrash()) {

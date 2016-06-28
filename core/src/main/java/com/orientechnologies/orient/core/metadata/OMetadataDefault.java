@@ -68,22 +68,20 @@ public class OMetadataDefault implements OMetadataInternal {
 
   public OMetadataDefault(ODatabaseDocumentInternal databaseDocument) {
     this.database = databaseDocument;
+
   }
 
   public void load() {
-    final long timer = PROFILER.startChrono();
-
-    try {
-      OSharedContext shared = init();
-      shared.load(database.getStorage());
-    } finally {
-      PROFILER.stopChrono(PROFILER.getDatabaseMetric(getDatabase().getName(), "metadata.load"), "Loading of database metadata",
-          timer, "db.*.metadata.load");
-    }
   }
 
   public void create() throws IOException {
-    OSharedContext shared = init();
+    OSharedContext shared = database.getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
+      @Override
+      public OSharedContext call() throws Exception {
+        OSharedContext shared = new OSharedContext(database.getStorage());
+        return shared;
+      }
+    });
     shared.create();
   }
 
@@ -135,16 +133,8 @@ public class OMetadataDefault implements OMetadataInternal {
     return schemaClusterId;
   }
 
-  private OSharedContext init() {
+  public OSharedContext init(OSharedContext shared) {
     schemaClusterId = database.getClusterIdByName(CLUSTER_INTERNAL_NAME);
-
-    OSharedContext shared = database.getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContext(database.getStorage());
-        return shared;
-      }
-    });
 
     schema = new OSchemaProxy(shared.getSchema(), database);
     indexManager = new OIndexManagerProxy(shared.getIndexManager(), database);

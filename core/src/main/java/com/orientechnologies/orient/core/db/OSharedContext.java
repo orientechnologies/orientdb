@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -20,7 +22,7 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
  * Created by tglman on 15/06/16.
  */
 public class OSharedContext implements OCloseable {
-
+  protected static final OProfiler PROFILER = Orient.instance().getProfiler();
   private OSchemaShared                schema;
   private OSecurity                    security;
   private OIndexManagerAbstract        indexManager;
@@ -51,19 +53,26 @@ public class OSharedContext implements OCloseable {
     statementCache = new OStatementCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
   }
 
-
   public synchronized void load(OStorage storage) {
-    if (!loaded) {
-      schema.load();
-      security.load();
-      indexManager.load();
-      if (!(storage instanceof OStorageProxy)) {
-        functionLibrary.load();
-        scheduler.load();
+    final long timer = PROFILER.startChrono();
+
+    try {
+      if (!loaded) {
+        schema.load();
+        security.load();
+        indexManager.load();
+        if (!(storage instanceof OStorageProxy)) {
+          functionLibrary.load();
+          scheduler.load();
+        }
+        sequenceLibrary.load();
+        schema.onPostIndexManagement();
+        loaded = true;
       }
-      sequenceLibrary.load();
-      schema.onPostIndexManagement();
-      loaded = true;
+    } finally {
+      PROFILER
+          .stopChrono(PROFILER.getDatabaseMetric(storage.getName(), "metadata.load"), "Loading of database metadata", timer,
+              "db.*.metadata.load");
     }
   }
 
@@ -143,6 +152,5 @@ public class OSharedContext implements OCloseable {
   public OStatementCache getStatementCache() {
     return statementCache;
   }
-
 
 }
