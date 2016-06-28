@@ -19,10 +19,14 @@
  */
 package com.orientechnologies.orient.stresstest;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.stresstest.workload.OWorkload;
 import com.orientechnologies.orient.stresstest.workload.OWorkloadFactory;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * The main class of the OStressTester. It is instantiated from the OStressTesterCommandLineParser and takes care of launching the
@@ -100,10 +104,9 @@ public class OStressTester {
 
       System.out.println(workload.getFinalResult());
 
-      // if specified, writes output (in JSON format) to file
-      if (outputResultFile != null) {
-        // OIOUtils.writeFile(new File(outputResultFile), OJsonResultsFormatter.format(stressTestResults));
-      }
+      if (outputResultFile != null)
+        writeFile(workload);
+
     } catch (Exception ex) {
       System.err.println("\nAn error has occurred while running the stress test: " + ex.getMessage());
       returnCode = 1;
@@ -116,6 +119,14 @@ public class OStressTester {
     }
 
     return returnCode;
+  }
+
+  private void writeFile(final OWorkload workload) {
+    try {
+      OIOUtils.writeFile(new File(outputResultFile), workload.getFinalResultAsJson());
+    } catch (IOException e) {
+      System.err.println("\nError on writing the result file : " + e.getMessage());
+    }
   }
 
   public int getThreadsNumber() {
