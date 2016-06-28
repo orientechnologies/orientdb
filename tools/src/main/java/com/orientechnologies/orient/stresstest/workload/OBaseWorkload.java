@@ -20,13 +20,13 @@
 package com.orientechnologies.orient.stresstest.workload;
 
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
-import com.orientechnologies.orient.stresstest.ODatabaseUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * CRUD implementation of the workload.
@@ -34,34 +34,43 @@ import java.util.List;
  * @author Luca Garulli
  */
 public abstract class OBaseWorkload implements OWorkload {
-  public class OWorkLoadContext {
-    ODatabase db;
-    int       threadId;
-    int       currentIdx;
+  public abstract class OBaseWorkLoadContext {
+    public int threadId;
+    public int currentIdx;
+    public int totalPerThread;
+
+    public abstract void init(ODatabaseIdentifier dbIdentifier);
+
+    public abstract void close();
   }
 
   public class OWorkLoadResult {
-    long totalTime;
-    long avgNs;
-    int  percentileAvg;
-    long percentile99Ns;
-    long percentile99_9Ns;
+    public AtomicInteger current = new AtomicInteger();
+    public int           total;
+    public long          totalTime;
+    public long          avgNs;
+    public int           percentileAvg;
+    public long          percentile99Ns;
+    public long          percentile99_9Ns;
+
+    public ODocument toJSON() {
+      final ODocument json = new ODocument();
+      json.field("total", total);
+      json.field("time", totalTime / 1000f);
+      json.field("throughput", total * 1000 / (float) totalTime);
+      json.field("avg", avgNs / 1000000f);
+      json.field("percAvg", percentileAvg);
+      json.field("perc99", percentile99Ns / 1000000f);
+      json.field("perc99_9", percentile99_9Ns / 1000000f);
+      return json;
+    }
   }
 
   protected static final long MAX_ERRORS = 100;
   protected List<String>      errors     = new ArrayList<String>();
 
-  protected ODatabase getDocumentDatabase(final ODatabaseIdentifier databaseIdentifier) {
-    // opens the newly created db and creates an index on the class we're going to use
-    final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
-    if (database == null)
-      throw new IllegalArgumentException("Error on opening database " + databaseIdentifier.getName());
-
-    return database;
-  }
-
   protected OWorkLoadResult executeOperation(final ODatabaseIdentifier dbIdentifier, final int operationTotal,
-      final int concurrencyLevel, final OCallable<Void, OWorkLoadContext> callback) {
+      final int concurrencyLevel, final OCallable<Void, OBaseWorkLoadContext> callback) {
     final OWorkLoadResult result = new OWorkLoadResult();
 
     if (operationTotal == 0)
@@ -76,20 +85,21 @@ public abstract class OBaseWorkload implements OWorkload {
 
     final Thread[] thread = new Thread[concurrencyLevel];
     for (int t = 0; t < concurrencyLevel; ++t) {
-      final OWorkLoadContext context = new OWorkLoadContext();
-
-      context.threadId = t;
+      final int currentThread = t;
 
       thread[t] = new Thread(new Runnable() {
         @Override
         public void run() {
-          final int threadTotal = context.threadId < concurrencyLevel - 1 ? totalPerThread : totalPerLastThread;
+          final OBaseWorkLoadContext context = getContext();
 
-          context.db = getDocumentDatabase(dbIdentifier);
+          context.threadId = currentThread;
+          context.totalPerThread = context.threadId < concurrencyLevel - 1 ? totalPerThread : totalPerLastThread;
+
+          context.init(dbIdentifier);
           try {
             final int startIdx = totalPerThread * context.threadId;
 
-            for (int i = 0; i < threadTotal; ++i) {
+            for (int i = 0; i < context.totalPerThread; ++i) {
               context.currentIdx = startIdx + i;
 
               final long startOp = System.nanoTime();
@@ -107,7 +117,7 @@ public abstract class OBaseWorkload implements OWorkload {
             }
 
           } finally {
-            context.db.close();
+            context.close();
           }
         }
       });
@@ -142,6 +152,8 @@ public abstract class OBaseWorkload implements OWorkload {
 
     return result;
   }
+
+  protected abstract OBaseWorkLoadContext getContext();
 
   protected String getErrors() {
     final StringBuilder buffer = new StringBuilder();

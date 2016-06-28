@@ -33,14 +33,13 @@ import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * CRUD implementation of the workload.
  *
  * @author Luca Garulli
  */
-public class OCRUDWorkload extends OBaseWorkload {
+public class OCRUDWorkload extends OBaseDocumentWorkload {
 
   public static final String CLASS_NAME           = "StressTestCRUD";
   public static final String INDEX_NAME           = CLASS_NAME + ".Index";
@@ -50,20 +49,10 @@ public class OCRUDWorkload extends OBaseWorkload {
 
   private int                total                = 0;
 
-  private int                creates              = 0;
-  private int                reads                = 0;
-  private int                updates              = 0;
-  private int                deletes              = 0;
-
-  private AtomicInteger      currentCreates       = new AtomicInteger();
-  private AtomicInteger      currentReads         = new AtomicInteger();
-  private AtomicInteger      currentUpdates       = new AtomicInteger();
-  private AtomicInteger      currentDeletes       = new AtomicInteger();
-
-  private OWorkLoadResult    createsResult;
-  private OWorkLoadResult    readsResult;
-  private OWorkLoadResult    updatesResult;
-  private OWorkLoadResult    deletesResult;
+  private OWorkLoadResult    createsResult        = new OWorkLoadResult();
+  private OWorkLoadResult    readsResult          = new OWorkLoadResult();
+  private OWorkLoadResult    updatesResult        = new OWorkLoadResult();
+  private OWorkLoadResult    deletesResult        = new OWorkLoadResult();
 
   @Override
   public String getName() {
@@ -88,9 +77,10 @@ public class OCRUDWorkload extends OBaseWorkload {
     }
     assignState(state, number, ' ');
 
-    total = creates + reads + updates + deletes;
+    total = createsResult.total + readsResult.total + updatesResult.total + deletesResult.total;
 
-    if (reads > creates || updates > creates || deletes > creates)
+    if (readsResult.total > createsResult.total || updatesResult.total > createsResult.total
+        || deletesResult.total > createsResult.total)
       throw new IllegalArgumentException(INVALID_NUMBERS);
 
     if (total == 0)
@@ -101,54 +91,56 @@ public class OCRUDWorkload extends OBaseWorkload {
   public void execute(final int concurrencyLevel, final ODatabaseIdentifier databaseIdentifier) {
     createSchema(databaseIdentifier);
 
-    final ArrayList<ORID> records = new ArrayList<ORID>(creates);
-    for (int i = 0; i < creates; ++i)
+    final ArrayList<ORID> records = new ArrayList<ORID>(createsResult.total);
+    for (int i = 0; i < createsResult.total; ++i)
       records.add(null);
 
-    createsResult = executeOperation(databaseIdentifier, creates, concurrencyLevel, new OCallable<Void, OWorkLoadContext>() {
+    executeOperation(databaseIdentifier, createsResult.total, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
-      public Void call(final OWorkLoadContext context) {
+      public Void call(final OBaseWorkLoadContext context) {
         final ODocument doc = createOperation(context.currentIdx);
         synchronized (records) {
           if (records.set(context.currentIdx, doc.getIdentity()) != null)
             throw new RuntimeException(
                 "Error on creating record with id " + context.currentIdx + " because has been already created");
         }
-        currentCreates.incrementAndGet();
+        createsResult.current.incrementAndGet();
         return null;
       }
     });
 
-    if (records.size() != creates)
-      throw new RuntimeException("Error on creating records: found " + records.size() + " but expected " + creates);
+    if (records.size() != createsResult.total)
+      throw new RuntimeException("Error on creating records: found " + records.size() + " but expected " + createsResult.total);
 
-    readsResult = executeOperation(databaseIdentifier, reads, concurrencyLevel, new OCallable<Void, OWorkLoadContext>() {
+    executeOperation(databaseIdentifier, readsResult.total, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
-      public Void call(final OWorkLoadContext context) {
-        readOperation(context.db, context.currentIdx);
-        currentReads.incrementAndGet();
+      public Void call(final OBaseWorkLoadContext context) {
+        readOperation(((OWorkLoadContext) context).getDb(), context.currentIdx);
+        readsResult.current.incrementAndGet();
         return null;
       }
     });
 
-    updatesResult = executeOperation(databaseIdentifier, updates, concurrencyLevel, new OCallable<Void, OWorkLoadContext>() {
-      @Override
-      public Void call(final OWorkLoadContext context) {
-        updateOperation(context.db, records.get(context.currentIdx));
-        currentUpdates.incrementAndGet();
-        return null;
-      }
-    });
+    updatesResult = executeOperation(databaseIdentifier, updatesResult.total, concurrencyLevel,
+        new OCallable<Void, OBaseWorkLoadContext>() {
+          @Override
+          public Void call(final OBaseWorkLoadContext context) {
+            updateOperation(((OWorkLoadContext) context).getDb(), records.get(context.currentIdx));
+            updatesResult.current.incrementAndGet();
+            return null;
+          }
+        });
 
-    deletesResult = executeOperation(databaseIdentifier, deletes, concurrencyLevel, new OCallable<Void, OWorkLoadContext>() {
-      @Override
-      public Void call(final OWorkLoadContext context) {
-        deleteOperation(context.db, records.get(context.currentIdx));
-        records.set(context.currentIdx, null);
-        currentDeletes.incrementAndGet();
-        return null;
-      }
-    });
+    deletesResult = executeOperation(databaseIdentifier, deletesResult.total, concurrencyLevel,
+        new OCallable<Void, OBaseWorkLoadContext>() {
+          @Override
+          public Void call(final OBaseWorkLoadContext context) {
+            deleteOperation(((OWorkLoadContext) context).getDb(), records.get(context.currentIdx));
+            records.set(context.currentIdx, null);
+            deletesResult.current.incrementAndGet();
+            return null;
+          }
+        });
   }
 
   protected void createSchema(ODatabaseIdentifier databaseIdentifier) {
@@ -160,10 +152,6 @@ public class OCRUDWorkload extends OBaseWorkload {
         cls.createProperty("name", OType.STRING);
         cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(), (OProgressListener) null, (ODocument) null,
             "AUTOSHARDING", new String[] { "name" });
-        // cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(), (OProgressListener) null, (ODocument) null,
-        // null, new String[] { "name" });
-        // cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null, null,
-        // new String[] { "name" });
       }
     } finally {
       database.close();
@@ -172,10 +160,11 @@ public class OCRUDWorkload extends OBaseWorkload {
 
   @Override
   public String getPartialResult() {
-    final long current = currentCreates.get() + currentReads.get() + currentUpdates.get() + currentDeletes.get();
+    final long current = createsResult.current.get() + readsResult.current.get() + updatesResult.current.get()
+        + deletesResult.current.get();
     return String.format("%d%% [Creates: %d%% - Reads: %d%% - Updates: %d%% - Deletes: %d%%]", ((int) (100 * current / total)),
-        100 * currentCreates.get() / creates, 100 * currentReads.get() / reads, 100 * currentUpdates.get() / updates,
-        100 * currentDeletes.get() / deletes);
+        100 * createsResult.current.get() / createsResult.total, 100 * readsResult.current.get() / readsResult.total,
+        100 * updatesResult.current.get() / updatesResult.total, 100 * deletesResult.current.get() / deletesResult.total);
   }
 
   @Override
@@ -184,28 +173,41 @@ public class OCRUDWorkload extends OBaseWorkload {
 
     buffer.append(String.format(
         "\nCreated %d records in %.3f secs - Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th Perc: %.3fms - 99.9th Perc: %.3fms",
-        creates, (createsResult.totalTime / 1000f), creates * 1000 / (float) createsResult.totalTime,
+        createsResult.total, (createsResult.totalTime / 1000f), createsResult.total * 1000 / (float) createsResult.totalTime,
         createsResult.avgNs / 1000000f, createsResult.percentileAvg, createsResult.percentile99Ns / 1000000f,
         createsResult.percentile99_9Ns / 1000000f));
 
     buffer.append(String.format(
         "\nRead    %d records in %.3f secs - Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th perc: %.3fms - 99.9th Perc: %.3fms",
-        reads, (readsResult.totalTime / 1000f), reads * 1000 / (float) readsResult.totalTime, readsResult.avgNs / 1000000f,
-        readsResult.percentileAvg, readsResult.percentile99Ns / 1000000f, readsResult.percentile99_9Ns / 1000000f));
+        readsResult.total, (readsResult.totalTime / 1000f), readsResult.total * 1000 / (float) readsResult.totalTime,
+        readsResult.avgNs / 1000000f, readsResult.percentileAvg, readsResult.percentile99Ns / 1000000f,
+        readsResult.percentile99_9Ns / 1000000f));
 
     buffer.append(String.format(
         "\nUpdated %d records in %.3f secs - Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th perc: %.3fms - 99.9th Perc: %.3fms",
-        updates, (updatesResult.totalTime / 1000f), updates * 1000 / (float) updatesResult.totalTime,
+        updatesResult.total, (updatesResult.totalTime / 1000f), updatesResult.total * 1000 / (float) updatesResult.totalTime,
         updatesResult.avgNs / 1000000f, updatesResult.percentileAvg, updatesResult.percentile99Ns / 1000000f,
         updatesResult.percentile99_9Ns / 1000000f));
 
     buffer.append(String.format(
         "\nDeleted %d records in %.3f secs - Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th perc: %.3fms - 99.9th Perc: %.3fms",
-        deletes, (deletesResult.totalTime / 1000f), deletes * 1000 / (float) deletesResult.totalTime,
+        deletesResult.total, (deletesResult.totalTime / 1000f), deletesResult.total * 1000 / (float) deletesResult.totalTime,
         deletesResult.avgNs / 1000000f, deletesResult.percentileAvg, deletesResult.percentile99Ns / 1000000f,
         deletesResult.percentile99_9Ns / 1000000f));
 
     return buffer.toString();
+  }
+
+  @Override
+  public String getFinalResultAsJson() {
+    final ODocument json = new ODocument();
+
+    json.field("creates", createsResult.toJSON(), OType.EMBEDDED);
+    json.field("reads", createsResult.toJSON(), OType.EMBEDDED);
+    json.field("updates", createsResult.toJSON(), OType.EMBEDDED);
+    json.field("deletes", createsResult.toJSON(), OType.EMBEDDED);
+
+    return json.toString();
   }
 
   public ODocument createOperation(final long n) {
@@ -242,31 +244,31 @@ public class OCRUDWorkload extends OBaseWorkload {
       number.append("0");
 
     if (state == 'C')
-      creates = Integer.parseInt(number.toString());
+      createsResult.total = Integer.parseInt(number.toString());
     else if (state == 'R')
-      reads = Integer.parseInt(number.toString());
+      readsResult.total = Integer.parseInt(number.toString());
     else if (state == 'U')
-      updates = Integer.parseInt(number.toString());
+      updatesResult.total = Integer.parseInt(number.toString());
     else if (state == 'D')
-      deletes = Integer.parseInt(number.toString());
+      deletesResult.total = Integer.parseInt(number.toString());
 
     number.setLength(0);
     return c;
   }
 
   public int getCreates() {
-    return creates;
+    return createsResult.total;
   }
 
   public int getReads() {
-    return reads;
+    return readsResult.total;
   }
 
   public int getUpdates() {
-    return updates;
+    return updatesResult.total;
   }
 
   public int getDeletes() {
-    return deletes;
+    return deletesResult.total;
   }
 }

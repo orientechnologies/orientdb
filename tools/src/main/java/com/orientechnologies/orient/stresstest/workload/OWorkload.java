@@ -36,4 +36,6 @@ public interface OWorkload {
   String getPartialResult();
 
   String getFinalResult();
+
+  String getFinalResultAsJson();
 }
