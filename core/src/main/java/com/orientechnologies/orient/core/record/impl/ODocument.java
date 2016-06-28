@@ -2419,7 +2419,7 @@ public class ODocument extends ORecordAbstract
         break;
       case LINKLIST:
         if (fieldValue instanceof List<?>)
-          newValue = new ORecordLazyList(this,(Collection<OIdentifiable>) fieldValue);
+          newValue = new ORecordLazyList(this, (Collection<OIdentifiable>) fieldValue);
         break;
       case LINKSET:
         if (fieldValue instanceof Set<?>)
@@ -2445,21 +2445,21 @@ public class ODocument extends ORecordAbstract
         addCollectionChangeListener(fieldEntry.getValue());
         fieldEntry.getValue().value = newValue;
         if (fieldType == OType.LINKSET || fieldType == OType.LINKLIST) {
-          boolean pre = ((OAutoConvertToRecord)newValue).isAutoConvertToRecord();
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(false);
+          boolean pre = ((OAutoConvertToRecord) newValue).isAutoConvertToRecord();
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(false);
           for (OIdentifiable rec : (Collection<OIdentifiable>) newValue) {
             if (rec instanceof ODocument)
               ((ODocument) rec).convertAllMultiValuesToTrackedVersions();
           }
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(pre);
-        } else if (fieldType == OType.LINKMAP){
-          boolean pre = ((OAutoConvertToRecord)newValue).isAutoConvertToRecord();
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(false);
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(pre);
+        } else if (fieldType == OType.LINKMAP) {
+          boolean pre = ((OAutoConvertToRecord) newValue).isAutoConvertToRecord();
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(false);
           for (OIdentifiable rec : (Collection<OIdentifiable>) ((Map<?, ?>) newValue).values()) {
             if (rec instanceof ODocument)
               ((ODocument) rec).convertAllMultiValuesToTrackedVersions();
           }
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(pre);
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(pre);
         }
       }
     }
@@ -2732,5 +2732,11 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+  }
+
+  @Override
+  protected void track(OIdentifiable id) {
+    if (isTrackingChanges() && id.getIdentity().getClusterId() != -2)
+      super.track(id);
   }
 }
