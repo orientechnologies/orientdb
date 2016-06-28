@@ -56,7 +56,7 @@ public class SFTPUploaderTest extends AbstractUploaderTest {
   private       OLocalBackupUploader uploader                 = new OLocalBackupUploader("sftp");
 
 
-  @Test
+
   public void testIncrementalBackup() {
 
     try {
