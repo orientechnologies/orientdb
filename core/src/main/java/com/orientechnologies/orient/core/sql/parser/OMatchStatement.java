@@ -582,6 +582,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     } else if (returnsMatches()) {
       doc = getDatabase().newInstance();
+      doc.setTrackingChanges(false);
       for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
         if (isExplicitAlias(entry.getKey())) {
           doc.field(entry.getKey(), entry.getValue());
@@ -589,6 +590,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       }
     } else if (returnsPaths()) {
       doc = getDatabase().newInstance();
+      doc.setTrackingChanges(false);
       for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
         doc.field(entry.getKey(), entry.getValue());
       }
@@ -596,6 +598,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       doc = jsonToDoc(matchContext, ctx);
     } else {
       doc = getDatabase().newInstance();
+      doc.setTrackingChanges(false);
       int i = 0;
       for (OExpression item : returnItems) {
         OIdentifier returnAliasIdentifier = returnAliases.get(i);
@@ -607,6 +610,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           returnAlias = returnAliasIdentifier;
         }
         ODocument mapDoc = new ODocument();
+        mapDoc.setTrackingChanges(false);
         mapDoc.fromMap((Map) matchContext.matched);
         doc.field(returnAlias.getStringValue(), item.execute(mapDoc, ctx));
 
@@ -689,6 +693,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   private ODocument jsonToDoc(MatchContext matchContext, OCommandContext ctx) {
     if (returnItems.size() == 1 && (returnItems.get(0).value instanceof OJson) && returnAliases.get(0) == null) {
       ODocument result = new ODocument();
+      result.setTrackingChanges(false);
       result.fromMap(((OJson) returnItems.get(0).value).toMap(matchContext.toDoc(), ctx));
       return result;
     }

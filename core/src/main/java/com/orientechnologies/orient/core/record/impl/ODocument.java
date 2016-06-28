@@ -207,6 +207,7 @@ public class ODocument extends ORecordAbstract
 
   /**
    * retrieves a property value from the current document
+   *
    * @param iFieldName The field name, it can contain any character (it's not evaluated as an expression, as in #eval()
    * @param <RET>
    * @return the field value. Null if the field does not exist.
@@ -240,7 +241,8 @@ public class ODocument extends ORecordAbstract
 
   /**
    * sets a property value on current document
-   * @param iFieldName The property name
+   *
+   * @param iFieldName     The property name
    * @param iPropertyValue The property value
    */
   public void setProperty(final String iFieldName, Object iPropertyValue) {
@@ -249,14 +251,14 @@ public class ODocument extends ORecordAbstract
 
   /**
    * Sets
-   * @param iPropetyName The property name
+   *
+   * @param iPropetyName   The property name
    * @param iPropertyValue The property value
-   * @param iFieldType Forced type (not auto-determined)
+   * @param iFieldType     Forced type (not auto-determined)
    */
   public void setProperty(String iPropetyName, Object iPropertyValue, OType... iFieldType) {
     if (iPropetyName == null)
       throw new IllegalArgumentException("Field is null");
-
 
     if (ODocumentHelper.ATTRIBUTE_CLASS.equals(iPropetyName)) {
       setClassName(iPropertyValue.toString());
@@ -2595,7 +2597,7 @@ public class ODocument extends ORecordAbstract
         break;
       case LINKLIST:
         if (fieldValue instanceof List<?>)
-          newValue = new ORecordLazyList(this,(Collection<OIdentifiable>) fieldValue);
+          newValue = new ORecordLazyList(this, (Collection<OIdentifiable>) fieldValue);
         break;
       case LINKSET:
         if (fieldValue instanceof Set<?>)
@@ -2621,21 +2623,21 @@ public class ODocument extends ORecordAbstract
         addCollectionChangeListener(fieldEntry.getValue());
         fieldEntry.getValue().value = newValue;
         if (fieldType == OType.LINKSET || fieldType == OType.LINKLIST) {
-          boolean pre = ((OAutoConvertToRecord)newValue).isAutoConvertToRecord();
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(false);
+          boolean pre = ((OAutoConvertToRecord) newValue).isAutoConvertToRecord();
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(false);
           for (OIdentifiable rec : (Collection<OIdentifiable>) newValue) {
             if (rec instanceof ODocument)
               ((ODocument) rec).convertAllMultiValuesToTrackedVersions();
           }
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(pre);
-        } else if (fieldType == OType.LINKMAP){
-          boolean pre = ((OAutoConvertToRecord)newValue).isAutoConvertToRecord();
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(false);
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(pre);
+        } else if (fieldType == OType.LINKMAP) {
+          boolean pre = ((OAutoConvertToRecord) newValue).isAutoConvertToRecord();
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(false);
           for (OIdentifiable rec : (Collection<OIdentifiable>) ((Map<?, ?>) newValue).values()) {
             if (rec instanceof ODocument)
               ((ODocument) rec).convertAllMultiValuesToTrackedVersions();
           }
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(pre);
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(pre);
         }
       }
     }
@@ -2908,5 +2910,11 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+  }
+
+  @Override
+  protected void track(OIdentifiable id) {
+    if (isTrackingChanges() && id.getIdentity().getClusterId() != -2)
+      super.track(id);
   }
 }
