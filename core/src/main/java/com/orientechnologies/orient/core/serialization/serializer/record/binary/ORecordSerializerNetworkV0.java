@@ -273,8 +273,14 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
 
   protected OClass serializeClass(final ODocument document, final BytesContainer bytes) {
     final OClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
+    String name = null;
     if (clazz != null)
-      writeString(bytes, clazz.getName());
+      name = clazz.getName();
+    if (name == null)
+      name = document.getClassName();
+
+    if (name != null)
+      writeString(bytes, name);
     else
       writeEmptyString(bytes);
     return clazz;
@@ -605,8 +611,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   }
 
   private int writeLinkMap(final BytesContainer bytes, final Map<Object, OIdentifiable> map) {
-    final boolean disabledAutoConversion = map instanceof ORecordLazyMultiValue
-        && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
+    final boolean disabledAutoConversion =
+        map instanceof ORecordLazyMultiValue && ((ORecordLazyMultiValue) map).isAutoConvertToRecord();
 
     if (disabledAutoConversion)
       // AVOID TO FETCH RECORD
@@ -688,8 +694,8 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
   private int writeLinkCollection(final BytesContainer bytes, final Collection<OIdentifiable> value) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
 
-    final boolean disabledAutoConversion = value instanceof ORecordLazyMultiValue
-        && ((ORecordLazyMultiValue) value).isAutoConvertToRecord();
+    final boolean disabledAutoConversion =
+        value instanceof ORecordLazyMultiValue && ((ORecordLazyMultiValue) value).isAutoConvertToRecord();
 
     if (disabledAutoConversion)
       // AVOID TO FETCH RECORD
@@ -835,6 +841,5 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
     toCalendar.set(Calendar.MILLISECOND, 0);
     return toCalendar.getTimeInMillis();
   }
-
 
 }
