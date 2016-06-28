@@ -2917,4 +2917,10 @@ public class ODocument extends ORecordAbstract
     if (isTrackingChanges() && id.getIdentity().getClusterId() != -2)
       super.track(id);
   }
+
+  @Override
+  protected void unTrack(OIdentifiable id) {
+    if (isTrackingChanges() && id.getIdentity().getClusterId() != -2)
+      super.unTrack(id);
+  }
 }
