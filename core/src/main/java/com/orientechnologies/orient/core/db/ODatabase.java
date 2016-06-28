@@ -76,6 +76,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param iUserPassword Password associated to the user
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
+  @Deprecated
   <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword);
 
   /**
@@ -83,6 +84,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
+  @Deprecated
   <DB extends ODatabase> DB create();
 
   /**
@@ -94,6 +96,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return he Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
+  @Deprecated
   <DB extends ODatabase> DB create(String incrementalBackupPath);
 
   /**
@@ -101,6 +104,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
+  @Deprecated
   <DB extends ODatabase> DB create(Map<OGlobalConfiguration, Object> iInitialSettings);
 
   /**

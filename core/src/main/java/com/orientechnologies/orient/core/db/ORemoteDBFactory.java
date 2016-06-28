@@ -1,20 +1,15 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 
-import java.io.InputStream;
 import java.util.Map;
 
 /**
  * Created by tglman on 08/04/16.
  */
-public class OEmbeddedFactory extends OrientFactory {
-  private OEngineLocalPaginated local;
-  private OEngineMemory         memory;
+public class ORemoteDBFactory extends OrientDBFactory {
 
-  public OEmbeddedFactory(String directoryPath) {
+  public ORemoteDBFactory(String[] hosts, OrientDBSettings configuration) {
     super();
   }
 
@@ -24,12 +19,8 @@ public class OEmbeddedFactory extends OrientFactory {
   }
 
   @Override
-  public void create(String name, String user, String password, DatabaseType type) {
+  public void create(String name, String user, String password, DatabaseType databaseType) {
 
-  }
-
-  public /*OServer*/ Object spawnServer(/*OServerConfiguration*/Object serverConfiguration){
-    return null;
   }
 
   @Override
@@ -48,7 +39,7 @@ public class OEmbeddedFactory extends OrientFactory {
   }
 
   @Override
-  public Pool<ODatabaseDocument> open(String name, String user, String password, Map<String, Object> poolSettings) {
+  public OPool<ODatabaseDocument> openPool(String name, String user, String password, Map<String, Object> poolSettings) {
     return null;
   }
 

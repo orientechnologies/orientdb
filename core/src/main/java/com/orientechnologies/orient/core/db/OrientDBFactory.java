@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Created by tglman on 27/03/16.
  */
-public abstract class OrientFactory implements AutoCloseable {
+public abstract class OrientDBFactory implements AutoCloseable {
 
   public enum DatabaseType {
     PLOCAL, MEMORY
@@ -23,26 +23,13 @@ public abstract class OrientFactory implements AutoCloseable {
    * @param configuration a map contain the configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
    * @return the new Orient Factory.
    */
-  public static OrientFactory fromUrl(String url, Map<String, String> configuration) {
+  public static OrientDBFactory fromUrl(String url, OrientDBSettings configuration) {
     String what = url.substring(0, url.indexOf(':'));
-    if ("local".equals(what))
+    if ("embedded".equals(what))
       return embedded(url.substring(url.indexOf(':') + 1), configuration);
     else if ("remote".equals(what))
       return remote(url.substring(url.indexOf(':') + 1).split(","), configuration);
-    else if ("distributed".equals(what))
-      return join(url.substring(url.indexOf(':') + 1).split(","), configuration);
     throw new ODatabaseException("not supported database type");
-  }
-
-  /**
-   * Create an embedded distributed factory.
-   *
-   * @param nodes
-   * @param configuration
-   * @return
-   */
-  public static ODistributedFactory join(String[] nodes, Map<String, String> configuration) {
-    return new ODistributedFactory(nodes);
   }
 
   /**
@@ -52,8 +39,8 @@ public abstract class OrientFactory implements AutoCloseable {
    * @param configuration
    * @return
    */
-  public static OrientFactory remote(String[] hosts, Map<String, String> configuration) {
-    return new ORemoteFactory(hosts);
+  public static OrientDBFactory remote(String[] hosts, OrientDBSettings configuration) {
+    return new ORemoteDBFactory(hosts, configuration);
   }
 
   /**
@@ -63,8 +50,8 @@ public abstract class OrientFactory implements AutoCloseable {
    * @param configuration
    * @return
    */
-  public static OEmbeddedFactory embedded(String directoryPath, Map<String, String> configuration) {
-    return new OEmbeddedFactory(directoryPath);
+  public static OEmbeddedDBFactory embedded(String directoryPath, OrientDBSettings configuration) {
+    return new OEmbeddedDBFactory(directoryPath, configuration);
   }
 
   /**
@@ -93,7 +80,7 @@ public abstract class OrientFactory implements AutoCloseable {
 
   public abstract Map<String, String> listDatabases(String user, String password);
 
-  public abstract Pool<ODatabaseDocument> openPool(String name, String user, String password,Map<String,Object> poolSettings);
+  public abstract OPool<ODatabaseDocument> openPool(String name, String user, String password, Map<String, Object> poolSettings);
 
   public abstract void close();
 

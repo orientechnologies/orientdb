@@ -85,6 +85,7 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    *          Authentication token
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
+  @Deprecated
   <DB extends ODatabase> DB open(final OToken iToken);
 
   OUncompletedCommit<Void> initiateCommit();
