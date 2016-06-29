@@ -104,33 +104,38 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     defaultSerializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
   }
 
-  private final Map<String, Object> properties = new HashMap<String, Object>();
-  private final Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
-  private final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
+  protected final Map<String, Object> properties = new HashMap<String, Object>();
+  protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
+  protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
   protected ORecordSerializer    serializer;
-  private   String               url;
-  private   OStorage             storage;
-  private   STATUS               status;
-  private   OIntent              currentIntent;
-  private   ODatabaseInternal<?> databaseOwner;
-  private   OMetadataDefault     metadata;
-  private   OImmutableUser       user;
-  private   byte                 recordType;
-  private final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
-  private       boolean                                     retainRecords = true;
-  private OLocalRecordCache                localCache;
-  private boolean                          mvcc;
-  private OCurrentStorageComponentsFactory componentsFactory;
-  private boolean initialized = false;
-  private OTransaction currentTx;
-  private boolean                 keepStorageOpen = false;
-  private AtomicReference<Thread> owner           = new AtomicReference<Thread>();
-  private boolean                 ownerProtection = true;
+  protected    String               url;
+  protected   OStorage             storage;
+  protected   STATUS               status;
+  protected   OIntent              currentIntent;
+  protected   ODatabaseInternal<?> databaseOwner;
+  protected   OMetadataDefault     metadata;
+  protected   OImmutableUser       user;
+  protected   byte                 recordType;
+  protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
+  protected       boolean                                     retainRecords = true;
+  protected OLocalRecordCache                localCache;
+  protected boolean                          mvcc;
+  protected OCurrentStorageComponentsFactory componentsFactory;
+  protected boolean initialized = false;
+  protected OTransaction currentTx;
+  protected boolean                 keepStorageOpen = false;
+  protected AtomicReference<Thread> owner           = new AtomicReference<Thread>();
+  protected boolean                 ownerProtection = true;
 
   protected ODatabaseSessionMetadata sessionMetadata;
 
-  private final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
-  private OSharedContext sharedContext;
+  protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
+  protected OSharedContext sharedContext;
+
+  protected ODatabaseDocumentTx(){
+    //DO NOTHING IS FOR EXTENDED OBJECTS
+    super(false);
+  }
 
   /**
    * Creates a new connection to the database.
@@ -377,7 +382,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return (DB) this;
   }
 
-  private void loadMetadata() {
+  protected void loadMetadata() {
     metadata = new OMetadataDefault(this);
     OSharedContext shared = getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
       @Override
@@ -1270,7 +1275,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private void clearOwner() {
     if (!ownerProtection)
       return;
-
     owner.set(null);
   }
 
@@ -3121,7 +3125,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     initialized = true;
   }
 
-  private void installHooksEmbedded() {
+  protected void installHooksEmbedded() {
     hooks.clear();
     registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
     registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
@@ -3247,7 +3251,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return record.toStream();
   }
 
-  private void init() {
+  protected void init() {
     currentTx = new OTransactionNoTx(this);
   }
 

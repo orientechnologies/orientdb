@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * Created by tglman on 08/04/16.
  */
-public class ORemoteDBFactory extends OrientDBFactory {
+public class ORemoteDBFactory implements OrientDBFactory {
 
   public ORemoteDBFactory(String[] hosts, OrientDBSettings configuration) {
     super();

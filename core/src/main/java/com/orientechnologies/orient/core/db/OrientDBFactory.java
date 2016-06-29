@@ -8,9 +8,9 @@ import java.util.Map;
 /**
  * Created by tglman on 27/03/16.
  */
-public abstract class OrientDBFactory implements AutoCloseable {
+public interface OrientDBFactory extends AutoCloseable {
 
-  public enum DatabaseType {
+  enum DatabaseType {
     PLOCAL, MEMORY
   }
 
@@ -23,7 +23,7 @@ public abstract class OrientDBFactory implements AutoCloseable {
    * @param configuration a map contain the configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
    * @return the new Orient Factory.
    */
-  public static OrientDBFactory fromUrl(String url, OrientDBSettings configuration) {
+  static OrientDBFactory fromUrl(String url, OrientDBSettings configuration) {
     String what = url.substring(0, url.indexOf(':'));
     if ("embedded".equals(what))
       return embedded(url.substring(url.indexOf(':') + 1), configuration);
@@ -39,7 +39,7 @@ public abstract class OrientDBFactory implements AutoCloseable {
    * @param configuration
    * @return
    */
-  public static OrientDBFactory remote(String[] hosts, OrientDBSettings configuration) {
+  static OrientDBFactory remote(String[] hosts, OrientDBSettings configuration) {
     return new ORemoteDBFactory(hosts, configuration);
   }
 
@@ -50,7 +50,7 @@ public abstract class OrientDBFactory implements AutoCloseable {
    * @param configuration
    * @return
    */
-  public static OEmbeddedDBFactory embedded(String directoryPath, OrientDBSettings configuration) {
+  static OEmbeddedDBFactory embedded(String directoryPath, OrientDBSettings configuration) {
     return new OEmbeddedDBFactory(directoryPath, configuration);
   }
 
@@ -62,7 +62,7 @@ public abstract class OrientDBFactory implements AutoCloseable {
    * @param password
    * @return the opened database.
    */
-  public abstract ODatabaseDocument open(String name, String user, String password);
+  ODatabaseDocument open(String name, String user, String password);
 
   /**
    * Create a new database
@@ -72,16 +72,16 @@ public abstract class OrientDBFactory implements AutoCloseable {
    * @param password
    * @param type     can be plocal or memory
    */
-  public abstract void create(String name, String user, String password, DatabaseType type);
+  void create(String name, String user, String password, DatabaseType type);
 
-  public abstract boolean exist(String name, String user, String password);
+  boolean exist(String name, String user, String password);
 
-  public abstract void drop(String name, String user, String password);
+  void drop(String name, String user, String password);
 
-  public abstract Map<String, String> listDatabases(String user, String password);
+  Map<String, String> listDatabases(String user, String password);
 
-  public abstract OPool<ODatabaseDocument> openPool(String name, String user, String password, Map<String, Object> poolSettings);
+  OPool<ODatabaseDocument> openPool(String name, String user, String password, Map<String, Object> poolSettings);
 
-  public abstract void close();
+  void close();
 
 }

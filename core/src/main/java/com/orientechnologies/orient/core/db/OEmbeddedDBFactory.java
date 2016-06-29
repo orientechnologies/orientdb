@@ -31,7 +31,7 @@ import java.util.concurrent.Callable;
 /**
  * Created by tglman on 08/04/16.
  */
-public class OEmbeddedDBFactory extends OrientDBFactory {
+public class OEmbeddedDBFactory implements OrientDBFactory {
   private static final OWriteCacheIdGen writeCacheIdGen = new OSnowFlakeIdGen();
   private volatile O2QCache readCache;
   private volatile Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
@@ -122,7 +122,7 @@ public class OEmbeddedDBFactory extends OrientDBFactory {
       storage.getConfiguration().update();
 
       final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-      embedded.create();
+      embedded.internalCreate();
     }
   }
 
