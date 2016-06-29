@@ -8,18 +8,17 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.*;
 
-@Test
 @SuppressWarnings("unchecked")
 public class OCompositeIndexDefinitionTest {
   private OCompositeIndexDefinition compositeIndex;
 
-  @BeforeMethod
+  @Before
   public void beforeMethod() {
     compositeIndex = new OCompositeIndexDefinition("testClass");
 
@@ -235,7 +234,7 @@ public class OCompositeIndexDefinitionTest {
     Assert.assertEquals(result, expectedResult);
   }
 
-  @Test(expectedExceptions = OIndexException.class)
+  @Test(expected = OIndexException.class)
   public void testCreateCollectionValueTwoCollections() {
     final OCompositeIndexDefinition compositeIndexDefinition = new OCompositeIndexDefinition("testCollectionClass");
 
@@ -245,7 +244,7 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.createValue(Arrays.asList(1, 2), Arrays.asList(12));
   }
 
-  @Test(expectedExceptions = NumberFormatException.class)
+  @Test(expected = NumberFormatException.class)
   public void testCreateValueWrongParam() {
     compositeIndex.createValue(Arrays.asList("1t2", "test"));
   }
@@ -257,7 +256,7 @@ public class OCompositeIndexDefinitionTest {
     Assert.assertEquals(result, new OCompositeKey(Arrays.asList(12, "test")));
   }
 
-  @Test(expectedExceptions = NumberFormatException.class)
+  @Test(expected = NumberFormatException.class)
   public void testCreateValueWrongParamArrayParams() {
     compositeIndex.createValue("1t2", "test");
   }
@@ -369,7 +368,6 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
     compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER));
 
-
     final Object result = compositeIndexDefinition.getDocumentValueToIndex(document);
     Assert.assertNull(result);
   }
@@ -403,7 +401,6 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.addIndex(new OPropertyListIndexDefinition("testCollectionClass", "fOne", OType.INTEGER));
     compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fTwo", OType.INTEGER));
     compositeIndexDefinition.setNullValuesIgnored(false);
-
 
     final Object result = compositeIndexDefinition.getDocumentValueToIndex(document);
     Assert.assertEquals(result, Arrays.asList(new OCompositeKey(null, 12)));
@@ -544,7 +541,7 @@ public class OCompositeIndexDefinitionTest {
     Assert.assertEquals(result, expectedResult);
   }
 
-  @Test(expectedExceptions = OException.class)
+  @Test(expected = OException.class)
   public void testDocumentToIndexCollectionValueTwoCollections() {
     final ODocument document = new ODocument();
 
@@ -558,7 +555,7 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.getDocumentValueToIndex(document);
   }
 
-  @Test(expectedExceptions = NumberFormatException.class)
+  @Test(expected = NumberFormatException.class)
   public void testDocumentToIndexWrongField() {
     final ODocument document = new ODocument();
 

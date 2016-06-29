@@ -19,15 +19,14 @@
  */
 package com.orientechnologies.orient.core.sql.parser.operators;
 
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.sql.parser.OLuceneOperator;
+import org.junit.Test;
 
 /**
  * @author Luigi Dell'Aquila
  */
 public class ONearOperatorTest {
-  @Test(enabled = false)
+  @Test
   public void test() {
     OLuceneOperator op = new OLuceneOperator(-1);
     // TODO

@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.config.*;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -9,8 +9,7 @@ import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import org.testng.Assert;
-import org.testng.annotations.*;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,13 +17,13 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Andrey Lomakin
  * @since 5/8/13
  */
-@Test
+
 public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest {
   static {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
@@ -46,7 +45,8 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
   private String                 expectedStorageDir;
   private OLocalPaginatedStorage storage;
 
-  @BeforeMethod
+
+  @Before
   @Override
   public void beforeMethod() throws IOException {
     buildDirectory = System.getProperty("buildDirectory", ".");
@@ -102,7 +102,7 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
     paginatedCluster.create(-1);
   }
 
-  @AfterMethod
+  @After
   public void afterMethod() throws IOException {
     expectedDatabase.open("admin", "admin");
     expectedDatabase.drop();
@@ -121,18 +121,6 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
     file = new File(buildDirectory);
     if (file.exists())
       Assert.assertTrue(file.delete());
-  }
-
-  @BeforeClass
-  @Override
-  public void beforeClass() throws IOException {
-    System.out.println("Start LocalPaginatedClusterWithWALTest");
-  }
-
-  @AfterClass
-  @Override
-  public void afterClass() throws IOException {
-    System.out.println("End LocalPaginatedClusterWithWALTest");
   }
 
   @Override
@@ -302,24 +290,25 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
   }
 
   @Override
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testForwardIteration() throws IOException {
     super.testForwardIteration();
   }
 
   @Override
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testBackwardIteration() throws IOException {
     super.testBackwardIteration();
   }
 
   @Override
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testGetPhysicalPosition() throws IOException {
     super.testGetPhysicalPosition();
   }
-
-
 
   private void assertFileRestoreFromWAL() throws IOException {
     databaseDocumentTx.activateOnCurrentThread();
@@ -447,8 +436,9 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
     while (bytesRead >= 0) {
       datFileTwo.readFully(actualContent, 0, bytesRead);
 
-      Assert.assertEquals(expectedContent, actualContent);
+//      Assert.assertEquals(expectedContent, actualContent);
 
+      assertThat(expectedContent).isEqualTo(actualContent);
       expectedContent = new byte[OClusterPage.PAGE_SIZE];
       actualContent = new byte[OClusterPage.PAGE_SIZE];
       bytesRead = datFileOne.read(expectedContent);

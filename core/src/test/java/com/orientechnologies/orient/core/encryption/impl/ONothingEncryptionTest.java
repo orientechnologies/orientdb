@@ -10,8 +10,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
@@ -20,7 +19,6 @@ import java.util.List;
  * @author Luca Garulli
  * @since 22.04.2015
  */
-@Test
 public class ONothingEncryptionTest extends AbstractEncryptionTest {
   private static final String DBNAME_CLUSTERTEST  = "testCreatedNothingEncryptedCluster";
   private static final String DBNAME_DATABASETEST = "testCreatedNothingEncryptedDatabase";

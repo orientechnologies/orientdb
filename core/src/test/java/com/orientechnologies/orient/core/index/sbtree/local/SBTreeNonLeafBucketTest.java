@@ -1,25 +1,24 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
+import com.orientechnologies.orient.core.storage.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.nio.ByteBuffer;
+import java.util.*;
 
 /**
  * @author Andrey Lomakin
  * @since 12.08.13
  */
-@Test
 public class SBTreeNonLeafBucketTest {
+  @Test
   public void testInitialization() throws Exception {
     final OByteBufferPool bufferPool = OByteBufferPool.instance();
     final ByteBuffer buffer = bufferPool.acquireDirect(true);
@@ -44,6 +43,7 @@ public class SBTreeNonLeafBucketTest {
     cachePointer.decrementReferrer();
   }
 
+  @Test
   public void testSearch() throws Exception {
     long seed = System.currentTimeMillis();
     System.out.println("testSearch seed : " + seed);
@@ -109,6 +109,7 @@ public class SBTreeNonLeafBucketTest {
     cachePointer.decrementReferrer();
   }
 
+  @Test
   public void testShrink() throws Exception {
     long seed = System.currentTimeMillis();
     System.out.println("testShrink seed : " + seed);

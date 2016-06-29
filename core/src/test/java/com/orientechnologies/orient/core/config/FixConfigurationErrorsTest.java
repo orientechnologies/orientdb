@@ -20,10 +20,10 @@
 package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.util.OMemory;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Sergey Sitnikov
@@ -33,16 +33,14 @@ public class FixConfigurationErrorsTest {
   private int originalCacheSize;
   private int originalChunkSize;
 
-  @BeforeClass
-  public void before()
-  {
+  @Before
+  public void before() {
     originalCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsInteger();
     originalChunkSize = OGlobalConfiguration.MEMORY_CHUNK_SIZE.getValueAsInteger();
   }
 
-  @AfterClass
-  public void after()
-  {
+  @After
+  public void after() {
     OGlobalConfiguration.DISK_CACHE_SIZE.setValue(originalCacheSize);
     OGlobalConfiguration.MEMORY_CHUNK_SIZE.setValue(originalChunkSize);
   }

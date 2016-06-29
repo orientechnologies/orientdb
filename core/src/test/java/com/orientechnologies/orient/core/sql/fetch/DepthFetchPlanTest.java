@@ -1,9 +1,5 @@
 package com.orientechnologies.orient.core.sql.fetch;
 
-import static org.testng.AssertJUnit.assertEquals;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
@@ -12,22 +8,11 @@ import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class DepthFetchPlanTest {
-
-  private final class CountFetchListener extends ORemoteFetchListener {
-    public int count;
-
-    @Override
-    public boolean requireFieldProcessing() {
-      return true;
-    }
-
-    @Override
-    protected void sendRecord(ORecord iLinked) {
-      count++;
-    }
-  }
 
   @Test
   public void testFetchPlanDepth() {
@@ -50,6 +35,7 @@ public class DepthFetchPlanTest {
       OFetchContext context = new ORemoteFetchContext();
       CountFetchListener listener = new CountFetchListener();
       OFetchHelper.fetch(doc2, doc2, OFetchHelper.buildFetchPlan("ref:1 *:-2"), listener, context, "");
+
       assertEquals(1, listener.count);
     } finally {
       database.drop();
@@ -84,6 +70,20 @@ public class DepthFetchPlanTest {
       assertEquals(3, listener.count);
     } finally {
       database.drop();
+    }
+  }
+
+  private final class CountFetchListener extends ORemoteFetchListener {
+    public int count;
+
+    @Override
+    public boolean requireFieldProcessing() {
+      return true;
+    }
+
+    @Override
+    protected void sendRecord(ORecord iLinked) {
+      count++;
     }
   }
 

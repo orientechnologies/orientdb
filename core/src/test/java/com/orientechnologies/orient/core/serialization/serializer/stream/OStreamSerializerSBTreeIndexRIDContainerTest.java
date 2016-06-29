@@ -6,29 +6,24 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContai
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.After; import org.junit.Before; import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashSet;
 import java.util.Set;
 
-@Test
 public class OStreamSerializerSBTreeIndexRIDContainerTest {
   private ODatabaseDocumentTx                      database;
   private OStreamSerializerSBTreeIndexRIDContainer streamSerializerSBTreeIndexRIDContainer;
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     database = new ODatabaseDocumentTx("memory:" + this.getClass().getSimpleName());
     database.create();
     streamSerializerSBTreeIndexRIDContainer = new OStreamSerializerSBTreeIndexRIDContainer();
   }
 
-  @AfterClass
+  @After
   public void afterClass() {
     database.drop();
   }

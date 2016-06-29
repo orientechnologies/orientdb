@@ -5,16 +5,18 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.junit.Assert;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Tests cases for the Scheduler component.
- * 
+ *
  * @author Luca Garulli
  */
 public class OSchedulerTest {
@@ -62,11 +64,15 @@ public class OSchedulerTest {
       Thread.sleep(2000);
 
       db.getMetadata().getScheduler().removeEvent("test");
+
+      assertThat(db.getMetadata().getScheduler().getEvents()).isEmpty();
+
+      assertThat(db.getMetadata().getScheduler().getEvent("test")).isNull();
+
+      //remove again
       db.getMetadata().getScheduler().removeEvent("test");
 
       Thread.sleep(3000);
-
-      db.getMetadata().getScheduler().removeEvent("test");
 
       Long count = getLogCounter(db);
 

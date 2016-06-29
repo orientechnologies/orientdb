@@ -24,37 +24,33 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.*;
 
 /**
  * @author Sergey Sitnikov
  */
 public class DuplicateDictionaryIndexChangesTxTest {
 
-  private ODatabaseDocumentTx db;
-  private OIndex              index;
+  private static ODatabaseDocumentTx db;
+  private        OIndex              index;
 
   @BeforeClass
-  public void before() {
+  public static void before() {
     db = new ODatabaseDocumentTx("memory:" + DuplicateDictionaryIndexChangesTxTest.class.getSimpleName(), false);
   }
 
-  @BeforeMethod
+  @AfterClass
+  public static void after() {
+    db.drop();
+  }
+
+  @Before
   public void beforeMethod() {
     if (!db.isClosed())
       db.drop();
     db.create();
     final OClass class_ = db.getMetadata().getSchema().createClass("Person");
     index = class_.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX);
-  }
-
-  @AfterClass
-  public void after() {
-    db.drop();
   }
 
   @Test

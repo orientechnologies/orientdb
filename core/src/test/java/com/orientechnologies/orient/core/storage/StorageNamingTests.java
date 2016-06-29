@@ -29,12 +29,12 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.IllegalCharsetNameException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -52,21 +52,23 @@ public class StorageNamingTests {
     new NamingTestStorage("/,,,/,/,/name");
   }
 
-  @Test
+  @Test(expected = IllegalCharsetNameException.class)
   public void commaInNameShouldThrow() {
-    Assert.assertThrows(IllegalArgumentException.class, new Assert.ThrowingRunnable() {
-      @Override
-      public void run() throws Throwable {
-        new NamingTestStorage("/path/with/,/name/with,");
-      }
-    });
 
-    Assert.assertThrows(IllegalArgumentException.class, new Assert.ThrowingRunnable() {
-      @Override
-      public void run() throws Throwable {
-        new NamingTestStorage("/name/with,");
-      }
-    });
+    new NamingTestStorage("/path/with/,/name/with,");
+
+    //    Assert.assertThrows(IllegalArgumentException.class, new Assert.ThrowingRunnable() {
+    //      @Override
+    //      public void run() throws Throwable {
+    //        new NamingTestStorage("/name/with,");
+    //      }
+    //    });
+  }
+
+  @Test(expected = IllegalCharsetNameException.class)
+  public void name() throws Exception {
+    new NamingTestStorage("/name/with,");
+
   }
 
   private static class NamingTestStorage extends OStorageAbstract {

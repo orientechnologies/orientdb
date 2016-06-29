@@ -1,8 +1,7 @@
 package com.orientechnologies.orient.core.db.tool;
 
 import org.mockito.Mockito;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;

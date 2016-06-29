@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class TestDeepLinkedDocumentSave {
 

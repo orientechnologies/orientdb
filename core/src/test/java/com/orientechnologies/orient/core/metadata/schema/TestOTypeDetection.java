@@ -1,27 +1,6 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import static org.testng.AssertJUnit.assertEquals;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -30,43 +9,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import org.junit.Test;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.*;
+
+import static org.junit.Assert.assertEquals;
 
 public class TestOTypeDetection {
-
-  public class CustomClass implements OSerializableStream {
-
-    @Override
-    public byte[] toStream() throws OSerializationException {
-      return null;
-    }
-
-    @Override
-    public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-      return null;
-    }
-
-  }
-
-  public class DocumentSer implements ODocumentSerializable {
-
-    @Override
-    public ODocument toDocument() {
-      // TODO Auto-generated method stub
-      return null;
-    }
-
-    @Override
-    public void fromDocument(ODocument document) {
-      // TODO Auto-generated method stub
-
-    }
-
-  }
-
-  public class ClassSerializable implements Serializable {
-    private String aaa;
-
-  }
 
   @Test
   public void testOTypeFromClass() {
@@ -254,6 +206,41 @@ public class TestOTypeDetection {
     ODocument document = new ODocument();
     ODocumentInternal.addOwner(document, new ODocument());
     assertEquals(OType.EMBEDDED, OType.getTypeByValue(document));
+  }
+
+  public class CustomClass implements OSerializableStream {
+
+    @Override
+    public byte[] toStream() throws OSerializationException {
+      return null;
+    }
+
+    @Override
+    public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+      return null;
+    }
+
+  }
+
+  public class DocumentSer implements ODocumentSerializable {
+
+    @Override
+    public ODocument toDocument() {
+      // TODO Auto-generated method stub
+      return null;
+    }
+
+    @Override
+    public void fromDocument(ODocument document) {
+      // TODO Auto-generated method stub
+
+    }
+
+  }
+
+  public class ClassSerializable implements Serializable {
+    private String aaa;
+
   }
 
 }

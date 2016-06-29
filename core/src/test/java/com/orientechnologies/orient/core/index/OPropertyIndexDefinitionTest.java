@@ -1,22 +1,20 @@
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
-@Test
 public class OPropertyIndexDefinitionTest {
   private OPropertyIndexDefinition propertyIndex;
 
-  @BeforeMethod
+  @Before
   public void beforeMethod() {
     propertyIndex = new OPropertyIndexDefinition("testClass", "fOne", OType.INTEGER);
   }
@@ -33,7 +31,7 @@ public class OPropertyIndexDefinitionTest {
     Assert.assertEquals(result, 12);
   }
 
-  @Test(expectedExceptions = NumberFormatException.class)
+  @Test(expected = NumberFormatException.class)
   public void testCreateValueWrongParameter() {
     propertyIndex.createValue(Collections.singletonList("tt"));
   }
@@ -50,7 +48,7 @@ public class OPropertyIndexDefinitionTest {
     Assert.assertEquals(result, 12);
   }
 
-  @Test(expectedExceptions = NumberFormatException.class)
+  @Test(expected = NumberFormatException.class)
   public void testCreateValueWrongParameterArrayParams() {
     propertyIndex.createValue("tt");
   }

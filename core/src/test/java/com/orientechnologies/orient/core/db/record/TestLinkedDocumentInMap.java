@@ -3,11 +3,7 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.List;
 import java.util.Map;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.Before; import org.junit.After;import org.junit.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -17,7 +13,7 @@ public class TestLinkedDocumentInMap {
 
   private ODatabaseDocumentTx db;
 
-  @BeforeMethod
+  @Before
   public void create() {
     db = new ODatabaseDocumentTx("memory:" + TestLinkedDocumentInMap.class.getSimpleName());
     db.create();
@@ -50,7 +46,7 @@ public class TestLinkedDocumentInMap {
 
   }
 
-  @AfterMethod
+  @After
   public void after() {
     db.drop();
   }

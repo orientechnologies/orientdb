@@ -14,8 +14,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-import org.testng.Assert;
-import org.testng.annotations.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -28,8 +29,7 @@ import java.util.List;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 5/19/14
  */
-@Test
-public class OLocalHashTableWALTest extends OLocalHashTableTest {
+public class OLocalHashTableWALTest extends OLocalHashTableBase {
   static {
     OGlobalConfiguration.FILE_LOCK.setValue(false);
   }
@@ -41,17 +41,7 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
 
   private ODatabaseDocumentTx expectedDatabaseDocumentTx;
 
-  @BeforeClass
-  @Override
-  public void beforeClass() {
-  }
-
-  @AfterClass
-  @Override
-  public void afterClass() {
-  }
-
-  @BeforeMethod
+  @Before
   public void beforeMethod() throws IOException {
     buildDirectory = System.getProperty("buildDirectory", ".");
 
@@ -92,9 +82,8 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
     diskWriteAheadLog.preventCutTill(diskWriteAheadLog.getFlushedLsn());
   }
 
-  @AfterMethod
-  @Override
-  public void afterMethod() throws IOException {
+  @After
+  public void after() throws IOException {
     if (databaseDocumentTx.isClosed())
       databaseDocumentTx.open("admin", "admin");
 

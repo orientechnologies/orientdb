@@ -12,72 +12,18 @@ import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import org.testng.annotations.Test;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.ObjectArrayAssert;
+import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.*;
 
-@Test
 public class ODocumentSchemalessBinarySerializationTest {
 
   protected ORecordSerializer serializer;
-
-  public static class Custom implements OSerializableStream {
-    byte[] bytes = new byte[10];
-
-    @Override
-    public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-      bytes = iStream;
-      return this;
-    }
-
-    @Override
-    public byte[] toStream() throws OSerializationException {
-      for (int i = 0; i < bytes.length; i++) {
-        bytes[i] = (byte) i;
-      }
-      return bytes;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj != null && obj instanceof Custom && Arrays.equals(bytes, ((Custom) obj).bytes);
-    }
-  }
-
-  public static class CustomDocument implements ODocumentSerializable {
-    private ODocument document;
-
-    @Override
-    public void fromDocument(ODocument document) {
-      this.document = document;
-    }
-
-    @Override
-    public ODocument toDocument() {
-      document = new ODocument();
-      document.field("test", "some strange content");
-      return document;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj != null && document.field("test").equals(((CustomDocument) obj).document.field("test"));
-    }
-  }
 
   public ODocumentSchemalessBinarySerializationTest() {
     serializer = new ORecordSerializerBinary();
@@ -142,8 +88,9 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(extr.<Object>field("dateTime"), document.field("dateTime"));
     assertEquals(extr.field("date"), c.getTime());
     assertEquals(extr.field("date1"), c1.getTime());
-    assertEquals(extr.<Object>field("bytes"), document.field("bytes"));
-    assertEquals(extr.<Object>field("utf8String"), document.field("utf8String"));
+//    assertEquals(extr.<String>field("bytes"), document.field("bytes"));
+    Assertions.assertThat(extr.<Object>field("bytes")).isEqualTo(document.field("bytes"));
+    assertEquals(extr.<String>field("utf8String"), document.field("utf8String"));
     assertEquals(extr.<Object>field("recordId"), document.field("recordId"));
     assertEquals(extr.<Object>field("bigNumber"), document.field("bigNumber"));
     assertNull(extr.field("nullField"));
@@ -689,12 +636,8 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(extr.<Object>field("custom"), document.field("custom"));
   }
 
-  private class WrongData {
-
-  }
-
-  @Test(expectedExceptions = OSerializationException.class)
-  private void testSetOfWrongData() {
+  @Test(expected = OSerializationException.class)
+  public void testSetOfWrongData() {
     ODatabaseRecordThreadLocal.INSTANCE.remove();
 
     ODocument document = new ODocument();
@@ -706,8 +649,8 @@ public class ODocumentSchemalessBinarySerializationTest {
     serializer.toStream(document, false);
   }
 
-  @Test(expectedExceptions = OSerializationException.class)
-  private void testListOfWrongData() {
+  @Test(expected = OSerializationException.class)
+  public void testListOfWrongData() {
     ODatabaseRecordThreadLocal.INSTANCE.remove();
 
     ODocument document = new ODocument();
@@ -719,8 +662,8 @@ public class ODocumentSchemalessBinarySerializationTest {
     serializer.toStream(document, false);
   }
 
-  @Test(expectedExceptions = OSerializationException.class)
-  private void testMapOfWrongData() {
+  @Test(expected = OSerializationException.class)
+  public void testMapOfWrongData() {
     ODatabaseRecordThreadLocal.INSTANCE.remove();
 
     ODocument document = new ODocument();
@@ -732,8 +675,8 @@ public class ODocumentSchemalessBinarySerializationTest {
     serializer.toStream(document, false);
   }
 
-  @Test(expectedExceptions = ClassCastException.class)
-  private void testLinkSetOfWrongData() {
+  @Test(expected = ClassCastException.class)
+  public void testLinkSetOfWrongData() {
     ODatabaseRecordThreadLocal.INSTANCE.remove();
 
     ODocument document = new ODocument();
@@ -745,8 +688,8 @@ public class ODocumentSchemalessBinarySerializationTest {
     serializer.toStream(document, false);
   }
 
-  @Test(expectedExceptions = ClassCastException.class)
-  private void testLinkListOfWrongData() {
+  @Test(expected = ClassCastException.class)
+  public void testLinkListOfWrongData() {
     ODatabaseRecordThreadLocal.INSTANCE.remove();
 
     ODocument document = new ODocument();
@@ -758,8 +701,8 @@ public class ODocumentSchemalessBinarySerializationTest {
     serializer.toStream(document, false);
   }
 
-  @Test(expectedExceptions = ClassCastException.class)
-  private void testLinkMapOfWrongData() {
+  @Test(expected = ClassCastException.class)
+  public void testLinkMapOfWrongData() {
     ODatabaseRecordThreadLocal.INSTANCE.remove();
 
     ODocument document = new ODocument();
@@ -771,8 +714,8 @@ public class ODocumentSchemalessBinarySerializationTest {
     serializer.toStream(document, false);
   }
 
-  @Test(expectedExceptions = OSerializationException.class)
-  private void testFieldWrongData() {
+  @Test(expected = OSerializationException.class)
+  public void testFieldWrongData() {
     ODatabaseRecordThreadLocal.INSTANCE.remove();
 
     ODocument document = new ODocument();
@@ -783,7 +726,7 @@ public class ODocumentSchemalessBinarySerializationTest {
   }
 
   @Test
-  private void testCollectionOfEmbeddedDocument() {
+  public void testCollectionOfEmbeddedDocument() {
 
     ODatabaseRecordThreadLocal.INSTANCE.remove();
 
@@ -838,7 +781,7 @@ public class ODocumentSchemalessBinarySerializationTest {
       if (embeddedInSet.field("name").equals(inSet.field("name")) && embeddedInSet.field("surname").equals(inSet.field("surname")))
         ok = true;
     }
-    assertTrue(ok, "not found record in the set after serilize");
+    assertTrue("not found record in the set after serilize", ok);
   }
 
   @Test
@@ -871,5 +814,53 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(fields[0], "a");
     assertEquals(fields[1], "b");
     assertEquals(fields[2], "c");
+  }
+
+  public static class Custom implements OSerializableStream {
+    byte[] bytes = new byte[10];
+
+    @Override
+    public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+      bytes = iStream;
+      return this;
+    }
+
+    @Override
+    public byte[] toStream() throws OSerializationException {
+      for (int i = 0; i < bytes.length; i++) {
+        bytes[i] = (byte) i;
+      }
+      return bytes;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj != null && obj instanceof Custom && Arrays.equals(bytes, ((Custom) obj).bytes);
+    }
+  }
+
+  public static class CustomDocument implements ODocumentSerializable {
+    private ODocument document;
+
+    @Override
+    public void fromDocument(ODocument document) {
+      this.document = document;
+    }
+
+    @Override
+    public ODocument toDocument() {
+      document = new ODocument();
+      document.field("test", "some strange content");
+      return document;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj != null && document.field("test").equals(((CustomDocument) obj).document.field("test"));
+    }
+  }
+
+  private class WrongData {
+
   }
 }

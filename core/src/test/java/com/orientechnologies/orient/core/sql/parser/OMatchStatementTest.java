@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
-@Test
 public class OMatchStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
@@ -142,7 +141,6 @@ public class OMatchStatementTest {
     checkRightSyntax(query);
   }
 
-
   @Test
   public void testWhile() {
     checkRightSyntax("MATCH {class: 'V', as: foo}.out(){while:($depth<4), as:bar} RETURN bar ");
@@ -162,7 +160,6 @@ public class OMatchStatementTest {
   public void testReturnJson() {
     checkRightSyntax("MATCH {class: 'V'} RETURN {'name':'foo', 'value': bar}");
   }
-
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

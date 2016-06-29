@@ -5,8 +5,8 @@ import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -15,8 +15,8 @@ import java.nio.ByteBuffer;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 4/15/14
  */
-@Test
 public class ONullBucketTest {
+  @Test
   public void testEmptyBucket() {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
@@ -34,6 +34,7 @@ public class ONullBucketTest {
     cachePointer.decrementReferrer();
   }
 
+  @Test
   public void testAddGetValue() throws IOException {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
@@ -54,6 +55,7 @@ public class ONullBucketTest {
     cachePointer.decrementReferrer();
   }
 
+  @Test
   public void testAddRemoveValue() throws IOException {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
     ByteBuffer buffer = bufferPool.acquireDirect(true);
@@ -76,6 +78,7 @@ public class ONullBucketTest {
     cachePointer.decrementReferrer();
   }
 
+  @Test
   public void testAddRemoveAddValue() throws IOException {
     OByteBufferPool bufferPool = new OByteBufferPool(1024);
     ByteBuffer buffer = bufferPool.acquireDirect(true);

@@ -1,16 +1,13 @@
 package com.orientechnologies.common.serialization;
 
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Before; import org.junit.Test;
 /**
  * @author Andrey Lomakin
  * @since 21.05.13
  */
-@Test
 public class SafeConverterTest extends AbstractConverterTest {
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     converter = new OSafeBinaryConverter();
   }

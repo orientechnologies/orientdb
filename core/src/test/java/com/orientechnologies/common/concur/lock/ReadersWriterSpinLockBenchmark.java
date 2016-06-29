@@ -1,31 +1,27 @@
 package com.orientechnologies.common.concur.lock;
 
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/19/14
  */
-@Test(enabled = false)
 public class ReadersWriterSpinLockBenchmark {
   private final OReadersWriterSpinLock spinLock        = new OReadersWriterSpinLock();
   private final ExecutorService        executorService = Executors.newCachedThreadPool();
 
-  private final AtomicLong             readLocksCount  = new AtomicLong();
+  private final AtomicLong readLocksCount = new AtomicLong();
 
-  private final AtomicLong             acquireLockSum  = new AtomicLong();
-  private final AtomicLong             releaseLockSum  = new AtomicLong();
+  private final AtomicLong acquireLockSum = new AtomicLong();
+  private final AtomicLong releaseLockSum = new AtomicLong();
 
-  private final CountDownLatch         latch           = new CountDownLatch(1);
-  private volatile boolean             stop            = false;
+  private final    CountDownLatch latch = new CountDownLatch(1);
+  private volatile boolean        stop  = false;
 
-  private volatile long                c               = 47;
+  private volatile long c = 47;
 
   public void benchmark() throws Exception {
     List<Future> futures = new ArrayList<Future>();
@@ -44,6 +40,14 @@ public class ReadersWriterSpinLockBenchmark {
 
     System.out.println("Average acquire read lock interval : " + (acquireLockSum.get() / readLocksCount.get()) + " ns.");
     System.out.println("Average release read lock interval : " + (releaseLockSum.get() / readLocksCount.get()) + " ns.");
+  }
+
+  private void consumeCPU(int cycles) {
+    long c1 = c;
+    for (int i = 0; i < cycles; i++) {
+      c1 += c1 * 31 + i * 51;
+    }
+    c = c1;
   }
 
   public final class Reader implements Callable<Void> {
@@ -71,13 +75,5 @@ public class ReadersWriterSpinLockBenchmark {
 
       return null;
     }
-  }
-
-  private void consumeCPU(int cycles) {
-    long c1 = c;
-    for (int i = 0; i < cycles; i++) {
-      c1 += c1 * 31 + i * 51;
-    }
-    c = c1;
   }
 }

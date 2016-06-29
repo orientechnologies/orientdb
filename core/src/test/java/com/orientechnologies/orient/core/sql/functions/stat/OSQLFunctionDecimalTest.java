@@ -4,21 +4,20 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionDecimal;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
-@Test
 public class OSQLFunctionDecimalTest {
 
   private OSQLFunctionDecimal function;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     function = new OSQLFunctionDecimal();
   }

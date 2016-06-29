@@ -4,12 +4,11 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import org.testng.annotations.Test;
-
+import org.junit.Test;
 import java.util.concurrent.*;
 
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertNull;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 public class ODatabaseDocumentPoolOpenCloseTest {
 
@@ -30,7 +29,7 @@ public class ODatabaseDocumentPoolOpenCloseTest {
     }
   }
 
-  @Test(expectedExceptions = ODatabaseException.class)
+  @Test(expected= ODatabaseException.class)
   public void failureOpenPoolDatabase() {
 
     String url = "memory:" + ODatabaseDocumentPoolOpenCloseTest.class.getSimpleName();

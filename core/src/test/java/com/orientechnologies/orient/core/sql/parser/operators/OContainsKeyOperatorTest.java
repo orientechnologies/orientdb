@@ -20,8 +20,8 @@
 package com.orientechnologies.orient.core.sql.parser.operators;
 
 import com.orientechnologies.orient.core.sql.parser.OContainsKeyOperator;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +30,7 @@ import java.util.Map;
  * @author Luigi Dell'Aquila
  */
 public class OContainsKeyOperatorTest {
+
   @Test
   public void test() {
     OContainsKeyOperator op = new OContainsKeyOperator(-1);

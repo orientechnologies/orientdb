@@ -2,9 +2,9 @@ package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class OVarIntSerializerTest {
 

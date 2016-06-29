@@ -5,9 +5,9 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.*;
 
@@ -15,15 +15,15 @@ import java.util.*;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 1/30/14
  */
-@Test
-public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
+public abstract class OPropertyRidBagAbstractIndexDefinition {
   private OPropertyRidBagIndexDefinition propertyIndex;
 
-  @BeforeMethod
+  @Before
   public void beforeMethod() {
     propertyIndex = new OPropertyRidBagIndexDefinition("testClass", "fOne");
   }
 
+  @Test
   public void testCreateValueSingleParameter() {
     ORidBag ridBag = new ORidBag();
     ridBag.setAutoConvertToRecord(false);
@@ -42,6 +42,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertTrue(collectionResult.contains(new ORecordId("#1:23")));
   }
 
+  @Test
   public void testCreateValueTwoParameters() {
     ORidBag ridBag = new ORidBag();
     ridBag.setAutoConvertToRecord(false);
@@ -60,10 +61,12 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertTrue(collectionResult.contains(new ORecordId("#1:23")));
   }
 
+  @Test
   public void testCreateValueWrongParameter() {
     Assert.assertNull(propertyIndex.createValue(Collections.singletonList("tt")));
   }
 
+  @Test
   public void testCreateValueSingleParameterArrayParams() {
     ORidBag ridBag = new ORidBag();
     ridBag.setAutoConvertToRecord(false);
@@ -82,6 +85,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertTrue(collectionResult.contains(new ORecordId("#1:23")));
   }
 
+  @Test
   public void testCreateValueTwoParametersArrayParams() {
     ORidBag ridBag = new ORidBag();
     ridBag.setAutoConvertToRecord(false);
@@ -100,10 +104,12 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertTrue(collectionResult.contains(new ORecordId("#1:23")));
   }
 
+  @Test
   public void testCreateValueWrongParameterArrayParams() {
     Assert.assertNull(propertyIndex.createValue("tt"));
   }
 
+  @Test
   public void testGetDocumentValueToIndex() {
     ORidBag ridBag = new ORidBag();
     ridBag.setAutoConvertToRecord(false);
@@ -126,6 +132,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertTrue(collectionResult.contains(new ORecordId("#1:23")));
   }
 
+  @Test
   public void testProcessChangeEventAddOnce() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
@@ -143,6 +150,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertEquals(keysToRemove, removedKeys);
   }
 
+  @Test
   public void testProcessChangeEventAddTwoTimes() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
@@ -163,6 +171,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertEquals(keysToRemove, removedKeys);
   }
 
+  @Test
   public void testProcessChangeEventAddTwoValues() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
@@ -184,6 +193,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertEquals(keysToRemove, removedKeys);
   }
 
+  @Test
   public void testProcessChangeEventRemoveOnce() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
@@ -201,6 +211,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertEquals(keysToRemove, removedKeys);
   }
 
+  @Test
   public void testProcessChangeEventRemoveTwoTimes() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
@@ -221,6 +232,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertEquals(keysToRemove, removedKeys);
   }
 
+  @Test
   public void testProcessChangeEventAddRemove() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
@@ -239,6 +251,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertEquals(keysToRemove, removedKeys);
   }
 
+  @Test
   public void testProcessChangeEventAddRemoveInvValue() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
@@ -259,6 +272,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertEquals(keysToRemove, removedKeys);
   }
 
+  @Test
   public void testProcessChangeEventAddTwiceRemoveOnce() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
@@ -282,6 +296,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertEquals(keysToRemove, removedKeys);
   }
 
+  @Test
   public void testProcessChangeEventAddOnceRemoveTwice() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();
@@ -305,6 +320,7 @@ public abstract class OPropertyRidBagAbstractIndexDefinitionTest {
     Assert.assertEquals(keysToRemove, removedKeys);
   }
 
+  @Test
   public void testProcessChangeEventRemoveTwoTimesAddOnce() {
     final Map<Object, Integer> keysToAdd = new HashMap<Object, Integer>();
     final Map<Object, Integer> keysToRemove = new HashMap<Object, Integer>();

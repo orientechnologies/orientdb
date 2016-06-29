@@ -2,8 +2,7 @@ package com.orientechnologies.orient.core.compression.impl;
 
 import java.util.Random;
 
-import org.testng.Assert;
-
+import org.junit.Assert;
 import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.compression.OCompressionFactory;
 

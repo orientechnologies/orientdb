@@ -21,8 +21,7 @@ package com.orientechnologies.orient.core.sql.parser.operators;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.parser.OEqualsCompareOperator;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import java.math.BigDecimal;
 

@@ -3,8 +3,7 @@ package com.orientechnologies.orient.core.metadata.security;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;

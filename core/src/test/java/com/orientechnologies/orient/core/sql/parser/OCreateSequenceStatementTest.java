@@ -1,8 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-@Test
 public class OCreateSequenceStatementTest extends OParserTestAbstract {
 
   @Test
@@ -22,6 +21,5 @@ public class OCreateSequenceStatementTest extends OParserTestAbstract {
     checkWrongSyntax("CREATE SEQUENCE Foo");
     checkWrongSyntax("CREATE SEQUENCE Foo TYPE foo");
   }
-
 
 }

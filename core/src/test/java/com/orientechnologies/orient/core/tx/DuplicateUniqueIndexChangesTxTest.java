@@ -25,37 +25,33 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.*;
 
 /**
  * @author Sergey Sitnikov
  */
 public class DuplicateUniqueIndexChangesTxTest {
 
-  private ODatabaseDocumentTx db;
-  private OIndex              index;
+  private static ODatabaseDocumentTx db;
+  private        OIndex              index;
 
   @BeforeClass
-  public void before() {
+  public static void before() {
     db = new ODatabaseDocumentTx("memory:" + DuplicateUniqueIndexChangesTxTest.class.getSimpleName(), false);
   }
 
-  @BeforeMethod
+  @AfterClass
+  public static void after() {
+    db.drop();
+  }
+
+  @Before
   public void beforeMethod() {
     if (!db.isClosed())
       db.drop();
     db.create();
     final OClass class_ = db.getMetadata().getSchema().createClass("Person");
     index = class_.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
-  }
-
-  @AfterClass
-  public void after() {
-    db.drop();
   }
 
   @Test
@@ -243,22 +239,24 @@ public class DuplicateUniqueIndexChangesTxTest {
     Assert.assertNull(index.get("same"));
   }
 
-  @Test
+  @Test(expected = ORecordDuplicatedException.class)
   public void testDuplicateCreateThrows() {
     db.begin();
     db.newInstance("Person").field("name", "Name1").save();
     db.newInstance("Person").save();
     db.newInstance("Person").save();
     db.newInstance("Person").field("name", "Name1").save();
-    Assert.assertThrows(ORecordDuplicatedException.class, new Assert.ThrowingRunnable() {
-      @Override
-      public void run() throws Throwable {
-        db.commit();
-      }
-    });
+    //    Assert.assertThrows(ORecordDuplicatedException.class, new Assert.ThrowingRunnable() {
+    //      @Override
+    //      public void run() throws Throwable {
+    //        db.commit();
+    //      }
+    //    });
+    db.commit();
+
   }
 
-  @Test
+  @Test(expected = ORecordDuplicatedException.class)
   public void testDuplicateUpdateThrows() {
     db.begin();
     final ODocument person1 = db.newInstance("Person").field("name", "Name1").save();
@@ -278,12 +276,13 @@ public class DuplicateUniqueIndexChangesTxTest {
     person2.field("name", (Object) null).save();
     person3.field("name", "Name1").save();
     person4.field("name", (Object) null).save();
-    Assert.assertThrows(ORecordDuplicatedException.class, new Assert.ThrowingRunnable() {
-      @Override
-      public void run() throws Throwable {
-        db.commit();
-      }
-    });
+    //    Assert.assertThrows(ORecordDuplicatedException.class, new Assert.ThrowingRunnable() {
+    //      @Override
+    //      public void run() throws Throwable {
+    //        db.commit();
+    //      }
+    //    });
+    db.commit();
   }
 
 }

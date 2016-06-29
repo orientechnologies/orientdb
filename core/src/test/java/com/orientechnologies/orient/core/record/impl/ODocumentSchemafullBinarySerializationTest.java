@@ -1,10 +1,9 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import org.testng.annotations.Test;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
-@Test
-public class ODocumentSchemafullBinarySerializationTest extends ODocumentSchemafullSerializationTest{
+public class ODocumentSchemafullBinarySerializationTest extends ODocumentSchemafullSerializationTest {
 
   public ODocumentSchemafullBinarySerializationTest() {
     super(new ORecordSerializerBinary());

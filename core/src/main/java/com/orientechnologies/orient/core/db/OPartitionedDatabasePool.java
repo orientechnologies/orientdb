@@ -91,7 +91,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   private static final class PoolData {
     private final int                      hashCode;
     private       int                      acquireCount;
-    private       DatabaseDocumentTxPolled acquiredDatabase;
+    private       DatabaseDocumentTxPooled acquiredDatabase;
 
     private PoolData() {
       hashCode = nextHashCode();
@@ -101,7 +101,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   private static final class PoolPartition {
     private final AtomicInteger                                   currentSize         = new AtomicInteger();
     private final AtomicInteger                                   acquiredConnections = new AtomicInteger();
-    private final ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
+    private final ConcurrentLinkedQueue<DatabaseDocumentTxPooled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPooled>();
   }
 
   private static class ThreadPoolData extends ThreadLocal<PoolData> {
@@ -111,10 +111,10 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     }
   }
 
-  private final class DatabaseDocumentTxPolled extends ODatabaseDocumentTx {
+  private final class DatabaseDocumentTxPooled extends ODatabaseDocumentTx {
     private PoolPartition partition;
 
-    private DatabaseDocumentTxPolled(String iURL) {
+    private DatabaseDocumentTxPooled(String iURL) {
       super(iURL, true);
     }
 
@@ -179,7 +179,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
           data.acquiredDatabase = null;
 
           //we create new connection instead of old one
-          final DatabaseDocumentTxPolled db = new DatabaseDocumentTxPolled(url);
+          final DatabaseDocumentTxPooled db = new DatabaseDocumentTxPooled(url);
           p.queue.offer(db);
         }
 
@@ -318,7 +318,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
           continue;
         } else {
-          DatabaseDocumentTxPolled db = partition.queue.poll();
+          DatabaseDocumentTxPooled db = partition.queue.poll();
           if (db == null) {
             if (pts.length < maxPartitions) {
               if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
@@ -337,7 +337,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
               if (partition.currentSize.get() >= maxPartitonSize)
                 throw new IllegalStateException("You have reached maximum pool size for given partition");
 
-              db = new DatabaseDocumentTxPolled(url);
+              db = new DatabaseDocumentTxPooled(url);
               openDatabase(db);
               db.partition = partition;
 
@@ -382,7 +382,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     return closed;
   }
 
-  protected void openDatabase(final DatabaseDocumentTxPolled db) {
+  protected void openDatabase(final DatabaseDocumentTxPooled db) {
     if (autoCreate) {
       if (!db.getURL().startsWith("remote:") && !db.exists()) {
         try {
@@ -420,10 +420,10 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
       if (partition == null)
         continue;
 
-      final Queue<DatabaseDocumentTxPolled> queue = partition.queue;
+      final Queue<DatabaseDocumentTxPooled> queue = partition.queue;
 
       while (!queue.isEmpty()) {
-        DatabaseDocumentTxPolled db = queue.poll();
+        DatabaseDocumentTxPooled db = queue.poll();
         db.activateOnCurrentThread();
         OStorage storage = db.getStorage();
         storage.close();
@@ -436,10 +436,10 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   }
 
   private void initQueue(String url, PoolPartition partition) {
-    ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue = partition.queue;
+    ConcurrentLinkedQueue<DatabaseDocumentTxPooled> queue = partition.queue;
 
     for (int n = 0; n < MIN_POOL_SIZE; n++) {
-      final DatabaseDocumentTxPolled db = new DatabaseDocumentTxPolled(url);
+      final DatabaseDocumentTxPooled db = new DatabaseDocumentTxPooled(url);
       queue.add(db);
     }
 

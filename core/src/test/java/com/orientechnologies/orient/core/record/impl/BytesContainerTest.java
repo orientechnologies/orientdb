@@ -1,12 +1,11 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
+import org.junit.Test;
+
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class BytesContainerTest {
 

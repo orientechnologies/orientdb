@@ -3,16 +3,11 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.OStorage;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.Before; import org.junit.After;import org.junit.Test;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-@Test
 public class OStorageLocalTest {
 
   public void withLegacyPath() {

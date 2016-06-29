@@ -1,10 +1,6 @@
 package com.orientechnologies.orient.core.sql;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import org.junit.Assert;import org.junit.After; import org.junit.Before; import org.junit.Test;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
@@ -12,7 +8,6 @@ import com.orientechnologies.orient.core.sql.query.OResultSet;
 /**
  * @author Luigi Dell'Aquila
  */
-@Test
 public class OCommandExecutorSQLCreateFunctionTest {
 
   private static String DB_STORAGE = "memory";
@@ -20,14 +15,14 @@ public class OCommandExecutorSQLCreateFunctionTest {
 
   ODatabaseDocumentTx   db;
 
-  @BeforeClass
+  @Before
   public void beforeClass() throws Exception {
     db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
     db.create();
 
   }
 
-  @AfterClass
+  @After
   public void afterClass() throws Exception {
     if (db.isClosed()) {
       db.open("admin", "admin");

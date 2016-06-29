@@ -1,32 +1,26 @@
 package com.orientechnologies.orient.core.index.hashindex.local;
 
-import java.util.*;
-
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import org.junit.*;
+
+import java.util.*;
 
 /**
  * @author Andrey Lomakin
  * @since 13.03.13
  */
-@Test
 public class LocalHashTableIterationTest {
-  private static final int                 KEYS_COUNT = 500000;
+  private static final int KEYS_COUNT = 500000;
 
-  private ODatabaseDocumentTx              databaseDocumentTx;
+  private ODatabaseDocumentTx databaseDocumentTx;
 
   private OLocalHashTable<Integer, String> localHashTable;
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
@@ -50,22 +44,24 @@ public class LocalHashTableIterationTest {
     localHashTable = new OLocalHashTable<Integer, String>("localHashTableIterationTest", ".imc", ".tsc", ".obf", ".nbh",
         hashFunction, false, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
-    localHashTable.create(OIntegerSerializer.INSTANCE,
-        OBinarySerializerFactory.getInstance().<String> getObjectSerializer(OType.STRING), null, true);
+    localHashTable
+        .create(OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance().<String>getObjectSerializer(OType.STRING), null,
+            true);
   }
 
-  @AfterClass
+  @After
   public void afterClass() throws Exception {
     localHashTable.clear();
     localHashTable.delete();
     databaseDocumentTx.drop();
   }
 
-  @AfterMethod
+  @After
   public void afterMethod() {
     localHashTable.clear();
   }
 
+  @Test
   public void testNextHaveRightOrder() throws Exception {
     SortedSet<Integer> keys = new TreeSet<Integer>();
     keys.clear();
@@ -86,7 +82,7 @@ public class LocalHashTableIterationTest {
     for (int key : keys) {
       int sKey = entries[curPos].key;
 
-      Assert.assertEquals(key, sKey, "" + key);
+      Assert.assertEquals(key, sKey);
       curPos++;
       if (curPos >= entries.length) {
         entries = localHashTable.higherEntries(entries[entries.length - 1].key);
@@ -129,7 +125,8 @@ public class LocalHashTableIterationTest {
     }
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testNextHaveRightOrderUsingNextMethod() throws Exception {
     List<Integer> keys = new ArrayList<Integer>();
     keys.clear();

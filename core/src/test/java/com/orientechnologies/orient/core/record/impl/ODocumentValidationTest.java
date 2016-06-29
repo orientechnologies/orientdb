@@ -8,12 +8,13 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import org.testng.Assert;
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static org.junit.Assert.fail;
 
 public class ODocumentValidationTest {
 
@@ -152,7 +153,7 @@ public class ODocumentValidationTest {
       d.field("embedded", new ODocument("EmbeddedValidation").field("test", "test"));
       try {
         d.validate();
-        Assert.fail("Validation doesn't throw exception");
+        fail("Validation doesn't throw exception");
       } catch (OValidationException e) {
         Assert.assertTrue(e.toString().contains("EmbeddedValidation.int"));
       }
@@ -193,7 +194,7 @@ public class ODocumentValidationTest {
 
       try {
         d.validate();
-        Assert.fail("Validation doesn't throw exception");
+        fail("Validation doesn't throw exception");
       } catch (OValidationException e) {
         Assert.assertTrue(e.toString().contains("EmbeddedValidation.long"));
       }
@@ -234,7 +235,7 @@ public class ODocumentValidationTest {
 
       try {
         d.validate();
-        Assert.fail("Validation doesn't throw exception");
+        fail("Validation doesn't throw exception");
       } catch (OValidationException e) {
         Assert.assertTrue(e.toString().contains("EmbeddedValidation.long"));
       }
@@ -276,7 +277,7 @@ public class ODocumentValidationTest {
 
       try {
         d.validate();
-        Assert.fail("Validation doesn't throw exception");
+        fail("Validation doesn't throw exception");
       } catch (OValidationException e) {
         Assert.assertTrue(e.toString().contains("EmbeddedValidation.long"));
       }
@@ -292,7 +293,7 @@ public class ODocumentValidationTest {
       ODocument newD = toCheck.copy();
       newD.removeField(fieldName);
       newD.validate();
-      AssertJUnit.fail();
+      fail();
     } catch (OValidationException v) {
     }
   }
@@ -680,7 +681,7 @@ public class ODocumentValidationTest {
   }
 
   @Test
-  public void testValidLinkCollectionsUpdate(){
+  public void testValidLinkCollectionsUpdate() {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODocumentValidationTest.class.getSimpleName());
     db.create();
     try {
@@ -706,31 +707,31 @@ public class ODocumentValidationTest {
 
       try {
         ODocument newD = d.copy();
-        ((Collection)newD.field("linkList")).add(new ODocument(clazz));
+        ((Collection) newD.field("linkList")).add(new ODocument(clazz));
         newD.validate();
-        AssertJUnit.fail();
+        fail();
       } catch (OValidationException v) {
       }
 
       try {
         ODocument newD = d.copy();
-        ((Collection)newD.field("linkSet")).add(new ODocument(clazz));
+        ((Collection) newD.field("linkSet")).add(new ODocument(clazz));
         newD.validate();
-        AssertJUnit.fail();
+        fail();
       } catch (OValidationException v) {
       }
       try {
         ODocument newD = d.copy();
-        ((ORidBag)newD.field("linkBag")).add(new ODocument(clazz));
+        ((ORidBag) newD.field("linkBag")).add(new ODocument(clazz));
         newD.validate();
-        AssertJUnit.fail();
+        fail();
       } catch (OValidationException v) {
       }
       try {
         ODocument newD = d.copy();
-        ((Map<String, ODocument> )newD.field("linkMap")).put("a",new ODocument(clazz));
+        ((Map<String, ODocument>) newD.field("linkMap")).put("a", new ODocument(clazz));
         newD.validate();
-        AssertJUnit.fail();
+        fail();
       } catch (OValidationException v) {
       }
     } finally {
@@ -744,7 +745,7 @@ public class ODocumentValidationTest {
       ODocument newD = toCheck.copy();
       newD.field(field, newValue);
       newD.validate();
-      AssertJUnit.fail();
+      fail();
     } catch (OValidationException v) {
     }
   }

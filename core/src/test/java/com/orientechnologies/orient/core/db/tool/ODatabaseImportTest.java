@@ -4,13 +4,12 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
-import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Created by tglman on 23/05/16.
@@ -44,7 +43,7 @@ public class ODatabaseImportTest {
     });
     importer.importDatabase();
 
-    assertTrue(dbImp.getMetadata().getSchema().existsClass("SimpleClass"));
+    Assert.assertTrue(dbImp.getMetadata().getSchema().existsClass("SimpleClass"));
     dbImp.drop();
   }
 

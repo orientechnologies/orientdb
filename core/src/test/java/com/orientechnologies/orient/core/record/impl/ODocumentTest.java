@@ -8,14 +8,15 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import org.testng.annotations.Test;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.testng.Assert.*;
+import static org.junit.Assert.*;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
@@ -32,8 +33,9 @@ public class ODocumentTest {
 
     assertEquals(doc2.<Object>field("integer2"), 123);
     assertEquals(doc2.field("string"), "OrientDB");
-    assertEquals(doc2.field("a"), 123.3);
+    //    assertEquals(doc2.field("a"), 123.3);
 
+    Assertions.assertThat(doc2.<Double>field("a")).isEqualTo(123.3d);
     assertEquals(doc2.fieldType("integer"), OType.INTEGER);
     assertEquals(doc2.fieldType("string"), OType.STRING);
     assertEquals(doc2.fieldType("binary"), OType.BINARY);
@@ -314,13 +316,13 @@ public class ODocumentTest {
 
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testFailNestedSetNull() {
     ODocument doc = new ODocument();
     doc.field("test.nested", "value");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testFailNullMapKey() {
     ODocument doc = new ODocument();
     Map<String, String> map = new HashMap<String, String>();
@@ -328,7 +330,6 @@ public class ODocumentTest {
     doc.field("testMap", map);
     doc.convertAllMultiValuesToTrackedVersions();
   }
-
 
   @Test
   public void testGetSetProperty() {
@@ -348,10 +349,8 @@ public class ODocumentTest {
     doc.setProperty(",", "comma");
     assertEquals(doc.getProperty(","), "comma");
 
-
     doc.setProperty(",.,/;:'\"", "strange");
     assertEquals(doc.getProperty(",.,/;:'\""), "strange");
-
 
     doc.setProperty("   ", "spaces");
     assertEquals(doc.getProperty("   "), "spaces");

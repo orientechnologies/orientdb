@@ -1,14 +1,13 @@
 package com.orientechnologies.orient.core.sql.method.misc;
 
-import static org.testng.Assert.assertEquals;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests the "asSet()" method implemented by the OSQLMethodAsSet class. Note
@@ -17,12 +16,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *
  * @author Michael MacFadden
  */
-@Test
 public class OSQLMethodAsSetTest {
 
   private OSQLMethodAsSet function;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     function = new OSQLMethodAsSet();
   }

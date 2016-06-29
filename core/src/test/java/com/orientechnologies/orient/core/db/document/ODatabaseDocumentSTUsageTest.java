@@ -1,12 +1,16 @@
 package com.orientechnologies.orient.core.db.document;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-@Test
 public class ODatabaseDocumentSTUsageTest {
+
+  @Test
   public void testShareBetweenThreads() {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:ODatabaseDocumentSTUsageTest");
     db.create();

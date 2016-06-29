@@ -1,11 +1,11 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.testng.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Created by tglman on 26/10/15.
@@ -14,7 +14,7 @@ public class TestRecursiveLinkedSave {
 
   private ODatabaseDocument db;
 
-  @BeforeMethod
+  @Before
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + TestRecursiveLinkedSave.class.getSimpleName());
     db.create();
@@ -56,7 +56,7 @@ public class TestRecursiveLinkedSave {
     assertEquals(doc, doc2.field("link"));
   }
 
-  @AfterMethod
+  @After
   public void after() {
     db.drop();
   }

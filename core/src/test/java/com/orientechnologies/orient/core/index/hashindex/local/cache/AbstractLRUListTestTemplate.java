@@ -8,8 +8,7 @@ import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.LRUList;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
@@ -17,7 +16,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
  * @author Andrey Lomakin
  * @since 26.02.13
  */
-public abstract class LRUListTest {
+public abstract class AbstractLRUListTestTemplate {
 
   protected LRUList lruList;
 

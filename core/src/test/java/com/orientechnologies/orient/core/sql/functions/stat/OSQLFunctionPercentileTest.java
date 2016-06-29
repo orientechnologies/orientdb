@@ -1,18 +1,18 @@
 package com.orientechnologies.orient.core.sql.functions.stat;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class OSQLFunctionPercentileTest {
-  
+
   private OSQLFunctionPercentile percentile;
-  
-  @BeforeMethod
+
+  @Before
   public void beforeMethod() {
     percentile = new OSQLFunctionPercentile() {
       @Override
@@ -21,25 +21,24 @@ public class OSQLFunctionPercentileTest {
       }
     };
   }
-  
+
   @Test
   public void testEmpty() {
     Object result = percentile.getResult();
     assertNull(result);
   }
-  
+
   @Test
   public void testSingleValueLower() {
     percentile.execute(null, null, null, new Object[] { 10, .25 }, null);
     assertEquals(10, percentile.getResult());
   }
-  
+
   @Test
   public void testSingleValueUpper() {
     percentile.execute(null, null, null, new Object[] { 10, .75 }, null);
     assertEquals(10, percentile.getResult());
   }
-
 
   @Test
   public void test50thPercentileOdd() {
@@ -52,7 +51,7 @@ public class OSQLFunctionPercentileTest {
     Object result = percentile.getResult();
     assertEquals(3.0, result);
   }
-  
+
   @Test
   public void test50thPercentileOddWithNulls() {
     Integer[] scores = { null, 1, 2, null, 3, 4, null, 5 };
@@ -64,7 +63,7 @@ public class OSQLFunctionPercentileTest {
     Object result = percentile.getResult();
     assertEquals(3.0, result);
   }
-  
+
   @Test
   public void test50thPercentileEven() {
     int[] scores = { 1, 2, 4, 5 };
@@ -76,7 +75,7 @@ public class OSQLFunctionPercentileTest {
     Object result = percentile.getResult();
     assertEquals(3.0, result);
   }
-  
+
   @Test
   public void testFirstQuartile() {
     int[] scores = { 1, 2, 3, 4, 5 };
@@ -88,7 +87,7 @@ public class OSQLFunctionPercentileTest {
     Object result = percentile.getResult();
     assertEquals(1.5, result);
   }
-  
+
   @Test
   public void testThirdQuartile() {
     int[] scores = { 1, 2, 3, 4, 5 };
@@ -100,7 +99,7 @@ public class OSQLFunctionPercentileTest {
     Object result = percentile.getResult();
     assertEquals(4.5, result);
   }
-  
+
   @Test
   public void testMultiQuartile() {
     int[] scores = { 1, 2, 3, 4, 5 };
@@ -110,7 +109,7 @@ public class OSQLFunctionPercentileTest {
     }
 
     List<Number> result = (List<Number>) percentile.getResult();
-    assertEquals(1.5, result.get(0).doubleValue());
-    assertEquals(4.5, result.get(1).doubleValue());
+    assertEquals(1.5, result.get(0).doubleValue(), 0);
+    assertEquals(4.5, result.get(1).doubleValue(), 0);
   }
 }

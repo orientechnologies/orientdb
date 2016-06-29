@@ -16,40 +16,39 @@
 package com.orientechnologies.orient.core.sql.functions.coll;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author edegtyarenko
  * @since 11.10.12 14:40
  */
-@Test
 public class SQLFunctionDifferenceTest {
-
 
   @Test
   public void testExecute() {
     final OSQLFunctionDifference function = new OSQLFunctionDifference();
 
-     List<List<Object>> incomes = Arrays.asList(Arrays.<Object> asList(1, 2, 3, 4, 5, 1),
-        Arrays.<Object> asList(3, 5, 6, 7, 0, 1, 3, 3, 6), Arrays.<Object> asList(2, 2, 8, 9));
+    List<List<Object>> incomes = Arrays
+        .asList(Arrays.<Object>asList(1, 2, 3, 4, 5, 1), Arrays.<Object>asList(3, 5, 6, 7, 0, 1, 3, 3, 6),
+            Arrays.<Object>asList(2, 2, 8, 9));
 
-    Set<Object> expectedResult = new HashSet<Object>(Arrays.<Object> asList(4));
+    Set<Object> expectedResult = new HashSet<Object>(Arrays.<Object>asList(4));
 
     Set<Object> actualResult = (Set<Object>) function.execute(null, null, null, incomes.toArray(), new OBasicCommandContext());
 
-
-
     assertSetEquals(actualResult, expectedResult);
 
-    incomes = Arrays.asList(Arrays.<Object> asList(1, 2, 3, 4, 5, 1),
-        Arrays.<Object> asList(3, 5, 6, 7, 0, 1, 3, 3, 6));
+    incomes = Arrays.asList(Arrays.<Object>asList(1, 2, 3, 4, 5, 1), Arrays.<Object>asList(3, 5, 6, 7, 0, 1, 3, 3, 6));
 
-    expectedResult = new HashSet<Object>(Arrays.<Object> asList(2, 4));
+    expectedResult = new HashSet<Object>(Arrays.<Object>asList(2, 4));
 
     actualResult = (Set<Object>) function.execute(null, null, null, incomes.toArray(), new OBasicCommandContext());
     assertSetEquals(actualResult, expectedResult);

@@ -2,53 +2,50 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
+import org.junit.After;
+import org.junit.Before;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 1/30/14
  */
-public class OPropertySBTreeRidBagIndexDefinitionTest extends OPropertyRidBagAbstractIndexDefinitionTest {
-	private int topThreshold;
-	private int bottomThreshold;
+public class OPropertySBTreeRidBagIndexDefinitionTest extends OPropertyRidBagAbstractIndexDefinition {
+  protected ODatabaseDocumentTx database;
+  private   int                 topThreshold;
+  private   int                 bottomThreshold;
 
-	protected ODatabaseDocumentTx database;
+  public OPropertySBTreeRidBagIndexDefinitionTest() {
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    final String url = "plocal:" + buildDirectory + "/test-db/" + this.getClass().getSimpleName();
+    database = new ODatabaseDocumentTx(url);
+    if (database.exists()) {
+      database.open("admin", "admin");
+      database.drop();
+    }
 
-	@BeforeClass
-	public void beforeClass() {
-		final String buildDirectory = System.getProperty("buildDirectory", ".");
-		final String url = "plocal:" + buildDirectory + "/test-db/" + this.getClass().getSimpleName();
-		database = new ODatabaseDocumentTx(url);
-		if (database.exists()) {
-			database.open("admin", "admin");
-			database.drop();
-		}
+    database.create();
+    database.close();
+  }
 
-		database.create();
-		database.close();
-	}
+  @Before
+  public void beforeMethod2() {
+    super.beforeMethod();
 
-	@BeforeMethod
-	public void beforeMethod() {
-		super.beforeMethod();
+    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
 
-		topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-		bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
 
-		OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
-		OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
+    database.open("admin", "admin");
+  }
 
-		database.open("admin", "admin");
-	}
+  @After
+  public void afterMethod() {
+    database.close();
 
-	@AfterMethod
-	public void afterMethod() {
-		database.close();
-
-		OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
-		OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
-	}
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
+  }
 
 }

@@ -2,13 +2,17 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -17,16 +21,15 @@ import static org.mockito.Mockito.when;
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 24/12/14
  */
-@Test(enabled = false)
 public class WALSegmentCreation {
-  private ODiskWriteAheadLog     writeAheadLog;
-  private File                   testDir;
-  private volatile boolean       stop = false;
+  private ODiskWriteAheadLog writeAheadLog;
+  private File               testDir;
+  private volatile boolean stop = false;
 
   private ExecutorService        writerExecutor;
   private OLocalPaginatedStorage localPaginatedStorage;
 
-  @BeforeClass(enabled = false)
+  @Before
   public void beforeClass() throws Exception {
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 129, TestRecordTwo.class);
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, TestRecordOne.class);
@@ -48,6 +51,8 @@ public class WALSegmentCreation {
     writerExecutor = Executors.newCachedThreadPool();
   }
 
+  @Test
+  @Ignore
   public void testLogSegmentCreation() throws Exception {
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
 
@@ -95,29 +100,6 @@ public class WALSegmentCreation {
     }
 
     Assert.assertTrue(operations.isEmpty());
-  }
-
-  public class Writer implements Callable<Void> {
-
-    @Override
-    public Void call() throws Exception {
-
-      while (!stop) {
-        OOperationUnitId operationUnitId = OOperationUnitId.generateId();
-        writeAheadLog.logAtomicOperationStartRecord(true, operationUnitId);
-        writeAheadLog.log(new TestRecordOne(100, operationUnitId));
-        writeAheadLog.log(new TestRecordOne(200, operationUnitId));
-        writeAheadLog.log(new TestRecordTwo(100));
-        writeAheadLog.log(new TestRecordOne(300, operationUnitId));
-        writeAheadLog.log(new TestRecordOne(200, operationUnitId));
-        writeAheadLog.log(new TestRecordTwo(200));
-        writeAheadLog.log(new TestRecordOne(100, operationUnitId));
-        writeAheadLog.logAtomicOperationEndRecord(operationUnitId, false, new OLogSequenceNumber(0, 0), null);
-        writeAheadLog.log(new TestRecordTwo(100));
-      }
-
-      return null;
-    }
   }
 
   public static final class TestRecordOne extends OOperationUnitRecord {
@@ -262,6 +244,29 @@ public class WALSegmentCreation {
     @Override
     public String toString() {
       return "TestRecordTwo {size: " + (data.length + OIntegerSerializer.INT_SIZE + 1 + (OIntegerSerializer.INT_SIZE + 3) + "}");
+    }
+  }
+
+  public class Writer implements Callable<Void> {
+
+    @Override
+    public Void call() throws Exception {
+
+      while (!stop) {
+        OOperationUnitId operationUnitId = OOperationUnitId.generateId();
+        writeAheadLog.logAtomicOperationStartRecord(true, operationUnitId);
+        writeAheadLog.log(new TestRecordOne(100, operationUnitId));
+        writeAheadLog.log(new TestRecordOne(200, operationUnitId));
+        writeAheadLog.log(new TestRecordTwo(100));
+        writeAheadLog.log(new TestRecordOne(300, operationUnitId));
+        writeAheadLog.log(new TestRecordOne(200, operationUnitId));
+        writeAheadLog.log(new TestRecordTwo(200));
+        writeAheadLog.log(new TestRecordOne(100, operationUnitId));
+        writeAheadLog.logAtomicOperationEndRecord(operationUnitId, false, new OLogSequenceNumber(0, 0), null);
+        writeAheadLog.log(new TestRecordTwo(100));
+      }
+
+      return null;
     }
   }
 }

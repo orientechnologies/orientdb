@@ -2,8 +2,7 @@ package com.orientechnologies.orient.core.encryption.impl;
 
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
-import org.testng.Assert;
-
+import org.junit.Assert;
 import java.util.Arrays;
 import java.util.Random;
 

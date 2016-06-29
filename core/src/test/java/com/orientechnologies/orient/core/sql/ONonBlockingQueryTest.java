@@ -3,13 +3,11 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.query.OSQLNonBlockingQuery;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 /**
  * Created by luigidellaquila on 13/04/15.
  */
-@Test
 public class ONonBlockingQueryTest {
 
   static class MyResultListener implements OCommandResultListener {

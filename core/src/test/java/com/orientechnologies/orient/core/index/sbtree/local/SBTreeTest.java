@@ -1,34 +1,29 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.util.*;
-
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.*;
 
 /**
  * @author Andrey Lomakin
  * @since 12.08.13
  */
-@Test
 public class SBTreeTest {
   private static final int KEYS_COUNT = 500000;
   protected OSBTree<Integer, OIdentifiable> sbTree;
   protected ODatabaseDocumentTx             databaseDocumentTx;
   private   String                          buildDirectory;
 
-  @BeforeClass
-  public void beforeClass() {
+  public SBTreeTest() {
     buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = ".";
@@ -46,25 +41,25 @@ public class SBTreeTest {
     sbTree.create(OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, 1, false);
   }
 
-  @AfterMethod
+  @After
   public void afterMethod() throws Exception {
     sbTree.clear();
   }
 
-  @AfterClass
   public void afterClass() throws Exception {
     sbTree.clear();
     sbTree.delete();
     databaseDocumentTx.drop();
   }
 
+  @Test
   public void testKeyPut() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
+      Assert.assertEquals(i + " key is absent", sbTree.get(i), new ORecordId(i % 32000, i));
     }
 
     Assert.assertEquals(0, (int) sbTree.firstKey());
@@ -77,6 +72,7 @@ public class SBTreeTest {
 
   }
 
+  @Test
   public void testKeyPutRandomUniform() throws Exception {
     final NavigableSet<Integer> keys = new TreeSet<Integer>();
     final Random random = new Random();
@@ -98,6 +94,7 @@ public class SBTreeTest {
 
   }
 
+  @Test
   public void testKeyPutRandomGaussian() throws Exception {
     NavigableSet<Integer> keys = new TreeSet<Integer>();
     long seed = System.currentTimeMillis();
@@ -126,6 +123,7 @@ public class SBTreeTest {
 
   }
 
+  @Test
   public void testKeyDeleteRandomUniform() throws Exception {
     NavigableSet<Integer> keys = new TreeSet<Integer>();
     for (int i = 0; i < KEYS_COUNT; i++) {
@@ -154,6 +152,7 @@ public class SBTreeTest {
     }
   }
 
+  @Test
   public void testKeyDeleteRandomGaussian() throws Exception {
     NavigableSet<Integer> keys = new TreeSet<Integer>();
 
@@ -196,6 +195,7 @@ public class SBTreeTest {
     }
   }
 
+  @Test
   public void testKeyDelete() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
@@ -217,6 +217,7 @@ public class SBTreeTest {
     }
   }
 
+  @Test
   public void testKeyAddDelete() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
@@ -248,6 +249,7 @@ public class SBTreeTest {
     }
   }
 
+  @Test
   public void testIterateEntriesMajor() {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     Random random = new Random();
@@ -269,6 +271,7 @@ public class SBTreeTest {
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
   }
 
+  @Test
   public void testIterateEntriesMinor() {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     Random random = new Random();
@@ -290,6 +293,7 @@ public class SBTreeTest {
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
   }
 
+  @Test
   public void testIterateEntriesBetween() {
     NavigableMap<Integer, ORID> keyValues = new TreeMap<Integer, ORID>();
     Random random = new Random();
@@ -315,6 +319,7 @@ public class SBTreeTest {
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
   }
 
+  @Test
   public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
     for (int i = 0; i < 5167; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
@@ -335,6 +340,7 @@ public class SBTreeTest {
 
   }
 
+  @Test
   public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
     for (int i = 0; i < 5167; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
@@ -356,6 +362,7 @@ public class SBTreeTest {
 
   }
 
+  @Test
   public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
     for (int i = 0; i < 12055; i++) {
       sbTree.put(i, new ORecordId(i % 32000, i));
@@ -468,6 +475,7 @@ public class SBTreeTest {
     Assert.assertTrue(identifiables.isEmpty());
   }
 
+  @Test
   public void testNullKeysInSBTree() {
     final OSBTree<Integer, OIdentifiable> nullSBTree = new OSBTree<Integer, OIdentifiable>("nullSBTree", ".sbt", false, ".nbt",
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());

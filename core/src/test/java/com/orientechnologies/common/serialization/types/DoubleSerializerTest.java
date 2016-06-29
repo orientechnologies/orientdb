@@ -18,9 +18,9 @@ package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -29,32 +29,36 @@ import java.nio.ByteOrder;
  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 18.01.12
  */
-@Test
 public class DoubleSerializerTest {
   private static final int    FIELD_SIZE = 8;
   private static final Double OBJECT     = Math.PI;
-  private ODoubleSerializer doubleSerializer;
   byte[] stream = new byte[FIELD_SIZE];
+  private ODoubleSerializer doubleSerializer;
 
-  @BeforeClass
+  @Before
   public void beforeClass() {
     doubleSerializer = new ODoubleSerializer();
   }
 
+  @Test
   public void testFieldSize() {
     Assert.assertEquals(doubleSerializer.getObjectSize(null), FIELD_SIZE);
   }
 
+  @Test
   public void testSerialize() {
     doubleSerializer.serialize(OBJECT, stream, 0);
     Assert.assertEquals(doubleSerializer.deserialize(stream, 0), OBJECT);
   }
 
+  @Test
   public void testSerializeNative() {
     doubleSerializer.serializeNative(OBJECT, stream, 0);
-    Assert.assertEquals(doubleSerializer.deserializeNative(stream, 0), OBJECT);
+    Double v = doubleSerializer.deserializeNative(stream, 0);
+    Assert.assertEquals(v, OBJECT);
   }
 
+  @Test
   public void testNativeDirectMemoryCompatibility() {
     doubleSerializer.serializeNative(OBJECT, stream, 0);
 
@@ -65,6 +69,7 @@ public class DoubleSerializerTest {
     Assert.assertEquals(doubleSerializer.deserializeFromByteBufferObject(buffer), OBJECT);
   }
 
+  @Test
   public void testSerializeInByteBuffer() {
     final int serializationOffset = 5;
     ByteBuffer buffer = ByteBuffer.allocate(FIELD_SIZE + serializationOffset);
@@ -84,6 +89,7 @@ public class DoubleSerializerTest {
     Assert.assertEquals(buffer.position() - serializationOffset, FIELD_SIZE);
   }
 
+  @Test
   public void testSerializeWALChanges() {
     final int serializationOffset = 5;
     final ByteBuffer buffer = ByteBuffer.allocateDirect(FIELD_SIZE + serializationOffset).order(ByteOrder.nativeOrder());

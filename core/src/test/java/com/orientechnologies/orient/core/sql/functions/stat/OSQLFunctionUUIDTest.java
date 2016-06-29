@@ -25,21 +25,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionUUID;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.UUID;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
+import static org.junit.Assert.*;
 
-@Test
 public class OSQLFunctionUUIDTest {
 
   private OSQLFunctionUUID uuid;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     uuid = new OSQLFunctionUUID();
   }
@@ -57,12 +54,12 @@ public class OSQLFunctionUUIDTest {
   }
 
   @Test
-  public void testQuery(){
+  public void testQuery() {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OSQLFunctionUUIDTest").create();
     try {
       final OResultSet<ODocument> result = db.command(new OCommandSQL("select uuid()")).execute();
       assertNotNull(result);
-      assertEquals(result.size(), 1 );
+      assertEquals(result.size(), 1);
       assertNotNull(result.get(0).field("uuid"));
 
     } finally {

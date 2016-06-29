@@ -1,55 +1,33 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
-import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
-import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OReadCache;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
-import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.assertj.core.api.Assertions;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static org.mockito.Matchers.shortThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * @author Andrey Lomakin
  * @since 26.03.13
  */
-@Test
-public class LocalPaginatedClusterTest {
-  OPaginatedCluster paginatedCluster;
-  protected String buildDirectory;
 
-  ODatabaseDocumentTx databaseDocumentTx;
+public class LocalPaginatedClusterTest {
+  protected static String              buildDirectory;
+  static           OPaginatedCluster   paginatedCluster;
+  static           ODatabaseDocumentTx databaseDocumentTx;
 
   OAtomicOperationsManager atomicOperationsManager;
 
   @BeforeClass
-  public void beforeClass() throws IOException {
+  public static void beforeClass() throws IOException {
+
     System.out.println("Start LocalPaginatedClusterTest");
     buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null || buildDirectory.isEmpty())
@@ -74,18 +52,19 @@ public class LocalPaginatedClusterTest {
   }
 
   @AfterClass
-  public void afterClass() throws IOException {
+  public static void afterClass() throws IOException {
     paginatedCluster.delete();
 
     databaseDocumentTx.drop();
     System.out.println("End LocalPaginatedClusterTest");
   }
 
-  @BeforeMethod
+  @Before
   public void beforeMethod() throws IOException {
     paginatedCluster.truncate();
   }
 
+  @Test
   public void testDeleteRecordAndAddNewOnItsPlace() throws IOException {
     byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
     int recordVersion = 0;
@@ -104,6 +83,7 @@ public class LocalPaginatedClusterTest {
     Assert.assertEquals(physicalPosition.recordVersion, recordVersion);
   }
 
+  @Test
   public void testAddOneSmallRecord() throws IOException {
     byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
     int recordVersion = 0;
@@ -117,10 +97,12 @@ public class LocalPaginatedClusterTest {
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, recordVersion);
-    Assert.assertEquals(rawBuffer.buffer, smallRecord);
+    //    Assert.assertEquals(rawBuffer.buffer, smallRecord);
+    Assertions.assertThat(rawBuffer.buffer).isEqualTo(smallRecord);
     Assert.assertEquals(rawBuffer.recordType, 1);
   }
 
+  @Test
   public void testAddOneBigRecord() throws IOException {
     byte[] bigRecord = new byte[2 * 65536 + 100];
     Random mersenneTwisterFast = new Random();
@@ -137,10 +119,12 @@ public class LocalPaginatedClusterTest {
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, recordVersion);
-    Assert.assertEquals(rawBuffer.buffer, bigRecord);
+    //    Assert.assertEquals(rawBuffer.buffer, bigRecord);
+    Assertions.assertThat(rawBuffer.buffer).isEqualTo(bigRecord);
     Assert.assertEquals(rawBuffer.recordType, 1);
   }
 
+  @Test
   public void testAddManySmallRecords() throws IOException {
     final int records = 10000;
 
@@ -170,11 +154,14 @@ public class LocalPaginatedClusterTest {
       Assert.assertNotNull(rawBuffer);
 
       Assert.assertEquals(rawBuffer.version, recordVersion);
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
       Assert.assertEquals(rawBuffer.recordType, 2);
     }
   }
 
+  @Test
   public void testAddManyBigRecords() throws IOException {
     final int records = 5000;
 
@@ -204,11 +191,13 @@ public class LocalPaginatedClusterTest {
       Assert.assertNotNull(rawBuffer);
 
       Assert.assertEquals(rawBuffer.version, recordVersion);
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
       Assert.assertEquals(rawBuffer.recordType, 2);
     }
   }
 
+  @Test
   public void testAddManyRecords() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
@@ -237,11 +226,13 @@ public class LocalPaginatedClusterTest {
       Assert.assertNotNull(rawBuffer);
 
       Assert.assertEquals(rawBuffer.version, recordVersion);
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
       Assert.assertEquals(rawBuffer.recordType, 2);
     }
   }
 
+  @Test
   public void testAllocatePositionMap() throws IOException {
 
     OPhysicalPosition position = paginatedCluster.allocatePosition((byte) 'd');
@@ -253,6 +244,7 @@ public class LocalPaginatedClusterTest {
     Assert.assertNotNull(rec);
   }
 
+  @Test
   public void testManyAllocatePositionMap() throws IOException {
     final int records = 10000;
 
@@ -273,6 +265,7 @@ public class LocalPaginatedClusterTest {
     }
   }
 
+  @Test
   public void testRemoveHalfSmallRecords() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
@@ -324,11 +317,13 @@ public class LocalPaginatedClusterTest {
       Assert.assertNotNull(rawBuffer);
 
       Assert.assertEquals(rawBuffer.version, recordVersion);
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
       Assert.assertEquals(rawBuffer.recordType, 2);
     }
   }
 
+  @Test
   public void testHideHalfSmallRecords() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
@@ -380,11 +375,14 @@ public class LocalPaginatedClusterTest {
       Assert.assertNotNull(rawBuffer);
 
       Assert.assertEquals(rawBuffer.version, recordVersion);
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
       Assert.assertEquals(rawBuffer.recordType, 2);
     }
   }
 
+  @Test
   public void testRemoveHalfBigRecords() throws IOException {
     final int records = 5000;
     long seed = System.currentTimeMillis();
@@ -437,11 +435,14 @@ public class LocalPaginatedClusterTest {
       Assert.assertNotNull(rawBuffer);
 
       Assert.assertEquals(rawBuffer.version, recordVersion);
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
       Assert.assertEquals(rawBuffer.recordType, 2);
     }
   }
 
+  @Test
   public void testHideHalfBigRecords() throws IOException {
     final int records = 5000;
     long seed = System.currentTimeMillis();
@@ -495,11 +496,13 @@ public class LocalPaginatedClusterTest {
       Assert.assertNotNull(rawBuffer);
 
       Assert.assertEquals(rawBuffer.version, recordVersion);
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
       Assert.assertEquals(rawBuffer.recordType, 2);
     }
   }
 
+  @Test
   public void testRemoveHalfRecords() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
@@ -552,11 +555,14 @@ public class LocalPaginatedClusterTest {
       Assert.assertNotNull(rawBuffer);
 
       Assert.assertEquals(rawBuffer.version, recordVersion);
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
       Assert.assertEquals(rawBuffer.recordType, 2);
     }
   }
 
+  @Test
   public void testHideHalfRecords() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
@@ -609,11 +615,14 @@ public class LocalPaginatedClusterTest {
       Assert.assertNotNull(rawBuffer);
 
       Assert.assertEquals(rawBuffer.version, recordVersion);
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
       Assert.assertEquals(rawBuffer.recordType, 2);
     }
   }
 
+  @Test
   public void testRemoveHalfRecordsAndAddAnotherHalfAgain() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
@@ -670,6 +679,7 @@ public class LocalPaginatedClusterTest {
     Assert.assertEquals(paginatedCluster.getEntries(), (long) (1.5 * records - deletedRecords));
   }
 
+  @Test
   public void testHideHalfRecordsAndAddAnotherHalfAgain() throws IOException {
     final int records = 10000;
     long seed = System.currentTimeMillis();
@@ -726,6 +736,7 @@ public class LocalPaginatedClusterTest {
     Assert.assertEquals(paginatedCluster.getEntries(), (long) (1.5 * records - hiddenRecords));
   }
 
+  @Test
   public void testUpdateOneSmallRecord() throws IOException {
     byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
     int recordVersion = 0;
@@ -743,10 +754,13 @@ public class LocalPaginatedClusterTest {
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, recordVersion);
-    Assert.assertEquals(rawBuffer.buffer, smallRecord);
+    //    Assert.assertEquals(rawBuffer.buffer, smallRecord);
+
+    Assertions.assertThat(rawBuffer.buffer).isEqualTo(smallRecord);
     Assert.assertEquals(rawBuffer.recordType, 2);
   }
 
+  @Test
   public void testUpdateOneSmallRecordVersionIsLowerCurrentOne() throws IOException {
     byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
     int recordVersion = 0;
@@ -766,10 +780,14 @@ public class LocalPaginatedClusterTest {
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, updateRecordVersion);
-    Assert.assertEquals(rawBuffer.buffer, smallRecord);
+
+    //    Assert.assertEquals(rawBuffer.buffer, smallRecord);
+
+    Assertions.assertThat(rawBuffer.buffer).isEqualTo(smallRecord);
     Assert.assertEquals(rawBuffer.recordType, 2);
   }
 
+  @Test
   public void testUpdateOneSmallRecordVersionIsMinusTwo() throws IOException {
     byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
     int recordVersion = 0;
@@ -789,10 +807,14 @@ public class LocalPaginatedClusterTest {
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, updateRecordVersion);
-    Assert.assertEquals(rawBuffer.buffer, smallRecord);
+    //    Assert.assertEquals(rawBuffer.buffer, smallRecord);
+
+    Assertions.assertThat(rawBuffer.buffer).isEqualTo(smallRecord);
+
     Assert.assertEquals(rawBuffer.recordType, 2);
   }
 
+  @Test
   public void testUpdateOneBigRecord() throws IOException {
     byte[] bigRecord = new byte[2 * 65536 + 100];
     Random mersenneTwisterFast = new Random();
@@ -815,10 +837,13 @@ public class LocalPaginatedClusterTest {
     Assert.assertNotNull(rawBuffer);
 
     Assert.assertEquals(rawBuffer.version, recordVersion);
-    Assert.assertEquals(rawBuffer.buffer, bigRecord);
+    //    Assert.assertEquals(rawBuffer.buffer, bigRecord);
+
+    Assertions.assertThat(rawBuffer.buffer).isEqualTo(bigRecord);
     Assert.assertEquals(rawBuffer.recordType, 2);
   }
 
+  @Test
   public void testUpdateManySmallRecords() throws IOException {
     final int records = 10000;
 
@@ -864,7 +889,9 @@ public class LocalPaginatedClusterTest {
       ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey());
       Assert.assertNotNull(rawBuffer);
 
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
 
       if (updatedPositions.contains(entry.getKey())) {
         Assert.assertEquals(rawBuffer.version, newRecordVersion);
@@ -876,6 +903,7 @@ public class LocalPaginatedClusterTest {
     }
   }
 
+  @Test
   public void testUpdateManyBigRecords() throws IOException {
     final int records = 5000;
 
@@ -920,10 +948,13 @@ public class LocalPaginatedClusterTest {
       ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey());
       Assert.assertNotNull(rawBuffer);
 
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
 
       if (updatedPositions.contains(entry.getKey())) {
         Assert.assertEquals(rawBuffer.version, newRecordVersion);
+
         Assert.assertEquals(rawBuffer.recordType, 3);
       } else {
         Assert.assertEquals(rawBuffer.version, recordVersion);
@@ -932,6 +963,7 @@ public class LocalPaginatedClusterTest {
     }
   }
 
+  @Test
   public void testUpdateManyRecords() throws IOException {
     final int records = 10000;
 
@@ -976,7 +1008,9 @@ public class LocalPaginatedClusterTest {
       ORawBuffer rawBuffer = paginatedCluster.readRecord(entry.getKey());
       Assert.assertNotNull(rawBuffer);
 
-      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+      //      Assert.assertEquals(rawBuffer.buffer, entry.getValue());
+
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(entry.getValue());
 
       if (updatedPositions.contains(entry.getKey())) {
         Assert.assertEquals(rawBuffer.version, newRecordVersion);
@@ -988,6 +1022,7 @@ public class LocalPaginatedClusterTest {
     }
   }
 
+  @Test
   public void testForwardIteration() throws IOException {
     final int records = 10000;
 
@@ -1042,6 +1077,7 @@ public class LocalPaginatedClusterTest {
     Assert.assertEquals(paginatedCluster.getLastPosition(), (long) positionRecordMap.lastKey());
   }
 
+  @Test
   public void testBackwardIteration() throws IOException {
     final int records = 10000;
 
@@ -1099,6 +1135,7 @@ public class LocalPaginatedClusterTest {
     Assert.assertEquals(paginatedCluster.getLastPosition(), (long) positionRecordMap.lastKey());
   }
 
+  @Test
   public void testGetPhysicalPosition() throws IOException {
     final int records = 10000;
 
@@ -1156,6 +1193,7 @@ public class LocalPaginatedClusterTest {
     }
   }
 
+  @Test
   public void testResurrectRecord() throws IOException {
     byte[] smallRecord = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 };
     int recordVersion = 0;
@@ -1194,7 +1232,9 @@ public class LocalPaginatedClusterTest {
       rawBuffer = paginatedCluster.readRecord(physicalPosition.clusterPosition);
       Assert.assertNotNull(rawBuffer);
       Assert.assertEquals(rawBuffer.version, recordVersion);
-      Assert.assertEquals(rawBuffer.buffer, smallRecord);
+      //      Assert.assertEquals(rawBuffer.buffer, smallRecord);
+      Assertions.assertThat(rawBuffer.buffer).isEqualTo(smallRecord);
+
       Assert.assertEquals(rawBuffer.recordType, 2);
 
       // UPDATE 10 TIMES WITH A GROWING CONTENT TO STIMULATE DEFRAG AND CHANGE OF PAGES

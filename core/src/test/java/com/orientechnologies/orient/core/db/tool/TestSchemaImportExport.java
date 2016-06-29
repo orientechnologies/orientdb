@@ -3,8 +3,9 @@ package com.orientechnologies.orient.core.db.tool;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -12,13 +13,8 @@ import java.io.IOException;
 
 public class TestSchemaImportExport {
 
-  private static final class MockOutputListener implements OCommandOutputListener {
-    @Override
-    public void onMessage(String iText) {
-    }
-  }
-
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testExportImportCustomData() throws IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + TestSchemaImportExport.class.getSimpleName());
     db.create();
@@ -49,8 +45,8 @@ public class TestSchemaImportExport {
 
   @Test
   public void testExportImportMultipleInheritance() throws IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + TestSchemaImportExport.class.getSimpleName()
-        + "MultipleInheritance");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(
+        "memory:" + TestSchemaImportExport.class.getSimpleName() + "MultipleInheritance");
     db.create();
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     try {
@@ -64,8 +60,8 @@ public class TestSchemaImportExport {
       db.drop();
     }
 
-    ODatabaseDocumentTx db1 = new ODatabaseDocumentTx("memory:imp_" + TestSchemaImportExport.class.getSimpleName()
-        + "MultipleInheritance");
+    ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(
+        "memory:imp_" + TestSchemaImportExport.class.getSimpleName() + "MultipleInheritance");
     db1.create();
     try {
       ODatabaseImport imp = new ODatabaseImport(db1, new ByteArrayInputStream(output.toByteArray()), new MockOutputListener());
@@ -77,6 +73,12 @@ public class TestSchemaImportExport {
       Assert.assertTrue(clas1.isSubClassOf("ORestricted"));
     } finally {
       db1.drop();
+    }
+  }
+
+  private static final class MockOutputListener implements OCommandOutputListener {
+    @Override
+    public void onMessage(String iText) {
     }
   }
 }

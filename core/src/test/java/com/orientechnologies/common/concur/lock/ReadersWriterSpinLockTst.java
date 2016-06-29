@@ -1,7 +1,6 @@
 package com.orientechnologies.common.concur.lock;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,23 +11,19 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/18/14
  */
-@Test(enabled = false)
 public class ReadersWriterSpinLockTst {
-  private final CountDownLatch         latch           = new CountDownLatch(1);
+  private final CountDownLatch latch = new CountDownLatch(1);
 
-  private final AtomicLong             readers         = new AtomicLong();
-  private final AtomicLong             writers         = new AtomicLong();
+  private final AtomicLong readers = new AtomicLong();
+  private final AtomicLong writers = new AtomicLong();
 
-  private final AtomicLong             readersCounter  = new AtomicLong();
-  private final AtomicLong             writersCounter  = new AtomicLong();
+  private final AtomicLong readersCounter = new AtomicLong();
+  private final AtomicLong writersCounter = new AtomicLong();
 
-  private final OReadersWriterSpinLock spinLock        = new OReadersWriterSpinLock();
-
-  private volatile boolean             stop            = false;
-
-  private final ExecutorService        executorService = Executors.newCachedThreadPool();
-
-  private volatile long                c               = 47;
+  private final    OReadersWriterSpinLock spinLock        = new OReadersWriterSpinLock();
+  private final    ExecutorService        executorService = Executors.newCachedThreadPool();
+  private volatile boolean                stop            = false;
+  private volatile long                   c               = 47;
 
   public void testCompetingAccess() throws Exception {
     List<Future> futures = new ArrayList<Future>();
@@ -52,6 +47,14 @@ public class ReadersWriterSpinLockTst {
     System.out.println("Reads : " + readers.get());
   }
 
+  private void consumeCPU(int cycles) {
+    long c1 = c;
+    for (int i = 0; i < cycles; i++) {
+      c1 += c1 * 31 + i * 51;
+    }
+    c = c1;
+  }
+
   private final class Reader implements Callable<Void> {
     @Override
     public Void call() throws Exception {
@@ -61,15 +64,15 @@ public class ReadersWriterSpinLockTst {
         while (!stop) {
           spinLock.acquireReadLock();
           try {
-						spinLock.acquireReadLock();
-						try {
-							readersCounter.incrementAndGet();
-							readers.incrementAndGet();
-							consumeCPU(100);
-							readersCounter.decrementAndGet();
-						} finally {
-							spinLock.releaseReadLock();
-						}
+            spinLock.acquireReadLock();
+            try {
+              readersCounter.incrementAndGet();
+              readers.incrementAndGet();
+              consumeCPU(100);
+              readersCounter.decrementAndGet();
+            } finally {
+              spinLock.releaseReadLock();
+            }
           } finally {
             spinLock.releaseReadLock();
           }
@@ -92,33 +95,33 @@ public class ReadersWriterSpinLockTst {
         while (!stop) {
           spinLock.acquireWriteLock();
           try {
-						spinLock.acquireWriteLock();
-						try {
-							spinLock.acquireReadLock();
-							try {
-								writers.incrementAndGet();
-								writersCounter.incrementAndGet();
+            spinLock.acquireWriteLock();
+            try {
+              spinLock.acquireReadLock();
+              try {
+                writers.incrementAndGet();
+                writersCounter.incrementAndGet();
 
-								Assert.assertEquals(readersCounter.get(), 0);
+                Assert.assertEquals(readersCounter.get(), 0);
 
-								long rCounter = readersCounter.get();
-								long wCounter = writersCounter.get();
+                long rCounter = readersCounter.get();
+                long wCounter = writersCounter.get();
 
-								Assert.assertEquals(rCounter, 0);
-								Assert.assertEquals(wCounter, 1);
+                Assert.assertEquals(rCounter, 0);
+                Assert.assertEquals(wCounter, 1);
 
-								consumeCPU(1000);
+                consumeCPU(1000);
 
-								Assert.assertEquals(rCounter, readersCounter.get());
-								Assert.assertEquals(wCounter, writersCounter.get());
+                Assert.assertEquals(rCounter, readersCounter.get());
+                Assert.assertEquals(wCounter, writersCounter.get());
 
-								writersCounter.decrementAndGet();
-							} finally {
-								spinLock.releaseReadLock();
-							}
-						} finally {
-							spinLock.releaseWriteLock();
-						}
+                writersCounter.decrementAndGet();
+              } finally {
+                spinLock.releaseReadLock();
+              }
+            } finally {
+              spinLock.releaseWriteLock();
+            }
           } finally {
             spinLock.releaseWriteLock();
           }
@@ -132,13 +135,5 @@ public class ReadersWriterSpinLockTst {
 
       return null;
     }
-  }
-
-  private void consumeCPU(int cycles) {
-    long c1 = c;
-    for (int i = 0; i < cycles; i++) {
-      c1 += c1 * 31 + i * 51;
-    }
-    c = c1;
   }
 }

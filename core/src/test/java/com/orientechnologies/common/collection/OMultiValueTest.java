@@ -1,7 +1,8 @@
 package com.orientechnologies.common.collection;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +10,6 @@ import java.util.List;
 /**
  * @author Luigi Dell'Aquila
  */
-@Test
 public class OMultiValueTest {
 
   @Test

@@ -4,11 +4,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.embedded.OEmbeddedRidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.util.UUID;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class OEmbeddedRidBagBasicTest {
 
@@ -38,7 +38,7 @@ public class OEmbeddedRidBagBasicTest {
 
   }
 
-  @Test(expectedExceptions = NullPointerException.class)
+  @Test(expected = NullPointerException.class)
   public void testExceptionInCaseOfNull() {
     OEmbeddedRidBag bag = new OEmbeddedRidBag();
     bag.add(null);

@@ -1,17 +1,17 @@
 package com.orientechnologies.orient.core.sql.lock;
 
-import static org.testng.AssertJUnit.assertEquals;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestQueryRecordLockUnlock {
 
@@ -64,7 +64,9 @@ public class TestQueryRecordLockUnlock {
       db = new ODatabaseDocumentTx("memory:" + TestQueryRecordLockUnlock.class.getSimpleName());
       db.open("admin", "admin");
       ODocument doc = db.load(id);
-      assertEquals(50, doc.<Object>field("count"));
+      //      assertEquals(50, doc.field("count"));
+
+      assertThat(doc.<Integer>field("count")).isEqualTo(50);
 
     } finally {
       if (db != null) {
@@ -73,7 +75,8 @@ public class TestQueryRecordLockUnlock {
     }
   }
 
-  @Test(enabled = false)
+  @Test
+  @Ignore
   public void testLockWithSubqueryRecord() throws InterruptedException {
     final ORID id;
     ODatabaseDocumentTx db = null;
@@ -122,7 +125,9 @@ public class TestQueryRecordLockUnlock {
       db = new ODatabaseDocumentTx("memory:" + TestQueryRecordLockUnlock.class.getSimpleName());
       db.open("admin", "admin");
       ODocument doc = db.load(id);
-      assertEquals(50, doc.<Object>field("count"));
+      //      assertEquals(50, doc.field("count"));
+
+      assertThat(doc.<Integer>field("count")).isEqualTo(50);
 
     } finally {
       if (db != null) {
@@ -180,7 +185,9 @@ public class TestQueryRecordLockUnlock {
       db = new ODatabaseDocumentTx("memory:" + TestQueryRecordLockUnlock.class.getSimpleName());
       db.open("admin", "admin");
       ODocument doc = db.load(id);
-      assertEquals(50, doc.<Object>field("count"));
+      //      assertEquals(50, doc.field("count"));
+
+      assertThat(doc.<Integer>field("count")).isEqualTo(50);
 
     } finally {
       if (db != null) {

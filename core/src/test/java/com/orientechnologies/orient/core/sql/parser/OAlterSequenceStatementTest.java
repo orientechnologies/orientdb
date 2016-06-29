@@ -1,8 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-@Test
 public class OAlterSequenceStatementTest extends OParserTestAbstract {
 
   @Test
@@ -18,6 +17,5 @@ public class OAlterSequenceStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("alter SEQUENCE Foo TYPE cached");
   }
-
 
 }

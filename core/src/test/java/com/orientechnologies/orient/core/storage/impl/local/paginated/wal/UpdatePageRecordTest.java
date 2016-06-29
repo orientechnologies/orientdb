@@ -1,13 +1,11 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 /**
  * @author Andrey Lomakin
  * @since 29.04.13
  */
-@Test
 public class UpdatePageRecordTest {
   public void testSerializationPrevLSNIsNotNull() {
     OWALChanges changesTree = new OWALPageChangesPortion();

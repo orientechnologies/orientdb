@@ -1,23 +1,23 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.nio.ByteBuffer;
-import java.util.Random;
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import org.assertj.core.api.Assertions;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.nio.ByteBuffer;
+import java.util.Random;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/1/13
  */
-@Test
 public class SBTreeValuePageTest {
+  @Test
   public void fillPageDataTest() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer bufferOne = bufferPool.acquireDirect(true);
@@ -59,8 +59,7 @@ public class SBTreeValuePageTest {
     offset = valuePageTwo.readBinaryContent(readData, offset);
     Assert.assertEquals(offset, data.length);
 
-    Assert.assertEquals(data, readData);
-
+    Assertions.assertThat(data).isEqualTo(readData);
     cacheEntryOne.releaseExclusiveLock();
     cacheEntryTwo.releaseExclusiveLock();
 
@@ -68,6 +67,7 @@ public class SBTreeValuePageTest {
     cachePointerTwo.decrementReferrer();
   }
 
+  @Test
   public void testFreeListPointer() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer buffer = bufferPool.acquireDirect(true);

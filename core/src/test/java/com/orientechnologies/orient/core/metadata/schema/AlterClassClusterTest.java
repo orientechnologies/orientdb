@@ -1,27 +1,26 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import static org.testng.AssertJUnit.assertEquals;
-
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class AlterClassClusterTest {
 
   private ODatabaseDocument db;
 
-  @BeforeMethod
+  @Before
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + AlterClassClusterTest.class.getSimpleName());
     db.create();
   }
 
-  @AfterMethod
+  @After
   public void after() {
     db.drop();
   }
@@ -38,24 +37,26 @@ public class AlterClassClusterTest {
 
   }
 
-  @Test(expectedExceptions = ODatabaseException.class)
+  @Test(expected = ODatabaseException.class)
   public void testRemoveLastClassCluster() {
     OClass clazz = db.getMetadata().getSchema().createClass("Test", 1, null);
     clazz.removeClusterId(db.getClusterIdByName("Test"));
   }
 
-  @Test(expectedExceptions = OSchemaException.class)
+  @Test(expected = OSchemaException.class)
   public void testAddClusterToAbstracClass() {
     OClass clazz = db.getMetadata().getSchema().createAbstractClass("Test");
     clazz.addCluster("TestOneMore");
   }
 
-  @Test(expectedExceptions = OSchemaException.class)
+  @Test(expected = OSchemaException.class)
   public void testAddClusterIdToAbstracClass() {
     OClass clazz = db.getMetadata().getSchema().createAbstractClass("Test");
     int id = db.addCluster("TestOneMore");
     clazz.addClusterId(id);
   }
+
+
 
 }
 

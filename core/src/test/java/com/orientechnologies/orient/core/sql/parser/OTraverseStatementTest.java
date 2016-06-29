@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.testng.Assert.*;
+import static org.junit.Assert.fail;
 
-@Test
 public class OTraverseStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
@@ -43,14 +42,12 @@ public class OTraverseStatementTest {
     return null;
   }
 
-
-
   // issue #4031
+  @Test
   public void testDepthFirst() {
     checkRightSyntax("traverse out() from #9:0 while $depth <= 2 strategy DEPTH_FIRST");
     checkRightSyntax("traverse out() from #9:0 while $depth <= 2 strategy depth_first");
   }
-
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

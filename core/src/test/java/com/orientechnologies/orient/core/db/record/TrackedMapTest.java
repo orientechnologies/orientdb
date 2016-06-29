@@ -1,27 +1,21 @@
 package com.orientechnologies.orient.core.db.record;
 
-import java.io.IOException;
-import java.io.NotSerializableException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.types.ORef;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
+import org.junit.Assert;
+import org.junit.Test;
 
-@Test
+import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.*;
+
 public class TrackedMapTest {
+  @Test
   public void testPutOne() {
     final ODocument doc = new ODocument();
 
@@ -48,6 +42,7 @@ public class TrackedMapTest {
     Assert.assertTrue(doc.isDirty());
   }
 
+  @Test
   public void testPutTwo() {
     final ODocument doc = new ODocument();
 
@@ -79,6 +74,7 @@ public class TrackedMapTest {
     Assert.assertTrue(doc.isDirty());
   }
 
+  @Test
   public void testPutThree() {
     final ODocument doc = new ODocument();
 
@@ -105,6 +101,7 @@ public class TrackedMapTest {
     Assert.assertFalse(doc.isDirty());
   }
 
+  @Test
   public void testPutFour() {
     final ODocument doc = new ODocument();
 
@@ -131,6 +128,7 @@ public class TrackedMapTest {
     Assert.assertFalse(doc.isDirty());
   }
 
+  @Test
   public void testPutFive() {
     final ODocument doc = new ODocument();
 
@@ -154,6 +152,7 @@ public class TrackedMapTest {
     Assert.assertFalse(doc.isDirty());
   }
 
+  @Test
   public void testRemoveOne() {
     final ODocument doc = new ODocument();
 
@@ -183,6 +182,7 @@ public class TrackedMapTest {
     Assert.assertTrue(doc.isDirty());
   }
 
+  @Test
   public void testRemoveTwo() {
     final ODocument doc = new ODocument();
 
@@ -207,6 +207,7 @@ public class TrackedMapTest {
     Assert.assertFalse(doc.isDirty());
   }
 
+  @Test
   public void testRemoveThree() {
     final ODocument doc = new ODocument();
 
@@ -232,6 +233,7 @@ public class TrackedMapTest {
     Assert.assertFalse(doc.isDirty());
   }
 
+  @Test
   public void testClearOne() {
     final ODocument doc = new ODocument();
 
@@ -267,6 +269,7 @@ public class TrackedMapTest {
     Assert.assertTrue(doc.isDirty());
   }
 
+  @Test
   public void testClearTwo() {
     final ODocument doc = new ODocument();
 
@@ -294,6 +297,7 @@ public class TrackedMapTest {
     Assert.assertFalse(doc.isDirty());
   }
 
+  @Test
   public void testClearThree() {
     final ODocument doc = new ODocument();
 
@@ -311,6 +315,7 @@ public class TrackedMapTest {
     Assert.assertTrue(doc.isDirty());
   }
 
+  @Test
   public void testReturnOriginalStateOne() {
     final ODocument doc = new ODocument();
 
@@ -347,6 +352,7 @@ public class TrackedMapTest {
 
   }
 
+  @Test
   public void testReturnOriginalStateTwo() {
     final ODocument doc = new ODocument();
 
@@ -411,7 +417,7 @@ public class TrackedMapTest {
     @SuppressWarnings("unchecked")
     final Map<Object, String> afterSerialization = (Map<Object, String>) input.readObject();
 
-    Assert.assertEquals(afterSerialization.size(), beforeSerialization.size(), "Map size");
+    Assert.assertEquals(afterSerialization.size(), beforeSerialization.size());
     for (int i = 0; i < afterSerialization.size(); i++) {
       Assert.assertEquals(afterSerialization.get(i), beforeSerialization.get(i));
     }

@@ -9,35 +9,100 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Test
 public class OSBTreeRidBagConcurrencySingleRidBag {
-  public static final String                URL             = "plocal:target/testdb/OSBTreeRidBagConcurrencySingleRidBag";
-  private final AtomicInteger               positionCounter = new AtomicInteger();
-  private final ConcurrentSkipListSet<ORID> ridTree         = new ConcurrentSkipListSet<ORID>();
-  private final CountDownLatch              latch           = new CountDownLatch(1);
-  private ORID                              docContainerRid;
-  private ExecutorService                   threadExecutor  = Executors.newCachedThreadPool();
-  private volatile boolean                  cont            = true;
+  public static final String                      URL             = "plocal:target/testdb/OSBTreeRidBagConcurrencySingleRidBag";
+  private final       AtomicInteger               positionCounter = new AtomicInteger();
+  private final       ConcurrentSkipListSet<ORID> ridTree         = new ConcurrentSkipListSet<ORID>();
+  private final       CountDownLatch              latch           = new CountDownLatch(1);
+  private ORID docContainerRid;
+  private          ExecutorService threadExecutor = Executors.newCachedThreadPool();
+  private volatile boolean         cont           = true;
 
-  private int                               topThreshold;
-  private int                               bottomThreshold;
+  private int topThreshold;
+  private int bottomThreshold;
+
+  @Before
+  public void beforeMethod() {
+    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
+
+  }
+
+  @After
+  public void afterMethod() {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
+  }
+
+  @Test
+  public void testConcurrency() throws Exception {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
+    if (db.exists()) {
+      db.open("admin", "admin");
+      db.drop();
+    }
+
+    db.create();
+    db.declareIntent(new OIntentMassiveInsert());
+
+    ODocument document = new ODocument();
+    ORidBag ridBag = new ORidBag();
+    ridBag.setAutoConvertToRecord(false);
+
+    document.field("ridBag", ridBag);
+    for (int i = 0; i < 100; i++) {
+      final ORID ridToAdd = new ORecordId(0, positionCounter.incrementAndGet());
+      ridBag.add(ridToAdd);
+      ridTree.add(ridToAdd);
+    }
+    document.save();
+
+    docContainerRid = document.getIdentity();
+
+    List<Future<Void>> futures = new ArrayList<Future<Void>>();
+
+    for (int i = 0; i < 5; i++)
+      futures.add(threadExecutor.submit(new RidAdder(i)));
+
+    for (int i = 0; i < 5; i++)
+      futures.add(threadExecutor.submit(new RidDeleter(i)));
+
+    latch.countDown();
+
+    Thread.sleep(30 * 60000);
+    cont = false;
+
+    for (Future<Void> future : futures)
+      future.get();
+
+    document = db.load(document.getIdentity());
+    document.setLazyLoad(false);
+
+    ridBag = document.field("ridBag");
+
+    for (OIdentifiable identifiable : ridBag)
+      Assert.assertTrue(ridTree.remove(identifiable.getIdentity()));
+
+    Assert.assertTrue(ridTree.isEmpty());
+
+    System.out.println("Result size is " + ridBag.size());
+    db.close();
+  }
 
   public class RidAdder implements Callable<Void> {
     private final int id;
@@ -151,75 +216,5 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
       System.out.println(RidDeleter.class.getSimpleName() + ":" + id + "-" + deletedRecords + " were deleted.");
       return null;
     }
-  }
-
-  @BeforeMethod
-  public void beforeMethod() {
-    topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-    bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
-
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
-
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
-  }
-
-  public void testConcurrency() throws Exception {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(URL);
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
-
-    db.create();
-    db.declareIntent(new OIntentMassiveInsert());
-
-    ODocument document = new ODocument();
-    ORidBag ridBag = new ORidBag();
-    ridBag.setAutoConvertToRecord(false);
-
-    document.field("ridBag", ridBag);
-    for (int i = 0; i < 100; i++) {
-      final ORID ridToAdd = new ORecordId(0, positionCounter.incrementAndGet());
-      ridBag.add(ridToAdd);
-      ridTree.add(ridToAdd);
-    }
-    document.save();
-
-    docContainerRid = document.getIdentity();
-
-    List<Future<Void>> futures = new ArrayList<Future<Void>>();
-
-    for (int i = 0; i < 5; i++)
-      futures.add(threadExecutor.submit(new RidAdder(i)));
-
-    for (int i = 0; i < 5; i++)
-      futures.add(threadExecutor.submit(new RidDeleter(i)));
-
-    latch.countDown();
-
-    Thread.sleep(30 * 60000);
-    cont = false;
-
-    for (Future<Void> future : futures)
-      future.get();
-
-    document = db.load(document.getIdentity());
-    document.setLazyLoad(false);
-
-    ridBag = document.field("ridBag");
-
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(ridTree.remove(identifiable.getIdentity()));
-
-    Assert.assertTrue(ridTree.isEmpty());
-
-    System.out.println("Result size is " + ridBag.size());
-    db.close();
   }
 }

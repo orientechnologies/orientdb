@@ -1,30 +1,25 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Random;
-import java.util.TreeSet;
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.nio.ByteBuffer;
+import java.util.*;
 
 /**
  * @author Andrey Lomakin
  * @since 09.08.13
  */
-@Test
 public class SBTreeLeafBucketTest {
+  @Test
   public void testInitialization() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer buffer = bufferPool.acquireDirect(true);
@@ -50,6 +45,7 @@ public class SBTreeLeafBucketTest {
     cachePointer.decrementReferrer();
   }
 
+  @Test
   public void testSearch() throws Exception {
     long seed = System.currentTimeMillis();
     System.out.println("testSearch seed : " + seed);
@@ -94,6 +90,7 @@ public class SBTreeLeafBucketTest {
     cachePointer.decrementReferrer();
   }
 
+  @Test
   public void testUpdateValue() throws Exception {
     long seed = System.currentTimeMillis();
     System.out.println("testUpdateValue seed : " + seed);
@@ -145,6 +142,7 @@ public class SBTreeLeafBucketTest {
     cachePointer.decrementReferrer();
   }
 
+  @Test
   public void testShrink() throws Exception {
     long seed = System.currentTimeMillis();
     System.out.println("testShrink seed : " + seed);
@@ -225,6 +223,7 @@ public class SBTreeLeafBucketTest {
     cachePointer.decrementReferrer();
   }
 
+  @Test
   public void testRemove() throws Exception {
     long seed = System.currentTimeMillis();
     System.out.println("testRemove seed : " + seed);
@@ -309,6 +308,7 @@ public class SBTreeLeafBucketTest {
     cachePointer.decrementReferrer();
   }
 
+  @Test
   public void testSetLeftSibling() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer buffer = bufferPool.acquireDirect(true);
@@ -328,6 +328,7 @@ public class SBTreeLeafBucketTest {
     cachePointer.decrementReferrer();
   }
 
+  @Test
   public void testSetRightSibling() throws Exception {
     OByteBufferPool bufferPool = OByteBufferPool.instance();
     ByteBuffer buffer = bufferPool.acquireDirect(true);

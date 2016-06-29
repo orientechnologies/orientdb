@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
-@Test
 public class OUpdateEdgeStatementTest {
 
   protected SimpleNode checkRightSyntax(String query) {
@@ -37,6 +36,7 @@ public class OUpdateEdgeStatementTest {
     return null;
   }
 
+  @Test
   public void testSimpleInsert() {
     checkRightSyntax("update edge Foo set a = b");
     checkRightSyntax("update edge Foo set a = 'b'");
@@ -54,6 +54,7 @@ public class OUpdateEdgeStatementTest {
 
   }
 
+  @Test
   public void testCollections() {
     checkRightSyntax("update edge Foo add a = b");
     checkWrongSyntax("update edge Foo add 'a' = b");
@@ -64,43 +65,49 @@ public class OUpdateEdgeStatementTest {
     checkRightSyntax("update edge Foo put a = 'b', 'c'");
   }
 
+  @Test
   public void testJson() {
     checkRightSyntax("update edge Foo merge {'a':'b', 'c':{'d':'e'}} where name = 'foo'");
     checkRightSyntax("update edge Foo content {'a':'b', 'c':{'d':'e', 'f': ['a', 'b', 4]}} where name = 'foo'");
   }
 
+  @Test
   public void testIncrementOld() {
     checkRightSyntax("update edge Foo increment a = 2");
   }
 
+  @Test
   public void testIncrement() {
     checkRightSyntax("update edge Foo set a += 2");
     printTree("update edge Foo set a += 2");
   }
 
+  @Test
   public void testDecrement() {
     checkRightSyntax("update edge Foo set a -= 2");
   }
 
+  @Test
   public void testQuotedJson() {
     checkRightSyntax("update edge E SET key = \"test\", value = {\"f12\":\"test\\\\\"} UPSERT WHERE key = \"test\"");
   }
 
+  @Test
   public void testTargetQuery() {
     //issue #4415
-    checkRightSyntax("update edge (select from (traverse References from ( select from Node WHERE Email = 'julia@local'  ) ) WHERE @class = 'Node' and $depth <= 1 and Active = true ) set Points = 0 RETURN BEFORE $current.Points");
+    checkRightSyntax(
+        "update edge (select from (traverse References from ( select from Node WHERE Email = 'julia@local'  ) ) WHERE @class = 'Node' and $depth <= 1 and Active = true ) set Points = 0 RETURN BEFORE $current.Points");
   }
 
+  @Test
   public void testTargetMultipleRids() {
     checkRightSyntax("update EDGE [#9:0, #9:1] set foo = 'bar'");
   }
-
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
       SimpleNode result = osql.parse();
-
 
     } catch (ParseException e) {
       e.printStackTrace();

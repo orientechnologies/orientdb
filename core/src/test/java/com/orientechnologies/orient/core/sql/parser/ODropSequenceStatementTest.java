@@ -1,8 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-@Test
 public class ODropSequenceStatementTest extends OParserTestAbstract {
 
   @Test
@@ -14,6 +13,5 @@ public class ODropSequenceStatementTest extends OParserTestAbstract {
 
     checkWrongSyntax("drop SEQUENCE Foo TYPE cached");
   }
-
 
 }

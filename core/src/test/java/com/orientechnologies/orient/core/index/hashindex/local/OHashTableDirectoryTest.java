@@ -3,8 +3,8 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.testng.Assert;
-import org.testng.annotations.*;
+import org.assertj.core.api.Assertions;
+import org.junit.*;
 
 import java.io.IOException;
 
@@ -12,14 +12,13 @@ import java.io.IOException;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 5/15/14
  */
-@Test
 public class OHashTableDirectoryTest {
-  private ODatabaseDocumentTx databaseDocumentTx;
+  private static ODatabaseDocumentTx databaseDocumentTx;
 
-  private OHashTableDirectory directory;
+  private static OHashTableDirectory directory;
 
   @BeforeClass
-  public void beforeClass() throws IOException {
+  public static void beforeClass() throws IOException {
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = ".";
@@ -35,27 +34,28 @@ public class OHashTableDirectoryTest {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    directory = new OHashTableDirectory(".tsc", "hashTableDirectoryTest","hashTableDirectoryTest", false,
+    directory = new OHashTableDirectory(".tsc", "hashTableDirectoryTest", "hashTableDirectoryTest", false,
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     directory.create();
   }
 
   @AfterClass
-  public void afterClass() throws Exception {
+  public static void afterClass() throws Exception {
     directory.delete();
     databaseDocumentTx.drop();
   }
 
-  @BeforeMethod
+  @Before
   public void beforeMethod() {
   }
 
-  @AfterMethod
+  @After
   public void afterMethod() throws IOException {
     directory.clear();
   }
 
+  @Test
   public void addFirstLevel() throws IOException {
     long[] level = new long[OLocalHashTable.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
@@ -68,12 +68,13 @@ public class OHashTableDirectoryTest {
     Assert.assertEquals(directory.getMaxRightChildDepth(0), 3);
     Assert.assertEquals(directory.getNodeLocalDepth(0), 4);
 
-    Assert.assertEquals(directory.getNode(0), level);
+    Assertions.assertThat(directory.getNode(0)).isEqualTo(level);
 
     for (int i = 0; i < level.length; i++)
       Assert.assertEquals(directory.getNodePointer(0, i), i);
   }
 
+  @Test
   public void changeFirstLevel() throws IOException {
     long[] level = new long[OLocalHashTable.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
@@ -96,6 +97,7 @@ public class OHashTableDirectoryTest {
     Assert.assertEquals(directory.getNodeLocalDepth(0), 102);
   }
 
+  @Test
   public void addThreeRemoveSecondAddNewAndChange() throws IOException {
     long[] level = new long[OLocalHashTable.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
@@ -132,6 +134,7 @@ public class OHashTableDirectoryTest {
     Assert.assertEquals(directory.getNodeLocalDepth(1), 7);
   }
 
+  @Test
   public void addRemoveChangeMix() throws IOException {
     long[] level = new long[OLocalHashTable.MAX_LEVEL_SIZE];
     for (int i = 0; i < level.length; i++)
@@ -207,6 +210,7 @@ public class OHashTableDirectoryTest {
     Assert.assertEquals(directory.getNodeLocalDepth(5), 13);
   }
 
+  @Test
   public void addThreePages() throws IOException {
     int firsIndex = -1;
     int secondIndex = -1;
@@ -304,6 +308,7 @@ public class OHashTableDirectoryTest {
       Assert.assertEquals(directory.getNodePointer(lastIndex, i), i + 4000);
   }
 
+  @Test
   public void changeLastNodeSecondPage() throws IOException {
     long[] level = new long[OLocalHashTable.MAX_LEVEL_SIZE];
 

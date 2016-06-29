@@ -1,7 +1,6 @@
 package com.orientechnologies.common.console;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import org.junit.Assert; import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;

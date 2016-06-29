@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -32,26 +31,24 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static org.testng.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.*;
 
-@Test
 public class OCommandExecutorSQLSelectTest {
+  static ODatabaseDocumentTx db;
   private static String DB_STORAGE             = "memory";
   private static String DB_NAME                = "OCommandExecutorSQLSelectTest";
-
-  private int           ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
-
-  ODatabaseDocumentTx   db;
+  private static int    ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
 
   @BeforeClass
-  public void beforeClass() throws Exception {
+  public static void beforeClass() throws Exception {
     db = new ODatabaseDocumentTx(DB_STORAGE + ":" + DB_NAME);
     db.create();
     getProfilerInstance().startRecording();
@@ -181,7 +178,7 @@ public class OCommandExecutorSQLSelectTest {
     initCollateOnLinked(db);
   }
 
-  private void initCollateOnLinked(ODatabaseDocumentTx db) {
+  private static void initCollateOnLinked(ODatabaseDocumentTx db) {
     db.command(new OCommandSQL("CREATE CLASS CollateOnLinked")).execute();
     db.command(new OCommandSQL("CREATE CLASS CollateOnLinked2")).execute();
     db.command(new OCommandSQL("CREATE PROPERTY CollateOnLinked.name String")).execute();
@@ -197,7 +194,7 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
-  private void initComplexFilterInSquareBrackets(ODatabaseDocumentTx db) {
+  private static void initComplexFilterInSquareBrackets(ODatabaseDocumentTx db) {
     db.command(new OCommandSQL("CREATE CLASS ComplexFilterInSquareBrackets1")).execute();
     db.command(new OCommandSQL("CREATE CLASS ComplexFilterInSquareBrackets2")).execute();
     db.command(new OCommandSQL("INSERT INTO ComplexFilterInSquareBrackets1 SET name = 'n1', value = 1")).execute();
@@ -212,7 +209,7 @@ public class OCommandExecutorSQLSelectTest {
         .execute();
   }
 
-  private void initFilterAndOrderByTest(ODatabaseDocumentTx db) {
+  private static void initFilterAndOrderByTest(ODatabaseDocumentTx db) {
     db.command(new OCommandSQL("CREATE CLASS FilterAndOrderByTest")).execute();
     db.command(new OCommandSQL("CREATE PROPERTY FilterAndOrderByTest.dc DATETIME")).execute();
     db.command(new OCommandSQL("CREATE PROPERTY FilterAndOrderByTest.active BOOLEAN")).execute();
@@ -227,7 +224,7 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
-  private void initMaxLongNumber(ODatabaseDocumentTx db) {
+  private static void initMaxLongNumber(ODatabaseDocumentTx db) {
     db.command(new OCommandSQL("CREATE class MaxLongNumberTest")).execute();
     db.command(new OCommandSQL("insert into MaxLongNumberTest set last = 1")).execute();
     db.command(new OCommandSQL("insert into MaxLongNumberTest set last = null")).execute();
@@ -235,7 +232,7 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into MaxLongNumberTest set foo = 'bar'")).execute();
   }
 
-  private void initLinkListSequence(ODatabaseDocumentTx db) {
+  private static void initLinkListSequence(ODatabaseDocumentTx db) {
     db.command(new OCommandSQL("CREATE class LinkListSequence")).execute();
 
     db.command(new OCommandSQL("insert into LinkListSequence set name = '1.1.1'")).execute();
@@ -258,13 +255,13 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
-  private void initMatchesWithRegex(ODatabaseInternal<ORecord> db) {
+  private static void initMatchesWithRegex(ODatabaseInternal<ORecord> db) {
     db.command(new OCommandSQL("CREATE class matchesstuff")).execute();
 
     db.command(new OCommandSQL("insert into matchesstuff (name, foo) values ('admin[name]', 1)")).execute();
   }
 
-  private void initDistinctLimit(ODatabaseInternal<ORecord> db) {
+  private static void initDistinctLimit(ODatabaseInternal<ORecord> db) {
     db.command(new OCommandSQL("CREATE class DistinctLimit")).execute();
 
     db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('one', 1)")).execute();
@@ -273,13 +270,13 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into DistinctLimit (name, foo) values ('two', 2)")).execute();
   }
 
-  private void initDatesSet(ODatabaseDocumentTx db) {
+  private static void initDatesSet(ODatabaseDocumentTx db) {
     db.command(new OCommandSQL("create class OCommandExecutorSQLSelectTest_datesSet")).execute();
     db.command(new OCommandSQL("create property OCommandExecutorSQLSelectTest_datesSet.foo embeddedlist date")).execute();
     db.command(new OCommandSQL("insert into OCommandExecutorSQLSelectTest_datesSet set foo = ['2015-10-21']")).execute();
   }
 
-  private void initMassiveOrderSkipLimit(ODatabaseDocumentTx db) {
+  private static void initMassiveOrderSkipLimit(ODatabaseDocumentTx db) {
     db.getMetadata().getSchema().createClass("MassiveOrderSkipLimit", 1, null);
     db.declareIntent(new OIntentMassiveInsert());
     String fieldValue = "laskdf lkajsd flaksjdf laksjd flakjsd flkasjd flkajsd flkajsd flkajsd flkajsd flkajsd flkjas;lkj a;ldskjf laksdj asdklasdjf lskdaj fladsd";
@@ -298,7 +295,7 @@ public class OCommandExecutorSQLSelectTest {
     db.declareIntent(null);
   }
 
-  private void initExpandSkipLimit(ODatabaseDocumentTx db) {
+  private static void initExpandSkipLimit(ODatabaseDocumentTx db) {
     db.command(new OCommandSQL("create class ExpandSkipLimit clusters 1")).execute();
 
     for (int i = 0; i < 5; i++) {
@@ -313,8 +310,13 @@ public class OCommandExecutorSQLSelectTest {
     }
   }
 
+  private static OProfiler getProfilerInstance() throws Exception {
+    return Orient.instance().getProfiler();
+
+  }
+
   @AfterClass
-  public void afterClass() throws Exception {
+  public static void afterClass() throws Exception {
     if (db.isClosed()) {
       db.open("admin", "admin");
     }
@@ -432,29 +434,24 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testOperatorPriority2() {
-    List<ODocument> qResult = db
-        .command(new OCommandSQL(
-            "select * from bar where name ='a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
+    List<ODocument> qResult = db.command(new OCommandSQL(
+        "select * from bar where name ='a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
         .execute();
 
-    List<ODocument> qResult2 = db
-        .command(new OCommandSQL(
-            "select * from bar where (name ='a' and foo = 1) or name='b' or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
+    List<ODocument> qResult2 = db.command(new OCommandSQL(
+        "select * from bar where (name ='a' and foo = 1) or name='b' or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
-    List<ODocument> qResult3 = db
-        .command(new OCommandSQL(
-            "select * from bar where (name ='a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other = 4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)"))
+    List<ODocument> qResult3 = db.command(new OCommandSQL(
+        "select * from bar where (name ='a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other = 4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
-    List<ODocument> qResult4 = db
-        .command(new OCommandSQL(
-            "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4)) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
+    List<ODocument> qResult4 = db.command(new OCommandSQL(
+        "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4)) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
-    List<ODocument> qResult5 = db
-        .command(new OCommandSQL(
-            "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)"))
+    List<ODocument> qResult5 = db.command(new OCommandSQL(
+        "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)"))
         .execute();
 
     assertEquals(qResult.size(), qResult2.size());
@@ -466,29 +463,24 @@ public class OCommandExecutorSQLSelectTest {
 
   @Test
   public void testOperatorPriority3() {
-    List<ODocument> qResult = db
-        .command(new OCommandSQL(
-            "select * from bar where name <> 'a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
+    List<ODocument> qResult = db.command(new OCommandSQL(
+        "select * from bar where name <> 'a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
         .execute();
 
-    List<ODocument> qResult2 = db
-        .command(new OCommandSQL(
-            "select * from bar where (name <> 'a' and foo = 1) or name='b' or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
+    List<ODocument> qResult2 = db.command(new OCommandSQL(
+        "select * from bar where (name <> 'a' and foo = 1) or name='b' or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
-    List<ODocument> qResult3 = db
-        .command(new OCommandSQL(
-            "select * from bar where ( name <> 'a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other <>  4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)"))
+    List<ODocument> qResult3 = db.command(new OCommandSQL(
+        "select * from bar where ( name <> 'a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other <>  4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
-    List<ODocument> qResult4 = db
-        .command(new OCommandSQL(
-            "select * from bar where (name <> 'a' and foo = 1) or ( (name='b') or (name='c' and foo = 3 and other <>  4)) or  (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
+    List<ODocument> qResult4 = db.command(new OCommandSQL(
+        "select * from bar where (name <> 'a' and foo = 1) or ( (name='b') or (name='c' and foo = 3 and other <>  4)) or  (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
-    List<ODocument> qResult5 = db
-        .command(new OCommandSQL(
-            "select * from bar where (name <> 'a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)"))
+    List<ODocument> qResult5 = db.command(new OCommandSQL(
+        "select * from bar where (name <> 'a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)"))
         .execute();
 
     assertEquals(qResult.size(), qResult2.size());
@@ -559,9 +551,8 @@ public class OCommandExecutorSQLSelectTest {
   public void testParamsInLetSubquery() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("name", "foo");
-    List<ODocument> qResult = db
-        .command(new OCommandSQL(
-            "select from TestParams let $foo = (select name from TestParams where surname = :name) where surname in $foo.name "))
+    List<ODocument> qResult = db.command(new OCommandSQL(
+        "select from TestParams let $foo = (select name from TestParams where surname = :name) where surname in $foo.name "))
         .execute(params);
     assertEquals(qResult.size(), 1);
   }
@@ -771,6 +762,7 @@ public class OCommandExecutorSQLSelectTest {
     }
   }
 
+  @Test
   public void testMultipleParamsWithSameName() {
     Map<String, Object> params = new HashMap<String, Object>();
     params.put("param1", "foo");
@@ -857,11 +849,19 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> results = db.query(sql);
     assertEquals(1, results.size());
     ODocument doc = results.get(0);
-    assertEquals(5, doc.<Object>field("collection_size"));
-    assertEquals(130, doc.<Object>field("collection_sum"));
-    assertEquals(26, doc.<Object>field("collection_avg"));
-    assertEquals(0, doc.<Object>field("collection_min"));
-    assertEquals(50, doc.<Object>field("collection_max"));
+
+    assertThat(doc.<Integer>field("collection_size")).isEqualTo(5);
+    assertThat(doc.<Integer>field("collection_sum")).isEqualTo(130);
+    assertThat(doc.<Integer>field("collection_avg")).isEqualTo(26);
+    assertThat(doc.<Integer>field("collection_min")).isEqualTo(0);
+    assertThat(doc.<Integer>field("collection_max")).isEqualTo(50);
+
+    //
+    //    assertEquals(5, doc.field("collection_size"));
+    //    assertEquals(130, doc.field("collection_sum"));
+    //    assertEquals(26, doc.field("collection_avg"));
+    //    assertEquals(0, doc.field("collection_min"));
+    //    assertEquals(50, doc.field("collection_max"));
   }
 
   @Test
@@ -885,7 +885,7 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
     ODocument doc = results.get(0);
-    assertEquals(doc.<Object>field("integer"), 1);
+    assertThat(doc.<Integer>field("integer")).isEqualTo(1);
     assertEquals(doc.field("string"), "Test");
     assertNull(doc.field("nothing"));
     boolean nullFound = false;
@@ -907,7 +907,9 @@ public class OCommandExecutorSQLSelectTest {
     List<OIdentifiable> results = db.query(sql);
     assertEquals(results.size(), 1);
     ODocument doc = results.get(0).getRecord();
-    assertEquals(doc.<Object>field("nnum"), 1);
+    //    assertEquals(doc.field("nnum"), 1);
+    assertThat(doc.<Integer>field("nnum")).isEqualTo(1);
+
   }
 
   @Test
@@ -916,7 +918,9 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
     ODocument doc = results.get(0);
-    assertEquals(doc.<Object>field("r"), 10);
+    //    assertEquals(doc.field("r"), 10);
+    assertThat(doc.<Integer>field("r")).isEqualTo(10);
+
   }
 
   @Test
@@ -946,88 +950,14 @@ public class OCommandExecutorSQLSelectTest {
   @Test
   public void testMassiveOrderAscSkipLimit() {
     int skip = 1000;
-
-    OSQLSynchQuery sql0 = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc limit "+skip);
-    List<ODocument> results0 = db.query(sql0);
-    assertEquals(results0.size(), 1000);
-    for (int i = 0; i < results0.size(); i++) {
-      ODocument doc = results0.get(i);
-      assertEquals(doc.<Object>field("nnum"), i);
-    }
-
     OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 5);
     for (int i = 0; i < results.size(); i++) {
       ODocument doc = results.get(i);
-      assertEquals(doc.<Object>field("nnum"), skip + i);
-      assertFalse(results0.contains(doc));
-    }
-  }
+      //      assertEquals(doc.field("nnum"), skip + i);
+      assertThat(doc.<Integer>field("nnum")).isEqualTo(skip + i);
 
-  @Test
-  public void testMassiveOrderAscSkipLimitBatchSize() {
-    int skip = OGlobalConfiguration.QUERY_SCAN_BATCH_SIZE.getValueAsInteger();
-
-    OSQLSynchQuery sql0 = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc limit "+skip);
-    List<ODocument> results0 = db.query(sql0);
-    assertEquals(results0.size(), skip);
-    for (int i = 0; i < results0.size(); i++) {
-      ODocument doc = results0.get(i);
-      assertEquals(doc.<Object>field("nnum"), i);
-    }
-
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 5);
-    for (int i = 0; i < results.size(); i++) {
-      ODocument doc = results.get(i);
-      assertEquals(doc.<Object>field("nnum"), skip + i);
-      assertFalse(results0.contains(doc));
-    }
-  }
-
-  @Test
-  public void testMassiveOrderAscSkipLimitBatchSizePlusOne() {
-    int skip = OGlobalConfiguration.QUERY_SCAN_BATCH_SIZE.getValueAsInteger()+1;
-
-    OSQLSynchQuery sql0 = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc limit "+skip);
-    List<ODocument> results0 = db.query(sql0);
-    assertEquals(results0.size(), skip);
-    for (int i = 0; i < results0.size(); i++) {
-      ODocument doc = results0.get(i);
-      assertEquals(doc.<Object>field("nnum"), i);
-    }
-
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 5);
-    for (int i = 0; i < results.size(); i++) {
-      ODocument doc = results.get(i);
-      assertEquals(doc.<Object>field("nnum"), skip + i);
-      assertFalse(results0.contains(doc));
-    }
-  }
-
-  @Test
-  public void testMassiveOrderAscSkipLimitBatchSizeMinusOne() {
-    int skip = OGlobalConfiguration.QUERY_SCAN_BATCH_SIZE.getValueAsInteger()-1;
-
-    OSQLSynchQuery sql0 = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc limit "+skip);
-    List<ODocument> results0 = db.query(sql0);
-    assertEquals(results0.size(), skip);
-    for (int i = 0; i < results0.size(); i++) {
-      ODocument doc = results0.get(i);
-      assertEquals(doc.<Object>field("nnum"), i);
-    }
-
-    OSQLSynchQuery sql = new OSQLSynchQuery("SELECT from MassiveOrderSkipLimit order by nnum asc skip " + skip + " limit 5");
-    List<ODocument> results = db.query(sql);
-    assertEquals(results.size(), 5);
-    for (int i = 0; i < results.size(); i++) {
-      ODocument doc = results.get(i);
-      assertEquals(doc.<Object>field("nnum"), skip + i);
-      assertFalse(results0.contains(doc));
     }
   }
 
@@ -1040,15 +970,18 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 5);
     for (int i = 0; i < results.size(); i++) {
       ODocument doc = results.get(i);
-      assertEquals(doc.<Object>field("nnum"), ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
+      //      assertEquals(doc.field("nnum"), ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
+      assertThat(doc.<Integer>field("nnum")).isEqualTo(ORDER_SKIP_LIMIT_ITEMS - 1 - skip - i);
+
     }
   }
 
   @Test
   public void testIntersectExpandLet() {
     // issue #5121
-    OSQLSynchQuery sql = new OSQLSynchQuery("select expand(intersect($q1, $q2)) "
-        + "let $q1 = (select from OUser where name ='admin')," + "$q2 = (select from OUser where name ='admin')");
+    OSQLSynchQuery sql = new OSQLSynchQuery(
+        "select expand(intersect($q1, $q2)) " + "let $q1 = (select from OUser where name ='admin'),"
+            + "$q2 = (select from OUser where name ='admin')");
 
     List<ODocument> results = db.query(sql);
     assertEquals(results.size(), 1);
@@ -1264,7 +1197,8 @@ public class OCommandExecutorSQLSelectTest {
     sql = new OSQLSynchQuery("SELECT expand(collection[value < 0]) FROM ComplexFilterInSquareBrackets2");
     results = db.query(sql);
     assertEquals(results.size(), 1);
-    assertEquals(results.iterator().next().<Object>field("value"), -1);
+    //    assertEquals(results.iterator().next().field("value"), -1);
+    assertThat(results.iterator().next().<Integer>field("value")).isEqualTo(-1);
 
     sql = new OSQLSynchQuery("SELECT expand(collection[2]) FROM ComplexFilterInSquareBrackets2");
     results = db.query(sql);
@@ -1280,26 +1214,37 @@ public class OCommandExecutorSQLSelectTest {
   public void testCollateOnCollections() {
     //issue #4851
     db.command(new OCommandSQL("create class OCommandExecutorSqlSelectTest_collateOnCollections")).execute();
-    db.command(new OCommandSQL("create property OCommandExecutorSqlSelectTest_collateOnCollections.categories EMBEDDEDLIST string")).execute();
-    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b']")).execute();
-    db.command(new OCommandSQL("alter property OCommandExecutorSqlSelectTest_collateOnCollections.categories COLLATE ci")).execute();
-    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['Math','English']")).execute();
-    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b','c']")).execute();
-    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from OCommandExecutorSqlSelectTest_collateOnCollections where 'Math' in categories"));
+    db.command(new OCommandSQL("create property OCommandExecutorSqlSelectTest_collateOnCollections.categories EMBEDDEDLIST string"))
+        .execute();
+    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b']"))
+        .execute();
+    db.command(new OCommandSQL("alter property OCommandExecutorSqlSelectTest_collateOnCollections.categories COLLATE ci"))
+        .execute();
+    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['Math','English']"))
+        .execute();
+    db.command(new OCommandSQL("insert into OCommandExecutorSqlSelectTest_collateOnCollections set categories=['a','b','c']"))
+        .execute();
+    List<ODocument> results = db.query(
+        new OSQLSynchQuery<ODocument>("select from OCommandExecutorSqlSelectTest_collateOnCollections where 'Math' in categories"));
     assertEquals(results.size(), 1);
-    results =db.query(new OSQLSynchQuery<ODocument>("select from OCommandExecutorSqlSelectTest_collateOnCollections where 'math' in categories"));
+    results = db.query(
+        new OSQLSynchQuery<ODocument>("select from OCommandExecutorSqlSelectTest_collateOnCollections where 'math' in categories"));
     assertEquals(results.size(), 1);
   }
 
+  @Test
   public void testCountUniqueIndex() {
     //issue http://www.prjhub.com/#/issues/6419
     db.command(new OCommandSQL("create class OCommandExecutorSqlSelectTest_testCountUniqueIndex")).execute();
     db.command(new OCommandSQL("create property OCommandExecutorSqlSelectTest_testCountUniqueIndex.AAA String")).execute();
     db.command(new OCommandSQL("create index OCommandExecutorSqlSelectTest_testCountUniqueIndex.AAA unique")).execute();
 
-    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select count(*) from OCommandExecutorSqlSelectTest_testCountUniqueIndex where AAA='missing'"));
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>(
+        "select count(*) from OCommandExecutorSqlSelectTest_testCountUniqueIndex where AAA='missing'"));
     assertEquals(results.size(), 1);
-    assertEquals(results.iterator().next().<Object>field("count"), 0l);
+    //    assertEquals(results.iterator().next().field("count"), 0l);
+
+    assertThat(results.iterator().next().<Long>field("count")).isEqualTo(0l);
 
   }
 
@@ -1308,23 +1253,28 @@ public class OCommandExecutorSQLSelectTest {
     //http://www.prjhub.com/#/issues/6472
     List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT EVAL(\"86400000 * 26\") AS value"));
     assertEquals(results.size(), 1);
-    assertEquals(results.get(0).<Object>field("value"), 86400000l*26);
+
+    //    assertEquals(results.get(0).field("value"), 86400000l * 26);
+    assertThat(results.get(0).<Long>field("value")).isEqualTo(86400000l * 26);
+
   }
 
   @Test
   public void testCollateOnLinked() {
-    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from CollateOnLinked2 where linked.name = 'foo' "));
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select from CollateOnLinked2 where linked.name = 'foo' "));
     assertEquals(results.size(), 1);
-    results =db.query(new OSQLSynchQuery<ODocument>("select from CollateOnLinked2 where linked.name = 'FOO' "));
+    results = db.query(new OSQLSynchQuery<ODocument>("select from CollateOnLinked2 where linked.name = 'FOO' "));
     assertEquals(results.size(), 1);
   }
 
+  @Test
   public void testParamConcat() {
     //issue #6049
-    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from TestParams where surname like ? + '%'"), "fo");
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select from TestParams where surname like ? + '%'"), "fo");
     assertEquals(results.size(), 1);
   }
 
+  @Test
   public void testCompositeIndexWithoutNullValues() {
     db.command(new OCommandSQL("create class CompositeIndexWithoutNullValues")).execute();
     db.command(new OCommandSQL("create property CompositeIndexWithoutNullValues.one String")).execute();
@@ -1361,42 +1311,43 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
-  public void testDateFormat(){
-    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select date('2015-07-20', 'yyyy-MM-dd').format('dd.MM.yyyy') as dd"));
+  public void testDateFormat() {
+    List<ODocument> results = db
+        .query(new OSQLSynchQuery<ODocument>("select date('2015-07-20', 'yyyy-MM-dd').format('dd.MM.yyyy') as dd"));
     assertEquals(results.size(), 1);
     assertEquals(results.get(0).field("dd"), "20.07.2015");
   }
 
-
   @Test
-  public void testConcatenateNamedParams(){
+  public void testConcatenateNamedParams() {
     //issue #5572
-    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from TestMultipleClusters where name like :p1 + '%'"), "fo");
+    List<ODocument> results = db
+        .query(new OSQLSynchQuery<ODocument>("select from TestMultipleClusters where name like :p1 + '%'"), "fo");
     assertEquals(results.size(), 1);
-    
-    results =db.query(new OSQLSynchQuery<ODocument>("select from TestMultipleClusters where name like :p1 "), "fo");
+
+    results = db.query(new OSQLSynchQuery<ODocument>("select from TestMultipleClusters where name like :p1 "), "fo");
     assertEquals(results.size(), 0);
   }
 
   @Test
-  public void testMethodsOnStrings(){
+  public void testMethodsOnStrings() {
     //issue #5671
-    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select '1'.asLong() as long"));
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select '1'.asLong() as long"));
     assertEquals(results.size(), 1);
-    assertEquals(results.get(0).<Object>field("long"), 1L);
+    //    assertEquals(results.get(0).field("long"), 1L);
+    assertThat(results.get(0).<Long>field("long")).isEqualTo(1L);
   }
 
   @Test
-  public void testDifferenceOfInlineCollections(){
+  public void testDifferenceOfInlineCollections() {
     //issue #5294
-    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select difference([1,2,3],[1,2]) as difference"));
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select difference([1,2,3],[1,2]) as difference"));
     assertEquals(results.size(), 1);
     Object differenceFieldValue = results.get(0).field("difference");
     assertTrue(differenceFieldValue instanceof Collection);
-    assertEquals(((Collection)differenceFieldValue).size(), 1);
-    assertEquals(((Collection)differenceFieldValue).iterator().next(), 3);
+    assertEquals(((Collection) differenceFieldValue).size(), 1);
+    assertEquals(((Collection) differenceFieldValue).iterator().next(), 3);
   }
-
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
@@ -1407,10 +1358,5 @@ public class OCommandExecutorSQLSelectTest {
       fail();
     }
     return -1l;
-  }
-
-  private OProfiler getProfilerInstance() throws Exception {
-    return Orient.instance().getProfiler();
-
   }
 }

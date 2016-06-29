@@ -1,35 +1,31 @@
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import com.orientechnologies.DatabaseAbstractTest;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.DatabaseAbstractTest;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
-
-@Test
 public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
   private OSBTreeCollectionManagerShared sbTreeCollectionManager;
 
-  @BeforeMethod
+  @Before
   public void beforeMethod() {
     sbTreeCollectionManager = new OSBTreeCollectionManagerShared(5, 10, (OAbstractPaginatedStorage) database.getStorage());
   }
 
-  @AfterMethod
+  @After
   public void afterMethod() {
     sbTreeCollectionManager.close();
   }
 
+  @Test
   public void testEvictionAllReleased() {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
@@ -76,6 +72,7 @@ public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
     }
   }
 
+  @Test
   public void testEvictionTwoIsNotReleased() {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
@@ -145,6 +142,7 @@ public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
     }
   }
 
+  @Test
   public void testEvictionFiveIsNotReleased() {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 

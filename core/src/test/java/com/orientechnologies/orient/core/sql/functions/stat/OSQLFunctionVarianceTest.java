@@ -1,22 +1,21 @@
 package com.orientechnologies.orient.core.sql.functions.stat;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
-@Test
 public class OSQLFunctionVarianceTest {
 
   private OSQLFunctionVariance variance;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     variance = new OSQLFunctionVariance() {
       @Override

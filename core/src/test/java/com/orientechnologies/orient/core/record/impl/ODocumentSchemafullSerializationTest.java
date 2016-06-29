@@ -11,50 +11,50 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.*;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class ODocumentSchemafullSerializationTest {
 
-  private static final String       CITY           = "city";
-  private static final String       NUMBER         = "number";
-  private static final String       INT_FIELD      = NUMBER;
-  private static final String       NAME           = "name";
-  private static final String       MAP_BYTES      = "bytesMap";
-  private static final String       MAP_DOUBLE     = "doubleMap";
-  private static final String       MAP_FLOAT      = "floatMap";
-  private static final String       MAP_DATE       = "dateMap";
-  private static final String       MAP_SHORT      = "shortMap";
-  private static final String       MAP_LONG       = "mapLong";
-  private static final String       MAP_INT        = "mapInt";
-  private static final String       MAP_STRING     = "mapString";
-  private static final String       LIST_MIXED     = "listMixed";
-  private static final String       LIST_BOOLEANS  = "booleans";
-  private static final String       LIST_BYTES     = "bytes";
-  private static final String       LIST_DATES     = "dates";
-  private static final String       LIST_DOUBLES   = "doubles";
-  private static final String       LIST_FLOATS    = "floats";
-  private static final String       LIST_INTEGERS  = "integers";
-  private static final String       LIST_LONGS     = "longs";
-  private static final String       LIST_SHORTS    = "shorts";
-  private static final String       LIST_STRINGS   = "listStrings";
-  private static final String       SHORT_FIELD    = "shortNumber";
-  private static final String       LONG_FIELD     = "longNumber";
-  private static final String       STRING_FIELD   = "stringField";
-  private static final String       FLOAT_NUMBER   = "floatNumber";
-  private static final String       DOUBLE_NUMBER  = "doubleNumber";
-  private static final String       BYTE_FIELD     = "byteField";
-  private static final String       BOOLEAN_FIELD  = "booleanField";
-  private static final String       DATE_FIELD     = "dateField";
-  private static final String       RECORDID_FIELD = "recordField";
-  private static final String       EMBEDDED_FIELD = "embeddedField";
-  private static final String       ANY_FIELD      = "anyField";
+  private static final String CITY           = "city";
+  private static final String NUMBER         = "number";
+  private static final String INT_FIELD      = NUMBER;
+  private static final String NAME           = "name";
+  private static final String MAP_BYTES      = "bytesMap";
+  private static final String MAP_DOUBLE     = "doubleMap";
+  private static final String MAP_FLOAT      = "floatMap";
+  private static final String MAP_DATE       = "dateMap";
+  private static final String MAP_SHORT      = "shortMap";
+  private static final String MAP_LONG       = "mapLong";
+  private static final String MAP_INT        = "mapInt";
+  private static final String MAP_STRING     = "mapString";
+  private static final String LIST_MIXED     = "listMixed";
+  private static final String LIST_BOOLEANS  = "booleans";
+  private static final String LIST_BYTES     = "bytes";
+  private static final String LIST_DATES     = "dates";
+  private static final String LIST_DOUBLES   = "doubles";
+  private static final String LIST_FLOATS    = "floats";
+  private static final String LIST_INTEGERS  = "integers";
+  private static final String LIST_LONGS     = "longs";
+  private static final String LIST_SHORTS    = "shorts";
+  private static final String LIST_STRINGS   = "listStrings";
+  private static final String SHORT_FIELD    = "shortNumber";
+  private static final String LONG_FIELD     = "longNumber";
+  private static final String STRING_FIELD   = "stringField";
+  private static final String FLOAT_NUMBER   = "floatNumber";
+  private static final String DOUBLE_NUMBER  = "doubleNumber";
+  private static final String BYTE_FIELD     = "byteField";
+  private static final String BOOLEAN_FIELD  = "booleanField";
+  private static final String DATE_FIELD     = "dateField";
+  private static final String RECORDID_FIELD = "recordField";
+  private static final String EMBEDDED_FIELD = "embeddedField";
+  private static final String ANY_FIELD      = "anyField";
   private ODatabaseDocumentInternal databaseDocument;
   private OClass                    simple;
   private ORecordSerializer         serializer;
@@ -70,7 +70,7 @@ public class ODocumentSchemafullSerializationTest {
     this(new ORecordSerializerSchemaAware2CSV());
   }
 
-  @BeforeMethod
+  @Before
   public void before() {
     ODatabaseDocumentTx.setDefaultSerializer(serializer);
     databaseDocument = new ODatabaseDocumentTx("memory:" + ODocumentSchemafullSerializationTest.class.getSimpleName()).create();
@@ -123,11 +123,11 @@ public class ODocumentSchemafullSerializationTest {
     clazzEmbComp.createProperty("addressByStreet", OType.EMBEDDEDMAP, address);
   }
 
-  @AfterMethod
+  @After
   public void after() {
     databaseDocument.drop();
-    ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerFactory.instance().getFormat(
-        OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString()));
+    ODatabaseDocumentTx.setDefaultSerializer(
+        ORecordSerializerFactory.instance().getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString()));
   }
 
   @Test

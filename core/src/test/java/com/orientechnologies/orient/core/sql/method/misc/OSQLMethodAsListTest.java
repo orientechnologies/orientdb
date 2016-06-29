@@ -1,16 +1,14 @@
 package com.orientechnologies.orient.core.sql.method.misc;
 
-import static org.testng.Assert.assertEquals;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests the "asList()" method implemented by the OSQLMethodAsList class.  Note
@@ -19,12 +17,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *
  * @author Michael MacFadden
  */
-@Test
 public class OSQLMethodAsListTest {
 
   private OSQLMethodAsList function;
 
-  @BeforeMethod
+  @Before
   public void setup() {
     function = new OSQLMethodAsList();
   }

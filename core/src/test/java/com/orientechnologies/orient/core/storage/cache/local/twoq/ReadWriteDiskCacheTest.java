@@ -1,20 +1,6 @@
 package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.zip.CRC32;
-
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
@@ -25,6 +11,7 @@ import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
+import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -32,28 +19,34 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskW
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
+import org.assertj.core.api.Assertions;
+import org.junit.*;
 
-@Test
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Random;
+import java.util.zip.CRC32;
+
 public class ReadWriteDiskCacheTest {
-  private static final int systemOffset            = OIntegerSerializer.INT_SIZE + 3 * OLongSerializer.LONG_SIZE;
   public static final  int userDataSize            = 8;
+  public static final  int writeCacheAmountOfPages = 15000;
+  private static final int systemOffset            = OIntegerSerializer.INT_SIZE + 3 * OLongSerializer.LONG_SIZE;
   public static final  int PAGE_SIZE               = userDataSize + systemOffset;
   public static final  int READ_CACHE_MAX_MEMORY   = 4 * PAGE_SIZE;
-  public static final  int writeCacheAmountOfPages = 15000;
   public static final  int WRITE_CACHE_MAX_SIZE    = writeCacheAmountOfPages * PAGE_SIZE;
+  private static O2QCache    readBuffer;
+  private static OWriteCache writeBuffer;
 
-  private O2QCache    readBuffer;
-  private OWriteCache writeBuffer;
-
-  private OLocalPaginatedStorage storageLocal;
-  private String                 fileName;
-  private byte                   seed;
-  private ODiskWriteAheadLog     writeAheadLog;
-  private String                 storagePath;
-
+  private static OLocalPaginatedStorage storageLocal;
+  private static String                 fileName;
+  private static String                 storagePath;
+  private static ODiskWriteAheadLog     writeAheadLog;
+  private        byte                   seed;
 
   @BeforeClass
-  public void beforeClass() throws IOException {
+  public static void beforeClass() throws IOException {
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
 
     String buildDirectory = System.getProperty("buildDirectory");
@@ -68,9 +61,40 @@ public class ReadWriteDiskCacheTest {
     fileName = "readWriteDiskCacheTest.tst";
 
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
+
   }
 
-  @BeforeMethod
+  @AfterClass
+  public static void afterClass() throws IOException {
+    if (writeBuffer != null) {
+      if (readBuffer != null)
+        readBuffer.deleteStorage(writeBuffer);
+      else
+        writeBuffer.delete();
+      writeBuffer = null;
+    }
+
+    if (readBuffer != null) {
+      readBuffer.clear();
+      readBuffer = null;
+    }
+
+    if (writeAheadLog != null) {
+      writeAheadLog.delete();
+      writeAheadLog = null;
+    }
+
+    storageLocal.delete();
+
+    File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
+    if (file.exists()) {
+      Assert.assertTrue(file.delete());
+      file.getParentFile().delete();
+    }
+
+  }
+
+  @Before
   public void beforeMethod() throws IOException {
     closeBufferAndDeleteFile();
 
@@ -110,36 +134,6 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
-  @AfterClass
-  public void afterClass() throws IOException {
-    if (writeBuffer != null) {
-      if (readBuffer != null)
-        readBuffer.deleteStorage(writeBuffer);
-      else
-        writeBuffer.delete();
-      writeBuffer = null;
-    }
-
-    if (readBuffer != null) {
-      readBuffer.clear();
-      readBuffer = null;
-    }
-
-    if (writeAheadLog != null) {
-      writeAheadLog.delete();
-      writeAheadLog = null;
-    }
-
-    storageLocal.delete();
-
-    File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
-    if (file.exists()) {
-      Assert.assertTrue(file.delete());
-      file.getParentFile().delete();
-    }
-
-  }
-
   private void initBuffer() throws IOException {
     writeBuffer = new OWOWCache(false, PAGE_SIZE, new OByteBufferPool(PAGE_SIZE), -1, writeAheadLog, -1, WRITE_CACHE_MAX_SIZE,
         WRITE_CACHE_MAX_SIZE + READ_CACHE_MAX_MEMORY, storageLocal, false, 1);
@@ -147,6 +141,7 @@ public class ReadWriteDiskCacheTest {
     readBuffer = new O2QCache(READ_CACHE_MAX_MEMORY, PAGE_SIZE, false, 50);
   }
 
+  @Test
   public void testAddFourItems() throws IOException {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -195,6 +190,7 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
+  @Test
   public void testFrequentlyReadItemsAreMovedInAm() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -264,6 +260,7 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
+  @Test
   public void testCacheShouldCreateFileIfItIsNotExisted() throws Exception {
     readBuffer.addFile(fileName, writeBuffer);
 
@@ -273,6 +270,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertTrue(file.isFile());
   }
 
+  @Test
   public void testFrequentlyAddItemsAreMovedInAm() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -351,6 +349,7 @@ public class ReadWriteDiskCacheTest {
 
   }
 
+  @Test
   public void testReadFourItems() throws IOException {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -405,6 +404,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals(writeBuffer.getFilledUpTo(fileId), 4);
   }
 
+  @Test
   public void testPrefetchPagesInA1inQueue() throws Exception {
     final long fileId = readBuffer.addFile(fileName, writeBuffer);
     for (int i = 0; i < 4; i++) {
@@ -469,6 +469,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals(a1in.size(), 4);
   }
 
+  @Test
   public void testPrefetchPagesInA1inAmQueue() throws Exception {
     final long fileId = readBuffer.addFile(fileName, writeBuffer);
     Assert.assertEquals(readBuffer.getMaxSize(), 4);
@@ -554,6 +555,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertNotNull(a1in.get(fileId, 0));
   }
 
+  @Test
   public void testStoreCacheState() throws Exception {
     final long fileId = readBuffer.addFile(fileName, writeBuffer);
     Assert.assertEquals(readBuffer.getMaxSize(), 4);
@@ -659,6 +661,7 @@ public class ReadWriteDiskCacheTest {
 
   }
 
+  @Test
   public void testPrefetchPagesInPinnedPages() throws Exception {
     final long fileId = readBuffer.addFile(fileName, writeBuffer);
     Assert.assertEquals(readBuffer.getMaxSize(), 4);
@@ -760,6 +763,7 @@ public class ReadWriteDiskCacheTest {
     readBuffer.changeMaximumAmountOfMemory(4 * (PAGE_SIZE));
   }
 
+  @Test
   public void testLoadAndLockForReadShouldHitCache() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -786,6 +790,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals(a1in.get(entry.getFileId(), entry.getPageIndex()), entry);
   }
 
+  @Test
   public void testCloseFileShouldFlushData() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -831,6 +836,7 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
+  @Test
   public void testDeleteFileShouldDeleteFileFromHardDrive() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -865,6 +871,7 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
+  @Test
   public void testFlushData() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -915,6 +922,7 @@ public class ReadWriteDiskCacheTest {
 
   }
 
+  @Test
   public void testIfNotEnoughSpaceOldPagesShouldBeMovedToA1Out() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -965,7 +973,7 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
-  @Test(expectedExceptions = OAllCacheEntriesAreUsedException.class)
+  @Test(expected = OAllCacheEntriesAreUsedException.class)
   public void testIfAllPagesAreUsedExceptionShouldBeThrown() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -1002,6 +1010,7 @@ public class ReadWriteDiskCacheTest {
     }
   }
 
+  @Test
   public void testDataVerificationOK() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -1029,6 +1038,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertTrue(writeBuffer.checkStoredPages(null).length == 0);
   }
 
+  @Test
   public void testMagicNumberIsBroken() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -1073,6 +1083,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[1].fileName);
   }
 
+  @Test
   public void testCheckSumIsBroken() throws Exception {
     long fileId = readBuffer.addFile(fileName, writeBuffer);
 
@@ -1118,6 +1129,7 @@ public class ReadWriteDiskCacheTest {
     Assert.assertEquals("readWriteDiskCacheTest.tst", pageErrors[1].fileName);
   }
 
+  @Test
   public void testFlushTillLSN() throws Exception {
     closeBufferAndDeleteFile();
 
@@ -1184,7 +1196,9 @@ public class ReadWriteDiskCacheTest {
     byte[] content = new byte[userDataSize + systemOffset];
     fileClassic.read(pageIndex * (userDataSize + systemOffset), content, userDataSize + systemOffset);
 
-    Assert.assertEquals(Arrays.copyOfRange(content, systemOffset, userDataSize + systemOffset), value);
+//    Assert.assertEquals(Arrays.copyOfRange(content, systemOffset, userDataSize + systemOffset), value);
+
+    Assertions.assertThat(Arrays.copyOfRange(content, systemOffset, userDataSize + systemOffset)).isEqualTo(value);
 
     long magicNumber = OLongSerializer.INSTANCE.deserializeNative(content, 0);
 

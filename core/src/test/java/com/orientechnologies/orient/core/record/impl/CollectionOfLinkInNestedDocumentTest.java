@@ -1,16 +1,5 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
-
-import java.util.Collections;
-
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.ObjectFactory;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -18,18 +7,23 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class CollectionOfLinkInNestedDocumentTest {
 
   private ODatabaseDocument db;
 
-  @BeforeMethod
+  @Before
   public void before() {
     db = new ODatabaseDocumentTx("memory:" + CollectionOfLinkInNestedDocumentTest.class);
     db.create();
   }
 
-  @AfterMethod
+  @After
   public void after() {
     try {
       db.drop();
