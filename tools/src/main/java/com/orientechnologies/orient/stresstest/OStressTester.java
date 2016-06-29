@@ -27,6 +27,8 @@ import com.orientechnologies.orient.stresstest.workload.OWorkloadFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The main class of the OStressTester. It is instantiated from the OStressTesterCommandLineParser and takes care of launching the
@@ -42,23 +44,24 @@ public class OStressTester {
     PLOCAL, MEMORY, REMOTE, DISTRIBUTED
   }
 
-  private int                           threadsNumber;
-  private ODatabaseIdentifier           databaseIdentifier;
-  private int                           opsInTx;
-  private String                        outputResultFile;
+  private final int                     threadsNumber;
+  private final ODatabaseIdentifier     databaseIdentifier;
+  private final int                     opsInTx;
+  private final String                  outputResultFile;
+  private final boolean                 keepDatabaseAfterTest;
   private OConsoleProgressWriter        consoleProgressWriter;
 
   private static final OWorkloadFactory workloadFactory = new OWorkloadFactory();
-  private OWorkload                     workload;
+  private List<OWorkload>               workloads       = new ArrayList<OWorkload>();
 
-  public OStressTester(final OWorkload workload, ODatabaseIdentifier databaseIdentifier, int threadsNumber, int opsInTx,
-      String outputResultFile) throws Exception {
-    this.workload = workload;
+  public OStressTester(final List<OWorkload> workloads, ODatabaseIdentifier databaseIdentifier, int threadsNumber, int opsInTx,
+      String outputResultFile, final boolean keepDatabaseAfterTest) throws Exception {
+    this.workloads = workloads;
     this.threadsNumber = threadsNumber;
     this.databaseIdentifier = databaseIdentifier;
     this.opsInTx = opsInTx;
     this.outputResultFile = outputResultFile;
-    consoleProgressWriter = new OConsoleProgressWriter(this.workload);
+    this.keepDatabaseAfterTest = keepDatabaseAfterTest;
   }
 
   public static void main(String[] args) {
@@ -84,46 +87,63 @@ public class OStressTester {
 
     // creates the temporary DB where to execute the test
     ODatabaseUtils.createDatabase(databaseIdentifier);
-    consoleProgressWriter.printMessage(String.format("Created database [%s].", databaseIdentifier.getUrl()));
+    System.out.println(String.format("Created database [%s].", databaseIdentifier.getUrl()));
 
     try {
-      new Thread(consoleProgressWriter).start();
+      for (OWorkload workload : workloads) {
+        consoleProgressWriter = new OConsoleProgressWriter(workload);
 
-      consoleProgressWriter
-          .printMessage(String.format("Starting workload %s - concurrencyLevel=%d...", workload.getName(), threadsNumber));
+        consoleProgressWriter.start();
 
-      final long startTime = System.currentTimeMillis();
+        consoleProgressWriter
+            .printMessage(String.format("\nStarting workload %s (concurrencyLevel=%d)...", workload.getName(), threadsNumber));
 
-      workload.execute(threadsNumber, databaseIdentifier);
+        final long startTime = System.currentTimeMillis();
 
-      final long endTime = System.currentTimeMillis();
+        workload.execute(threadsNumber, databaseIdentifier);
 
-      consoleProgressWriter.sendShutdown();
+        final long endTime = System.currentTimeMillis();
 
-      System.out.println(String.format("\nTotal execution time: %.3f secs", ((float) (endTime - startTime) / 1000f)));
+        consoleProgressWriter.sendShutdown();
 
-      System.out.println(workload.getFinalResult());
+        System.out.println(String.format("\n- Total execution time: %.3f secs", ((float) (endTime - startTime) / 1000f)));
+
+        System.out.println(workload.getFinalResult());
+      }
 
       if (outputResultFile != null)
-        writeFile(workload);
+        writeFile();
 
     } catch (Exception ex) {
       System.err.println("\nAn error has occurred while running the stress test: " + ex.getMessage());
       returnCode = 1;
     } finally {
       // we don't need to drop the in-memory DB
-      if (databaseIdentifier.getMode() != OMode.MEMORY) {
+      if (keepDatabaseAfterTest || databaseIdentifier.getMode() == OMode.MEMORY)
+        consoleProgressWriter.printMessage(String.format("\nDatabase is available on [%s].", databaseIdentifier.getUrl()));
+      else {
         ODatabaseUtils.dropDatabase(databaseIdentifier);
         consoleProgressWriter.printMessage(String.format("\nDropped database [%s].", databaseIdentifier.getUrl()));
       }
+
     }
 
     return returnCode;
   }
 
-  private void writeFile(final OWorkload workload) {
+  private void writeFile() {
     try {
-      OIOUtils.writeFile(new File(outputResultFile), workload.getFinalResultAsJson());
+      final StringBuilder output = new StringBuilder();
+      output.append("{\"result\":[");
+      int i = 0;
+      for (OWorkload workload : workloads) {
+        if (i++ > 0)
+          output.append(",");
+        workload.getFinalResultAsJson();
+      }
+      output.append("]}");
+
+      OIOUtils.writeFile(new File(outputResultFile), output.toString());
     } catch (IOException e) {
       System.err.println("\nError on writing the result file : " + e.getMessage());
     }
