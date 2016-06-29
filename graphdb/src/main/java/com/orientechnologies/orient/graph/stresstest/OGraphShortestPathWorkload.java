@@ -154,9 +154,11 @@ public class OGraphShortestPathWorkload extends OBaseGraphWorkload {
   public String getFinalResultAsJson() {
     final ODocument json = new ODocument();
 
+    json.field("type", getName());
+
     json.field("shortestPath", result.toJSON(), OType.EMBEDDED);
 
-    return json.toString();
+    return json.toJSON("");
   }
 
   private char assignState(final char state, final StringBuilder number, final char c) {

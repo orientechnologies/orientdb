@@ -63,7 +63,7 @@ public abstract class OBaseWorkload implements OWorkload {
       final ODocument json = new ODocument();
       json.field("total", total);
       json.field("time", totalTime / 1000f);
-      json.field("throughput", total * 1000 / (float) totalTime);
+      json.field("throughput", totalTime > 0 ? total * 1000 / (float) totalTime : 0);
       json.field("avg", avgNs / 1000000f);
       json.field("percAvg", percentileAvg);
       json.field("perc99", percentile99Ns / 1000000f);

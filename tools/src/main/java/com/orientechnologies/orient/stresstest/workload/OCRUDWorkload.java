@@ -196,12 +196,14 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
   public String getFinalResultAsJson() {
     final ODocument json = new ODocument();
 
+    json.field("type", getName());
+
     json.field("creates", createsResult.toJSON(), OType.EMBEDDED);
     json.field("reads", createsResult.toJSON(), OType.EMBEDDED);
     json.field("updates", createsResult.toJSON(), OType.EMBEDDED);
     json.field("deletes", createsResult.toJSON(), OType.EMBEDDED);
 
-    return json.toString();
+    return json.toJSON("");
   }
 
   public ODocument createOperation(final long n) {
