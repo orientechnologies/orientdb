@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.*;
 import org.junit.Test;
@@ -25,11 +26,11 @@ import java.util.concurrent.Future;
  * 
  * @author Luca Garulli
  */
-public class StandAloneDatabaseJavaThreadPoolTest extends AbstractServerClusterTxTest {
+public class HAGraphTest extends AbstractServerClusterTxTest {
 
   final static int           SERVERS           = 3;
   private static final int   CONCURRENCY_LEVEL = 8;
-  private static final int   TOTAL_CYCLES      = 20000;
+  private static final int   TOTAL_CYCLES      = 10000;
 
   private OrientGraphFactory graphReadFactory;
   private ExecutorService    executorService;
@@ -51,6 +52,28 @@ public class StandAloneDatabaseJavaThreadPoolTest extends AbstractServerClusterT
       createSchemaAndFirstVertices();
       startTest();
     }
+  }
+
+  @Override
+  protected void onAfterExecution() throws Exception {
+    banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
+    serverInstance.get(SERVERS - 1).shutdownServer();
+
+    banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
+
+    startTest();
+    waitForEndOfTest();
+
+    banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
+
+    serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+    if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
+      serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
+
+    banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
+
+    startTest();
+    waitForEndOfTest();
   }
 
   protected String getDatabaseURL(final ServerRun server) {
