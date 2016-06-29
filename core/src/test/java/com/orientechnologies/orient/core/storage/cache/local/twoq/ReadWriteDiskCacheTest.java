@@ -8,6 +8,7 @@ import java.util.Random;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -21,10 +22,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
-import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.cache.OCachePointer;
-import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -1208,11 +1205,11 @@ public class ReadWriteDiskCacheTest {
 
   private OCacheEntry generateEntry(long fileId, long pageIndex, ByteBuffer buffer, OByteBufferPool bufferPool, boolean dirty,
       OLogSequenceNumber lsn) {
-    return new OCacheEntry(fileId, pageIndex, new OCachePointer(buffer, bufferPool, lsn, fileId, pageIndex), dirty);
+    return new OCacheEntryImpl(fileId, pageIndex, new OCachePointer(buffer, bufferPool, lsn, fileId, pageIndex), dirty);
   }
 
   private OCacheEntry generateRemovedEntry(long fileId, long pageIndex) {
-    return new OCacheEntry(fileId, pageIndex, null, false);
+    return new OCacheEntryImpl(fileId, pageIndex, null, false);
   }
 
   private void setLsn(ByteBuffer buffer, OLogSequenceNumber lsn) {
