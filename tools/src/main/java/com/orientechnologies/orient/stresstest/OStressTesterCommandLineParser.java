@@ -55,8 +55,8 @@ public class OStressTesterCommandLineParser {
       + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH + OPTION_KEEP_DATABASE_AFTER_TEST;
 
   public static final String SYNTAX                                              = "StressTester "
-      + "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" + "\n\t-s operationSet" + "\n\t-t threadsNumber"
-      + "\n\t-x operationsPerTransaction" + "\n\t-o resultOutputFile" + "\n\t-d plocalDirectory"
+      + "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" + "\n\t-w workloads" + "\n\t-c concurrency-level"
+      + "\n\t-x operations-per-transaction" + "\n\t-o result-output-file" + "\n\t-d database-directory"
       + "\n\t--root-password rootPassword" + "\n\t--remote-ip ipOrHostname" + "\n\t--remote-port portNumber" + "\n";
 
   static final String        COMMAND_LINE_PARSER_INVALID_NUMBER                  = "Invalid %s number [%s].";
@@ -66,7 +66,6 @@ public class OStressTesterCommandLineParser {
   static final String        COMMAND_LINE_PARSER_EXPECTED_VALUE                  = "Expected value after argument [%s]";
   static final String        COMMAND_LINE_PARSER_INVALID_REMOTE_PORT_NUMBER      = "Invalid remote port [%d]. The port number has to be lesser than 65536.";
   static final String        COMMAND_LINE_PARSER_MODE_PARAM_MANDATORY            = "The mode param [-m] is mandatory.";
-  static final String        COMMAND_LINE_PARSER_EXISTING_OUTPUT_FILE            = "The resultOutputFile [%s] already exists.";
   static final String        COMMAND_LINE_PARSER_NOT_EXISTING_OUTPUT_DIRECTORY   = "The directory where to write the resultOutputFile [%s] doesn't exist.";
   static final String        COMMAND_LINE_PARSER_NOT_EXISTING_PLOCAL_PATH        = "The plocal directory (param -d) doesn't exist [%s].";
   static final String        COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE = "You don't have the permissions for writing on directory [%s] the resultOutputFile.";
@@ -117,7 +116,7 @@ public class OStressTesterCommandLineParser {
 
       File outputFile = new File(resultOutputFile);
       if (outputFile.exists()) {
-        throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_EXISTING_OUTPUT_FILE, resultOutputFile));
+        outputFile.delete();
       }
 
       File parentFile = outputFile.getParentFile();

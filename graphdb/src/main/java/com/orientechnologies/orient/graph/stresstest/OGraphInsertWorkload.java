@@ -142,10 +142,12 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   public String getFinalResultAsJson() {
     final ODocument json = new ODocument();
 
+    json.field("type", getName());
+
     json.field("vertices", resultVertices.toJSON(), OType.EMBEDDED);
     json.field("edges", resultEdges.toJSON(), OType.EMBEDDED);
 
-    return json.toString();
+    return json.toJSON("");
   }
 
   private char assignState(final char state, final StringBuilder number, final char c) {

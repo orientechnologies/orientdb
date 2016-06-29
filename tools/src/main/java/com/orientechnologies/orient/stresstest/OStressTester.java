@@ -139,7 +139,7 @@ public class OStressTester {
       for (OWorkload workload : workloads) {
         if (i++ > 0)
           output.append(",");
-        workload.getFinalResultAsJson();
+        output.append( workload.getFinalResultAsJson() );
       }
       output.append("]}");
 
