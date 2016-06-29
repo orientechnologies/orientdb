@@ -96,7 +96,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       if (pos == -1)
         throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), parserText, oldPos);
 
-      indexName = word.toString();
+      indexName = decodeClassName(word.toString());
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
