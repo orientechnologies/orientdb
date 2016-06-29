@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -99,26 +98,21 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
   public void execute(final int concurrencyLevel, final ODatabaseIdentifier databaseIdentifier) {
     createSchema(databaseIdentifier);
 
-    final ArrayList<ORID> records = new ArrayList<ORID>(createsResult.total);
-    for (int i = 0; i < createsResult.total; ++i)
-      records.add(null);
+    // PREALLOCATE THE LIST TO AVOID CONCURRENCY ISSUES
+    final ORID[] records = new ORID[createsResult.total];
 
     executeOperation(databaseIdentifier, createsResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
       public Void call(final OBaseWorkLoadContext context) {
         final ODocument doc = createOperation(context.currentIdx);
-        synchronized (records) {
-          if (records.set(context.currentIdx, doc.getIdentity()) != null)
-            throw new RuntimeException(
-                "Error on creating record with id " + context.currentIdx + " because has been already created");
-        }
+        records[context.currentIdx] = doc.getIdentity();
         createsResult.current.incrementAndGet();
         return null;
       }
     });
 
-    if (records.size() != createsResult.total)
-      throw new RuntimeException("Error on creating records: found " + records.size() + " but expected " + createsResult.total);
+    if (records.length != createsResult.total)
+      throw new RuntimeException("Error on creating records: found " + records.length + " but expected " + createsResult.total);
 
     executeOperation(databaseIdentifier, readsResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
@@ -132,7 +126,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
     executeOperation(databaseIdentifier, updatesResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
       public Void call(final OBaseWorkLoadContext context) {
-        updateOperation(((OWorkLoadContext) context).getDb(), records.get(context.currentIdx));
+        updateOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
         updatesResult.current.incrementAndGet();
         return null;
       }
@@ -141,8 +135,8 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
     executeOperation(databaseIdentifier, deletesResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
       public Void call(final OBaseWorkLoadContext context) {
-        deleteOperation(((OWorkLoadContext) context).getDb(), records.get(context.currentIdx));
-        records.set(context.currentIdx, null);
+        deleteOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
+        records[context.currentIdx] = null;
         deletesResult.current.incrementAndGet();
         return null;
       }
@@ -168,25 +162,28 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
   public String getPartialResult() {
     final long current = createsResult.current.get() + readsResult.current.get() + updatesResult.current.get()
         + deletesResult.current.get();
+
     return String.format("%d%% [Creates: %d%% - Reads: %d%% - Updates: %d%% - Deletes: %d%%]", ((int) (100 * current / total)),
-        100 * createsResult.current.get() / createsResult.total, 100 * readsResult.current.get() / readsResult.total,
-        100 * updatesResult.current.get() / updatesResult.total, 100 * deletesResult.current.get() / deletesResult.total);
+        createsResult.total > 0 ? 100 * createsResult.current.get() / createsResult.total : 0,
+        readsResult.total > 0 ? 100 * readsResult.current.get() / readsResult.total : 0,
+        updatesResult.total > 0 ? 100 * updatesResult.current.get() / updatesResult.total : 0,
+        deletesResult.total > 0 ? 100 * deletesResult.current.get() / deletesResult.total : 0);
   }
 
   @Override
   public String getFinalResult() {
     final StringBuilder buffer = new StringBuilder(getErrors());
 
-    buffer.append(String.format("- Created %d records in %.3f secs - %s", createsResult.total, (createsResult.totalTime / 1000f),
+    buffer.append(String.format("- Created %d records in %.3f secs\n  %s", createsResult.total, (createsResult.totalTime / 1000f),
         createsResult.toOutput()));
 
-    buffer.append(String.format("\n- Read    %d records in %.3f secs - %s", readsResult.total, (readsResult.totalTime / 1000f),
+    buffer.append(String.format("\n- Read    %d records in %.3f secs\n  %s", readsResult.total, (readsResult.totalTime / 1000f),
         readsResult.toOutput()));
 
-    buffer.append(String.format("\n- Updated %d records in %.3f secs - %s", updatesResult.total, (updatesResult.totalTime / 1000f),
+    buffer.append(String.format("\n- Updated %d records in %.3f secs\n  %s", updatesResult.total, (updatesResult.totalTime / 1000f),
         updatesResult.toOutput()));
 
-    buffer.append(String.format("\n- Deleted %d records in %.3f secs - %s", deletesResult.total, (deletesResult.totalTime / 1000f),
+    buffer.append(String.format("\n- Deleted %d records in %.3f secs\n  %s", deletesResult.total, (deletesResult.totalTime / 1000f),
         deletesResult.toOutput()));
 
     return buffer.toString();
@@ -208,14 +205,14 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
 
   public ODocument createOperation(final long n) {
     ODocument doc = new ODocument(CLASS_NAME);
-    doc.field("name", getValue(n));
+    doc.field("name", "value" + n);
     doc.save();
     return doc;
   }
 
   public void readOperation(final ODatabase database, final long n) {
     final String query = String.format("SELECT FROM %s WHERE name = ?", CLASS_NAME);
-    final List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(query)).execute(getValue(n));
+    final List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(query)).execute("value" + n);
     if (result.size() != 1) {
       throw new RuntimeException(String.format("The query [%s] result size is %d. Expected size is 1.", query, result.size()));
     }
@@ -229,10 +226,6 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
 
   public void deleteOperation(final ODatabase database, final OIdentifiable rec) {
     database.delete(rec.getIdentity());
-  }
-
-  private String getValue(final long n) {
-    return "value" + n;
   }
 
   private char assignState(final char state, final StringBuilder number, final char c) {

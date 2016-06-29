@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -83,9 +83,7 @@ public abstract class OBaseWorkload implements OWorkload {
     final int totalPerThread = result.total / concurrencyLevel;
     final int totalPerLastThread = totalPerThread + result.total % concurrencyLevel;
 
-    final ArrayList<Long> operationTiming = new ArrayList<Long>(result.total);
-    for (int i = 0; i < result.total; ++i)
-      operationTiming.add(null);
+    final Long[] operationTiming = new Long[result.total];
 
     final List<OBaseWorkLoadContext> contexts = new ArrayList<OBaseWorkLoadContext>(concurrencyLevel);
 
@@ -119,7 +117,7 @@ public abstract class OBaseWorkload implements OWorkload {
                   break;
                 }
               } finally {
-                operationTiming.set(context.currentIdx, System.nanoTime() - startOp);
+                operationTiming[context.currentIdx] = System.nanoTime() - startOp;
               }
             }
 
@@ -149,13 +147,13 @@ public abstract class OBaseWorkload implements OWorkload {
     // STOP THE COUNTER
     result.totalTime = System.currentTimeMillis() - startTime;
 
-    Collections.sort(operationTiming);
+    Arrays.sort(operationTiming);
 
     // COMPUTE THE PERCENTILE
-    result.avgNs = (int) (result.totalTime * 1000000 / operationTiming.size());
+    result.avgNs = (int) (result.totalTime * 1000000 / operationTiming.length);
     result.percentileAvg = getPercentile(operationTiming, result.avgNs);
-    result.percentile99Ns = operationTiming.get((int) (operationTiming.size() * 99f / 100f));
-    result.percentile99_9Ns = operationTiming.get((int) (operationTiming.size() * 99.9f / 100f));
+    result.percentile99Ns = operationTiming[(int) (operationTiming.length * 99f / 100f)];
+    result.percentile99_9Ns = operationTiming[(int) (operationTiming.length * 99.9f / 100f)];
 
     return contexts;
   }
@@ -176,14 +174,14 @@ public abstract class OBaseWorkload implements OWorkload {
     return buffer.toString();
   }
 
-  protected int getPercentile(final ArrayList<Long> sortedResults, final long time) {
+  protected int getPercentile(final Long[] sortedResults, final long time) {
     int j = 0;
-    for (; j < sortedResults.size(); j++) {
-      final Long valueNs = sortedResults.get(j);
+    for (; j < sortedResults.length; j++) {
+      final Long valueNs = sortedResults[j];
       if (valueNs > time) {
         break;
       }
     }
-    return (int) (100 * (j / (float) sortedResults.size()));
+    return (int) (100 * (j / (float) sortedResults.length));
   }
 }
