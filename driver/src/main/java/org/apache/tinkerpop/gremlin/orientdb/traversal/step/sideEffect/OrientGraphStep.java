@@ -27,6 +27,7 @@ import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 import org.apache.tinkerpop.gremlin.util.function.TriFunction;
+import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.javatuples.Pair;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -73,8 +74,10 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
      *            the edges (i.e. full scan)
      * @return An iterator for all the vertices/edges for this step
      */
-    private <ElementType extends Element> Iterator<? extends ElementType> elements(BiFunction<OrientGraph, Object[], Iterator<ElementType>> getElementsByIds,
-            TriFunction<OrientGraph, OIndex<Object>, Optional<Object>, Stream<? extends ElementType>> getElementsByIndex,
+    private <ElementType extends Element> Iterator<? extends ElementType> elements(
+            BiFunction<OrientGraph, Object[],
+            Iterator<ElementType>> getElementsByIds,
+            TriFunction<OrientGraph, OIndex<Object>, Iterator<Object>, Stream<? extends ElementType>> getElementsByIndex,
             Function<OrientGraph, Iterator<ElementType>> getAllElements) {
         final OrientGraph graph = getGraph();
 
@@ -88,7 +91,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
                 OrientIndexQuery indexQuery = indexQueryOption.get();
                 OLogManager.instance().debug(this, "using " + indexQuery);
 
-                Stream<? extends ElementType> indexedElements = getElementsByIndex.apply(graph, indexQuery.index, indexQuery.value);
+                Stream<? extends ElementType> indexedElements = getElementsByIndex.apply(graph, indexQuery.index, indexQuery.values);
                 return indexedElements
                         .filter(element -> HasContainer.testAll(element, this.hasContainers))
                         .collect(Collectors.<ElementType> toList())
@@ -131,11 +134,19 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
         // find indexed keys only for the element subclass (if present)
         final Set<String> indexedKeys = elementLabel.isPresent() ? graph.getIndexedKeys(this.returnClass, elementLabel.get()) : graph.getIndexedKeys(this.returnClass);
 
+        // TODO: refactor: find single value
         Optional<Pair<String, Object>> indexedKeyAndValue = this.hasContainers.stream()
                 .filter(c -> indexedKeys.contains(c.getKey()) && c.getPredicate().getBiPredicate() == Compare.eq)
                 .findAny()
                 .map(c -> Optional.of(new Pair<>(c.getKey(), c.getValue())))
                 .orElseGet(Optional::empty);
+
+        // TODO: refactor: find multiple values
+//        Optional<Pair<String, Object>> indexedKeyAndValue = this.hasContainers.stream()
+//                .filter(c -> indexedKeys.contains(c.getKey()) && c.getPredicate().getBiPredicate() == Compare.eq)
+//                .findAny()
+//                .map(c -> Optional.of(new Pair<>(c.getKey(), c.getValue())))
+//                .orElseGet(Optional::empty);
 
         if (elementLabel.isPresent() && indexedKeyAndValue.isPresent()) {
             String key = indexedKeyAndValue.get().getValue0();
@@ -148,7 +159,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
             if (keyIndexes.hasNext()) {
                 // TODO: implement algorithm to select best index if there are
                 // multiple
-                return Optional.of(new OrientIndexQuery(keyIndexes.next(), Optional.of(value)));
+                return Optional.of(new OrientIndexQuery(keyIndexes.next(), IteratorUtils.of(value)));
             } else {
                 OLogManager.instance().warn(this, "no index found for class=[" + className + "] and key=[" + key + "]");
             }
