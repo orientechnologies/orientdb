@@ -40,6 +40,7 @@ public class OStressTesterCommandLineParser {
   public final static String OPTION_MODE                                         = "m";
   public final static String OPTION_WORKLOAD                                     = "w";
   public final static String OPTION_TRANSACTIONS                                 = "tx";
+  public final static String OPTION_KEEP_DATABASE_AFTER_TEST                     = "k";
   public final static String OPTION_OUTPUT_FILE                                  = "o";
   public static final String OPTION_PLOCAL_PATH                                  = "d";
   public final static String OPTION_ROOT_PASSWORD                                = "root-password";
@@ -51,7 +52,7 @@ public class OStressTesterCommandLineParser {
   public final static String OPTION_REMOTE_PORT                                  = "remote-port";
 
   public final static String MAIN_OPTIONS                                        = OPTION_MODE + OPTION_CONCURRENCY
-      + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH;
+      + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH + OPTION_KEEP_DATABASE_AFTER_TEST;
 
   public static final String SYNTAX                                              = "StressTester "
       + "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" + "\n\t-s operationSet" + "\n\t-t threadsNumber"
@@ -83,15 +84,17 @@ public class OStressTesterCommandLineParser {
 
     final Map<String, String> options = checkOptions(readOptions(args));
 
-    String dbName = TEMP_DATABASE_NAME + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-    OStressTester.OMode mode = OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase());
+    final String dbName = TEMP_DATABASE_NAME + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+    final OStressTester.OMode mode = OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase());
     String rootPassword = options.get(OPTION_ROOT_PASSWORD);
-    String resultOutputFile = options.get(OPTION_OUTPUT_FILE);
+    final String resultOutputFile = options.get(OPTION_OUTPUT_FILE);
     String plocalPath = options.get(OPTION_PLOCAL_PATH);
-    int operationsPerTransaction = getNumber(options.get(OPTION_TRANSACTIONS), "transactions");
-    int threadsNumber = getNumber(options.get(OPTION_CONCURRENCY), "concurrency");
-    String remoteIp = options.get(OPTION_REMOTE_IP);
-    String workloadCfg = options.get(OPTION_WORKLOAD);
+    final int operationsPerTransaction = getNumber(options.get(OPTION_TRANSACTIONS), "transactions");
+    final int threadsNumber = getNumber(options.get(OPTION_CONCURRENCY), "concurrency");
+    final String remoteIp = options.get(OPTION_REMOTE_IP);
+    final String workloadCfg = options.get(OPTION_WORKLOAD);
+    final boolean keepDatabaseAfterTest = options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null
+        ? Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST)) : false;
     int remotePort = 2424;
 
     if (plocalPath != null) {
@@ -163,7 +166,8 @@ public class OStressTesterCommandLineParser {
     final ODatabaseIdentifier databaseIdentifier = new ODatabaseIdentifier(mode, dbName, rootPassword, remoteIp, remotePort,
         plocalPath);
 
-    return new OStressTester(workloads, databaseIdentifier, threadsNumber, operationsPerTransaction, resultOutputFile);
+    return new OStressTester(workloads, databaseIdentifier, threadsNumber, operationsPerTransaction, resultOutputFile,
+        keepDatabaseAfterTest);
   }
 
   private static List<OWorkload> parseWorkloads(final String workloadConfig) {

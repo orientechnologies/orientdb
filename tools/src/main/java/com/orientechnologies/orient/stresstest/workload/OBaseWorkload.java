@@ -46,12 +46,18 @@ public abstract class OBaseWorkload implements OWorkload {
 
   public class OWorkLoadResult {
     public AtomicInteger current = new AtomicInteger();
-    public int           total;
+    public int           total   = 1;
     public long          totalTime;
     public long          avgNs;
     public int           percentileAvg;
     public long          percentile99Ns;
     public long          percentile99_9Ns;
+
+    public String toOutput() {
+      return String.format("\n- Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th Perc: %.3fms - 99.9th Perc: %.3fms",
+          total * 1000 / (float) totalTime, avgNs / 1000000f, percentileAvg, percentile99Ns / 1000000f,
+          percentile99_9Ns / 1000000f);
+    }
 
     public ODocument toJSON() {
       final ODocument json = new ODocument();
@@ -69,10 +75,10 @@ public abstract class OBaseWorkload implements OWorkload {
   protected static final long MAX_ERRORS = 100;
   protected List<String>      errors     = new ArrayList<String>();
 
-  protected OWorkLoadResult executeOperation(final ODatabaseIdentifier dbIdentifier, final OWorkLoadResult result,
+  protected List<OBaseWorkLoadContext> executeOperation(final ODatabaseIdentifier dbIdentifier, final OWorkLoadResult result,
       final int concurrencyLevel, final OCallable<Void, OBaseWorkLoadContext> callback) {
     if (result.total == 0)
-      return result;
+      return null;
 
     final int totalPerThread = result.total / concurrencyLevel;
     final int totalPerLastThread = totalPerThread + result.total % concurrencyLevel;
@@ -81,15 +87,18 @@ public abstract class OBaseWorkload implements OWorkload {
     for (int i = 0; i < result.total; ++i)
       operationTiming.add(null);
 
+    final List<OBaseWorkLoadContext> contexts = new ArrayList<OBaseWorkLoadContext>(concurrencyLevel);
+
     final Thread[] thread = new Thread[concurrencyLevel];
     for (int t = 0; t < concurrencyLevel; ++t) {
       final int currentThread = t;
 
+      final OBaseWorkLoadContext context = getContext();
+      contexts.add(context);
+
       thread[t] = new Thread(new Runnable() {
         @Override
         public void run() {
-          final OBaseWorkLoadContext context = getContext();
-
           context.threadId = currentThread;
           context.totalPerThread = context.threadId < concurrencyLevel - 1 ? totalPerThread : totalPerLastThread;
 
@@ -148,7 +157,7 @@ public abstract class OBaseWorkload implements OWorkload {
     result.percentile99Ns = operationTiming.get((int) (operationTiming.size() * 99f / 100f));
     result.percentile99_9Ns = operationTiming.get((int) (operationTiming.size() * 99.9f / 100f));
 
-    return result;
+    return contexts;
   }
 
   protected abstract OBaseWorkLoadContext getContext();

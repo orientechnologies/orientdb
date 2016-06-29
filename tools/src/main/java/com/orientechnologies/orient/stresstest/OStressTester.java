@@ -44,22 +44,24 @@ public class OStressTester {
     PLOCAL, MEMORY, REMOTE, DISTRIBUTED
   }
 
-  private int                           threadsNumber;
-  private ODatabaseIdentifier           databaseIdentifier;
-  private int                           opsInTx;
-  private String                        outputResultFile;
+  private final int                     threadsNumber;
+  private final ODatabaseIdentifier     databaseIdentifier;
+  private final int                     opsInTx;
+  private final String                  outputResultFile;
+  private final boolean                 keepDatabaseAfterTest;
   private OConsoleProgressWriter        consoleProgressWriter;
 
   private static final OWorkloadFactory workloadFactory = new OWorkloadFactory();
   private List<OWorkload>               workloads       = new ArrayList<OWorkload>();
 
   public OStressTester(final List<OWorkload> workloads, ODatabaseIdentifier databaseIdentifier, int threadsNumber, int opsInTx,
-      String outputResultFile) throws Exception {
+      String outputResultFile, final boolean keepDatabaseAfterTest) throws Exception {
     this.workloads = workloads;
     this.threadsNumber = threadsNumber;
     this.databaseIdentifier = databaseIdentifier;
     this.opsInTx = opsInTx;
     this.outputResultFile = outputResultFile;
+    this.keepDatabaseAfterTest = keepDatabaseAfterTest;
   }
 
   public static void main(String[] args) {
@@ -94,7 +96,7 @@ public class OStressTester {
         consoleProgressWriter.start();
 
         consoleProgressWriter
-            .printMessage(String.format("Starting workload %s - concurrencyLevel=%d...", workload.getName(), threadsNumber));
+            .printMessage(String.format("\nStarting workload %s (concurrencyLevel=%d)...", workload.getName(), threadsNumber));
 
         final long startTime = System.currentTimeMillis();
 
@@ -104,7 +106,7 @@ public class OStressTester {
 
         consoleProgressWriter.sendShutdown();
 
-        System.out.println(String.format("\nTotal execution time: %.3f secs", ((float) (endTime - startTime) / 1000f)));
+        System.out.println(String.format("\n- Total execution time: %.3f secs", ((float) (endTime - startTime) / 1000f)));
 
         System.out.println(workload.getFinalResult());
       }
@@ -117,10 +119,13 @@ public class OStressTester {
       returnCode = 1;
     } finally {
       // we don't need to drop the in-memory DB
-      if (databaseIdentifier.getMode() != OMode.MEMORY) {
+      if (keepDatabaseAfterTest || databaseIdentifier.getMode() == OMode.MEMORY)
+        consoleProgressWriter.printMessage(String.format("\nDatabase is available on [%s].", databaseIdentifier.getUrl()));
+      else {
         ODatabaseUtils.dropDatabase(databaseIdentifier);
         consoleProgressWriter.printMessage(String.format("\nDropped database [%s].", databaseIdentifier.getUrl()));
       }
+
     }
 
     return returnCode;

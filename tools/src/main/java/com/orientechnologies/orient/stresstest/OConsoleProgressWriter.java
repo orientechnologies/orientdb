@@ -45,10 +45,10 @@ public class OConsoleProgressWriter extends OSoftThread {
   protected void execute() throws Exception {
     final String result = workload.getPartialResult();
     if (lastResult == null || !lastResult.equals(result))
-      System.out.print("\rStress test in progress " + result);
+      System.out.print("\r- Workload in progress " + result);
     lastResult = result;
     try {
-      Thread.sleep(200);
+      Thread.sleep(300);
     } catch (InterruptedException e) {
       interruptCurrentOperation();
     }

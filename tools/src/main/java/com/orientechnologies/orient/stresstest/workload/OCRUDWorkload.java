@@ -95,7 +95,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
     for (int i = 0; i < createsResult.total; ++i)
       records.add(null);
 
-    executeOperation(databaseIdentifier, createsResult,concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
+    executeOperation(databaseIdentifier, createsResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
       public Void call(final OBaseWorkLoadContext context) {
         final ODocument doc = createOperation(context.currentIdx);
@@ -121,7 +121,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
       }
     });
 
-    executeOperation(databaseIdentifier, updatesResult,  concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
+    executeOperation(databaseIdentifier, updatesResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
       public Void call(final OBaseWorkLoadContext context) {
         updateOperation(((OWorkLoadContext) context).getDb(), records.get(context.currentIdx));
@@ -169,29 +169,17 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
   public String getFinalResult() {
     final StringBuilder buffer = new StringBuilder(getErrors());
 
-    buffer.append(String.format(
-        "\nCreated %d records in %.3f secs - Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th Perc: %.3fms - 99.9th Perc: %.3fms",
-        createsResult.total, (createsResult.totalTime / 1000f), createsResult.total * 1000 / (float) createsResult.totalTime,
-        createsResult.avgNs / 1000000f, createsResult.percentileAvg, createsResult.percentile99Ns / 1000000f,
-        createsResult.percentile99_9Ns / 1000000f));
+    buffer.append(String.format("- Created %d records in %.3f secs - %s", createsResult.total, (createsResult.totalTime / 1000f),
+        createsResult.toOutput()));
 
-    buffer.append(String.format(
-        "\nRead    %d records in %.3f secs - Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th perc: %.3fms - 99.9th Perc: %.3fms",
-        readsResult.total, (readsResult.totalTime / 1000f), readsResult.total * 1000 / (float) readsResult.totalTime,
-        readsResult.avgNs / 1000000f, readsResult.percentileAvg, readsResult.percentile99Ns / 1000000f,
-        readsResult.percentile99_9Ns / 1000000f));
+    buffer.append(String.format("\n- Read    %d records in %.3f secs - %s", readsResult.total, (readsResult.totalTime / 1000f),
+        readsResult.toOutput()));
 
-    buffer.append(String.format(
-        "\nUpdated %d records in %.3f secs - Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th perc: %.3fms - 99.9th Perc: %.3fms",
-        updatesResult.total, (updatesResult.totalTime / 1000f), updatesResult.total * 1000 / (float) updatesResult.totalTime,
-        updatesResult.avgNs / 1000000f, updatesResult.percentileAvg, updatesResult.percentile99Ns / 1000000f,
-        updatesResult.percentile99_9Ns / 1000000f));
+    buffer.append(String.format("\n- Updated %d records in %.3f secs - %s", updatesResult.total, (updatesResult.totalTime / 1000f),
+        updatesResult.toOutput()));
 
-    buffer.append(String.format(
-        "\nDeleted %d records in %.3f secs - Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th perc: %.3fms - 99.9th Perc: %.3fms",
-        deletesResult.total, (deletesResult.totalTime / 1000f), deletesResult.total * 1000 / (float) deletesResult.totalTime,
-        deletesResult.avgNs / 1000000f, deletesResult.percentileAvg, deletesResult.percentile99Ns / 1000000f,
-        deletesResult.percentile99_9Ns / 1000000f));
+    buffer.append(String.format("\n- Deleted %d records in %.3f secs - %s", deletesResult.total, (deletesResult.totalTime / 1000f),
+        deletesResult.toOutput()));
 
     return buffer.toString();
   }

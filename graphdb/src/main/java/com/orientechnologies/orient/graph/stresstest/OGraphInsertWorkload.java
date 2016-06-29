@@ -24,7 +24,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.List;
 
 /**
  * CRUD implementation of the workload.
@@ -45,7 +48,7 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
 
   @Override
   public String getName() {
-    return "GRAPHINSERT";
+    return "GINSERT";
   }
 
   @Override
@@ -73,32 +76,48 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
 
   @Override
   public void execute(final int concurrencyLevel, final ODatabaseIdentifier databaseIdentifier) {
-    executeOperation(databaseIdentifier, resultVertices, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
-      @Override
-      public Void call(final OBaseWorkLoadContext context) {
-        final OWorkLoadContext graphContext = ((OWorkLoadContext) context);
-        final OrientBaseGraph graph = graphContext.graph;
+    final List<OBaseWorkLoadContext> contexts = executeOperation(databaseIdentifier, resultVertices, concurrencyLevel,
+        new OCallable<Void, OBaseWorkLoadContext>() {
+          @Override
+          public Void call(final OBaseWorkLoadContext context) {
+            final OWorkLoadContext graphContext = ((OWorkLoadContext) context);
+            final OrientBaseGraph graph = graphContext.graph;
 
-        final OrientVertex v = graph.addVertex(null, "_id", resultVertices.current.get());
+            final OrientVertex v = graph.addVertex(null, "_id", resultVertices.current.get());
 
-        if (graphContext.lastVertexToConnect != null) {
-          v.addEdge("E", graphContext.lastVertexToConnect);
-          resultEdges.current.incrementAndGet();
+            if (graphContext.lastVertexToConnect != null) {
+              v.addEdge("E", graphContext.lastVertexToConnect);
+              resultEdges.current.incrementAndGet();
 
-          graphContext.lastVertexEdges++;
+              graphContext.lastVertexEdges++;
 
-          if (graphContext.lastVertexEdges > factor) {
-            graphContext.lastVertexEdges = 0;
-            graphContext.lastVertexToConnect = v;
+              if (graphContext.lastVertexEdges > factor) {
+                graphContext.lastVertexEdges = 0;
+                graphContext.lastVertexToConnect = v;
+              }
+            } else
+              graphContext.lastVertexToConnect = v;
+
+            resultVertices.current.incrementAndGet();
+
+            return null;
           }
-        } else
-          graphContext.lastVertexToConnect = v;
+        });
 
-        resultVertices.current.incrementAndGet();
+    final OrientGraphNoTx graph = getGraphNoTx(databaseIdentifier);
+    try {
+      // CONNECTED ALL THE SUB GRAPHS
+      OrientVertex lastVertex = null;
+      for (OBaseWorkLoadContext context : contexts) {
+        if (lastVertex != null)
+          lastVertex.addEdge("E", ((OWorkLoadContext) context).lastVertexToConnect);
 
-        return null;
+        lastVertex = ((OWorkLoadContext) context).lastVertexToConnect;
       }
-    });
+    } finally {
+      graph.shutdown();
+    }
+
   }
 
   @Override
@@ -111,13 +130,10 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   public String getFinalResult() {
     final StringBuilder buffer = new StringBuilder(getErrors());
 
-    buffer.append(String.format("\nCreated %d vertices and %d edges in %.3f secs", resultVertices.current.get(),
+    buffer.append(String.format("- Created %d vertices and %d edges in %.3f secs", resultVertices.current.get(),
         resultEdges.current.get(), resultVertices.totalTime / 1000f));
 
-    buffer.append(
-        String.format("\n- Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th Perc: %.3fms - 99.9th Perc: %.3fms",
-            resultVertices.total * 1000 / (float) resultVertices.totalTime, resultVertices.avgNs / 1000000f,
-            resultVertices.percentileAvg, resultVertices.percentile99Ns / 1000000f, resultVertices.percentile99_9Ns / 1000000f));
+    buffer.append(resultVertices.toOutput());
 
     return buffer.toString();
   }

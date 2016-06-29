@@ -58,6 +58,11 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload {
     }
   }
 
+  @Override
+  protected OBaseWorkLoadContext getContext() {
+    return new OWorkLoadContext();
+  }
+
   protected OrientGraphNoTx getGraphNoTx(final ODatabaseIdentifier databaseIdentifier) {
     final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
     if (database == null)
