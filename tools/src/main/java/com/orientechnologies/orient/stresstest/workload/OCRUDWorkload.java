@@ -150,8 +150,8 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
       if (!schema.existsClass(OCRUDWorkload.CLASS_NAME)) {
         final OClass cls = schema.createClass(OCRUDWorkload.CLASS_NAME);
         cls.createProperty("name", OType.STRING);
-        cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(), (OProgressListener) null, (ODocument) null,
-            "AUTOSHARDING", new String[] { "name" });
+        cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null, "AUTOSHARDING",
+            new String[] { "name" });
       }
     } finally {
       database.close();
