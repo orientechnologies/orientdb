@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -98,8 +97,13 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
         }
       } else {
 
-        // FIX TRANSACTION CONTENT
-        pRequest.fix(database, fixTasks);
+        if (pRequest == null)
+          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+              "Tx %s db=%s was not found for fix, probably has been already fixed for timeout reason", requestId,
+              database.getName());
+        else
+          // FIX TRANSACTION CONTENT
+          pRequest.fix(database, fixTasks);
 
       }
     } finally {
@@ -160,6 +164,7 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
 
   @Override
   public String toString() {
-    return getName() + " type: " + (success ? "commit" : (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) [" + fixTasks + "]"));
+    return getName() + " type: "
+        + (success ? "commit" : (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) [" + fixTasks + "]"));
   }
 }

@@ -143,6 +143,7 @@ public class OTxTask extends OAbstractReplicatedTask {
 
     } catch (Throwable e) {
       database.rollback();
+      ddb.popTxContext(requestId);
       reqContext.unlock();
 
       if (!(e instanceof ONeedRetryException || e instanceof OTransactionException || e instanceof ORecordDuplicatedException

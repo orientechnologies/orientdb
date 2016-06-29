@@ -1,21 +1,22 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.*;
 import org.junit.Test;
+import org.testng.Assert;
 
-import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Test case to check the right management of distributed exception while a server is starting. Derived from the test provided by
@@ -28,14 +29,20 @@ import java.util.concurrent.Future;
  */
 public class HAGraphTest extends AbstractServerClusterTxTest {
 
-  final static int           SERVERS           = 3;
-  private static final int   CONCURRENCY_LEVEL = 8;
-  private static final int   TOTAL_CYCLES      = 10000;
+  final static int           SERVERS                 = 3;
+  private static final int   CONCURRENCY_LEVEL       = 8;
+  private static final int   TOTAL_CYCLES_PER_THREAD = 5000;
 
   private OrientGraphFactory graphReadFactory;
   private ExecutorService    executorService;
-  private int                serverStarted     = 0;
-  List<Future<?>>            ths               = new ArrayList<Future<?>>();
+  private int                serverStarted           = 0;
+  private AtomicLong         operations              = new AtomicLong();
+
+  private volatile boolean   serverDown              = false;
+  private volatile boolean   serverRestarted         = false;
+
+  List<Future<?>>            ths                     = new ArrayList<Future<?>>();
+  private TimerTask          task;
 
   @Test
   public void test() throws Exception {
@@ -51,29 +58,37 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
       // START THE TEST DURING 2ND NODE STARTUP
       createSchemaAndFirstVertices();
       startTest();
+
+      task = new TimerTask() {
+        @Override
+        public void run() {
+          if (serverDown && !serverRestarted && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 2 / 3) {
+
+            // RESTART LAST SERVER AT 2/3 OF PROGRESS
+            banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
+            try {
+              serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+              if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
+                serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
+
+              serverRestarted = true;
+
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+
+          } else if (!serverDown && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL / 3) {
+
+            // SHUTDOWN LASt SERVER AT 1/3 OF PROGRESS
+            banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
+            serverInstance.get(SERVERS - 1).shutdownServer();
+
+            serverDown = true;
+          }
+        }
+      };
+      Orient.instance().scheduleTask(task, 2000, 200);
     }
-  }
-
-  @Override
-  protected void onAfterExecution() throws Exception {
-    banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
-    serverInstance.get(SERVERS - 1).shutdownServer();
-
-    banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
-
-    startTest();
-    waitForEndOfTest();
-
-    banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
-
-    serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-    if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
-      serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
-
-    banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
-
-    startTest();
-    waitForEndOfTest();
   }
 
   protected String getDatabaseURL(final ServerRun server) {
@@ -85,43 +100,15 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
     return "dbquerytest";
   }
 
-  private void createSchemaAndFirstVertices() {
-    OrientBaseGraph orientGraph = new OrientGraphNoTx(getDatabaseURL(serverInstance.get(0)));
-    createVertexType(orientGraph, "Test");
-    createVertexType(orientGraph, "Test1");
-    orientGraph.shutdown();
-
-    OrientBaseGraph graph = getGraphFactory().getTx();
-
-    for (int i = 1; i <= 1; i++) {
-      Vertex vertex = graph.addVertex("class:Test");
-      vertex.setProperty("prop1", "v1-" + i);
-      vertex.setProperty("prop2", "v2-1");
-      vertex.setProperty("prop3", "v3-1");
-      graph.commit();
-      if ((i % 100) == 0) {
-        log("Created " + i + " nodes");
-      }
-    }
-    for (int i = 1; i <= 200; i++) {
-      Vertex vertex = graph.addVertex("class:Test1");
-      vertex.setProperty("prop1", "v1-" + i);
-      vertex.setProperty("prop2", "v2-1");
-      vertex.setProperty("prop3", "v3-1");
-      graph.commit();
-      if ((i % 10) == 0) {
-        System.out.print("." + i + ".");
-      }
-      if ((i % 100) == 0) {
-        System.out.println();
-      }
-    }
-    graph.shutdown();
-  }
-
   @Override
   public void executeTest() throws Exception {
     waitForEndOfTest();
+
+    if (task != null)
+      task.cancel();
+
+    Assert.assertEquals(serverDown, true);
+    Assert.assertEquals(serverRestarted, true);
   }
 
   private void startTest() {
@@ -158,7 +145,7 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
         try {
           String query = "select from Test where prop2='v2-1'";
           boolean isRunning = true;
-          for (int i = 1; i < TOTAL_CYCLES && isRunning; i++) {
+          for (int i = 1; i < TOTAL_CYCLES_PER_THREAD && isRunning; i++) {
             if ((i % 2500) == 0) {
               long et = System.currentTimeMillis();
               log(sb.toString() + " [" + id + "] Total Records Processed: [" + i + "] Current: [2500] Time taken: ["
@@ -223,7 +210,12 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
                       } catch (OConcurrentModificationException ex) {
                         vtx1.reload();
                       } catch (ONeedRetryException ex) {
-                        if (ex instanceof ONeedRetryException || ex.getCause() instanceof ONeedRetryException) {
+                        if (ex instanceof ODistributedRecordLockedException) {
+                          if (k > 20)
+                            log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] ODistributedRecordLockedException: [" + ex + "] Cause: ["
+                                + (ex.getCause() != null ? ex.getCause() : "--") + "] for vertex " + vtx1);
+                          vtx1.reload();
+                        } else if (ex instanceof ONeedRetryException || ex.getCause() instanceof ONeedRetryException) {
                           vtx1.reload();
                         } else {
                           if (ex.getCause() instanceof ConcurrentModificationException) {
@@ -260,9 +252,12 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
                   }
                 }
               }
+
             } finally {
               graph.shutdown();
             }
+
+            operations.incrementAndGet();
           }
         } catch (Exception ex) {
           System.out.println("ID: [" + id + "]********** Exception " + ex + " \n\n");
@@ -297,5 +292,39 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
       executorService = Executors.newFixedThreadPool(10);
     }
     return executorService;
+  }
+
+  private void createSchemaAndFirstVertices() {
+    OrientBaseGraph orientGraph = new OrientGraphNoTx(getDatabaseURL(serverInstance.get(0)));
+    createVertexType(orientGraph, "Test");
+    createVertexType(orientGraph, "Test1");
+    orientGraph.shutdown();
+
+    OrientBaseGraph graph = getGraphFactory().getTx();
+
+    for (int i = 1; i <= 1; i++) {
+      Vertex vertex = graph.addVertex("class:Test");
+      vertex.setProperty("prop1", "v1-" + i);
+      vertex.setProperty("prop2", "v2-1");
+      vertex.setProperty("prop3", "v3-1");
+      graph.commit();
+      if ((i % 100) == 0) {
+        log("Created " + i + " nodes");
+      }
+    }
+    for (int i = 1; i <= 200; i++) {
+      Vertex vertex = graph.addVertex("class:Test1");
+      vertex.setProperty("prop1", "v1-" + i);
+      vertex.setProperty("prop2", "v2-1");
+      vertex.setProperty("prop3", "v3-1");
+      graph.commit();
+      if ((i % 10) == 0) {
+        System.out.print("." + i + ".");
+      }
+      if ((i % 100) == 0) {
+        System.out.println();
+      }
+    }
+    graph.shutdown();
   }
 }
