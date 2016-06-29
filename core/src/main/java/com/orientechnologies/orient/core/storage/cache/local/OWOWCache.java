@@ -432,17 +432,20 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       fileId = composeFileId(id, intId);
       fileClassic = files.get(fileId);
 
-      if (fileClassic != null)
-        throw new OStorageException(
-            "File with given id exists but has different name " + fileClassic.getName() + " vs. proposed " + fileName);
+      if (fileClassic != null) {
+        if (!fileClassic.getName().equals(fileName))
+          throw new OStorageException(
+              "File with given id exists but has different name " + fileClassic.getName() + " vs. proposed " + fileName);
+      } else {
+        if (fileCounter < intId)
+          fileCounter = intId;
 
-      if (fileCounter < intId)
-        fileCounter = intId;
+        fileClassic = createFileInstance(fileName);
+        createFile(fileClassic);
 
-      fileClassic = createFileInstance(fileName);
-      createFile(fileClassic);
+        files.add(fileId, fileClassic);
+      }
 
-      files.add(fileId, fileClassic);
       nameIdMap.put(fileName, intId);
       writeNameIdEntry(new NameFileIdEntry(fileName, intId), true);
 
@@ -474,15 +477,23 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   public void lock() throws IOException {
-    for (Long fileId : files.keySet()) {
-      final OFileClassic file = files.get(fileId);
+    for (Integer intId : nameIdMap.values()) {
+      if (intId < 0)
+        continue;
+
+      final long externalId = composeFileId(id, intId);
+      final OFileClassic file = files.get(externalId);
       file.lock();
     }
   }
 
   public void unlock() throws IOException {
-    for (Long fileId : files.keySet()) {
-      final OFileClassic file = files.get(fileId);
+    for (Integer intId : nameIdMap.values()) {
+      if (intId < 0)
+        continue;
+
+      final long externalId = composeFileId(id, intId);
+      final OFileClassic file = files.get(externalId);
       file.unlock();
     }
   }
@@ -662,8 +673,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   public void flush() {
-    for (long fileId : files.keySet())
-      flush(fileId);
+    for (int intId : nameIdMap.values()) {
+      if (intId < 0)
+        continue;
+
+      final long externalId = composeFileId(id, intId);
+      flush(externalId);
+    }
+
   }
 
   public long getFilledUpTo(long fileId) throws IOException {
@@ -772,14 +789,22 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
     }
 
+    final List<Long> result = new ArrayList<Long>();
+
     filesLock.acquireWriteLock();
     try {
-      final Collection<Integer> fileIds = nameIdMap.values();
+      final Collection<Integer> intIds = nameIdMap.values();
 
-      for (Integer intId : fileIds) {
-        if (intId >= 0) {
-          files.close(composeFileId(id, intId));
-        }
+      for (Integer intId : intIds) {
+        if (intId < 0)
+          continue;
+
+        final long fileId = composeFileId(id, intId);
+        //we remove files because when we reopen storage we will reload them
+        final OFileClassic fileClassic = files.remove(fileId);
+        fileClassic.close();
+
+        result.add(fileId);
       }
 
       if (nameIdMapHolder != null) {
@@ -794,15 +819,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       nameIdMap.clear();
 
-      final long[] ids = new long[fileIds.size()];
-      int n = 0;
-
-      for (long id : fileIds) {
-        ids[n] = id;
-        n++;
+      final long[] ds = new long[result.size()];
+      int counter = 0;
+      for (long id : result) {
+        ds[counter] = id;
+        counter++;
       }
 
-      return ids;
+      return ds;
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -832,18 +856,19 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     filesLock.acquireWriteLock();
     try {
-      for (Long fid : files.keySet()) {
-        final int fileId = extractFileId(fid);
-        boolean fileIsCorrect;
+      for (Integer intId : nameIdMap.values()) {
+        if (intId < 0)
+          continue;
 
-        final OClosableEntry<Long, OFileClassic> entry = files.acquire(fid);
+        boolean fileIsCorrect;
+        final long externalId = composeFileId(id, intId);
+        final OClosableEntry<Long, OFileClassic> entry = files.acquire(externalId);
         final OFileClassic fileClassic = entry.get();
         try {
-
           if (commandOutputListener != null)
             commandOutputListener.onMessage("Flashing file " + fileClassic.getName() + "... ");
 
-          flush(fileId);
+          flush(intId);
 
           if (commandOutputListener != null)
             commandOutputListener.onMessage("Start verification of content of " + fileClassic.getName() + "file ...");
@@ -918,16 +943,17 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   public long[] delete() throws IOException {
-    long[] result = null;
+    final List<Long> result = new ArrayList<Long>();
+
     filesLock.acquireWriteLock();
     try {
-      final Set<Long> fileIds = files.keySet();
-      result = new long[fileIds.size()];
+      for (int intId : nameIdMap.values()) {
+        if (intId < 0)
+          continue;
 
-      int counter = 0;
-      for (long fileId : files.keySet()) {
-        doDeleteFile(fileId);
-        result[counter++] = fileId;
+        final long externalId = composeFileId(id, intId);
+        doDeleteFile(externalId);
+        result.add(externalId);
       }
 
       if (nameIdMapHolderFile != null) {
@@ -958,7 +984,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
     }
 
-    return result;
+    final long[] ids = new long[result.size()];
+    int counter = 0;
+    for (long id : result) {
+      ids[counter] = id;
+      counter++;
+    }
+
+    return ids;
   }
 
   public String fileNameById(long fileId) {
@@ -1124,6 +1157,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   private void removeCachedPages(int fileId) {
+    //cache already closed or deleted
+    if (commitExecutor.isShutdown())
+      return;
+
     Future<Void> future = commitExecutor.submit(new RemoveFilePagesTask(fileId));
     try {
       future.get();
@@ -1690,7 +1727,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         try {
           writeAheadLog.logFuzzyCheckPointStart(minLsn);
 
-          for (Long fileId : files.keySet()) {
+          for (Integer intId : nameIdMap.values()) {
+            if (intId < 0)
+              continue;
+
+            final long fileId = composeFileId(id, intId);
             final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
             try {
               final OFileClassic fileClassic = entry.get();
@@ -1749,8 +1790,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       flushRing(writeCachePages.subMap(firstKey, true, lastKey, true));
 
-      for (Long fileId : files.keySet()) {
-        final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+      for (Integer intId : nameIdMap.values()) {
+        if (intId < 0)
+          continue;
+
+        final long finalId = composeFileId(id, intId);
+        final OClosableEntry<Long, OFileClassic> entry = files.acquire(finalId);
         try {
           entry.get().synch();
         } finally {

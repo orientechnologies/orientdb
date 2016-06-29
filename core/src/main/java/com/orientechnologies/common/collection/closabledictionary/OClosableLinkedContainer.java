@@ -358,13 +358,6 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     return false;
   }
 
-  /**
-   * @return Set of keys contained inside of container.
-   */
-  public Set<K> keySet() {
-    return Collections.unmodifiableSet(data.keySet());
-  }
-
   boolean checkAllLRUListItemsInMap() {
     lruLock.lock();
     try {
