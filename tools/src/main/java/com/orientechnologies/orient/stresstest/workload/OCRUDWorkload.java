@@ -53,6 +53,10 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
   private OWorkLoadResult    readsResult          = new OWorkLoadResult();
   private OWorkLoadResult    updatesResult        = new OWorkLoadResult();
   private OWorkLoadResult    deletesResult        = new OWorkLoadResult();
+  private int                creates;
+  private int                reads;
+  private int                updates;
+  private int                deletes;
 
   @Override
   public String getName() {
@@ -77,14 +81,18 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
     }
     assignState(state, number, ' ');
 
-    total = createsResult.total + readsResult.total + updatesResult.total + deletesResult.total;
+    total = creates + reads + updates + deletes;
 
-    if (readsResult.total > createsResult.total || updatesResult.total > createsResult.total
-        || deletesResult.total > createsResult.total)
+    if (reads > creates || updates > creates || deletes > creates)
       throw new IllegalArgumentException(INVALID_NUMBERS);
 
     if (total == 0)
       throw new IllegalArgumentException(INVALID_FORM_MESSAGE);
+
+    createsResult.total = creates;
+    readsResult.total = reads;
+    updatesResult.total = updates;
+    deletesResult.total = deletes;
   }
 
   @Override
@@ -230,13 +238,13 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
       number.append("0");
 
     if (state == 'C')
-      createsResult.total = Integer.parseInt(number.toString());
+      creates = Integer.parseInt(number.toString());
     else if (state == 'R')
-      readsResult.total = Integer.parseInt(number.toString());
+      reads = Integer.parseInt(number.toString());
     else if (state == 'U')
-      updatesResult.total = Integer.parseInt(number.toString());
+      updates = Integer.parseInt(number.toString());
     else if (state == 'D')
-      deletesResult.total = Integer.parseInt(number.toString());
+      deletes = Integer.parseInt(number.toString());
 
     number.setLength(0);
     return c;
