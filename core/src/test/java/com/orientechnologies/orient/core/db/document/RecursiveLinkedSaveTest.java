@@ -10,13 +10,13 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by tglman on 26/10/15.
  */
-public class TestRecursiveLinkedSave {
+public class RecursiveLinkedSaveTest {
 
   private ODatabaseDocument db;
 
   @Before
   public void before() {
-    db = new ODatabaseDocumentTx("memory:" + TestRecursiveLinkedSave.class.getSimpleName());
+    db = new ODatabaseDocumentTx("memory:" + RecursiveLinkedSaveTest.class.getSimpleName());
     db.create();
   }
 
