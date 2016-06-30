@@ -71,18 +71,12 @@ public class OMetadataDefault implements OMetadataInternal {
 
   }
 
+  @Deprecated
   public void load() {
   }
 
+  @Deprecated
   public void create() throws IOException {
-    OSharedContext shared = database.getStorage().getResource(OSharedContext.class.getName(), new Callable<OSharedContext>() {
-      @Override
-      public OSharedContext call() throws Exception {
-        OSharedContext shared = new OSharedContext(database.getStorage());
-        return shared;
-      }
-    });
-    shared.create();
   }
 
   public OSchemaProxy getSchema() {
@@ -172,6 +166,7 @@ public class OMetadataDefault implements OMetadataInternal {
   /**
    * Closes internal objects
    */
+  @Deprecated
   public void close() {
     //DO NOTHING BECAUSE THE PROXY OBJECT HAVE NO DIRECT STATE
     //ADD HERE THE CLOSE OF A PROXY OBJECT IF NEEDED

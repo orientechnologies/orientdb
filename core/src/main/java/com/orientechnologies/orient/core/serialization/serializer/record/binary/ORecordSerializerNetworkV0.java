@@ -131,7 +131,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         bytes.offset = headerCursor;
         document.field(fieldName, value, type);
       } else
-        document.field(fieldName, null, null);
+        document.field(fieldName, null, (OType[]) null);
 
       if (unmarshalledFields == iFields.length)
         // ALL REQUESTED FIELDS UNMARSHALLED: EXIT
@@ -177,7 +177,7 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         bytes.offset = headerCursor;
         document.field(fieldName, value, type);
       } else
-        document.field(fieldName, null, null);
+        document.field(fieldName, null, (OType[])null);
     }
 
     ORecordInternal.clearSource(document);

@@ -306,7 +306,9 @@ import java.util.concurrent.Callable;
     return Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0;
   }
 
-  @Override public OClass getSuperClass() {
+  @Override
+  @Deprecated
+  public OClass getSuperClass() {
     acquireSchemaReadLock();
     try {
       return superClasses.isEmpty() ? null : superClasses.get(0);
@@ -315,7 +317,9 @@ import java.util.concurrent.Callable;
     }
   }
 
-  @Override public OClass setSuperClass(OClass iSuperClass) {
+  @Override
+  @Deprecated
+  public OClass setSuperClass(OClass iSuperClass) {
     setSuperClasses(iSuperClass != null ? Arrays.asList(iSuperClass) : Collections.EMPTY_LIST);
     return this;
   }
@@ -1251,15 +1255,18 @@ import java.util.concurrent.Callable;
     }
   }
 
+  @Deprecated
   public Collection<OClass> getBaseClasses() {
     return getSubclasses();
   }
 
+  @Deprecated
   public Collection<OClass> getAllBaseClasses() {
     return getAllSubclasses();
   }
 
-  @Override public Collection<OClass> getAllSuperClasses() {
+  @Override
+  public Collection<OClass> getAllSuperClasses() {
     Set<OClass> ret = new HashSet<OClass>();
     getAllSuperClasses(ret);
     return ret;

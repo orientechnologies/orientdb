@@ -62,7 +62,6 @@ public interface OMetadata {
   /**
    * Reloads the internal objects.
    */
-  @Deprecated
   void reload();
 
   /**
