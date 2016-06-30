@@ -723,7 +723,7 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
 
 
         var val = prop[entry];
-        
+
         if (propType === "DATE" || propType === "DATETIME") {
 
 
@@ -803,11 +803,10 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
     var sql = 'CREATE CLASS ' + $scope.property['name'];
     var abstract = $scope.property['abstract'] ? ' ABSTRACT ' : '';
     var alias = $scope.property['alias'] == null || $scope.property['alias'] == '' ? null : $scope.property['alias'];
-    sql = sql + abstract;
     var supercl = $scope.property['superclass'] != null ? ' extends ' + $scope.property['superclass'] : '';
     var arrSuper = $scope.property['superClasses'];
     var superClasses = (arrSuper != null && arrSuper.length > 0) ? ' extends ' + $filter('formatArray')($scope.property['superClasses']) : ''
-    sql = sql + superClasses;
+    sql = sql + superClasses+ abstract;
 
 
     CommandApi.queryText({
