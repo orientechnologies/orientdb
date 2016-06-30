@@ -32,22 +32,22 @@ import java.util.concurrent.Callable;
  * Created by tglman on 08/04/16.
  */
 public class OEmbeddedDBFactory implements OrientDBFactory {
-  private static final OWriteCacheIdGen writeCacheIdGen = new OSnowFlakeIdGen();
-  private volatile O2QCache readCache;
   private volatile Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
   private final OrientDBSettings configurations;
   private       String           basePath;
+  private       OEngine          memory;
+  private       OEngine          disk;
 
   public OEmbeddedDBFactory(String directoryPath, OrientDBSettings configurations) {
     super();
+
+    memory = Orient.instance().getEngine("memory");
+    disk = Orient.instance().getEngine("plocal");
+
     this.basePath = new java.io.File(directoryPath).getAbsolutePath();
     this.configurations = configurations != null ? configurations : OrientDBSettings.defaultSettings();
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
-
-    readCache = new O2QCache(calculateReadCacheMaxMemory(OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024),
-        OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, true,
-        OGlobalConfiguration.DISK_CACHE_PINNED_PAGES.getValueAsInteger());
 
     try {
       if (OByteBufferPool.instance() != null)
@@ -67,7 +67,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     OAbstractPaginatedStorage storage = getStorage(name);
     storage.open(new HashMap<>());
     final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-    embedded.internalOpen(user,password);
+    embedded.internalOpen(user, password);
 
     return embedded;
   }
@@ -75,15 +75,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   private OAbstractPaginatedStorage getStorage(String name) {
     OAbstractPaginatedStorage storage = storages.get(name);
     if (storage == null) {
-      try {
-        storage = new OLocalPaginatedStorage(name, buildName(name), configurations.getStorageMode(), writeCacheIdGen.nextId(),
-            readCache);
-      } catch (Exception e) {
-        final String message = "Error on opening database: " + name + ". Current location is: " + basePath;
-        OLogManager.instance().error(this, message, e);
-
-        throw OException.wrapException(new ODatabaseException(message), e);
-      }
+      storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
       storages.put("storage", storage);
     }
     return storage;
@@ -98,17 +90,9 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     if (!exist(name, user, password)) {
       OAbstractPaginatedStorage storage;
       if (type == DatabaseType.MEMORY) {
-        storage = new ODirectMemoryStorage(name, buildName(name), configurations.getStorageMode(), writeCacheIdGen.nextId());
+        storage = (OAbstractPaginatedStorage) memory.createStorage(buildName(name), new HashMap<>());
       } else {
-        try {
-          storage = new OLocalPaginatedStorage(name, buildName(name), configurations.getStorageMode(), writeCacheIdGen.nextId(),
-              readCache);
-        } catch (IOException e) {
-          final String message = "Error on opening database: " + name + ". Current location is: " + basePath;
-          OLogManager.instance().error(this, message, e);
-
-          throw OException.wrapException(new ODatabaseException(message), e);
-        }
+        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
       }
       //CHECK Configurations
       storage.create(new HashMap<>());
