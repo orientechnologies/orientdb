@@ -16,6 +16,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -29,20 +30,20 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class HAGraphTest extends AbstractServerClusterTxTest {
 
-  final static int           SERVERS                 = 3;
-  private static final int   CONCURRENCY_LEVEL       = 8;
-  private static final int   TOTAL_CYCLES_PER_THREAD = 5000;
+  final static int            SERVERS                 = 3;
+  private static final int    CONCURRENCY_LEVEL       = 8;
+  private static final int    TOTAL_CYCLES_PER_THREAD = 10000;
 
-  private OrientGraphFactory graphReadFactory;
-  private ExecutorService    executorService;
-  private int                serverStarted           = 0;
-  private AtomicLong         operations              = new AtomicLong();
+  private OrientGraphFactory  graphReadFactory;
+  private ExecutorService     executorService;
+  private int                 serverStarted           = 0;
+  private AtomicLong          operations              = new AtomicLong();
 
-  private volatile boolean   serverDown              = false;
-  private volatile boolean   serverRestarted         = false;
+  private final AtomicBoolean serverDown              = new AtomicBoolean(false);
+  private final AtomicBoolean serverRestarted         = new AtomicBoolean(false);
 
-  List<Future<?>>            ths                     = new ArrayList<Future<?>>();
-  private TimerTask          task;
+  List<Future<?>>             ths                     = new ArrayList<Future<?>>();
+  private TimerTask           task;
 
   @Test
   public void test() throws Exception {
@@ -62,7 +63,8 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
       task = new TimerTask() {
         @Override
         public void run() {
-          if (serverDown && !serverRestarted && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 2 / 3) {
+          if (serverDown.get() && !serverRestarted.get()
+              && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 2 / 3) {
 
             // RESTART LAST SERVER AT 2/3 OF PROGRESS
             banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
@@ -71,19 +73,19 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
               if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
                 serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
 
-              serverRestarted = true;
+              serverRestarted.set(true);
 
             } catch (Exception e) {
               e.printStackTrace();
             }
 
-          } else if (!serverDown && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL / 3) {
+          } else if (!serverDown.get() && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL / 3) {
 
             // SHUTDOWN LASt SERVER AT 1/3 OF PROGRESS
             banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
             serverInstance.get(SERVERS - 1).shutdownServer();
 
-            serverDown = true;
+            serverDown.set(true);
           }
         }
       };
@@ -107,8 +109,8 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
     if (task != null)
       task.cancel();
 
-    Assert.assertEquals(serverDown, true);
-    Assert.assertEquals(serverRestarted, true);
+    Assert.assertEquals(serverDown.get(), true);
+    Assert.assertEquals(serverRestarted.get(), true);
   }
 
   private void startTest() {

@@ -280,13 +280,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       msgService.registerRequest(iRequest.getId().getMessageId(), currentResponseMgr);
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "Sending request %s", iRequest);
+        ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "Sending request %s...", iRequest);
 
       for (String node : iNodes) {
         // CATCH ANY EXCEPTION LOG IT AND IGNORE TO CONTINUE SENDING REQUESTS TO OTHER NODES
         try {
           final ORemoteServerController remoteServer = manager.getRemoteServer(node);
-          remoteServer.sendRequest(iRequest, node);
+
+          remoteServer.sendRequest(iRequest);
 
         } catch (Throwable e) {
           if (e instanceof OSecurityAccessException) {
@@ -294,8 +295,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             manager.closeRemoteServer(node);
             final ORemoteServerController remoteServer = manager.getRemoteServer(node);
             try {
-              remoteServer.sendRequest(iRequest, node);
+              remoteServer.sendRequest(iRequest);
               continue;
+
             } catch (Throwable ex) {
               // IGNORE IT BECAUSE MANAGED BELOW
             }

@@ -95,102 +95,99 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   protected Object deltaBackup(final ODistributedRequestId requestId, final ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database, final String databaseName) throws IOException, InterruptedException {
 
+    final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
+    if (lastDeployment != null && lastDeployment.longValue() == random) {
+      // SKIP IT
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+          "Skip deploying delta database '%s' because already executed", databaseName);
+      return Boolean.FALSE;
+    }
+
+    iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
+
+    iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+    iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+
+    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+        "Deploying database %s with delta of changes...", databaseName);
+
+    // CREATE A BACKUP OF DATABASE
+    final File backupFile = new File(Orient.getTempPath() + "/backup_" + getNodeSource() + "_" + database.getName() + ".zip");
+
+    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+        "Creating delta backup of database '%s' (startLSN=%s) in directory: %s...", databaseName, startLSN,
+        backupFile.getAbsolutePath());
+
+    if (backupFile.exists())
+      backupFile.delete();
+    else
+      backupFile.getParentFile().mkdirs();
+    backupFile.createNewFile();
+
+    final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
+    // final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(fileOutputStream);
+
+    final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
+    if (completedFile.exists())
+      completedFile.delete();
+
+    final OStorage storage = database.getStorage().getUnderlying();
+    if (!(storage instanceof OAbstractPaginatedStorage))
+      throw new UnsupportedOperationException("Storage '" + storage.getName() + "' does not support distributed delta backup");
+
+    final AtomicReference<OLogSequenceNumber> endLSN = new AtomicReference<OLogSequenceNumber>();
+    final AtomicReference<ODistributedDatabaseDeltaSyncException> exception = new AtomicReference<ODistributedDatabaseDeltaSyncException>();
+
     try {
+      endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream, excludedClusterNames));
 
-      final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
-      if (lastDeployment != null && lastDeployment.longValue() == random) {
-        // SKIP IT
-        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-            "Skip deploying delta database '%s' because already executed", databaseName);
-        return Boolean.FALSE;
-      }
-
-      iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
-
-      iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
-      iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
-
-      ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-          "Deploying database %s with delta of changes...", databaseName);
-
-      // CREATE A BACKUP OF DATABASE
-      final File backupFile = new File(Orient.getTempPath() + "/backup_" + getNodeSource() + "_" + database.getName() + ".zip");
-
-      ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-          "Creating delta backup of database '%s' (startLSN=%s) in directory: %s...", databaseName, startLSN,
-          backupFile.getAbsolutePath());
-
-      if (backupFile.exists())
-        backupFile.delete();
+      if (endLSN.get() == null)
+        // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
+        exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
       else
-        backupFile.getParentFile().mkdirs();
-      backupFile.createNewFile();
+        ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+            "Delta backup of database '%s' completed. range=%s-%s...", databaseName, startLSN, endLSN);
 
-      final FileOutputStream fileOutputStream = new FileOutputStream(backupFile);
-      // final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(fileOutputStream);
-
-      final File completedFile = new File(backupFile.getAbsolutePath() + ".completed");
-      if (completedFile.exists())
-        completedFile.delete();
-
-      final OStorage storage = database.getStorage().getUnderlying();
-      if (!(storage instanceof OAbstractPaginatedStorage))
-        throw new UnsupportedOperationException("Storage '" + storage.getName() + "' does not support distributed delta backup");
-
-      final AtomicReference<OLogSequenceNumber> endLSN = new AtomicReference<OLogSequenceNumber>();
-      final AtomicReference<ODistributedDatabaseDeltaSyncException> exception = new AtomicReference<ODistributedDatabaseDeltaSyncException>();
-
-      try {
-        endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream, excludedClusterNames));
-
-        if (endLSN.get() == null)
-          // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
-          exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
-        else
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "Delta backup of database '%s' completed. range=%s-%s...", databaseName, startLSN, endLSN);
-
-      } catch (Exception e) {
-        // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
-        exception.set((ODistributedDatabaseDeltaSyncException) OException
-            .wrapException(new ODistributedDatabaseDeltaSyncException(startLSN), e));
-
-      } finally {
-        // try {
-        // gzipOutputStream.close();
-        // } catch (IOException e) {
-        // }
-
-        try {
-          fileOutputStream.close();
-        } catch (IOException e) {
-        }
-
-        try {
-          completedFile.createNewFile();
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Cannot create file of delta backup completed: %s", e, completedFile);
-        }
-      }
-
-      if (exception.get() instanceof ODistributedDatabaseDeltaSyncException)
-        throw exception.get();
-
-      final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, endLSN.get(), false);
-
-      ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-          "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
-
-      if (chunk.last)
-        // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-        iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
-
-      return chunk;
+    } catch (Exception e) {
+      // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
+      exception.set((ODistributedDatabaseDeltaSyncException) OException
+          .wrapException(new ODistributedDatabaseDeltaSyncException(startLSN), e));
 
     } finally {
-      ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-          "Deploy delta database task completed");
+      // try {
+      // gzipOutputStream.close();
+      // } catch (IOException e) {
+      // }
+
+      try {
+        fileOutputStream.close();
+      } catch (IOException e) {
+      }
+
+      try {
+        completedFile.createNewFile();
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Cannot create file of delta backup completed: %s", e, completedFile);
+      }
     }
+
+    if (exception.get() instanceof ODistributedDatabaseDeltaSyncException) {
+      throw exception.get();
+    }
+
+    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+        "Deploy delta database task completed");
+
+    final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(backupFile, 0, CHUNK_MAX_SIZE, endLSN.get(), false);
+
+    ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+        "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
+
+    if (chunk.last)
+      // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+      iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+
+    return chunk;
   }
 
   @Override
