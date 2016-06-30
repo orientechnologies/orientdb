@@ -27,6 +27,7 @@ public class OrientFactoryTests {
 
   }
 
+  @Test
   public void createAndUseRemoteDatabase() {
     OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
     //    OrientDBFactory factory = OrientDBFactory.fromUrl("remote:localhost", null);
