@@ -475,8 +475,9 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
           break;
 
         applyRead(entry);
-
         counter++;
+
+        eref.lazySet(null);
       }
 
       readBufferReadCount[n] = counter;
