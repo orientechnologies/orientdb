@@ -68,7 +68,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
@@ -1326,13 +1325,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     String dbSerializerName = connection.getDatabase().getSerializer().toString();
     String name = getRecordSerializerName(connection);
+    if(name == null)
+      name = dbSerializerName;
+    ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
 
-    if (!dbSerializerName.equals(name)) {
-      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-      ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
-    }
-    OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel.readBytes());
-    ONetworkThreadLocalSerializer.setNetworkSerializer(null);
+    OCommandRequestText command = OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel.readBytes(),ser);
 
     final Map<Object, Object> params = command.getParameters();
 

@@ -1104,9 +1104,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * Execute the command remotely and get the results back.
    */
   public Object command(final OCommandRequestText iCommand) {
-
-    if (!(iCommand instanceof OSerializableStream))
-      throw new OCommandExecutionException("Cannot serialize the command to be executed to the server side.");
     final boolean live = iCommand instanceof OLiveQuery;
     final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
 

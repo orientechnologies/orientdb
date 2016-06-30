@@ -30,7 +30,7 @@ import java.util.Map;
  * @author Luca Garulli
  * 
  */
-public interface OCommandRequestInternal extends OCommandRequest, OSerializableStream {
+public interface OCommandRequestInternal extends OCommandRequest {
 
   Map<Object, Object> getParameters();
 

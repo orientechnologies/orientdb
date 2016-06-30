@@ -19,15 +19,20 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 
 /**
  * Internal specialization of generic OCommand interface based on a text command.
- * 
+ *
  * @author Luca Garulli
  */
-public interface OCommandRequestText extends OCommandRequestInternal, OSerializableStream {
+public interface OCommandRequestText extends OCommandRequestInternal {
   String getText();
 
   OCommandRequestText setText(String iText);
+
+  OCommandRequestText fromStream(byte[] bytes, ORecordSerializer serializer);
+
+  byte[] toStream();
 }
