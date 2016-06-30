@@ -196,9 +196,9 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
     json.field("type", getName());
 
     json.field("creates", createsResult.toJSON(), OType.EMBEDDED);
-    json.field("reads", createsResult.toJSON(), OType.EMBEDDED);
-    json.field("updates", createsResult.toJSON(), OType.EMBEDDED);
-    json.field("deletes", createsResult.toJSON(), OType.EMBEDDED);
+    json.field("reads", readsResult.toJSON(), OType.EMBEDDED);
+    json.field("updates", updatesResult.toJSON(), OType.EMBEDDED);
+    json.field("deletes", deletesResult.toJSON(), OType.EMBEDDED);
 
     return json.toJSON("");
   }
