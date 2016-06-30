@@ -1,23 +1,16 @@
 package org.apache.tinkerpop.gremlin.orientdb.traversal.step.sideEffect;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.tinkerpop.gremlin.orientdb.OrientEdge;
+import org.apache.tinkerpop.gremlin.groovy.loaders.ObjectLoader;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientIndexQuery;
-import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
 import org.apache.tinkerpop.gremlin.process.traversal.Compare;
+import org.apache.tinkerpop.gremlin.process.traversal.Contains;
 import org.apache.tinkerpop.gremlin.process.traversal.step.HasContainerHolder;
 import org.apache.tinkerpop.gremlin.process.traversal.step.map.GraphStep;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.HasContainer;
@@ -114,7 +107,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
 
     // if one of the HasContainers is a label matching predicate, then return
     // that label
-    private Optional<String> findElementLabelInHasContainers() {
+    private Optional<String> findClassLabelInHasContainers() {
         return this.hasContainers.stream()
                 .filter(hasContainer -> isLabelKey(hasContainer.getKey()))
                 .findFirst()
@@ -127,45 +120,53 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
 
     @VisibleForTesting
     public Optional<OrientIndexQuery> findIndex() {
-        final Optional<String> elementLabel = findElementLabelInHasContainers();
         final OrientGraph graph = getGraph();
         final OIndexManagerProxy indexManager = graph.database().getMetadata().getIndexManager();
 
-        // find indexed keys only for the element subclass (if present)
-        final Set<String> indexedKeys = elementLabel.isPresent() ? graph.getIndexedKeys(this.returnClass, elementLabel.get()) : graph.getIndexedKeys(this.returnClass);
+        // find indexed keys only for the element subclasses (if present)
+        final Optional<String> classLabel = findClassLabelInHasContainers();
 
-        // TODO: refactor: find single value
-        Optional<Pair<String, Object>> indexedKeyAndValue = this.hasContainers.stream()
-                .filter(c -> indexedKeys.contains(c.getKey()) && c.getPredicate().getBiPredicate() == Compare.eq)
-                .findAny()
-                .map(c -> Optional.of(new Pair<>(c.getKey(), c.getValue())))
-                .orElseGet(Optional::empty);
+        if (classLabel.isPresent()) {
+            final Set<String> indexedKeys = classLabel.isPresent() ? graph.getIndexedKeys(this.returnClass, classLabel.get()) : graph.getIndexedKeys(this.returnClass);
 
-        // TODO: refactor: find multiple values
-//        Optional<Pair<String, Object>> indexedKeyAndValue = this.hasContainers.stream()
-//                .filter(c -> indexedKeys.contains(c.getKey()) && c.getPredicate().getBiPredicate() == Compare.eq)
-//                .findAny()
-//                .map(c -> Optional.of(new Pair<>(c.getKey(), c.getValue())))
-//                .orElseGet(Optional::empty);
+            Optional<Pair<String, Iterator<Object>>> requestedKeyValue = this.hasContainers.stream()
+                    .filter(c -> indexedKeys.contains(c.getKey()) && (
+                            c.getPredicate().getBiPredicate() == Compare.eq ||
+                                    c.getPredicate().getBiPredicate() == Contains.within))
+                    .findAny()
+                    .map(c -> getValuePair(c))
+                    .orElseGet(Optional::empty);
 
-        if (elementLabel.isPresent() && indexedKeyAndValue.isPresent()) {
-            String key = indexedKeyAndValue.get().getValue0();
-            Object value = indexedKeyAndValue.get().getValue1();
+            if (requestedKeyValue.isPresent()) {
+                String key = requestedKeyValue.get().getValue0();
+                Iterator<Object> values = requestedKeyValue.get().getValue1();
 
-            String className = graph.labelToClassName(elementLabel.get(), isVertexStep() ? OImmutableClass.VERTEX_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME);
-            Set<OIndex<?>> classIndexes = indexManager.getClassIndexes(className);
-            Iterator<OIndex<?>> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key)).iterator();
+                String className = graph.labelToClassName(classLabel.get(), isVertexStep() ? OImmutableClass.VERTEX_CLASS_NAME : OImmutableClass.EDGE_CLASS_NAME);
+                Set<OIndex<?>> classIndexes = indexManager.getClassIndexes(className);
+                Iterator<OIndex<?>> keyIndexes = classIndexes.stream().filter(idx -> idx.getDefinition().getFields().contains(key)).iterator();
 
-            if (keyIndexes.hasNext()) {
-                // TODO: implement algorithm to select best index if there are
-                // multiple
-                return Optional.of(new OrientIndexQuery(keyIndexes.next(), IteratorUtils.of(value)));
-            } else {
-                OLogManager.instance().warn(this, "no index found for class=[" + className + "] and key=[" + key + "]");
+                if (keyIndexes.hasNext()) {
+                    // TODO: select best index if there are multiple options
+                    return Optional.of(new OrientIndexQuery(keyIndexes.next(), values));
+                } else {
+                    OLogManager.instance().warn(this, "no index found for class=[" + className + "] and key=[" + key + "]");
+                }
             }
         }
 
         return Optional.empty();
+    }
+
+    /** gets the requested values from the Has step. If it's a single value, wrap it in an array, otherwise return the array
+     *  */
+    private Optional<Pair<String, Iterator<Object>>> getValuePair(HasContainer c) {
+        Iterator<Object> values;
+        if (c.getPredicate().getBiPredicate() == Contains.within)
+            values = ((Iterable<Object>)c.getValue()).iterator();
+        else
+            values = IteratorUtils.of(c.getValue());
+        return Optional.of(new Pair<>(c.getKey(), values));
+
     }
 
     @Override

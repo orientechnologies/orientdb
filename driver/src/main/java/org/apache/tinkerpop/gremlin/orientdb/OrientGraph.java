@@ -284,13 +284,21 @@ public final class OrientGraph implements Graph {
                     return index.cursor().toValues().stream().map(id -> newElement.apply(this, id));
                 } else {
                     Stream<Object> convertedValues = StreamUtils.asStream(valuesIter).map(value -> convertValue(index, value));
-                    Stream<OIdentifiable> ids = convertedValues.map(v -> (OIdentifiable) index.get(v));
+                    Stream<OIdentifiable> ids = convertedValues.flatMap(v -> lookupInIndex(index, v));
                     Stream<ORecord> records = ids.map(id -> id.getRecord());
                     Stream<ORecord> recordsWithoutNulls = records.filter(r -> r != null);
                     return recordsWithoutNulls.map(r -> newElement.apply(this, getRawDocument(r)));
                 }
             }
         });
+    }
+
+    private Stream<OIdentifiable> lookupInIndex(OIndex<Object> index, Object value) {
+        Object fromIndex = index.get(value);
+        if (fromIndex instanceof Iterable)
+            return StreamUtils.asStream(((Iterable) fromIndex).iterator());
+        else
+            return Stream.of((OIdentifiable) fromIndex);
     }
 
     private OIndexManager getIndexManager() {
