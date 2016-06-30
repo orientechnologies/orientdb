@@ -1274,6 +1274,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     byte type = channel.readByte();
     final boolean live = type == 'l';
     final boolean asynch = type == 'a';
+    if(connection == null && connection.database == null)
+      throw new IOException("Found invalid session");
     String dbSerializerName = connection.database.getSerializer().toString();
     String name = getRecordSerializerName();
 
