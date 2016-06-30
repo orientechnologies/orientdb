@@ -390,26 +390,20 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     ODocument keyContainer = new ODocument();
     keyContainer.setTrackingChanges(false);
 
-    try {
-      if (entry.key != null) {
-        if (entry.key instanceof OCompositeKey) {
-          final List<Object> keys = ((OCompositeKey) entry.key).getKeys();
+    if (entry.key != null) {
+      if (entry.key instanceof OCompositeKey) {
+        final List<Object> keys = ((OCompositeKey) entry.key).getKeys();
 
-          keyContainer.field("key", keys, OType.EMBEDDEDLIST);
-          keyContainer.field("binary", false);
-        } else if (!(entry.key instanceof ORecordElement) && (entry.key instanceof OSerializableStream)) {
-          keyContainer.field("key", OStreamSerializerAnyStreamable.INSTANCE.toStream(entry.key), OType.BINARY);
-          keyContainer.field("binary", true);
-        } else {
-          keyContainer.field("key", entry.key);
-          keyContainer.field("binary", false);
-        }
+        keyContainer.field("key", keys, OType.EMBEDDEDLIST);
+        keyContainer.field("binary", false);
+      }else {
+        keyContainer.field("key", entry.key);
+        keyContainer.field("binary", false);
+      }
 
-      } else
-        keyContainer = null;
-    } catch (IOException ioe) {
-      throw OException.wrapException(new OTransactionException("Error during index changes serialization. "), ioe);
-    }
+    } else
+      keyContainer = null;
+
 
     final List<ODocument> operations = new ArrayList<ODocument>();
 

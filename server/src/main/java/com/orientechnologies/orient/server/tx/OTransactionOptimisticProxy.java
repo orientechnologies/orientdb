@@ -246,34 +246,28 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           continue;
 
         final Object key;
-        try {
-          ODocument keyContainer;
-          if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_24) {
+        ODocument keyContainer;
+        if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_24) {
 
-            final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
-            if (serializedKey.equals("*"))
-              keyContainer = null;
-            else {
-              keyContainer = new ODocument();
-              keyContainer.setLazyLoad(false);
-              ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
-            }
-          } else {
-            keyContainer = entry.field("k");
+          final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+          if (serializedKey.equals("*"))
+            keyContainer = null;
+          else {
+            keyContainer = new ODocument();
+            keyContainer.setLazyLoad(false);
+            ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
           }
-          if (keyContainer != null) {
-            final Object storedKey = keyContainer.field("key");
-            if (storedKey instanceof List)
-              key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
-            else if (Boolean.TRUE.equals(keyContainer.field("binary"))) {
-              key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
-            } else
-              key = storedKey;
-          } else
-            key = null;
-        } catch (IOException ioe) {
-          throw OException.wrapException(new OTransactionException("Error during index changes deserialization. "), ioe);
+        } else {
+          keyContainer = entry.field("k");
         }
+        if (keyContainer != null) {
+          final Object storedKey = keyContainer.field("key");
+          if (storedKey instanceof List)
+            key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
+          else
+            key = storedKey;
+        } else
+          key = null;
 
         for (final ODocument op : operations) {
           final int operation = (Integer) op.rawField("o");
