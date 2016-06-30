@@ -1318,6 +1318,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     byte type = channel.readByte();
     final boolean live = type == 'l';
     final boolean asynch = type == 'a';
+    if(connection == null && connection.getDatabase() == null)
+      throw new IOException("Found invalid session");
+
     String dbSerializerName = connection.getDatabase().getSerializer().toString();
     String name = getRecordSerializerName(connection);
 
