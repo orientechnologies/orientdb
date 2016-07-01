@@ -65,8 +65,8 @@ public class OFileClassic implements OFile, OClosableItem {
   private volatile File   osFile;
   private final    String mode;
 
-  private volatile RandomAccessFile accessFile;
-  private          FileChannel      channel;
+  private RandomAccessFile accessFile;
+  private FileChannel      channel;
   private volatile boolean dirty       = false;
   private volatile boolean headerDirty = false;
   private int version;
@@ -828,7 +828,12 @@ public class OFileClassic implements OFile, OClosableItem {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#isOpen()
    */
   public boolean isOpen() {
-    return accessFile != null;
+    acquireReadLock();
+    try {
+      return accessFile != null;
+    } finally {
+      releaseReadLock();
+    }
   }
 
   /*
