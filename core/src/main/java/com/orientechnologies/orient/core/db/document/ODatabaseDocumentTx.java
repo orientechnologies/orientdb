@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.*;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleter;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.*;
@@ -2147,8 +2147,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       try {
         // if cache is switched off record will be unreachable after delete.
         ORecord rec = record.getRecord();
-        if (rec != null)
+        if (rec != null) {
           callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, rec);
+
+          if(rec instanceof ODocument)
+            ORidBagDeleter.deleteAllRidBags((ODocument) rec);
+        }
 
         final OStorageOperationResult<Boolean> operationResult;
         try {
@@ -3060,7 +3064,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     registerHook(new OSequenceTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
     registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new ORidBagDeleteHook(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
