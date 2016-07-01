@@ -53,6 +53,11 @@ public class ServerRun {
     return getServerHome(iServerId) + "/databases/" + iDatabaseName;
   }
 
+  @Override
+  public String toString() {
+    return server.getDistributedManager().getLocalNodeName() + "(" + serverId + ")";
+  }
+
   public OServer getServerInstance() {
     return server;
   }

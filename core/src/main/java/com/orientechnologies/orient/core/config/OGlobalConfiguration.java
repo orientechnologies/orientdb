@@ -88,8 +88,7 @@ public enum OGlobalConfiguration {
    * Amount of cached locks is used for component lock in atomic operation to avoid constant creation of new lock instances, default
    * value is 10000.
    */
-  COMPONENTS_LOCK_CACHE("storage.componentsLock.cache",
-      "Amount of cached locks is used for component lock to avoid constant creation of new lock instances", Integer.class, 10000),
+  COMPONENTS_LOCK_CACHE("storage.componentsLock.cache", "Amount of cached locks is used for component lock to avoid constant creation of new lock instances", Integer.class, 10000),
 
   DISK_CACHE_PINNED_PAGES("storage.diskCache.pinnedPages",
       "Maximum amount of pinned pages which may be contained in cache,"
@@ -128,8 +127,7 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time the write cache will wait before a page flushes (in ms, -1 to disable)", Integer.class, -1),
 
-  @Deprecated
-  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
+  @Deprecated DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
       "The interval (in seconds), after which the storage periodically "
           + "checks whether the amount of free disk space is enough to work in write mode",
       Integer.class, 5),
@@ -138,17 +136,12 @@ public enum OGlobalConfiguration {
    * The interval (how many new pages should be added before free space will be checked), after which the storage periodically
    * checks whether the amount of free disk space is enough to work in write mode.
    */
-  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES("storage.diskCache.diskFreeSpaceCheckIntervalInPages",
-      "The interval (how many new pages should be added before free space will be checked), after which the storage periodically "
-          + "checks whether the amount of free disk space is enough to work in write mode",
-      Integer.class, 2048),
+  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES("storage.diskCache.diskFreeSpaceCheckIntervalInPages", "The interval (how many new pages should be added before free space will be checked), after which the storage periodically " + "checks whether the amount of free disk space is enough to work in write mode", Integer.class, 2048),
 
   /**
    * Keep disk cache state between moment when storage is closed and moment when it is opened again. <code>true</code> by default.
    */
-  STORAGE_KEEP_DISK_CACHE_STATE("storage.diskCache.keepState",
-      "Keep disk cache state between moment when storage is closed and moment when it is opened again. true by default",
-      Boolean.class, true),
+  STORAGE_KEEP_DISK_CACHE_STATE("storage.diskCache.keepState", "Keep disk cache state between moment when storage is closed and moment when it is opened again. true by default", Boolean.class, true),
 
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Indicates a force sync should be performed for each update on the storage configuration", Boolean.class, true),
@@ -221,8 +214,10 @@ public enum OGlobalConfiguration {
   DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer (in kilobytes). !!! NEVER CHANGE THIS VALUE !!!",
       Integer.class, 64),
 
-  DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit", "Minimum amount of space on disk, which, when exceeded, "
-      + "will cause the database to switch to read-only mode (in megabytes)", Long.class, 2 * WAL_MAX_SEGMENT_SIZE.getValueAsLong()),
+  DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit",
+      "Minimum amount of space on disk, which, when exceeded, "
+          + "will cause the database to switch to read-only mode (in megabytes)",
+      Long.class, 2 * WAL_MAX_SEGMENT_SIZE.getValueAsLong()),
 
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound",
       "The least amount of free space (in kb) in a page, which is tracked in paginated storage", Integer.class, 16),
@@ -235,14 +230,14 @@ public enum OGlobalConfiguration {
       "When a record is deleted, the space in the cluster will not be freed, but rather tombstoned", Boolean.class, false),
 
   // RECORDS
-      RECORD_DOWNSIZING_ENABLED("record.downsizing.enabled",
-          "On updates, if the record size is lower than before, this reduces the space taken accordingly. "
-              + "If enabled this could increase defragmentation, but it reduces the used disk space",
-          Boolean.class, true),
+  RECORD_DOWNSIZING_ENABLED("record.downsizing.enabled",
+      "On updates, if the record size is lower than before, this reduces the space taken accordingly. "
+          + "If enabled this could increase defragmentation, but it reduces the used disk space",
+      Boolean.class, true),
 
   // DATABASE
-  OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only! It saves objects bound to dirty records",
-              Boolean.class, false, true),
+  OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only! It saves objects bound to dirty records", Boolean.class,
+      false, true),
 
   // DATABASE
   DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
@@ -277,9 +272,9 @@ public enum OGlobalConfiguration {
       Boolean.class, false),
 
   // INDEX
-      INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
+  INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
       "Amount of values, after which the index implementation will use an sbtree as a values container. Set to -1, to disable and force using an sbtree",
-          Integer.class, 40, true),
+      Integer.class, 40, true),
 
   INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("index.sbtreeBonsaiToEmbeddedThreshold",
       "Amount of values, after which index implementation will use an embedded values container (disabled by default)",
@@ -311,9 +306,7 @@ public enum OGlobalConfiguration {
    * @see OIndexDefinition#isNullValuesIgnored()
    * @since 2.2
    */
-  INDEX_IGNORE_NULL_VALUES_DEFAULT("index.ignoreNullValuesDefault",
-      "Controls whether null values will be ignored by default " + "by newly created indexes or not (false by default)",
-      Boolean.class, false),
+  INDEX_IGNORE_NULL_VALUES_DEFAULT("index.ignoreNullValuesDefault", "Controls whether null values will be ignored by default " + "by newly created indexes or not (false by default)", Boolean.class, false),
 
   INDEX_TX_MODE("index.txMode",
       "Indicates the index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
@@ -348,8 +341,8 @@ public enum OGlobalConfiguration {
       0.5),
 
   // RIDBAG
-      RID_BAG_EMBEDDED_DEFAULT_SIZE("ridBag.embeddedDefaultSize", "Size of embedded RidBag array, when created (empty)",
-          Integer.class, 4),
+  RID_BAG_EMBEDDED_DEFAULT_SIZE("ridBag.embeddedDefaultSize", "Size of embedded RidBag array, when created (empty)", Integer.class,
+      4),
 
   RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("ridBag.embeddedToSbtreeBonsaiThreshold",
       "Amount of values after which a LINKBAG implementation will use sbtree as values container. Set to -1 to always use an sbtree",
@@ -363,7 +356,7 @@ public enum OGlobalConfiguration {
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This configuration setting is experimental", Boolean.class, false),
 
   // FILE
-      TRACK_FILE_CLOSE("file.trackFileClose",
+  TRACK_FILE_CLOSE("file.trackFileClose",
       "Log all the cases when files are closed. This is needed only for internal debugging purposes", Boolean.class, false),
 
   FILE_LOCK("file.lock", "Locks files when used. Default is true", boolean.class, true),
@@ -374,9 +367,9 @@ public enum OGlobalConfiguration {
   FILE_DELETE_RETRY("file.deleteRetry", "Number of retries to delete a locked file", Integer.class, 50),
 
   // SECURITY
-      SECURITY_USER_PASSWORD_SALT_ITERATIONS("security.userPasswordSaltIterations",
+  SECURITY_USER_PASSWORD_SALT_ITERATIONS("security.userPasswordSaltIterations",
       "Number of iterations to generate the salt or user password. Changing this setting does not affect stored passwords",
-          Integer.class, 65536),
+      Integer.class, 65536),
 
   SECURITY_USER_PASSWORD_SALT_CACHE_SIZE("security.userPasswordSaltCacheSize",
       "Cache size of hashed salt passwords. The cache works as LRU. Use 0 to disable the cache", Integer.class, 500),
@@ -488,8 +481,7 @@ public enum OGlobalConfiguration {
   /**
    * Interval between snapshots of profiler state in milliseconds, default value is 100.
    */
-  STORAGE_PROFILER_SNAPSHOT_INTERVAL("storageProfiler.intervalBetweenSnapshots",
-      "Interval between snapshots of profiler state in milliseconds", Integer.class, 100),
+  STORAGE_PROFILER_SNAPSHOT_INTERVAL("storageProfiler.intervalBetweenSnapshots", "Interval between snapshots of profiler state in milliseconds", Integer.class, 100),
 
   STORAGE_PROFILER_CLEANUP_INTERVAL("storageProfiler.cleanUpInterval", "Interval between time series in milliseconds",
       Integer.class, 5000),
@@ -574,15 +566,12 @@ public enum OGlobalConfiguration {
   /**
    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
    */
-  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool",
-      "Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection", Integer.class, 100),
+  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection", Integer.class, 100),
 
   /**
    * Maximum time, where the client should wait for a connection from the pool, when all connections busy.
    */
-  CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
-      "Maximum time, where the client should wait for a connection from the pool, when all connections busy", Integer.class, 5000,
-      true),
+  CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout", "Maximum time, where the client should wait for a connection from the pool, when all connections busy", Integer.class, 5000, true),
 
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
       "Delay (in ms), after which a data modification command will be resent, if the DB was frozen", Integer.class, 10000, true),
@@ -646,51 +635,46 @@ public enum OGlobalConfiguration {
       Long.class, 15000l),
 
   /**
-   * @Since 2.2.0
+   * Since 2.2.4
    */
-  DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY("distributed.publishNodeStatusEvery",
-      "Time in ms to publish the node status on distributed map. Set to 0 to disable such refresh of node configuration",
-      Long.class, 5000l),
+  DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS("distributed.autoRemoveOfflineServers",
+      "This is the amount of time (in ms) to automatically remove a server from the distributed configuration after a while it's OFFLINE. -1 = never, 0 = immediately, >0 the actual time to wait",
+      Long.class, -1),
 
   /**
    * @Since 2.2.0
    */
-  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_LOCAL_QUEUESIZE("distributed.localQueueSize",
-      "Size of the intra-thread queue for distributed messages", Integer.class, 10000),
+  DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY("distributed.publishNodeStatusEvery", "Time in ms to publish the node status on distributed map. Set to 0 to disable such refresh of node configuration", Long.class, 5000l),
 
   /**
    * @Since 2.2.0
    */
-  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads",
-      "Number of parallel worker threads per database that process distributed messages", Integer.class, 8),
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_LOCAL_QUEUESIZE("distributed.localQueueSize", "Size of the intra-thread queue for distributed messages", Integer.class, 10000),
+
+  /**
+   * @Since 2.2.0
+   */
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_DB_WORKERTHREADS("distributed.dbWorkerThreads", "Number of parallel worker threads per database that process distributed messages", Integer.class, 8),
 
   /**
    * @Since 2.1.3, Deprecated in 2.2.0
    */
-  @Deprecated @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize",
-      "Maximum queue size to mark a node as stalled. If the number of messages in queue are more than this values, the node is restarted with a remote command (0 = no maximum, which means up to 2^31-1 entries)",
-      Integer.class, 10000),
+  @Deprecated @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_QUEUE_MAXSIZE("distributed.queueMaxSize", "Maximum queue size to mark a node as stalled. If the number of messages in queue are more than this values, the node is restarted with a remote command (0 = no maximum, which means up to 2^31-1 entries)", Integer.class, 10000),
 
   /**
    * @Since 2.1.3
    */
-  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory",
-      "Directory where the copy of an existent database is saved, before it is downloaded from the cluster", String.class,
-      "../backup/databases"),
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_BACKUP_DIRECTORY("distributed.backupDirectory", "Directory where the copy of an existent database is saved, before it is downloaded from the cluster", String.class, "../backup/databases"),
 
   /**
    * @Since 2.1
    */
-  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY("distributed.concurrentTxMaxAutoRetry",
-      "Maximum attempts the transaction coordinator should execute a transaction automatically, if records are locked. (Minimum is 1 = no attempts)",
-      Integer.class, 10, true),
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY("distributed.concurrentTxMaxAutoRetry", "Maximum attempts the transaction coordinator should execute a transaction automatically, if records are locked. (Minimum is 1 = no attempts)", Integer.class, 10, true),
 
   /**
    * @Since 2.1
    */
-  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY("distributed.concurrentTxAutoRetryDelay",
-      "Delay (in ms) between attempts on executing a distributed transaction, which had failed because of locked records. (0=no delay)",
-      Integer.class, 100, true),
+  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY("distributed.concurrentTxAutoRetryDelay", "Delay (in ms) between attempts on executing a distributed transaction, which had failed because of locked records. (0=no delay)", Integer.class, 100, true),
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
       ORecordSerializerBinary.NAME),
@@ -698,46 +682,37 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_KRB5_CONFIG("client.krb5.config", "Location of the Kerberos configuration file",
-      String.class, null),
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_CONFIG("client.krb5.config", "Location of the Kerberos configuration file", String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_KRB5_CCNAME("client.krb5.ccname", "Location of the Kerberos client ticketcache",
-      String.class, null),
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_CCNAME("client.krb5.ccname", "Location of the Kerberos client ticketcache", String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_KRB5_KTNAME("client.krb5.ktname", "Location of the Kerberos client keytab",
-      String.class, null),
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_KRB5_KTNAME("client.krb5.ktname", "Location of the Kerberos client keytab", String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CREDENTIAL_INTERCEPTOR("client.credentialinterceptor",
-      "The name of the CredentialInterceptor class", String.class, null),
+  @OApi(maturity = OApi.MATURITY.NEW) CLIENT_CREDENTIAL_INTERCEPTOR("client.credentialinterceptor", "The name of the CredentialInterceptor class", String.class, null),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)CREATE_DEFAULT_USERS("security.createDefaultUsers",
-      "Indicates whether default database users should be created", Boolean.class, true),
+  @OApi(maturity = OApi.MATURITY.NEW) CREATE_DEFAULT_USERS("security.createDefaultUsers", "Indicates whether default database users should be created", Boolean.class, true),
 
   /**
    * @Since 2.2
    */
-  @OApi(maturity = OApi.MATURITY.NEW)SERVER_SECURITY_FILE("server.security.file",
-      "Location of the OrientDB security.json configuration file", String.class, null),
+  @OApi(maturity = OApi.MATURITY.NEW) SERVER_SECURITY_FILE("server.security.file", "Location of the OrientDB security.json configuration file", String.class, null),
 
   /**
    * Deprecated in v2.2.0
    */
-  @Deprecated
-  JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
-      "This property disables using JNA, should it be installed on your system. (Default true) To use JNA bundled with database",
-      boolean.class, true),
+  @Deprecated JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library", "This property disables using JNA, should it be installed on your system. (Default true) To use JNA bundled with database", boolean.class, true),
 
   @Deprecated DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout",
       "Maximum timeout (in ms) to wait for the response in replication", Long.class, 500000l, true),
