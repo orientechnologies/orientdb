@@ -22,6 +22,7 @@ package com.orientechnologies.orient.stresstest;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.stresstest.workload.OCheckWorkload;
 import com.orientechnologies.orient.stresstest.workload.OWorkload;
 import com.orientechnologies.orient.stresstest.workload.OWorkloadFactory;
 
@@ -44,24 +45,18 @@ public class OStressTester {
     PLOCAL, MEMORY, REMOTE, DISTRIBUTED
   }
 
-  private final int                     threadsNumber;
   private final ODatabaseIdentifier     databaseIdentifier;
-  private final int                     opsInTx;
-  private final String                  outputResultFile;
-  private final boolean                 keepDatabaseAfterTest;
   private OConsoleProgressWriter        consoleProgressWriter;
+  private final OStressTesterSettings   settings;
 
   private static final OWorkloadFactory workloadFactory = new OWorkloadFactory();
   private List<OWorkload>               workloads       = new ArrayList<OWorkload>();
 
-  public OStressTester(final List<OWorkload> workloads, ODatabaseIdentifier databaseIdentifier, int threadsNumber, int opsInTx,
-      String outputResultFile, final boolean keepDatabaseAfterTest) throws Exception {
+  public OStressTester(final List<OWorkload> workloads, ODatabaseIdentifier databaseIdentifier,
+      final OStressTesterSettings settings) throws Exception {
     this.workloads = workloads;
-    this.threadsNumber = threadsNumber;
     this.databaseIdentifier = databaseIdentifier;
-    this.opsInTx = opsInTx;
-    this.outputResultFile = outputResultFile;
-    this.keepDatabaseAfterTest = keepDatabaseAfterTest;
+    this.settings = settings;
   }
 
   public static void main(String[] args) {
@@ -95,12 +90,12 @@ public class OStressTester {
 
         consoleProgressWriter.start();
 
-        consoleProgressWriter
-            .printMessage(String.format("\nStarting workload %s (concurrencyLevel=%d)...", workload.getName(), threadsNumber));
+        consoleProgressWriter.printMessage(
+            String.format("\nStarting workload %s (concurrencyLevel=%d)...", workload.getName(), settings.threadsNumber));
 
         final long startTime = System.currentTimeMillis();
 
-        workload.execute(threadsNumber, databaseIdentifier);
+        workload.execute(settings.threadsNumber, databaseIdentifier);
 
         final long endTime = System.currentTimeMillis();
 
@@ -109,9 +104,15 @@ public class OStressTester {
         System.out.println(String.format("\n- Total execution time: %.3f secs", ((float) (endTime - startTime) / 1000f)));
 
         System.out.println(workload.getFinalResult());
+
+        if (settings.checkDatabase && workload instanceof OCheckWorkload) {
+          System.out.println(String.format("- Checking database..."));
+          ((OCheckWorkload) workload).check(databaseIdentifier);
+          System.out.println(String.format("- Check completed"));
+        }
       }
 
-      if (outputResultFile != null)
+      if (settings.resultOutputFile != null)
         writeFile();
 
     } catch (Exception ex) {
@@ -119,7 +120,7 @@ public class OStressTester {
       returnCode = 1;
     } finally {
       // we don't need to drop the in-memory DB
-      if (keepDatabaseAfterTest || databaseIdentifier.getMode() == OMode.MEMORY)
+      if (settings.keepDatabaseAfterTest || databaseIdentifier.getMode() == OMode.MEMORY)
         consoleProgressWriter.printMessage(String.format("\nDatabase is available on [%s].", databaseIdentifier.getUrl()));
       else {
         ODatabaseUtils.dropDatabase(databaseIdentifier);
@@ -139,18 +140,18 @@ public class OStressTester {
       for (OWorkload workload : workloads) {
         if (i++ > 0)
           output.append(",");
-        output.append( workload.getFinalResultAsJson() );
+        output.append(workload.getFinalResultAsJson());
       }
       output.append("]}");
 
-      OIOUtils.writeFile(new File(outputResultFile), output.toString());
+      OIOUtils.writeFile(new File(settings.resultOutputFile), output.toString());
     } catch (IOException e) {
       System.err.println("\nError on writing the result file : " + e.getMessage());
     }
   }
 
   public int getThreadsNumber() {
-    return threadsNumber;
+    return settings.threadsNumber;
   }
 
   public OMode getMode() {
@@ -166,7 +167,7 @@ public class OStressTester {
   }
 
   public int getTransactionsNumber() {
-    return opsInTx;
+    return settings.operationsPerTransaction;
   }
 
   public static OWorkloadFactory getWorkloadFactory() {

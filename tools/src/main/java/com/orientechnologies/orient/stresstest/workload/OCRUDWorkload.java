@@ -22,7 +22,10 @@ package com.orientechnologies.orient.stresstest.workload;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.tool.ODatabaseRepair;
+import com.orientechnologies.orient.core.db.tool.ODatabaseTool;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -38,7 +41,7 @@ import java.util.List;
  *
  * @author Luca Garulli
  */
-public class OCRUDWorkload extends OBaseDocumentWorkload {
+public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorkload {
 
   public static final String CLASS_NAME           = "StressTestCRUD";
   public static final String INDEX_NAME           = CLASS_NAME + ".Index";
@@ -174,16 +177,16 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
   public String getFinalResult() {
     final StringBuilder buffer = new StringBuilder(getErrors());
 
-    buffer.append(String.format("- Created %d records in %.3f secs\n  %s", createsResult.total, (createsResult.totalTime / 1000f),
+    buffer.append(String.format("- Created %d records in %.3f secs%s", createsResult.total, (createsResult.totalTime / 1000f),
         createsResult.toOutput()));
 
-    buffer.append(String.format("\n- Read    %d records in %.3f secs\n  %s", readsResult.total, (readsResult.totalTime / 1000f),
+    buffer.append(String.format("\n- Read %d records in %.3f secs%s", readsResult.total, (readsResult.totalTime / 1000f),
         readsResult.toOutput()));
 
-    buffer.append(String.format("\n- Updated %d records in %.3f secs\n  %s", updatesResult.total, (updatesResult.totalTime / 1000f),
+    buffer.append(String.format("\n- Updated %d records in %.3f secs%s", updatesResult.total, (updatesResult.totalTime / 1000f),
         updatesResult.toOutput()));
 
-    buffer.append(String.format("\n- Deleted %d records in %.3f secs\n  %s", deletesResult.total, (deletesResult.totalTime / 1000f),
+    buffer.append(String.format("\n- Deleted %d records in %.3f secs%s", deletesResult.total, (deletesResult.totalTime / 1000f),
         deletesResult.toOutput()));
 
     return buffer.toString();
@@ -259,5 +262,12 @@ public class OCRUDWorkload extends OBaseDocumentWorkload {
 
   public int getDeletes() {
     return deletesResult.total;
+  }
+
+  @Override
+  public void check(final ODatabaseIdentifier databaseIdentifier) {
+    final ODatabaseDocument db = (ODatabaseDocument) getDocumentDatabase(databaseIdentifier);
+    final ODatabaseTool repair = new ODatabaseRepair().setDatabase(db);
+    repair.run();
   }
 }

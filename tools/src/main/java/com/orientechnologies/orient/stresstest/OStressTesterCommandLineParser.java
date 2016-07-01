@@ -43,6 +43,7 @@ public class OStressTesterCommandLineParser {
   public final static String OPTION_KEEP_DATABASE_AFTER_TEST                     = "k";
   public final static String OPTION_OUTPUT_FILE                                  = "o";
   public static final String OPTION_PLOCAL_PATH                                  = "d";
+  public final static String OPTION_CHECK_DATABASE                               = "chk";
   public final static String OPTION_ROOT_PASSWORD                                = "root-password";
   public static final String ERROR_OPENING_CONSOLE                               = "An error has occurred opening the console. Please supply the root password as the -"
       + OPTION_ROOT_PASSWORD + " parameter.";
@@ -52,12 +53,14 @@ public class OStressTesterCommandLineParser {
   public final static String OPTION_REMOTE_PORT                                  = "remote-port";
 
   public final static String MAIN_OPTIONS                                        = OPTION_MODE + OPTION_CONCURRENCY
-      + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH + OPTION_KEEP_DATABASE_AFTER_TEST;
+      + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH + OPTION_KEEP_DATABASE_AFTER_TEST
+      + OPTION_CHECK_DATABASE;
 
   public static final String SYNTAX                                              = "StressTester "
       + "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" + "\n\t-w workloads" + "\n\t-c concurrency-level"
-      + "\n\t-x operations-per-transaction" + "\n\t-o result-output-file" + "\n\t-d database-directory"
-      + "\n\t--root-password rootPassword" + "\n\t--remote-ip ipOrHostname" + "\n\t--remote-port portNumber" + "\n";
+      + "\n\t-x operations-per-transaction" + "\n\t-o result-output-file" + "\n\t-d database-directory" + "\n\t-k true|false"
+      + "\n\t-chk true|false" + "\n\t--root-password rootPassword" + "\n\t--remote-ip ipOrHostname" + "\n\t--remote-port portNumber"
+      + "\n";
 
   static final String        COMMAND_LINE_PARSER_INVALID_NUMBER                  = "Invalid %s number [%s].";
   static final String        COMMAND_LINE_PARSER_LESSER_THAN_ZERO_NUMBER         = "The %s value must be greater than 0.";
@@ -83,38 +86,41 @@ public class OStressTesterCommandLineParser {
 
     final Map<String, String> options = checkOptions(readOptions(args));
 
-    final String dbName = TEMP_DATABASE_NAME + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-    final OStressTester.OMode mode = OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase());
-    String rootPassword = options.get(OPTION_ROOT_PASSWORD);
-    final String resultOutputFile = options.get(OPTION_OUTPUT_FILE);
-    String plocalPath = options.get(OPTION_PLOCAL_PATH);
-    final int operationsPerTransaction = getNumber(options.get(OPTION_TRANSACTIONS), "transactions");
-    final int threadsNumber = getNumber(options.get(OPTION_CONCURRENCY), "concurrency");
-    final String remoteIp = options.get(OPTION_REMOTE_IP);
-    final String workloadCfg = options.get(OPTION_WORKLOAD);
-    final boolean keepDatabaseAfterTest = options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null
-        ? Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST)) : false;
-    int remotePort = 2424;
+    final OStressTesterSettings settings = new OStressTesterSettings();
 
-    if (plocalPath != null) {
-      if (plocalPath.endsWith(File.separator)) {
-        plocalPath = plocalPath.substring(0, plocalPath.length() - File.separator.length());
+    settings.dbName = TEMP_DATABASE_NAME + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+    settings.mode = OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase());
+    settings.rootPassword = options.get(OPTION_ROOT_PASSWORD);
+    settings.resultOutputFile = options.get(OPTION_OUTPUT_FILE);
+    settings.plocalPath = options.get(OPTION_PLOCAL_PATH);
+    settings.operationsPerTransaction = getNumber(options.get(OPTION_TRANSACTIONS), "transactions");
+    settings.threadsNumber = getNumber(options.get(OPTION_CONCURRENCY), "concurrency");
+    settings.remoteIp = options.get(OPTION_REMOTE_IP);
+    settings.workloadCfg = options.get(OPTION_WORKLOAD);
+    settings.keepDatabaseAfterTest = options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null
+        ? Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST)) : false;
+    settings.remotePort = 2424;
+    settings.checkDatabase = Boolean.parseBoolean(options.get(OPTION_CHECK_DATABASE));
+
+    if (settings.plocalPath != null) {
+      if (settings.plocalPath.endsWith(File.separator)) {
+        settings.plocalPath = settings.plocalPath.substring(0, settings.plocalPath.length() - File.separator.length());
       }
-      File plocalFile = new File(plocalPath);
+      File plocalFile = new File(settings.plocalPath);
       if (!plocalFile.exists()) {
-        throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_NOT_EXISTING_PLOCAL_PATH, plocalPath));
+        throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_NOT_EXISTING_PLOCAL_PATH, settings.plocalPath));
       }
       if (!plocalFile.canWrite()) {
-        throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_PLOCAL_PATH, plocalPath));
+        throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_PLOCAL_PATH, settings.plocalPath));
       }
       if (!plocalFile.isDirectory()) {
-        throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_PLOCAL_PATH_IS_NOT_DIRECTORY, plocalPath));
+        throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_PLOCAL_PATH_IS_NOT_DIRECTORY, settings.plocalPath));
       }
     }
 
-    if (resultOutputFile != null) {
+    if (settings.resultOutputFile != null) {
 
-      File outputFile = new File(resultOutputFile);
+      File outputFile = new File(settings.resultOutputFile);
       if (outputFile.exists()) {
         outputFile.delete();
       }
@@ -137,36 +143,35 @@ public class OStressTesterCommandLineParser {
     }
 
     if (options.get(OPTION_REMOTE_PORT) != null) {
-      remotePort = getNumber(options.get(OPTION_REMOTE_PORT), "remotePort");
-      if (remotePort > 65535) {
-        throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_INVALID_REMOTE_PORT_NUMBER, remotePort));
+      settings.remotePort = getNumber(options.get(OPTION_REMOTE_PORT), "remotePort");
+      if (settings.remotePort > 65535) {
+        throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_INVALID_REMOTE_PORT_NUMBER, settings.remotePort));
       }
     }
 
-    if (mode == OStressTester.OMode.DISTRIBUTED) {
-      throw new IllegalArgumentException(String.format("OMode [%s] not yet supported.", mode));
+    if (settings.mode == OStressTester.OMode.DISTRIBUTED) {
+      throw new IllegalArgumentException(String.format("OMode [%s] not yet supported.", settings.mode));
     }
 
-    if (mode == OStressTester.OMode.REMOTE && remoteIp == null) {
+    if (settings.mode == OStressTester.OMode.REMOTE && settings.remoteIp == null) {
       throw new IllegalArgumentException(COMMAND_LINE_PARSER_MISSING_REMOTE_IP);
     }
 
-    if (rootPassword == null && mode == OStressTester.OMode.REMOTE) {
+    if (settings.rootPassword == null && settings.mode == OStressTester.OMode.REMOTE) {
       Console console = System.console();
       if (console != null) {
-        rootPassword = String.valueOf(console.readPassword(String.format(CONSOLE_REMOTE_PASSWORD_PROMPT, remoteIp, remotePort)));
+        settings.rootPassword = String
+            .valueOf(console.readPassword(String.format(CONSOLE_REMOTE_PASSWORD_PROMPT, settings.remoteIp, settings.remotePort)));
       } else {
         throw new Exception(ERROR_OPENING_CONSOLE);
       }
     }
 
-    final List<OWorkload> workloads = parseWorkloads(workloadCfg);
+    final List<OWorkload> workloads = parseWorkloads(settings.workloadCfg);
 
-    final ODatabaseIdentifier databaseIdentifier = new ODatabaseIdentifier(mode, dbName, rootPassword, remoteIp, remotePort,
-        plocalPath);
+    final ODatabaseIdentifier databaseIdentifier = new ODatabaseIdentifier(settings);
 
-    return new OStressTester(workloads, databaseIdentifier, threadsNumber, operationsPerTransaction, resultOutputFile,
-        keepDatabaseAfterTest);
+    return new OStressTester(workloads, databaseIdentifier, settings);
   }
 
   private static List<OWorkload> parseWorkloads(final String workloadConfig) {
