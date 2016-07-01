@@ -643,10 +643,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       final Member member = iEvent.getMember();
       final String nodeLeftName = getNodeName(member);
+
       if (nodeLeftName != null) {
         try {
-          final int nodeLeftId = getNodeIdByName(nodeLeftName);
-
           // REMOVE INTRA SERVER CONNECTION
           closeRemoteServer(nodeLeftName);
 
@@ -659,9 +658,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             }
 
           // UNLOCK ANY PENDING LOCKS
-          if (messageService != null)
+          if (messageService != null) {
+            final int nodeLeftId = getNodeIdByName(nodeLeftName);
             for (String dbName : messageService.getDatabases())
               messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftId);
+          }
 
           activeNodes.remove(nodeLeftName);
           activeNodesNamesByMemberId.remove(member.getUuid());

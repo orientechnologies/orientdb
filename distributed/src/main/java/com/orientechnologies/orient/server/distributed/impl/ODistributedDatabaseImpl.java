@@ -19,24 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.concur.OOfflineNodeException;
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -47,6 +29,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 /**
  * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each others.
@@ -272,8 +271,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       if (localResult != null)
         // COLLECT LOCAL RESULT
-        currentResponseMgr
-            .setLocalResult(localNodeName, (Serializable) localResult);
+        currentResponseMgr.setLocalResult(localNodeName, (Serializable) localResult);
 
       if (!(iNodes instanceof List))
         iNodes = new ArrayList<String>(iNodes);
@@ -282,14 +280,29 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       msgService.registerRequest(iRequest.getId().getMessageId(), currentResponseMgr);
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "Sending request %s", iRequest);
+        ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "Sending request %s...", iRequest);
 
       for (String node : iNodes) {
         // CATCH ANY EXCEPTION LOG IT AND IGNORE TO CONTINUE SENDING REQUESTS TO OTHER NODES
         try {
           final ORemoteServerController remoteServer = manager.getRemoteServer(node);
-          remoteServer.sendRequest(iRequest, node);
+
+          remoteServer.sendRequest(iRequest);
+
         } catch (Throwable e) {
+          if (e instanceof OSecurityAccessException) {
+            // THE CONNECTION COULD BE STALE, CREATE A NEW ONE AND RETRY
+            manager.closeRemoteServer(node);
+            final ORemoteServerController remoteServer = manager.getRemoteServer(node);
+            try {
+              remoteServer.sendRequest(iRequest);
+              continue;
+
+            } catch (Throwable ex) {
+              // IGNORE IT BECAUSE MANAGED BELOW
+            }
+          }
+
           if (!manager.isNodeAvailable(node))
             // NODE IS NOT AVAILABLE
             ODistributedServerLog.debug(this, localNodeName, node, ODistributedServerLog.DIRECTION.OUT,
@@ -515,10 +528,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       } else
         // BROWSE FOR ALL CLUSTER TO GET THE FIRST 'waitLocalNode'
         for (String clName : iClusterNames) {
-          if (cfg.isReadYourWrites(clName)) {
-            waitLocalNode = true;
-            break;
-          }
+        if (cfg.isReadYourWrites(clName)) {
+        waitLocalNode = true;
+        break;
+        }
         }
     return waitLocalNode;
   }

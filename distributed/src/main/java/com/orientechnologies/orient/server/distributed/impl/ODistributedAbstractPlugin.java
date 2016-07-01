@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
@@ -76,6 +67,15 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedDatabase
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -1699,7 +1699,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODistributedRequest request = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), null,
         new OStopServerTask(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
 
-    getRemoteServer(iNode).sendRequest(request, iNode);
+    getRemoteServer(iNode).sendRequest(request);
   }
 
   public void restartNode(final String iNode) throws IOException {
@@ -1708,7 +1708,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODistributedRequest request = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), null,
         new ORestartServerTask(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
 
-    getRemoteServer(iNode).sendRequest(request, iNode);
+    getRemoteServer(iNode).sendRequest(request);
   }
 
   public Set<String> getAvailableNodeNames(final String iDatabaseName) {

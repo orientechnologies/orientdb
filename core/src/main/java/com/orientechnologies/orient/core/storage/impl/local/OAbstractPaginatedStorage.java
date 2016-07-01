@@ -747,6 +747,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OLogSequenceNumber endLsn = writeAheadLog.end();
 
       if (endLsn == null || lsn.compareTo(endLsn) >= 0) {
+        OLogManager.instance().warn(this, "Cannot find requested LSN=%s for database sync operation. Last available LSN is %s", endLsn);
         return null;
       }
 
