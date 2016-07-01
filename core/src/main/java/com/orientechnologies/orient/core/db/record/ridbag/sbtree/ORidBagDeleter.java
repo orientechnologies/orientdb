@@ -15,18 +15,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public final class ORidBagDeleter implements ODocumentFieldVisitor {
 
   public static void deleteAllRidBags(ODocument document) {
-    final int version = document.getVersion();
-    if (document.fields() == 0 && document.getIdentity().isPersistent()) {
-      // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
-      document.reload();
-      if (version > -1 && document.getVersion() != version) // check for record version errors
-        if (OFastConcurrentModificationException.enabled())
-          throw OFastConcurrentModificationException.instance();
-        else
-          throw new OConcurrentModificationException(document.getIdentity(), document.getVersion(), version,
-              ORecordOperation.DELETED);
-    }
-
     final ODocumentFieldWalker documentFieldWalker = new ODocumentFieldWalker();
     final ORidBagDeleter ridBagDeleter = new ORidBagDeleter();
     documentFieldWalker.walkDocument(document, ridBagDeleter);

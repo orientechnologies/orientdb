@@ -431,9 +431,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       case ORecordOperation.DELETED:
         database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
         database.callbackHooks(TYPE.BEFORE_DELETE, iRecord);
-        if(iRecord instanceof ODocument)
-          // TODO: double check this, it use ORecordSerializationContext.getContext() not present here
-          ORidBagDeleter.deleteAllRidBags((ODocument) iRecord);
         break;
       }
 
