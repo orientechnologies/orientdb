@@ -54,7 +54,7 @@ public class OGraphRepair {
     repairVertices(graph, stats, outputListener);
 
     message(outputListener, "Repair of graph '" + graph.getRawGraph().getURL() + "' completed in "
-        + (System.currentTimeMillis() - beginTime / 1000) + " secs\n");
+        + ((System.currentTimeMillis() - beginTime )/ 1000) + " secs\n");
 
     message(outputListener, " scannedEdges.....: " + stats.scannedEdges + "\n");
     message(outputListener, " removedEdges.....: " + stats.removedEdges + "\n");
