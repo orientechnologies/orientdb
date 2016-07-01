@@ -19,22 +19,21 @@
  */
 package com.orientechnologies.orient.graph.stresstest;
 
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.ODatabaseUtils;
 import com.orientechnologies.orient.stresstest.workload.OBaseWorkload;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.orientechnologies.orient.stresstest.workload.OCheckWorkload;
+import com.tinkerpop.blueprints.impls.orient.*;
 
 /**
  * CRUD implementation of the workload.
  *
  * @author Luca Garulli
  */
-public abstract class OBaseGraphWorkload extends OBaseWorkload {
+public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheckWorkload {
   protected boolean tx = false;
 
   protected OBaseGraphWorkload(final boolean tx) {
@@ -77,5 +76,16 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload {
       throw new IllegalArgumentException("Error on opening database " + databaseIdentifier.getName());
 
     return new OrientGraph((ODatabaseDocumentTx) database);
+  }
+
+  @Override
+  public void check(final ODatabaseIdentifier databaseIdentifier) {
+    final OGraphRepair repair = new OGraphRepair();
+    repair.repair(getGraphNoTx(databaseIdentifier), new OCommandOutputListener() {
+      @Override
+      public void onMessage(String iText) {
+        System.out.print("   - " + iText);
+      }
+    });
   }
 }
