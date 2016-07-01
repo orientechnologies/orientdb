@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -113,11 +114,11 @@ public class ODistributedTransactionManager {
 
             final List<ORecordOperation> uResult = (List<ORecordOperation>) OScenarioThreadLocal
                 .executeAsDistributed(new Callable() {
-              @Override
-              public Object call() throws Exception {
-                return storage.commit(iTx, callback);
-              }
-            });
+                  @Override
+                  public Object call() throws Exception {
+                    return storage.commit(iTx, callback);
+                  }
+                });
 
             // REMOVE THE TX OBJECT FROM DATABASE TO AVOID UND OPERATIONS ARE "LOST IN TRANSACTION"
             database.setDefaultTransactionMode();
@@ -141,6 +142,7 @@ public class ODistributedTransactionManager {
 
             final OTxTask txTask = createTxTask(uResult);
             txTask.setLocalUndoTasks(undoTasks);
+            txTask.setLastLSN(((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN());
 
             OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
 
@@ -495,7 +497,7 @@ public class ODistributedTransactionManager {
   protected boolean processCommitResult(final String localNodeName, final OTransaction iTx, final OTxTask txTask,
       final Set<String> involvedClusters, final Iterable<ORecordOperation> tmpEntries, final Collection<String> nodes,
       final int autoRetryDelay, final ODistributedRequestId reqId, final ODistributedResponse dResponse, final boolean isLastRetry)
-          throws InterruptedException {
+      throws InterruptedException {
     final Object result = dResponse.getPayload();
 
     if (result instanceof OTxTaskResult) {

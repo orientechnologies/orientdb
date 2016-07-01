@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
@@ -143,6 +144,7 @@ public class OTxTask extends OAbstractReplicatedTask {
 
     } catch (Throwable e) {
       database.rollback();
+      // ddb.popTxContext(requestId);
       reqContext.unlock();
 
       if (!(e instanceof ONeedRetryException || e instanceof OTransactionException || e instanceof ORecordDuplicatedException
@@ -200,6 +202,11 @@ public class OTxTask extends OAbstractReplicatedTask {
     out.writeInt(tasks.size());
     for (OAbstractRecordReplicatedTask task : tasks)
       out.writeObject(task);
+    if (lastLSN != null) {
+      out.writeBoolean(true);
+      lastLSN.writeExternal(out);
+    } else
+      out.writeBoolean(false);
   }
 
   @Override
@@ -207,6 +214,9 @@ public class OTxTask extends OAbstractReplicatedTask {
     final int size = in.readInt();
     for (int i = 0; i < size; ++i)
       tasks.add((OAbstractRecordReplicatedTask) in.readObject());
+    final boolean hasLastLSN = in.readBoolean();
+    if (hasLastLSN)
+      lastLSN = new OLogSequenceNumber(in);
   }
 
   /**
@@ -249,5 +259,14 @@ public class OTxTask extends OAbstractReplicatedTask {
 
   public void setLocalUndoTasks(final List<OAbstractRemoteTask> undoTasks) {
     this.localUndoTasks = undoTasks;
+  }
+
+  @Override
+  public OLogSequenceNumber getLastLSN() {
+    return lastLSN;
+  }
+
+  public void setLastLSN(final OLogSequenceNumber lastLSN) {
+    this.lastLSN = lastLSN;
   }
 }

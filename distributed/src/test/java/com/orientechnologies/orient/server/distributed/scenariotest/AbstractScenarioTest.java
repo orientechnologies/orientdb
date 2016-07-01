@@ -37,7 +37,7 @@ import static org.junit.Assert.*;
  * It represents an abstract scenario test.
  *
  * @author Gabriele Ponzi
- * @email  <gabriele.ponzi--at--gmail.com>
+ * @email <gabriele.ponzi--at--gmail.com>
  */
 
 public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTest {
@@ -63,7 +63,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     return result.get(0);
   }
 
-  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType) throws InterruptedException, ExecutionException {
+  protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType)
+      throws InterruptedException, ExecutionException {
     executeMultipleWrites(executeOnServers, storageType, null);
   }
 
@@ -77,10 +78,9 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       throws InterruptedException, ExecutionException {
 
     ODatabaseDocumentTx database;
-    if(dbURL == null) {
+    if (dbURL == null) {
       database = poolFactory.get(getPlocalDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
-    }
-    else {
+    } else {
       database = poolFactory.get(dbURL, "admin", "admin").acquire();
     }
 
@@ -344,18 +344,20 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         for (ServerRun server : serverInstance) {
 
           ODocument document = retrieveRecordOrReturnMissing(getDatabaseURL(server), recordId);
-          OLogManager.instance().debug(this, "Readed record [%s] from server%s - %s: %s ", recordId, server.getServerId(), fieldName, document.field(fieldName));
+          final String storedValue = document.field(fieldName);
+
+          OLogManager.instance().debug(this, "Read record [%s] from server%s - %s: %s ", recordId, server.getServerId(), fieldName,
+              storedValue);
 
           if (document == MISSING_DOCUMENT) {
             return false;
           }
 
-          if (document.field(fieldName) != null && !document.field(fieldName).equals(expectedFieldValue)
-              || document.field(fieldName) == null && expectedFieldValue != null)
-            return false;
+          OLogManager.instance().info(this, "Waiting for updated document propagation on record %s. Found %s=%s, expected %s",
+              recordId, fieldName, storedValue, expectedFieldValue);
 
-          OLogManager.instance().info(this, "Waiting for updated document propagation on record %s (%s=%s)...", recordId, fieldName,
-              expectedFieldValue);
+          if (storedValue != null && !storedValue.equals(expectedFieldValue) || storedValue == null && expectedFieldValue != null)
+            return false;
         }
         return true;
       }
@@ -364,7 +366,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
   protected ODocument retrieveRecord(String dbUrl, String uniqueId, boolean returnsMissingDocument) {
     ODatabaseDocumentTx dbServer = poolFactory.get(dbUrl, "admin", "admin").acquire();
-    //dbServer.getLocalCache().invalidate();
+    // dbServer.getLocalCache().invalidate();
     ODatabaseRecordThreadLocal.INSTANCE.set(dbServer);
     try {
       List<ODocument> result = dbServer.query(new OSQLSynchQuery<ODocument>("select from Person where id = '" + uniqueId + "'"));
@@ -378,11 +380,11 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       }
 
       ODocument doc = (ODocument) result.get(0);
-//      try {
-//        doc.reload();
-//      } catch (ORecordNotFoundException e) {
-////        e.printStackTrace();
-//      }
+      // try {
+      // doc.reload();
+      // } catch (ORecordNotFoundException e) {
+      //// e.printStackTrace();
+      // }
       return doc;
     } finally {
       ODatabaseRecordThreadLocal.INSTANCE.set(null);

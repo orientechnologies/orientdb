@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -150,8 +149,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
     } catch (Exception e) {
       // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
-      exception.set((ODistributedDatabaseDeltaSyncException) OException
-          .wrapException(new ODistributedDatabaseDeltaSyncException(startLSN), e));
+      exception.set(new ODistributedDatabaseDeltaSyncException(startLSN, e.getMessage()));
 
     } finally {
       // try {
