@@ -112,6 +112,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected Map<String, String>                                  activeNodesNamesByMemberId        = new ConcurrentHashMap<String, String>();
   protected List<String>                                         registeredNodeById;
   protected Map<String, Integer>                                 registeredNodeByName;
+  protected Map<String, Long>                                    autoRemovalOfServers              = new ConcurrentHashMap<String, Long>();
   protected ODistributedMessageServiceImpl                       messageService;
   protected Date                                                 startedOn                         = new Date();
   protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
