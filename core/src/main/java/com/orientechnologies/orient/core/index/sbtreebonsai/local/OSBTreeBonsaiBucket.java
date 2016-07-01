@@ -41,20 +41,22 @@ import java.util.Map;
  * @since 8/7/13
  */
 public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
-  public static final int             MAX_BUCKET_SIZE_BYTES    = OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getValueAsInteger() * 1024;
+  public static final int   MAX_BUCKET_SIZE_BYTES    = OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getValueAsInteger() * 1024;
   /**
    * Maximum size of key-value pair which can be put in SBTreeBonsai in bytes (24576000 by default)
    */
-  private static final int            MAX_ENTREE_SIZE          = 24576000;
-  private static final int            FREE_POINTER_OFFSET      = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int            SIZE_OFFSET              = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int            IS_LEAF_OFFSET           = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int            FREE_LIST_POINTER_OFFSET = IS_LEAF_OFFSET + OByteSerializer.BYTE_SIZE;
-  private static final int            LEFT_SIBLING_OFFSET      = FREE_LIST_POINTER_OFFSET + OBonsaiBucketPointer.SIZE;
-  private static final int            RIGHT_SIBLING_OFFSET     = LEFT_SIBLING_OFFSET + OBonsaiBucketPointer.SIZE;
-  private static final int            TREE_SIZE_OFFSET         = RIGHT_SIBLING_OFFSET + OBonsaiBucketPointer.SIZE;
-  private static final int            KEY_SERIALIZER_OFFSET    = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
-  private static final int            VALUE_SERIALIZER_OFFSET  = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final byte LEAF                     = 0x1;
+  private static final byte DELETED                  = 0x2;
+  private static final int  MAX_ENTREE_SIZE          = 24576000;
+  private static final int  FREE_POINTER_OFFSET      = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int  SIZE_OFFSET              = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int  FLAGS_OFFSET             = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int  FREE_LIST_POINTER_OFFSET = FLAGS_OFFSET + OByteSerializer.BYTE_SIZE;
+  private static final int  LEFT_SIBLING_OFFSET      = FREE_LIST_POINTER_OFFSET + OBonsaiBucketPointer.SIZE;
+  private static final int  RIGHT_SIBLING_OFFSET     = LEFT_SIBLING_OFFSET + OBonsaiBucketPointer.SIZE;
+  private static final int  TREE_SIZE_OFFSET         = RIGHT_SIBLING_OFFSET + OBonsaiBucketPointer.SIZE;
+  private static final int  KEY_SERIALIZER_OFFSET    = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int  VALUE_SERIALIZER_OFFSET  = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int            POSITIONS_ARRAY_OFFSET   = VALUE_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
   private final boolean               isLeaf;
   private final int                   offset;
@@ -148,7 +150,8 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     setIntValue(offset + FREE_POINTER_OFFSET, MAX_BUCKET_SIZE_BYTES);
     setIntValue(offset + SIZE_OFFSET, 0);
 
-    setByteValue(offset + IS_LEAF_OFFSET, (byte) (isLeaf ? 1 : 0));
+    //THIS REMOVE ALSO THE EVENTUAL DELETED FLAG
+    setByteValue(offset + FLAGS_OFFSET, (byte) (isLeaf ? LEAF : 0));
     setLongValue(offset + LEFT_SIBLING_OFFSET, -1);
     setLongValue(offset + RIGHT_SIBLING_OFFSET, -1);
 
@@ -164,7 +167,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     super(cacheEntry, changes);
 
     this.offset = pageOffset;
-    this.isLeaf = getByteValue(offset + IS_LEAF_OFFSET) > 0;
+    this.isLeaf = (getByteValue(offset + FLAGS_OFFSET) & LEAF) == LEAF;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
     this.tree = tree;
@@ -422,6 +425,20 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   public void setFreeListPointer(OBonsaiBucketPointer pointer) throws IOException {
     setBucketPointer(offset + FREE_LIST_POINTER_OFFSET, pointer);
   }
+
+  public void setDelted(boolean deleted) {
+    byte value = getByteValue(offset + FLAGS_OFFSET);
+    if(deleted)
+      setByteValue(offset + FLAGS_OFFSET, (byte) (value | DELETED));
+    else
+      //REMOVE THE FLAG the &(and) ~(not) is the opreation to remove flags in bits
+      setByteValue(offset + FLAGS_OFFSET, (byte) (value & (~DELETED)));
+  }
+
+  public boolean isDeleted() {
+    return (getByteValue(offset + FLAGS_OFFSET) & DELETED) == DELETED;
+  }
+
 
   public OBonsaiBucketPointer getLeftSibling() {
     return getBucketPointer(offset + LEFT_SIBLING_OFFSET);

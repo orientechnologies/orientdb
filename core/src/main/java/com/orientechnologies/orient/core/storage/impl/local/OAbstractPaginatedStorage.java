@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleter;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.exception.*;
@@ -3621,6 +3622,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       case ORecordOperation.DELETED: {
+        if (rec instanceof ODocument)
+          ORidBagDeleter.deleteAllRidBags((ODocument) rec);
         deleteRecord(rid, rec.getVersion(), -1, null);
         break;
       }
