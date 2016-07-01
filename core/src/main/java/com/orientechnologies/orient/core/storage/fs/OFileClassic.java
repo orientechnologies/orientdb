@@ -47,6 +47,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class OFileClassic implements OFile, OClosableItem {
   private static final boolean trackFileClose = OGlobalConfiguration.TRACK_FILE_CLOSE.getValueAsBoolean();
 
+  public volatile StackTraceElement[] closed;
+
   public final static  String        NAME                     = "classic";
   public static final  int           HEADER_SIZE              = 1024;
   private static final int           SOFTLY_CLOSED_OFFSET_V_0 = 8;
@@ -656,6 +658,8 @@ public class OFileClassic implements OFile, OClosableItem {
         accessFile.close();
         accessFile = null;
       }
+
+      closed = Thread.currentThread().getStackTrace();
     } catch (Exception e) {
       final String message = "Error on closing file " + osFile.getAbsolutePath();
       OLogManager.instance().error(this, message, e);

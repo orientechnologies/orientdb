@@ -673,12 +673,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   public void flush() {
+    int counter = 0;
     for (int intId : nameIdMap.values()) {
       if (intId < 0)
         continue;
 
       final long externalId = composeFileId(id, intId);
       flush(externalId);
+      counter++;
     }
 
   }
@@ -1790,17 +1792,12 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       flushRing(writeCachePages.subMap(firstKey, true, lastKey, true));
 
-      for (Integer intId : nameIdMap.values()) {
-        if (intId < 0)
-          continue;
-
-        final long finalId = composeFileId(id, intId);
-        final OClosableEntry<Long, OFileClassic> entry = files.acquire(finalId);
-        try {
-          entry.get().synch();
-        } finally {
-          files.release(entry);
-        }
+      final long finalId = composeFileId(id, fileId);
+      final OClosableEntry<Long, OFileClassic> entry = files.acquire(finalId);
+      try {
+        entry.get().synch();
+      } finally {
+        files.release(entry);
       }
 
       return null;

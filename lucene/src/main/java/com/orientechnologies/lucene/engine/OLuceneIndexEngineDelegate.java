@@ -114,7 +114,6 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
 
   @Override
   public void close() {
-
     delegate.close();
   }
 

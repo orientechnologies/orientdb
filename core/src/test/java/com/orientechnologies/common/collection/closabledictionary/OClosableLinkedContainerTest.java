@@ -2,12 +2,14 @@ package com.orientechnologies.common.collection.closabledictionary;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import org.testng.internal.thread.ThreadUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.LockSupport;
 
 @Test
 public class OClosableLinkedContainerTest {
@@ -77,7 +79,7 @@ public class OClosableLinkedContainerTest {
 
     int limit = 60000;
 
-    OClosableLinkedContainer<Long, CItem> dictionary = new OClosableLinkedContainer<Long, CItem>(500);
+    OClosableLinkedContainer<Long, CItem> dictionary = new OClosableLinkedContainer<Long, CItem>(16);
     futures.add(executor.submit(new Adder(dictionary, latch, 0, limit / 3)));
     futures.add(executor.submit(new Adder(dictionary, latch, limit / 3, 2 * limit / 3)));
 
@@ -93,7 +95,7 @@ public class OClosableLinkedContainerTest {
 
     futures.add(executor.submit(new Adder(dictionary, latch, 2 * limit / 3, limit)));
 
-    Thread.sleep(10 * 60000);
+    Thread.sleep(15 * 60000);
 
     stop.set(true);
     for (Future<Void> future : futures) {
@@ -187,6 +189,7 @@ public class OClosableLinkedContainerTest {
   }
 
   private class CItem implements OClosableItem {
+    private final Random rnd = new Random();
     private volatile boolean open = true;
     private final int index;
 
@@ -205,6 +208,7 @@ public class OClosableLinkedContainerTest {
     }
 
     public void open() {
+      LockSupport.parkNanos(rnd.nextInt(51) + 50);
       open = true;
     }
   }

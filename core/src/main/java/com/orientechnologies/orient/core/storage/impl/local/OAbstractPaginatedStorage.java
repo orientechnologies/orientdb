@@ -55,6 +55,8 @@ import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
+import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -69,6 +71,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
+import com.orientechnologies.orient.core.sql.parser.OLuceneOperator;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
@@ -3450,8 +3453,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       sbTreeCollectionManager.close();
 
-      closeClusters(onDelete);
-      closeIndexes(onDelete);
+      //we close all files inside cache system so we only clear cluset metadata
+      clusters.clear();
+      clusterMap.clear();
+
+      //we close all files inside cache system so we only clear index metadata and close non core indexes
+      for (OIndexEngine engine : indexEngines) {
+        if (engine != null && !(engine instanceof OSBTreeIndexEngine || engine instanceof OHashTableIndexEngine)) {
+          if (onDelete)
+            engine.delete();
+          else
+            engine.close();
+        }
+      }
+
+      indexEngines.clear();
+      indexEngineNameMap.clear();
 
       if (configuration != null)
         if (onDelete)

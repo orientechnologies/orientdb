@@ -73,7 +73,6 @@ public class OSBTreeIndexEngine implements OIndexEngine {
 
   @Override
   public void flush() {
-    sbTree.flush();
   }
 
   @Override
