@@ -24,7 +24,6 @@ import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 import java.io.ByteArrayOutputStream;
@@ -196,6 +195,9 @@ public class ORemoteServerChannel {
         if (!autoReconnect)
           break;
 
+        if (!manager.isNodeAvailable(server))
+          break;
+
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
             "Error on sending message to distributed node (%s) retrying (%d/%d)", lastException.toString(), retry, maxRetry);
 
@@ -205,9 +207,6 @@ public class ORemoteServerChannel {
           } catch (InterruptedException e1) {
             break;
           }
-
-        if (!manager.isNodeAvailable(server))
-          break;
 
         try {
           connect();
@@ -220,7 +219,7 @@ public class ORemoteServerChannel {
       }
     }
 
-    throw OException.wrapException(new OStorageException(errorMessage), lastException);
+    throw OException.wrapException(new ODistributedException(errorMessage), lastException);
   }
 
   public ODistributedServerManager getManager() {

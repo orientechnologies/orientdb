@@ -290,7 +290,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           remoteServer.sendRequest(iRequest);
 
         } catch (Throwable e) {
-          if (e instanceof OSecurityAccessException) {
+          if (e instanceof ODistributedException && e.getCause() instanceof IOException) {
+            // CONNECTION ERROR: REMOVE THE CONNECTION
+            manager.closeRemoteServer(node);
+
+          } else if (e instanceof OSecurityAccessException) {
             // THE CONNECTION COULD BE STALE, CREATE A NEW ONE AND RETRY
             manager.closeRemoteServer(node);
             final ORemoteServerController remoteServer = manager.getRemoteServer(node);
@@ -328,7 +332,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       return waitForResponse(iRequest, currentResponseMgr);
 
-    } catch (RuntimeException e) {
+    } catch (
+
+    RuntimeException e) {
       throw e;
     } catch (Exception e) {
       throw OException.wrapException(new ODistributedException("Error on executing distributed request (" + iRequest

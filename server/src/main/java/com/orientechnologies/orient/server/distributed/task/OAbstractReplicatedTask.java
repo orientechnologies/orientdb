@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -31,6 +32,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  */
 public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
+  protected OLogSequenceNumber lastLSN;
 
   public ORemoteTask getFixTask(ODistributedRequest iRequest, ORemoteTask iOriginalTask, Object iBadResponse, Object iGoodResponse,
       String executorNodeName, ODistributedServerManager dManager) {
@@ -42,4 +44,8 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
   }
 
   public abstract String getPayload();
+
+  public OLogSequenceNumber getLastLSN(){
+    return null;
+  }
 }

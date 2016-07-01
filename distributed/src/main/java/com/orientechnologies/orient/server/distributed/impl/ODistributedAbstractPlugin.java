@@ -61,7 +61,6 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -607,16 +606,17 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             if (last == null)
               last = 0l;
 
-            if (task instanceof OAbstractRecordReplicatedTask && System.currentTimeMillis() - last > 2000) {
+            if (task instanceof OAbstractReplicatedTask && System.currentTimeMillis() - last > 2000) {
               final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(database.getName());
-              final OLogSequenceNumber lastLSN = ((OAbstractRecordReplicatedTask) task).getLastLSN();
-              if (lastLSN != null)
+              final OLogSequenceNumber lastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
+              if (lastLSN != null) {
                 ddb.getSyncConfiguration().setLSN(task.getNodeSource(), lastLSN);
 
-              ODistributedServerLog.debug(this, nodeName, task.getNodeSource(), DIRECTION.NONE,
-                  "Updating LSN table to the value %s", lastLSN);
+                ODistributedServerLog.debug(this, nodeName, task.getNodeSource(), DIRECTION.NONE,
+                    "Updating LSN table to the value %s", lastLSN);
 
-              lastLSNWriting.put(sourceNodeName, System.currentTimeMillis());
+                lastLSNWriting.put(sourceNodeName, System.currentTimeMillis());
+              }
             }
           }
 
@@ -934,8 +934,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, targetNodes, deployTask,
           getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null).getPayload();
 
-      ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Receiving delta sync for '%s'...", databaseName);
-
       ODistributedServerLog.debug(this, nodeName, selectedNodes.toString(), DIRECTION.OUT, "Database delta sync returned: %s",
           results);
 
@@ -948,13 +946,21 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         if (value instanceof Boolean)
           continue;
         else if (value instanceof ODistributedDatabaseDeltaSyncException) {
-          ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN,
-              "Error on installing database delta %s, requesting full database sync...",
-              (ODistributedDatabaseDeltaSyncException) value, databaseName, dbPath);
+          final ODistributedDatabaseDeltaSyncException exc = (ODistributedDatabaseDeltaSyncException) value;
+
+          ODistributedServerLog.warn(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database delta for '%s' (%s)",
+              databaseName, exc.getMessage());
+
+          ODistributedServerLog.warn(this, nodeName, r.getKey(), DIRECTION.IN, "Requesting full database '%s' sync...",
+              databaseName);
+
           throw (ODistributedDatabaseDeltaSyncException) value;
+
         } else if (value instanceof Throwable) {
+
           ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database delta %s in %s (%s)",
               (Exception) value, databaseName, dbPath, value);
+
         } else if (value instanceof ODistributedDatabaseChunk) {
 
           final File uniqueClustersBackupDirectory = getClusterOwnedExclusivelyByCurrentNode(dbPath, databaseName);
