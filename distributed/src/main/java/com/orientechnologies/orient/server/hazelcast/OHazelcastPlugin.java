@@ -643,14 +643,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       final Member member = iEvent.getMember();
       final String nodeLeftName = getNodeName(member);
+
       if (nodeLeftName != null) {
         try {
-          final int nodeLeftId = getNodeIdByName(nodeLeftName);
-
           // REMOVE INTRA SERVER CONNECTION
           closeRemoteServer(nodeLeftName);
 
-          // NOTIFY NODE LEFT
+          // NOTIFY ABOUT THE NODE HAS LEFT
           for (ODistributedLifecycleListener l : listeners)
             try {
               l.onNodeLeft(nodeLeftName);
@@ -659,9 +658,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             }
 
           // UNLOCK ANY PENDING LOCKS
-          if (messageService != null)
+          if (messageService != null) {
+            final int nodeLeftId = getNodeIdByName(nodeLeftName);
             for (String dbName : messageService.getDatabases())
               messageService.getDatabase(dbName).handleUnreachableNode(nodeLeftId);
+          }
 
           activeNodes.remove(nodeLeftName);
           activeNodesNamesByMemberId.remove(member.getUuid());
@@ -669,30 +670,26 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
             return;
 
-          final Map<String, Object> map = configurationMap;
+          final long autoRemoveOffLineServer = OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.getValueAsLong();
+          if (autoRemoveOffLineServer == 0)
+            // REMOVE THE NODE RIGHT NOW
+            removeNodeFromConfiguration(nodeLeftName);
+          else if (autoRemoveOffLineServer > 0) {
+            // SCHEDULE AUTO REMOVAL IN A WHILE
+            autoRemovalOfServers.put(nodeLeftName, System.currentTimeMillis());
+            Orient.instance().scheduleTask(new TimerTask() {
+              @Override
+              public void run() {
+                final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
+                if (lastTimeNodeLeft == null)
+                  // NODE WAS BACK ONLINE
+                  return;
 
-          // UNREGISTER DB STATUSES
-          final HashSet<String> entriesToRemove = new HashSet<String>();
-          for (Iterator<String> it = map.keySet().iterator(); it.hasNext();) {
-            final String n = it.next();
-
-            if (n.startsWith(CONFIG_DBSTATUS_PREFIX)) {
-              final String part = n.substring(CONFIG_DBSTATUS_PREFIX.length());
-              final int pos = part.indexOf(".");
-              if (pos > -1) {
-                // CHECK ANY DB STATUS OF THE LEFT NODE
-                if (part.substring(0, pos).equals(nodeLeftName)) {
-                  ODistributedServerLog.debug(this, nodeName, null, DIRECTION.NONE,
-                      "Removing dbstatus for the node %s that just left: %s", nodeLeftName, n);
-                  entriesToRemove.add(n);
+                if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
+                  removeNodeFromConfiguration(nodeLeftName);
                 }
               }
-            }
-          }
-
-          // REMOVE THE ENTRIES
-          for (String entry : entriesToRemove) {
-            map.remove(entry);
+            }, autoRemoveOffLineServer, 0);
           }
 
           ODistributedServerLog.warn(this, nodeLeftName, null, DIRECTION.NONE, "Node removed id=%s name=%s", member, nodeLeftName);
@@ -735,8 +732,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     try {
       updateLastClusterChange();
+      final String addedNodeName = getNodeName(iEvent.getMember());
       ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Added new node id=%s name=%s", iEvent.getMember(),
-          getNodeName(iEvent.getMember()));
+          addedNodeName);
+
+      // REMOVE THE NODE FROM AUTO REMOVAL
+      autoRemovalOfServers.remove(addedNodeName);
 
     } catch (HazelcastInstanceNotActiveException e) {
       OLogManager.instance().error(this, "Hazelcast is not running");
@@ -897,5 +898,31 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     return registeredNodes;
+  }
+
+  public void removeNodeFromConfiguration(final String nodeLeftName) {
+    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Removing server '%s' from all the databases...",
+        nodeLeftName);
+
+    for (String dbName : getManagedDatabases()) {
+      removeNodeFromConfiguration(nodeLeftName, dbName);
+    }
+  }
+
+  public boolean removeNodeFromConfiguration(final String nodeLeftName, final String databaseName) {
+    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+        "Removing server '%s' from database configuration '%s'...", nodeLeftName, databaseName);
+
+    final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+
+    final boolean found = cfg.removeServer(nodeLeftName) != null;
+
+    if (found)
+      // SERVER REMOVED CORRECTLY
+      updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), true, true);
+
+    configurationMap.remove(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName);
+
+    return found;
   }
 }

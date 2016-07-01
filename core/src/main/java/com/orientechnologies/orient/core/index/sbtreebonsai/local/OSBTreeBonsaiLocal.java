@@ -400,6 +400,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         addChildrenToQueue(subTreesToDelete, bucket);
 
         bucket.setFreeListPointer(head);
+        bucket.setDelted(true);
         head = bucketPointer;
       } finally {
         cacheEntry.releaseExclusiveLock();
@@ -474,7 +475,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  public void load(OBonsaiBucketPointer rootBucketPointer) {
+
+  public boolean load(OBonsaiBucketPointer rootBucketPointer) {
     OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     startOperation();
     if (statistic != null)
@@ -499,6 +501,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
               .getObjectSerializer(rootBucket.getKeySerializerId());
           valueSerializer = (OBinarySerializer<V>) storage.getComponentsFactory().binarySerializerFactory
               .getObjectSerializer(rootBucket.getValueSerializerId());
+
+          return !rootBucket.isDeleted();
+
         } finally {
           rootCacheEntry.releaseSharedLock();
           releasePage(atomicOperation, rootCacheEntry);

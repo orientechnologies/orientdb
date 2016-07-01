@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -270,8 +271,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       if (localResult != null)
         // COLLECT LOCAL RESULT
-        currentResponseMgr
-            .setLocalResult(localNodeName, (Serializable) localResult);
+        currentResponseMgr.setLocalResult(localNodeName, (Serializable) localResult);
 
       if (!(iNodes instanceof List))
         iNodes = new ArrayList<String>(iNodes);
@@ -280,14 +280,29 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       msgService.registerRequest(iRequest.getId().getMessageId(), currentResponseMgr);
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "Sending request %s", iRequest);
+        ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "Sending request %s...", iRequest);
 
       for (String node : iNodes) {
         // CATCH ANY EXCEPTION LOG IT AND IGNORE TO CONTINUE SENDING REQUESTS TO OTHER NODES
         try {
           final ORemoteServerController remoteServer = manager.getRemoteServer(node);
-          remoteServer.sendRequest(iRequest, node);
+
+          remoteServer.sendRequest(iRequest);
+
         } catch (Throwable e) {
+          if (e instanceof OSecurityAccessException) {
+            // THE CONNECTION COULD BE STALE, CREATE A NEW ONE AND RETRY
+            manager.closeRemoteServer(node);
+            final ORemoteServerController remoteServer = manager.getRemoteServer(node);
+            try {
+              remoteServer.sendRequest(iRequest);
+              continue;
+
+            } catch (Throwable ex) {
+              // IGNORE IT BECAUSE MANAGED BELOW
+            }
+          }
+
           if (!manager.isNodeAvailable(node))
             // NODE IS NOT AVAILABLE
             ODistributedServerLog.debug(this, localNodeName, node, ODistributedServerLog.DIRECTION.OUT,
@@ -447,10 +462,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final Iterator<ODistributedTxContextImpl> pendingReqIterator = activeTxContexts.values().iterator();
       while (pendingReqIterator.hasNext()) {
         final ODistributedTxContextImpl pReq = pendingReqIterator.next();
-        if (pReq != null) {
+        if (pReq != null && pReq.getReqId().getNodeId() == iNodeId) {
           tasks += pReq.rollback(database);
           rollbacks++;
           pReq.destroy();
+          pendingReqIterator.remove();
         }
       }
     } finally {
@@ -513,10 +529,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       } else
         // BROWSE FOR ALL CLUSTER TO GET THE FIRST 'waitLocalNode'
         for (String clName : iClusterNames) {
-          if (cfg.isReadYourWrites(clName)) {
-            waitLocalNode = true;
-            break;
-          }
+        if (cfg.isReadYourWrites(clName)) {
+        waitLocalNode = true;
+        break;
+        }
         }
     return waitLocalNode;
   }
@@ -589,10 +605,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
           ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Adding node '%s' in partition: db=%s %s",
               getLocalNodeName(), databaseName, foundPartition);
-
-          // ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "\n--------------\n" + databaseName
-          // + "\n--------------\n" + cfg.getDocument().toJSON("prettyPrint") + "\n--------------\n");
-          // System.out.flush();
         }
         return null;
       }

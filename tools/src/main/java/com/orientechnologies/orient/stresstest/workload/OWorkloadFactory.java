@@ -20,8 +20,11 @@
 package com.orientechnologies.orient.stresstest.workload;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
 /**
  * Factory of workloads.
@@ -33,6 +36,14 @@ public class OWorkloadFactory {
 
   public OWorkloadFactory() {
     register(new OCRUDWorkload());
+
+    final ClassLoader orientClassLoader = OWorkloadFactory.class.getClassLoader();
+
+    final Iterator<OWorkload> ite = lookupProviderWithOrientClassLoader(OWorkload.class, orientClassLoader);
+    while (ite.hasNext()) {
+      final OWorkload strategy = ite.next();
+      register(strategy);
+    }
   }
 
   public OWorkload get(final String name) {

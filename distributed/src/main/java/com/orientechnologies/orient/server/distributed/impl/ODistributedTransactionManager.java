@@ -25,11 +25,9 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -51,7 +49,10 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -131,6 +132,7 @@ public class ODistributedTransactionManager {
             final Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
             if (nodes.isEmpty()) {
               // NO FURTHER NODES TO INVOLVE
+              localDistributedDatabase.popTxContext(requestId);
               ctx.destroy();
               return null;
             }
@@ -183,6 +185,7 @@ public class ODistributedTransactionManager {
                 @Override
                 public Void call(final ODistributedRequestId reqId) {
                   // FREE THE CONTEXT
+                  localDistributedDatabase.popTxContext(requestId);
                   ctx.destroy();
                   return null;
                 }
@@ -192,15 +195,19 @@ public class ODistributedTransactionManager {
             }
 
           } catch (RuntimeException e) {
+            localDistributedDatabase.popTxContext(requestId);
             ctx.destroy();
             throw e;
           } catch (Exception e) {
+            localDistributedDatabase.popTxContext(requestId);
             ctx.destroy();
             OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
             // UNREACHABLE
           } finally {
-            if (finalExecutionModeSynch)
+            if (finalExecutionModeSynch) {
+              localDistributedDatabase.popTxContext(requestId);
               ctx.destroy();
+            }
           }
           return null;
         }

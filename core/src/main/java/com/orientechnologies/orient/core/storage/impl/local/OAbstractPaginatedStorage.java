@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleter;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.exception.*;
@@ -752,6 +753,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OLogSequenceNumber endLsn = writeAheadLog.end();
 
       if (endLsn == null || lsn.compareTo(endLsn) >= 0) {
+        OLogManager.instance().warn(this, "Cannot find requested LSN=%s for database sync operation. Last available LSN is %s", endLsn);
         return null;
       }
 
@@ -1293,15 +1295,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
     final Set<ORecordOperation> newRecords = new TreeSet<ORecordOperation>(new Comparator<ORecordOperation>() {
       @Override
-      public int compare(ORecordOperation o1, ORecordOperation o2) {
-        long diff = (o1.getRecord().getIdentity().getClusterPosition() - o2.getRecord().getIdentity().getClusterPosition());
-        //convert long to int comparation
-        if (diff == 0)
-          return 0;
-        else if (diff < 0)
-          return -1;
-        else
-          return 1;
+      public int compare(final ORecordOperation o1, final ORecordOperation o2) {
+        return o1.getRecord().getIdentity().compareTo(o2.getRecord().getIdentity());
       }
     });
 
@@ -3646,6 +3641,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       case ORecordOperation.DELETED: {
+        if (rec instanceof ODocument)
+          ORidBagDeleter.deleteAllRidBags((ODocument) rec);
         deleteRecord(rid, rec.getVersion(), -1, null);
         break;
       }

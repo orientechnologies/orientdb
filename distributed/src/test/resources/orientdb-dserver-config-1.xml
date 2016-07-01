@@ -84,13 +84,8 @@
         <entry name="db.pool.max" value="20"/>
 
         <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size> -->
-        <entry name="profiler.enabled" value="true"/>
+        <entry name="profiler.enabled" value="false"/>
         <!-- <entry name="profiler.config" value="30,10,10" /> -->
-
-        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info,
-            warning -->
-        <entry name="log.console.level" value="info"/>
-        <entry name="log.file.level" value="fine"/>
     </properties>
     <isAfterFirstTime>true</isAfterFirstTime>
 </orient-server>

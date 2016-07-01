@@ -301,7 +301,7 @@ public class ODistributedWorker extends Thread {
       ODistributedServerLog.debug(this, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Sending response %s back", response);
 
-      remoteSenderServer.sendResponse(response, senderNodeName);
+      remoteSenderServer.sendResponse(response);
 
     } catch (Exception e) {
       ODistributedServerLog.debug(this, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,

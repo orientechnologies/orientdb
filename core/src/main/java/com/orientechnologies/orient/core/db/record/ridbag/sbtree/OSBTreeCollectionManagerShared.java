@@ -105,9 +105,10 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(fileName.substring(0,
         fileName.length() - DEFAULT_EXTENSION.length()), DEFAULT_EXTENSION, storage);
 
-    tree.load(collectionPointer.getRootPointer());
-
-    return tree;
+    if (tree.load(collectionPointer.getRootPointer()))
+      return tree;
+    else
+      return null;
   }
 
   /**

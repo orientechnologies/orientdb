@@ -23,7 +23,7 @@ import java.io.IOException;
 
 /**
  * Remote server controller.
- * 
+ *
  * @author Luca Garulli
  */
 public class ORemoteServerController {
@@ -36,12 +36,12 @@ public class ORemoteServerController {
     responseChannel = new ORemoteServerChannel(manager, iServer, iURL, user, passwd);
   }
 
-  public void sendRequest(final ODistributedRequest req, final String node) {
-    requestChannel.sendRequest(req, node);
+  public void sendRequest(final ODistributedRequest req) {
+    requestChannel.sendRequest(req);
   }
 
-  public void sendResponse(final ODistributedResponse response, final String node) {
-    responseChannel.sendResponse(response, node);
+  public void sendResponse(final ODistributedResponse response) {
+    responseChannel.sendResponse(response);
   }
 
   public void close() {

@@ -24,9 +24,7 @@ import com.orientechnologies.orient.stresstest.workload.OWorkload;
 import java.io.Console;
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This is the parser of the command line arguments passed with the invocation of OStressTester. It contains a static method that -
@@ -42,6 +40,7 @@ public class OStressTesterCommandLineParser {
   public final static String OPTION_MODE                                         = "m";
   public final static String OPTION_WORKLOAD                                     = "w";
   public final static String OPTION_TRANSACTIONS                                 = "tx";
+  public final static String OPTION_KEEP_DATABASE_AFTER_TEST                     = "k";
   public final static String OPTION_OUTPUT_FILE                                  = "o";
   public static final String OPTION_PLOCAL_PATH                                  = "d";
   public final static String OPTION_ROOT_PASSWORD                                = "root-password";
@@ -53,11 +52,11 @@ public class OStressTesterCommandLineParser {
   public final static String OPTION_REMOTE_PORT                                  = "remote-port";
 
   public final static String MAIN_OPTIONS                                        = OPTION_MODE + OPTION_CONCURRENCY
-      + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH;
+      + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH + OPTION_KEEP_DATABASE_AFTER_TEST;
 
   public static final String SYNTAX                                              = "StressTester "
-      + "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" + "\n\t-s operationSet" + "\n\t-t threadsNumber"
-      + "\n\t-x operationsPerTransaction" + "\n\t-o resultOutputFile" + "\n\t-d plocalDirectory"
+      + "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" + "\n\t-w workloads" + "\n\t-c concurrency-level"
+      + "\n\t-x operations-per-transaction" + "\n\t-o result-output-file" + "\n\t-d database-directory"
       + "\n\t--root-password rootPassword" + "\n\t--remote-ip ipOrHostname" + "\n\t--remote-port portNumber" + "\n";
 
   static final String        COMMAND_LINE_PARSER_INVALID_NUMBER                  = "Invalid %s number [%s].";
@@ -67,7 +66,6 @@ public class OStressTesterCommandLineParser {
   static final String        COMMAND_LINE_PARSER_EXPECTED_VALUE                  = "Expected value after argument [%s]";
   static final String        COMMAND_LINE_PARSER_INVALID_REMOTE_PORT_NUMBER      = "Invalid remote port [%d]. The port number has to be lesser than 65536.";
   static final String        COMMAND_LINE_PARSER_MODE_PARAM_MANDATORY            = "The mode param [-m] is mandatory.";
-  static final String        COMMAND_LINE_PARSER_EXISTING_OUTPUT_FILE            = "The resultOutputFile [%s] already exists.";
   static final String        COMMAND_LINE_PARSER_NOT_EXISTING_OUTPUT_DIRECTORY   = "The directory where to write the resultOutputFile [%s] doesn't exist.";
   static final String        COMMAND_LINE_PARSER_NOT_EXISTING_PLOCAL_PATH        = "The plocal directory (param -d) doesn't exist [%s].";
   static final String        COMMAND_LINE_PARSER_NO_WRITE_PERMISSION_OUTPUT_FILE = "You don't have the permissions for writing on directory [%s] the resultOutputFile.";
@@ -85,15 +83,17 @@ public class OStressTesterCommandLineParser {
 
     final Map<String, String> options = checkOptions(readOptions(args));
 
-    String dbName = TEMP_DATABASE_NAME + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-    OStressTester.OMode mode = OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase());
+    final String dbName = TEMP_DATABASE_NAME + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+    final OStressTester.OMode mode = OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase());
     String rootPassword = options.get(OPTION_ROOT_PASSWORD);
-    String resultOutputFile = options.get(OPTION_OUTPUT_FILE);
+    final String resultOutputFile = options.get(OPTION_OUTPUT_FILE);
     String plocalPath = options.get(OPTION_PLOCAL_PATH);
-    int operationsPerTransaction = getNumber(options.get(OPTION_TRANSACTIONS), "transactions");
-    int threadsNumber = getNumber(options.get(OPTION_CONCURRENCY), "concurrency");
-    String remoteIp = options.get(OPTION_REMOTE_IP);
-    String workloadCfg = options.get(OPTION_WORKLOAD);
+    final int operationsPerTransaction = getNumber(options.get(OPTION_TRANSACTIONS), "transactions");
+    final int threadsNumber = getNumber(options.get(OPTION_CONCURRENCY), "concurrency");
+    final String remoteIp = options.get(OPTION_REMOTE_IP);
+    final String workloadCfg = options.get(OPTION_WORKLOAD);
+    final boolean keepDatabaseAfterTest = options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null
+        ? Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST)) : false;
     int remotePort = 2424;
 
     if (plocalPath != null) {
@@ -116,7 +116,7 @@ public class OStressTesterCommandLineParser {
 
       File outputFile = new File(resultOutputFile);
       if (outputFile.exists()) {
-        throw new IllegalArgumentException(String.format(COMMAND_LINE_PARSER_EXISTING_OUTPUT_FILE, resultOutputFile));
+        outputFile.delete();
       }
 
       File parentFile = outputFile.getParentFile();
@@ -160,38 +160,45 @@ public class OStressTesterCommandLineParser {
       }
     }
 
-    final OWorkload workload = parseWorkload(workloadCfg);
+    final List<OWorkload> workloads = parseWorkloads(workloadCfg);
 
     final ODatabaseIdentifier databaseIdentifier = new ODatabaseIdentifier(mode, dbName, rootPassword, remoteIp, remotePort,
         plocalPath);
 
-    return new OStressTester(workload, databaseIdentifier, threadsNumber, operationsPerTransaction, resultOutputFile);
+    return new OStressTester(workloads, databaseIdentifier, threadsNumber, operationsPerTransaction, resultOutputFile,
+        keepDatabaseAfterTest);
   }
 
-  private static OWorkload parseWorkload(final String workloadConfig) {
+  private static List<OWorkload> parseWorkloads(final String workloadConfig) {
     if (workloadConfig == null || workloadConfig.isEmpty())
-      throw new IllegalArgumentException("Workload parameter is mandatory. Syntax: <workload:params>");
+      throw new IllegalArgumentException("Workload parameter is mandatory. Syntax: <workload-name:workload-params>");
 
-    String workloadName;
-    String workloadParams;
+    final List<OWorkload> result = new ArrayList<OWorkload>();
 
-    final int pos = workloadConfig.indexOf(":");
-    if (pos > -1) {
-      workloadName = workloadConfig.substring(0, pos);
-      workloadParams = workloadConfig.substring(pos + 1);
-    } else {
-      workloadName = workloadConfig;
-      workloadParams = null;
+    final String[] parts = workloadConfig.split(",");
+    for (String part : parts) {
+      String workloadName;
+      String workloadParams;
+
+      final int pos = part.indexOf(":");
+      if (pos > -1) {
+        workloadName = part.substring(0, pos);
+        workloadParams = part.substring(pos + 1);
+      } else {
+        workloadName = part;
+        workloadParams = null;
+      }
+
+      final OWorkload workload = OStressTester.getWorkloadFactory().get(workloadName);
+      if (workload == null)
+        throw new IllegalArgumentException("Workload '" + workloadName + "' is not configured. Use one of the following: "
+            + OStressTester.getWorkloadFactory().getRegistered());
+      workload.parseParameters(workloadParams);
+
+      result.add(workload);
     }
 
-    final OWorkload workload = OStressTester.getWorkloadFactory().get(workloadName);
-    if (workload == null)
-      throw new IllegalArgumentException("Workload '" + workloadName + "' is not configured. Use one of the following: "
-          + OStressTester.getWorkloadFactory().getRegistered());
-
-    workload.parseParameters(workloadParams);
-
-    return workload;
+    return result;
   }
 
   private static int getNumber(String value, String option) throws IllegalArgumentException {
