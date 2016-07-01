@@ -48,7 +48,7 @@ import java.util.concurrent.TimeoutException;
 public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> implements OCommandRequestAsynch {
   private static final long serialVersionUID = 1L;
 
-  public static class ONonBlockingQueryFuture implements Future, List<Future> {
+  public class ONonBlockingQueryFuture implements Future, List<Future> {
 
     protected volatile boolean finished = false;
 
@@ -72,7 +72,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
       while (!finished) {
         wait();
       }
-      return null;
+      return OSQLNonBlockingQuery.this.getResultListener().getResult();
     }
 
     @Override
@@ -80,7 +80,7 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
       while (!finished) {
         wait();
       }
-      return null;
+      return OSQLNonBlockingQuery.this.getResultListener().getResult();
     }
 
     @Override
@@ -100,7 +100,23 @@ public class OSQLNonBlockingQuery<T extends Object> extends OSQLQuery<T> impleme
 
     @Override
     public Iterator<Future> iterator() {
-      throw new UnsupportedOperationException("Trying to iterate over a non-blocking query result");
+      return new Iterator<Future>() {
+
+        @Override
+        public boolean hasNext() {
+          return false;
+        }
+
+        @Override
+        public Future next() {
+          return null;
+        }
+
+        @Override
+        public void remove() {
+          throw new UnsupportedOperationException("Unsuppored remove on non blocking query result");
+        }
+      };
     }
 
     @Override
