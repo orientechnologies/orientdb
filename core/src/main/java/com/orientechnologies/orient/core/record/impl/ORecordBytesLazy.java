@@ -17,6 +17,7 @@
   *  * For more information: http://orientdb.com
   *
   */
+
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.serialization.OSerializableStream;

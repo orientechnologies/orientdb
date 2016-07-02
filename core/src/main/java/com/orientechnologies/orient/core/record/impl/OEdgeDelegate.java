@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -98,16 +100,34 @@ public class OEdgeDelegate implements OEdge {
     return null;
   }
 
+  public void delete() {
+    ((OVertexDelegate) getFrom()).detachOutgointEdge(this);
+    ((OVertexDelegate) getTo()).detachIncomingEdge(this);
+    if (element != null) {
+      element.delete();
+    }
+  }
+
   @Override public <RET> RET getProperty(String name) {
     return element == null ? null : element.getProperty(name);
   }
 
   @Override public void setProperty(String name, Object value) {
-    if (element != null) {
-      element.setProperty(name, value);
-    } else {
-      //TODO promote to regular edge
+    if (element == null) {
+      //promote to regular edge
+      ODatabase db = getDatabase();
+      OVertexDelegate from = (OVertexDelegate) getFrom();
+      OVertexDelegate to = (OVertexDelegate) getTo();
+      from.detachOutgointEdge(this);
+      to.detachIncomingEdge(this);
+      this.element = db.newEdge(from, to, lightweightEdgeType).getRecord();
+      this.lightweightEdgeType = null;
     }
+    element.setProperty(name, value);
+  }
+
+  private ODatabase getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
   @Override public Optional<OVertex> asVertex() {
@@ -174,13 +194,33 @@ public class OEdgeDelegate implements OEdge {
   }
 
   @Override public int compare(OIdentifiable o1, OIdentifiable o2) {
-    if (element != null)
-      return element.compare(o1, o2);
-    else
-      return 0;//TODO lightweight edges!
+    return o1.compareTo(o2);
   }
 
   @Override public int compareTo(OIdentifiable o) {
     return 0;
+  }
+
+  @Override public boolean equals(Object obj) {
+    if (element == null) {
+      return this == obj;
+      //TODO double-check this logic for lightweight edges
+    }
+    if (!(obj instanceof OIdentifiable)) {
+      return false;
+    }
+    if (!(obj instanceof OElement)) {
+      obj = ((OIdentifiable) obj).getRecord();
+    }
+
+    return element.equals(((OElement) obj).getRecord());
+  }
+
+  @Override public int hashCode() {
+    if (element == null) {
+      return super.hashCode();
+    }
+
+    return element.hashCode();
   }
 }

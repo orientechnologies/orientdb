@@ -40,11 +40,14 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -885,10 +888,25 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return getUnderlying().getBlobClusterIds();
   }
 
+  @Override public OEdge newEdge(OVertex from, OVertex to, OClass type) {
+    return getUnderlying().newEdge(from, to, type);
+  }
+
+  @Override public OEdge newEdge(OVertex from, OVertex to, String type) {
+    return getUnderlying().newEdge(from, to, type);
+  }
+
+  @Override public OVertex newVertex(OClass type) {
+    return getUnderlying().newVertex(type);
+  }
+
+  @Override public OVertex newVertex(String type) {
+    return getUnderlying().newVertex(type);
+  }
+
   @Override
   public OSharedContext getSharedContext() {
     return underlying.getSharedContext();
   }
-
 
 }

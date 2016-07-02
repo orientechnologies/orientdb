@@ -1,22 +1,6 @@
 package com.orientechnologies.orient.core.db.document;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicReference;
-
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -24,25 +8,12 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OEmbeddedDBFactory;
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
-import com.orientechnologies.orient.core.db.OrientDBFactory;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -50,12 +21,19 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.record.ODirection;
+import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -66,6 +44,17 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by tglman on 20/07/16.
@@ -507,6 +496,148 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public void freeze(boolean throwException) {
     checkOpeness();
     internal.freeze(throwException);
+  }
+
+  public OVertex newVertex(final String iClassName) {
+    ODocument doc = newInstance(iClassName);
+    if (!doc.isVertex()) {
+      throw new IllegalArgumentException("" + iClassName + " is not a vertex class");
+    }
+    return doc.asVertex().get();
+  }
+
+  @Override public OVertex newVertex(OClass type) {
+    if (type == null) {
+      return newVertex("E");
+    }
+    return newVertex(type.getName());
+  }
+
+  @Override public OEdge newEdge(OVertex from, OVertex to, String type) {
+    ODocument doc = newInstance(type);
+    if (!doc.isEdge()) {
+      throw new IllegalArgumentException("" + type + " is not an edge class");
+    }
+
+    return addEdgeInternal(from, to, type);
+  }
+
+  @Override public OEdge newEdge(OVertex from, OVertex to, OClass type) {
+    if (type == null) {
+      return newEdge(from, to, "E");
+    }
+    return newEdge(from, to, type.getName());
+  }
+
+  private OEdge addEdgeInternal(final OVertex currentVertex, final OVertex inVertex, String iClassName, final Object... fields) {
+
+    OEdge edge = null;
+    ODocument outDocument = null;
+    ODocument inDocument = null;
+    boolean outDocumentModified = false;
+
+    final int maxRetries = 1;//TODO
+    for (int retry = 0; retry < maxRetries; ++retry) {
+      try {
+        // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
+        if (outDocument == null) {
+          outDocument = currentVertex.getRecord();
+          if (outDocument == null)
+            throw new IllegalArgumentException("source vertex is invalid (rid=" + currentVertex.getIdentity() + ")");
+        }
+
+        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+          throw new IllegalArgumentException("source record is not a vertex");
+
+        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+          throw new IllegalArgumentException("destination record is not a vertex");
+
+        OVertex to = inVertex;
+        OVertex from = currentVertex;
+
+        OSchema schema = getMetadata().getSchema();
+        final OClass edgeType = schema.getClass(iClassName);
+        if (edgeType == null)
+          // AUTO CREATE CLASS
+          schema.createClass(iClassName);
+        else
+          // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
+          iClassName = edgeType.getName();
+
+        final String outFieldName = getConnectionFieldName(ODirection.OUT, iClassName);
+        final String inFieldName = getConnectionFieldName(ODirection.IN, iClassName);
+
+        // since the label for the edge can potentially get re-assigned
+        // before being pushed into the OrientEdge, the
+        // null check has to go here.
+        if (iClassName == null)
+          throw new IllegalArgumentException("Class " + iClassName + " cannot be found");
+
+        // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
+
+        edge = newInstance(iClassName).asEdge().get();
+        if (fields != null) {
+          for (int i = 0; i < fields.length; i += 2) {
+            String fieldName = "" + fields[i];
+            if (fields.length <= i + 1) {
+              break;
+            }
+            Object fieldValue = fields[i + 1];
+            edge.setProperty(fieldName, fieldValue);
+
+          }
+        }
+
+        edge.setProperty("out", currentVertex);
+        edge.setProperty("in", inDocument);
+
+        if (!outDocumentModified) {
+          // OUT-VERTEX ---> IN-VERTEX/EDGE
+          OVertexDelegate.createLink(outDocument, to, outFieldName);
+
+        }
+
+        // IN-VERTEX ---> OUT-VERTEX/EDGE
+        OVertexDelegate.createLink(inDocument, from, inFieldName);
+
+        // OK
+        break;
+
+      } catch (ONeedRetryException e) {
+        // RETRY
+        if (!outDocumentModified)
+          outDocument.reload();
+        else if (inDocument != null)
+          inDocument.reload();
+      } catch (RuntimeException e) {
+        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
+        try {
+          edge.delete();
+        } catch (Exception ex) {
+        }
+        throw e;
+      } catch (Throwable e) {
+        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
+        try {
+          edge.delete();
+        } catch (Exception ex) {
+        }
+        throw new IllegalStateException("Error on addEdge in non tx environment", e);
+      }
+    }
+    return edge;
+  }
+
+  private static String getConnectionFieldName(final ODirection iDirection, final String iClassName) {
+    if (iDirection == null || iDirection == ODirection.BOTH)
+      throw new IllegalArgumentException("Direction not valid");
+
+    // PREFIX "out_" or "in_" TO THE FIELD NAME
+    final String prefix = iDirection == ODirection.OUT ? "out_" : "in_";
+    if (iClassName == null || iClassName.isEmpty() || iClassName.equals("E"))
+      return prefix;
+
+    return prefix + iClassName;
   }
 
   @Override

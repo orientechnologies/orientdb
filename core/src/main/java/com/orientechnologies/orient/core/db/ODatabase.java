@@ -32,10 +32,14 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
+
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -447,6 +451,56 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return The new instance.
    */
   <RET extends Object> RET newInstance();
+
+  /**
+   * Creates a new Edge of type E
+   * @param from the starting point vertex
+   * @param to the endpoint vertex
+   * @return the edge
+   */
+  default OEdge newEdge(OVertex from, OVertex to){
+    return newEdge(from, to, "E");
+  }
+
+  /**
+   * Creates a new Edge
+   * @param from the starting point vertex
+   * @param to the endpoint vertex
+   * @param type the edge type
+   * @return the edge
+   */
+  OEdge newEdge(OVertex from, OVertex to, OClass type);
+
+  /**
+   * Creates a new Edge
+   * @param from the starting point vertex
+   * @param to the endpoint vertex
+   * @param type the edge type
+   * @return the edge
+   */
+  OEdge newEdge(OVertex from, OVertex to, String type);
+
+  /**
+   * Creates a new Vertex of type V
+   * @return
+   */
+  default OVertex newVertex(){
+    return newVertex("V");
+  }
+
+  /**
+   * Creates a new Vertex
+   * @param type the vertex type
+   * @return
+   */
+  OVertex newVertex(OClass type);
+
+  /**
+   * Creates a new Vertex
+   * @param type the vertex type (class name)
+   * @return
+   */
+  OVertex newVertex(String type);
 
   /**
    * Returns the Dictionary manual index.

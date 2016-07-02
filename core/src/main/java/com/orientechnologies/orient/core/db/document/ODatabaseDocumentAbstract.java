@@ -55,16 +55,12 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordVersionHelper;
-import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.record.impl.ODirtyManager;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.record.*;
+import com.orientechnologies.orient.core.record.impl.*;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -2039,6 +2035,149 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public ODocument newInstance(final String iClassName) {
     return new ODocument(iClassName);
+  }
+
+
+  public OVertex newVertex(final String iClassName) {
+    ODocument doc = newInstance(iClassName);
+    if (!doc.isVertex()) {
+      throw new IllegalArgumentException("" + iClassName + " is not a vertex class");
+    }
+    return doc.asVertex().get();
+  }
+
+  @Override public OVertex newVertex(OClass type) {
+    if (type == null) {
+      return newVertex("E");
+    }
+    return newVertex(type.getName());
+  }
+
+  @Override public OEdge newEdge(OVertex from, OVertex to, String type) {
+    ODocument doc = newInstance(type);
+    if (!doc.isEdge()) {
+      throw new IllegalArgumentException("" + type + " is not an edge class");
+    }
+
+    return addEdgeInternal(from, to, type);
+  }
+
+  @Override public OEdge newEdge(OVertex from, OVertex to, OClass type) {
+    if (type == null) {
+      return newEdge(from, to, "E");
+    }
+    return newEdge(from, to, type.getName());
+  }
+
+  private OEdge addEdgeInternal(final OVertex currentVertex, final OVertex inVertex, String iClassName, final Object... fields) {
+
+    OEdge edge = null;
+    ODocument outDocument = null;
+    ODocument inDocument = null;
+    boolean outDocumentModified = false;
+
+    final int maxRetries = 1;//TODO
+    for (int retry = 0; retry < maxRetries; ++retry) {
+      try {
+        // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
+        if (outDocument == null) {
+          outDocument = currentVertex.getRecord();
+          if (outDocument == null)
+            throw new IllegalArgumentException("source vertex is invalid (rid=" + currentVertex.getIdentity() + ")");
+        }
+
+        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+          throw new IllegalArgumentException("source record is not a vertex");
+
+        if (!ODocumentInternal.getImmutableSchemaClass(outDocument).isVertexType())
+          throw new IllegalArgumentException("destination record is not a vertex");
+
+        OVertex to = inVertex;
+        OVertex from = currentVertex;
+
+        OSchema schema = getMetadata().getSchema();
+        final OClass edgeType = schema.getClass(iClassName);
+        if (edgeType == null)
+          // AUTO CREATE CLASS
+          schema.createClass(iClassName);
+        else
+          // OVERWRITE CLASS NAME BECAUSE ATTRIBUTES ARE CASE SENSITIVE
+          iClassName = edgeType.getName();
+
+        final String outFieldName = getConnectionFieldName(ODirection.OUT, iClassName);
+        final String inFieldName = getConnectionFieldName(ODirection.IN, iClassName);
+
+        // since the label for the edge can potentially get re-assigned
+        // before being pushed into the OrientEdge, the
+        // null check has to go here.
+        if (iClassName == null)
+          throw new IllegalArgumentException("Class " + iClassName + " cannot be found");
+
+        // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
+
+        edge = newInstance(iClassName).asEdge().get();
+        if (fields != null) {
+          for (int i = 0; i < fields.length; i += 2) {
+            String fieldName = "" + fields[i];
+            if (fields.length <= i + 1) {
+              break;
+            }
+            Object fieldValue = fields[i + 1];
+            edge.setProperty(fieldName, fieldValue);
+
+          }
+        }
+
+        edge.setProperty("out", currentVertex);
+        edge.setProperty("in", inDocument);
+
+        if (!outDocumentModified) {
+          // OUT-VERTEX ---> IN-VERTEX/EDGE
+          OVertexDelegate.createLink(outDocument, to, outFieldName);
+
+        }
+
+        // IN-VERTEX ---> OUT-VERTEX/EDGE
+        OVertexDelegate.createLink(inDocument, from, inFieldName);
+
+        // OK
+        break;
+
+      } catch (ONeedRetryException e) {
+        // RETRY
+        if (!outDocumentModified)
+          outDocument.reload();
+        else if (inDocument != null)
+          inDocument.reload();
+      } catch (RuntimeException e) {
+        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
+        try {
+          edge.delete();
+        } catch (Exception ex) {
+        }
+        throw e;
+      } catch (Throwable e) {
+        // REVERT CHANGES. EDGE.REMOVE() TAKES CARE TO UPDATE ALSO BOTH VERTICES IN CASE
+        try {
+          edge.delete();
+        } catch (Exception ex) {
+        }
+        throw new IllegalStateException("Error on addEdge in non tx environment", e);
+      }
+    }
+    return edge;
+  }
+
+  private static String getConnectionFieldName(final ODirection iDirection, final String iClassName) {
+    if (iDirection == null || iDirection == ODirection.BOTH)
+      throw new IllegalArgumentException("Direction not valid");
+
+    // PREFIX "out_" or "in_" TO THE FIELD NAME
+    final String prefix = iDirection == ODirection.OUT ? "out_" : "in_";
+    if (iClassName == null || iClassName.isEmpty() || iClassName.equals("E"))
+      return prefix;
+
+    return prefix + iClassName;
   }
 
   /**

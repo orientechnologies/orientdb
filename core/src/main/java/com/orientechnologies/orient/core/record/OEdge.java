@@ -30,6 +30,8 @@ public interface OEdge extends OElement {
 
   public OVertex getTo();
 
+  public void delete();
+
   default OVertex getVertex(ODirection dir) {
     if (dir == ODirection.IN) {
       return getTo();
