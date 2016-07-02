@@ -29,6 +29,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.Date;
 
 /**
  * Remote server channel.
@@ -51,6 +52,7 @@ public class ORemoteServerChannel {
   private int                             sessionId     = -1;
   private byte[]                          sessionToken;
   private OContextConfiguration           contextConfig = new OContextConfiguration();
+  private Date                            createdOn     = new Date();
 
   public ORemoteServerChannel(final ODistributedServerManager manager, final String iServer, final String iURL, final String user,
       final String passwd) throws IOException {
@@ -228,5 +230,9 @@ public class ORemoteServerChannel {
 
   public String getServer() {
     return server;
+  }
+
+  public Date getCreatedOn() {
+    return createdOn;
   }
 }
