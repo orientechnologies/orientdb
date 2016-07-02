@@ -917,7 +917,7 @@ public class OMatchStatementExecutionTest {
   }
 
   @Test
-  public void testTriangle2() {
+  public void testTriangle2Old() {
     StringBuilder query = new StringBuilder();
     query.append("match ");
     query.append("{class:TriangleV, as: friend1}");
@@ -926,6 +926,28 @@ public class OMatchStatementExecutionTest {
     query.append("{class:TriangleV, as: friend1}");
     query.append("  .out('TriangleE'){as: friend3}");
     query.append("return $matches");
+
+    List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
+    assertEquals(1, result.size());
+    ODocument doc = result.get(0);
+    ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
+    ODocument friend2 = ((OIdentifiable) doc.field("friend2")).getRecord();
+    ODocument friend3 = ((OIdentifiable) doc.field("friend3")).getRecord();
+    assertEquals(0, friend1.field("uid"));
+    assertEquals(1, friend2.field("uid"));
+    assertEquals(2, friend3.field("uid"));
+  }
+
+  @Test
+  public void testTriangle2() {
+    StringBuilder query = new StringBuilder();
+    query.append("match ");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .out('TriangleE'){class:TriangleV, as: friend2, where: (uid = 1)}");
+    query.append("  .out('TriangleE'){as: friend3},");
+    query.append("{class:TriangleV, as: friend1}");
+    query.append("  .out('TriangleE'){as: friend3}");
+    query.append("return $patterns");
 
     List<ODocument> result = db.command(new OCommandSQL(query.toString())).execute();
     assertEquals(1, result.size());

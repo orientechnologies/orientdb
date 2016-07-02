@@ -580,7 +580,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
           }
         }
       }
-    } else if (returnsMatches()) {
+    } else if (returnsPatterns()) {
       doc = getDatabase().newInstance();
       doc.setTrackingChanges(false);
       for (Map.Entry<String, OIdentifiable> entry : matchContext.matched.entrySet()) {
@@ -665,8 +665,11 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     return false;
   }
 
-  private boolean returnsMatches() {
+  private boolean returnsPatterns() {
     for (OExpression item : returnItems) {
+      if (item.toString().equalsIgnoreCase("$patterns")) {
+        return true;
+      }
       if (item.toString().equalsIgnoreCase("$matches")) {
         return true;
       }
