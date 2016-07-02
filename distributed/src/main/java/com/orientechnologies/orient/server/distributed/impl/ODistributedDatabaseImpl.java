@@ -290,8 +290,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           remoteServer.sendRequest(iRequest);
 
         } catch (Throwable e) {
+          String reason = e.getMessage();
           if (e instanceof ODistributedException && e.getCause() instanceof IOException) {
             // CONNECTION ERROR: REMOVE THE CONNECTION
+            reason = e.getCause().getMessage();
             manager.closeRemoteServer(node);
 
           } else if (e instanceof OSecurityAccessException) {
@@ -314,7 +316,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 manager.getAvailableNodeNames(databaseName));
           else
             ODistributedServerLog.error(this, localNodeName, node, ODistributedServerLog.DIRECTION.OUT,
-                "Error on sending distributed request %s. Active nodes: %s", e, iRequest,
+                "Error on sending distributed request %s (%s). Active nodes: %s", iRequest, reason,
                 manager.getAvailableNodeNames(databaseName));
         }
       }
