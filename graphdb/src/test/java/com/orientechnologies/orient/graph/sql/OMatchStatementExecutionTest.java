@@ -955,9 +955,9 @@ public class OMatchStatementExecutionTest {
     ODocument friend1 = ((OIdentifiable) doc.field("friend1")).getRecord();
     ODocument friend2 = ((OIdentifiable) doc.field("friend2")).getRecord();
     ODocument friend3 = ((OIdentifiable) doc.field("friend3")).getRecord();
-    assertEquals(0, friend1.field("uid"));
-    assertEquals(1, friend2.field("uid"));
-    assertEquals(2, friend3.field("uid"));
+    assertEquals(0, friend1.<Object>field("uid"));
+    assertEquals(1, friend2.<Object>field("uid"));
+    assertEquals(2, friend3.<Object>field("uid"));
   }
 
   @Test
