@@ -130,7 +130,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   protected volatile OWriteCache writeCache;
 
   private volatile ORecordConflictStrategy recordConflictStrategy = Orient.instance().getRecordConflictStrategy()
-      .newInstanceOfDefaultClass();
+      .getDefaultImplementation();
 
   private volatile int defaultClusterId = -1;
   protected volatile OAtomicOperationsManager atomicOperationsManager;
