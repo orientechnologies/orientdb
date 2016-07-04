@@ -464,6 +464,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         files, getId());
     wowCache.loadRegisteredFiles();
     wowCache.addLowDiskSpaceListener(this);
+    wowCache.addBackgroundExceptionListener(this);
 
     writeCache = wowCache;
   }

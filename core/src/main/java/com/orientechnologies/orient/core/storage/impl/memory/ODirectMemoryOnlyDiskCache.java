@@ -26,6 +26,7 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.*;
+import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
@@ -393,6 +394,20 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   public void storeCacheState(OWriteCache writeCache) {
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void addBackgroundExceptionListener(OBackgroundExceptionListener listener) {
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void removeBackgroundExceptionListener(OBackgroundExceptionListener listener) {
+  }
+
   @Override
   public OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener) {
     return OCommonConst.EMPTY_PAGE_DATA_VERIFICATION_ARRAY;
@@ -588,7 +603,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   public long addFile(String fileName) {
     return addFile(fileName, null);
   }
-
 
   @Override
   public long addFile(String fileName, long fileId) {

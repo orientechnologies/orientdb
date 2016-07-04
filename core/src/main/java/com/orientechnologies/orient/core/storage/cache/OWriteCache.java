@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 
@@ -63,7 +64,7 @@ public interface OWriteCache {
    * Returns id associated with given file or value &lt; 0 if such file does not exist.
    *
    * @param fileName File name id of which has to be returned.
-   * @return  id associated with given file or value &lt; 0 if such file does not exist.
+   * @return id associated with given file or value &lt; 0 if such file does not exist.
    */
   long fileIdByName(String fileName);
 
@@ -115,6 +116,20 @@ public interface OWriteCache {
   int pageSize();
 
   boolean fileIdsAreEqual(long firsId, long secondId);
+
+  /**
+   * Adds listener which is triggered if exception is cast inside background flush data thread.
+   *
+   * @param listener Listener to trigger
+   */
+  void addBackgroundExceptionListener(OBackgroundExceptionListener listener);
+
+  /**
+   * Removes listener which is triggered if exception is cast inside background flush data thread.
+   *
+   * @param listener Listener to remove
+   */
+  void removeBackgroundExceptionListener(OBackgroundExceptionListener listener);
 
   /**
    * Directory which contains all files managed by write cache.
