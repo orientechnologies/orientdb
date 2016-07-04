@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 
-public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implements HasContainerHolder {
+public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E> implements HasContainerHolder {
 
     private final List<HasContainer> hasContainers = new ArrayList<>();
 
@@ -68,8 +68,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
      * @return An iterator for all the vertices/edges for this step
      */
     private <ElementType extends Element> Iterator<? extends ElementType> elements(
-            BiFunction<OrientGraph, Object[],
-            Iterator<ElementType>> getElementsByIds,
+            BiFunction<OrientGraph, Object[], Iterator<ElementType>> getElementsByIds,
             TriFunction<OrientGraph, OIndex<Object>, Iterator<Object>, Stream<? extends ElementType>> getElementsByIndex,
             Function<OrientGraph, Iterator<ElementType>> getAllElements) {
         final OrientGraph graph = getGraph();
@@ -130,9 +129,8 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
             final Set<String> indexedKeys = classLabel.isPresent() ? graph.getIndexedKeys(this.returnClass, classLabel.get()) : graph.getIndexedKeys(this.returnClass);
 
             Optional<Pair<String, Iterator<Object>>> requestedKeyValue = this.hasContainers.stream()
-                    .filter(c -> indexedKeys.contains(c.getKey()) && (
-                            c.getPredicate().getBiPredicate() == Compare.eq ||
-                                    c.getPredicate().getBiPredicate() == Contains.within))
+                    .filter(c -> indexedKeys.contains(c.getKey()) && (c.getPredicate().getBiPredicate() == Compare.eq ||
+                            c.getPredicate().getBiPredicate() == Contains.within))
                     .findAny()
                     .map(c -> getValuePair(c))
                     .orElseGet(Optional::empty);
@@ -162,7 +160,7 @@ public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>implem
     private Optional<Pair<String, Iterator<Object>>> getValuePair(HasContainer c) {
         Iterator<Object> values;
         if (c.getPredicate().getBiPredicate() == Contains.within)
-            values = ((Iterable<Object>)c.getValue()).iterator();
+            values = ((Iterable<Object>) c.getValue()).iterator();
         else
             values = IteratorUtils.of(c.getValue());
         return Optional.of(new Pair<>(c.getKey(), values));

@@ -90,7 +90,7 @@ public final class OrientGraph implements Graph {
         if (config.containsKey(CONFIG_POOL_SIZE))
             if (config.containsKey(CONFIG_MAX_PARTITION_SIZE))
             factory.setupPool(config.getInt(CONFIG_MAX_PARTITION_SIZE), config.getInt(CONFIG_POOL_SIZE));
-        else
+            else
                 factory.setupPool(config.getInt(CONFIG_POOL_SIZE));
 
         return factory.getNoTx();
