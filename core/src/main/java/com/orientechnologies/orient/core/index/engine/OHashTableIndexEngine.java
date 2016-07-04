@@ -103,7 +103,6 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void flush() {
-    hashTable.flush();
   }
 
   @Override

@@ -748,7 +748,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OLogSequenceNumber endLsn = writeAheadLog.end();
 
       if (endLsn == null || lsn.compareTo(endLsn) >= 0) {
-        OLogManager.instance().warn(this, "Cannot find requested LSN=%s for database sync operation. Last available LSN is %s", endLsn);
+        OLogManager.instance()
+            .warn(this, "Cannot find requested LSN=%s for database sync operation. Last available LSN is %s", endLsn);
         return null;
       }
 
@@ -1256,8 +1257,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (clusterName.length() == 0)
       throw new IllegalArgumentException("Cluster name is empty");
 
-//    if (Character.isDigit(clusterName.charAt(0)))
-//      return Integer.parseInt(clusterName);
+    //    if (Character.isDigit(clusterName.charAt(0)))
+    //      return Integer.parseInt(clusterName);
 
     stateLock.acquireReadLock();
     try {
@@ -1611,7 +1612,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         // OLD INDEX FILE ARE PRESENT: THIS IS THE CASE OF PARTIAL/BROKEN INDEX
         OLogManager.instance().warn(this, "Index with name '%s' already exists, removing it and re-create the index", engineName);
         final OIndexEngine engine = indexEngineNameMap.remove(engineName);
-        if( engine != null ) {
+        if (engine != null) {
           indexEngines.remove(engine);
           configuration.deleteIndexEngine(engineName);
           engine.delete();
@@ -2452,17 +2453,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       synch();
       try {
-        unlock();
 
         if (configuration != null)
           configuration.setSoftlyClosed(true);
 
       } catch (IOException e) {
         atomicOperationsManager.releaseAtomicOperations(freezeId);
-        try {
-          lock();
-        } catch (IOException ignored) {
-        }
         throw OException.wrapException(new OStorageException("Error on freeze of storage '" + name + "'"), e);
       }
     } finally {
@@ -2472,7 +2468,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   public void release() {
     try {
-      lock();
 
       for (OIndexEngine indexEngine : indexEngines)
         if (indexEngine != null && indexEngine instanceof OFreezableStorageComponent)
@@ -2837,24 +2832,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   protected boolean isDirty() throws IOException {
     return false;
-  }
-
-  /**
-   * Locks all the clusters to avoid access outside current process.
-   */
-  protected void lock() throws IOException {
-    OLogManager.instance().debug(this, "Locking storage %s...", name);
-    configuration.lock();
-    writeCache.lock();
-  }
-
-  /**
-   * Unlocks all the clusters to allow access outside current process.
-   */
-  protected void unlock() throws IOException {
-    OLogManager.instance().debug(this, "Unlocking storage %s...", name);
-    configuration.unlock();
-    writeCache.unlock();
   }
 
   private ORawBuffer readRecordIfNotLatest(final OCluster cluster, final ORecordId rid, final int recordVersion)
@@ -3987,9 +3964,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           readCache.deleteFile(fileDeletedWALRecord.getFileId(), writeCache);
       } else if (walRecord instanceof OFileCreatedWALRecord) {
         OFileCreatedWALRecord fileCreatedCreatedWALRecord = (OFileCreatedWALRecord) walRecord;
-        if (writeCache.exists(fileCreatedCreatedWALRecord.getFileName())) {
-          writeCache.loadFile(fileCreatedCreatedWALRecord.getFileName(), fileCreatedCreatedWALRecord.getFileId());
-        } else {
+
+        if (!writeCache.exists(fileCreatedCreatedWALRecord.getFileName())) {
           readCache.addFile(fileCreatedCreatedWALRecord.getFileName(), fileCreatedCreatedWALRecord.getFileId(), writeCache);
         }
       } else if (walRecord instanceof OUpdatePageRecord) {

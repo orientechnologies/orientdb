@@ -50,7 +50,6 @@ public class SBTreeWALTest extends SBTreeTest {
   private OReadCache             expectedReadCache;
   private OWriteCache            expectedWriteCache;
 
-
   @Before
   public void before() throws IOException {
     buildDirectory = System.getProperty("buildDirectory", ".");
@@ -272,9 +271,7 @@ public class SBTreeWALTest extends SBTreeTest {
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
             final String fileName = fileCreatedCreatedRecord.getFileName().replace("actualSBTree", "expectedSBTree");
 
-            if (expectedWriteCache.exists(fileName))
-              expectedWriteCache.loadFile(fileName, fileCreatedCreatedRecord.getFileId());
-            else
+            if (!expectedWriteCache.exists(fileName))
               expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
           } else {
             final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
@@ -336,7 +333,7 @@ public class SBTreeWALTest extends SBTreeTest {
     while (bytesRead >= 0) {
       fileTwo.readFully(actualContent, 0, bytesRead);
 
-//      Assert.assertEquals(expectedContent, actualContent);
+      //      Assert.assertEquals(expectedContent, actualContent);
 
       Assertions.assertThat(expectedContent).isEqualTo(actualContent);
       expectedContent = new byte[OClusterPage.PAGE_SIZE];

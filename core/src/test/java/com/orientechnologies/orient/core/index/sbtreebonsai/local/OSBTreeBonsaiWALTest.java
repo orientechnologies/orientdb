@@ -286,9 +286,7 @@ public class OSBTreeBonsaiWALTest extends OSBTreeBonsaiLocalTest {
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
             final String fileName = fileCreatedCreatedRecord.getFileName().replace("actualSBTree", "expectedSBTree");
 
-            if (expectedWriteCache.exists(fileName))
-              expectedWriteCache.loadFile(fileName, fileCreatedCreatedRecord.getFileId());
-            else
+            if (!expectedWriteCache.exists(fileName))
               expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
           } else {
             final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;

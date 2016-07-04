@@ -34,7 +34,7 @@ public class OSingleFileSegment {
   protected OLocalPaginatedStorage    storage;
   protected OFile                     file;
   protected OStorageFileConfiguration config;
-  private boolean                     wasSoftlyClosedAtPreviousTime = true;
+  private boolean wasSoftlyClosedAtPreviousTime = true;
 
   public OSingleFileSegment(final OLocalPaginatedStorage iStorage, final OStorageFileConfiguration iConfig) throws IOException {
     this(iStorage, iConfig, iConfig.type);
@@ -47,15 +47,8 @@ public class OSingleFileSegment {
     file = new OFileClassic(iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());
   }
 
-  public boolean open() throws IOException {
-    boolean softClosed = file.open();
-    if (!softClosed) {
-      // LAST TIME THE FILE WAS NOT CLOSED IN SOFT WAY
-      OLogManager.instance().warn(this, "segment file '%s' was not closed correctly last time", OFileUtils.getPath(file.getName()));
-      wasSoftlyClosedAtPreviousTime = false;
-    }
-
-    return softClosed;
+  public void open() throws IOException {
+    file.open();
   }
 
   public void create(final int iStartSize) throws IOException {
@@ -111,8 +104,8 @@ public class OSingleFileSegment {
   public void rename(String iOldName, String iNewName) throws IOException {
     final String osFileName = file.getName();
     if (osFileName.startsWith(iOldName)) {
-      final File newFile = new File(storage.getStoragePath() + "/" + iNewName
-          + osFileName.substring(osFileName.lastIndexOf(iOldName) + iOldName.length()));
+      final File newFile = new File(
+          storage.getStoragePath() + "/" + iNewName + osFileName.substring(osFileName.lastIndexOf(iOldName) + iOldName.length()));
       boolean renamed = file.renameTo(newFile);
       while (!renamed) {
         renamed = file.renameTo(newFile);

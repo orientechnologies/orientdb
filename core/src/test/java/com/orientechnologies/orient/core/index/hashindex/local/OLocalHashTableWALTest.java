@@ -284,9 +284,7 @@ public class OLocalHashTableWALTest extends OLocalHashTableBase {
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
             String fileName = fileCreatedCreatedRecord.getFileName().replace("actualLocalHashTable", "expectedLocalHashTable");
 
-            if (expectedWriteCache.exists(fileName))
-              expectedWriteCache.loadFile(fileName, fileCreatedCreatedRecord.getFileId());
-            else
+            if (!expectedWriteCache.exists(fileName))
               expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
           }
         }

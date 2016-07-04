@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.engine.local;
 
+import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesI
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.util.Map;
@@ -42,6 +44,9 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   public static final String NAME = "plocal";
 
   private volatile O2QCache readCache;
+
+  private final OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<Long, OFileClassic>(
+      OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger());
 
   public OEngineLocalPaginated() {
   }
@@ -78,7 +83,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   public OStorage createStorage(final String dbName, final Map<String, String> configuration) {
     try {
 
-      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache);
+      return new OLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), readCache, files);
     } catch (Exception e) {
       final String message =
           "Error on opening database: " + dbName + ". Current location is: " + new java.io.File(".").getAbsolutePath();
@@ -105,6 +110,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
   public void shutdown() {
     try {
       readCache.clear();
+      files.clear();
 
       try {
         if (OByteBufferPool.instance() != null)
