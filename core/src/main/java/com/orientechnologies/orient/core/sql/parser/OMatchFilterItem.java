@@ -12,6 +12,7 @@ public class OMatchFilterItem extends SimpleNode {
   protected OWhereClause        whileCondition;
   protected OArrayRangeSelector depth;
   protected OInteger            maxDepth;
+  protected boolean             optional = false;
 
   public OMatchFilterItem(int id) {
     super(id);
@@ -61,6 +62,12 @@ public class OMatchFilterItem extends SimpleNode {
       builder.append("while: (");
       whileCondition.toString(params, builder);
       builder.append(")");
+      return;
+    }
+
+    if(optional){
+      builder.append("optional: ");
+      builder.append(optional);
       return;
     }
   }

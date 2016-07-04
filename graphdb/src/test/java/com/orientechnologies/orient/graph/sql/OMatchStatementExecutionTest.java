@@ -1319,6 +1319,48 @@ public class OMatchStatementExecutionTest {
     assertEquals(expectedNames, names);
   }
 
+  @Test
+  public void testOptional() throws Exception {
+    List<ODocument> qResult = db.command(new OCommandSQL("match {class:Person, as: person} -NonExistingEdge-> {as:b, optional:true} return person, b.name")).execute();
+    assertEquals(6, qResult.size());
+    for (ODocument doc : qResult) {
+      assertTrue(doc.fieldNames().length == 2);
+      OIdentifiable personId = doc.field("person");
+      ODocument person = personId.getRecord();
+      String name = person.field("name");
+      assertTrue(name.startsWith("n"));
+    }
+  }
+
+  @Test
+  public void testOptional2() throws Exception {
+    List<ODocument> qResult = db.command(new OCommandSQL("match {class:Person, as: person} --> {as:b, optional:true, where:(nonExisting = 12)} return person, b.name")).execute();
+    assertEquals(6, qResult.size());
+    for (ODocument doc : qResult) {
+      assertTrue(doc.fieldNames().length == 2);
+      OIdentifiable personId = doc.field("person");
+      ODocument person = personId.getRecord();
+      String name = person.field("name");
+      assertTrue(name.startsWith("n"));
+    }
+  }
+
+  @Test
+  public void testOptional3() throws Exception {
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select friend.name as name from ("
+                    + "match {class:Person, as:a, where:(name = 'n1' and 1 + 1 = 2)}.out('Friend'){as:friend, where:(name = 'n2' and 1 + 1 = 2)},"
+                    + "{as:a}.out(){as:b, where:(nonExisting = 12), optional:true},"
+                    + "{as:friend}.out(){as:b, optional:true}"
+                    + " return friend)"))
+        .execute();
+    assertEquals(1, qResult.size());
+    assertEquals("n2", qResult.get(0).field("name"));
+
+  }
+
   private List<OIdentifiable> getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");
@@ -1345,6 +1387,5 @@ public class OMatchStatementExecutionTest {
 
   private static OProfiler getProfilerInstance() throws Exception {
     return Orient.instance().getProfiler();
-
   }
 }
