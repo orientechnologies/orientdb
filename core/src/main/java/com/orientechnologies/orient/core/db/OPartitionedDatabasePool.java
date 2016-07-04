@@ -115,7 +115,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     private PoolPartition partition;
 
     private DatabaseDocumentTxPooled(String iURL) {
-      super(iURL, true);
+      super(iURL, true, false);
     }
 
     @Override
@@ -156,7 +156,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
         partition = null;
 
         final OStorage storage = getStorage();
-        if( storage == null )
+        if (storage == null)
           return;
 
         //if connection is lost and storage is closed as result we should not put closed connection back to the pool
