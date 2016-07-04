@@ -179,13 +179,13 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
   void close();
 
-  void preCommit();
+  void preCommit(OIndexAbstract.IndexTxSnapshot snapshots);
 
-  void addTxOperation(final OTransactionIndexChanges changes);
+  void addTxOperation(OIndexAbstract.IndexTxSnapshot snapshots, final OTransactionIndexChanges changes);
 
-  void commit();
+  void commit(OIndexAbstract.IndexTxSnapshot snapshots);
 
-  void postCommit();
+  void postCommit(OIndexAbstract.IndexTxSnapshot snapshots);
 
   void setType(OType type);
 }
