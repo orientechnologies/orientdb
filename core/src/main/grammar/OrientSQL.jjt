@@ -346,6 +346,8 @@ TOKEN:
 	|
 	< START: ( "S" | "s") ( "T" | "t") ( "A" | "a") ( "R" | "r") ( "T" | "t") >
 	|
+	< OPTIONAL: ( "O" | "o") ( "P" | "p") ( "T" | "t") ( "I" | "i") ( "O" | "o") ( "N" | "n") ( "A" | "a") ( "L" | "l") >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -788,6 +790,8 @@ OIdentifier Identifier():
     token = <CACHE>
     |
     token = <START>
+    |
+    token = <OPTIONAL>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -3416,6 +3420,15 @@ OMatchFilterItem MatchFilterItem():
         |
         (
             <MAXDEPTH> <COLON> jjtThis.maxDepth = Integer()
+        )
+        |
+        (
+            <OPTIONAL> <COLON>
+            (
+                <TRUE> { jjtThis.optional = true; }
+                |
+                <FALSE> { jjtThis.optional = false; }
+            )
         )
     )
     { return jjtThis; }
