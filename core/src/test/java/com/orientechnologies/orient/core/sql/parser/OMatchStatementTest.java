@@ -163,6 +163,11 @@ public class OMatchStatementTest {
     checkRightSyntax("MATCH {class: 'V'} RETURN {'name':'foo', 'value': bar}");
   }
 
+  @Test
+  public void testOptional() {
+    checkRightSyntax("MATCH {class: 'V', as: foo}-->{}<-foo-{}-bar-{}-->{as: bar, optional:true} RETURN foo");
+    checkRightSyntax("MATCH {class: 'V', as: foo}-->{}<-foo-{}-bar-{}-->{as: bar, optional:false} RETURN foo");
+  }
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
