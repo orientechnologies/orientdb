@@ -12,6 +12,7 @@ The main area that need some more work is index lookups - currently it does find
 * you can run the standard tinkerpop test suite with `mvn install -P release`
 * there are some additional tests that you can run independently with `mvn test`
 * additionally there is a separate suite of tests in the `tests-scala` directory which you can run using `sbt test`
+* to automatically format the code (travis CI enforces a format check), just run `mvn clean install`
 
 ## Usage
 Have a look at the tests-scala which demonstrates the usage. There's also an orientdb example project in [gremlin-scala-examples](https://github.com/mpollmeier/gremlin-scala-examples).
