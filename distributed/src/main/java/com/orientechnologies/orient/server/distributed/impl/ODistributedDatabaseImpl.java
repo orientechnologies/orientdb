@@ -19,6 +19,17 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
@@ -35,17 +46,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each others.
@@ -179,28 +179,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         processLock.readLock().unlock();
       }
     }
-  }
-
-  public int checkQuorumBeforeReplicate(final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType,
-      final Collection<String> iClusterNames, final Collection<String> iNodes, final ODistributedConfiguration cfg) {
-    int nodesConcurToTheQuorum = 0;
-    if (quorumType == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE) {
-      // ONLY MASTER NODES CONCUR TO THE MINIMUM QUORUM
-      for (String node : iNodes) {
-        if (cfg.getServerRole(node) == ODistributedConfiguration.ROLES.MASTER)
-          nodesConcurToTheQuorum++;
-      }
-
-    } else {
-
-      // ALL NODES CONCUR TO THE MINIMUM QUORUM
-      nodesConcurToTheQuorum = iNodes.size();
-    }
-
-    // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE NODES
-    final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
-
-    return calculateQuorum(quorumType, iClusterNames, cfg, availableNodes, nodesConcurToTheQuorum, true);
   }
 
   @Override

@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.ONeedRetryException;
@@ -64,18 +76,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -302,8 +302,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             // LOCAL NODE, AVOID TO DISTRIBUTE IT
             // CALL IN DEFAULT MODE TO LET OWN COMMAND TO REDISTRIBUTE CHANGES (LIKE INSERT)
             return wrapped.command(iCommand);
-
-          localDistributedDatabase.checkQuorumBeforeReplicate(task.getQuorumType(), involvedClusters, nodes, dbCfg);
 
           final Object localResult;
 
@@ -573,9 +571,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       final Set<String> clusterNames = Collections.singleton(finalClusterName);
 
-      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames,
-          nodes, dbCfg);
-
       // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
       nodes.remove(localNodeName);
 
@@ -791,9 +786,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       final Set<String> clusterNames = Collections.singleton(clusterName);
 
-      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames,
-          nodes, dbCfg);
-
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
       if (executionModeSynch == null)
         executionModeSynch = iMode == 0;
@@ -924,9 +916,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             "Cannot execute distributed delete record " + iRecordId + " because no nodes are available");
 
       final Set<String> clusterNames = Collections.singleton(clusterName);
-
-      localDistributedDatabase.checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE, clusterNames,
-          nodes, dbCfg);
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
       if (executionModeSynch == null)
