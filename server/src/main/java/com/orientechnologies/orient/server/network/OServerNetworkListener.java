@@ -56,7 +56,7 @@ public class OServerNetworkListener extends Thread {
   public OServerNetworkListener(final OServer iServer, final OServerSocketFactory iSocketFactory, final String iHostName,
       final String iHostPortRange, final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
       final OServerParameterConfiguration[] iParameters, final OServerCommandConfiguration[] iCommands) {
-    super(Orient.instance().getThreadGroup(),
+    super(iServer.getThreadGroup(),
         "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ":" + iHostPortRange);
     server = iServer;
 
@@ -65,7 +65,7 @@ public class OServerNetworkListener extends Thread {
     // DETERMINE THE PROTOCOL VERSION BY CREATING A NEW ONE AND THEN THROW IT AWAY
     // TODO: CREATE PROTOCOL FACTORIES INSTEAD
     try {
-      protocolVersion = iProtocol.newInstance().getVersion();
+      protocolVersion = iProtocol.getConstructor(OServer.class).newInstance(server).getVersion();
     } catch (Exception e) {
       final String message = "Error on reading protocol version for " + iProtocol;
       OLogManager.instance().error(this, message, e);
@@ -181,6 +181,7 @@ public class OServerNetworkListener extends Thread {
   @Override
   public void run() {
     try {
+      Constructor<? extends ONetworkProtocol> constructor = protocolType.getConstructor(OServer.class);
       while (active) {
         try {
           // listen for and accept a client connection to serverSocket
@@ -210,7 +211,7 @@ public class OServerNetworkListener extends Thread {
           socket.setReceiveBufferSize(socketBufferSize);
 
           // CREATE A NEW PROTOCOL INSTANCE
-          final ONetworkProtocol protocol = protocolType.newInstance();
+          final ONetworkProtocol protocol = constructor.newInstance(server);
 
           // CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
           protocol.config(this, server, socket, configuration);
@@ -221,6 +222,8 @@ public class OServerNetworkListener extends Thread {
         } finally {
         }
       }
+    } catch (NoSuchMethodException e) {
+      OLogManager.instance().error(this, "error finding the protocol constructor with the server as parameter", e);
     } finally {
       try {
         if (serverSocket != null && !serverSocket.isClosed())

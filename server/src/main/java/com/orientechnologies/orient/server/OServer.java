@@ -1219,6 +1219,10 @@ public class OServer {
     return tokenHandler;
   }
 
+  public ThreadGroup getThreadGroup() {
+    return Orient.instance().getThreadGroup();
+  }
+
   private void initSystemDatabase() {
     systemDatabase = new OSystemDatabase(this);
   }

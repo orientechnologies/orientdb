@@ -33,6 +33,10 @@ import java.net.Socket;
 public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
   private static final int CURRENT_PROTOCOL_VERSION = 10;
 
+  public ONetworkProtocolHttpDb(OServer server) {
+    super(server);
+  }
+
   @Override
   public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
       final OContextConfiguration iConfiguration) throws IOException {
