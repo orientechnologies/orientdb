@@ -334,7 +334,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return (DB) this;
   }
 
-  private void setupThreadOwner() {
+  protected void setupThreadOwner() {
     if (!ownerProtection)
       return;
 
@@ -1272,7 +1272,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     clearOwner();
   }
 
-  private void clearOwner() {
+  protected void clearOwner() {
     if (!ownerProtection)
       return;
     owner.set(null);

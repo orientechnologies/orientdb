@@ -23,9 +23,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -42,7 +40,9 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     super();
 
     memory = Orient.instance().getEngine("memory");
+    memory.startup();
     disk = Orient.instance().getEngine("plocal");
+    disk.startup();
 
     this.basePath = new java.io.File(directoryPath).getAbsolutePath();
     this.configurations = configurations != null ? configurations : OrientDBSettings.defaultSettings();
@@ -56,10 +56,6 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       OLogManager.instance().error(this, "MBean for byte buffer pool cannot be registered", e);
     }
 
-  }
-
-  private long calculateReadCacheMaxMemory(final long cacheSize) {
-    return (long) (cacheSize * ((100 - OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0));
   }
 
   @Override
@@ -137,7 +133,23 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   }
 
   @Override
-  public void close() {
+  public synchronized void close() {
+
+    final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
+    for (OStorage stg : storagesCopy) {
+      try {
+        OLogManager.instance().info(this, "- shutdown storage: " + stg.getName() + "...");
+        stg.shutdown();
+      } catch (Throwable e) {
+        OLogManager.instance().warn(this, "-- error on shutdown storage", e);
+      }
+    }
+    storages.clear();
+
+    // SHUTDOWN ENGINES
+    memory.shutdown();
+    disk.shutdown();
+
 
   }
 
