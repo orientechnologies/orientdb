@@ -115,14 +115,15 @@ public class OMatchFilter extends SimpleNode {
     return null;
   }
 
-  public boolean isOptional(){
+  public boolean isOptional() {
     for (OMatchFilterItem item : items) {
-      if (item.optional) {
+      if (Boolean.TRUE.equals(item.optional)) {
         return true;
       }
     }
     return false;
   }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("{");
     boolean first = true;
