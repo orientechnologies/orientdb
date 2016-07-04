@@ -97,8 +97,7 @@ import java.util.zip.ZipOutputStream;
  * @since 28.03.13
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract
-    implements OLowDiskSpaceListener, OFullCheckpointRequestListener, OIdentifiableStorage, OOrientStartupListener,
-    OOrientShutdownListener {
+    implements OLowDiskSpaceListener, OFullCheckpointRequestListener, OIdentifiableStorage {
   private static final int RECORD_LOCK_TIMEOUT = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
 
   private final OComparableLockManager<ORID> lockManager;
@@ -116,7 +115,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final Map<String, OCluster> clusterMap = new HashMap<String, OCluster>();
   private       List<OCluster>        clusters   = new ArrayList<OCluster>();
 
-  private volatile ThreadLocal<OStorageTransaction> transaction          = new ThreadLocal<OStorageTransaction>();
+  private volatile ThreadLocal<OStorageTransaction> transaction;
   private final    AtomicBoolean                    checkpointInProgress = new AtomicBoolean();
   protected final OSBTreeCollectionManagerShared sbTreeCollectionManager;
 
@@ -185,6 +184,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (!exists())
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
+      transaction = new ThreadLocal<OStorageTransaction>();
+
       configuration.load(iProperties);
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
@@ -218,6 +219,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       status = STATUS.OPEN;
 
       readCache.loadCacheState(writeCache);
+
     } catch (Exception e) {
       for (OCluster c : clusters) {
         try {
@@ -365,7 +367,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       } catch (Exception e) {
         OLogManager.instance().error(this, "MBean for profiler cannot be registered.");
       }
-
+      transaction = new ThreadLocal<OStorageTransaction>();
       initWalAndDiskCache();
 
       atomicOperationsManager = new OAtomicOperationsManager(this);
@@ -421,17 +423,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } finally {
       stateLock.releaseReadLock();
     }
-  }
-
-  @Override
-  public void onShutdown() {
-    transaction = null;
-  }
-
-  @Override
-  public void onStartup() {
-    if (transaction == null)
-      transaction = new ThreadLocal<OStorageTransaction>();
   }
 
   @Override
@@ -3549,6 +3540,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         } catch (Exception e) {
           OLogManager.instance().error(this, "MBean for atomic opeations manager cannot be unregistered", e);
         }
+
+      transaction = null;
 
       status = STATUS.CLOSED;
     } catch (IOException e) {
