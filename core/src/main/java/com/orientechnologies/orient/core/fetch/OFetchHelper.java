@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.fetch;
 
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
@@ -42,9 +32,13 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.*;
+
 /**
  * Helper class for fetching.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * @author Luca Molino
  * @author Claudio Tesoriero (giastfader @ github)
@@ -311,13 +305,18 @@ public class OFetchHelper {
         // EMBEDDED, GO DEEPER
         fetch = true;
 
-      if (iFormat.contains("shallow") || fieldValue == null || (!fetch && fieldValue instanceof OIdentifiable)
-          || !(fieldValue instanceof OIdentifiable) && (!(fieldValue instanceof ORecordLazyMultiValue)
-          || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue).rawIterator()
-          .next() instanceof OIdentifiable)) && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0 || !(Array
-          .get(fieldValue, 0) instanceof OIdentifiable)) && (!(OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable
-          || OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue)) instanceof OIdentifiable || OMultiValue
-          .getFirstValue(OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue))) instanceof OIdentifiable))) {
+      if (iFormat.contains("shallow")
+          || fieldValue == null
+          || (!fetch && fieldValue instanceof OIdentifiable)
+          || !(fieldValue instanceof OIdentifiable)
+              && (!(
+                fieldValue instanceof ORecordLazyMultiValue)
+                || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext()
+                || !(((ORecordLazyMultiValue) fieldValue).rawIterator().next() instanceof OIdentifiable)
+              )
+              && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0 || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
+              && !containsIdentifiers(fieldValue)
+          ) {
         iContext.onBeforeStandardField(fieldValue, fieldName, iUserObject,fieldType);
         iListener.processStandardField(record, fieldValue, fieldName, iContext, iUserObject, iFormat, fieldType);
         iContext.onAfterStandardField(fieldValue, fieldName, iUserObject,fieldType);
@@ -339,6 +338,21 @@ public class OFetchHelper {
       iListener.skipStandardField(record, fieldName, iContext, iUserObject, iFormat);
     }
     iContext.onAfterFetch(record);
+  }
+
+  private static boolean containsIdentifiers(Object fieldValue) {
+    if(!OMultiValue.isMultiValue(fieldValue)){
+      return false;
+    }
+    for(Object item: OMultiValue.getMultiValueIterable(fieldValue)){
+      if(item instanceof OIdentifiable){
+        return true;
+      }
+      if(containsIdentifiers(item)){
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isEmbedded(Object fieldValue) {
