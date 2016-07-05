@@ -154,7 +154,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   }
 
   private void installComponents() {
-    server.getDistributedManager().setDistributedStrategy(new OEnterpriseDistributedStrategy());
+
+    if (server.getDistributedManager() != null) {
+      server.getDistributedManager().setDistributedStrategy(new OEnterpriseDistributedStrategy());
+    }
   }
 
   @Override
