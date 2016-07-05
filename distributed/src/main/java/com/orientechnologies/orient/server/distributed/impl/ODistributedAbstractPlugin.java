@@ -116,6 +116,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected Date                                                 startedOn                         = new Date();
   protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
   protected String                                               nodeUuid;
+  protected ODistributedStrategy responseManagerFactory = new ODefaultDistributedStrategy();
 
   private volatile String                                        lastServerDump                    = "";
 
@@ -1354,6 +1355,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
             new HashSet<String>(), true);
       }
     });
+  }
+
+  public ODistributedStrategy getDistributedStrategy() {
+    return responseManagerFactory;
+  }
+
+  public void setDistributedStrategy(final ODistributedStrategy streatgy) {
+    this.responseManagerFactory = streatgy;
   }
 
   /**
