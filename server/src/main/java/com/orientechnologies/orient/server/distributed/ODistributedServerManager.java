@@ -87,6 +87,10 @@ public interface ODistributedServerManager {
 
   ODistributedMessageService getMessageService();
 
+  ODistributedStrategy getDistributedStrategy();
+
+  void setDistributedStrategy(final ODistributedStrategy streatgy);
+
   void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster);
 
   long getNextMessageIdCounter();

@@ -42,9 +42,6 @@ public interface ODistributedDatabase {
 
   void setOnline();
 
-  int checkQuorumBeforeReplicate(OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType, Collection<String> iClusterNames,
-      Collection<String> iNodes, ODistributedConfiguration cfg);
-
   /**
    * Locks the record to be sure distributed transactions never work concurrently against the same records in the meanwhile the
    * transaction is executed and the OCompleteTxTask is not arrived.
