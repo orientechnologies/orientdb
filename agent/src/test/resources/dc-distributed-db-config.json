@@ -4,7 +4,7 @@
   "writeQuorum": "localDataCenter",
   "readYourWrites": true,
   "dataCenters": {
-    "denver": {
+    "rome": {
       "writeQuorum": "majority",
       "servers": [
         "europe-0",
@@ -12,7 +12,7 @@
         "europe-2"
       ]
     },
-    "palto": {
+    "austin": {
       "writeQuorum": "majority",
       "servers": [
         "usa-0",
