@@ -82,8 +82,8 @@ public interface OElement extends OIdentifiable{
   public boolean isEdge();
 
   /**
-   * Returns the type of current element (if any)
+   * Returns the type of current element, ie the class in the schema (if any)
    * @return the type of current element. An empty optional is returned if current element does not have a schema
    */
-  public Optional<OClass> getType();
+  public Optional<OClass> getSchemaType();
 }

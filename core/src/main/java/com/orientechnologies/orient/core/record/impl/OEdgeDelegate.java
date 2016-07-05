@@ -150,7 +150,7 @@ public class OEdgeDelegate implements OEdge {
     return true;
   }
 
-  @Override public Optional<OClass> getType() {
+  @Override public Optional<OClass> getSchemaType() {
     if (element == null) {
       return Optional.of(lightweightEdgeType);
     }

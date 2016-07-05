@@ -33,8 +33,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.*;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.*;
@@ -49,7 +48,8 @@ import java.util.*;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
-@SuppressWarnings("unchecked") public class OrientVertex extends OrientElement implements OrientExtendedVertex {
+
+@SuppressWarnings("unchecked") public class OrientVertex extends OrientElement implements OrientExtendedVertex, OVertex {
   public static final String CONNECTION_OUT_PREFIX = OrientBaseGraph.CONNECTION_OUT + "_";
   public static final String CONNECTION_IN_PREFIX  = OrientBaseGraph.CONNECTION_IN + "_";
 
@@ -876,6 +876,30 @@ import java.util.*;
     return "Vertex";
   }
 
+  @Override public Set<String> getPropertyNames() {
+    return getPropertyKeys();
+  }
+
+  @Override public Optional<OVertex> asVertex() {
+    return Optional.of(this);
+  }
+
+  @Override public Optional<OEdge> asEdge() {
+    return Optional.empty();
+  }
+
+  @Override public boolean isDocument() {
+    return true;
+  }
+
+  @Override public boolean isVertex() {
+    return true;
+  }
+
+  @Override public boolean isEdge() {
+    return false;
+  }
+
   /**
    * (Blueprints Extension) Returns the Vertex type as OrientVertexType object.
    */
@@ -1156,4 +1180,96 @@ import java.util.*;
       // ADD THE VERTEX
       iterable.add(toAdd);
   }
+
+  private Direction decodeODirection(ODirection direction) {
+    if (direction == null) {
+      return null;
+    }
+    switch (direction) {
+    case OUT:
+      return Direction.OUT;
+    case IN:
+      return Direction.IN;
+    case BOTH:
+      return Direction.BOTH;
+    }
+    return null;
+  }
+
+  @Override public Iterable<OEdge> getEdges(ODirection direction) {
+    if (direction == null) {
+      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
+    }
+    return (Iterable) getEdges(decodeODirection(direction));
+  }
+
+  @Override public Iterable<OEdge> getEdges(ODirection direction, String... type) {
+    if (direction == null) {
+      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
+    }
+    return (Iterable) getEdges(decodeODirection(direction), type);
+  }
+
+  @Override public Iterable<OEdge> getEdges(ODirection direction, OClass... type) {
+    if (direction == null) {
+      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
+    }
+    return (Iterable) getEdges(decodeODirection(direction), toClassNames(type));
+  }
+
+  @Override public Iterable<OVertex> getVertices(ODirection direction) {
+    if (direction == null) {
+      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
+    }
+    return (Iterable) getVertices(decodeODirection(direction));
+  }
+
+  @Override public Iterable<OVertex> getVertices(ODirection direction, String... type) {
+    if (direction == null) {
+      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
+    }
+    return (Iterable) getVertices(decodeODirection(direction), type);
+  }
+
+  @Override public Iterable<OVertex> getVertices(ODirection direction, OClass... type) {
+    if (direction == null) {
+      throw new IllegalArgumentException("Null direction is not allowed, use ODirection.BOTH to have all the directions");
+    }
+    return (Iterable) getVertices(decodeODirection(direction), toClassNames(type));
+  }
+
+  @Override public OEdge addEdge(OVertex to) {
+    return (OEdge) addEdge("E", (Vertex)to);
+  }
+
+  @Override public OEdge addEdge(OVertex to, String type) {
+    return (OEdge) addEdge(type, (Vertex)to);
+  }
+
+  @Override public OEdge addEdge(OVertex to, OClass type) {
+    return (OEdge) addEdge(type.getName(), (Vertex)to);
+  }
+
+  @Override public void delete() {
+    remove();
+  }
+
+  @Override public Optional<OClass> getSchemaType() {
+    return Optional.ofNullable(getType());
+  }
+
+
+  private String[] toClassNames(OClass[] type) {
+    if (type == null) {
+      return null;
+    }
+    String[] result = new String[type.length];
+    for (int i = 0; i < type.length; i++) {
+      result[i] = type[i].getName();
+    }
+    return result;
+  }
+
+
+
 }

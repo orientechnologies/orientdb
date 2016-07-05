@@ -251,7 +251,7 @@ public class OVertexDelegate implements OVertex {
     return false;
   }
 
-  @Override public Optional<OClass> getType() {
+  @Override public Optional<OClass> getSchemaType() {
     return Optional.ofNullable(element.getSchemaClass());
   }
 

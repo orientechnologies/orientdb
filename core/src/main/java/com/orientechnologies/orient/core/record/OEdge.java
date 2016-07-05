@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+
+import java.util.Optional;
+
 /**
  * @author Luigi Dell'Aquila
  */
@@ -47,8 +51,9 @@ public interface OEdge extends OElement {
       return false;
     }
     String type = "E";
-    if (getType().isPresent()) {
-      type = getType().get().getName();
+    Optional<OClass> typeClass = getSchemaType();
+    if (typeClass.isPresent()) {
+      type = typeClass.get().getName();
     }
     for (String s : labels) {
       if (type.equalsIgnoreCase(s)) {

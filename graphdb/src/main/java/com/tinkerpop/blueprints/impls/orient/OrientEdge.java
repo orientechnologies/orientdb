@@ -23,6 +23,9 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -44,7 +47,7 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com) (http://orientdb.com)
  */
 @SuppressWarnings("unchecked")
-public class OrientEdge extends OrientElement implements Edge {
+public class OrientEdge extends OrientElement implements Edge, OEdge {
   private static final long serialVersionUID = 1L;
 
   protected OIdentifiable   vOut;
@@ -274,6 +277,10 @@ public class OrientEdge extends OrientElement implements Edge {
     return super.getId();
   }
 
+  @Override public Set<String> getPropertyNames() {
+    return null;
+  }
+
   /**
    * Returns a Property value.
    *
@@ -355,6 +362,30 @@ public class OrientEdge extends OrientElement implements Edge {
       convertToDocument();
 
     super.setProperty(key, value);
+  }
+
+  @Override public Optional<OVertex> asVertex() {
+    return Optional.empty();
+  }
+
+  @Override public Optional<OEdge> asEdge() {
+    return Optional.of(this);
+  }
+
+  @Override public boolean isDocument() {
+    return true;
+  }
+
+  @Override public boolean isVertex() {
+    return false;
+  }
+
+  @Override public boolean isEdge() {
+    return true;
+  }
+
+  @Override public Optional<OClass> getSchemaType() {
+    return Optional.ofNullable(getType());
   }
 
   /**
@@ -521,6 +552,18 @@ public class OrientEdge extends OrientElement implements Edge {
       label = null;
   }
 
+  @Override public OVertex getFrom() {
+    return (OVertex) getOutVertex();
+  }
+
+  @Override public OVertex getTo() {
+    return (OVertex) getInVertex();
+  }
+
+  @Override public void delete() {
+    remove();
+  }
+
   /**
    * Returns true if the edge is labeled with any of the passed strings.
    *
@@ -528,7 +571,7 @@ public class OrientEdge extends OrientElement implements Edge {
    *          Labels as array of Strings
    * @return true if the edge is labeled with any of the passed strings
    */
-  protected boolean isLabeled(final String[] iLabels) {
+  public boolean isLabeled(final String[] iLabels) {
     return isLabeled(getLabel(), iLabels);
   }
 
