@@ -416,8 +416,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   @Override
   public OPhysicalPosition allocatePosition(byte recordType) throws IOException {
-    startAtomicOperation(true);
+    startOperation();
     try {
+      startAtomicOperation(true);
       acquireExclusiveLock();
       try {
         final OPhysicalPosition pos = createPhysicalPosition(recordType, clusterPositionMap.allocate(), -1);
