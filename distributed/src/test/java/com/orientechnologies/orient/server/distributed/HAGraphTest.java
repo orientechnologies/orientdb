@@ -202,6 +202,8 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
                       try {
                         vtx1.setProperty("prop5", "prop55");
                         vtx1.setProperty("updateTime", new Date().toString());
+                        vtx1.setProperty("blob", new byte[1000]);
+
                         graph.commit();
                         if (isException) {
                           // log("********** [" + id + "][" + k + "] Update success after distributed lock Exception for vertex " +
