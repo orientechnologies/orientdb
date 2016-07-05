@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import sun.misc.BASE64Encoder;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -1388,6 +1389,29 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(((Collection)differenceFieldValue).iterator().next(), 3);
   }
 
+  @Test
+  public void testBinaryField(){
+    //issue #6379
+
+    byte[] array = new byte[]{1,4,5,74,3,45,6,127,-120,2};
+
+    db.command(new OCommandSQL("create class TestBinaryField")).execute();
+
+    ODocument doc = db.newInstance("TestBinaryField");
+    doc.field("binaryField", array);
+    doc.save();
+
+    doc = db.newInstance("TestBinaryField");
+    doc.field("binaryField", "foobar");
+    doc.save();
+
+    String base64Value = new BASE64Encoder().encode(array);
+
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from TestBinaryField where binaryField = decode(?, 'base64')"), base64Value);
+    assertEquals(results.size(), 1);
+    Object value = results.get(0).field("binaryField");
+    assertEquals(value, array);
+  }
 
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
