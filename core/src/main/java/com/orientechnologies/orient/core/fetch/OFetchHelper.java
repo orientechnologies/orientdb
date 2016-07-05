@@ -320,9 +320,7 @@ public class OFetchHelper {
           && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue)
               .rawIterator().next() instanceof OIdentifiable))
           && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0 || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
-          && (!(OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable
-              || OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue)) instanceof OIdentifiable || OMultiValue
-                .getFirstValue(OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue))) instanceof OIdentifiable))) {
+          && !containsIdentifiers(fieldValue)) {
         iContext.onBeforeStandardField(fieldValue, fieldName, iUserObject, fieldType);
         iListener.processStandardField(record, fieldValue, fieldName, iContext, iUserObject, iFormat, fieldType);
         iContext.onAfterStandardField(fieldValue, fieldName, iUserObject, fieldType);
@@ -344,6 +342,22 @@ public class OFetchHelper {
       iListener.skipStandardField(record, fieldName, iContext, iUserObject, iFormat);
     }
     iContext.onAfterFetch(record);
+  }
+
+
+  private static boolean containsIdentifiers(Object fieldValue) {
+    if(!OMultiValue.isMultiValue(fieldValue)){
+      return false;
+    }
+    for(Object item: OMultiValue.getMultiValueIterable(fieldValue)){
+      if(item instanceof OIdentifiable){
+        return true;
+      }
+      if(containsIdentifiers(item)){
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isEmbedded(Object fieldValue) {
