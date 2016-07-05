@@ -15,11 +15,12 @@ import static com.orientechnologies.orient.jdbc.OrientDbCreationHelper.loadDB;
 public abstract class OrientJdbcBaseTest {
 
   protected OrientJdbcConnection conn;
+  private   ODatabaseDocumentTx  db;
 
   @Before
   public void prepareDatabase() throws Exception {
     String dbUrl = "memory:test";
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+    db = new ODatabaseDocumentTx(dbUrl);
 
     String username = "admin";
     String password = "admin";
@@ -50,5 +51,10 @@ public abstract class OrientJdbcBaseTest {
   public void closeConnection() throws Exception {
     if (conn != null && !conn.isClosed())
       conn.close();
+    db.activateOnCurrentThread();
+    db.drop();
+
+    //should reset the underlying pool becasuse the db is dropped
+    OrientJdbcConnection.POOL_FACTORY.reset();
   }
 }
