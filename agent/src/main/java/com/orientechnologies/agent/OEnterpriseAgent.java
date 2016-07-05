@@ -18,6 +18,7 @@
 package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.backup.OBackupManager;
+import com.orientechnologies.agent.ha.OEnterpriseDistributedStrategy;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
@@ -76,6 +77,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       if (p.name.equals("license"))
         license = p.value;
     }
+
+    installComponents();
   }
 
   @Override
@@ -148,6 +151,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     eventPlugin.startup();
     server.getPluginManager()
         .registerPlugin(new OServerPluginInfo(eventPlugin.getName(), null, null, null, eventPlugin, null, 0, null));
+  }
+
+  private void installComponents() {
+    server.getDistributedManager().setDistributedStrategy(new OEnterpriseDistributedStrategy());
   }
 
   @Override

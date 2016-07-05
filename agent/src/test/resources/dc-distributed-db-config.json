@@ -1,0 +1,36 @@
+{
+  "autoDeploy": true,
+  "readQuorum": 1,
+  "writeQuorum": "localDataCenter",
+  "readYourWrites": true,
+  "dataCenters": {
+    "denver": {
+      "writeQuorum": "majority",
+      "servers": [
+        "europe-0",
+        "europe-1",
+        "europe-2"
+      ]
+    },
+    "palto": {
+      "writeQuorum": "majority",
+      "servers": [
+        "usa-0",
+        "usa-1",
+        "usa-2"
+      ]
+    }
+  },
+  "servers": {
+    "*": "master"
+  },
+  "clusters": {
+    "internal": {
+    },
+    "*": {
+      "servers": [
+        "<NEW_NODE>"
+      ]
+    }
+  }
+}

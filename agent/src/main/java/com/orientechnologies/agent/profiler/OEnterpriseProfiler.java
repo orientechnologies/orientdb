@@ -18,6 +18,7 @@
 
 package com.orientechnologies.agent.profiler;
 
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
@@ -101,6 +102,9 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
   }
 
   public void shutdown() {
+    autoPause.cancel();
+    autoPublish.cancel();
+
     super.shutdown();
     hooks.clear();
 
@@ -757,35 +761,39 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
     autoPublish = new TimerTask() {
       @Override
       public void run() {
-        if (!Boolean.TRUE.equals(paused.get())) {
+        try {
+          if (!Boolean.TRUE.equals(paused.get())) {
 
-          updateStats();
-          synchronized (server) {
+            updateStats();
+            synchronized (server) {
 
-            ODistributedServerManager distributedManager = server.getDistributedManager();
+              ODistributedServerManager distributedManager = server.getDistributedManager();
 
-            if (distributedManager != null) {
-              String localNodeName = distributedManager.getLocalNodeName();
-              if (distributedManager != null && distributedManager.isEnabled()) {
-                Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
-                if (configurationMap != null) {
-                  ODocument doc = (ODocument) configurationMap.get("clusterStats");
+              if (distributedManager != null) {
+                String localNodeName = distributedManager.getLocalNodeName();
+                if (distributedManager != null && distributedManager.isEnabled()) {
+                  Map<String, Object> configurationMap = distributedManager.getConfigurationMap();
+                  if (configurationMap != null) {
+                    ODocument doc = (ODocument) configurationMap.get("clusterStats");
 
-                  if (doc == null) {
-                    doc = new ODocument();
-                    doc.setTrackingChanges(false);
-                  }
-                  try {
-                    ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
-                    doc.field(localNodeName, entries.toMap());
-                    configurationMap.put("clusterStats", doc);
-                  } catch (Exception e) {
-                    OLogManager.instance().debug(this, "Cannot publish realtime stats for node %s", e, localNodeName);
+                    if (doc == null) {
+                      doc = new ODocument();
+                      doc.setTrackingChanges(false);
+                    }
+                    try {
+                      ODocument entries = new ODocument().fromJSON(toJSON("realtime", null));
+                      doc.field(localNodeName, entries.toMap());
+                      configurationMap.put("clusterStats", doc);
+                    } catch (Exception e) {
+                      OLogManager.instance().debug(this, "Cannot publish realtime stats for node %s", e, localNodeName);
+                    }
                   }
                 }
               }
             }
           }
+        } catch (HazelcastInstanceNotActiveException e) {
+          // IGNORE IT
         }
       }
     };
