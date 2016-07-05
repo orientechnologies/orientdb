@@ -61,9 +61,7 @@ public class LuceneExportImportTest extends BaseLuceneTest {
   @Test
   public void testExportImport() {
 
-    String property = "java.io.tmpdir";
-
-    String file = System.getProperty(property) + "test.json";
+    String file = "./target/exportTest.json";
 
     List<?> query = databaseDocumentTx.query(new OSQLSynchQuery<Object>("select from City where name lucene 'Rome'"));
 
@@ -83,8 +81,9 @@ public class LuceneExportImportTest extends BaseLuceneTest {
         }
       }).importDatabase();
     } catch (IOException e) {
-      e.printStackTrace();
+      Assert.fail(e.getMessage());
     }
+
     long city = databaseDocumentTx.countClass("City");
 
     Assert.assertEquals(city, 1);
