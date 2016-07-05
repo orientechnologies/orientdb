@@ -137,7 +137,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean trackNonTxOperations)
       throws IOException {
     if (durableComponent != null)
-      return startAtomicOperation(durableComponent.getFullName(), trackNonTxOperations);
+      return startAtomicOperation(durableComponent.getLockName(), trackNonTxOperations);
 
     return startAtomicOperation((String) null, trackNonTxOperations);
   }
