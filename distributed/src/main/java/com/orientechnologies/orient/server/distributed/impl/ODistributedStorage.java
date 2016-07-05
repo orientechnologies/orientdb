@@ -480,11 +480,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       // IDEMPOTENT: CHECK IF CAN WORK LOCALLY ONLY
       int maxReadQuorum;
       if (involvedClusters.isEmpty())
-        maxReadQuorum = dbCfg.getReadQuorum(null, availableNodes);
+        maxReadQuorum = dbCfg.getReadQuorum(null, availableNodes, localNodeName);
       else {
         maxReadQuorum = 0;
         for (String cl : involvedClusters)
-          maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl, availableNodes));
+          maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl, availableNodes, localNodeName));
       }
 
       if (nodes.size() == 1 && nodes.iterator().next().equals(localNodeName) && maxReadQuorum <= 1)
@@ -662,7 +662,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       final int availableNodes = nodes.size();
 
       // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
-      if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes) <= 1) {
+      final String localNodeName = dManager.getLocalNodeName();
+
+      if (nodes.isEmpty()
+          || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes, localNodeName) <= 1) {
         // DON'T REPLICATE
         return (OStorageOperationResult<ORawBuffer>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override
@@ -712,7 +715,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       final int availableNodes = nodes.size();
 
       // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
-      if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes) <= 1) {
+      final String localNodeName = dManager.getLocalNodeName();
+
+      if (nodes.isEmpty()
+          || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName, availableNodes, localNodeName) <= 1) {
         // DON'T REPLICATE
         return (OStorageOperationResult<ORawBuffer>) OScenarioThreadLocal.executeAsDistributed(new Callable() {
           @Override

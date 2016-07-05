@@ -1144,7 +1144,8 @@ public class OServer {
 
     if (configuration.handlers != null) {
       // ACTIVATE PLUGINS
-      OServerPlugin handler;
+      final List<OServerPlugin> plugins = new ArrayList<OServerPlugin>();
+
       for (OServerHandlerConfiguration h : configuration.handlers) {
         if (h.parameters != null) {
           // CHECK IF IT'S ENABLED
@@ -1171,16 +1172,20 @@ public class OServer {
             continue;
         }
 
-        handler = (OServerPlugin) loadClass(h.clazz).newInstance();
+        final OServerPlugin plugin = (OServerPlugin) loadClass(h.clazz).newInstance();
 
-        if (handler instanceof ODistributedServerManager)
-          distributedManager = (ODistributedServerManager) handler;
+        if (plugin instanceof ODistributedServerManager)
+          distributedManager = (ODistributedServerManager) plugin;
 
-        pluginManager.registerPlugin(new OServerPluginInfo(handler.getName(), null, null, null, handler, null, 0, null));
+        pluginManager.registerPlugin(new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
 
-        handler.config(this, h.parameters);
-        handler.startup();
+        plugin.config(this, h.parameters);
+        plugins.add(plugin);
       }
+
+      // START ALL THE CONFIGURED PLUGINS
+      for (OServerPlugin plugin : plugins)
+        plugin.startup();
     }
   }
 
