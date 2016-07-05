@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.ONeedRetryException;
@@ -77,6 +65,18 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -488,9 +488,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl, availableNodes, localNodeName));
       }
 
-      if (nodes.size() == 1 && nodes.iterator().next().equals(localNodeName) && maxReadQuorum <= 1)
+      if (nodes.contains(localNodeName) && maxReadQuorum <= 1)
         executeLocally = true;
-
     }
 
     return executeLocally;
