@@ -65,7 +65,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Luca Garulli
  */
-public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientStartupListener, OOrientShutdownListener {
+public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   protected static final String                 CONFIG_MAP_RID  = "mapRid";
   protected static final String                 CONFIG_CLUSTERS = "clusters";
@@ -88,7 +88,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   private Set<String>                           clustersToIndex = new HashSet<String>();
   private volatile OIndexDefinition             indexDefinition;
   private volatile boolean                      rebuilding      = false;
-  private volatile ThreadLocal<IndexTxSnapshot> txSnapshot      = new IndexTxSnapshotThreadLocal();
   private Map<String, String>                   engineProperties = new HashMap<String, String>();
 
   public OIndexAbstract(String name, final String type, final String algorithm, final String valueContainerAlgorithm,
@@ -108,8 +107,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
           ? new OOneEntryPerKeyLockManager<Object>(true, -1, OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger())
           : new OPartitionedLockManager<Object>();
 
-      Orient.instance().registerWeakOrientStartupListener(this);
-      Orient.instance().registerWeakOrientShutdownListener(this);
     } finally {
       releaseExclusiveLock();
     }
@@ -173,17 +170,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     final Set<String> clusters = new HashSet<String>((Collection<String>) config.field(CONFIG_CLUSTERS, OType.EMBEDDEDSET));
 
     return new OIndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
-  }
-
-  @Override
-  public void onShutdown() {
-    txSnapshot = null;
-  }
-
-  @Override
-  public void onStartup() {
-    if (txSnapshot == null)
-      txSnapshot = new IndexTxSnapshotThreadLocal();
   }
 
   public void flush() {
@@ -718,13 +704,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     return configuration.getDocument();
   }
 
-  public void addTxOperation(final OTransactionIndexChanges changes) {
+  public void addTxOperation(IndexTxSnapshot snapshots, final OTransactionIndexChanges changes) {
     acquireSharedLock();
     try {
-      final IndexTxSnapshot indexTxSnapshot = txSnapshot.get();
       if (changes.cleared)
-        clearSnapshot(indexTxSnapshot);
-      final Map<Object, Object> snapshot = indexTxSnapshot.indexSnapshot;
+        clearSnapshot(snapshots);
+      final Map<Object, Object> snapshot = snapshots.indexSnapshot;
       for (final OTransactionIndexChangesPerKey entry : changes.changesPerKey.values()) {
         applyIndexTxEntry(snapshot, entry);
       }
@@ -768,25 +753,22 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     }
   }
 
-  public void commit() {
+  public void commit(IndexTxSnapshot snapshots) {
     acquireSharedLock();
     try {
-      final IndexTxSnapshot indexTxSnapshot = txSnapshot.get();
-      if (indexTxSnapshot.clear)
+      if (snapshots.clear)
         clear();
 
-      commitSnapshot(indexTxSnapshot.indexSnapshot);
+      commitSnapshot(snapshots.indexSnapshot);
     } finally {
       releaseSharedLock();
     }
   }
 
-  public void preCommit() {
-    txSnapshot.set(new IndexTxSnapshot());
+  public void preCommit(IndexTxSnapshot snapshots) {
   }
 
-  public void postCommit() {
-    txSnapshot.set(new IndexTxSnapshot());
+  public void postCommit(IndexTxSnapshot snapshots) {
   }
 
   public ODocument getConfiguration() {
@@ -1047,7 +1029,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     });
   }
 
-  protected static final class IndexTxSnapshot {
+  public static final class IndexTxSnapshot {
     public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
     public boolean             clear         = false;
   }

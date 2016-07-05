@@ -417,9 +417,6 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       String vertexFieldName = direction + "_" + edgeClassName;
       ODocument prevOutDoc = ((OIdentifiable) prevVertex).getRecord();
       ORidBag prevBag = prevOutDoc.field(vertexFieldName);
-      if (prevBag == null && edgeClassName.equalsIgnoreCase("E")) {
-        prevBag = prevOutDoc.field(vertexFieldName + "E");
-      }
       if (prevBag != null) {
         prevBag.remove(edge);
         prevOutDoc.save();

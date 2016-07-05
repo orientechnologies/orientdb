@@ -377,22 +377,22 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public void preCommit() {
+  public void preCommit(OIndexAbstract.IndexTxSnapshot snapshots) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
   @Override
-  public void addTxOperation(OTransactionIndexChanges changes) {
+  public void addTxOperation(OIndexAbstract.IndexTxSnapshot snapshots, OTransactionIndexChanges changes) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
   @Override
-  public void commit() {
+  public void commit(OIndexAbstract.IndexTxSnapshot snapshots) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
   @Override
-  public void postCommit() {
+  public void postCommit(OIndexAbstract.IndexTxSnapshot snapshots) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 }

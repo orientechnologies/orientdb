@@ -19,7 +19,9 @@ public class OMatchPathItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -29,6 +31,9 @@ public class OMatchPathItem extends SimpleNode {
       return false;
     }
     if (filter.getMaxDepth() != null) {
+      return false;
+    }
+    if (filter.isOptional()) {
       return false;
     }
     return method.isBidirectional();
@@ -79,8 +84,8 @@ public class OMatchPathItem extends SimpleNode {
         result.add(startingPoint);
       }
 
-      if ((maxDepth == null || depth < maxDepth)
-          && (whileCondition == null || whileCondition.matchesFilters(startingPoint, iCommandContext))) {
+      if ((maxDepth == null || depth < maxDepth) && (whileCondition == null || whileCondition
+          .matchesFilters(startingPoint, iCommandContext))) {
 
         Iterable<OIdentifiable> queryResult = traversePatternEdge(matchContext, startingPoint, iCommandContext);
 
@@ -105,10 +110,12 @@ public class OMatchPathItem extends SimpleNode {
       OCommandContext iCommandContext) {
 
     Iterable possibleResults = null;
-    if(filter!=null) {
+    if (filter != null) {
       OIdentifiable matchedNode = matchContext.matched.get(filter.getAlias());
       if (matchedNode != null) {
         possibleResults = Collections.singleton(matchedNode);
+      } else if (matchContext.matched.containsKey(filter.getAlias())) {
+        possibleResults = Collections.emptySet();//optional node, the matched element is a null value
       } else {
         possibleResults = matchContext.candidates == null ? null : matchContext.candidates.get(filter.getAlias());
       }

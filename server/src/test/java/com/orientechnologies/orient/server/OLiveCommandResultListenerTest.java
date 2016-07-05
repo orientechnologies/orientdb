@@ -68,7 +68,7 @@ public class OLiveCommandResultListenerTest {
     db = new ODatabaseDocumentTx("memory:" + OLiveCommandResultListenerTest.class.getSimpleName());
     db.create();
     OClientConnectionManager manager = new OClientConnectionManager(server);
-    protocol = new ONetworkProtocolBinary();
+    protocol = new ONetworkProtocolBinary(server);
     protocol.initVariables(server, channelBinary);
     connection = manager.connect(protocol);
     OTokenHandlerImpl tokenHandler = new OTokenHandlerImpl(server);

@@ -1395,8 +1395,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private void commitIndexes(OTransaction clientTx, final Map<String, OIndexInternal<?>> indexesToCommit) {
     assert clientTx instanceof OTransactionOptimistic;
 
-    for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-      indexInternal.preCommit();
+    Map<OIndex, OIndexAbstract.IndexTxSnapshot> snapshots = new IdentityHashMap<OIndex, OIndexAbstract.IndexTxSnapshot>();
+    for (OIndexInternal<?> indexInternal : indexesToCommit.values()) {
+      OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
+      snapshots.put(indexInternal, snapshot);
+      indexInternal.preCommit(snapshot);
+    }
 
     Map<String, OTransactionIndexChanges> indexChanges = ((OTransactionOptimistic) clientTx).getIndexEntries();
 
@@ -1406,16 +1410,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (index == null) {
         OLogManager.instance().error(this, "Index with name '" + indexEntry.getKey() + "' was not found.");
         throw new OIndexException("Index with name '" + indexEntry.getKey() + "' was not found.");
-      } else
-        index.addTxOperation(indexEntry.getValue());
+      } else {
+        OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
+        index.addTxOperation(snapshot, indexEntry.getValue());
+      }
     }
 
     try {
-      for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-        indexInternal.commit();
+      for (OIndexInternal<?> indexInternal : indexesToCommit.values()) {
+        OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(indexInternal);
+        indexInternal.commit(snapshot);
+      }
     } finally {
-      for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-        indexInternal.postCommit();
+      for (OIndexInternal<?> indexInternal : indexesToCommit.values()) {
+        OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(indexInternal);
+        indexInternal.postCommit(snapshot);
+      }
     }
   }
 

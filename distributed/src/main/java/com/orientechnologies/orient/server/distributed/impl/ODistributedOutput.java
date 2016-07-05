@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.text.SimpleDateFormat;
+import java.util.*;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.orient.console.OTableFormatter;
@@ -28,9 +31,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * Formats information about distributed cfg.
@@ -60,7 +60,7 @@ public class ODistributedOutput {
 
         final Date date = m.field("startedOn");
 
-        if( date != null ) {
+        if (date != null) {
           final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
           if (sdf.format(date).equals(sdf.format(new Date())))
             // TODAY, PUT ONLY THE HOUR
@@ -201,9 +201,11 @@ public class ODistributedOutput {
     table.setColumnAlignment("writeQuorum", OTableFormatter.ALIGNMENT.CENTER);
     table.setColumnAlignment("readQuorum", OTableFormatter.ALIGNMENT.CENTER);
 
+    final String localNodeName = manager.getLocalNodeName();
+
     // READ DEFAULT CFG (CLUSTER=*)
-    final int defaultWQ = cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes);
-    final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes);
+    final int defaultWQ = cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes, localNodeName);
+    final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes, localNodeName);
     final String defaultOwner = "" + cfg.getClusterOwner(ODistributedConfiguration.ALL_WILDCARD);
     final List<String> defaultServers = cfg.getServers(ODistributedConfiguration.ALL_WILDCARD);
 
@@ -211,8 +213,8 @@ public class ODistributedOutput {
     final Set<String> allServers = new HashSet<String>();
 
     for (String cluster : cfg.getClusterNames()) {
-      final int wQ = cfg.getWriteQuorum(cluster, availableNodes);
-      final int rQ = cfg.getReadQuorum(cluster, availableNodes);
+      final int wQ = cfg.getWriteQuorum(cluster, availableNodes, localNodeName);
+      final int rQ = cfg.getReadQuorum(cluster, availableNodes, localNodeName);
       final String owner = cfg.getClusterOwner(cluster);
       final List<String> servers = cfg.getServers(cluster);
 

@@ -116,12 +116,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   private long    distributedRequests  = 0;
   private long    distributedResponses = 0;
 
-  public ONetworkProtocolBinary() {
-    this("OrientDB <- BinaryClient/?");
+  public ONetworkProtocolBinary(OServer server) {
+    this(server,"OrientDB <- BinaryClient/?");
   }
 
-  public ONetworkProtocolBinary(final String iThreadName) {
-    super(Orient.instance().getThreadGroup(), iThreadName);
+  public ONetworkProtocolBinary(OServer server, final String iThreadName) {
+    super(server.getThreadGroup(), iThreadName);
     logClientExceptions = Level.parse(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL.getValueAsString());
     logClientFullStackTrace = OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE.getValueAsBoolean();
   }

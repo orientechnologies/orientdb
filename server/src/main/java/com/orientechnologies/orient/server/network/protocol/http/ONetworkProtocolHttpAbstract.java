@@ -79,8 +79,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private String                       listeningAddress  = "?";
   private OContextConfiguration        configuration;
 
-  public ONetworkProtocolHttpAbstract() {
-    super(Orient.instance().getThreadGroup(), "IO-HTTP");
+  public ONetworkProtocolHttpAbstract(OServer server) {
+    super(server.getThreadGroup(), "IO-HTTP");
   }
 
   @Override
