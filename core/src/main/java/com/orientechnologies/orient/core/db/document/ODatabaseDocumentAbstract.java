@@ -2038,6 +2038,18 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
 
+  @Override public OElement newElement() {
+    return newInstance();
+  }
+
+  @Override public OElement newElement(String className) {
+    return newInstance(className);
+  }
+
+  public OElement newElement(OClass clazz) {
+    return newInstance(clazz.getName());
+  }
+
   public OVertex newVertex(final String iClassName) {
     ODocument doc = newInstance(iClassName);
     if (!doc.isVertex()) {

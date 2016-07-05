@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
@@ -452,20 +453,26 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    */
   <RET extends Object> RET newInstance();
 
+  OElement newElement();
+
+  OElement newElement(final String className);
+
   /**
    * Creates a new Edge of type E
+   *
    * @param from the starting point vertex
-   * @param to the endpoint vertex
+   * @param to   the endpoint vertex
    * @return the edge
    */
-  default OEdge newEdge(OVertex from, OVertex to){
+  default OEdge newEdge(OVertex from, OVertex to) {
     return newEdge(from, to, "E");
   }
 
   /**
    * Creates a new Edge
+   *
    * @param from the starting point vertex
-   * @param to the endpoint vertex
+   * @param to   the endpoint vertex
    * @param type the edge type
    * @return the edge
    */
@@ -473,8 +480,9 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
   /**
    * Creates a new Edge
+   *
    * @param from the starting point vertex
-   * @param to the endpoint vertex
+   * @param to   the endpoint vertex
    * @param type the edge type
    * @return the edge
    */
@@ -482,14 +490,16 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
   /**
    * Creates a new Vertex of type V
+   *
    * @return
    */
-  default OVertex newVertex(){
+  default OVertex newVertex() {
     return newVertex("V");
   }
 
   /**
    * Creates a new Vertex
+   *
    * @param type the vertex type
    * @return
    */
@@ -497,6 +507,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
 
   /**
    * Creates a new Vertex
+   *
    * @param type the vertex type (class name)
    * @return
    */
@@ -515,7 +526,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @see com.orientechnologies.orient.core.metadata.security.OSecurity
    */
   OSecurityUser getUser();
-
+  
   /**
    * Loads the entity and return it.
    *

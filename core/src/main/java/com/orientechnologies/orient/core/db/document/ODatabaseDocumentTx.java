@@ -27,10 +27,7 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.ODirection;
-import com.orientechnologies.orient.core.record.OEdge;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.record.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.OVertexDelegate;
@@ -528,6 +525,19 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     }
     return newEdge(from, to, type.getName());
   }
+
+  @Override public OElement newElement() {
+    return newInstance();
+  }
+
+  @Override public OElement newElement(String className) {
+    return newInstance(className);
+  }
+
+  public OElement newElement(OClass clazz) {
+    return newInstance(clazz.getName());
+  }
+
 
   private OEdge addEdgeInternal(final OVertex currentVertex, final OVertex inVertex, String iClassName, final Object... fields) {
 
