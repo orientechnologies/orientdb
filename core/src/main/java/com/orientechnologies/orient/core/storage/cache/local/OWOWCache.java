@@ -130,6 +130,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   private final OByteBufferPool bufferPool;
 
+  /**
+   * Listeners which are called when exception in background data flush thread is happened.
+   */
+  private final List<WeakReference<OBackgroundExceptionListener>> backgroundExceptionListeners = new CopyOnWriteArrayList<WeakReference<OBackgroundExceptionListener>>();
+
   public OWOWCache(boolean syncOnPageFlush, int pageSize, OByteBufferPool bufferPool, long groupTTL, OWriteAheadLog writeAheadLog,
       long pageFlushInterval, long writeCacheMaxSize, long cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize,
       OClosableLinkedContainer<Long, OFileClassic> files, int id) {
@@ -186,6 +191,47 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       initNameIdMapping();
     } finally {
       filesLock.releaseWriteLock();
+    }
+  }
+
+  /**
+   * Adds listener which is triggered if exception is cast inside background flush data thread.
+   *
+   * @param listener Listener to trigger
+   */
+  public void addBackgroundExceptionListener(OBackgroundExceptionListener listener) {
+    backgroundExceptionListeners.add(new WeakReference<OBackgroundExceptionListener>(listener));
+  }
+
+  /**
+   * Removes listener which is triggered if exception is cast inside background flush data thread.
+   *
+   * @param listener Listener to remove
+   */
+  public void removeBackgroundExceptionListener(OBackgroundExceptionListener listener) {
+    List<WeakReference<OBackgroundExceptionListener>> itemsToRemove = new ArrayList<WeakReference<OBackgroundExceptionListener>>();
+
+    for (WeakReference<OBackgroundExceptionListener> ref : backgroundExceptionListeners) {
+      final OBackgroundExceptionListener l = ref.get();
+      if (l != null && l.equals(listener)) {
+        itemsToRemove.add(ref);
+      }
+    }
+
+    for (WeakReference<OBackgroundExceptionListener> ref : itemsToRemove) {
+      backgroundExceptionListeners.remove(ref);
+    }
+  }
+
+  /**
+   * Fires event about exception is thrown in data flush thread
+   */
+  private void fireBackgroundDataFlushExceptionEvent(Exception e) {
+    for (WeakReference<OBackgroundExceptionListener> ref : backgroundExceptionListeners) {
+      final OBackgroundExceptionListener listener = ref.get();
+      if (listener != null) {
+        listener.onException(e);
+      }
     }
   }
 
@@ -1427,10 +1473,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           }
         }
 
-      } catch (IOException e) {
+      } catch (IOException | RuntimeException e) {
         OLogManager.instance().error(this, "Exception during data flush", e);
-      } catch (RuntimeException e) {
-        OLogManager.instance().error(this, "Exception during data flush", e);
+        OWOWCache.this.fireBackgroundDataFlushExceptionEvent(e);
       } finally {
         if (statistic != null)
           statistic.stopWriteCacheFlushTimer(flushedPages);
