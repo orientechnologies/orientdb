@@ -262,7 +262,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
 
       token.setIsVerified(verifyTokenSignature(token.getHeader(), binaryToken, 0, end, decodedSignature));
       return token;
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw OException.wrapException(new OSystemException("Error on token parsing"), e);
     }
   }

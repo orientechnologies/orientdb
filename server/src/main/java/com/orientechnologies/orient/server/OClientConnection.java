@@ -163,12 +163,8 @@ public class OClientConnection {
        * NOTHING return; }
        */
       OToken token = null;
-      try {
-        if (tokenFromNetwork != null)
-          token = handler.parseBinaryToken(tokenFromNetwork);
-      } catch (Exception e) {
-        throw OException.wrapException(new OSystemException("Error on token parse"), e);
-      }
+      if (tokenFromNetwork != null)
+        token = handler.parseBinaryToken(tokenFromNetwork);
       if (token == null || !token.getIsVerified()) {
         cleanSession();
         throw new OTokenSecurityException("The token provided is not a valid token, signature does not match");
