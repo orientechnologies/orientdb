@@ -27,12 +27,14 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
 
@@ -526,7 +528,89 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @see com.orientechnologies.orient.core.metadata.security.OSecurity
    */
   OSecurityUser getUser();
-  
+
+  /**
+   * retrieves a class from the schema
+   * @param className The class name
+   * @return The object representing the class in the schema. Null if the class does not exist.
+   */
+  default OClass getClass(String className) {
+    OSchema schema = getMetadata().getSchema();
+    schema.reload();
+    return schema.getClass(className);
+  }
+
+  /**
+   * creates a new vertex class (a class that extends V)
+   * @param className the class name
+   * @return The object representing the class in the schema
+   * @throws OSchemaException if the class already exists or if V class is not defined (Eg. if it was deleted from the schema)
+   */
+  default OClass createVertexClass(String className) throws OSchemaException{
+    return createClass(className, "V");
+  }
+
+  /**
+   * creates a new edge class (a class that extends E)
+   * @param className the class name
+   * @return The object representing the class in the schema
+   * @throws OSchemaException if the class already exists or if E class is not defined (Eg. if it was deleted from the schema)
+   */
+  default OClass createEdgeClass(String className) {
+    return createClass(className, "E");
+  }
+
+  /**
+   * If a class with given name already exists, it's just returned, otherwise the method creates a new class and returns it.
+   * @param className the class name
+   * @param superclasses a list of superclasses for the class (can be empty)
+   * @return the class with the given name
+   * @throws OSchemaException if one of the superclasses does not exist in the schema
+   */
+  default OClass createClassIfNotExist(String className, String... superclasses) throws OSchemaException{
+    OSchema schema = getMetadata().getSchema();
+    schema.reload();
+
+    OClass result = schema.getClass(className);
+    if (result == null) {
+      result = createClass(className, superclasses);
+    }
+    return result;
+  }
+
+  /**
+   * Creates a new class in the schema
+   * @param className the class name
+   * @param superclasses a list of superclasses for the class (can be empty)
+   * @return the class with the given name
+   * @throws OSchemaException if a class with this name already exists or if one of the superclasses does not exist.
+   */
+  default OClass createClass(String className, String... superclasses) throws OSchemaException{
+    OSchema schema = getMetadata().getSchema();
+    schema.reload();
+    OClass[] superclassInstances = null;
+    if (superclasses != null) {
+      superclassInstances = new OClass[superclasses.length];
+      for (int i = 0; i < superclasses.length; i++) {
+        String superclass = superclasses[i];
+        OClass superclazz = schema.getClass(superclass);
+        if (superclazz == null) {
+          throw new OSchemaException("Class " + superclazz + " does not exist");
+        }
+        superclassInstances[i] = superclazz;
+      }
+    }
+    OClass result = schema.getClass(className);
+    if (result != null) {
+      throw new OSchemaException("Class " + className + " already exists");
+    }
+    if (superclassInstances == null) {
+      return schema.createClass(className);
+    } else {
+      return schema.createClass(className, superclassInstances);
+    }
+  }
+
   /**
    * Loads the entity and return it.
    *
