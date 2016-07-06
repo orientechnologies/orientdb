@@ -450,7 +450,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       diskWriteAheadLog.checkFreeSpace();
       writeAheadLog = diskWriteAheadLog;
       writeAheadLog.addFullCheckpointListener(this);
-      writeCache.addBackgroundExceptionListener(this);
     } else
       writeAheadLog = null;
 
@@ -464,6 +463,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         files, getId());
     wowCache.addLowDiskSpaceListener(this);
     wowCache.loadRegisteredFiles();
+    wowCache.addBackgroundExceptionListener(this);
 
     writeCache = wowCache;
   }

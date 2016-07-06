@@ -26,6 +26,7 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.*;
+import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
@@ -169,8 +170,12 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     return composeFileId(id, intId);
   }
 
-  public long loadFile(String fileName, long fileId, OWriteCache writeCache) {
-    throw new UnsupportedOperationException();
+  @Override
+  public void addBackgroundExceptionListener(OBackgroundExceptionListener listener) {
+  }
+
+  @Override
+  public void removeBackgroundExceptionListener(OBackgroundExceptionListener listener) {
   }
 
   @Override
@@ -580,7 +585,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   public long addFile(String fileName) {
     return addFile(fileName, null);
   }
-
 
   @Override
   public long addFile(String fileName, long fileId) {
