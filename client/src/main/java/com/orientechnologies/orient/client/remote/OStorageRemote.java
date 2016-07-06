@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
@@ -1306,19 +1307,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
 
             final int updatedRecords = network.readInt();
+            ORecordId rid;
             for (int i = 0; i < updatedRecords; ++i) {
-              final ORecordId rid = network.readRID();
-              final int v = network.readVersion();
+              rid = network.readRID();
 
-              final byte[] updateContent = network.getSrvProtocolVersion() >= 37 ? network.readBytes() : null;
-
-              final ORecordOperation rop = iTx.getRecordEntry(rid);
-              if (rop != null) {
-                if( updateContent != null && updateContent.length>0)
-                  ORecordInternal.fill(rop.getRecord(), rop.getRecord().getIdentity(), v, updateContent, false);
-                else
-                  ORecordInternal.setVersion(rop.getRecord(), v);
-              }
+              ORecordOperation rop = iTx.getRecordEntry(rid);
+              if (rop != null)
+                ORecordInternal.setVersion(rop.getRecord(), network.readVersion());
             }
 
             if (network.getSrvProtocolVersion() >= 20)
