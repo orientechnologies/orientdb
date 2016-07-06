@@ -182,7 +182,6 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
       body: 'You are removing edge ' + edge + '. Are you sure?',
       success: function () {
 
-        console.log(edge);
         var edgeDoc = DocumentApi.get({database: $scope.database, document: edge}, function () {
           var command = ""
           if (Database.isEdge(edgeDoc['@class'])) {
@@ -235,6 +234,8 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
   $scope.queries = new Array;
   $scope.added = new Array;
   $scope.loaded = true;
+
+
   $scope.editorOptions = {
     lineWrapping: true,
     lineNumbers: true,
@@ -332,6 +333,35 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     $scope.saveConfig();
   })
 
+  $rootScope.$on("aside:close", function () {
+    $scope.listClass = 'fa-mail-forward';
+  })
+  $rootScope.$on("aside:open", function () {
+    $scope.listClass = 'fa-mail-reply';
+  })
+
+
+  $scope.toggleProperties = function () {
+
+    Aside.toggle();
+
+    if (Aside.isOpen()) {
+      $scope.graphClass = "svg-container-collapsed";
+    } else {
+      $scope.graphClass = "svg-container-expanded";
+    }
+
+  }
+
+  $scope.graphClass = "svg-container-collapsed";
+  Aside.show({
+    scope: $scope,
+    title: "",
+    template: 'views/database/graph/asideEmpty.html',
+    show: true,
+    absolute: false,
+    fullscreen: $scope.fullscreen
+  });
   $scope.$watch("fullscreen", function (val) {
     if (val) {
       $scope.additionalClass = 'panel-graph-fullscreen';
@@ -435,9 +465,22 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
       $scope.graph.on('node/click', function (v) {
 
-
+        var q = "SELECT outE().@class.asSet() as out, inE().@class.asSet() as in from " + v.source["@rid"];
+        CommandApi.queryText({
+          database: $routeParams.database,
+          contentType: 'JSON',
+          language: 'sql',
+          text: q,
+          limit: -1,
+          shallow: false,
+          verbose: false
+        }, function (data) {
+          v.relationships = data.result[0];
+        })
         if (Aside.isOpen()) {
           $scope.doc = v.source;
+
+
           var title = $scope.doc['@class'] + "-" + $scope.doc['@rid'] + "- Version " + $scope.doc['@version'];
           Aside.show({
             scope: $scope,
@@ -610,54 +653,58 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
           type: "tree",
           entries: function (v) {
 
+
             var acts = [];
-            var outgoings = Database.getEdge(v.source, 'out_');
-            outgoings.forEach(function (elem) {
-              var name = elem.replace("out_", "");
-              acts.push(
-                {
-                  name: (name != "" ? name : "E"),
-                  onClick: function (v, label) {
+            //var outgoings = Database.getEdge(v.source, 'out_');
+            if (v.relationships && v.relationships.out) {
+              v.relationships.out.forEach(function (elem) {
+                var name = elem.replace("out_", "");
+                acts.push(
+                  {
+                    name: (name != "" ? name : "E"),
+                    onClick: function (v, label) {
 
-                    if (v['@rid'].startsWith("#-")) {
+                      if (v['@rid'].startsWith("#-")) {
 
-                      $scope.$apply(function () {
-                        Notification.push({
-                          content: 'Cannot navigate relationship of a temporary node',
-                          autoHide: true,
-                          warning: true
+                        $scope.$apply(function () {
+                          Notification.push({
+                            content: 'Cannot navigate relationship of a temporary node',
+                            autoHide: true,
+                            warning: true
+                          });
                         });
-                      });
 
-                    } else {
-                      if (label == "E") {
-                        label = "";
+                      } else {
+                        if (label == "E") {
+                          label = "";
+                        }
+                        else {
+                          label = "'" + label + "'";
+                        }
+
+                        var props = {rid: v['@rid'], label: label};
+                        var query = "select expand(unionAll(outE({{label}}),out({{label}})) )  from {{rid}}"
+                        var queryText = S(query).template(props).s;
+
+                        CommandApi.queryText({
+                          database: $routeParams.database,
+                          contentType: 'JSON',
+                          language: 'sql',
+                          text: queryText,
+                          limit: -1,
+                          shallow: false,
+                          verbose: false
+                        }, function (data) {
+
+                          $scope.graph.data(data.result).redraw();
+                        })
                       }
-                      else {
-                        label = "'" + label + "'";
-                      }
-
-                      var props = {rid: v['@rid'], label: label};
-                      var query = "select expand(unionAll(outE({{label}}),out({{label}})) )  from {{rid}}"
-                      var queryText = S(query).template(props).s;
-
-                      CommandApi.queryText({
-                        database: $routeParams.database,
-                        contentType: 'JSON',
-                        language: 'sql',
-                        text: queryText,
-                        limit: -1,
-                        shallow: false,
-                        verbose: false
-                      }, function (data) {
-
-                        $scope.graph.data(data.result).redraw();
-                      })
                     }
                   }
-                }
-              )
-            })
+                )
+
+              })
+            }
             return acts;
           }
 
@@ -742,40 +789,42 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
           entries: function (v) {
 
             var acts = [];
-            var outgoings = Database.getEdge(v.source, 'in_');
-            outgoings.forEach(function (elem) {
-              var name = elem.replace("in_", "");
+            if (v.relationships || v.relationships.in) {
+              //var outgoings = Database.getEdge(v.source, 'in_');
+              v.relationships.in.forEach(function (elem) {
+                var name = elem.replace("in_", "");
 
-              acts.push(
-                {
-                  name: (name != "" ? name : "E"),
-                  onClick: function (v, label) {
-                    if (label == "E") {
-                      label = "";
+                acts.push(
+                  {
+                    name: (name != "" ? name : "E"),
+                    onClick: function (v, label) {
+                      if (label == "E") {
+                        label = "";
+                      }
+                      else {
+                        label = "'" + label + "'";
+                      }
+
+                      var props = {rid: v['@rid'], label: label};
+                      var query = "select expand(unionAll(inE({{label}}),in({{label}})) )  from {{rid}}"
+                      var queryText = S(query).template(props).s;
+                      CommandApi.queryText({
+                        database: $routeParams.database,
+                        contentType: 'JSON',
+                        language: 'sql',
+                        text: queryText,
+                        limit: -1,
+                        shallow: false,
+                        verbose: false
+                      }, function (data) {
+
+                        $scope.graph.data(data.result).redraw();
+                      })
                     }
-                    else {
-                      label = "'" + label + "'";
-                    }
-
-                    var props = {rid: v['@rid'], label: label};
-                    var query = "select expand(unionAll(inE({{label}}),in({{label}})) )  from {{rid}}"
-                    var queryText = S(query).template(props).s;
-                    CommandApi.queryText({
-                      database: $routeParams.database,
-                      contentType: 'JSON',
-                      language: 'sql',
-                      text: queryText,
-                      limit: -1,
-                      shallow: false,
-                      verbose: false
-                    }, function (data) {
-
-                      $scope.graph.data(data.result).redraw();
-                    })
                   }
-                }
-              )
-            })
+                )
+              })
+            }
             return acts;
           }
 
@@ -791,6 +840,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             title: title,
             template: 'views/database/graph/asideVertex.html',
             show: true,
+            absolute: false,
             fullscreen: $scope.fullscreen
           });
 
@@ -902,23 +952,34 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     } else {
       $scope.language = 'sql';
     }
-    CommandApi.queryText({
+
+    CommandApi.graphQuery($scope.queryText, {
       database: $routeParams.database,
-      contentType: 'JSON',
       language: $scope.language,
-      text: $scope.queryText,
-      limit: 20,
-      shallow: false,
-      verbose: false
-    }, function (data) {
-      if (data.result) {
-        $scope.graph.data(data.result).redraw();
-      }
+    }).then(function (data) {
+      $scope.graph.data(data.graph).redraw();
       Spinner.stopSpinner();
-    }, function (data) {
+    }).catch(function (err) {
       Spinner.stopSpinner();
-      Notification.push({content: data, error: true, autoHide: true});
-    });
+      Notification.push({content: err, error: true, autoHide: true});
+    })
+    //CommandApi.queryText({
+    //  database: $routeParams.database,
+    //  contentType: 'JSON',
+    //  language: $scope.language,
+    //  text: $scope.queryText,
+    //  limit: 20,
+    //  shallow: false,
+    //  verbose: false
+    //}, function (data) {
+    //  if (data.result) {
+    //    $scope.graph.data(data.result).redraw();
+    //  }
+    //  Spinner.stopSpinner();
+    //}, function (data) {
+    //  Spinner.stopSpinner();
+    //  Notification.push({content: data, error: true, autoHide: true});
+    //});
 
   }
 
@@ -936,72 +997,95 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
 
 
   Icon.icons().then(function (data) {
+
     $scope.icons = data;
+
+
+    $scope.headers = Database.getPropertyFromDoc($scope.doc);
+    $scope.headers.unshift("@class");
+    $scope.headers.unshift("@rid");
+    $scope.active = 'properties';
+    if ($scope.doc['@class']) {
+      $scope.config = $scope.graph.getClazzConfig($scope.doc['@class']);
+    }
+
+    $scope.setDirty = function () {
+      $rootScope.$broadcast('graphConfig:changed', true);
+
+    }
+    $scope.$watch('config.display', function (val) {
+      if (val) {
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', null);
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
+      }
+    })
+
+    $scope.$watch('config.iconSize', function (val) {
+
+      if (val) {
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'iconSize', val);
+      }
+    })
+    $scope.$watch('config.iconVPadding', function (val) {
+
+      if (val || val === 0) {
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'iconVPadding', val);
+      }
+    })
+    $scope.$watch('config.iconCss', function (val) {
+
+
+      if (val) {
+        var mapped = val;
+
+        if ($scope.icons) {
+          $scope.icons.forEach(function (d) {
+            if (d.css == val) {
+              mapped = d.code;
+
+            }
+          })
+
+
+          $scope.graph.changeClazzConfig($scope.doc['@class'], 'iconCss', val);
+          $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', eval('\'\\u' + mapped.toString(16) + '\''));
+        }
+      } else {
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'iconCss', null);
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', null);
+        var val = null;
+        if ($scope.graph.getClazzConfig($scope.doc['@class'])) {
+          if ($scope.graph.getClazzConfig($scope.doc['@class'])['display']) {
+            val = $scope.graph.getClazzConfig($scope.doc['@class'])['display'];
+          }
+        }
+        if (!val) {
+          val = "@rid";
+        }
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
+      }
+    })
+    $scope.$watch('config.fill', function (val) {
+      if (val) {
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'fill', val);
+      }
+    })
+    $scope.$watch('config.stroke', function (val) {
+      if (val) {
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'stroke', val);
+      }
+    })
+    $scope.$watch('config.r', function (val) {
+      if (val) {
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'r', val);
+      }
+    })
+
+    $scope.save = function () {
+      $rootScope.$broadcast("graphConfig:onSave");
+    }
   });
 
-  $scope.headers = Database.getPropertyFromDoc($scope.doc);
-  $scope.headers.unshift("@class");
-  $scope.headers.unshift("@rid");
-  $scope.active = 'properties';
-  if ($scope.doc['@class']) {
-    $scope.config = $scope.graph.getClazzConfig($scope.doc['@class']);
-  }
-
-  $scope.setDirty = function () {
-    $rootScope.$broadcast('graphConfig:changed', true);
-
-  }
-  $scope.$watch('config.display', function (val) {
-    if (val) {
-      $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', null);
-      $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
-    }
-  })
-  $scope.$watch('config.icon', function (val) {
-    if (val) {
-      var mapped = val;
-      if ($scope.icons) {
-        $scope.icons.forEach(function (d) {
-          if (d.css == val) {
-            mapped = d.code;
-
-          }
-        })
-        $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', eval('\'\\u' + mapped.toString(16) + '\''));
-      }
-    } else {
-      $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', null);
-      var val = null;
-      if ($scope.graph.getClazzConfig($scope.doc['@class'])) {
-        if ($scope.graph.getClazzConfig($scope.doc['@class'])['display']) {
-          val = $scope.graph.getClazzConfig($scope.doc['@class'])['display'];
-        }
-      }
-      if (!val) {
-        val = "@rid";
-      }
-      $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
-    }
-  })
-  $scope.$watch('config.fill', function (val) {
-    if (val) {
-      $scope.graph.changeClazzConfig($scope.doc['@class'], 'fill', val);
-    }
-  })
-  $scope.$watch('config.stroke', function (val) {
-    if (val) {
-      $scope.graph.changeClazzConfig($scope.doc['@class'], 'stroke', val);
-    }
-  })
-  $scope.$watch('config.r', function (val) {
-    if (val) {
-      $scope.graph.changeClazzConfig($scope.doc['@class'], 'r', val);
-    }
-  })
-
-  $scope.save = function () {
-    $rootScope.$broadcast("graphConfig:onSave");
-  }
 
 }]);
 GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside) {
