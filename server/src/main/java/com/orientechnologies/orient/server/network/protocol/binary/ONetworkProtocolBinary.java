@@ -1292,6 +1292,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
             channel.writeVersion(entry.getValue().getVersion());
+
+            if( connection.getData().protocolVersion >= 37 ) {
+              if (ORecordInternal.isContentChanged(entry.getValue()))
+                channel.writeBytes(entry.getValue().toStream());
+              else
+                channel.writeBytes(null);
+            }
           }
 
           if (connection.getData().protocolVersion >= 20)
