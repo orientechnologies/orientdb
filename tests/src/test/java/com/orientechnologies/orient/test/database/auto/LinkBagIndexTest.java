@@ -307,7 +307,7 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<ORidBag> field("ridBag").add(docThree);
-      loadedDocument.save();
+      document.save();
       database.commit();
     } catch (Exception e) {
       database.rollback();

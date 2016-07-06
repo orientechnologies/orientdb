@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
@@ -86,10 +85,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   private final OPerformanceStatisticManager performanceStatisticManager;
 
   /**
-   * Flag which indicates whether we work in unsafe mode for current thread. Unsafe mode means that all operations in this thread
-   * may violate violate ACID properties but system performance will be faster.
-   *
-   * <p>To start unsafe mode call {@link #switchOnUnsafeMode()}, to stop unsafe mode call {@link #switchOffUnsafeMode()}.
+   * Flag which indicates whether we work in unsafe mode for current thread.
+   * Unsafe mode means that all operations in this thread may violate violate ACID properties but system performance will be faster.
+   * <p>
+   * To start unsafe mode call {@link #switchOnUnsafeMode()}, to stop unsafe mode call {@link #switchOffUnsafeMode()}.
    */
   private static final ThreadLocal<Boolean> unsafeMode = new ThreadLocal<Boolean>() {
     @Override
@@ -144,30 +143,30 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   /**
-   * Starts atomic operation inside of current thread. If atomic operation has been already started, current atomic operation
-   * instance will be returned. All durable components have to call this method at the beginning of any data modification
-   * operation.
+   * Starts atomic operation inside of current thread.
+   * If atomic operation has been already started , current atomic operation instance will be returned.
+   * All durable components have to call this method at the beginning of any data modification operation.
+   * <p>
+   * In current implementation of atomic operation, each component which is participated in atomic operation is hold under exclusive
+   * lock till atomic operation will not be completed (committed or rollbacked).
+   * <p>
+   * If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link #acquireReadLock(ODurableComponent)}
+   * , otherwise data consistency will be compromised.
+   * <p>
+   * Atomic operation may be delayed if start of atomic operations is prohibited by call of {@link #freezeAtomicOperations(Class, String)}
+   * method. If mentioned above method is called then execution of current method will be stopped till call of {@link #releaseAtomicOperations(long)}
+   * method or exception will be thrown. Concrete behaviour depends on real values of parameters of {@link #freezeAtomicOperations(Class, String)} method.
    *
-   * <p>In current implementation of atomic operation, each component which is participated in atomic operation is hold under
-   * exclusive lock till atomic operation will not be completed (committed or rollbacked).
-   *
-   * <p>If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link
-   * #acquireReadLock(ODurableComponent)}, otherwise data consistency will be compromised.
-   *
-   * <p>Atomic operation may be delayed if start of atomic operations is prohibited by call of {@link
-   * #freezeAtomicOperations(Class, String)} method. If mentioned above method is called then execution of current method will be
-   * stopped till call of {@link #releaseAtomicOperations(long)} method or exception will be thrown. Concrete behaviour depends on
-   * real values of parameters of {@link #freezeAtomicOperations(Class, String)} method.
-   *
-   * @param trackNonTxOperations If this flag set to <code>true</code> then special record {@link ONonTxOperationPerformedWALRecord}
-   *                             will be added to WAL in case of atomic operation is started outside of active storage transaction.
-   *                             During storage restore procedure this record is monitored and if given record is present then
-   *                             rebuild of all indexes is performed.
+   * @param trackNonTxOperations If this flag set to <code>true</code> then special record {@link ONonTxOperationPerformedWALRecord} will be added to
+   *                             WAL in case of atomic operation is started outside of active storage transaction. During storage restore procedure
+   *                             this record is monitored and if given record is present then rebuild of all indexes is performed.
    * @param lockName             Name of lock (usually name of component) which is going participate in atomic operation.
-   *
    * @return Instance of active atomic operation.
    */
   public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
+    if (unsafeMode.get() || writeAheadLog == null)
+      return null;
+
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
       operation.incrementCounter();
@@ -200,9 +199,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     assert freezeRequests.get() >= 0;
 
-    final boolean useWal = useWal();
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
+    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
     operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), performanceStatisticManager);
     currentOperation.set(operation);
@@ -212,7 +210,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       activeAtomicOperations.put(unitId, new OPair<String, StackTraceElement[]>(thread.getName(), thread.getStackTrace()));
     }
 
-    if (useWal && trackNonTxOperations && storage.getStorageTransaction() == null)
+    if (trackNonTxOperations && storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
     if (lockName != null)
@@ -222,10 +220,10 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   /**
-   * Switch off unsafe mode. During this mode it is not guaranteed that operations will support ACID properties but system
-   * performance will be faster.
-   *
-   * <p>To switch off unsafe mode call {@link #switchOffUnsafeMode()}
+   * Switch off unsafe mode. During this mode it is not guaranteed that operations will support
+   * ACID properties but system performance will be faster.
+   * <p>
+   * To switch off unsafe mode call {@link #switchOffUnsafeMode()}
    */
   public void switchOnUnsafeMode() {
     unsafeMode.set(true);
@@ -389,6 +387,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public OAtomicOperation endAtomicOperation(boolean rollback, Exception exception) throws IOException {
+    if (unsafeMode.get() || writeAheadLog == null)
+      return null;
+
     final OAtomicOperation operation = currentOperation.get();
     assert operation != null;
 
@@ -415,14 +416,11 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     assert counter > 0;
 
     if (counter == 1) {
-      final boolean useWal = useWal();
-
       if (!operation.isRollback())
-        operation.commitChanges(useWal ? writeAheadLog : null);
+        operation.commitChanges(writeAheadLog);
 
-      if (useWal)
-        writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
-            operation.getMetadata());
+      writeAheadLog
+          .logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(), operation.getMetadata());
 
       // We have to decrement the counter after the disk operations, otherwise, if they
       // fail, we will be unable to rollback the atomic operation later.
@@ -444,6 +442,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public OUncompletedCommit<OAtomicOperation> initiateCommit() throws IOException {
+    if (unsafeMode.get() || writeAheadLog == null)
+      return new OUncompletedCommit.NoOperation<OAtomicOperation>(null);
+
     final OAtomicOperation operation = currentOperation.get();
     assert operation != null;
 
@@ -453,7 +454,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (counter > 0)
       return new OUncompletedCommit.NoOperation<OAtomicOperation>(operation);
 
-    return new UncompletedCommit(operation, operation.initiateCommit(useWal() ? writeAheadLog : null));
+    return new UncompletedCommit(operation, operation.initiateCommit(writeAheadLog));
   }
 
   private void acquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String fullName) {
@@ -464,22 +465,19 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     operation.addLockedObject(fullName);
   }
 
-  /**
-   * Acquires exclusive lock in the active atomic operation running on the current thread for the {@code durableComponent}.
-   */
-  public void acquireExclusiveLockTillOperationComplete(ODurableComponent durableComponent) {
-    final OAtomicOperation operation = currentOperation.get();
-    assert operation != null;
-    acquireExclusiveLockTillOperationComplete(operation, durableComponent.getFullName());
-  }
-
   public void acquireReadLock(ODurableComponent durableComponent) {
+    if (unsafeMode.get() || writeAheadLog == null)
+      return;
+
     assert durableComponent.getLockName() != null;
 
     lockManager.acquireLock(durableComponent.getLockName(), OOneEntryPerKeyLockManager.LOCK.SHARED);
   }
 
   public void releaseReadLock(ODurableComponent durableComponent) {
+    if (unsafeMode.get() || writeAheadLog == null)
+      return;
+
     assert durableComponent.getName() != null;
     assert durableComponent.getLockName() != null;
 
@@ -602,17 +600,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     }
   }
 
-  private boolean useWal() {
-    if (writeAheadLog == null)
-      return false;
-
-    if (unsafeMode.get())
-      return false;
-
-    final OStorageTransaction storageTransaction = storage.getStorageTransaction();
-    return storageTransaction == null || storageTransaction.getClientTx().isUsingLog();
-  }
-
   private class UncompletedCommit implements OUncompletedCommit<OAtomicOperation> {
     private final OAtomicOperation         operation;
     private final OUncompletedCommit<Void> nestedCommit;
@@ -627,9 +614,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       nestedCommit.complete();
 
       try {
-        if (useWal())
-          writeAheadLog
-              .logAtomicOperationEndRecord(operation.getOperationUnitId(), false, operation.getStartLSN(), operation.getMetadata());
+        writeAheadLog
+            .logAtomicOperationEndRecord(operation.getOperationUnitId(), false, operation.getStartLSN(), operation.getMetadata());
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error while completing an uncompleted commit."), e);
       }
@@ -654,9 +640,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       nestedCommit.rollback();
 
       try {
-        if (useWal())
-          writeAheadLog
-              .logAtomicOperationEndRecord(operation.getOperationUnitId(), true, operation.getStartLSN(), operation.getMetadata());
+        writeAheadLog
+            .logAtomicOperationEndRecord(operation.getOperationUnitId(), true, operation.getStartLSN(), operation.getMetadata());
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error while rollbacking an uncompleted commit."), e);
       }

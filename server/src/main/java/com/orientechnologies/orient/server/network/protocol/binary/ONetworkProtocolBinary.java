@@ -1260,18 +1260,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(connection, this);
 
     try {
-      try {
-        connection.getDatabase().begin(tx);
-      } catch (final ORecordNotFoundException e) {
-        throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
-      }
+      connection.getDatabase().begin(tx);
 
       try {
-        try {
-          connection.getDatabase().commit();
-        } catch (final ORecordNotFoundException e) {
-          throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
-        }
+        connection.getDatabase().commit();
         beginResponse();
         try {
           sendOk(connection, clientTxId);
@@ -2676,7 +2668,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   protected int cleanOutRecord(final ODatabaseDocument iDatabase, final ORID rid, final int version) {
-    iDatabase.cleanOutRecord(rid, version);
+    iDatabase.delete(rid, version);
     return 1;
   }
 

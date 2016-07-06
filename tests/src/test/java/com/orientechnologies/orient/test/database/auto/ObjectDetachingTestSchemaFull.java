@@ -241,7 +241,7 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     Country loaded = (Country) database.load((ORecordId) country.getId());
     Assert.assertEquals(loaded.getId(), country.getId());
     Assert.assertEquals(loaded.getVersion(), country.getVersion());
-    Assert.assertEquals((Object) database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
+    Assert.assertEquals(database.getRecordByUserObject(loaded, false), database.getRecordByUserObject(country, false));
     String newName = "ShouldNotBeChanged";
     loaded.setName(newName);
     loaded = (Country) database.save(loaded);

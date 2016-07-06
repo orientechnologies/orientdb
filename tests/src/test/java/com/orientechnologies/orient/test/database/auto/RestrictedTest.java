@@ -125,8 +125,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
   public void testFilteredDirectDeleteAsWriter() throws IOException {
     database.open("writer", "writer");
     try {
-      // adminRecord.delete();
-      database.delete(adminRecord.getIdentity());
+      adminRecord.delete();
     } catch (OSecurityException e) {
       // OK AS EXCEPTION
     } catch (ORecordNotFoundException e) {
@@ -136,7 +135,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
 
     database.open("admin", "admin");
     adminRecord.reload();
-    Assert.assertEquals(((ODocument) database.load(adminRecord.getIdentity())).field("user"), "admin");
+    Assert.assertEquals(adminRecord.field("user"), "admin");
   }
 
   @Test(dependsOnMethods = "testFilteredDirectDeleteAsWriter")

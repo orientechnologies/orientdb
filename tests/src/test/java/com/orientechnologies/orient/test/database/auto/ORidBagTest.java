@@ -1162,7 +1162,6 @@ import static org.testng.Assert.assertTrue;
     Assert.assertTrue(itemsToAdd.isEmpty());
   }
 
-  @Test(enabled = false)
   public void testFromEmbeddedToSBTreeAndBack() throws IOException {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(7);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(4);
@@ -1355,7 +1354,6 @@ import static org.testng.Assert.assertTrue;
     Assert.assertEquals(teamMates.iterator().next().getIdentity(), bob.getIdentity());
   }
 
-  @Test(enabled = false) // re-enable after #6372 is fixed
   public void testDocumentHelper() {
     ODocument document = new ODocument();
     ODocument embeddedDocument = new ODocument();
@@ -1512,7 +1510,6 @@ import static org.testng.Assert.assertTrue;
     Assert.assertEquals(ridBag.size(), size);
   }
 
-  @Test(enabled = false) // re-enable after #6372 is fixed
   public void testJsonSerialization() {
     ODocument externalDoc = new ODocument();
     ODocument testDocument = new ODocument();

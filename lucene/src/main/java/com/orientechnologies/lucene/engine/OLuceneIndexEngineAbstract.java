@@ -503,9 +503,4 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       OLogManager.instance().error(this, "Error on releasing Lucene index", e);
     }
   }
-
-  @Override
-  public void acquireAtomicExclusiveLock() {
-    // do nothing
-  }
 }

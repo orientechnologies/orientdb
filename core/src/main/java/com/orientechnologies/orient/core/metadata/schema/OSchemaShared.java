@@ -508,10 +508,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       } else if (storage instanceof OStorageProxy) {
         final OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
         db.command(commandSQL).execute();
-        final OClass classToDrop = getClass(className);
         reload();
-        if (getClass(className) == null) // really dropped, for example there may be no rights to drop a class
-          dropClassIndexes(classToDrop);
       } else
         dropClassInternal(className);
 

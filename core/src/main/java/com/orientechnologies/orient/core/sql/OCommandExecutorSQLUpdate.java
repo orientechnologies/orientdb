@@ -277,6 +277,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract
       queryArgs = iArgs;
     }
 
+    query.setUseCache(false);
     query.setContext(context);
 
     returnHandler.reset();

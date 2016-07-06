@@ -1535,11 +1535,6 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
     }
   }
 
-  @Override
-  public void acquireAtomicExclusiveLock() {
-    atomicOperationsManager.acquireExclusiveLockTillOperationComplete(this);
-  }
-
   private void doPut(K key, V value, OAtomicOperation atomicOperation) throws IOException {
     int sizeDiff = 0;
 
