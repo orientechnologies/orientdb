@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -46,6 +47,7 @@ import static org.junit.Assert.assertTrue;
  * - server0's request has reached the write quorum and propagates the new value to all the servers in the cluster
  */
 
+@Ignore
 public class TwoClientsRecordUpdateTxOnThreeServersScenarioTest extends AbstractScenarioTest {
 
   private final String        RECORD_ID   = "R001";

@@ -91,7 +91,7 @@ public class OrientDataSource implements DataSource {
 
   @Override
   public Connection getConnection() throws SQLException {
-    return this.getConnection(username, password);
+    return getConnection(username, password);
   }
 
   @Override

@@ -448,6 +448,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     try {
       documentIndexed = fillIndex(iProgressListener, true);
     } catch (final Exception e) {
+      OLogManager.instance().error(this, "Error during index rebuild", e);
       try {
         if (indexId >= 0)
           storage.clearIndex(indexId);
