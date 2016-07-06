@@ -81,7 +81,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
+                <version>2.4</version>
                 <configuration>
                     <descriptors>
                         <descriptor>src/assembly/all.xml</descriptor>
