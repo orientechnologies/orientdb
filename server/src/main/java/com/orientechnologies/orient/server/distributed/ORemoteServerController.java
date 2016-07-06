@@ -32,6 +32,9 @@ public class ORemoteServerController {
 
   public ORemoteServerController(final ODistributedServerManager manager, final String iServer, final String iURL,
       final String user, final String passwd) throws IOException {
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), iServer, ODistributedServerLog.DIRECTION.OUT,
+        "Creating remote channel to distributed server...");
+
     requestChannel = new ORemoteServerChannel(manager, iServer, iURL, user, passwd);
     responseChannel = new ORemoteServerChannel(manager, iServer, iURL, user, passwd);
   }
@@ -45,6 +48,9 @@ public class ORemoteServerController {
   }
 
   public void close() {
+    ODistributedServerLog.debug(this, requestChannel.getManager().getLocalNodeName(), requestChannel.getServer(),
+        ODistributedServerLog.DIRECTION.OUT, "Closing remote channel to distributed server...");
+
     requestChannel.close();
     responseChannel.close();
   }

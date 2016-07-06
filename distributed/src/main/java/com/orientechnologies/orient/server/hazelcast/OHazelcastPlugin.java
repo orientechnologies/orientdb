@@ -425,6 +425,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   public void updateCachedDatabaseConfiguration(final String iDatabaseName, final ODocument cfg, final boolean iSaveToDisk,
       final boolean iDeployToCluster) {
+    // VALIDATE THE CONFIGURATION FIRST
+    getDistributedStrategy().validateConfiguration(new ODistributedConfiguration(cfg));
+
     final boolean updated = super.updateCachedDatabaseConfiguration(iDatabaseName, cfg, iSaveToDisk);
 
     if (updated) {
@@ -645,6 +648,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       final String nodeLeftName = getNodeName(member);
 
       if (nodeLeftName != null) {
+        ODistributedServerLog.debug(this, nodeName, nodeLeftName, ODistributedServerLog.DIRECTION.NONE,
+            "Distributed server is '%s' unreachable", nodeLeftName);
+
         try {
           // REMOVE INTRA SERVER CONNECTION
           closeRemoteServer(nodeLeftName);
@@ -690,6 +696,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                 }
               }
             }, autoRemoveOffLineServer, 0);
+          }
+
+          for (String databaseName : getManagedDatabases()) {
+            configurationMap.remove(CONFIG_DBSTATUS_PREFIX + nodeLeftName + "." + databaseName);
           }
 
           ODistributedServerLog.warn(this, nodeLeftName, null, DIRECTION.NONE, "Node removed id=%s name=%s", member, nodeLeftName);

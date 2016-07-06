@@ -67,29 +67,29 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientStartupListener, OOrientShutdownListener {
 
-  protected static final String                 CONFIG_MAP_RID  = "mapRid";
-  protected static final String                 CONFIG_CLUSTERS = "clusters";
-  protected final String                        type;
-  protected final OLockManager<Object>          keyLockManager;
-  protected volatile IndexConfiguration         configuration;
+  protected static final String CONFIG_MAP_RID  = "mapRid";
+  protected static final String CONFIG_CLUSTERS = "clusters";
+  protected final    String               type;
+  protected final    OLockManager<Object> keyLockManager;
+  protected volatile IndexConfiguration   configuration;
 
-  protected final ODocument                     metadata;
-  protected final OAbstractPaginatedStorage     storage;
-  private final String                          databaseName;
-  private final String                          name;
+  protected final ODocument                 metadata;
+  protected final OAbstractPaginatedStorage storage;
+  private final   String                    databaseName;
+  private final   String                    name;
 
-  private final OReadersWriterSpinLock          rwLock          = new OReadersWriterSpinLock();
-  private final AtomicLong                      rebuildVersion  = new AtomicLong();
+  private final OReadersWriterSpinLock rwLock         = new OReadersWriterSpinLock();
+  private final AtomicLong             rebuildVersion = new AtomicLong();
 
-  private final int                             version;
-  protected String                              valueContainerAlgorithm;
-  protected int                                 indexId         = -1;
-  private String                                algorithm;
-  private Set<String>                           clustersToIndex = new HashSet<String>();
-  private volatile OIndexDefinition             indexDefinition;
-  private volatile boolean                      rebuilding      = false;
-  private volatile ThreadLocal<IndexTxSnapshot> txSnapshot      = new IndexTxSnapshotThreadLocal();
-  private Map<String, String>                   engineProperties = new HashMap<String, String>();
+  private final int    version;
+  protected     String valueContainerAlgorithm;
+  protected int indexId = -1;
+  private String algorithm;
+  private Set<String> clustersToIndex = new HashSet<String>();
+  private volatile OIndexDefinition indexDefinition;
+  private volatile boolean                      rebuilding       = false;
+  private volatile ThreadLocal<IndexTxSnapshot> txSnapshot       = new IndexTxSnapshotThreadLocal();
+  private          Map<String, String>          engineProperties = new HashMap<String, String>();
 
   public OIndexAbstract(String name, final String type, final String algorithm, final String valueContainerAlgorithm,
       final ODocument metadata, final int version, final OStorage storage) {
@@ -104,9 +104,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
       this.metadata = metadata;
       this.valueContainerAlgorithm = valueContainerAlgorithm;
       this.storage = (OAbstractPaginatedStorage) storage.getUnderlying();
-      this.keyLockManager = Orient.instance().isRunningDistributed()
-          ? new OOneEntryPerKeyLockManager<Object>(true, -1, OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger())
-          : new OPartitionedLockManager<Object>();
+      this.keyLockManager = Orient.instance().isRunningDistributed() ?
+          new OOneEntryPerKeyLockManager<Object>(true, -1, OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger()) :
+          new OPartitionedLockManager<Object>();
 
       Orient.instance().registerWeakOrientStartupListener(this);
       Orient.instance().registerWeakOrientShutdownListener(this);
@@ -202,8 +202,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   /**
    * Creates the index.
    *
-   * @param clusterIndexName
-   *          Cluster name where to place the TreeMap
+   * @param clusterIndexName Cluster name where to place the TreeMap
    * @param clustersToIndex
    * @param rebuild
    * @param progressListener
@@ -232,8 +231,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
       final Boolean durableInNonTxMode = isDurableInNonTxMode();
 
-      indexId = storage.addIndexEngine(name, algorithm, type, indexDefinition, valueSerializer, isAutomatic(), durableInNonTxMode,
-          version, getEngineProperties(), clustersToIndex, metadata);
+      indexId = storage
+          .addIndexEngine(name, algorithm, type, indexDefinition, valueSerializer, isAutomatic(), durableInNonTxMode, version,
+              getEngineProperties(), clustersToIndex, metadata);
       assert indexId >= 0;
 
       onIndexEngineChange(indexId);
@@ -306,8 +306,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
         indexId = storage.loadIndexEngine(name);
 
         if (indexId == -1) {
-          indexId = storage.loadExternalIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(),
-              isAutomatic(), isDurableInNonTxMode(), version, getEngineProperties());
+          indexId = storage
+              .loadExternalIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(),
+                  isDurableInNonTxMode(), version, getEngineProperties());
         }
 
         if (indexId == -1)
@@ -324,8 +325,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
           try {
             rebuild();
           } catch (Throwable t) {
-            OLogManager.instance().error(this,
-                "Cannot rebuild index '%s' because '" + t + "'. The index will be removed in configuration", e, getName());
+            OLogManager.instance()
+                .error(this, "Cannot rebuild index '%s' because '" + t + "'. The index will be removed in configuration", e,
+                    getName());
             // REMOVE IT
             return false;
           }
@@ -439,8 +441,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
 
       removeValuesContainer();
 
-      indexId = storage.addIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(),
-          isDurableInNonTxMode(), version, getEngineProperties(), clustersToIndex, metadata);
+      indexId = storage
+          .addIndexEngine(name, algorithm, type, indexDefinition, determineValueSerializer(), isAutomatic(), isDurableInNonTxMode(),
+              version, getEngineProperties(), clustersToIndex, metadata);
 
       onIndexEngineChange(indexId);
     } catch (Exception e) {
@@ -462,6 +465,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
     try {
       documentIndexed = fillIndex(iProgressListener);
     } catch (final Exception e) {
+      OLogManager.instance().error(this, "Error during index rebuild", e);
+
       try {
         if (indexId >= 0)
           storage.clearIndex(indexId);
@@ -969,8 +974,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
             } catch (OIndexException e) {
               OLogManager.instance().error(this,
                   "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
-                      + " Rebuild will continue from this point",
-                  e, fieldValue, doc.getIdentity());
+                      + " Rebuild will continue from this point", e, fieldValue, doc.getIdentity());
             }
 
             ++documentIndexed;

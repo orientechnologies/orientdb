@@ -28,70 +28,60 @@ import java.io.File;
  */
 public class ODatabaseIdentifier {
 
-  private final OStressTester.OMode mode;
-  private final String              remoteIp;
-  private final int                 remotePort;
-  private       String              dbName;
-  private       String              rootPassword;
-  private       String              plocalPath;
+  private OStressTesterSettings settings;
 
-  public ODatabaseIdentifier(OStressTester.OMode mode, String dbName, String rootPassword, String remoteIp, int remotePort, String plocalPath) {
-    this.mode = mode;
-    this.dbName = dbName;
-    this.rootPassword = rootPassword;
-    this.remotePort = remotePort;
-    this.remoteIp = remoteIp;
-    this.plocalPath = plocalPath;
+  public ODatabaseIdentifier(final OStressTesterSettings settings) {
+    this.settings = settings;
   }
 
   public String getUrl() {
 
-    switch (mode) {
+    switch (settings.mode) {
     case MEMORY:
-      return "memory:" + dbName;
+      return "memory:" + settings.dbName;
     case REMOTE:
-      return "remote:" + remoteIp + ":" + remotePort + "/" + dbName;
+      return "remote:" + settings.remoteIp + ":" + settings.remotePort + "/" + settings.dbName;
     case DISTRIBUTED:
       return null;
     case PLOCAL:
     default:
       String basePath = System.getProperty("java.io.tmpdir");
-      if (plocalPath != null) {
-        basePath = plocalPath;
+      if (settings.plocalPath != null) {
+        basePath = settings.plocalPath;
       }
 
-      if( !basePath.endsWith(File.separator))
+      if (!basePath.endsWith(File.separator))
         basePath += File.separator;
 
-      return "plocal:" + basePath + dbName;
+      return "plocal:" + basePath + settings.dbName;
     }
   }
 
   public OStressTester.OMode getMode() {
-    return mode;
+    return settings.mode;
   }
 
   public String getPassword() {
-    return rootPassword;
+    return settings.rootPassword;
   }
 
   public void setPassword(String password) {
-    this.rootPassword = password;
+    settings.rootPassword = password;
   }
 
   public String getName() {
-    return dbName;
+    return settings.dbName;
   }
 
   public String getRemoteIp() {
-    return remoteIp;
+    return settings.remoteIp;
   }
 
   public int getRemotePort() {
-    return remotePort;
+    return settings.remotePort;
   }
 
   public String getPlocalPath() {
-    return plocalPath;
+    return settings.plocalPath;
   }
 }

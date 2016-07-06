@@ -181,28 +181,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  public int checkQuorumBeforeReplicate(final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType,
-      final Collection<String> iClusterNames, final Collection<String> iNodes, final ODistributedConfiguration cfg) {
-    int nodesConcurToTheQuorum = 0;
-    if (quorumType == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE) {
-      // ONLY MASTER NODES CONCUR TO THE MINIMUM QUORUM
-      for (String node : iNodes) {
-        if (cfg.getServerRole(node) == ODistributedConfiguration.ROLES.MASTER)
-          nodesConcurToTheQuorum++;
-      }
-
-    } else {
-
-      // ALL NODES CONCUR TO THE MINIMUM QUORUM
-      nodesConcurToTheQuorum = iNodes.size();
-    }
-
-    // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE NODES
-    final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
-
-    return calculateQuorum(quorumType, iClusterNames, cfg, availableNodes, nodesConcurToTheQuorum, true);
-  }
-
   @Override
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
       Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
@@ -225,27 +203,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       final boolean checkNodesAreOnline = task.isNodeOnlineRequired();
 
-      final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
-      if (iRequest.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE) {
-        // ONLY MASTER NODES CONCUR TO THE MINIMUM QUORUM
-        for (String node : iNodes) {
-          if (cfg.getServerRole(node) == ODistributedConfiguration.ROLES.MASTER)
-            nodesConcurToTheQuorum.add(node);
-        }
-
-        if (localResult != null && cfg.getServerRole(getLocalNodeName()) == ODistributedConfiguration.ROLES.MASTER)
-          // INCLUDE LOCAL NODE TOO
-          nodesConcurToTheQuorum.add(getLocalNodeName());
-
-      } else {
-
-        // ALL NODES CONCUR TO THE MINIMUM QUORUM
-        nodesConcurToTheQuorum.addAll(iNodes);
-
-        if (localResult != null)
-          // INCLUDE LOCAL NODE TOO
-          nodesConcurToTheQuorum.add(getLocalNodeName());
-      }
+      final Set<String> nodesConcurToTheQuorum = manager.getDistributedStrategy().getNodesConcurInQuorum(manager, cfg, iRequest,
+          iNodes, localResult);
 
       // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE NODES
       final int availableNodes = manager.getAvailableNodes(iNodes, databaseName);
@@ -253,7 +212,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final int expectedResponses = localResult != null ? availableNodes + 1 : availableNodes;
 
       final int quorum = calculateQuorum(task.getQuorumType(), iClusterNames, cfg, expectedResponses, nodesConcurToTheQuorum.size(),
-          checkNodesAreOnline);
+          checkNodesAreOnline, localNodeName);
 
       final boolean groupByResponse;
       if (task.getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION) {
@@ -273,6 +232,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         // COLLECT LOCAL RESULT
         currentResponseMgr.setLocalResult(localNodeName, (Serializable) localResult);
 
+      // SORT THE NODE TO GUARANTEE THE SAME ORDER OF DELIVERY
       if (!(iNodes instanceof List))
         iNodes = new ArrayList<String>(iNodes);
       Collections.sort((List<String>) iNodes);
@@ -290,7 +250,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           remoteServer.sendRequest(iRequest);
 
         } catch (Throwable e) {
-          if (e instanceof OSecurityAccessException) {
+          String reason = e.getMessage();
+          if (e instanceof ODistributedException && e.getCause() instanceof IOException) {
+            // CONNECTION ERROR: REMOVE THE CONNECTION
+            reason = e.getCause().getMessage();
+            manager.closeRemoteServer(node);
+
+          } else if (e instanceof OSecurityAccessException) {
             // THE CONNECTION COULD BE STALE, CREATE A NEW ONE AND RETRY
             manager.closeRemoteServer(node);
             final ORemoteServerController remoteServer = manager.getRemoteServer(node);
@@ -310,7 +276,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
                 manager.getAvailableNodeNames(databaseName));
           else
             ODistributedServerLog.error(this, localNodeName, node, ODistributedServerLog.DIRECTION.OUT,
-                "Error on sending distributed request %s. Active nodes: %s", e, iRequest,
+                "Error on sending distributed request %s (%s). Active nodes: %s", iRequest, reason,
                 manager.getAvailableNodeNames(databaseName));
         }
       }
@@ -328,7 +294,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       return waitForResponse(iRequest, currentResponseMgr);
 
-    } catch (RuntimeException e) {
+    } catch (
+
+    RuntimeException e) {
       throw e;
     } catch (Exception e) {
       throw OException.wrapException(new ODistributedException("Error on executing distributed request (" + iRequest
@@ -537,30 +505,36 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return waitLocalNode;
   }
 
-  protected int calculateQuorum(final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType,
-      final Collection<String> clusterNames, final ODistributedConfiguration cfg, final int allAvailableNodes,
-      final int masterAvailableNodes, final boolean checkNodesAreOnline) {
-
-    final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();
+  protected int calculateQuorum(final OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType, Collection<String> clusterNames,
+      final ODistributedConfiguration cfg, final int allAvailableNodes, final int masterAvailableNodes,
+      final boolean checkNodesAreOnline, final String localNodeName) {
 
     int quorum = 1;
 
-    switch (quorumType) {
-    case NONE:
-      // IGNORE IT
-      break;
-    case READ:
-      quorum = cfg.getReadQuorum(clusterName, allAvailableNodes);
-      break;
-    case WRITE:
-      quorum = cfg.getWriteQuorum(clusterName, masterAvailableNodes);
-      break;
-    case ALL:
-      quorum = allAvailableNodes;
-      break;
+    if (clusterNames == null || clusterNames.isEmpty()) {
+      clusterNames = new ArrayList<String>(1);
+      clusterNames.add(null);
     }
 
-    // CHECK THE QUORUM OFFSET IF ANY
+    for (String cluster : clusterNames) {
+      int clusterQuorum = 0;
+      switch (quorumType) {
+      case NONE:
+        // IGNORE IT
+        break;
+      case READ:
+        clusterQuorum = cfg.getReadQuorum(cluster, allAvailableNodes, localNodeName);
+        break;
+      case WRITE:
+        clusterQuorum = cfg.getWriteQuorum(cluster, masterAvailableNodes, localNodeName);
+        break;
+      case ALL:
+        clusterQuorum = allAvailableNodes;
+        break;
+      }
+
+      quorum = Math.max(quorum, clusterQuorum);
+    }
 
     if (quorum < 0)
       quorum = 0;
