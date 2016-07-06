@@ -1,93 +1,107 @@
 <div class="container-fluid vertex-aside" ng-controller="VertexAsideController">
-    <div class="row">
-        <ul class="nav nav-pills nav-justified nav-pills-aside">
-            <li ng-class="{active : 'properties' == active }"><a href="javascript:void(0)"
-                                                                 ng-click="active = 'properties'"
-                    ><i class="fa fa-bars"></i></a></li>
-            <li ng-class="{active : 'settings' == active }"><a href="javascript:void(0)"
-                                                               ng-click="active = 'settings'"><i
-                    class="fa fa-cog"></i></a>
-            </li>
-        </ul>
-    </div>
-    <div class="row">
-        <h5 class="text-center title-tab">
-            {{ active | capitalize}}
-        </h5>
-    </div>
-    <div class="row aside-form">
+  <div class="row">
+    <ul class="nav nav-pills nav-justified nav-pills-aside">
+      <li ng-class="{active : 'properties' == active }"><a href="javascript:void(0)"
+                                                           ng-click="active = 'properties'"
+      ><i class="fa fa-bars"></i></a></li>
+      <li ng-class="{active : 'settings' == active }"><a href="javascript:void(0)"
+                                                         ng-click="active = 'settings'"><i
+        class="fa fa-cog"></i></a>
+      </li>
+    </ul>
+  </div>
+  <div class="row">
+    <h5 class="text-center title-tab">
+      {{ active | capitalize}}
+    </h5>
+  </div>
+  <div class="row aside-form">
 
-        <div class="col-md-12" ng-show="active == 'properties'">
-            <form class="form-horizontal">
-                <div class="form-group vertex-fields" ng-repeat="header in headers">
-                    <label for="inputDisplay" class="col-md-4 control-label">{{header}}</label>
+    <div class="col-md-12" ng-show="active == 'properties'">
+      <form class="form-horizontal">
+        <div class="form-group vertex-fields" ng-repeat="header in headers">
+          <label for="inputDisplay" class="col-md-4 control-label">{{header}}</label>
 
-                    <div class="col-md-8">
-                        <p class="form-control-static">{{doc[header]}}</p>
-                    </div>
-                </div>
-            </form>
+          <div class="col-md-8">
+            <p class="form-control-static">{{doc[header]}}</p>
+          </div>
         </div>
-        <div class="col-md-12" ng-show="active == 'settings'">
-
-            <form class="form-horizontal">
-                <div class="form-group">
-                    <label for="inputDisplay" class="col-md-4 control-label">Display</label>
-
-                    <div class="col-md-8">
-                        <select ng-model="config.display" ng-change="setDirty()" id="inputDisplay"
-                                ng-options="h for h in headers">
-
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="inputIcon" class="col-md-4 control-label">Icon</label>
-
-                    <div class="col-md-8">
-                        <select fontpicker id="inputIcon" class="form-control" ng-change="setDirty()"
-                                ng-options="icon.css as icon.code for icon in icons track by icon.css"
-                                ng-model="config.icon">
-                        </select>
-                    </div>
-                </div>
-
-
-                <div class="form-group">
-                    <label for="inputRadius" class="col-md-4 control-label">Radius</label>
-
-                    <div class="col-md-8">
-                        <input id="inputRadius" ng-model="config.r" ng-change="setDirty()" class="form-control">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="col-md-4 control-label">Fill</label>
-
-                    <div class="col-md-8">
-                        <spectrum-colorpicker
-                                ng-model="config.fill" ng-change="setDirty()"
-                                options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="col-md-4 control-label">Stroke</label>
-
-                    <div class="col-md-8">
-                        <spectrum-colorpicker ng-change="setDirty()"
-                                              ng-model="config.stroke"
-                                              options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="col-md-4 control-label"></label>
-                    <div class="col-md-8 btn-group">
-                        <button href="javascript:void(0)" class="btn btn-primary btn-sm"
-                                ng-click="save()"><i
-                                class="fa fa-save"> Save configuration</i>
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
+      </form>
     </div>
+    <div class="col-md-12" ng-show="active == 'settings'">
+
+      <form class="form-horizontal">
+        <div class="form-group">
+          <label for="inputDisplay" class="col-md-4 control-label">Display</label>
+
+          <div class="col-md-8">
+            <select ng-model="config.display" ng-change="setDirty()" id="inputDisplay"
+                    ng-options="h for h in headers">
+
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputIcon" class="col-md-4 control-label">Icon</label>
+
+          <div class="col-md-8">
+            <select fontpicker id="inputIcon" class="form-control" ng-change="setDirty()"
+
+                    ng-model="config.iconCss">
+
+              <option  ng-repeat="icon in icons" ng-selected="icon.css == config.iconCss">{{icon.css}}</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="col-md-4 control-label">Icon Size</label>
+          <div class="col-md-8">
+            <input type="number" ng-model="config.iconSize" ng-change="setDirty()" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-md-4 control-label">Icon Vertical Padding</label>
+          <div class="col-md-8">
+            <input type="number" ng-model="config.iconVPadding" ng-change="setDirty()" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="inputRadius" class="col-md-4 control-label">Radius</label>
+
+          <div class="col-md-8">
+            <input id="inputRadius" ng-model="config.r" ng-change="setDirty()" class="form-control">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-md-4 control-label">Fill</label>
+
+          <div class="col-md-8">
+            <spectrum-colorpicker
+              ng-model="config.fill" ng-change="setDirty()"
+              options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-md-4 control-label">Stroke</label>
+
+          <div class="col-md-8">
+            <spectrum-colorpicker ng-change="setDirty()"
+                                  ng-model="config.stroke"
+                                  options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-md-4 control-label"></label>
+          <div class="col-md-8 btn-group">
+            <button href="javascript:void(0)" class="btn btn-primary btn-sm"
+                    ng-click="save()"><i
+              class="fa fa-save"> Save configuration</i>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>

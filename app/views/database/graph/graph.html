@@ -4,6 +4,10 @@
       <div class="row">
         <div class="col-md-4 admin-title">
           <h2>
+
+            <button class="btn btn-xs btn-warning btn-trasparent" ng-click="toggleProperties()"><i class="fa "
+                                                                                                   ng-class="listClass"></i>
+            </button>
             Graph Editor
             <a href="{{ database.getWiki() }}" class="btn btn-trasparent btn-help"
                data-placement="right"
@@ -19,43 +23,78 @@
         <div class="col-md-8 admin-actions">
           <div class="btn-toolbar pull-right">
             <div class="btn-group">
-              <button href="javascript:void(0)" class="btn btn-primary btn-sm"
-                      ng-click="saveConfig()"><i
-                class="fa fa-save"> </i>
-                Save Configuration
+              <button href="javascript:void(0)"
+                      data-title="Run Query"
+                      data-trigger="hover"
+                      data-placement="bottom"
+                      bs-tooltip
+                      ng-click="query()"
+                      ng-disabled="!queryText"
+                      class="btn btn-warning btn-sm">
+                <i class="fa fa-play"> </i>
+
 
               </button>
             </div>
             <div class="btn-group">
-              <button href="javascript:void(0)" class="btn btn-sm btn-default" ng-click="addNode()"><i
-                class="fa fa-plus-circle"> </i>
-                Add Vertex
+              <button href="javascript:void(0)"
+                      data-title="Save Configuration"
+                      data-trigger="hover"
+                      data-placement="bottom"
+                      bs-tooltip
+                      ng-click="saveConfig()"
+                      class="btn btn-primary btn-sm">
+                <i class="fa fa-save"> </i>
 
+              </button>
+            </div>
+            <div class="btn-group">
+              <button href="javascript:void(0)"
+                      data-title="Add Vertex"
+                      data-trigger="hover"
+                      data-placement="bottom"
+                      bs-tooltip
+                      class="btn btn-sm btn-default"
+                      ng-click="addNode()"><i
+                class="fa fa-plus-circle"> </i>
               </button>
             </div>
 
 
             <div class="btn-group" ng-hide="fullscreen">
-              <button href="javascript:void(0)" class="btn  btn-sm btn-default"
+              <button href="javascript:void(0)"
+                      data-title="Full Screen"
+                      data-trigger="hover"
+                      data-placement="bottom"
+                      bs-tooltip
+                      class="btn  btn-sm btn-default"
                       ng-click="fullscreen = true"><i
                 class="fa fa-expand"> </i>
-                Fullscreen
 
               </button>
             </div>
             <div class="btn-group" ng-show="fullscreen">
-              <button href="javascript:void(0)" class="btn  btn-sm btn-default"
+              <button href="javascript:void(0)"
+                      data-title="Exit Full Screen"
+                      data-trigger="hover"
+                      data-placement="bottom"
+                      bs-tooltip
+                      class="btn  btn-sm btn-default"
                       ng-click="fullscreen = false"><i
                 class="fa fa-compress"> </i>
-                Exit Fullscreen
 
               </button>
             </div>
             <div class="btn-group">
-              <button href="javascript:void(0)" class="btn  btn-sm btn-default"
+              <button href="javascript:void(0)"
+                      data-title="Clear Canvas"
+                      data-trigger="hover"
+                      data-placement="bottom"
+                      bs-tooltip
+                      class="btn  btn-sm btn-default"
                       ng-click="clear()"><i
                 class="fa fa-trash-o"> </i>
-                Clear Canvas
+
 
               </button>
             </div>
@@ -95,18 +134,14 @@
                   </div>
                 </form>
                 <div class="run-container">
-                  <div class="btn-group run-action ">
-                    <button type="button" ng-click="query()" ng-disabled="!queryText"
-                            class="btn btn-sm btn-primary">Run
-                    </button>
-                  </div>
+
                 </div>
               </div>
 
             </div>
             <div class="row">
               <div class="col-md-12">
-                <div class="graph-container" ng-o-graph="graphOptions">
+                <div class="graph-container svg-container" ng-class="graphClass" ng-o-graph="graphOptions">
 
                 </div>
               </div>

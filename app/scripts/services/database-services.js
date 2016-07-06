@@ -733,6 +733,24 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
     }
   }
 
+
+  resource.graphQuery = function (query, params) {
+
+
+    var deferred = $q.defer();
+
+    var limit = params.limit || 20;
+
+    var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit;
+
+    var opts = {
+      command: query,
+      mode : "graph"
+    }
+    $http.post(text, opts).success(deferred.resolve).error(deferred.reject);
+    return deferred.promise;
+
+  }
   resource.getAll = function (database, clazz, callback) {
     var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,shallow,graph';
     var query = "select * from " + clazz;
