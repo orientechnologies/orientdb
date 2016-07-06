@@ -690,20 +690,13 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
       //we may only close items in open state so we "peek" them first
       Iterator<OClosableEntry<K, V>> iterator = lruList.iterator();
 
-      boolean entryClosed = false;
-
       while (iterator.hasNext()) {
         OClosableEntry<K, V> entry = iterator.next();
         if (entry.makeClosed()) {
           iterator.remove();
-          entryClosed = true;
           break;
         }
       }
-
-      //there are no items in open state stop evictaion
-      if (!entryClosed)
-        break;
     }
   }
 
