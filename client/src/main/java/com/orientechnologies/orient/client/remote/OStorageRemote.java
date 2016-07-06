@@ -1310,10 +1310,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             ORecordId rid;
             for (int i = 0; i < updatedRecords; ++i) {
               rid = network.readRID();
-
+              int version = network.readVersion();
               ORecordOperation rop = iTx.getRecordEntry(rid);
-              if (rop != null)
-                ORecordInternal.setVersion(rop.getRecord(), network.readVersion());
+              if (rop != null) {
+                if (version != rop.getRecord().getVersion() + 1)
+                  rop.getRecord().unload();
+                ORecordInternal.setVersion(rop.getRecord(), version);
+              }
             }
 
             if (network.getSrvProtocolVersion() >= 20)
