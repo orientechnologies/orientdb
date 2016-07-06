@@ -1,16 +1,20 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 /**
  * Created by tglman on 08/04/16.
  */
-public class OrientFactoryTests {
+public class OrientDBFactoryTests {
 
   @Test
   public void createAndUseEmbeddedDatabase() {
@@ -27,38 +31,29 @@ public class OrientFactoryTests {
 
   }
 
+  @Test(expected = OStorageExistsException.class)
+  public void testEmbeddedDoubleCreate() {
+    OrientDBFactory factory = OrientDBFactory.embedded(".", null);
+    try {
+      factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
+      factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
+    } finally {
+      factory.close();
+    }
+  }
+
   @Test
-  public void createAndUseRemoteDatabase() {
-    OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
+  public void createDropEmbeddedDatabase() {
+    OrientDBFactory factory = OrientDBFactory.embedded(".", null);
     //    OrientDBFactory factory = OrientDBFactory.fromUrl("remote:localhost", null);
-    if (!factory.exist("test", "root", "root"))
+    try {
       factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
-
-    ODatabaseDocument db = factory.open("test", "admin", "admin");
-    db.save(new ODocument());
-    db.close();
-    factory.close();
-
-  }
-
-  public void createAndUseDistributeEmbeddedDatabase() {
-    ////    OrientDBFactory factory = OrientDBFactory.join(new String[] { "localhost:3435" }, null);
-    //    //    OrientDBFactory factory = OrientDBFactory.fromUrl("distributed:localhost:3435", null);
-    //    //    WE need cluster root users ...
-    //    if (!factory.exist("test", "root", "root"))
-    //      factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
-    //
-    //    ODatabaseDocument db = factory.open("test", "admin", "admin");
-    //    db.save(new ODocument());
-    //    db.close();
-    //    factory.close();
-
-  }
-
-  public void embeddedWithServer() {
-    OEmbeddedDBFactory factory = OrientDBFactory.embedded(".", null);
-    //OEmbeddedDBFactory factory = (OEmbeddedDBFactory)OrientDBFactory.fromUrl("local:.", null);
-    factory.spawnServer(new Object()/*configuration*/);
+      assertTrue(factory.exist("test", "root", "root"));
+      factory.drop("test", "root", "root");
+      assertFalse(factory.exist("test", "root", "root"));
+    } finally {
+      factory.close();
+    }
   }
 
   public void testPool() {

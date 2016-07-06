@@ -63,13 +63,13 @@ public class TestNetworkSerializerIndipendency {
 
   private void dropDatabase() throws IOException {
     OServerAdmin admin = new OServerAdmin("remote:localhost/test");
-    admin.connect("root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
+    admin.connect("root", "root");
     admin.dropDatabase("plocal");
   }
 
   private void createDatabase() throws IOException {
     OServerAdmin admin = new OServerAdmin("remote:localhost/test");
-    admin.connect("root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
+    admin.connect("root", "root");
     admin.createDatabase("document", "plocal");
   }
 

@@ -245,7 +245,7 @@ public class OServerAdmin {
         public Void execute(final OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
           String storageMode;
           if (iStorageMode == null)
-            storageMode = "csv";
+            storageMode = "plocal";
           else
             storageMode = iStorageMode;
 

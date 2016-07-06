@@ -1,8 +1,11 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 /**
@@ -40,7 +43,18 @@ public interface OrientDBFactory extends AutoCloseable {
    * @return
    */
   static OrientDBFactory remote(String[] hosts, OrientDBSettings configuration) {
-    return new ORemoteDBFactory(hosts, configuration);
+    OrientDBFactory factory;
+
+    try {
+      Class<?> kass = Class.forName("com.orientechnologies.orient.core.db.ORemoteDBFactory");
+      Constructor<?> constructor = kass.getConstructor(String[].class, OrientDBSettings.class);
+      factory = (OrientDBFactory) constructor.newInstance(hosts, configuration);
+    } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
+      throw new ODatabaseException("OrientDB client API missing");
+    } catch (InvocationTargetException e) {
+      throw OException.wrapException(new ODatabaseException("Error creating OrientDB remote factory"), e.getTargetException());
+    }
+    return factory;
   }
 
   /**

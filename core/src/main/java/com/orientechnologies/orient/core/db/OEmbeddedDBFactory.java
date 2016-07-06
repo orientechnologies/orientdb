@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -103,7 +104,8 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
       final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
       embedded.internalCreate();
-    }
+    } else
+      throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
   }
 
   @Override
@@ -149,7 +151,6 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     // SHUTDOWN ENGINES
     memory.shutdown();
     disk.shutdown();
-
 
   }
 
