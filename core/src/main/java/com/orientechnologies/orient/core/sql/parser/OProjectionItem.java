@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Map;
 
 public class OProjectionItem extends SimpleNode {
@@ -70,14 +73,18 @@ public class OProjectionItem extends SimpleNode {
     }
   }
 
-  public OIdentifier getDefaultAlias() {
-    if (expression == null) {
-      OIdentifier result = new OIdentifier(-1);
-      result.setValue("null");
-      return result;
+  public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (all) {
+      return iCurrentRecord;
     }
-    return expression.getDefaultAlias();
+    return expression.execute(iCurrentRecord, ctx);
   }
 
+  public String getProjectionFieldAlias() {
+    if (alias != null) {
+      return alias.getStringValue();
+    }
+    return this.toString();
+  }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

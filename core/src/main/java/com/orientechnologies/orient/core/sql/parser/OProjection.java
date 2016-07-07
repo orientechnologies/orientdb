@@ -2,6 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +21,9 @@ public class OProjection extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -30,8 +36,7 @@ public class OProjection extends SimpleNode {
     this.items = items;
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (items == null) {
       return;
     }
@@ -62,7 +67,21 @@ public class OProjection extends SimpleNode {
     }
   }
 
+  public Object calculate(OCommandContext iContext, OIdentifiable iRecord) {
+    if (isExpand()) {
+      return items.get(0).getExpression().execute(iRecord, iContext);
+    } else {
+      OResult result = new OResult();
+      for (OProjectionItem item : items) {
+        result.setProperty(item.getProjectionFieldAlias(), item.getExpression().execute(iRecord, iContext));
+      }
+      return result;
+    }
+  }
 
+  private boolean isExpand() {
+    return false; //TODO
+  }
 
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

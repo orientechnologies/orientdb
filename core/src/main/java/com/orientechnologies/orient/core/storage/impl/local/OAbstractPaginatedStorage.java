@@ -30,8 +30,6 @@ import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
@@ -43,6 +41,7 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -57,7 +56,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -70,6 +68,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.*;
@@ -116,7 +117,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private       List<OCluster>        clusters   = new ArrayList<OCluster>();
 
   private volatile ThreadLocal<OStorageTransaction> transaction;
-  private final    AtomicBoolean                    checkpointInProgress = new AtomicBoolean();
+  private final AtomicBoolean checkpointInProgress = new AtomicBoolean();
   protected final OSBTreeCollectionManagerShared sbTreeCollectionManager;
 
   private final OPerformanceStatisticManager performanceStatisticManager = new OPerformanceStatisticManager(this,
@@ -415,8 +416,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public boolean isClosed() {
+  @Override public boolean isClosed() {
     stateLock.acquireReadLock();
     try {
       return super.isClosed();
@@ -425,8 +425,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public void close(final boolean force, boolean onDelete) {
+  @Override public void close(final boolean force, boolean onDelete) {
     doClose(force, onDelete);
   }
 
@@ -573,8 +572,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public int getId() {
+  @Override public int getId() {
     return id;
   }
 
@@ -623,8 +621,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public OSBTreeCollectionManager getSBtreeCollectionManager() {
+  @Override public OSBTreeCollectionManager getSBtreeCollectionManager() {
     return sbTreeCollectionManager;
   }
 
@@ -640,8 +637,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return count(iClusterId, false);
   }
 
-  @Override
-  public long count(int clusterId, boolean countTombstones) {
+  @Override public long count(int clusterId, boolean countTombstones) {
     if (clusterId == -1)
       throw new OStorageException("Cluster Id " + clusterId + " is invalid in database '" + name + "'");
 
@@ -718,10 +714,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param lsn                LSN from which we should find changed records
    * @param stream             Stream which will contain found records
    * @param excludedClusterIds Array of cluster ids to exclude from the export
-   *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
-   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
@@ -743,7 +737,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OLogSequenceNumber endLsn = writeAheadLog.end();
 
       if (endLsn == null || lsn.compareTo(endLsn) >= 0) {
-        OLogManager.instance().warn(this, "Cannot find requested LSN=%s for database sync operation. Last available LSN is %s", endLsn);
+        OLogManager.instance()
+            .warn(this, "Cannot find requested LSN=%s for database sync operation. Last available LSN is %s", endLsn);
         return null;
       }
 
@@ -866,8 +861,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public long count(int[] iClusterIds, boolean countTombstones) {
+  @Override public long count(int[] iClusterIds, boolean countTombstones) {
     checkOpeness();
 
     long tot = 0;
@@ -925,8 +919,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public ORecordMetadata getRecordMetadata(ORID rid) {
+  @Override public ORecordMetadata getRecordMetadata(ORID rid) {
     if (rid.isNew())
       throw new OStorageException("Passed record with id " + rid + " is new and cannot be stored.");
 
@@ -1016,9 +1009,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback) {
+  @Override public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan,
+      boolean iIgnoreCache, ORecordCallback<ORawBuffer> iCallback) {
     checkOpeness();
     final OCluster cluster;
     try {
@@ -1030,16 +1022,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return new OStorageOperationResult<ORawBuffer>(readRecord(cluster, iRid));
   }
 
-  @Override
-  public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
+  @Override public OStorageOperationResult<ORawBuffer> readRecordIfVersionIsNotLatest(final ORecordId rid, final String fetchPlan,
       final boolean ignoreCache, final int recordVersion) throws ORecordNotFoundException {
     checkOpeness();
     return new OStorageOperationResult<ORawBuffer>(readRecordIfNotLatest(getClusterById(rid.clusterId), rid, recordVersion));
   }
 
-  @Override
-  public OStorageOperationResult<Integer> updateRecord(final ORecordId rid, final boolean updateContent, final byte[] content,
-      final int version, final byte recordType, final int mode, final ORecordCallback<Integer> callback) {
+  @Override public OStorageOperationResult<Integer> updateRecord(final ORecordId rid, final boolean updateContent,
+      final byte[] content, final int version, final byte recordType, final int mode, final ORecordCallback<Integer> callback) {
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
 
@@ -1073,8 +1063,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public OStorageOperationResult<Integer> recyclePosition(final ORecordId rid, final byte[] content, final int version,
+  @Override public OStorageOperationResult<Integer> recyclePosition(final ORecordId rid, final byte[] content, final int version,
       final byte recordType) {
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
@@ -1122,8 +1111,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return writeAheadLog;
   }
 
-  @Override
-  public OStorageOperationResult<Boolean> deleteRecord(final ORecordId rid, final int version, final int mode,
+  @Override public OStorageOperationResult<Boolean> deleteRecord(final ORecordId rid, final int version, final int mode,
       ORecordCallback<Boolean> callback) {
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
@@ -1154,8 +1142,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final int mode, ORecordCallback<Boolean> callback) {
+  @Override public OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final int mode,
+      ORecordCallback<Boolean> callback) {
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
 
@@ -1215,8 +1203,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return performanceStatisticManager.stopThreadMonitoring();
   }
 
-  @Override
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
+  @Override public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
     stateLock.acquireReadLock();
     try {
       if (iExclusiveLock) {
@@ -1251,8 +1238,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (clusterName.length() == 0)
       throw new IllegalArgumentException("Cluster name is empty");
 
-//    if (Character.isDigit(clusterName.charAt(0)))
-//      return Integer.parseInt(clusterName);
+    //    if (Character.isDigit(clusterName.charAt(0)))
+    //      return Integer.parseInt(clusterName);
 
     stateLock.acquireReadLock();
     try {
@@ -1286,8 +1273,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<>();
 
     final Set<ORecordOperation> newRecords = new TreeSet<ORecordOperation>(new Comparator<ORecordOperation>() {
-      @Override
-      public int compare(final ORecordOperation o1, final ORecordOperation o2) {
+      @Override public int compare(final ORecordOperation o1, final ORecordOperation o2) {
         return o1.getRecord().getIdentity().compareTo(o2.getRecord().getIdentity());
       }
     });
@@ -1454,8 +1440,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return sortedIndexes;
   }
 
-  @Override
-  public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction clientTx, Runnable callback) {
+  @Override public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction clientTx, Runnable callback) {
     boolean success = false;
     checkOpeness();
     checkLowDiskSpaceAndFullCheckpointRequests();
@@ -1467,8 +1452,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
     final Set<ORecordOperation> newRecords = new TreeSet<ORecordOperation>(new Comparator<ORecordOperation>() {
-      @Override
-      public int compare(ORecordOperation o1, ORecordOperation o2) {
+      @Override public int compare(ORecordOperation o1, ORecordOperation o2) {
         long diff = (o1.getRecord().getIdentity().getClusterPosition() - o2.getRecord().getIdentity().getClusterPosition());
         //convert long to int comparation
         if (diff == 0)
@@ -2310,8 +2294,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
+  @Override public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
     return ppos != null && !ORecordVersionHelper.isTombstone(ppos.recordVersion);
   }
 
@@ -2403,8 +2386,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public OCluster getClusterByName(final String clusterName) {
+  @Override public OCluster getClusterByName(final String clusterName) {
     checkOpeness();
 
     stateLock.acquireReadLock();
@@ -2476,8 +2458,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         clusterMap.remove(oldName.toLowerCase(configuration.getLocaleInstance())));
   }
 
-  @Override
-  public boolean cleanOutRecord(final ORecordId recordId, final int recordVersion, final int iMode,
+  @Override public boolean cleanOutRecord(final ORecordId recordId, final int recordVersion, final int iMode,
       final ORecordCallback<Boolean> callback) {
     return deleteRecord(recordId, recordVersion, iMode, callback).getResult();
   }
@@ -2549,8 +2530,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     atomicOperationsManager.releaseAtomicOperations(-1);
   }
 
-  @Override
-  public boolean isRemote() {
+  @Override public boolean isRemote() {
     return false;
   }
 
@@ -2569,13 +2549,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return mode;
   }
 
-  @Override
-  public void lowDiskSpace(OLowDiskSpaceInformation information) {
+  @Override public void lowDiskSpace(OLowDiskSpaceInformation information) {
     lowDiskSpace = information;
   }
 
-  @Override
-  public void requestCheckpoint() {
+  @Override public void requestCheckpoint() {
     checkpointRequest = true;
   }
 
@@ -2684,8 +2662,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
+  @Override public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
     if (currentClusterId == -1)
       return new OPhysicalPosition[0];
 
@@ -2705,8 +2682,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+  @Override public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
     if (clusterId == -1)
       return new OPhysicalPosition[0];
 
@@ -2727,8 +2703,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
   }
 
-  @Override
-  public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
+  @Override public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
     if (currentClusterId == -1)
       return new OPhysicalPosition[0];
 
@@ -2749,8 +2724,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  @Override
-  public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+  @Override public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
     if (clusterId == -1)
       return new OPhysicalPosition[0];
 
@@ -3407,9 +3381,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
-   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
-   *
    * @throws IOException
    */
   private int registerCluster(final OCluster cluster) throws IOException {
@@ -3579,9 +3551,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     indexEngineNameMap.clear();
   }
 
-  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
-  private byte[] checkAndIncrementVersion(final OCluster iCluster, final ORecordId rid, final AtomicInteger version,
-      final AtomicInteger iDatabaseVersion, final byte[] iRecordContent, final byte iRecordType) {
+  @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS") private byte[] checkAndIncrementVersion(final OCluster iCluster,
+      final ORecordId rid, final AtomicInteger version, final AtomicInteger iDatabaseVersion, final byte[] iRecordContent,
+      final byte iRecordType) {
 
     final int v = version.get();
 
@@ -3812,13 +3784,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return false;
   }
 
-  @Override
-  public String incrementalBackup(String backupDirectory) {
+  @Override public String incrementalBackup(String backupDirectory) {
     throw new IllegalStateException("Incremental backup is supported only in enterprise version");
   }
 
-  @Override
-  public void restoreFromIncrementalBackup(String filePath) {
+  @Override public void restoreFromIncrementalBackup(String filePath) {
     throw new IllegalStateException("Incremental backup is supported only in enterprise version");
   }
 
@@ -4146,8 +4116,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       super(true, -1);
     }
 
-    @Override
-    protected ORID getImmutableResourceId(ORID iResourceId) {
+    @Override protected ORID getImmutableResourceId(ORID iResourceId) {
       return new ORecordId(iResourceId);
     }
   }
@@ -4179,8 +4148,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       this.nestedCommit = nestedCommit;
     }
 
-    @Override
-    public List<ORecordOperation> complete() {
+    @Override public List<ORecordOperation> complete() {
       checkOpeness();
 
       stateLock.acquireReadLock();
@@ -4207,8 +4175,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return result;
     }
 
-    @Override
-    public void rollback() {
+    @Override public void rollback() {
       checkOpeness();
       stateLock.acquireReadLock();
       try {
@@ -4257,4 +4224,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
+  @Override public OTodoResultSet query(ODatabase db, String query, Object[] args) {
+    OStatement statement = OSQLEngine.parse(query, (ODatabaseDocumentInternal) db);
+    return statement.execute(db, args);
+
+  }
 }

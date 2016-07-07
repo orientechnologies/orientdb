@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 import java.io.ByteArrayInputStream;
@@ -53,7 +52,9 @@ public class OStatementCache {
       return parse(statement);
     }
 
-    OStatementCache resource = ((OSharedContext)db.getStorage().getResource(OSharedContext.class.getName(),null)).getStatementCache();
+//    OStatementCache resource = ((OSharedContext)db.getStorage().getResource(OSharedContext.class.getName(),null)).getStatementCache();
+
+    OStatementCache resource = db.getSharedContext().getStatementCache();
     return resource.get(statement);
   }
 
