@@ -1,31 +1,23 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
-import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.cache.OSnowFlakeIdGen;
-import com.orientechnologies.orient.core.storage.cache.OWriteCacheIdGen;
-import com.orientechnologies.orient.core.storage.cache.local.twoq.O2QCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.*;
-import java.util.concurrent.Callable;
 
 /**
  * Created by tglman on 08/04/16.
@@ -65,7 +57,14 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     storage.open(new HashMap<>());
     final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
     embedded.internalOpen(user, password);
+    return embedded;
+  }
 
+  public synchronized OEmbeddedDatabasePool poolOpen(String name, String user, String password, OEmbeddedPoolByFactory pool) {
+    OAbstractPaginatedStorage storage = getStorage(name);
+    storage.open(new HashMap<>());
+    final OEmbeddedDatabasePool embedded = new OEmbeddedDatabasePool(pool, storage);
+    embedded.internalOpen(user, password);
     return embedded;
   }
 
@@ -125,13 +124,21 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   }
 
   @Override
-  public Map<String, String> listDatabases(String user, String password) {
-    return null;
+  public Set<String> listDatabases(String user, String password) {
+    // SEARCH IN CONFIGURED PATHS
+    final Set<String> databases = new HashSet<>();
+    // SEARCH IN DEFAULT DATABASE DIRECTORY
+    final String rootDirectory = basePath;
+    scanDatabaseDirectory(new File(rootDirectory), databases);
+    databases.addAll(this.storages.keySet());
+
+    //TODO remove  OSystemDatabase.SYSTEM_DB_NAME from the list
+    return databases;
   }
 
   @Override
   public OPool<ODatabaseDocument> openPool(String name, String user, String password, Map<String, Object> poolSettings) {
-    return null;
+    return new OEmbeddedPoolByFactory(this, name, user, password, this.configurations);
   }
 
   @Override
@@ -156,6 +163,27 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
   public /*OServer*/ Object spawnServer(/*OServerConfiguration*/Object serverConfiguration) {
     return null;
+  }
+
+  public interface InstanceFactory<T> {
+    T create(OAbstractPaginatedStorage storage);
+  }
+
+  private void scanDatabaseDirectory(final File directory, final Set<String> storages) {
+    if (directory.exists() && directory.isDirectory()) {
+      final File[] files = directory.listFiles();
+      if (files != null)
+        for (File db : files) {
+          if (db.isDirectory()) {
+            final File plocalFile = new File(db.getAbsolutePath() + "/database.ocf");
+            final String dbPath = db.getPath().replace('\\', '/');
+            final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
+            if (plocalFile.exists()) {
+              storages.add(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)));
+            }
+          }
+        }
+    }
   }
 
 }

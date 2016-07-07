@@ -6,16 +6,12 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentRemote;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by tglman on 08/04/16.
@@ -23,12 +19,14 @@ import java.util.Map;
 public class ORemoteDBFactory implements OrientDBFactory {
   private String[] hosts;
   private Map<String, OStorage> storages = new HashMap<>();
-  private OEngine remote;
+  private OEngine          remote;
+  private OrientDBSettings configuration;
 
   public ORemoteDBFactory(String[] hosts, OrientDBSettings configuration) {
     super();
     this.hosts = hosts;
     remote = Orient.instance().getEngine("remote");
+    this.configuration = configuration;
   }
 
   private String buildUrl(String name) {
@@ -58,6 +56,16 @@ public class ORemoteDBFactory implements OrientDBFactory {
       admin.createDatabase(name, null, sendType);
       return null;
     });
+  }
+
+  public ORemoteDatabasePool poolOpen(String name, String user, String password, ORemotePoolByFactory pool) {
+    OStorage storage = storages.get(name);
+    if (storage == null) {
+      storage = remote.createStorage(buildUrl(name), new HashMap<>());
+    }
+    ORemoteDatabasePool db = new ORemoteDatabasePool(pool, storage);
+    db.internalOpen(user, password);
+    return db;
   }
 
   private interface Operation<T> {
@@ -92,16 +100,19 @@ public class ORemoteDBFactory implements OrientDBFactory {
       //TODO: check for memory cases
       return admin.dropDatabase(name, null);
     });
-  } 
+  }
 
   @Override
-  public Map<String, String> listDatabases(String user, String password) {
-    return null;
+  public Set<String> listDatabases(String user, String password) {
+    return connectEndExecute("", user, password, admin -> {
+      //TODO: check for memory cases
+      return admin.listDatabases().keySet();
+    });
   }
 
   @Override
   public OPool<ODatabaseDocument> openPool(String name, String user, String password, Map<String, Object> poolSettings) {
-    return null;
+    return new ORemotePoolByFactory(this, name, user, password, this.configuration);
   }
 
   @Override

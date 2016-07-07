@@ -12,7 +12,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -72,6 +74,34 @@ public class ORemoteDBFactoryTest {
     } finally {
       factory.close();
     }
+  }
+
+
+  @Test
+  public void testPool() {
+    OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
+    //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
+
+    if (!factory.exist("test", "root", "root"))
+      factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
+
+    OPool<ODatabaseDocument> pool = factory.openPool("test", "admin", "admin", null);
+    ODatabaseDocument db = pool.acquire();
+    db.save(new ODocument());
+    db.close();
+    pool.close();
+    factory.close();
+  }
+
+  @Test
+  public void testListDatabases() {
+    OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
+    //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
+    assertEquals(factory.listDatabases("root", "root").size(), 0);
+    factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
+    Set<String> databases = factory.listDatabases("root", "root");
+    assertEquals(databases.size(), 1);
+    assertTrue(databases.contains("test"));
   }
 
   @After

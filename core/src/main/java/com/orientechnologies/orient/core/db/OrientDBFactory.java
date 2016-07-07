@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by tglman on 27/03/16.
@@ -92,7 +93,7 @@ public interface OrientDBFactory extends AutoCloseable {
 
   void drop(String name, String user, String password);
 
-  Map<String, String> listDatabases(String user, String password);
+  Set<String> listDatabases(String user, String password);
 
   OPool<ODatabaseDocument> openPool(String name, String user, String password, Map<String, Object> poolSettings);
 

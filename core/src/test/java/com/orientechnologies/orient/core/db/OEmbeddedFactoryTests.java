@@ -7,14 +7,16 @@ import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
  * Created by tglman on 08/04/16.
  */
-public class OrientDBFactoryTests {
+public class OEmbeddedFactoryTests {
 
   @Test
   public void createAndUseEmbeddedDatabase() {
@@ -47,15 +49,16 @@ public class OrientDBFactoryTests {
     OrientDBFactory factory = OrientDBFactory.embedded(".", null);
     //    OrientDBFactory factory = OrientDBFactory.fromUrl("remote:localhost", null);
     try {
-      factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
-      assertTrue(factory.exist("test", "root", "root"));
-      factory.drop("test", "root", "root");
-      assertFalse(factory.exist("test", "root", "root"));
+      factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
+      assertTrue(factory.exist("test", "", ""));
+      factory.drop("test", "", "");
+      assertFalse(factory.exist("test", "", ""));
     } finally {
       factory.close();
     }
   }
 
+  @Test
   public void testPool() {
     OrientDBFactory factory = OrientDBFactory.embedded(".", null);
     //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
@@ -63,16 +66,23 @@ public class OrientDBFactoryTests {
     if (!factory.exist("test", "", ""))
       factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
 
-    Map<String, Object> settings = new HashMap<>();
-    settings.put("min", 10);
-    settings.put("max", 100);
-
-    OPool<ODatabaseDocument> pool = factory.openPool("test", "admin", "admin", settings);
+    OPool<ODatabaseDocument> pool = factory.openPool("test", "admin", "admin", null);
     ODatabaseDocument db = pool.acquire();
     db.save(new ODocument());
     db.close();
     pool.close();
     factory.close();
+  }
+
+  @Test
+  public void testListDatabases() {
+    OrientDBFactory factory = OrientDBFactory.embedded(".", null);
+    //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
+    assertEquals(factory.listDatabases("", "").size(), 0);
+    factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
+    Set<String> databases = factory.listDatabases("", "");
+    assertEquals(databases.size(), 1);
+    assertTrue(databases.contains("test"));
   }
 
 }
