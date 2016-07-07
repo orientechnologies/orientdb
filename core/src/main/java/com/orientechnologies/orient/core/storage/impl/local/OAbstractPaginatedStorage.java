@@ -190,6 +190,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
       configuration.load(iProperties);
+
+      final String cs = configuration.getConflictStrategy();
+      if( cs != null ) {
+        // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
+        setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
+      }
+
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
       preOpenSteps();

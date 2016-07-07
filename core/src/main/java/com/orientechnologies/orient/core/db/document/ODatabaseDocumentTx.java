@@ -2058,6 +2058,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
           if (operationResult.getModifiedRecordContent() != null)
             stream = operationResult.getModifiedRecordContent();
+          else if (version > record.getVersion() + 1)
+            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+            record.unload();
 
           ORecordInternal.fill(record, rid, version, stream, false);
 
