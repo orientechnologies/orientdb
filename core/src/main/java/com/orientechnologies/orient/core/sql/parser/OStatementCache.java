@@ -53,7 +53,7 @@ public class OStatementCache {
       return parse(statement);
     }
 
-    OStatementCache resource = ((OSharedContext)db.getStorage().getResource(OSharedContext.class.getName(),null)).getStatementCache();
+    OStatementCache resource = db.getSharedContext().getStatementCache();
     return resource.get(statement);
   }
 
