@@ -187,6 +187,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       transaction = new ThreadLocal<OStorageTransaction>();
 
       configuration.load(iProperties);
+
+      final String cs = configuration.getConflictStrategy();
+      if( cs != null ) {
+        // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
+        setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
+      }
+
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
       preOpenSteps();
