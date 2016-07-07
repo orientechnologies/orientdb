@@ -1972,7 +1972,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     synchronized (serverURLs) {
       if (!serverURLs.contains(host)) {
         serverURLs.add(host);
-        OLogManager.instance().info(this, "Registered the new available server '%s'", host);
+        OLogManager.instance().debug(this, "Registered the new available server '%s'", host);
       }
     }
 
