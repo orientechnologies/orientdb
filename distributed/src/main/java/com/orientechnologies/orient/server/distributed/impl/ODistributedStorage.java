@@ -523,9 +523,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       final List<String> nodes = dbCfg.getServers(clusterName, null);
 
       if (nodes.isEmpty())
-        // DON'T REPLICATE OR DISTRIBUTE
-        throw new ODistributedException(
-            "Cannot execute distributed create record " + iRecordId + " because no nodes are available");
+        // NO NODES: EXECUTE LOCALLY ONLY
+        return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
       String masterNode = nodes.get(0);
       if (!masterNode.equals(localNodeName)) {
@@ -787,8 +786,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       final List<String> nodes = dbCfg.getServers(clusterName, null);
 
       if (nodes.isEmpty())
-        throw new ODistributedException(
-            "Cannot execute distributed update record " + iRecordId + " because no nodes are available");
+        // NO REPLICATION: EXECUTE IT LOCALLY
+        return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
 
       final Set<String> clusterNames = Collections.singleton(clusterName);
 
@@ -918,8 +917,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       final List<String> nodes = dbCfg.getServers(clusterName, null);
 
       if (nodes.isEmpty())
-        throw new ODistributedException(
-            "Cannot execute distributed delete record " + iRecordId + " because no nodes are available");
+        // NO NODES: EXECUTE LOCALLY ONLY
+        return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
       final Set<String> clusterNames = Collections.singleton(clusterName);
 
