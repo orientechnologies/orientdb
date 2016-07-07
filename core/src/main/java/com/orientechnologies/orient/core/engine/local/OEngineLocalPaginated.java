@@ -45,7 +45,7 @@ public class OEngineLocalPaginated extends OEngineAbstract {
 
   private volatile O2QCache readCache;
 
-  private final OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<Long, OFileClassic>(
+  protected final OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<Long, OFileClassic>(
       OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger());
 
   public OEngineLocalPaginated() {
