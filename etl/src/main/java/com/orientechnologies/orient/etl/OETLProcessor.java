@@ -33,11 +33,12 @@ import com.orientechnologies.orient.etl.transformer.OTransformer;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * ETL processor class.
@@ -93,20 +94,6 @@ public class OETLProcessor {
     configRunBehaviour(context);
   }
 
-//  public OETLProcessor() {
-//    factory = new OETLComponentFactory();
-//    stats = new OETLProcessorStats();
-//
-//    beginBlocks = new ArrayList<OBlock>();
-//
-//    transformers = new ArrayList<OTransformer>();
-//
-//    endBlocks = new ArrayList<OBlock>();
-//
-//    executor = Executors.newCachedThreadPool();
-//
-//  }
-
   public static void main(final String[] args) {
 
     System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
@@ -139,6 +126,8 @@ public class OETLProcessor {
 
       if (cores >= 2)
         workers = cores - 1;
+
+      //      workers = cores;
     }
 
   }
@@ -197,22 +186,13 @@ public class OETLProcessor {
 
       final AtomicLong counter = new AtomicLong();
 
-      List<Future<Boolean>> tasks = new ArrayList<Future<Boolean>>();
-      for (int i = 0; i < workers; i++) {
+      List<CompletableFuture<Void>> futures = IntStream.range(0, workers).boxed().map(i -> CompletableFuture
+          .runAsync(new OETLPipelineWorker(queue, new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError)),
+              executor)).collect(Collectors.toList());
 
-        final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, logLevel, maxRetries, haltOnError);
+      futures.add(CompletableFuture.runAsync(new OETLExtractorWorker(this, queue, counter), executor));
 
-        OETLPipelineWorker task = new OETLPipelineWorker(queue, pipeline);
-        tasks.add(executor.submit(task));
-      }
-
-      Future<Boolean> extractorFuture = executor.submit(new OETLExtractorWorker(this, queue, counter));
-      Boolean extracted = extractorFuture.get();
-
-      for (Future<Boolean> future : tasks) {
-        Boolean result = future.get(1, TimeUnit.MINUTES);
-        out(LOG_LEVELS.DEBUG, "Pipeline worker done without errors:: " + result);
-      }
+      futures.forEach(cf -> cf.join());
 
       out(LOG_LEVELS.DEBUG, "all items extracted");
 
