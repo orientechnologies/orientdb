@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Iterator;
 
 /**
@@ -23,12 +25,16 @@ public class OIteratorResultSet implements OTodoResultSet {
     }
 
     OResult result = new OResult();
-    result.setProperty("value", val);
+    if (val instanceof OIdentifiable) {
+      result.setElement((OIdentifiable) val);
+    } else {
+      result.setProperty("value", val);
+    }
     return result;
   }
 
   @Override public void close() {
-    
+
   }
 
 }

@@ -73,7 +73,7 @@ public class OProjection extends SimpleNode {
     } else {
       OResult result = new OResult();
       for (OProjectionItem item : items) {
-        result.setProperty(item.getProjectionFieldAlias(), item.getExpression().execute(iRecord, iContext));
+        result.setProperty(item.getProjectionFieldAlias(), item.execute(iRecord, iContext));
       }
       return result;
     }
