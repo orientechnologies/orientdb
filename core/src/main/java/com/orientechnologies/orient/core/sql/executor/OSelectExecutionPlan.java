@@ -49,4 +49,13 @@ public class OSelectExecutionPlan implements OExecutionPlan {
     return lastStep.syncPull(ctx, n);
   }
 
+  @Override public String prettyPrint(int indent) {
+    StringBuilder result = new StringBuilder();
+    for (OExecutionStep step : steps) {
+      result.append(step.prettyPrint(0, indent));
+      result.append("\n");
+    }
+    return result.toString();
+  }
+
 }

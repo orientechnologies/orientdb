@@ -11,4 +11,5 @@ public interface OExecutionPlan extends Serializable{
 
   public OTodoResultSet fetchNext(int n);
 
+  public String prettyPrint(int indent);
 }

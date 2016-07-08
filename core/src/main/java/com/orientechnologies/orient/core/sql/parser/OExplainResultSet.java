@@ -11,19 +11,26 @@ import java.util.Optional;
 /**
  * Created by luigidellaquila on 08/07/16.
  */
-public class OExplainResultSet implements OTodoResultSet{
+public class OExplainResultSet implements OTodoResultSet {
   private final OExecutionPlan executionPlan;
+  boolean hasNext = true;
 
   public OExplainResultSet(OExecutionPlan executionPlan) {
-    this. executionPlan = executionPlan;
+    this.executionPlan = executionPlan;
   }
 
   @Override public boolean hasNext() {
-    return false;
+    return hasNext;
   }
 
   @Override public OResult next() {
-    return null;
+    if (!hasNext) {
+      throw new IllegalStateException();
+    }
+    OResult result = new OResult();
+    getExecutionPlan().ifPresent(x -> result.setProperty("executionPlan", x.prettyPrint(3)));
+    hasNext = false;
+    return result;
   }
 
   @Override public void close() {

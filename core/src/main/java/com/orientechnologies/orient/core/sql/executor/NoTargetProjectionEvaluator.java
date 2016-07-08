@@ -83,14 +83,13 @@ public class NoTargetProjectionEvaluator implements OExecutionStep {
     throw new UnsupportedOperationException("a " + getClass().getSimpleName() + " cannot have a previous step");
   }
 
-
   @Override public void setNext(OExecutionStep step) {
     this.next = step;
   }
 
   @Override public void close() {
     this.keepRunning = false;
-    if(calculatedResult!=null){
+    if (calculatedResult != null) {
       this.calculatedResult.close();
     }
   }
@@ -99,4 +98,7 @@ public class NoTargetProjectionEvaluator implements OExecutionStep {
     //Do nothing, nobody will send results to this step
   }
 
+  @Override public String prettyPrint(int depth, int indent) {
+    return OExecutionStep.getIndent(depth, indent) + "CALCULATE PROJECTIONS (no target): " + projection.toString();
+  }
 }

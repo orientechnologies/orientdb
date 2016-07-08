@@ -31,4 +31,15 @@ public class OResult {
   public void setElement(OIdentifiable element) {
     this.element = element;
   }
+
+  @Override public String toString() {
+
+    return
+        "{\n"+
+          content.entrySet().stream()
+            .map(x -> x.getKey() + ": \n" + x.getValue())
+            .reduce("", (a, b) -> a + b + "\n\n")
+        +"}\n";
+
+  }
 }
