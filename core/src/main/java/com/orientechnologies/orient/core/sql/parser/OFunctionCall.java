@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class OFunctionCall extends SimpleNode {
 
-  protected OIdentifier       name;
+  protected OIdentifier name;
   protected boolean           star   = false;
   protected List<OExpression> params = new ArrayList<OExpression>();
 
@@ -96,7 +96,7 @@ public class OFunctionCall extends SimpleNode {
 
   /**
    * see OIndexableSQLFunction.searchFromTarget()
-   * 
+   *
    * @param target
    * @param ctx
    * @param operator
@@ -107,31 +107,30 @@ public class OFunctionCall extends SimpleNode {
       Object rightValue) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     if (function instanceof OIndexableSQLFunction) {
-      return ((OIndexableSQLFunction) function).searchFromTarget(target, operator, rightValue, ctx,
-          this.getParams().toArray(new OExpression[] {}));
+      return ((OIndexableSQLFunction) function)
+          .searchFromTarget(target, operator, rightValue, ctx, this.getParams().toArray(new OExpression[] {}));
     }
     return null;
   }
 
   /**
-   *
-   * @param target
-   *          query target
-   * @param ctx
-   *          execution context
-   * @param operator
-   *          operator at the right of the function
-   * @param rightValue
-   *          value to compare to funciton result
+   * @param target     query target
+   * @param ctx        execution context
+   * @param operator   operator at the right of the function
+   * @param rightValue value to compare to funciton result
    * @return the approximate number of items returned by the condition execution, -1 if the extimation cannot be executed
    */
   public long estimateIndexedFunction(OFromClause target, OCommandContext ctx, OBinaryCompareOperator operator, Object rightValue) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     if (function instanceof OIndexableSQLFunction) {
-      return ((OIndexableSQLFunction) function).estimate(target, operator, rightValue, ctx,
-          this.getParams().toArray(new OExpression[] {}));
+      return ((OIndexableSQLFunction) function)
+          .estimate(target, operator, rightValue, ctx, this.getParams().toArray(new OExpression[] {}));
     }
     return -1;
+  }
+
+  public boolean isExpand() {
+    return name.getStringValue().equals("expand");
   }
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */

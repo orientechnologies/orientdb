@@ -208,8 +208,8 @@ public class OExpression extends SimpleNode {
   }
 
   public boolean isExpand() {
-    if (value instanceof OMathExpression) {
-      return ((OMathExpression) value).isExpand();
+    if (mathExpression!=null) {
+      return mathExpression.isExpand();
     }
     return false;
   }

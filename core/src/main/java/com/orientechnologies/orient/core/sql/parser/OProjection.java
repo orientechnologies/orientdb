@@ -80,8 +80,8 @@ public class OProjection extends SimpleNode {
     }
   }
 
-  private boolean isExpand() {
-    return false; //TODO
+  public boolean isExpand() {
+    return items != null && items.size() == 1 && items.get(0).isExpand();
   }
 
   public void validate() {

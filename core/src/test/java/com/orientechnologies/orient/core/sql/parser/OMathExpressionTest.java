@@ -19,7 +19,8 @@
  */
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.junit.Assert; import org.junit.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.math.BigDecimal;
 
@@ -56,6 +57,6 @@ public class OMathExpressionTest {
 
     Assert.assertEquals(expr.apply(Integer.MAX_VALUE, OMathExpression.Operator.PLUS, 1).getClass(), Long.class);
     Assert.assertEquals(expr.apply(Integer.MIN_VALUE, OMathExpression.Operator.MINUS, 1).getClass(), Long.class);
-
   }
+
 }

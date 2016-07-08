@@ -70,5 +70,12 @@ public class OLevelZeroIdentifier extends SimpleNode {
     }
     return null;
   }
+
+  public boolean isExpand() {
+    if(functionCall!=null){
+      return functionCall.isExpand();
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */

@@ -72,5 +72,12 @@ public class OBaseIdentifier extends SimpleNode {
   public boolean isBaseIdentifier() {
     return suffix!=null && suffix.isBaseIdentifier();
   }
+
+  public boolean isExpand() {
+    if(levelZero!=null){
+      return levelZero.isExpand();
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */
