@@ -2311,13 +2311,13 @@ OFromItem FromItem():
     (
     	lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	|
-    	/*(
+    	(
     	    <LBRACKET> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    (
     	        <COMMA> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    )* <RBRACKET>
     	)
-    	|*/
+    	|
     	jjtThis.cluster = Cluster()
     	|
     	jjtThis.clusterList = ClusterList()
