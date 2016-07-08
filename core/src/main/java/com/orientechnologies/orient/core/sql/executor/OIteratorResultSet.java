@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by luigidellaquila on 07/07/16.
@@ -35,6 +37,14 @@ public class OIteratorResultSet implements OTodoResultSet {
 
   @Override public void close() {
 
+  }
+
+  @Override public Optional<OExecutionPlan> getExecutionPlan() {
+    return null;
+  }
+
+  @Override public Map<String, Object> getQueryStats() {
+    return null;
   }
 
 }

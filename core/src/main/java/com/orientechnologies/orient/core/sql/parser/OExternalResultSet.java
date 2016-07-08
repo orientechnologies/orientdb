@@ -4,6 +4,9 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 
+import java.util.Map;
+import java.util.Optional;
+
 /**
  * Created by luigidellaquila on 07/07/16.
  */
@@ -44,5 +47,13 @@ public class OExternalResultSet implements OTodoResultSet {
 
   @Override public void close() {
     executionPlan.close();
+  }
+
+  @Override public Optional<OExecutionPlan> getExecutionPlan() {
+    return null;//TODO
+  }
+
+  @Override public Map<String, Object> getQueryStats() {
+    return null;//TODO
   }
 }
