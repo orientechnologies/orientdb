@@ -73,7 +73,7 @@ public class StorageBackupMTTest {
       future.get();
     }
 
-    System.out.println("do inc backuop last time");
+    System.out.println("do inc backup last time");
     databaseDocumentTx.incrementalBackup(backupDir.getAbsolutePath());
 
     final OStorage storage = databaseDocumentTx.getStorage();
@@ -144,6 +144,12 @@ public class StorageBackupMTTest {
           } catch (RuntimeException e) {
             e.printStackTrace();
             throw e;
+          } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+          } catch (Error e) {
+            e.printStackTrace();
+            throw e;
           }
         }
       } finally {
@@ -184,11 +190,17 @@ public class StorageBackupMTTest {
       } catch (RuntimeException e) {
         e.printStackTrace();
         throw e;
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw e;
+      } catch (Error e) {
+        e.printStackTrace();
+        throw e;
       } finally {
         databaseDocumentTx.close();
       }
 
-      System.out.println(Thread.currentThread() + " - done writing");
+      System.out.println(Thread.currentThread() + " - stop backup");
 
       return null;
     }

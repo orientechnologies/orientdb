@@ -40,10 +40,11 @@ public class OEnterpriseEnginePaginated extends OEngineLocalPaginated {
   public OStorage createStorage(final String dbName, final Map<String, String> configuration) {
 
     try {
-      return new OEnterpriseLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), getReadCache());
+      return new OEnterpriseLocalPaginatedStorage(dbName, dbName, getMode(configuration), generateStorageId(), getReadCache(),
+          files);
     } catch (IOException e) {
-      final String message = "Error on opening database: " + dbName + ". Current location is: "
-          + new java.io.File(".").getAbsolutePath();
+      final String message =
+          "Error on opening database: " + dbName + ". Current location is: " + new java.io.File(".").getAbsolutePath();
       OLogManager.instance().error(this, message, e);
       throw OException.wrapException(new ODatabaseException(message), e);
     }

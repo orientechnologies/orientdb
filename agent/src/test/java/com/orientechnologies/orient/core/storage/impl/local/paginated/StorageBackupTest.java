@@ -46,9 +46,6 @@ public class StorageBackupTest {
   @Before
   public void before() {
     buildDirectory = System.getProperty("buildDirectory", ".");
-
-    //    OEngineLocalPaginated plocalEngine = (OEngineLocalPaginated) Orient.instance().getEngine("plocal");
-    //    Orient.instance().registerEngine(new OEnterpriseEnginePaginated(plocalEngine));
   }
 
   @Test

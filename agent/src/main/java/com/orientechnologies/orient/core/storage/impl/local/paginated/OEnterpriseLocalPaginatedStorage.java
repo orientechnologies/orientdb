@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.exception.OBackupInProgressException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -54,9 +56,9 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   public static final String CONF_ENTRY_NAME               = "database.ocf";
   public static final String INCREMENTAL_BACKUP_DATEFORMAT = "yyyy-MM-dd-HH-mm-ss";
 
-  public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache)
-      throws IOException {
-    super(name, filePath, mode, id, readCache);
+  public OEnterpriseLocalPaginatedStorage(String name, String filePath, String mode, int id, OReadCache readCache,
+      OClosableLinkedContainer<Long, OFileClassic> files) throws IOException {
+    super(name, filePath, mode, id, readCache, files);
     OLogManager.instance().info(this, "Enterprise storage installed correctly.");
   }
 
@@ -314,9 +316,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       final String fileName = entry.getKey();
 
       long fileId = entry.getValue();
-      final boolean closeFile = !writeCache.isOpen(fileId);
-
-      fileId = readCache.openFile(fileId, writeCache);
+      fileId = writeCache.externalFileId(writeCache.internalFileId(fileId));
 
       final long filledUpTo = writeCache.getFilledUpTo(fileId);
       final ZipEntry zipEntry = new ZipEntry(fileName);
@@ -351,9 +351,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
           readCache.release(cacheEntry, writeCache);
         }
       }
-
-      if (closeFile)
-        readCache.closeFile(fileId, true, writeCache);
 
       stream.closeEntry();
     }
@@ -434,7 +431,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       if (isFull) {
         final Map<String, Long> files = writeCache.files();
         for (Map.Entry<String, Long> entry : files.entrySet()) {
-          final long fileId = readCache.openFile(entry.getKey(), writeCache);
+          final long fileId = writeCache.fileIdByName(entry.getKey());
 
           assert entry.getValue().equals(fileId);
           readCache.deleteFile(fileId, writeCache);
@@ -463,19 +460,10 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
         final long expectedFileId = OLongSerializer.INSTANCE.deserialize(binaryFileId, 0);
         Long fileId;
 
-        final boolean isClosed;
-
         if (!writeCache.exists(zipEntry.getName())) {
           fileId = readCache.addFile(zipEntry.getName(), expectedFileId, writeCache);
-          isClosed = true;
         } else {
-          fileId = writeCache.isOpen(zipEntry.getName());
-
-          if (fileId == null) {
-            isClosed = true;
-            fileId = readCache.openFile(zipEntry.getName(), writeCache);
-          } else
-            isClosed = false;
+          fileId = writeCache.fileIdByName(zipEntry.getName());
         }
 
         if (!writeCache.fileIdsAreEqual(expectedFileId, fileId))
@@ -493,9 +481,6 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
               if (rb > 0)
                 throw new OStorageException("Can not read data from file " + zipEntry.getName());
               else {
-                if (isClosed)
-                  readCache.closeFile(fileId, true, writeCache);
-
                 processedFiles.add(zipEntry.getName());
                 continue entryLoop;
               }
@@ -553,7 +538,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
       for (String file : currentFiles) {
         if (writeCache.exists(file)) {
-          final long fileId = readCache.openFile(file, writeCache);
+          final long fileId = writeCache.fileIdByName(file);
           readCache.deleteFile(fileId, writeCache);
         }
       }
