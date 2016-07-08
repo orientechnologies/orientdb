@@ -27,6 +27,9 @@ public class OSelectExecutionPlan implements OExecutionPlan {
     if (oSelectStatement.getSkip() != null) {
       chain(new SkipExecutionStep(oSelectStatement.getSkip(), ctx));
     }
+    if (oSelectStatement.getLimit() != null) {
+      chain(new LimitExecutionStep(oSelectStatement.getLimit(), ctx));
+    }
   }
 
   private void chain(OExecutionStep nextStep) {

@@ -51,7 +51,7 @@ public class SkipExecutionStep extends AbstractExecutionStep {
   }
 
   @Override public void close() {
-
+    prev.ifPresent(x -> x.close());
   }
 
   @Override public void sendResult(Object o, Status status) {

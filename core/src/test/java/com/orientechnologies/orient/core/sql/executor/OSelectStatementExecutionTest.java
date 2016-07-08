@@ -34,12 +34,14 @@ public class OSelectStatementExecutionTest {
     Assert.assertEquals(1L, item.getProperty("one"));
     Assert.assertEquals(2L, item.getProperty("two"));
     Assert.assertEquals(5L, item.getProperty("2 + 3"));
+    result.close();
   }
 
   @Test
   public void testSelectNoTargetSkip(){
     OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 1");
     Assert.assertFalse(result.hasNext());
+    result.close();
   }
 
   @Test
@@ -51,5 +53,26 @@ public class OSelectStatementExecutionTest {
     Assert.assertEquals(1L, item.getProperty("one"));
     Assert.assertEquals(2L, item.getProperty("two"));
     Assert.assertEquals(5L, item.getProperty("2 + 3"));
+    result.close();
   }
+
+  @Test
+  public void testSelectNoTargetLimit0(){
+    OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 limit 0");
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testSelectNoTargetLimit1(){
+    OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 limit 1");
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals(1L, item.getProperty("one"));
+    Assert.assertEquals(2L, item.getProperty("two"));
+    Assert.assertEquals(5L, item.getProperty("2 + 3"));
+    result.close();
+  }
+
 }

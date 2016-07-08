@@ -90,7 +90,9 @@ public class NoTargetProjectionEvaluator implements OExecutionStep {
 
   @Override public void close() {
     this.keepRunning = false;
-    this.calculatedResult.close();
+    if(calculatedResult!=null){
+      this.calculatedResult.close();
+    }
   }
 
   @Override public void sendResult(Object o, Status status) {
