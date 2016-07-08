@@ -244,7 +244,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     OClientConnection connection = server.getClientConnectionManager().getConnection(clientTxId, this);
     try {
       boolean noToken = false;
-      if (connection == null && clientTxId < 0 && requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
+      if (connection == null && clientTxId < 0 && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
+          || requestType == OChannelBinaryProtocol.REQUEST_CONNECT)) {
         // OPEN OF OLD STYLE SESSION.
         noToken = true;
       }
@@ -260,6 +261,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       if (noToken) {
         if (clientTxId < 0) {
+          if(requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN)
+            throw new OSecurityException("Missing session for");
           connection = server.getClientConnectionManager().connect(this);
           connection.getData().sessionId = clientTxId;
         }
@@ -1260,10 +1263,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy(connection, this);
 
     try {
-      connection.getDatabase().begin(tx);
+      try {
+        connection.getDatabase().begin(tx);
+      } catch (final ORecordNotFoundException e) {
+        throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
+      }
 
       try {
-        connection.getDatabase().commit();
+        try {
+          connection.getDatabase().commit();
+        } catch (final ORecordNotFoundException e) {
+          throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
+        }
         beginResponse();
         try {
           sendOk(connection, clientTxId);
@@ -1284,13 +1295,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
             channel.writeVersion(entry.getValue().getVersion());
-
-            if( connection.getData().protocolVersion >= 37 ) {
-              if (ORecordInternal.isContentChanged(entry.getValue()))
-                channel.writeBytes(entry.getValue().toStream());
-              else
-                channel.writeBytes(null);
-            }
           }
 
           if (connection.getData().protocolVersion >= 20)
@@ -2668,7 +2672,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   protected int cleanOutRecord(final ODatabaseDocument iDatabase, final ORID rid, final int version) {
-    iDatabase.delete(rid, version);
+    iDatabase.cleanOutRecord(rid, version);
     return 1;
   }
 

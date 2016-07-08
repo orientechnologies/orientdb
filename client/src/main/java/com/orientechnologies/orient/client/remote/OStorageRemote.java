@@ -19,19 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -69,6 +56,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
@@ -79,6 +67,18 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -104,6 +104,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private final ExecutorService asynchExecutor;
   private final ODocument clusterConfiguration = new ODocument();
   private final String                clientId;
+  private final AtomicInteger users = new AtomicInteger(0);
   private       OContextConfiguration clientConfiguration;
   private       int                   connectionRetry;
   private       int                   connectionRetryDelay;
@@ -457,17 +458,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   @Override
   public int getUsers() {
-    return dataLock.getUsers();
+    return users.get();
   }
 
   @Override
   public int addUser() {
-    return dataLock.addUser();
+    return users.incrementAndGet();
   }
 
   @Override
   public int removeUser() {
-    return dataLock.removeUser();
+    if (users.get() < 1)
+      throw new IllegalStateException("Cannot remove user of the remote storage '" + toString() + "' because no user is using it");
+
+    return users.decrementAndGet();
   }
 
   public void delete() {
@@ -1303,18 +1307,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
 
             final int updatedRecords = network.readInt();
+            ORecordId rid;
             for (int i = 0; i < updatedRecords; ++i) {
-              final ORecordId rid = network.readRID();
-              final int v = network.readVersion();
-
-              final byte[] updateContent = network.getSrvProtocolVersion() >= 37 ? network.readBytes() : null;
-
-              final ORecordOperation rop = iTx.getRecordEntry(rid);
+              rid = network.readRID();
+              int version = network.readVersion();
+              ORecordOperation rop = iTx.getRecordEntry(rid);
               if (rop != null) {
-                if( updateContent != null && updateContent.length>0)
-                  ORecordInternal.fill(rop.getRecord(), rop.getRecord().getIdentity(), v, updateContent, false);
-                else
-                  ORecordInternal.setVersion(rop.getRecord(), v);
+                if (version > rop.getRecord().getVersion() + 1)
+                  // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+                  rop.getRecord().unload();
+                ORecordInternal.setVersion(rop.getRecord(), version);
               }
             }
 
@@ -1970,7 +1972,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     synchronized (serverURLs) {
       if (!serverURLs.contains(host)) {
         serverURLs.add(host);
-        OLogManager.instance().info(this, "Registered the new available server '%s'", host);
+        OLogManager.instance().debug(this, "Registered the new available server '%s'", host);
       }
     }
 

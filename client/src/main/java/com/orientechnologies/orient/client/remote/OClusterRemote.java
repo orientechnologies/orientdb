@@ -22,11 +22,7 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.*;
 
 import java.io.IOException;
 
@@ -238,5 +234,10 @@ public class OClusterRemote implements OCluster {
   @Override
   public ORecordConflictStrategy getRecordConflictStrategy() {
     return null;
+  }
+
+  @Override
+  public void acquireAtomicExclusiveLock() {
+    throw new UnsupportedOperationException("remote cluster doesn't support atomic locking");
   }
 }

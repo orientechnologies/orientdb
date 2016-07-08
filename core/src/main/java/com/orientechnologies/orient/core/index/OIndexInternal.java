@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 
 import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * Interface to handle index.
@@ -32,6 +33,16 @@ import java.util.Collection;
  * 
  */
 public interface OIndexInternal<T> extends OIndex<T> {
+
+  /**
+   * Orders indexes by its index ID.
+   */
+  Comparator<OIndexInternal> ID_COMPARATOR = new Comparator<OIndexInternal>() {
+    @Override
+    public int compare(OIndexInternal o1, OIndexInternal o2) {
+      return o2.getIndexId() - o1.getIndexId();
+    }
+  };
 
   String CONFIG_KEYTYPE            = "keyType";
   String CONFIG_AUTOMATIC          = "automatic";
@@ -188,4 +199,9 @@ public interface OIndexInternal<T> extends OIndex<T> {
   void postCommit(OIndexAbstract.IndexTxSnapshot snapshots);
 
   void setType(OType type);
+
+  /**
+   * Acquires exclusive lock in the active atomic operation running on the current thread for this index.
+   */
+  void acquireAtomicExclusiveLock();
 }
