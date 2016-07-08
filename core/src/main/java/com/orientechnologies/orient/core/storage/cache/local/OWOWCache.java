@@ -1757,8 +1757,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
           if (minLsn.compareTo(new OLogSequenceNumber(-1, -1)) > 0)
             writeAheadLog.cutTill(minLsn);
-        } catch (IOException ioe) {
-          OLogManager.instance().error(this, "Error during fuzzy checkpoint", ioe);
+        } catch (IOException | RuntimeException e) {
+          OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
+          fireBackgroundDataFlushExceptionEvent(e);
         }
 
         OLogManager.instance().debug(this, "End fuzzy checkpoint");
