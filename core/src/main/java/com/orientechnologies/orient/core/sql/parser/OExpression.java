@@ -13,6 +13,12 @@ public class OExpression extends SimpleNode {
   protected Boolean singleQuotes;
   protected Boolean doubleQuotes;
 
+  protected boolean isNull = false;
+  protected ORid            rid;
+  protected OMathExpression mathExpression;
+  protected OJson           json;
+  protected Boolean         booleanValue;
+
   public OExpression(int id) {
     super(id);
   }
@@ -21,12 +27,35 @@ public class OExpression extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (isNull) {
+      return null;
+    }
+    if (rid != null) {
+      return new ORecordId(rid.cluster.getValue().intValue(), rid.position.getValue().longValue());
+    }
+    if (mathExpression != null) {
+      return mathExpression.execute(iCurrentRecord, ctx);
+    }
+    if (json != null) {
+      return json.toMap(iCurrentRecord, ctx);
+    }
+    if (booleanValue != null) {
+      return booleanValue;
+    }
+    if (value instanceof ONumber) {
+      return ((ONumber) value).getValue();//only for old executor (manually replaced params)
+    }
+
+
+    //from here it's old stuff, only for the old executor
     if (value instanceof ORid) {
       ORid v = (ORid) value;
       return new ORecordId(v.cluster.getValue().intValue(), v.position.getValue().longValue());
@@ -41,83 +70,87 @@ public class OExpression extends SimpleNode {
     }
 
     return value;
-
   }
 
-  public boolean isBaseIdentifier(){
-    if(value instanceof OMathExpression) {
-      return ((OMathExpression)value).isBaseIdentifier();
+  public boolean isBaseIdentifier() {
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).isBaseIdentifier();
     }
 
     return false;
   }
 
-  public boolean isEarlyCalculated(){
-    if(value instanceof Number) {
+  public boolean isEarlyCalculated() {
+    if (value instanceof Number) {
       return true;
     }
-    if(value instanceof String) {
+    if (value instanceof String) {
       return true;
     }
-    if(value instanceof OMathExpression) {
-      return ((OMathExpression)value).isEarlyCalculated();
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).isEarlyCalculated();
     }
 
     return false;
   }
 
   public OIdentifier getDefaultAlias() {
-
-    if (value instanceof String) {
-      OIdentifier identifier = new OIdentifier(-1);
-      identifier.setValue((String)value);
-      return identifier;
-    }
-    // TODO create an interface for this;
-
-    // if (value instanceof ORid) {
-    // return null;// TODO
-    // } else if (value instanceof OMathExpression) {
-    // return null;// TODO
-    // } else if (value instanceof OJson) {
-    // return null;// TODO
-    // }
-
-    String result = ("" + value).replaceAll("\\.", "_").replaceAll(" ", "_").replaceAll("\n", "_").replaceAll("\b", "_")
-        .replaceAll("\\[", "_").replaceAll("\\]", "_").replaceAll("\\(", "_").replaceAll("\\)", "_");
     OIdentifier identifier = new OIdentifier(-1);
-    identifier.setValue(result);
+    identifier.setValue(this.toString());
     return identifier;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    if (value == null) {
+//    if (value == null) {
+//      builder.append("null");
+//    } else if (value instanceof SimpleNode) {
+//      ((SimpleNode) value).toString(params, builder);
+//    } else if (value instanceof String) {
+//      if (Boolean.TRUE.equals(singleQuotes)) {
+//        builder.append("'" + value + "'");
+//      } else {
+//        builder.append("\"" + value + "\"");
+//      }
+//    } else {
+//      builder.append("" + value);
+//    }
+
+    if (isNull) {
       builder.append("null");
+    } else if (rid != null) {
+      rid.toString(params, builder);
+    } else if (mathExpression != null) {
+      mathExpression.toString(params, builder);
+    } else if (json != null) {
+      json.toString(params, builder);
+    } else if (booleanValue != null) {
+      builder.append(booleanValue.toString());
     } else if (value instanceof SimpleNode) {
-      ((SimpleNode) value).toString(params, builder);
-    } else if (value instanceof String) {
-      if (Boolean.TRUE.equals(singleQuotes)) {
-        builder.append("'" + value + "'");
-      } else {
-        builder.append("\"" + value + "\"");
-      }
+      ((SimpleNode) value).toString(params, builder);//only for translated input params, will disappear with new executor
+    } else if(value instanceof String) {
+    if (Boolean.TRUE.equals(singleQuotes)) {
+      builder.append("'" + value + "'");
     } else {
-      builder.append("" + value);
+      builder.append("\"" + value + "\"");
+    }
+
+    } else {
+      builder.append(""+value);//only for translated input params, will disappear with new executor
     }
   }
 
   public static String encode(String s) {
     StringBuilder builder = new StringBuilder(s.length());
-    for(char c:s.toCharArray()){
-      if(c=='\n'){
+    for (char c : s.toCharArray()) {
+      if (c == '\n') {
         builder.append("\\n");
         continue;
       }
-      if(c=='\t'){
+      if (c == '\t') {
         builder.append("\\t");
         continue;
       }
-      if(c=='\\' || c == '"'){
+      if (c == '\\' || c == '"') {
         builder.append("\\");
       }
       builder.append(c);
@@ -142,16 +175,16 @@ public class OExpression extends SimpleNode {
   public static String encodeSingle(String s) {
 
     StringBuilder builder = new StringBuilder(s.length());
-    for(char c:s.toCharArray()){
-      if(c=='\n'){
+    for (char c : s.toCharArray()) {
+      if (c == '\n') {
         builder.append("\\n");
         continue;
       }
-      if(c=='\t'){
+      if (c == '\t') {
         builder.append("\\t");
         continue;
       }
-      if(c=='\\' || c == '\''){
+      if (c == '\\' || c == '\'') {
         builder.append("\\");
       }
       builder.append(c);
@@ -175,8 +208,8 @@ public class OExpression extends SimpleNode {
   }
 
   public boolean isExpand() {
-    if(value instanceof OMathExpression){
-      return ((OMathExpression)value).isExpand();
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).isExpand();
     }
     return false;
   }

@@ -396,7 +396,7 @@ public class OMatchStatementExecutionTest {
                 "match {class:Person, where:(name = 'n1')}.both('Friend'){as:friend}.both('Friend'){class: Person, where:(name = 'n4')} return friend.name"))
         .execute();
     assertEquals(1, qResult.size());
-    assertEquals("n2", qResult.get(0).field("friend_name"));
+    assertEquals("n2", qResult.get(0).getProperty("friend.name"));
   }
 
   @Test
@@ -407,7 +407,7 @@ public class OMatchStatementExecutionTest {
                 "match {class:Person, where:(name = 'n1')}-Friend-{as:friend}-Friend-{class: Person, where:(name = 'n4')} return friend.name"))
         .execute();
     assertEquals(1, qResult.size());
-    assertEquals("n2", qResult.get(0).field("friend_name"));
+    assertEquals("n2", qResult.get(0).getProperty("friend.name"));
   }
 
   @Test

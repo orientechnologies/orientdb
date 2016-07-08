@@ -711,7 +711,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         ODocument mapDoc = new ODocument();
         mapDoc.setTrackingChanges(false);
         mapDoc.fromMap((Map) matchContext.matched);
-        doc.field(returnAlias.getStringValue(), item.execute(mapDoc, ctx));
+        doc.setProperty(returnAlias.getStringValue(), item.execute(mapDoc, ctx));
 
         i++;
       }

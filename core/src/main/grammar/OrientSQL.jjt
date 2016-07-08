@@ -2117,23 +2117,24 @@ OModifier Modifier():
     { return jjtThis; }
 }
 
+
 OExpression Expression():
 {Token token; }
 {
     (
-        <NULL> {jjtThis.value = null;}
+        <NULL> {jjtThis.isNull = true; jjtThis.value = null;}
         |
         LOOKAHEAD( Rid() )
-        jjtThis.value = Rid()
+        jjtThis.rid = Rid() { jjtThis.value = jjtThis.rid; }
         |
         LOOKAHEAD( MathExpression() )
-        jjtThis.value = MathExpression()
+        jjtThis.mathExpression = MathExpression() { jjtThis.value = jjtThis.mathExpression; }
         |
-        jjtThis.value = Json()
+        jjtThis.json = Json() {jjtThis.value = jjtThis.json; }
         |
-        <TRUE> {jjtThis.value = true;}
+        <TRUE> { jjtThis.booleanValue = true; jjtThis.value = true; }
         |
-        <FALSE> {jjtThis.value = false;}
+        <FALSE> { jjtThis.booleanValue = false; jjtThis.value = false; }
 	)
 	{ return jjtThis; }
 }
