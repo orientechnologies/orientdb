@@ -2327,17 +2327,33 @@ OFromItem FromItem():
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	<LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
+    	(
+    	    <LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
+    	    [
+                LOOKAHEAD( Modifier() )
+                jjtThis.modifier = Modifier()
+            ]
+    	)
     	|
     	jjtThis.inputParam = InputParameter()
     	|
-    	(
-            jjtThis.identifier = BaseIdentifier()
+        LOOKAHEAD(2)
+        (
+            jjtThis.functionCall = FunctionCall()
             [
                 LOOKAHEAD( Modifier() )
                 jjtThis.modifier = Modifier()
             ]
         )
+    	|
+    	(
+            jjtThis.identifier = Identifier()
+            [
+                LOOKAHEAD( Modifier() )
+                jjtThis.modifier = Modifier()
+            ]
+        )
+
     )
     { return jjtThis; }
 }

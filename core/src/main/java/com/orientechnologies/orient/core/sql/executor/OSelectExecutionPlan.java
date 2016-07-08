@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
+import com.orientechnologies.orient.core.sql.parser.OFromItem;
 import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 
 import java.util.ArrayList;
@@ -22,6 +23,8 @@ public class OSelectExecutionPlan implements OExecutionPlan {
     if (queryTarget == null) {
       chain(new NoTargetProjectionEvaluator(oSelectStatement.getProjection(), ctx));
     } else {
+      OFromItem target = queryTarget.getItem();
+
       throw new UnsupportedOperationException();
     }
     if (oSelectStatement.getSkip() != null) {

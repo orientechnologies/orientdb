@@ -10,12 +10,12 @@ public class OFromItem extends SimpleNode {
   protected List<ORid>          rids;
   protected OCluster            cluster;
   protected OClusterList        clusterList;
-  // protected OIdentifier className;
   protected OIndexIdentifier    index;
   protected OMetadataIdentifier metadata;
   protected OStatement          statement;
   protected OInputParameter     inputParam;
-  protected OBaseIdentifier     identifier;
+  protected OIdentifier         identifier;
+  protected OFunctionCall       functionCall;
   protected OModifier           modifier;
 
   private static final Object   UNSET           = new Object();
@@ -73,18 +73,18 @@ public class OFromItem extends SimpleNode {
       return;
     } else if (inputParam != null) {
       inputParam.toString(params, builder);
+    }else if(functionCall!=null){
+      functionCall.toString(params, builder);
     } else if (identifier != null) {
-
       identifier.toString(params, builder);
-      if (modifier != null) {
-        modifier.toString(params, builder);
-      }
-      return;
+    }
+    if (modifier != null) {
+      modifier.toString(params, builder);
     }
   }
 
 
-  public OBaseIdentifier getIdentifier() {
+  public OIdentifier getIdentifier() {
     return identifier;
   }
 }

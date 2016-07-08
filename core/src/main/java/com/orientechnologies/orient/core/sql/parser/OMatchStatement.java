@@ -841,10 +841,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     stm.whereClause = oWhereClause;
     stm.target = new OFromClause(-1);
     stm.target.item = new OFromItem(-1);
-    stm.target.item.identifier = new OBaseIdentifier(-1);
-    stm.target.item.identifier.suffix = new OSuffixIdentifier(-1);
-    stm.target.item.identifier.suffix.identifier = new OIdentifier(-1);
-    stm.target.item.identifier.suffix.identifier.value = className;
+    stm.target.item.identifier = new OIdentifier(-1);
+    stm.target.item.identifier.value = className;
     return stm;
   }
 
