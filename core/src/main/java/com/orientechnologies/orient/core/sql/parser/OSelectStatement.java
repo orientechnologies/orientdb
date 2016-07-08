@@ -228,7 +228,7 @@ public class OSelectStatement extends OStatement {
 
   }
 
-  private OExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OExecutionPlan createExecutionPlan(OCommandContext ctx) {
     OSelectExecutionPlan result = new OSelectExecutionPlan(this, ctx);
     return result;
   }

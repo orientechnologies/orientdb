@@ -51,7 +51,7 @@ public class OExternalResultSet implements OTodoResultSet {
   }
 
   @Override public Optional<OExecutionPlan> getExecutionPlan() {
-    return Optional.empty();//TODO
+    return Optional.of(executionPlan);
   }
 
   @Override public Map<String, Object> getQueryStats() {
