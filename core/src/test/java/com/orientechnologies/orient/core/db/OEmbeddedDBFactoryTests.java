@@ -16,7 +16,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Created by tglman on 08/04/16.
  */
-public class OEmbeddedFactoryTests {
+public class OEmbeddedDBFactoryTests {
 
   @Test
   public void createAndUseEmbeddedDatabase() {
