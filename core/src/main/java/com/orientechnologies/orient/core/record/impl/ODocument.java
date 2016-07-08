@@ -2014,13 +2014,13 @@ public class ODocument extends ORecordAbstract
    * @see OProperty
    */
   public void validate() throws OValidationException {
-    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !getDatabase().isValidationEnabled())
-      return;
-
     checkForLoading();
     checkForFields();
 
     autoConvertValues();
+
+    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !getDatabase().isValidationEnabled())
+      return;
 
     final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
     if (immutableSchemaClass != null) {
