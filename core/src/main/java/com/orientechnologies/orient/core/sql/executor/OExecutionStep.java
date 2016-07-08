@@ -15,7 +15,7 @@ public interface OExecutionStep extends OExecutionCallback{
 
   void sendTimeout();
 
-  void addPrevious(OExecutionStep step);
+  void setPrevious(OExecutionStep step);
 
   void setNext(OExecutionStep step);
 

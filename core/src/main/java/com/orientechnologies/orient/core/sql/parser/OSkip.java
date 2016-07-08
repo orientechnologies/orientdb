@@ -2,11 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+
 import java.util.Map;
 
 public class OSkip extends SimpleNode {
 
-  protected OInteger        num;
+  protected OInteger num;
 
   protected OInputParameter inputParam;
 
@@ -18,12 +21,12 @@ public class OSkip extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
-
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (num == null && inputParam == null) {
@@ -35,6 +38,21 @@ public class OSkip extends SimpleNode {
     } else {
       inputParam.toString(params, builder);
     }
+  }
+
+  public int getValue(OCommandContext ctx) {
+    if (num != null) {
+      return num.getValue().intValue();
+    }
+    if (inputParam != null) {
+      Object paramValue = inputParam.bindFromInputParams(ctx.getInputParameters());
+      if (paramValue instanceof Number) {
+        return ((Number) paramValue).intValue();
+      } else {
+        throw new OCommandExecutionException("Invalid value for SKIP: " + paramValue);
+      }
+    }
+    throw new OCommandExecutionException("No value for SKIP");
   }
 }
 /* JavaCC - OriginalChecksum=8e13ca184705a8fc1b5939ecefe56a60 (do not edit this line) */

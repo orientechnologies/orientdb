@@ -20,12 +20,22 @@ public class OSelectExecutionPlan implements OExecutionPlan {
     this.ctx = ctx;
     OFromClause queryTarget = oSelectStatement.getTarget();
     if (queryTarget == null) {
-
-      lastStep = new NoTargetProjectionEvaluator(oSelectStatement.getProjection(), ctx);
-      steps.add(lastStep);
+      chain(new NoTargetProjectionEvaluator(oSelectStatement.getProjection(), ctx));
     } else {
       throw new UnsupportedOperationException();
     }
+    if (oSelectStatement.getSkip() != null) {
+      chain(new SkipExecutionStep(oSelectStatement.getSkip(), ctx));
+    }
+  }
+
+  private void chain(OExecutionStep nextStep) {
+    if (lastStep != null) {
+      lastStep.setNext(nextStep);
+      nextStep.setPrevious(lastStep);
+    }
+    lastStep = nextStep;
+    steps.add(nextStep);
   }
 
   @Override public void close() {

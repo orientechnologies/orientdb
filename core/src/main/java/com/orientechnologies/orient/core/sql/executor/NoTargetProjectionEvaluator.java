@@ -79,9 +79,10 @@ public class NoTargetProjectionEvaluator implements OExecutionStep {
     this.keepRunning = false;
   }
 
-  @Override public void addPrevious(OExecutionStep step) {
+  @Override public void setPrevious(OExecutionStep step) {
     throw new UnsupportedOperationException("a " + getClass().getSimpleName() + " cannot have a previous step");
   }
+
 
   @Override public void setNext(OExecutionStep step) {
     this.next = step;
