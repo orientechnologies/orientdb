@@ -1,5 +1,5 @@
 var dbModule = angular.module('database.controller', ['database.services', 'bookmarks.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', 'BatchApi', 'DocumentApi', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig, BatchApi, DocumentApi) {
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', 'BatchApi', 'DocumentApi','History', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig, BatchApi, DocumentApi,History) {
 
   $scope.database = Database;
   $scope.limit = 20;
@@ -10,6 +10,10 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     {name: "bookmarks", title: "Bookmarks"}
   ];
 
+
+  $scope.history = History.histories();
+
+  $scope.currentIndex = -1;
 
   if (Database.hasClass(GraphConfig.CLAZZ)) {
     GraphConfig.get().then(function (data) {
@@ -120,8 +124,37 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
       },
       "Ctrl-Space": "autocomplete",
       'Cmd-/': 'toggleComment',
-      'Ctrl-/': 'toggleComment'
+      'Ctrl-/': 'toggleComment',
+      "Cmd-Up": function (instance) {
 
+
+        if ($scope.currentIndex < $scope.history.length - 1) {
+
+          var tmp = $scope.queryText;
+          if ($scope.currentIndex == -1) {
+            $scope.prevText = tmp;
+          }
+          $scope.currentIndex++;
+          $scope.queryText = $scope.history[$scope.currentIndex];
+          $scope.$apply();
+        }
+
+
+      },
+      "Cmd-Down": function (instance) {
+        if ($scope.currentIndex >= 0) {
+
+          $scope.currentIndex--;
+
+          if ($scope.currentIndex == -1) {
+            $scope.queryText = $scope.prevText
+          } else {
+            $scope.queryText = $scope.history[$scope.currentIndex];
+          }
+
+          $scope.$apply();
+        }
+      }
 
     },
     onLoad: function (_cm) {
@@ -258,10 +291,13 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
           $scope.timeline.splice($scope.timeline.length - 1, 1);
         }
 
-        var dbTime = localStorageService.get("Timeline");
-        dbTime[Database.getName()][[Database.currentUser()]] = $scope.timeline;
-        localStorageService.add("Timeline", dbTime);
-
+        $timeout(function () {
+          var dbTime = localStorageService.get("Timeline");
+          dbTime[Database.getName()][[Database.currentUser()]] = $scope.timeline;
+          localStorageService.add("Timeline", dbTime);
+          $scope.history = History.push(queryBuffer);
+          $scope.currentIndex = -1;
+        }, 500)
         Spinner.stopSpinner();
         $scope.context = $scope.items[0];
         $scope.nContext = $scope.items[1];

@@ -1,25 +1,38 @@
 
 .graph-container {
-    border: 1px solid #DEDEDE;
-    margin-top: 5px;
+  border: 1px solid #DEDEDE;
+
 }
 
 text.id {
-    text-anchor: middle;
-    font-weight: bold;
+  text-anchor: middle;
+  font-weight: bold;
 }
 
 .queryGraph .ng-hide-remove {
-    -webkit-animation: fadeInDown 0.2s;
-    animation: fadeInDown 0.2s;
+  -webkit-animation: fadeInDown 0.2s;
+  animation: fadeInDown 0.2s;
 }
 
 .queryGraph .ng-hide-add {
-    -webkit-animation: fadeOutUp 0.2s;
-    -webkit-animation: fadeOutUp 0.2s;
-    display: block !important;
+  -webkit-animation: fadeOutUp 0.2s;
+  -webkit-animation: fadeOutUp 0.2s;
+  display: block !important;
 }
 
 .animationQuery {
 
 }
+
+@media (min-height: 600px) {
+  .graph-container {
+    height: 480px;
+  }
+}
+
+@media (min-height: 800px) {
+  .graph-container {
+    height: 720px;
+  }
+}
+

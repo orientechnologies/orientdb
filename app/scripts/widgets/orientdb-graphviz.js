@@ -99,6 +99,7 @@ var OrientGraph = (function () {
 
         d3.selectAll('g.vertex-' + clazz.toLowerCase())
           .selectAll('.vlabel-icon')
+          .attr('class', 'vlabel-icon vicon')
           .text(val)
 
 
@@ -138,6 +139,19 @@ var OrientGraph = (function () {
           })
 
       }
+      change['strokeWidth'] = function (clazz, prop, val) {
+
+        if (!self.config.classes[clazz]) {
+          self.config.classes[clazz] = {}
+        }
+
+        self.config.classes[clazz].strokeWidth = val;
+
+        d3.selectAll('path.edge-' + clazz.toLowerCase())
+          .style('stroke-width', function (d) {
+            return bindStrokeWidth(d.edge);
+          })
+      }
       var style = function (clazz, prop, val) {
         if (!self.config.classes[clazz]) {
           self.config.classes[clazz] = {}
@@ -150,6 +164,11 @@ var OrientGraph = (function () {
         d3.selectAll('g.legend-' + clazz.toLowerCase())
           .selectAll("circle")
           .style(prop, val);
+
+        d3.selectAll('path.edge-' + clazz.toLowerCase())
+          .style(prop, function (d) {
+            return bindStroke(d.edge);
+          })
       }
       change['fill'] = style;
       change['stroke'] = style;
@@ -199,6 +218,35 @@ var OrientGraph = (function () {
       }
 
     }
+
+
+    this.resetZoomInternal = function () {
+      var b = graphBounds();
+      var w = b.X - b.x, h = b.Y - b.y;
+
+
+      var bbox = this.svgContainer.node().getBoundingClientRect();
+      var cw = bbox.width, ch = bbox.height;
+      var s = Math.min(cw / w, ch / h);
+      var tx = (-b.x * s + (cw / s - w) * s / 2), ty = (-b.y * s + (ch / s - h) * s / 2);
+
+      this.svgContainer.transition()
+        .duration(750)
+        .call(this.zoomComponent.translate([tx, ty]).scale(s).event);
+
+    }
+    function graphBounds() {
+      var x = Number.POSITIVE_INFINITY, X = Number.NEGATIVE_INFINITY, y = Number.POSITIVE_INFINITY, Y = Number.NEGATIVE_INFINITY;
+
+      d3.selectAll("g.vertex").each(function (v) {
+        x = Math.min(x, v.x - 100);
+        X = Math.max(X, v.x + 100);
+        y = Math.min(y, v.y - 300);
+        Y = Math.max(Y, v.y + 300);
+      });
+      return {x: x, X: X, y: y, Y: Y};
+    }
+
     this.addVertex = function (v) {
       if (!self.get[v["@rid"]]) {
         self.nodes.push(v);
@@ -262,6 +310,7 @@ var OrientGraph = (function () {
         .links(this.links)
         .size([this.config.width, this.config.height])
         .linkDistance(this.config.linkDistance)
+        .linkStrength(0.1)
         .charge(this.config.charge)
         .friction(this.config.friction)
 
@@ -294,11 +343,12 @@ var OrientGraph = (function () {
 
       this.svgContainer = this.viewport.append('svg');
 
-      this.svgContainer
-        .attr("preserveAspectRatio", "xMinYMin meet")
-        .attr("viewBox", "0 0 1024 800")
-        //class to make it responsive
-        .classed("svg-content-responsive", true);
+      //this.svgContainer
+      //  .attr("preserveAspectRatio", "xMinYMin meet")
+      //  .attr("viewBox", "0 0 1440 1024").style("cursor", "move")
+      //  //class to make it responsive
+      //  .classed("svg-content-responsive", true);
+
 
       // define arrow markers for graph links
       this.svgContainer.append('svg:defs').append('svg:marker')
@@ -350,8 +400,8 @@ var OrientGraph = (function () {
 
 
       this.svg = this.svgContainer
-        //.attr('width', self.config.width)
-        //.attr('height', self.config.height)
+        .attr('width', "100%")
+        .attr('height', "100%")
         .append("g");
 
       // line displayed when dragging new nodes
@@ -560,7 +610,7 @@ var OrientGraph = (function () {
         .attr("class", function (d) {
           return self.classesInCanvas.edges.indexOf(d) == -1 ? "elem-invisible" : "";
         })
-        .style("stroke-width", 3)
+        .style("stroke-width", 5)
         .style("fill", function (d) {
           var fill = self.getClazzConfigVal(d, "fill");
           return fill ? fill : null;
@@ -589,7 +639,7 @@ var OrientGraph = (function () {
       this.edgePath = this.pathG.append('svg:path')
         .attr("class", function (d) {
           var eclass = d.edge ? "edge" : "edge lightweight"
-          return eclass;
+          return eclass + " edge-" + d.label.toLowerCase();
         })
         .attr("id", function (d, i) {
           return "linkId_" + i;
@@ -604,9 +654,12 @@ var OrientGraph = (function () {
         .style('stroke', function (d) {
           return bindStroke(d.edge);
         })
+        .style("stroke-width", function (d) {
+          return bindStrokeWidth(d.edge);
+        })
         .on("mouseover", function (d) {
           var eclass = d.edge ? "edge" : "edge lightweight"
-          eclass = eclass + " edge-hover"
+          eclass = eclass + " edge-hover edge-" + d.label.toLowerCase();
           d3.select(this).attr("class", eclass)
             .style('marker-start', function (d) {
               return d.left ? 'url(#start-arrow-hover)' : '';
@@ -616,12 +669,21 @@ var OrientGraph = (function () {
         })
         .on("mouseout", function (d) {
           var eclass = d.edge ? "edge" : "edge lightweight"
+          eclass += " edge-" + d.label.toLowerCase();
+          ;
           d3.select(this).attr("class", eclass)
             .style('marker-start', function (d) {
               return d.left ? 'url(#start-arrow)' : '';
             }).style('marker-end', function (d) {
             return d.right ? 'url(#end-arrow)' : '';
           });
+        })
+        .on("click", function (e) {
+          d3.event.stopPropagation();
+          self.edgeMenu.select({elem: this, d: e})
+          if (self.topics['edge/click']) {
+            self.topics['edge/click'](e);
+          }
         });
 
 
@@ -629,32 +691,7 @@ var OrientGraph = (function () {
       //  .attr("class", function (d) {
       //    return "elabel";
       //  })
-      //  .on("mouseover", function () {
-      //    d3.select(this.parentNode).selectAll('.edge')
-      //      .attr("class", function (d) {
-      //        var eclass = d.edge ? "edge" : "edge lightweight"
-      //        return eclass + " edge-hover"
-      //      })
-      //      .style('marker-start', function (d) {
-      //        return d.left ? 'url(#start-arrow-hover)' : '';
-      //      })
-      //      .style('marker-end', function (d) {
-      //        return d.right ? 'url(#end-arrow-hover)' : '';
-      //      });
-      //  })
-      //  .on("mouseout", function () {
-      //    d3.select(this.parentNode).selectAll('.edge')
-      //      .attr("class", function (d) {
-      //        var eclass = d.edge ? "edge" : "edge lightweight"
-      //        return eclass;
-      //      })
-      //      .style('marker-start', function (d) {
-      //        return d.left ? 'url(#start-arrow)' : '';
-      //      })
-      //      .style('marker-end', function (d) {
-      //        return d.right ? 'url(#end-arrow)' : '';
-      //      });
-      //  })
+      //
       //  .style("text-anchor", "middle")
       //  .attr("dy", "-5")
       //  .append("textPath")
@@ -662,9 +699,9 @@ var OrientGraph = (function () {
       //  .attr("xlink:href", function (d, i) {
       //    return "#linkId_" + i;
       //  })
-      //  .text(bindLabel).on("click", function (e) {
-      //
-      //
+      //  .text(function(e){
+      //    return bindRealName(e.edge);
+      //  }).on("click", function (e) {
       //  d3.event.stopPropagation();
       //  self.edgeMenu.select({elem: this, d: e})
       //
@@ -704,12 +741,12 @@ var OrientGraph = (function () {
       drag.on("dragstart", function (v) {
         d3.event.sourceEvent.stopPropagation();
         d3.select(this).classed("dragging", true);
-        d3.select(this).classed("fixed", v.fixed);
+        d3.select(this).classed("fixed", v.fixed = true);
       })
       drag.on("dragend", function (v) {
         d3.event.sourceEvent.stopPropagation();
         d3.select(this).classed("dragging", false);
-//                d3.select(this).classed("fixed", v.fixed = false);
+        //d3.select(this).classed("fixed", v.fixed = false);
       })
       g.call(drag);
       var cc = clickcancel();
@@ -796,9 +833,11 @@ var OrientGraph = (function () {
         .text(bindRealName);
 
       this.circle.exit().remove();
-      this.viewport.call(d3.behavior.zoom()
+      this.zoomComponent = d3.behavior.zoom()
         .scaleExtent([0.005, 500])
-        .on("zoom", this.zoom));
+        .on("zoom", this.zoom);
+
+      this.svgContainer.call(this.zoomComponent);
     }
 
     function clickcancel() {
@@ -872,6 +911,13 @@ var OrientGraph = (function () {
         self.changeClazzConfig(clsName, "stroke", stroke);
       }
       return stroke;
+
+    }
+
+    function bindStrokeWidth(d) {
+      var clsName = getClazzName(d);
+      var stroke = self.getClazzConfigVal(clsName, "strokeWidth");
+      return stroke || 3;
 
     }
 
@@ -1191,6 +1237,7 @@ var OrientGraph = (function () {
 
       var eclass = data.d.edge ? "edge" : "edge lightweight"
       eclass += change ? "" : " edge-hover"
+      eclass += " edge-" + data.d.label.toLowerCase();
       d3.select(data.elem.parentNode).selectAll("path.edge").attr("class", eclass);
       d3.select(data.elem).attr("class", "elabel");
       var width = 100 * child.length;
@@ -1750,32 +1797,34 @@ var OrientGraph = (function () {
           //this.dataArray(data);
         } else {
           var self = this;
-          data.vertices.forEach(function (elem) {
-            var v = self.get(elem['@rid']);
-            if (!v) {
-              v = new OVertex(self, elem);
-              self.addVertex(v);
-            }
-            if (elem["@class"]) {
-              if (self.classesInCanvas.vertices.indexOf(elem["@class"]) == -1) {
-                self.classesInCanvas.vertices.push(elem["@class"]);
+          if (data.vertices) {
+            data.vertices.forEach(function (elem) {
+              var v = self.get(elem['@rid']);
+              if (!v) {
+                v = new OVertex(self, elem);
+                self.addVertex(v);
               }
-            }
-          })
-
-          data.edges.forEach(function (elem) {
-            var v1 = self.get(elem['from']);
-            var v2 = self.get(elem['to']);
-            var e = new OEdge(self, v1, v2, elem['@class'], elem);
-            self.addEdge(e);
-
-            if (elem["@class"]) {
-              if (self.classesInCanvas.edges.indexOf(elem["@class"]) == -1) {
-                self.classesInCanvas.edges.push(elem["@class"]);
+              if (elem["@class"]) {
+                if (self.classesInCanvas.vertices.indexOf(elem["@class"]) == -1) {
+                  self.classesInCanvas.vertices.push(elem["@class"]);
+                }
               }
-            }
+            })
+          }
+          if (data.edges) {
+            data.edges.forEach(function (elem) {
+              var v1 = self.get(elem['from']) || self.get(elem['out']);
+              var v2 = self.get(elem['to']) || self.get(elem['in']);
+              var e = new OEdge(self, v1, v2, elem['@class'], elem);
+              self.addEdge(e);
 
-          })
+              if (elem["@class"]) {
+                if (self.classesInCanvas.edges.indexOf(elem["@class"]) == -1) {
+                  self.classesInCanvas.edges.push(elem["@class"]);
+                }
+              }
+            })
+          }
         }
       }
       return this;
@@ -1987,6 +2036,9 @@ var OrientGraph = (function () {
     clear: function () {
       this.clearGraph();
       this.redraw();
+    },
+    resetZoom: function () {
+      this.resetZoomInternal();
     }
   }
   return graph;

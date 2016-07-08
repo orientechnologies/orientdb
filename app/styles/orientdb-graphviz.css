@@ -234,29 +234,31 @@ path.emore-link {
   stroke: #DC4717;
 }
 
-.svg-container {
-  display: inline-block;
-  position: relative;
-  width: 100%;
-  /* aspect ratio */
-  vertical-align: top;
-  overflow: hidden;
-}
+/*.svg-container {*/
+  /*display: inline-block;*/
+  /*position: relative;*/
+  /*height: 600px;*/
+  /*width: 100%;*/
+  /*!* aspect ratio *!*/
+  /*vertical-align: top;*/
+  /*overflow: hidden;*/
+/*}*/
 
-.svg-container-expanded {
-  padding-bottom: 40%;
-}
+/*.svg-container-expanded {*/
+  /*padding-bottom: 40%;*/
+/*}*/
 
-.svg-container-collapsed {
-  padding-bottom: 55%;
-}
+/*.svg-container-collapsed {*/
+  /*padding-bottom: 55%;*/
+/*}*/
 
-.svg-content-responsive {
-  display: inline-block;
-  position: absolute;
-  top: 10px;
-  left: 0;
-}
+/*.svg-content-responsive {*/
+  /*display: inline-block;*/
+  /*position: absolute;*/
+  /*height: 100%;*/
+  /*padding-bottom: 55%;*/
+  /*left: 0;*/
+/*}*/
 
 .elem-invisible {
   display: none
