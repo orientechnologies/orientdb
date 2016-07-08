@@ -173,5 +173,12 @@ public class OExpression extends SimpleNode {
     }
     return null;
   }
+
+  public boolean isExpand() {
+    if(value instanceof OMathExpression){
+      return ((OMathExpression)value).isExpand();
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

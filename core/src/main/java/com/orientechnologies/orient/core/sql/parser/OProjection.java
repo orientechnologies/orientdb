@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.List;
@@ -83,5 +84,14 @@ public class OProjection extends SimpleNode {
     return false; //TODO
   }
 
+  public void validate() {
+    if (items != null && items.size() > 1) {
+      for (OProjectionItem item : items) {
+        if (item.isExpand()) {
+          throw new OCommandSQLParsingException("Cannot execute a query with expand() together with other projections");
+        }
+      }
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

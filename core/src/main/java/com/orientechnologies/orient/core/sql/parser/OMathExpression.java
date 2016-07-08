@@ -12,6 +12,10 @@ import java.util.Map;
 
 public class OMathExpression extends SimpleNode {
 
+  public boolean isExpand() {
+    return false;//TODO
+  }
+
   public enum Operator {
     PLUS {
       @Override

@@ -213,7 +213,9 @@ public class OSelectStatement extends OStatement {
   }
 
   public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
-
+    if(projection!=null){
+      projection.validate();
+    }
   }
 
   @Override public OTodoResultSet execute(ODatabase db, Object[] args) {

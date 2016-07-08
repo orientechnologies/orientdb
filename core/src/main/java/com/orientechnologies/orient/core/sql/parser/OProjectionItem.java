@@ -86,5 +86,9 @@ public class OProjectionItem extends SimpleNode {
     }
     return this.toString();
   }
+
+  public boolean isExpand() {
+    return expression.isExpand();
+  }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */
