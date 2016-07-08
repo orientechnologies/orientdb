@@ -260,10 +260,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         noToken = true;
       }
 
+      if(connection == null && clientTxId < 0  && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE)
+        //CLOSE OF NOT EXISTING SESSION, DO NOTHING
+        return null;
+
       if (noToken) {
         if (clientTxId < 0) {
-          if(requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN)
-            throw new OSecurityException("Missing session for");
           connection = server.getClientConnectionManager().connect(this);
           connection.getData().sessionId = clientTxId;
         }
