@@ -305,8 +305,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       Thread.yield();
     }
 
-    assert atomicOperationsCount.get() == 0;
-
     return id;
   }
 

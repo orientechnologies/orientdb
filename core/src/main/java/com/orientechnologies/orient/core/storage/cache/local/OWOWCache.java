@@ -34,7 +34,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OBackupInProgressException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OWriteCacheException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -230,7 +229,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   /**
    * Fires event about exception is thrown in data flush thread
    */
-  private void fireBackgroundDataFlushExceptionEvent(Exception e) {
+  private void fireBackgroundDataProcessingExceptionEvent(Exception e) {
     for (WeakReference<OBackgroundExceptionListener> ref : backgroundExceptionListeners) {
       final OBackgroundExceptionListener listener = ref.get();
       if (listener != null) {
@@ -1508,10 +1507,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       } catch (IOException e) {
         OLogManager.instance().error(this, "Exception during data flush", e);
-        OWOWCache.this.fireBackgroundDataFlushExceptionEvent(e);
+        OWOWCache.this.fireBackgroundDataProcessingExceptionEvent(e);
       } catch (RuntimeException e) {
         OLogManager.instance().error(this, "Exception during data flush", e);
-        OWOWCache.this.fireBackgroundDataFlushExceptionEvent(e);
+        OWOWCache.this.fireBackgroundDataProcessingExceptionEvent(e);
       } finally {
         if (statistic != null)
           statistic.stopWriteCacheFlushTimer(flushedPages);
@@ -1774,6 +1773,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         statistic.startFuzzyCheckpointTimer();
       try {
         OLogSequenceNumber minLsn = findMinLsn(writeAheadLog.getFlushedLsn(), writeCachePages);
+        if (minLsn == null)
+          return;
+
         OLogManager.instance().debug(this, "Start fuzzy checkpoint flushed LSN is %s", minLsn);
         try {
           writeAheadLog.logFuzzyCheckPointStart(minLsn);
@@ -1799,6 +1801,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             writeAheadLog.cutTill(minLsn);
         } catch (IOException ioe) {
           OLogManager.instance().error(this, "Error during fuzzy checkpoint", ioe);
+          fireBackgroundDataProcessingExceptionEvent(ioe);
+        } catch (RuntimeException e) {
+          OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
+          fireBackgroundDataProcessingExceptionEvent(e);
         }
 
         OLogManager.instance().debug(this, "End fuzzy checkpoint");
@@ -1809,6 +1815,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
 
     private OLogSequenceNumber findMinLsn(OLogSequenceNumber minLsn, ConcurrentSkipListMap<PageKey, PageGroup> ring) {
+      if (minLsn == null)
+        return null;
+
       for (Map.Entry<PageKey, PageGroup> entry : ring.entrySet()) {
         final Lock groupLock = lockManager.acquireExclusiveLock(entry.getKey());
         try {

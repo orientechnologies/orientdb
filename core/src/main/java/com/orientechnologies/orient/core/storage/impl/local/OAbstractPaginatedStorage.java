@@ -192,7 +192,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       configuration.load(iProperties);
 
       final String cs = configuration.getConflictStrategy();
-      if( cs != null ) {
+      if (cs != null) {
         // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
         setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
       }
@@ -3486,12 +3486,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       super.close(force, onDelete);
 
-      if (writeCache != null)
+      if (writeCache != null) {
         writeCache.removeLowDiskSpaceListener(this);
+        writeCache.removeBackgroundExceptionListener(this);
+      }
 
       if (writeAheadLog != null) {
         writeAheadLog.removeFullCheckpointListener(this);
-        writeCache.removeBackgroundExceptionListener(this);
+        writeAheadLog.removeLowDiskSpaceListener(this);
       }
 
       if (readCache != null)
