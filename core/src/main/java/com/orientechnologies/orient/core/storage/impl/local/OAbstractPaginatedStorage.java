@@ -100,8 +100,7 @@ import java.util.zip.ZipOutputStream;
  * @since 28.03.13
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract
-    implements OLowDiskSpaceListener, OFullCheckpointRequestListener, OIdentifiableStorage, OOrientStartupListener,
-    OOrientShutdownListener, OBackgroundExceptionListener {
+    implements OLowDiskSpaceListener, OFullCheckpointRequestListener, OIdentifiableStorage, OBackgroundExceptionListener {
   private static final int RECORD_LOCK_TIMEOUT = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
 
   private final OComparableLockManager<ORID> lockManager;
@@ -120,7 +119,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private       List<OCluster>        clusters   = new ArrayList<OCluster>();
 
   private volatile ThreadLocal<OStorageTransaction> transaction;
-  private final    AtomicBoolean                    checkpointInProgress = new AtomicBoolean();
+  private final AtomicBoolean checkpointInProgress = new AtomicBoolean();
   protected final OSBTreeCollectionManagerShared sbTreeCollectionManager;
 
   private final OPerformanceStatisticManager performanceStatisticManager = new OPerformanceStatisticManager(this,
@@ -195,7 +194,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       configuration.load(iProperties);
 
       final String cs = configuration.getConflictStrategy();
-      if( cs != null ) {
+      if (cs != null) {
         // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
         setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(cs));
       }
@@ -736,10 +735,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @param lsn                LSN from which we should find changed records
    * @param stream             Stream which will contain found records
    * @param excludedClusterIds Array of cluster ids to exclude from the export
-   *
    * @return Last LSN processed during examination of changed records, or <code>null</code> if it was impossible to find changed
    * records: write ahead log is absent, record with start LSN was not found in WAL, etc.
-   *
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
@@ -3402,9 +3399,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * Register the cluster internally.
    *
    * @param cluster OCluster implementation
-   *
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
-   *
    * @throws IOException
    */
   private int registerCluster(final OCluster cluster) throws IOException {
