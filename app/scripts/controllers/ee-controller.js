@@ -1593,122 +1593,7 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
 
     $scope.initBackup(db);
 
-    $scope.removeBkp = function (evt) {
 
-      var modalScope = $scope.$new(true);
-      modalScope.restored = {unitId: evt.unitId};
-
-      modalScope.onRemove = function (obj, callback) {
-        BackupService.remove($scope.backup.uuid, obj).then(function (data) {
-          $scope.requestEvents();
-          callback();
-          Notification.push({content: "Backcup files removed", autoHide: true});
-
-        }).catch(function (err) {
-          callback();
-          Notification.push({content: err.data, error: true, autoHide: true});
-        })
-      }
-      BackupService.unitLogs($scope.backup.uuid, evt.unitId, {op: evt.op}).then(function (data) {
-        modalScope.unitLogs = data.logs;
-        modalScope.restored.log = evt;
-        var modalPromise = $modal({template: 'views/server/backup/remove.html', scope: modalScope, show: false});
-        modalPromise.$promise.then(modalPromise.show);
-      })
-    }
-    $scope.restore = function (evt) {
-      var modalScope = $scope.$new(true);
-      modalScope.restored = {unitId: evt.unitId};
-      modalScope.onRestore = function (obj, callback) {
-
-        BackupService.restore($scope.backup.uuid, obj).then(function (data) {
-          $scope.requestEvents();
-          callback();
-          Notification.push({content: "Restore procedure in progress into database " + obj.target, autoHide: true});
-        }).catch(function (err) {
-          callback();
-          Notification.push({content: err.data, error: true, autoHide: true});
-        })
-      }
-
-
-      BackupService.unitLogs($scope.backup.uuid, evt.unitId, {op: evt.op}).then(function (data) {
-        modalScope.unitLogs = data.logs;
-        modalScope.restored.log = evt;
-
-        var modalPromise = $modal({template: 'views/server/backup/restore.html', scope: modalScope, show: false});
-        modalPromise.$promise.then(modalPromise.show);
-      })
-
-    }
-
-
-    var modeToString = function (mode) {
-
-      switch (mode) {
-        case "INCREMENTAL_BACKUP":
-          return "Incremental backup";
-        case "FULL_BACKUP":
-          return "Full backup";
-      }
-    }
-
-    $scope.clazz = function (event) {
-      var clazz = "basic-log";
-
-      switch (event.op) {
-        case "BACKUP_FINISHED":
-          clazz += " log-finished";
-          break;
-        case "BACKUP_SCHEDULED":
-          clazz += " log-scheduled";
-          break;
-        case "BACKUP_STARTED":
-          clazz += " log-started";
-          break;
-        case "BACKUP_ERROR":
-          clazz += " log-error";
-          break;
-        case "RESTORE_FINISHED":
-          clazz += " log-restore-finished";
-          break;
-        case "RESTORE_STARTED":
-          clazz += " log-restore-started";
-          break;
-        case "RESTORE_ERROR":
-          clazz += " log-error";
-          break;
-
-      }
-      return clazz;
-    }
-    $scope.info = function (event) {
-      var info = modeToString(event.mode);
-      switch (event.op) {
-        case "BACKUP_FINISHED":
-          info += " executed";
-          break;
-        case "BACKUP_ERROR":
-          info += " error";
-          break;
-        case "BACKUP_SCHEDULED":
-          info += " scheduled.";
-          break;
-        case "BACKUP_STARTED":
-          info += " started";
-          break;
-        case "RESTORE_FINISHED":
-          info = "Restore finished";
-          break;
-        case "RESTORE_STARTED":
-          info = "Restore started";
-          break;
-        case "RESTORE_ERROR":
-          info = "Restore error";
-          break;
-      }
-      return info;
-    }
     $scope.$watch("mode", function (m) {
       if (m) {
         switch (m) {
@@ -1740,7 +1625,122 @@ ee.controller("SingleBackupController", function ($scope, BackupService, Notific
 
   })
 
+  $scope.removeBkp = function (evt) {
 
+    var modalScope = $scope.$new(true);
+    modalScope.restored = {unitId: evt.unitId};
+
+    modalScope.onRemove = function (obj, callback) {
+      BackupService.remove($scope.backup.uuid, obj).then(function (data) {
+        $scope.requestEvents();
+        callback();
+        Notification.push({content: "Backcup files removed", autoHide: true});
+
+      }).catch(function (err) {
+        callback();
+        Notification.push({content: err.data, error: true, autoHide: true});
+      })
+    }
+    BackupService.unitLogs($scope.backup.uuid, evt.unitId, {op: evt.op}).then(function (data) {
+      modalScope.unitLogs = data.logs;
+      modalScope.restored.log = evt;
+      var modalPromise = $modal({template: 'views/server/backup/remove.html', scope: modalScope, show: false});
+      modalPromise.$promise.then(modalPromise.show);
+    })
+  }
+  $scope.restore = function (evt) {
+    var modalScope = $scope.$new(true);
+    modalScope.restored = {unitId: evt.unitId};
+    modalScope.onRestore = function (obj, callback) {
+
+      BackupService.restore($scope.backup.uuid, obj).then(function (data) {
+        $scope.requestEvents();
+        callback();
+        Notification.push({content: "Restore procedure in progress into database " + obj.target, autoHide: true});
+      }).catch(function (err) {
+        callback();
+        Notification.push({content: err.data, error: true, autoHide: true});
+      })
+    }
+
+
+    BackupService.unitLogs($scope.backup.uuid, evt.unitId, {op: evt.op}).then(function (data) {
+      modalScope.unitLogs = data.logs;
+      modalScope.restored.log = evt;
+
+      var modalPromise = $modal({template: 'views/server/backup/restore.html', scope: modalScope, show: false});
+      modalPromise.$promise.then(modalPromise.show);
+    })
+
+  }
+
+
+  var modeToString = function (mode) {
+
+    switch (mode) {
+      case "INCREMENTAL_BACKUP":
+        return "Incremental backup";
+      case "FULL_BACKUP":
+        return "Full backup";
+    }
+  }
+
+  $scope.clazz = function (event) {
+    var clazz = "basic-log";
+
+    switch (event.op) {
+      case "BACKUP_FINISHED":
+        clazz += " log-finished";
+        break;
+      case "BACKUP_SCHEDULED":
+        clazz += " log-scheduled";
+        break;
+      case "BACKUP_STARTED":
+        clazz += " log-started";
+        break;
+      case "BACKUP_ERROR":
+        clazz += " log-error";
+        break;
+      case "RESTORE_FINISHED":
+        clazz += " log-restore-finished";
+        break;
+      case "RESTORE_STARTED":
+        clazz += " log-restore-started";
+        break;
+      case "RESTORE_ERROR":
+        clazz += " log-error";
+        break;
+
+    }
+    return clazz;
+  }
+  $scope.info = function (event) {
+    var info = modeToString(event.mode);
+    switch (event.op) {
+      case "BACKUP_FINISHED":
+        info += " executed";
+        break;
+      case "BACKUP_ERROR":
+        info += " error";
+        break;
+      case "BACKUP_SCHEDULED":
+        info += " scheduled.";
+        break;
+      case "BACKUP_STARTED":
+        info += " started";
+        break;
+      case "RESTORE_FINISHED":
+        info = "Restore finished";
+        break;
+      case "RESTORE_STARTED":
+        info = "Restore started";
+        break;
+      case "RESTORE_ERROR":
+        info = "Restore error";
+        break;
+    }
+    return info;
+  }
   function initCalendar() {
     $('#calendar').fullCalendar({
       header: {
