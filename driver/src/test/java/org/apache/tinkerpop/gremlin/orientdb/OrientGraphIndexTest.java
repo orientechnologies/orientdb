@@ -106,6 +106,37 @@ public class OrientGraphIndexTest {
     }
 
     @Test
+    public void vertexUniqueIndexLookupWithMultipleValues() {
+        OrientGraph graph = newGraph();
+        createVertexIndexLabel1(graph);
+        // verify index created
+        Assert.assertEquals(graph.getIndexedKeys(Vertex.class, vertexLabel1), new HashSet<>(Collections.singletonList(key)));
+
+        String value1 = "value1";
+        String value2 = "value2";
+        String value3 = "value3";
+
+        Vertex v1 = graph.addVertex(T.label, vertexLabel1, key, value1);
+        Vertex v2 = graph.addVertex(T.label, vertexLabel1, key, value2);
+        Vertex v3 = graph.addVertex(T.label, vertexLabel1, key, value3);
+
+        // looking deep into the internals here - I can't find a nicer way to
+        // auto verify that an index is actually used
+        // GraphTraversal<Vertex, Vertex> traversal = graph.traversal().V().has(T.label, P.eq(vertexLabel1)).has(key, P.eq(value1));
+        GraphTraversal<Vertex, Vertex> traversal = graph.traversal().V().has(T.label, P.eq(vertexLabel1)).has(key, P.within(value1, value2));
+
+        OIndex index = findUsedIndex(traversal).get().index;
+        Assert.assertEquals(3, index.getSize());
+        Assert.assertEquals(v1.id(), index.get(value1));
+        Assert.assertEquals(v2.id(), index.get(value2));
+
+        List<Vertex> result = traversal.toList();
+        Assert.assertEquals(2, result.size());
+        Assert.assertEquals(v1.id(), result.get(0).id());
+        Assert.assertEquals(v2.id(), result.get(1).id());
+    }
+
+    @Test
     public void edgeUniqueIndexLookupWithValue() {
         OrientGraph graph = newGraph();
         createUniqueEdgeIndex(graph, edgeLabel1);

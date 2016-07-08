@@ -90,7 +90,7 @@ public final class OrientGraph implements Graph {
         if (config.containsKey(CONFIG_POOL_SIZE))
             if (config.containsKey(CONFIG_MAX_PARTITION_SIZE))
             factory.setupPool(config.getInt(CONFIG_MAX_PARTITION_SIZE), config.getInt(CONFIG_POOL_SIZE));
-        else
+            else
                 factory.setupPool(config.getInt(CONFIG_POOL_SIZE));
 
         return factory.getNoTx();
@@ -262,46 +262,42 @@ public final class OrientGraph implements Graph {
         return iValue;
     }
 
-    public Stream<OrientVertex> getIndexedVertices(OIndex<Object> index, Optional<Object> valueOption) {
-        return getIndexedElements(index, valueOption, OrientVertex::new);
+    public Stream<OrientVertex> getIndexedVertices(OIndex<Object> index, Iterator<Object> valueIter) {
+        return getIndexedElements(index, valueIter, OrientVertex::new);
     }
 
-    public Stream<OrientEdge> getIndexedEdges(OIndex<Object> index, Optional<Object> valueOption) {
-        return getIndexedElements(index, valueOption, OrientEdge::new);
+    public Stream<OrientEdge> getIndexedEdges(OIndex<Object> index, Iterator<Object> valueIter) {
+        return getIndexedElements(index, valueIter, OrientEdge::new);
     }
 
-    private <ElementType extends OrientElement> Stream<ElementType> getIndexedElements(OIndex<Object> index, Optional<Object> valueOption,
+    private <ElementType extends OrientElement> Stream<ElementType> getIndexedElements(
+            OIndex<Object> index,
+            Iterator<Object> valuesIter,
             BiFunction<OrientGraph, OIdentifiable, ElementType> newElement) {
         return executeWithConnectionCheck(() -> {
             makeActive();
 
             if (index == null) {
-                // NO INDEX
                 return Collections.<ElementType> emptyList().stream();
             } else {
-                if (!valueOption.isPresent()) {
+                if (!valuesIter.hasNext()) {
                     return index.cursor().toValues().stream().map(id -> newElement.apply(this, id));
                 } else {
-                    Object value = convertValue(index, valueOption.get());
-                    Object indexValue = index.get(value);
-                    if (indexValue == null) {
-                        return Collections.<ElementType> emptyList().stream();
-                    } else if (!(indexValue instanceof Iterable<?>)) {
-                        indexValue = Collections.singletonList(indexValue);
-                    }
-
-                    // The index value is iterable, but some indices will give ORecordId 
-                    // objects (e.g. OIndexTxAwareOneValue and OIndexTxAwareMultiValue) whilst others will 
-                    // give ORecord objects (e.g. OIndexRemoteMultiValue). 
-                    // Thankfully both ORecordId and ORecord implement OIdentifiable.
-                    @SuppressWarnings("unchecked")
-                    Iterable<OIdentifiable> iterableVals = (Iterable<OIdentifiable>) indexValue;
-                    Stream<OIdentifiable> ids = StreamSupport.stream(iterableVals.spliterator(), false);
-                    Stream<ORecord> records = ids.map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
+                    Stream<Object> convertedValues = StreamUtils.asStream(valuesIter).map(value -> convertValue(index, value));
+                    Stream<OIdentifiable> ids = convertedValues.flatMap(v -> lookupInIndex(index, v)).filter(r -> r != null);
+                    Stream<ORecord> records = ids.map(id -> id.getRecord());
                     return records.map(r -> newElement.apply(this, getRawDocument(r)));
                 }
             }
         });
+    }
+
+    private Stream<OIdentifiable> lookupInIndex(OIndex<Object> index, Object value) {
+        Object fromIndex = index.get(value);
+        if (fromIndex instanceof Iterable)
+            return StreamUtils.asStream(((Iterable) fromIndex).iterator());
+        else
+            return Stream.of((OIdentifiable) fromIndex);
     }
 
     private OIndexManager getIndexManager() {

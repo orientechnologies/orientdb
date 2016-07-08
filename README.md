@@ -6,12 +6,13 @@ TP3 Graph Structure Implementation for OrientDB. This started off as just a proo
 
 Warning: While this is (as of now) the only TP3 graph structure implementation for OrientDB, it's not the `official` one - it's not supported by the Orient team. The contributors focused on the functionality needed for their use cases, and it doesn't claim to be complete. 
 
-The main area that need some more work is index lookups - currently it does find the right index for a simple case, e.g. `g.V.hasLabel("myLabel").has("someKey", "someValue")`. However if there are multiple indexes on the same property, or if there the traversal should better use a composite index, that's not handled well yet. If you feel inclined you can add these cases to the OrientGraphIndexTest.java.
+The main area that need some more work is index lookups - currently it does find the right index for a simple case, e.g. `g.V.hasLabel("myLabel").has("someKey", "someValue")`. However if there are multiple indexes on the same property, or if there the traversal should better use a composite index, that's not handled well yet. If you feel inclined you can add these cases to the `OrientGraphIndexTest.java`. The function that looks up indexes is `OrientGraphStep.findIndex`.
 
 ## Tests
 * you can run the standard tinkerpop test suite with `mvn install -P release`
 * there are some additional tests that you can run independently with `mvn test`
 * additionally there is a separate suite of tests in the `tests-scala` directory which you can run using `sbt test`
+* to automatically format the code (travis CI enforces a format check), just run `mvn clean install`
 
 ## Usage
 Have a look at the tests-scala which demonstrates the usage. There's also an orientdb example project in [gremlin-scala-examples](https://github.com/mpollmeier/gremlin-scala-examples).

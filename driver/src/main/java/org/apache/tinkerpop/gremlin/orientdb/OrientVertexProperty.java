@@ -16,7 +16,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OrientVertexProperty<V> extends OrientProperty<V>implements VertexProperty<V> {
+public class OrientVertexProperty<V> extends OrientProperty<V> implements VertexProperty<V> {
 
     public OrientVertexProperty(Property<V> property, OrientVertex vertex) {
         super(property.key(), property.value(), vertex);
