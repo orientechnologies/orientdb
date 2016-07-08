@@ -49,6 +49,11 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       OLogManager.instance().error(this, "MBean for byte buffer pool cannot be registered", e);
     }
 
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      OEmbeddedDBFactory.this.close();
+      Runtime.getRuntime().removeShutdownHook(Thread.currentThread());
+    }));
+
   }
 
   @Override

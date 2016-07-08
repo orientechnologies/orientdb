@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,25 +10,21 @@ import java.util.Map;
  */
 public class OrientDBSettings {
 
-  public Map<String, Object> configurations;
+  public OContextConfiguration configurations;
 
   public static OrientDBSettings fromMap(Map<String, Object> configurations) {
     OrientDBSettings settings = new OrientDBSettings();
-    settings.configurations = configurations;
+    settings.configurations = new OContextConfiguration(configurations);
     return settings;
   }
 
   public static OrientDBSettings defaultSettings() {
     OrientDBSettings settings = new OrientDBSettings();
-    settings.configurations = new HashMap<>();
+    settings.configurations = new OContextConfiguration();
     return settings;
   }
 
-  public String getStorageMode() {
-    String config = (String) configurations.get("mode");
-    if (config == null)
-      config = "rw";
-    return config;
+  public OContextConfiguration getConfigurations() {
+    return configurations;
   }
-
 }

@@ -27,6 +27,10 @@ public class ORemoteDBFactory implements OrientDBFactory {
     this.hosts = hosts;
     remote = Orient.instance().getEngine("remote");
     this.configuration = configuration;
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      ORemoteDBFactory.this.close();
+      Runtime.getRuntime().removeShutdownHook(Thread.currentThread());
+    }));
   }
 
   private String buildUrl(String name) {
