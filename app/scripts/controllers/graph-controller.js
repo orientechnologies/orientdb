@@ -316,10 +316,16 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
 
 }]);
 
-GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope) {
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', 'History', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope, History) {
 
   var data = [];
 
+
+  ;
+
+  $scope.currentIndex = -1;
+
+  $scope.history = History.histories();
 
   $scope.fullscreen = false;
   $scope.additionalClass = '';
@@ -356,7 +362,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
   $scope.graphClass = "svg-container-collapsed";
   Aside.show({
     scope: $scope,
-    title: "",
+    title: "Vertex/Edge Panel",
     template: 'views/database/graph/asideEmpty.html',
     show: true,
     absolute: false,
@@ -389,7 +395,40 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         });
 
       },
-      "Ctrl-Space": "autocomplete"
+      "Ctrl-Space": "autocomplete",
+      'Cmd-/': 'toggleComment',
+      'Ctrl-/': 'toggleComment',
+      "Cmd-Up": function (instance) {
+
+
+
+        if ($scope.currentIndex < $scope.history.length - 1) {
+
+          var tmp = $scope.queryText;
+          if ($scope.currentIndex == -1) {
+            $scope.prevText = tmp;
+          }
+          $scope.currentIndex++;
+          $scope.queryText = $scope.history[$scope.currentIndex];
+          $scope.$apply();
+        }
+
+
+      },
+      "Cmd-Down": function (instance) {
+        if ($scope.currentIndex >= 0) {
+
+          $scope.currentIndex--;
+
+          if ($scope.currentIndex == -1) {
+            $scope.queryText = $scope.prevText
+          } else {
+            $scope.queryText = $scope.history[$scope.currentIndex];
+          }
+
+          $scope.$apply();
+        }
+      }
 
     },
     onLoad: function (_cm) {
@@ -452,6 +491,11 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
       r: 30
     }
 
+  }
+
+
+  $scope.resetZoom = function () {
+    $scope.graph.resetZoom();
   }
   $scope.clear = function () {
     $scope.graph.clear();
@@ -526,12 +570,12 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
           DocumentApi.get({database: $routeParams.database, document: e.edge}, function (doc) {
             e.edge = doc;
             if (Aside.isOpen()) {
-              openEdge($scope, e.edge);
+              openEdge($scope, e);
             }
           });
         }
         if (Aside.isOpen()) {
-          openEdge($scope, e.edge);
+          openEdge($scope, e);
         }
 
 
@@ -545,18 +589,14 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
           });
 
         } else {
-          var q = "select expand(bothE())  from " + v['@rid'];
-          CommandApi.queryText({
-            database: $routeParams.database,
-            contentType: 'JSON',
-            language: 'sql',
-            text: q,
-            limit: -1,
-            shallow: false,
-            verbose: false
-          }, function (data) {
 
-            $scope.graph.data(data.result).redraw();
+          var q = "traverse both() from " + v['@rid'] + " while $depth <2"
+          CommandApi.graphQuery(q, {
+            database: $routeParams.database,
+            language: 'sql',
+            limit: -1
+          }).then(function (data) {
+            $scope.graph.data(data.graph).redraw();
           })
         }
       });
@@ -655,7 +695,6 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
 
             var acts = [];
-            //var outgoings = Database.getEdge(v.source, 'out_');
             if (v.relationships && v.relationships.out) {
               v.relationships.out.forEach(function (elem) {
                 var name = elem.replace("out_", "");
@@ -683,21 +722,18 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                         }
 
                         var props = {rid: v['@rid'], label: label};
-                        var query = "select expand(unionAll(outE({{label}}),out({{label}})) )  from {{rid}}"
+                        var query = "traverse out({{label}})  from {{rid}} while $depth <2 "
                         var queryText = S(query).template(props).s;
 
-                        CommandApi.queryText({
-                          database: $routeParams.database,
-                          contentType: 'JSON',
-                          language: 'sql',
-                          text: queryText,
-                          limit: -1,
-                          shallow: false,
-                          verbose: false
-                        }, function (data) {
 
-                          $scope.graph.data(data.result).redraw();
+                        CommandApi.graphQuery(queryText, {
+                          database: $routeParams.database,
+                          language: 'sql',
+                          limit: -1
+                        }).then(function (data) {
+                          $scope.graph.data(data.graph).redraw();
                         })
+
                       }
                     }
                   }
@@ -780,7 +816,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         }
       },
       {
-        name: "\uf190",
+        name: "\uf18e",
         onClick: function (v) {
 
         },
@@ -806,20 +842,29 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                       }
 
                       var props = {rid: v['@rid'], label: label};
-                      var query = "select expand(unionAll(inE({{label}}),in({{label}})) )  from {{rid}}"
+                      var query = "traverse in({{label}})  from {{rid}} while $depth <2 "
                       var queryText = S(query).template(props).s;
-                      CommandApi.queryText({
-                        database: $routeParams.database,
-                        contentType: 'JSON',
-                        language: 'sql',
-                        text: queryText,
-                        limit: -1,
-                        shallow: false,
-                        verbose: false
-                      }, function (data) {
 
-                        $scope.graph.data(data.result).redraw();
+
+                      CommandApi.graphQuery(queryText, {
+                        database: $routeParams.database,
+                        language: 'sql',
+                        limit: -1
+                      }).then(function (data) {
+                        $scope.graph.data(data.graph).redraw();
                       })
+                      //CommandApi.queryText({
+                      //  database: $routeParams.database,
+                      //  contentType: 'JSON',
+                      //  language: 'sql',
+                      //  text: queryText,
+                      //  limit: -1,
+                      //  shallow: false,
+                      //  verbose: false
+                      //}, function (data) {
+                      //
+                      //  $scope.graph.data(data.result).redraw();
+                      //})
                     }
                   }
                 )
@@ -834,7 +879,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         name: "\uf06e",
         onClick: function (v) {
           $scope.doc = v.source;
-          var title = $scope.doc['@class'] + "-" + $scope.doc['@rid'] + "- Version " + $scope.doc['@version'];
+          var title = $scope.doc['@class'] + " - " + $scope.doc['@rid']
           Aside.show({
             scope: $scope,
             title: title,
@@ -865,7 +910,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     modalScope.target = target;
     modalScope.confirmSave = function (docs) {
       $scope.graph.endEdgeCreation();
-      $scope.graph.data(docs).redraw();
+      $scope.graph.data({edges: docs}).redraw();
     }
     modalScope.cancelSave = function (error) {
 
@@ -893,7 +938,8 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     modalScope.database = $routeParams.database;
     modalScope.isNew = true;
     modalScope.confirmSave = function (doc) {
-      $scope.graph.data([doc]).redraw();
+
+      $scope.graph.data({vertices: [doc]}).redraw();
     }
     $modal({
       template: 'views/database/modalNew.html',
@@ -953,33 +999,24 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
       $scope.language = 'sql';
     }
 
-    CommandApi.graphQuery($scope.queryText, {
+    var queryBuffer = $scope.queryText;
+    var selection = $scope.cm.getSelection();
+    if (selection && selection != "") {
+      queryBuffer = "" + selection;
+    }
+    CommandApi.graphQuery(queryBuffer, {
       database: $routeParams.database,
       language: $scope.language,
     }).then(function (data) {
       $scope.graph.data(data.graph).redraw();
+      $scope.history = History.push(queryBuffer);
+      $scope.currentIndex = -1;
       Spinner.stopSpinner();
     }).catch(function (err) {
       Spinner.stopSpinner();
       Notification.push({content: err, error: true, autoHide: true});
     })
-    //CommandApi.queryText({
-    //  database: $routeParams.database,
-    //  contentType: 'JSON',
-    //  language: $scope.language,
-    //  text: $scope.queryText,
-    //  limit: 20,
-    //  shallow: false,
-    //  verbose: false
-    //}, function (data) {
-    //  if (data.result) {
-    //    $scope.graph.data(data.result).redraw();
-    //  }
-    //  Spinner.stopSpinner();
-    //}, function (data) {
-    //  Spinner.stopSpinner();
-    //  Notification.push({content: data, error: true, autoHide: true});
-    //});
+
 
   }
 
@@ -1095,7 +1132,10 @@ GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$l
 
   $scope.active = 'properties';
   if ($scope.doc) {
+
     $scope.headers = Database.getPropertyFromDoc($scope.doc);
+    $scope.headers.unshift("@class");
+    $scope.headers.unshift("@rid");
     $scope.active = 'properties';
     if ($scope.doc['@class']) {
       $scope.config = $scope.graph.getClazzConfig($scope.doc['@class']);
@@ -1121,9 +1161,9 @@ GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$l
         $scope.graph.changeClazzConfig($scope.doc['@class'], 'stroke', val);
       }
     })
-    $scope.$watch('config.r', function (val) {
+    $scope.$watch('config.strokeWidth', function (val) {
       if (val) {
-        $scope.graph.changeClazzConfig($scope.doc['@class'], 'r', val);
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'strokeWidth', val);
       }
     })
   }

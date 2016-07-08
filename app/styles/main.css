@@ -238,7 +238,7 @@ div.edge form.bs-docs-example:after {
 }
 
 .master-query .query-header {
-  font-size: 11;
+  font-size: 11px;
 
 }
 
@@ -263,6 +263,16 @@ div.edge form.bs-docs-example:after {
   border-radius: 0px 0px 4px 4px;
   padding: 0;
   border-top: none;
+}
+
+.graph-query .query-info {
+  background-color: #F5F5F5;
+  height: 40px;
+  padding: 0;
+  padding-top: 2px;
+  border: 1px solid #DEDEDE;
+  border-top: none;
+  border-bottom: none;
 }
 
 .master-query .query-body {
