@@ -65,7 +65,9 @@ public class OEngineRemote extends OEngineAbstract {
   @Override
   public void shutdown() {
     try {
-      connectionManager.close();
+      //We call shutdown in case of failed startup, the connection manager may have not been initialized
+      if (connectionManager != null)
+        connectionManager.close();
     } finally {
       super.shutdown();
     }
