@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -40,11 +41,11 @@ public class OIteratorResultSet implements OTodoResultSet {
   }
 
   @Override public Optional<OExecutionPlan> getExecutionPlan() {
-    return null;
+    return Optional.empty();
   }
 
   @Override public Map<String, Object> getQueryStats() {
-    return null;
+    return new HashMap<>();
   }
 
 }

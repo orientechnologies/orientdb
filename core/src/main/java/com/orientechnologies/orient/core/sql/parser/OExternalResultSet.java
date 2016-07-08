@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -50,10 +51,10 @@ public class OExternalResultSet implements OTodoResultSet {
   }
 
   @Override public Optional<OExecutionPlan> getExecutionPlan() {
-    return null;//TODO
+    return Optional.empty();//TODO
   }
 
   @Override public Map<String, Object> getQueryStats() {
-    return null;//TODO
+    return new HashMap<>();//TODO
   }
 }

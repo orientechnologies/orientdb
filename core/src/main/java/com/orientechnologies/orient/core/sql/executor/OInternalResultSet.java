@@ -1,9 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 07/07/16.
@@ -25,11 +22,11 @@ public class OInternalResultSet implements OTodoResultSet {
   }
 
   @Override public Optional<OExecutionPlan> getExecutionPlan() {
-    return null;
+    return Optional.empty();
   }
 
   @Override public Map<String, Object> getQueryStats() {
-    return null;
+    return new HashMap<>();
   }
 
   public void add(OResult nextResult) {
