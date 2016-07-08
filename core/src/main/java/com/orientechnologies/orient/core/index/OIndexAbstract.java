@@ -1004,7 +1004,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         try {
           final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
           if (writeCache.exists(fileName)) {
-            final long fileId = readCache.openFile(fileName, writeCache);
+            final long fileId = writeCache.loadFile(fileName);
             readCache.deleteFile(fileId, writeCache);
           }
         } catch (IOException e) {
@@ -1014,7 +1014,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         try {
           final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
           if (atomicOperation.isFileExists(fileName)) {
-            final long fileId = atomicOperation.openFile(fileName);
+            final long fileId = atomicOperation.loadFile(fileName);
             atomicOperation.deleteFile(fileId);
           }
         } catch (IOException e) {

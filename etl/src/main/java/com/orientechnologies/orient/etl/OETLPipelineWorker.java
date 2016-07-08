@@ -1,12 +1,11 @@
 package com.orientechnologies.orient.etl;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 
 /**
  * Created by frank on 14/06/2016.
  */
-final class OETLPipelineWorker implements Callable<Boolean> {
+final class OETLPipelineWorker implements Runnable {
 
   private final BlockingQueue<OExtractedItem> queue;
   private final OETLPipeline                  pipeline;
@@ -18,18 +17,17 @@ final class OETLPipelineWorker implements Callable<Boolean> {
   }
 
   @Override
-  public Boolean call() throws Exception {
-
-    //      pipeline.begin();
-
-    pipeline.getDocumentDatabase();
-    OExtractedItem content;
-    while (!(content = queue.take()).finished) {
-      pipeline.execute(content);
+  public void run() {
+    try {
+      pipeline.getDocumentDatabase();
+      OExtractedItem content;
+      while (!(content = queue.take()).finished) {
+        pipeline.execute(content);
+      }
+      pipeline.end();
+      //RE-ADD END FLAG FOR OTHER THREADS
+      queue.put(content);
+    } catch (InterruptedException e) {
     }
-    pipeline.end();
-    //RE-ADD END FLAG FOR OTHER THREADS
-    queue.put(content);
-    return Boolean.TRUE;
   }
 }

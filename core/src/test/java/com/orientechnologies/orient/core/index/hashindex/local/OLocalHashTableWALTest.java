@@ -265,9 +265,6 @@ public class OLocalHashTableWALTest extends OLocalHashTableBase {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            if (!expectedWriteCache.isOpen(fileId))
-              expectedReadCache.openFile(fileId, expectedWriteCache);
-
             OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
             if (cacheEntry == null)
               do {
@@ -287,9 +284,7 @@ public class OLocalHashTableWALTest extends OLocalHashTableBase {
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
             String fileName = fileCreatedCreatedRecord.getFileName().replace("actualLocalHashTable", "expectedLocalHashTable");
 
-            if (expectedWriteCache.exists(fileName))
-              expectedReadCache.openFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
-            else
+            if (!expectedWriteCache.exists(fileName))
               expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
           }
         }

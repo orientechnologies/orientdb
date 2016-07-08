@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLPipeline;
-import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -118,12 +117,12 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     if (batchCommitSize > 0 && batchCounter.get() > batchCommitSize) {
       if (dbType == DOCUMENT) {
         final ODatabaseDocument documentDatabase = pipeline.getDocumentDatabase();
-        log(DEBUG, "committing batch");
+        log(DEBUG, "committing document batch");
         documentDatabase.commit();
         documentDatabase.begin();
         documentDatabase.getTransaction().setUsingLog(txUseLog);
       } else {
-        log(DEBUG, "committing batch");
+        log(DEBUG, "committing graph batch");
         pipeline.getGraphDatabase().commit();
       }
       batchCounter.set(0);
@@ -134,7 +133,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   private void autoCreateProperties(OETLPipeline pipeline, Object input) {
     if (dbType == DOCUMENT && input instanceof ODocument) {
-      auroCreatePropertiesOnDocument(pipeline, (ODocument) input);
+      autoCreatePropertiesOnDocument(pipeline, (ODocument) input);
     } else if (dbType == GRAPH && input instanceof OrientElement) {
       autoCreatePropertiesOnElement(pipeline, (OrientElement) input);
     }
@@ -168,7 +167,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     }
   }
 
-  private void auroCreatePropertiesOnDocument(OETLPipeline pipeline, ODocument doc) {
+  private void autoCreatePropertiesOnDocument(OETLPipeline pipeline, ODocument doc) {
     final OClass cls;
     if (className != null)
       cls = getOrCreateClass(pipeline, className, null);
@@ -464,17 +463,15 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   public void beginLoader(OETLPipeline pipeline) {
 
     synchronized (this) {
-      ODatabaseDocument documentDatabase = null;
-      OrientBaseGraph graphDatabase = null;
 
       final OrientGraphFactory factory = new OrientGraphFactory(dbURL, dbUser, dbPassword);
 
-      graphDatabase = tx ? factory.getTx() : factory.getNoTx();
+      final OrientBaseGraph graphDatabase = tx ? factory.getTx() : factory.getNoTx();
 
       graphDatabase.setUseLightweightEdges(useLightweightEdges);
       graphDatabase.setStandardElementConstraints(standardElementConstraints);
 
-      documentDatabase = graphDatabase.getRawGraph();
+      final ODatabaseDocument documentDatabase = graphDatabase.getRawGraph();
 
       pipeline.setDocumentDatabase(documentDatabase);
       pipeline.setGraphDatabase(graphDatabase);

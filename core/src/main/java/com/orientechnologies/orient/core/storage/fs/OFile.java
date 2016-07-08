@@ -36,7 +36,7 @@ public interface OFile {
    * @return
    * @throws IOException
    */
-  boolean open() throws IOException;
+  void open();
 
   /**
    * Creates the file.
@@ -50,7 +50,7 @@ public interface OFile {
    *
    * @throws IOException
    */
-  void close() throws IOException;
+  void close();
 
   /**
    * Deletes the file.

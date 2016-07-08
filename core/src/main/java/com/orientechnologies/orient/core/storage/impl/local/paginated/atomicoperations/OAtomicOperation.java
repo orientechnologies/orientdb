@@ -266,11 +266,11 @@ public class OAtomicOperation {
     return fileId;
   }
 
-  public long openFile(String fileName) throws IOException {
+  public long loadFile(String fileName) throws IOException {
     Long fileId = newFileNamesId.get(fileName);
 
     if (fileId == null)
-      fileId = readCache.openFile(fileName, writeCache);
+      fileId = writeCache.loadFile(fileName);
 
     FileChanges fileChanges = this.fileChanges.get(fileId);
     if (fileChanges == null) {
@@ -279,17 +279,6 @@ public class OAtomicOperation {
     }
 
     return fileId;
-  }
-
-  public void openFile(long fileId) throws IOException {
-    fileId = checkFileIdCompatibilty(fileId, storageId);
-
-    if (deletedFiles.contains(fileId))
-      throw new OStorageException("File with id " + fileId + " is deleted.");
-
-    FileChanges changesContainer = fileChanges.get(fileId);
-    if (changesContainer == null || !changesContainer.isNew)
-      readCache.openFile(fileId, writeCache);
   }
 
   public void deleteFile(long fileId) {

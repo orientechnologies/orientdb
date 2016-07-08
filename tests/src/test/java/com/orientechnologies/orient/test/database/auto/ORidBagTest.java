@@ -1164,12 +1164,12 @@ import static org.testng.Assert.assertTrue;
 
   public void testFromEmbeddedToSBTreeAndBack() throws IOException {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(7);
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(4);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
 
     if (database.getStorage() instanceof OStorageProxy) {
       OServerAdmin server = new OServerAdmin(database.getURL()).connect("root", ODatabaseHelper.getServerRootPassword());
       server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, 7);
-      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, 4);
+      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, -1);
       server.close();
     }
 
@@ -1236,7 +1236,7 @@ import static org.testng.Assert.assertTrue;
 
     document.save();
 
-    Assert.assertTrue(ridBag.isEmbedded());
+    Assert.assertTrue(!ridBag.isEmbedded());
 
     for (OIdentifiable id : ridBag)
       Assert.assertTrue(addedItems.remove(id));
@@ -1246,7 +1246,7 @@ import static org.testng.Assert.assertTrue;
     document.reload();
 
     ridBag = document.field("ridBag");
-    Assert.assertTrue(ridBag.isEmbedded());
+    Assert.assertTrue(!ridBag.isEmbedded());
 
     addedItems.addAll(addedItemsCopy);
     for (OIdentifiable id : ridBag)
@@ -1255,15 +1255,14 @@ import static org.testng.Assert.assertTrue;
     Assert.assertTrue(addedItems.isEmpty());
   }
 
-  @Test(enabled = false)
   public void testFromEmbeddedToSBTreeAndBackTx() throws IOException {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(7);
-    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(4);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
 
     if (database.getStorage() instanceof OStorageProxy) {
       OServerAdmin server = new OServerAdmin(database.getURL()).connect("root", ODatabaseHelper.getServerRootPassword());
       server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, 7);
-      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, 4);
+      server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, -1);
       server.close();
     }
 
@@ -1338,7 +1337,7 @@ import static org.testng.Assert.assertTrue;
     document.save();
     database.commit();
 
-    Assert.assertTrue(ridBag.isEmbedded());
+    Assert.assertTrue(!ridBag.isEmbedded());
 
     for (OIdentifiable id : ridBag)
       Assert.assertTrue(addedItems.remove(id));
@@ -1348,7 +1347,7 @@ import static org.testng.Assert.assertTrue;
     document.reload();
 
     ridBag = document.field("ridBag");
-    Assert.assertTrue(ridBag.isEmbedded());
+    Assert.assertTrue(!ridBag.isEmbedded());
 
     addedItems.addAll(addedItemsCopy);
     for (OIdentifiable id : ridBag)

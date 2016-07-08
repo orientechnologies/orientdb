@@ -39,20 +39,18 @@ import java.util.Set;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
- * 
+ *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OIndexRIDContainer implements Set<OIdentifiable> {
   public static final String INDEX_FILE_EXTENSION = ".irs";
 
-  private final long         fileId;
-  private Set<OIdentifiable> underlying;
-  private boolean            isEmbedded;
-  private int                topThreshold         = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD
-                                                      .getValueAsInteger();
-  private int                bottomThreshold      = OGlobalConfiguration.INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD
-                                                      .getValueAsInteger();
-  private final boolean      durableNonTxMode;
+  private final long               fileId;
+  private       Set<OIdentifiable> underlying;
+  private       boolean            isEmbedded;
+  private int topThreshold    = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+  private int bottomThreshold = OGlobalConfiguration.INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+  private final boolean durableNonTxMode;
 
   /**
    * Should be called inside of lock to ensure uniqueness of entity on disk !!!
@@ -88,14 +86,14 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
       if (atomicOperation == null) {
         if (writeCache.exists(fileName))
-          return readCache.openFile(fileName, writeCache);
+          return writeCache.fileIdByName(fileName);
 
         return readCache.addFile(fileName, writeCache);
       } else {
         long fileId;
 
         if (atomicOperation.isFileExists(fileName))
-          fileId = atomicOperation.openFile(fileName);
+          fileId = atomicOperation.loadFile(fileName);
         else
           fileId = atomicOperation.addFile(fileName);
 
@@ -246,8 +244,8 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   private void convertToSbTree() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, (OAbstractPaginatedStorage) db
-        .getStorage().getUnderlying());
+    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId,
+        (OAbstractPaginatedStorage) db.getStorage().getUnderlying());
 
     tree.addAll(underlying);
 

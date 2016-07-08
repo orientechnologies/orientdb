@@ -45,7 +45,6 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
   private String                 expectedStorageDir;
   private OLocalPaginatedStorage storage;
 
-
   @Before
   @Override
   public void beforeMethod() throws IOException {
@@ -353,18 +352,13 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
             final String fileName = fileCreatedCreatedRecord.getFileName()
                 .replace("actualPaginatedClusterWithWALTest", "expectedPaginatedClusterWithWALTest");
-            if (expectedWriteCache.exists(fileName))
-              expectedReadCache.openFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
-            else
+            if (!expectedWriteCache.exists(fileName))
               expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
           } else {
             final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
 
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
-
-            if (!expectedWriteCache.isOpen(fileId))
-              expectedReadCache.openFile(fileId, expectedWriteCache);
 
             OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
             if (cacheEntry == null) {
@@ -436,7 +430,7 @@ public class LocalPaginatedClusterWithWALTest extends LocalPaginatedClusterTest 
     while (bytesRead >= 0) {
       datFileTwo.readFully(actualContent, 0, bytesRead);
 
-//      Assert.assertEquals(expectedContent, actualContent);
+      //      Assert.assertEquals(expectedContent, actualContent);
 
       assertThat(expectedContent).isEqualTo(actualContent);
       expectedContent = new byte[OClusterPage.PAGE_SIZE];

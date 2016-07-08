@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage.cache;
 
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
 import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 
@@ -39,23 +40,37 @@ public interface OWriteCache {
 
   long bookFileId(String fileName) throws IOException;
 
-  long openFile(String fileName) throws IOException;
-
-  void openFile(long fileId) throws IOException;
-
-  void openFile(String fileName, long fileId) throws IOException;
+  /**
+   * Registers new file in write cache and returns file id assigned to this file.
+   * <p>
+   * File id consist of two parts:
+   * <ol>
+   * <li>Internal id is permanent and can not be changed during life of storage {@link #internalFileId(long)}</li>
+   * <li>Write cache id  which is changed between storage open/close cycles</li>
+   * </ol>
+   * <p>
+   * If file with the same name is deleted and then new file is created this file with have the same internal id.
+   *
+   * @param fileName Name of file to register inside storage.
+   * @return Id of registered file
+   */
+  long loadFile(String fileName) throws IOException;
 
   long addFile(String fileName) throws IOException;
 
   long addFile(String fileName, long fileId) throws IOException;
 
+  /**
+   * Returns id associated with given file or value &lt; 0 if such file does not exist.
+   *
+   * @param fileName File name id of which has to be returned.
+   * @return  id associated with given file or value &lt; 0 if such file does not exist.
+   */
+  long fileIdByName(String fileName);
+
   boolean checkLowDiskSpace();
 
   void makeFuzzyCheckpoint();
-
-  void lock() throws IOException;
-
-  void unlock() throws IOException;
 
   boolean exists(String fileName);
 
@@ -73,10 +88,6 @@ public interface OWriteCache {
   long getFilledUpTo(long fileId) throws IOException;
 
   long getExclusiveWriteCachePagesSize();
-
-  boolean isOpen(long fileId);
-
-  Long isOpen(String fileName) throws IOException;
 
   void deleteFile(long fileId) throws IOException;
 
@@ -101,6 +112,20 @@ public interface OWriteCache {
   int pageSize();
 
   boolean fileIdsAreEqual(long firsId, long secondId);
+
+  /**
+   * Adds listener which is triggered if exception is cast inside background flush data thread.
+   *
+   * @param listener Listener to trigger
+   */
+  void addBackgroundExceptionListener(OBackgroundExceptionListener listener);
+
+  /**
+   * Removes listener which is triggered if exception is cast inside background flush data thread.
+   *
+   * @param listener Listener to remove
+   */
+  void removeBackgroundExceptionListener(OBackgroundExceptionListener listener);
 
   /**
    * Directory which contains all files managed by write cache.
