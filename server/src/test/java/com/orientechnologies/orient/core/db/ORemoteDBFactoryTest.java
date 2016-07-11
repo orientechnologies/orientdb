@@ -2,16 +2,13 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -39,7 +36,7 @@ public class ORemoteDBFactoryTest {
   public void createAndUseRemoteDatabase() {
     OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
     //    OrientDBFactory factory = OrientDBFactory.fromUrl("remote:localhost", null);
-    if (!factory.exist("test", "root", "root"))
+    if (!factory.exists("test", "root", "root"))
       factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
 
     ODatabaseDocument db = factory.open("test", "admin", "admin");
@@ -68,9 +65,9 @@ public class ORemoteDBFactoryTest {
     //    OrientDBFactory factory = OrientDBFactory.fromUrl("remote:localhost", null);
     try {
       factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
-      assertTrue(factory.exist("test", "root", "root"));
+      assertTrue(factory.exists("test", "root", "root"));
       factory.drop("test", "root", "root");
-      assertFalse(factory.exist("test", "root", "root"));
+      assertFalse(factory.exists("test", "root", "root"));
     } finally {
       factory.close();
     }
@@ -82,10 +79,10 @@ public class ORemoteDBFactoryTest {
     OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
     //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
 
-    if (!factory.exist("test", "root", "root"))
+    if (!factory.exists("test", "root", "root"))
       factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
 
-    OPool<ODatabaseDocument> pool = factory.openPool("test", "admin", "admin", null);
+    OPool<ODatabaseDocument> pool = factory.openPool("test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
     db.save(new ODocument());
     db.close();

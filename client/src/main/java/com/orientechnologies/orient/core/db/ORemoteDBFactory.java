@@ -17,16 +17,19 @@ import java.util.*;
  * Created by tglman on 08/04/16.
  */
 public class ORemoteDBFactory implements OrientDBFactory {
-  private String[] hosts;
-  private Map<String, OStorage> storages = new HashMap<>();
-  private OEngine          remote;
-  private OrientDBSettings configuration;
+  private final Map<String, OStorage> storages = new HashMap<>();
+  private final Set<OPool<?>>         pools    = new HashSet<>();
+  private final String[]         hosts;
+  private final OEngine          remote;
+  private final OrientDBSettings configurations;
 
-  public ORemoteDBFactory(String[] hosts, OrientDBSettings configuration) {
+  public ORemoteDBFactory(String[] hosts, OrientDBSettings configurations) {
     super();
     this.hosts = hosts;
     remote = Orient.instance().getEngine("remote");
-    this.configuration = configuration;
+
+    this.configurations = configurations != null ? configurations : OrientDBSettings.defaultSettings();
+
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       ORemoteDBFactory.this.close();
       Runtime.getRuntime().removeShutdownHook(Thread.currentThread());
@@ -91,7 +94,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
   }
 
   @Override
-  public synchronized boolean exist(String name, String user, String password) {
+  public synchronized boolean exists(String name, String user, String password) {
     return connectEndExecute(name, user, password, admin -> {
       //TODO: check for memory cases
       return admin.existsDatabase(name, null);
@@ -115,8 +118,14 @@ public class ORemoteDBFactory implements OrientDBFactory {
   }
 
   @Override
-  public OPool<ODatabaseDocument> openPool(String name, String user, String password, Map<String, Object> poolSettings) {
-    return new ORemotePoolByFactory(this, name, user, password, this.configuration);
+  public OPool<ODatabaseDocument> openPool(String name, String user, String password) {
+    ORemotePoolByFactory pool = new ORemotePoolByFactory(this, name, user, password);
+    pools.add(pool);
+    return pool;
+  }
+
+  public void removePool(ORemotePoolByFactory pool) {
+    pools.remove(pool);
   }
 
   @Override
@@ -134,5 +143,9 @@ public class ORemoteDBFactory implements OrientDBFactory {
 
     // SHUTDOWN ENGINES
     remote.shutdown();
+  }
+
+  public OrientDBSettings getConfigurations() {
+    return configurations;
   }
 }

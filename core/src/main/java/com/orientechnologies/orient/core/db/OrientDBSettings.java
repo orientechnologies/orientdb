@@ -24,6 +24,8 @@ public class OrientDBSettings {
     return settings;
   }
 
+
+
   public OContextConfiguration getConfigurations() {
     return configurations;
   }

@@ -2,17 +2,19 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 
 /**
  * Created by tglman on 07/07/16.
  */
 public class ORemotePoolByFactory implements OPool<ODatabaseDocument> {
-  private OResourcePool<Void, ORemoteDatabasePool> pool;
+  private final OResourcePool<Void, ORemoteDatabasePool> pool;
+  private final ORemoteDBFactory                         factory;
 
-  public ORemotePoolByFactory(ORemoteDBFactory factory, String database, String user, String password, OrientDBSettings config) {
-    //TODO use configured max
-    pool = new OResourcePool(10, new OResourcePoolListener<Void, ORemoteDatabasePool>() {
+  public ORemotePoolByFactory(ORemoteDBFactory factory, String database, String user, String password) {
+    int max = factory.getConfigurations().getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
+    pool = new OResourcePool(max, new OResourcePoolListener<Void, ORemoteDatabasePool>() {
       @Override
       public ORemoteDatabasePool createNewResource(Void iKey, Object... iAdditionalArgs) {
         return factory.poolOpen(database, user, password, ORemotePoolByFactory.this);
@@ -24,11 +26,12 @@ public class ORemotePoolByFactory implements OPool<ODatabaseDocument> {
         return true;
       }
     });
+    this.factory = factory;
   }
 
   @Override
   public synchronized ODatabaseDocument acquire() {
-    //TODO:use configured timeout
+    //TODO:use configured timeout no property exist yet
     return pool.getResource(null, 1000);
   }
 
@@ -38,6 +41,7 @@ public class ORemotePoolByFactory implements OPool<ODatabaseDocument> {
       res.realClose();
     }
     pool.close();
+    factory.removePool(this);
   }
 
   public synchronized void release(ORemoteDatabasePool oPoolDatabaseDocument) {

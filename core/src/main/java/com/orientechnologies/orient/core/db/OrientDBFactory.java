@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -24,7 +23,7 @@ public interface OrientDBFactory extends AutoCloseable {
    * possible kind of urls 'local','remote','distributed', for the case of remote and distributed can be specified multiple nodes using comma.
    *
    * @param url           the url for the specific factory.
-   * @param configuration a map contain the configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
+   * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
    * @return the new Orient Factory.
    */
   static OrientDBFactory fromUrl(String url, OrientDBSettings configuration) {
@@ -40,8 +39,8 @@ public interface OrientDBFactory extends AutoCloseable {
    * Create a new remote factory
    *
    * @param hosts         array of hosts
-   * @param configuration
-   * @return
+   * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}.
+   * @return a new remote databases factory
    */
   static OrientDBFactory remote(String[] hosts, OrientDBSettings configuration) {
     OrientDBFactory factory;
@@ -61,9 +60,9 @@ public interface OrientDBFactory extends AutoCloseable {
   /**
    * Create a new Embedded factory
    *
-   * @param directoryPath base path where the database are hosted.
-   * @param configuration
-   * @return
+   * @param directoryPath base path where the database are hosted
+   * @param configuration configuration for the specific factory for the list of option {@see OGlobalConfiguration}
+   * @return a new embedded databases factory
    */
   static OEmbeddedDBFactory embedded(String directoryPath, OrientDBSettings configuration) {
     return new OEmbeddedDBFactory(directoryPath, configuration);
@@ -72,10 +71,10 @@ public interface OrientDBFactory extends AutoCloseable {
   /**
    * Open a database specified by name using the username or password if needed
    *
-   * @param name     of the database to open.
-   * @param user
-   * @param password
-   * @return the opened database.
+   * @param name     of the database to open
+   * @param user     the username allowed to open the database
+   * @param password related to the specified username
+   * @return the opened database
    */
   ODatabaseDocument open(String name, String user, String password);
 
@@ -83,20 +82,53 @@ public interface OrientDBFactory extends AutoCloseable {
    * Create a new database
    *
    * @param name     database name
-   * @param user
-   * @param password
+   * @param user     the username of a user allowed to create a database, in case of remote is a server user for embedded it can be left empty
+   * @param password the password relative to the user
    * @param type     can be plocal or memory
    */
   void create(String name, String user, String password, DatabaseType type);
 
-  boolean exist(String name, String user, String password);
+  /**
+   * Check if a database exists
+   *
+   * @param name     database name to check
+   * @param user     the username of a user allowed to check the database existence, in case of remote is a server user for embedded it can be left empty.
+   * @param password the password relative to the user
+   * @return boolean  true if exist false otherwise.
+   */
+  boolean exists(String name, String user, String password);
 
+  /**
+   * Drop a database
+   *
+   * @param name     database name
+   * @param user     the username of a user allowed to drop a database, in case of remote is a server user for embedded it can be left empty
+   * @param password the password relative to the user
+   */
   void drop(String name, String user, String password);
 
+  /**
+   * List of database exiting in the current environment
+   *
+   * @param user     the username of a user allowed to list databases, in case of remote is a server user for embedded it can be left empty
+   * @param password the password relative to the user
+   * @return a set of databases names.
+   */
   Set<String> listDatabases(String user, String password);
 
-  OPool<ODatabaseDocument> openPool(String name, String user, String password, Map<String, Object> poolSettings);
+  /**
+   * Open a pool of databases, similar to open but with multiple instances.
+   *
+   * @param name database name
+   * @param user  the username allowed to open the database
+   * @param password the password relative to the user
+   * @return a new pool of databases.
+   */
+  OPool<ODatabaseDocument> openPool(String name, String user, String password);
 
+  /**
+   * Close the factory with all related databases and pools.
+   */
   void close();
 
 }

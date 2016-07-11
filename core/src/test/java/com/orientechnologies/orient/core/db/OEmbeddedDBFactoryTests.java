@@ -5,8 +5,6 @@ import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -23,7 +21,7 @@ public class OEmbeddedDBFactoryTests {
     OrientDBFactory factory = OrientDBFactory.embedded(".", null);
     //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
 
-    if (!factory.exist("test", "", ""))
+    if (!factory.exists("test", "", ""))
       factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
 
     ODatabaseDocument db = factory.open("test", "admin", "admin");
@@ -50,9 +48,9 @@ public class OEmbeddedDBFactoryTests {
     //    OrientDBFactory factory = OrientDBFactory.fromUrl("remote:localhost", null);
     try {
       factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
-      assertTrue(factory.exist("test", "", ""));
+      assertTrue(factory.exists("test", "", ""));
       factory.drop("test", "", "");
-      assertFalse(factory.exist("test", "", ""));
+      assertFalse(factory.exists("test", "", ""));
     } finally {
       factory.close();
     }
@@ -63,10 +61,10 @@ public class OEmbeddedDBFactoryTests {
     OrientDBFactory factory = OrientDBFactory.embedded(".", null);
     //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
 
-    if (!factory.exist("test", "", ""))
+    if (!factory.exists("test", "", ""))
       factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
 
-    OPool<ODatabaseDocument> pool = factory.openPool("test", "admin", "admin", null);
+    OPool<ODatabaseDocument> pool = factory.openPool("test", "admin", "admin");
     ODatabaseDocument db = pool.acquire();
     db.save(new ODocument());
     db.close();

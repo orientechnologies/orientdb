@@ -23,11 +23,12 @@ import java.util.*;
  * Created by tglman on 08/04/16.
  */
 public class OEmbeddedDBFactory implements OrientDBFactory {
-  private volatile Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
+  private final Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
+  private final Set<OPool<?>>                          pools    = new HashSet<>();
   private final OrientDBSettings configurations;
-  private       String           basePath;
-  private       OEngine          memory;
-  private       OEngine          disk;
+  private final String           basePath;
+  private final OEngine          memory;
+  private final OEngine          disk;
 
   public OEmbeddedDBFactory(String directoryPath, OrientDBSettings configurations) {
     super();
@@ -88,7 +89,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
   @Override
   public synchronized void create(String name, String user, String password, DatabaseType type) {
-    if (!exist(name, user, password)) {
+    if (!exists(name, user, password)) {
       OAbstractPaginatedStorage storage;
       if (type == DatabaseType.MEMORY) {
         storage = (OAbstractPaginatedStorage) memory.createStorage(buildName(name), new HashMap<>());
@@ -113,7 +114,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   }
 
   @Override
-  public synchronized boolean exist(String name, String user, String password) {
+  public synchronized boolean exists(String name, String user, String password) {
     if (!storages.containsKey(name)) {
       return OLocalPaginatedStorage.exists(buildName(name));
     }
@@ -122,7 +123,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
   @Override
   public synchronized void drop(String name, String user, String password) {
-    if (exist(name, user, password)) {
+    if (exists(name, user, password)) {
       getStorage(name).delete();
       storages.remove(name);
     }
@@ -142,8 +143,10 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   }
 
   @Override
-  public OPool<ODatabaseDocument> openPool(String name, String user, String password, Map<String, Object> poolSettings) {
-    return new OEmbeddedPoolByFactory(this, name, user, password, this.configurations);
+  public OPool<ODatabaseDocument> openPool(String name, String user, String password) {
+    OEmbeddedPoolByFactory pool = new OEmbeddedPoolByFactory(this, name, user, password);
+    pools.add(pool);
+    return pool;
   }
 
   @Override
@@ -166,8 +169,16 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
   }
 
+  public OrientDBSettings getConfigurations() {
+    return configurations;
+  }
+
   public /*OServer*/ Object spawnServer(/*OServerConfiguration*/Object serverConfiguration) {
     return null;
+  }
+
+  public void removePool(OEmbeddedPoolByFactory pool) {
+    pools.remove(pool);
   }
 
   public interface InstanceFactory<T> {
