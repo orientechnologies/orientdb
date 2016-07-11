@@ -19,15 +19,15 @@
  */
 package com.orientechnologies.orient.graph.stresstest;
 
+import java.util.List;
+
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
+import com.orientechnologies.orient.stresstest.OStressTesterSettings;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.List;
 
 /**
  * CRUD implementation of the workload.
@@ -75,9 +75,9 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   }
 
   @Override
-  public void execute(final int concurrencyLevel, final ODatabaseIdentifier databaseIdentifier) {
-    final List<OBaseWorkLoadContext> contexts = executeOperation(databaseIdentifier, resultVertices, concurrencyLevel,
-        new OCallable<Void, OBaseWorkLoadContext>() {
+  public void execute(final OStressTesterSettings settings, final ODatabaseIdentifier databaseIdentifier) {
+    final List<OBaseWorkLoadContext> contexts = executeOperation(databaseIdentifier, resultVertices, settings.concurrencyLevel,
+        settings.operationsPerTransaction, new OCallable<Void, OBaseWorkLoadContext>() {
           @Override
           public Void call(final OBaseWorkLoadContext context) {
             final OWorkLoadContext graphContext = ((OWorkLoadContext) context);
@@ -104,7 +104,8 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
           }
         });
 
-    final OrientGraphNoTx graph = getGraphNoTx(databaseIdentifier);
+    final OrientBaseGraph graph = settings.operationsPerTransaction > 0 ? getGraph(databaseIdentifier)
+        : getGraphNoTx(databaseIdentifier);
     try {
       // CONNECTED ALL THE SUB GRAPHS
       OrientVertex lastVertex = null;

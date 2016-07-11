@@ -31,7 +31,7 @@ public class OStressTesterSettings {
   public String              resultOutputFile;
   public String              plocalPath;
   public int                 operationsPerTransaction;
-  public int                 threadsNumber;
+  public int                 concurrencyLevel;
   public String              remoteIp;
   public String              workloadCfg;
   public boolean             keepDatabaseAfterTest;

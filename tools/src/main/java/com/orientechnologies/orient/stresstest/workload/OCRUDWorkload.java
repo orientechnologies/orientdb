@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
+import com.orientechnologies.orient.stresstest.OStressTesterSettings;
 
 import java.util.List;
 
@@ -98,52 +99,56 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   }
 
   @Override
-  public void execute(final int concurrencyLevel, final ODatabaseIdentifier databaseIdentifier) {
+  public void execute(final OStressTesterSettings settings, final ODatabaseIdentifier databaseIdentifier) {
     createSchema(databaseIdentifier);
 
     // PREALLOCATE THE LIST TO AVOID CONCURRENCY ISSUES
     final ORID[] records = new ORID[createsResult.total];
 
-    executeOperation(databaseIdentifier, createsResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
-      @Override
-      public Void call(final OBaseWorkLoadContext context) {
-        final ODocument doc = createOperation(context.currentIdx);
-        records[context.currentIdx] = doc.getIdentity();
-        createsResult.current.incrementAndGet();
-        return null;
-      }
-    });
+    executeOperation(databaseIdentifier, createsResult, settings.concurrencyLevel, settings.operationsPerTransaction,
+        new OCallable<Void, OBaseWorkLoadContext>() {
+          @Override
+          public Void call(final OBaseWorkLoadContext context) {
+            final ODocument doc = createOperation(context.currentIdx);
+            records[context.currentIdx] = doc.getIdentity();
+            createsResult.current.incrementAndGet();
+            return null;
+          }
+        });
 
     if (records.length != createsResult.total)
       throw new RuntimeException("Error on creating records: found " + records.length + " but expected " + createsResult.total);
 
-    executeOperation(databaseIdentifier, readsResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
-      @Override
-      public Void call(final OBaseWorkLoadContext context) {
-        readOperation(((OWorkLoadContext) context).getDb(), context.currentIdx);
-        readsResult.current.incrementAndGet();
-        return null;
-      }
-    });
+    executeOperation(databaseIdentifier, readsResult, settings.concurrencyLevel, settings.operationsPerTransaction,
+        new OCallable<Void, OBaseWorkLoadContext>() {
+          @Override
+          public Void call(final OBaseWorkLoadContext context) {
+            readOperation(((OWorkLoadContext) context).getDb(), context.currentIdx);
+            readsResult.current.incrementAndGet();
+            return null;
+          }
+        });
 
-    executeOperation(databaseIdentifier, updatesResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
-      @Override
-      public Void call(final OBaseWorkLoadContext context) {
-        updateOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
-        updatesResult.current.incrementAndGet();
-        return null;
-      }
-    });
+    executeOperation(databaseIdentifier, updatesResult, settings.concurrencyLevel, settings.operationsPerTransaction,
+        new OCallable<Void, OBaseWorkLoadContext>() {
+          @Override
+          public Void call(final OBaseWorkLoadContext context) {
+            updateOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
+            updatesResult.current.incrementAndGet();
+            return null;
+          }
+        });
 
-    executeOperation(databaseIdentifier, deletesResult, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
-      @Override
-      public Void call(final OBaseWorkLoadContext context) {
-        deleteOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
-        records[context.currentIdx] = null;
-        deletesResult.current.incrementAndGet();
-        return null;
-      }
-    });
+    executeOperation(databaseIdentifier, deletesResult, settings.concurrencyLevel, settings.operationsPerTransaction,
+        new OCallable<Void, OBaseWorkLoadContext>() {
+          @Override
+          public Void call(final OBaseWorkLoadContext context) {
+            deleteOperation(((OWorkLoadContext) context).getDb(), records[context.currentIdx]);
+            records[context.currentIdx] = null;
+            deletesResult.current.incrementAndGet();
+            return null;
+          }
+        });
   }
 
   protected void createSchema(ODatabaseIdentifier databaseIdentifier) {
@@ -153,6 +158,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
       if (!schema.existsClass(OCRUDWorkload.CLASS_NAME)) {
         final OClass cls = schema.createClass(OCRUDWorkload.CLASS_NAME);
         cls.createProperty("name", OType.STRING);
+        // cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(), "name");
         cls.createIndex(INDEX_NAME, OClass.INDEX_TYPE.UNIQUE.toString(), (OProgressListener) null, (ODocument) null, "AUTOSHARDING",
             new String[] { "name" });
       }

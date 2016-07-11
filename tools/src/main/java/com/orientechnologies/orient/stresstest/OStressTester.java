@@ -91,11 +91,11 @@ public class OStressTester {
         consoleProgressWriter.start();
 
         consoleProgressWriter.printMessage(
-            String.format("\nStarting workload %s (concurrencyLevel=%d)...", workload.getName(), settings.threadsNumber));
+            String.format("\nStarting workload %s (concurrencyLevel=%d)...", workload.getName(), settings.concurrencyLevel));
 
         final long startTime = System.currentTimeMillis();
 
-        workload.execute(settings.threadsNumber, databaseIdentifier);
+        workload.execute(settings, databaseIdentifier);
 
         final long endTime = System.currentTimeMillis();
 
@@ -151,7 +151,7 @@ public class OStressTester {
   }
 
   public int getThreadsNumber() {
-    return settings.threadsNumber;
+    return settings.concurrencyLevel;
   }
 
   public OMode getMode() {

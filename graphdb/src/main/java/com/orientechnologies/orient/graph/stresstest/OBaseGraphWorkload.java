@@ -88,4 +88,14 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
       }
     });
   }
+
+  @Override
+  protected void beginTransaction(final OBaseWorkLoadContext context) {
+    ((OWorkLoadContext) context).graph.begin();
+  }
+
+  @Override
+  protected void commitTransaction(final OBaseWorkLoadContext context) {
+    ((OWorkLoadContext) context).graph.commit();
+  }
 }
