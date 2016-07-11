@@ -832,8 +832,8 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   @Override
-  public void acquireAtomicExclusiveLock() {
-    storage.getIndexEngine(indexId).acquireAtomicExclusiveLock();
+  public boolean acquireAtomicExclusiveLock(Object key) {
+    return storage.getIndexEngine(indexId).acquireAtomicExclusiveLock(key);
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
