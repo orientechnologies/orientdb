@@ -5,13 +5,13 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import java.util.Optional;
 
 /**
- * Created by luigidellaquila on 08/07/16.
+ * @author Luigi Dell'Aquila
  */
 public abstract class AbstractExecutionStep implements OExecutionStep {
 
-  protected final OCommandContext          ctx;
-  protected       Optional<OExecutionStep> prev;
-  protected       Optional<OExecutionStep> next;
+  protected final OCommandContext ctx;
+  protected Optional<OExecutionStep> prev = Optional.empty();
+  protected Optional<OExecutionStep> next = Optional.empty();
 
   public AbstractExecutionStep(OCommandContext ctx) {
     this.ctx = ctx;
@@ -36,4 +36,13 @@ public abstract class AbstractExecutionStep implements OExecutionStep {
   public Optional<OExecutionStep> getNext() {
     return next;
   }
+
+  @Override public void sendTimeout() {
+    prev.ifPresent(p -> p.sendTimeout());
+  }
+
+  @Override public void close() {
+    prev.ifPresent(p -> p.close());
+  }
+
 }

@@ -43,6 +43,14 @@ public class OExternalResultSet implements OTodoResultSet {
   }
 
   @Override public OResult next() {
+    if (finished) {
+      throw new IllegalStateException();
+    }
+    if (!lastFetch.hasNext()) {
+      if (!fetchNext()) {
+        throw new IllegalStateException();
+      }
+    }
     return lastFetch.next();
   }
 

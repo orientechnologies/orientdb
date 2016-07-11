@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.orient.core.db.ODatabase;
 
 import java.util.Map;
 
@@ -91,5 +92,7 @@ public interface OCommandContext {
    * @param iContext
    */
   void merge(OCommandContext iContext);
+
+  public ODatabase getDatabase();
 
 }

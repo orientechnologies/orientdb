@@ -34,6 +34,9 @@ public class OResult {
 
   @Override public String toString() {
 
+    if(element!=null){
+      return element.toString();
+    }
     return
         "{\n"+
           content.entrySet().stream()

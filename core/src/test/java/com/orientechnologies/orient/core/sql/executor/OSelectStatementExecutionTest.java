@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -72,4 +74,124 @@ public class OSelectStatementExecutionTest {
     result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
   }
 
+  @Test public void testSelectFullScan1() {
+    String className = "TestSelectFullScan1";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 100000; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select from " + className);
+    for (int i = 0; i < 100000; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    result.close();
+  }
+
+  @Test public void testSelectFullScanOrderByRidAsc() {
+    String className = "testSelectFullScanOrderByRidAsc";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 100000; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select from " + className + " ORDER BY @rid ASC");
+    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    OIdentifiable lastItem = null;
+    for (int i = 0; i < 100000; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
+      if (lastItem != null) {
+        Assert.assertTrue(lastItem.getIdentity().compareTo(item.getElement().getIdentity()) < 0);
+      }
+      lastItem = item.getElement();
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testSelectFullScanOrderByRidDesc() {
+    String className = "testSelectFullScanOrderByRidDesc";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 100000; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select from " + className + " ORDER BY @rid DESC");
+    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    OIdentifiable lastItem = null;
+    for (int i = 0; i < 100000; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
+      if (lastItem != null) {
+        Assert.assertTrue(lastItem.getIdentity().compareTo(item.getElement().getIdentity()) > 0);
+      }
+      lastItem = item.getElement();
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+
+  @Test public void testSelectFullScanLimit1() {
+    String className = "testSelectFullScanLimit1";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 300; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select from " + className + " limit 10");
+    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
+
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+
+  @Test public void testSelectFullScanSkipLimit1() {
+    String className = "testSelectFullScanSkipLimit1";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 300; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select from " + className + " skip 100 limit 10");
+    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
+
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
 }
