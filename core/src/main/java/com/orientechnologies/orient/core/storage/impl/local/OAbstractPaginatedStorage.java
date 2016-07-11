@@ -3517,8 +3517,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         writeCache.removeBackgroundExceptionListener(this);
       }
 
-      if (writeAheadLog != null)
+      if (writeAheadLog != null) {
         writeAheadLog.removeFullCheckpointListener(this);
+        writeAheadLog.removeLowDiskSpaceListener(this);
+      }
 
       if (readCache != null)
         if (!onDelete)

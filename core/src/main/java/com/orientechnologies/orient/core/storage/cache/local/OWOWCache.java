@@ -813,11 +813,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     try {
       final Collection<Integer> fileIds = nameIdMap.values();
 
+      final List<Long> closedIds = new ArrayList<>();
+
       for (Integer intId : fileIds) {
-        if (intId > 0) {
+        if (intId >= 0) {
           final long extId = composeFileId(id, intId);
           final OFileClassic fileClassic = files.remove(extId);
           fileClassic.close();
+          closedIds.add(extId);
         }
       }
 
@@ -833,10 +836,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       nameIdMap.clear();
 
-      final long[] ids = new long[fileIds.size()];
+      final long[] ids = new long[closedIds.size()];
       int n = 0;
 
-      for (long id : fileIds) {
+      for (long id : closedIds) {
         ids[n] = id;
         n++;
       }
@@ -963,7 +966,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     filesLock.acquireWriteLock();
     try {
       for (int intId : nameIdMap.values()) {
-        if (intId <= 0)
+        if (intId < 0)
           continue;
 
         final long externalId = composeFileId(id, intId);
