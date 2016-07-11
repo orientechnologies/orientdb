@@ -146,7 +146,7 @@ public class OGraphShortestPathWorkload extends OBaseGraphWorkload {
     buffer.append(String.format("- Executed %d shortest paths in %.3f secs", result.current.get(), result.totalTime / 1000f));
     buffer.append(String.format("\n- Path depth: maximum %d, average %.3f, not connected %d", maxDepth.get(),
         totalDepth.get() / (float) startingVertices.size() / (float) startingVertices.size(), notConnected.get()));
-    buffer.append(result.toOutput());
+    buffer.append(result.toOutput(2));
 
     return buffer.toString();
   }

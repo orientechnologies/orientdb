@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.graph.stresstest;
 
-import java.util.List;
-
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -28,6 +26,8 @@ import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.OStressTesterSettings;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.List;
 
 /**
  * CRUD implementation of the workload.
@@ -134,7 +134,7 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
     buffer.append(String.format("- Created %d vertices and %d edges in %.3f secs", resultVertices.current.get(),
         resultEdges.current.get(), resultVertices.totalTime / 1000f));
 
-    buffer.append(resultVertices.toOutput());
+    buffer.append(resultVertices.toOutput(1));
 
     return buffer.toString();
   }

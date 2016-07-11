@@ -48,26 +48,43 @@ public abstract class OBaseWorkload implements OWorkload {
     public AtomicInteger current = new AtomicInteger();
     public int           total   = 1;
     public long          totalTime;
-    public long          avgNs;
-    public int           percentileAvg;
-    public long          percentile99Ns;
-    public long          percentile99_9Ns;
+    public long          totalTimeOperationsNs;
+    public long          throughputAvgNs;
 
-    public String toOutput() {
-      return String.format("\n- Throughput: %.3f/sec - Avg: %.3fms/op (%dth percentile) - 99th Perc: %.3fms - 99.9th Perc: %.3fms",
-          total * 1000 / (float) totalTime, avgNs / 1000000f, percentileAvg, percentile99Ns / 1000000f,
-          percentile99_9Ns / 1000000f);
+    public long          latencyAvgNs;
+    public long          latencyMinNs;
+    public long          latencyMaxNs;
+    public int           latencyPercentileAvg;
+    public long          latencyPercentile99Ns;
+    public long          latencyPercentile99_9Ns;
+
+    public String toOutput(final int leftSpaces) {
+      final StringBuilder indent = new StringBuilder();
+      for (int i = 0; i < leftSpaces; ++i)
+        indent.append(' ');
+
+      return String.format(
+          "\n%s- Throughput: %.3f/sec (Avg %.3fms/op)\n%s- Latency Avg: %.3fms/op (%dth percentile) - Min: %.3fms - 99th Perc: %.3fms - 99.9th Perc: %.3fms Max: %.3fms",
+          indent, total * 1000 / (float) totalTime, throughputAvgNs / 1000000f, indent, latencyAvgNs / 1000000f,
+          latencyPercentileAvg, latencyMinNs / 1000000f, latencyPercentile99Ns / 1000000f, latencyPercentile99_9Ns / 1000000f,
+          latencyMaxNs / 1000000f);
     }
 
     public ODocument toJSON() {
       final ODocument json = new ODocument();
       json.field("total", total);
       json.field("time", totalTime / 1000f);
+      json.field("timeOperations", totalTimeOperationsNs / 1000f);
+
       json.field("throughput", totalTime > 0 ? total * 1000 / (float) totalTime : 0);
-      json.field("avg", avgNs / 1000000f);
-      json.field("percAvg", percentileAvg);
-      json.field("perc99", percentile99Ns / 1000000f);
-      json.field("perc99_9", percentile99_9Ns / 1000000f);
+      json.field("throughputAvg", throughputAvgNs / 1000000f);
+
+      json.field("latencyAvg", latencyAvgNs / 1000000f);
+      json.field("latencyMin", latencyMinNs / 1000000f);
+      json.field("latencyPercAvg", latencyPercentileAvg);
+      json.field("latencyPerc99", latencyPercentile99Ns / 1000000f);
+      json.field("latencyPerc99_9", latencyPercentile99_9Ns / 1000000f);
+      json.field("latencyMax", latencyMaxNs / 1000000f);
       return json;
     }
   }
@@ -160,11 +177,21 @@ public abstract class OBaseWorkload implements OWorkload {
 
     Arrays.sort(operationTiming);
 
+    // COMPUTE THE TOTAL COST OF OPERATIONS ONLY
+    result.totalTimeOperationsNs = 0;
+    for (long l : operationTiming)
+      result.totalTimeOperationsNs += l;
+
+    result.latencyMinNs = operationTiming[0];
+    result.latencyMaxNs = operationTiming[operationTiming.length - 1];
+
     // COMPUTE THE PERCENTILE
-    result.avgNs = (int) (result.totalTime * 1000000 / operationTiming.length);
-    result.percentileAvg = getPercentile(operationTiming, result.avgNs);
-    result.percentile99Ns = operationTiming[(int) (operationTiming.length * 99f / 100f)];
-    result.percentile99_9Ns = operationTiming[(int) (operationTiming.length * 99.9f / 100f)];
+    result.throughputAvgNs = (int) (result.totalTime * 1000000 / operationTiming.length);
+
+    result.latencyAvgNs = (int) (result.totalTimeOperationsNs / operationTiming.length);
+    result.latencyPercentileAvg = getPercentile(operationTiming, result.latencyAvgNs);
+    result.latencyPercentile99Ns = operationTiming[(int) (operationTiming.length * 99f / 100f)];
+    result.latencyPercentile99_9Ns = operationTiming[(int) (operationTiming.length * 99.9f / 100f)];
 
     return contexts;
   }

@@ -184,16 +184,16 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
     final StringBuilder buffer = new StringBuilder(getErrors());
 
     buffer.append(String.format("- Created %d records in %.3f secs%s", createsResult.total, (createsResult.totalTime / 1000f),
-        createsResult.toOutput()));
+        createsResult.toOutput(1)));
 
     buffer.append(String.format("\n- Read %d records in %.3f secs%s", readsResult.total, (readsResult.totalTime / 1000f),
-        readsResult.toOutput()));
+        readsResult.toOutput(1)));
 
     buffer.append(String.format("\n- Updated %d records in %.3f secs%s", updatesResult.total, (updatesResult.totalTime / 1000f),
-        updatesResult.toOutput()));
+        updatesResult.toOutput(1)));
 
     buffer.append(String.format("\n- Deleted %d records in %.3f secs%s", deletesResult.total, (deletesResult.totalTime / 1000f),
-        deletesResult.toOutput()));
+        deletesResult.toOutput(1)));
 
     return buffer.toString();
   }
