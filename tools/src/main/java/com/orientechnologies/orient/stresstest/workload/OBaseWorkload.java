@@ -76,7 +76,7 @@ public abstract class OBaseWorkload implements OWorkload {
   protected List<String>      errors     = new ArrayList<String>();
 
   protected List<OBaseWorkLoadContext> executeOperation(final ODatabaseIdentifier dbIdentifier, final OWorkLoadResult result,
-      final int concurrencyLevel, final OCallable<Void, OBaseWorkLoadContext> callback) {
+      final int concurrencyLevel, final int operationsPerTransaction, final OCallable<Void, OBaseWorkLoadContext> callback) {
     if (result.total == 0)
       return null;
 
@@ -104,8 +104,16 @@ public abstract class OBaseWorkload implements OWorkload {
           try {
             final int startIdx = totalPerThread * context.threadId;
 
+            if (operationsPerTransaction > 0)
+              beginTransaction(context);
+
             for (int i = 0; i < context.totalPerThread; ++i) {
               context.currentIdx = startIdx + i;
+
+              if (operationsPerTransaction > 0 && (i + 1) % operationsPerTransaction == 0) {
+                commitTransaction(context);
+                beginTransaction(context);
+              }
 
               final long startOp = System.nanoTime();
               try {
@@ -120,6 +128,9 @@ public abstract class OBaseWorkload implements OWorkload {
                 operationTiming[context.currentIdx] = System.nanoTime() - startOp;
               }
             }
+
+            if (operationsPerTransaction > 0)
+              commitTransaction(context);
 
           } finally {
             context.close();
@@ -157,6 +168,10 @@ public abstract class OBaseWorkload implements OWorkload {
 
     return contexts;
   }
+
+  protected abstract void beginTransaction(OBaseWorkLoadContext context);
+
+  protected abstract void commitTransaction(OBaseWorkLoadContext context);
 
   protected abstract OBaseWorkLoadContext getContext();
 

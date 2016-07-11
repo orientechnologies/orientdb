@@ -94,7 +94,7 @@ public class OStressTesterCommandLineParser {
     settings.resultOutputFile = options.get(OPTION_OUTPUT_FILE);
     settings.plocalPath = options.get(OPTION_PLOCAL_PATH);
     settings.operationsPerTransaction = getNumber(options.get(OPTION_TRANSACTIONS), "transactions");
-    settings.threadsNumber = getNumber(options.get(OPTION_CONCURRENCY), "concurrency");
+    settings.concurrencyLevel = getNumber(options.get(OPTION_CONCURRENCY), "concurrency");
     settings.remoteIp = options.get(OPTION_REMOTE_IP);
     settings.workloadCfg = options.get(OPTION_WORKLOAD);
     settings.keepDatabaseAfterTest = options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null
