@@ -569,7 +569,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected void checkLocalNodeInConfiguration() {
-    manager.executeInDistributedDatabaseLock(databaseName, new OCallable<Void, ODistributedConfiguration>() {
+    manager.executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Void, ODistributedConfiguration>() {
       @Override
       public Void call(final ODistributedConfiguration cfg) {
         // GET LAST VERSION IN LOCK

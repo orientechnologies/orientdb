@@ -24,6 +24,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
@@ -72,6 +73,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -116,7 +118,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected Date                                                 startedOn                         = new Date();
   protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
   protected String                                               nodeUuid;
-  protected ODistributedStrategy responseManagerFactory = new ODefaultDistributedStrategy();
+  protected ODistributedStrategy                                 responseManagerFactory            = new ODefaultDistributedStrategy();
 
   private volatile String                                        lastServerDump                    = "";
 
@@ -771,7 +773,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     // REASSIGN CLUSTERS WITHOUT AN OWNER, AVOIDING TO REBALANCE EXISTENT
     final ODatabaseDocumentTx database = serverInstance.openDatabase(databaseName, "internal", "internal", null, true);
     try {
-      return executeInDistributedDatabaseLock(databaseName, new OCallable<Boolean, ODistributedConfiguration>() {
+      return executeInDistributedDatabaseLock(databaseName, 5000, new OCallable<Boolean, ODistributedConfiguration>() {
         @Override
         public Boolean call(final ODistributedConfiguration cfg) {
           return rebalanceClusterOwnership(iNode, database, cfg, clustersWithNotAvailableOwner, rebalance);
@@ -1268,7 +1270,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         uniqueClustersBackupDirectory);
     if (db != null) {
       try {
-        executeInDistributedDatabaseLock(databaseName, new OCallable<Void, ODistributedConfiguration>() {
+        executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Void, ODistributedConfiguration>() {
 
           @Override
           public Void call(final ODistributedConfiguration cfg) {
@@ -1346,7 +1348,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (iClass.isAbstract())
       return false;
 
-    return executeInDistributedDatabaseLock(databaseName, new OCallable<Boolean, ODistributedConfiguration>() {
+    return executeInDistributedDatabaseLock(databaseName, 5000, new OCallable<Boolean, ODistributedConfiguration>() {
       @Override
       public Boolean call(final ODistributedConfiguration lastCfg) {
         final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
@@ -1368,15 +1370,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   /**
    * Executes an operation protected by a distributed lock (one per database).
    *
-   * @param databaseName
-   *          Database name
-   * @param iCallback
-   *          Operation
    * @param <T>
    *          Return type
-   * @return The operation's result of type T
+   * @param databaseName
+   *          Database name
+   * @param timeoutLocking
+   * @param iCallback
+   *          Operation @return The operation's result of type T
    */
-  public <T> T executeInDistributedDatabaseLock(final String databaseName,
+  public <T> T executeInDistributedDatabaseLock(final String databaseName, final long timeoutLocking,
       final OCallable<T, ODistributedConfiguration> iCallback) {
     if (OScenarioThreadLocal.INSTANCE.isInDatabaseLock()) {
       // ALREADY IN LOCK
@@ -1384,41 +1386,55 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return (T) iCallback.call(lastCfg);
     }
 
+    boolean locked = false;
     final Lock lock = getLock(databaseName + ".cfg");
-    lock.lock();
-    try {
-
-      OScenarioThreadLocal.INSTANCE.setInDatabaseLock(true);
-
-      // GET LAST VERSION IN LOCK
-      final ODistributedConfiguration lastCfg = getLastDatabaseConfiguration(databaseName);
-      final int cfgVersion = lastCfg.getVersion();
-
+    if (timeoutLocking > 0) {
       try {
+        if (lock.tryLock(timeoutLocking, TimeUnit.MILLISECONDS))
+          locked = true;
+      } catch (InterruptedException e) {
+        // IGNORE IT
+      }
+    } else {
+      lock.lock();
+      locked = true;
+    }
 
-        return (T) iCallback.call(lastCfg);
+    if (locked)
+      try {
+        OScenarioThreadLocal.INSTANCE.setInDatabaseLock(true);
+
+        // GET LAST VERSION IN LOCK
+        final ODistributedConfiguration lastCfg = getLastDatabaseConfiguration(databaseName);
+        final int cfgVersion = lastCfg.getVersion();
+
+        try {
+
+          return (T) iCallback.call(lastCfg);
+
+        } finally {
+          if (lastCfg.getVersion() > cfgVersion)
+            // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
+            updateCachedDatabaseConfiguration(databaseName, lastCfg.getDocument(), true, true);
+
+          OScenarioThreadLocal.INSTANCE.setInDatabaseLock(false);
+        }
+
+      } catch (RuntimeException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
 
       } finally {
-        if (lastCfg.getVersion() > cfgVersion)
-          // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
-          updateCachedDatabaseConfiguration(databaseName, lastCfg.getDocument(), true, true);
-
-        OScenarioThreadLocal.INSTANCE.setInDatabaseLock(false);
+        lock.unlock();
       }
 
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-
-    } finally {
-      lock.unlock();
-    }
+    throw new OLockException("Cannot lock distributed database resource after " + timeoutLocking + "ms");
   }
 
   protected void onDatabaseEvent(final ODocument config, final String databaseName) {
     if (messageService.getDatabase(databaseName) != null) {
-      executeInDistributedDatabaseLock(databaseName, new OCallable<Object, ODistributedConfiguration>() {
+      executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Object, ODistributedConfiguration>() {
         @Override
         public Object call(ODistributedConfiguration iArgument) {
           // DATABASE IS CONFIGURED ON LOCAL NODE, UPDATE THE CFG ON DISK ONLY
@@ -1643,7 +1659,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       try {
         final ODistributedAbstractPlugin me = this;
-        executeInDistributedDatabaseLock(databaseName, new OCallable<Void, ODistributedConfiguration>() {
+        executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Void, ODistributedConfiguration>() {
           @Override
           public Void call(final ODistributedConfiguration cfg) {
             try {

@@ -363,7 +363,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (messageService.getDatabase(databaseName) == null) {
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Opening database '%s'...", databaseName);
 
-        executeInDistributedDatabaseLock(databaseName, new OCallable<Object, ODistributedConfiguration>() {
+        executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Object, ODistributedConfiguration>() {
           @Override
           public Object call(ODistributedConfiguration cfg) {
             ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
