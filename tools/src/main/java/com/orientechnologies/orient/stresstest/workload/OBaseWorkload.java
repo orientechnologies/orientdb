@@ -64,7 +64,7 @@ public abstract class OBaseWorkload implements OWorkload {
         indent.append(' ');
 
       return String.format(
-          "\n%s- Throughput: %.3f/sec (Avg %.3fms/op)\n%s- Latency Avg: %.3fms/op (%dth percentile) - Min: %.3fms - 99th Perc: %.3fms - 99.9th Perc: %.3fms Max: %.3fms",
+          "\n%s- Throughput: %.3f/sec (Avg %.3fms/op)\n%s- Latency Avg: %.3fms/op (%dth percentile) - Min: %.3fms - 99th Perc: %.3fms - 99.9th Perc: %.3fms - Max: %.3fms",
           indent, total * 1000 / (float) totalTime, throughputAvgNs / 1000000f, indent, latencyAvgNs / 1000000f,
           latencyPercentileAvg, latencyMinNs / 1000000f, latencyPercentile99Ns / 1000000f, latencyPercentile99_9Ns / 1000000f,
           latencyMaxNs / 1000000f);
