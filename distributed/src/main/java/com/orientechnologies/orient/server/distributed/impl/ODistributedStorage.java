@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFact
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -599,25 +600,32 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                 if (syncMode) {
 
                   // SYNCHRONOUS CALL: REPLICATE IT
-                  final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
-                      dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localPlaceholder, unlockCallback);
+                  try {
+                    final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
+                        dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localPlaceholder, unlockCallback);
+                    final Object payload = dResponse.getPayload();
+                    if (payload != null) {
+                      if (payload instanceof Exception) {
+                        executeUndoOnLocalServer(dResponse.getRequestId(), task);
+                        if (payload instanceof ONeedRetryException)
+                          throw (ONeedRetryException) payload;
 
-                  final Object payload = dResponse.getPayload();
-                  if (payload != null) {
-                    if (payload instanceof Exception) {
-                      executeUndoOnLocalServer(dResponse.getRequestId(), task);
-                      if (payload instanceof ONeedRetryException)
-                        throw (ONeedRetryException) payload;
+                        throw OException.wrapException(new ODistributedException("Error on execution distributed create record"),
+                            (Exception) payload);
+                      }
+                      // COPY THE CLUSTER POS -> RID
+                      final OPlaceholder masterPlaceholder = (OPlaceholder) payload;
+                      iRecordId.copyFrom(masterPlaceholder.getIdentity());
 
-                      throw OException.wrapException(new ODistributedException("Error on execution distributed CREATE_RECORD"),
-                          (Exception) payload);
+                      return new OStorageOperationResult<OPhysicalPosition>(new OPhysicalPosition(
+                          masterPlaceholder.getIdentity().getClusterPosition(), masterPlaceholder.getVersion()));
                     }
-                    // COPY THE CLUSTER POS -> RID
-                    final OPlaceholder masterPlaceholder = (OPlaceholder) payload;
-                    iRecordId.copyFrom(masterPlaceholder.getIdentity());
-
-                    return new OStorageOperationResult<OPhysicalPosition>(new OPhysicalPosition(
-                        masterPlaceholder.getIdentity().getClusterPosition(), masterPlaceholder.getVersion()));
+                  } catch (RuntimeException e) {
+                    executeUndoOnLocalServer(null, task);
+                    throw e;
+                  } catch (Exception e) {
+                    executeUndoOnLocalServer(null, task);
+                    ODatabaseException.wrapException(new ODistributedException("Cannot execute distributed create record"), e);
                   }
 
                 } else {
@@ -642,7 +650,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
-      handleDistributedException("Cannot route CREATE_RECORD operation for %s to the distributed node", e, iRecordId);
+      handleDistributedException("Cannot route create record operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
     }
@@ -680,7 +688,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       if (dResult instanceof ONeedRetryException)
         throw (ONeedRetryException) dResult;
       else if (dResult instanceof Exception)
-        throw OException.wrapException(new ODistributedException("Error on execution distributed READ_RECORD"),
+        throw OException.wrapException(new ODistributedException("Error on execution distributed read record"),
             (Exception) dResult);
 
       return new OStorageOperationResult<ORawBuffer>((ORawBuffer) dResult);
@@ -695,7 +703,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
-      handleDistributedException("Cannot route READ_RECORD operation for %s to the distributed node", e, iRecordId);
+      handleDistributedException("Cannot route read record operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
     }
@@ -735,7 +743,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       if (result instanceof ONeedRetryException)
         throw (ONeedRetryException) result;
       else if (result instanceof Exception)
-        throw OException.wrapException(new ODistributedException("Error on execution distributed READ_RECORD"), (Exception) result);
+        throw OException.wrapException(new ODistributedException("Error on execution distributed read record"), (Exception) result);
 
       return new OStorageOperationResult<ORawBuffer>((ORawBuffer) result);
 
@@ -749,7 +757,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
-      handleDistributedException("Cannot route READ_RECORD operation for %s to the distributed node", e, rid);
+      handleDistributedException("Cannot route read record operation for %s to the distributed node", e, rid);
       // UNREACHABLE
       return null;
     }
@@ -840,23 +848,32 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
                 if (syncMode || localResult == null) {
                   // REPLICATE IT
-                  final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
-                      dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
+                  try {
+                    final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
+                        dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
 
-                  final Object payload = dResponse.getPayload();
+                    final Object payload = dResponse.getPayload();
 
-                  if (payload instanceof Exception) {
-                    executeUndoOnLocalServer(dResponse.getRequestId(), task);
+                    if (payload instanceof Exception) {
+                      executeUndoOnLocalServer(dResponse.getRequestId(), task);
 
-                    if (payload instanceof ONeedRetryException)
-                      throw (ONeedRetryException) payload;
+                      if (payload instanceof ONeedRetryException)
+                        throw (ONeedRetryException) payload;
 
-                    throw OException.wrapException(new ODistributedException("Error on execution distributed UPDATE_RECORD"),
-                        (Exception) payload);
+                      throw OException.wrapException(new ODistributedException("Error on execution distributed update record"),
+                          (Exception) payload);
+                    }
+
+                    // UPDATE LOCALLY
+                    return new OStorageOperationResult<Integer>((Integer) payload);
+
+                  } catch (RuntimeException e) {
+                    executeUndoOnLocalServer(null, task);
+                    throw e;
+                  } catch (Exception e) {
+                    executeUndoOnLocalServer(null, task);
+                    ODatabaseException.wrapException(new ODistributedException("Cannot execute distributed update record"), e);
                   }
-
-                  // UPDATE LOCALLY
-                  return new OStorageOperationResult<Integer>((Integer) payload);
                 }
 
                 // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
@@ -965,22 +982,31 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
               if (syncMode || localResult == null) {
                 // REPLICATE IT
-                final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
-                    dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
+                try {
+                  final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
+                      dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
 
-                final Object payload = dResponse.getPayload();
+                  final Object payload = dResponse.getPayload();
 
-                if (payload instanceof Exception) {
-                  executeUndoOnLocalServer(dResponse.getRequestId(), task);
+                  if (payload instanceof Exception) {
+                    executeUndoOnLocalServer(dResponse.getRequestId(), task);
 
-                  if (payload instanceof ONeedRetryException)
-                    throw (ONeedRetryException) payload;
+                    if (payload instanceof ONeedRetryException)
+                      throw (ONeedRetryException) payload;
 
-                  throw OException.wrapException(new ODistributedException("Error on execution distributed DELETE_RECORD"),
-                      (Exception) payload);
+                    throw OException.wrapException(new ODistributedException("Error on execution distributed delete record"),
+                        (Exception) payload);
+                  }
+
+                  return new OStorageOperationResult<Boolean>(true);
+
+                } catch (RuntimeException e) {
+                  executeUndoOnLocalServer(null, task);
+                  throw e;
+                } catch (Exception e) {
+                  executeUndoOnLocalServer(null, task);
+                  ODatabaseException.wrapException(new ODistributedException("Cannot execute distributed delete record"), e);
                 }
-
-                return new OStorageOperationResult<Boolean>(true);
               }
 
               // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
