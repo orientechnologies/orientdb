@@ -321,9 +321,9 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void acquireAtomicExclusiveLock() {
-    for (OHashTable<?, ?> hashTable : partitions)
-      hashTable.acquireAtomicExclusiveLock();
+  public boolean acquireAtomicExclusiveLock(Object key) {
+    getPartition(key).acquireAtomicExclusiveLock();
+    return false;
   }
 
   private ODatabaseDocumentInternal getDatabase() {

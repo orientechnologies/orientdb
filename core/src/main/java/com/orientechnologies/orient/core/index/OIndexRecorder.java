@@ -376,7 +376,7 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public void acquireAtomicExclusiveLock() {
+  public boolean acquireAtomicExclusiveLock(Object key) {
     throw new UnsupportedOperationException("atomic locking is not supported by index recorder");
   }
 }

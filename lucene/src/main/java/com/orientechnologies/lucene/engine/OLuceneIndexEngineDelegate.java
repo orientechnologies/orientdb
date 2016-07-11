@@ -274,7 +274,7 @@ public class OLuceneIndexEngineDelegate implements OLuceneIndexEngine, OFreezabl
   }
 
   @Override
-  public void acquireAtomicExclusiveLock() {
-    delegate.acquireAtomicExclusiveLock();
+  public boolean acquireAtomicExclusiveLock(Object key) {
+    return delegate.acquireAtomicExclusiveLock(key);
   }
 }
