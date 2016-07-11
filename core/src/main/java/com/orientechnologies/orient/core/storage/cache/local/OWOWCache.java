@@ -1733,11 +1733,15 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     @Override
     public void run() {
+      final OLogSequenceNumber flushedLsn = writeAheadLog.getFlushedLsn();
+      if (flushedLsn == null)
+        return;
+
       final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
       if (statistic != null)
         statistic.startFuzzyCheckpointTimer();
       try {
-        OLogSequenceNumber minLsn = findMinLsn(writeAheadLog.getFlushedLsn(), writeCachePages);
+        OLogSequenceNumber minLsn = findMinLsn(flushedLsn, writeCachePages);
         OLogManager.instance().debug(this, "Start fuzzy checkpoint flushed LSN is %s", minLsn);
         try {
           writeAheadLog.logFuzzyCheckPointStart(minLsn);
