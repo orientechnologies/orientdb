@@ -4,8 +4,10 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 import java.util.Map;
+import java.util.Set;
 
 public class OLevelZeroIdentifier extends SimpleNode {
   protected OFunctionCall functionCall;
@@ -20,7 +22,9 @@ public class OLevelZeroIdentifier extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -72,8 +76,25 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   public boolean isExpand() {
-    if(functionCall!=null){
+    if (functionCall != null) {
       return functionCall.isExpand();
+    }
+    return false;
+  }
+
+  public OExpression getExpandContent() {
+    if (functionCall.getParams().size() != 1) {
+      throw new OCommandExecutionException("Invalid expand expression: " + functionCall.toString());
+    }
+    return functionCall.getParams().get(0);
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    if(functionCall!=null && functionCall.needsAliases(aliases)){
+      return true;
+    }
+    if(collection!=null && collection.needsAliases(aliases)){
+      return true;
     }
     return false;
   }

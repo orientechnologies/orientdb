@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 
 import java.util.Map;
+import java.util.Set;
 
 public class OExpression extends SimpleNode {
 
@@ -210,6 +211,20 @@ public class OExpression extends SimpleNode {
   public boolean isExpand() {
     if (mathExpression!=null) {
       return mathExpression.isExpand();
+    }
+    return false;
+  }
+
+  public OExpression getExpandContent() {
+    return mathExpression.getExpandContent();
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    if(mathExpression!=null){
+      return mathExpression.needsAliases(aliases);
+    }
+    if(json!=null){
+      return json.needsAliases(aliases);
     }
     return false;
   }

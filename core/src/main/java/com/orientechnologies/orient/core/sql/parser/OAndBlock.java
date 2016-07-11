@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OAndBlock extends OBooleanExpression {
   List<OBooleanExpression> subBlocks = new ArrayList<OBooleanExpression>();
@@ -140,6 +141,15 @@ public class OAndBlock extends OBooleanExpression {
     OAndBlock result = new OAndBlock(-1);
     result.subBlocks.add(item);
     return result;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    for(OBooleanExpression block:subBlocks){
+      if(block.needsAliases(aliases)){
+        return true;
+      }
+    }
+    return false;
   }
 
 }

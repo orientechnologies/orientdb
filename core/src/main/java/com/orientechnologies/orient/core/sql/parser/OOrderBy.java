@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +23,9 @@ public class OOrderBy extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -43,6 +48,16 @@ public class OOrderBy extends SimpleNode {
         items.get(i).toString(params, builder);
       }
     }
+  }
+
+  public int compare(OResult a, OResult b, OCommandContext ctx) {
+    for (OOrderByItem item : items) {
+      int result = item.compare(a, b, ctx);
+      if (result != 0) {
+        return result;
+      }
+    }
+    return 0;
   }
 }
 /* JavaCC - OriginalChecksum=d5529400217169f15e556e5dc6fe4f5b (do not edit this line) */

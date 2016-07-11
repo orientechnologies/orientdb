@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OContainsValueCondition extends OBooleanExpression {
   protected OExpression            left;
@@ -67,6 +68,20 @@ public class OContainsValueCondition extends OBooleanExpression {
       return Collections.EMPTY_LIST;
     }
     return condition.getExternalCalculationConditions();
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if(left!=null && left.needsAliases(aliases)){
+      return true;
+    }
+    if(condition!=null && condition.needsAliases(aliases)){
+      return true;
+    }
+    if(expression!=null && expression.needsAliases(aliases)){
+      return true;
+    }
+
+    return false;
   }
 
 }

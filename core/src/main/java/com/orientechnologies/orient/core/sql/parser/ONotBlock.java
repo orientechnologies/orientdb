@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ONotBlock extends OBooleanExpression {
   protected OBooleanExpression sub;
@@ -88,6 +89,10 @@ public class ONotBlock extends OBooleanExpression {
       return sub.flatten();
     }
     return super.flatten();
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    return sub.needsAliases(aliases);
   }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

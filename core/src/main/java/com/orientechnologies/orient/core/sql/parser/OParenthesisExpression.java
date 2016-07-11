@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Map;
+import java.util.Set;
 
 public class OParenthesisExpression extends OMathExpression {
 
@@ -58,5 +59,13 @@ public class OParenthesisExpression extends OMathExpression {
     // TODO implement query execution and early calculation;
     return expression != null && expression.isEarlyCalculated();
   }
+
+  public boolean needsAliases(Set<String> aliases) {
+    if(expression.needsAliases(aliases)){
+      return true;
+    }
+    return false;
+  }
+
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */

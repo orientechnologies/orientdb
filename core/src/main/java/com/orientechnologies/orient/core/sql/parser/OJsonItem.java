@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by luigidellaquila on 18/02/15.
@@ -33,5 +34,15 @@ public class OJsonItem {
       leftIdentifier.getStringValue();
     }
     return null;
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    if(aliases.contains(leftIdentifier.getStringValue())){
+      return true;
+    }
+    if(right.needsAliases(aliases)){
+      return true;
+    }
+    return false;
   }
 }

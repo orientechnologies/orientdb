@@ -29,9 +29,9 @@ public class OSelectStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
-    Assert.assertEquals(1L, item.getProperty("one"));
-    Assert.assertEquals(2L, item.getProperty("two"));
-    Assert.assertEquals(5L, item.getProperty("2 + 3"));
+    Assert.assertEquals(1L, item.<Object>getProperty("one"));
+    Assert.assertEquals(2L, item.<Object>getProperty("two"));
+    Assert.assertEquals(5L, item.<Object>getProperty("2 + 3"));
     result.close();
   }
 
@@ -46,9 +46,9 @@ public class OSelectStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
-    Assert.assertEquals(1L, item.getProperty("one"));
-    Assert.assertEquals(2L, item.getProperty("two"));
-    Assert.assertEquals(5L, item.getProperty("2 + 3"));
+    Assert.assertEquals(1L, item.<Object>getProperty("one"));
+    Assert.assertEquals(2L, item.<Object>getProperty("two"));
+    Assert.assertEquals(5L, item.<Object>getProperty("2 + 3"));
     result.close();
   }
 
@@ -63,9 +63,9 @@ public class OSelectStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
-    Assert.assertEquals(1L, item.getProperty("one"));
-    Assert.assertEquals(2L, item.getProperty("two"));
-    Assert.assertEquals(5L, item.getProperty("2 + 3"));
+    Assert.assertEquals(1L, item.<Object>getProperty("one"));
+    Assert.assertEquals(2L, item.<Object>getProperty("two"));
+    Assert.assertEquals(5L, item.<Object>getProperty("2 + 3"));
     result.close();
   }
 
@@ -147,7 +147,6 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-
   @Test public void testSelectFullScanLimit1() {
     String className = "testSelectFullScanLimit1";
     db.getMetadata().getSchema().createClass(className);
@@ -171,7 +170,6 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-
   @Test public void testSelectFullScanSkipLimit1() {
     String className = "testSelectFullScanSkipLimit1";
     db.getMetadata().getSchema().createClass(className);
@@ -190,6 +188,60 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(item);
       Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
 
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testSelectOrderByDesc() {
+    String className = "testSelectOrderByDesc";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 30; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select from " + className + " order by surname desc");
+    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+
+    String lastSurname = null;
+    for (int i = 0; i < 30; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      String thisSurname = item.getProperty("surname");
+      if (lastSurname != null) {
+        Assert.assertTrue(lastSurname.compareTo(thisSurname) >= 0);
+      }
+      lastSurname = thisSurname;
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testSelectOrderByAsc() {
+    String className = "testSelectOrderByAsc";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 30; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select from " + className + " order by surname asc");
+    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+
+    String lastSurname = null;
+    for (int i = 0; i < 30; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      String thisSurname = item.getProperty("surname");
+      if (lastSurname != null) {
+        Assert.assertTrue(lastSurname.compareTo(thisSurname) <= 0);
+      }
+      lastSurname = thisSurname;
     }
     Assert.assertFalse(result.hasNext());
     result.close();

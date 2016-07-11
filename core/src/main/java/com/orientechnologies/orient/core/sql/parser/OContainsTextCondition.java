@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OContainsTextCondition extends OBooleanExpression {
 
@@ -65,6 +66,16 @@ public class OContainsTextCondition extends OBooleanExpression {
       result.add(right);
     }
     return result;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if (!left.needsAliases(aliases)) {
+      return true;
+    }
+    if (!right.needsAliases(aliases)) {
+      return true;
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=b588492ba2cbd0f932055f1f64bbbecd (do not edit this line) */

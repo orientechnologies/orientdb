@@ -6,21 +6,18 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OModifier extends SimpleNode {
 
-  boolean                    squareBrackets = false;
+  boolean squareBrackets = false;
   OArrayRangeSelector        arrayRange;
   OOrBlock                   condition;
   OArraySingleValuesSelector arraySingleValues;
   OMethodCall                methodCall;
   OSuffixIdentifier          suffix;
 
-  OModifier                  next;
+  OModifier next;
 
   public OModifier(int id) {
     super(id);
@@ -30,7 +27,9 @@ public class OModifier extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -71,7 +70,7 @@ public class OModifier extends SimpleNode {
       result = filterByCondition(iCurrentRecord, result, ctx);
     } else if (arraySingleValues != null) {
       result = arraySingleValues.execute(iCurrentRecord, result, ctx);
-    } 
+    }
     if (next != null) {
       result = next.execute(iCurrentRecord, result, ctx);
     }
@@ -79,31 +78,55 @@ public class OModifier extends SimpleNode {
   }
 
   private Object filterByCondition(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
-    if(iResult==null){
+    if (iResult == null) {
       return null;
     }
     List<Object> result = new ArrayList<Object>();
-    if(iResult.getClass().isArray()){
-      for(int i=0;i< Array.getLength(iResult); i++){
+    if (iResult.getClass().isArray()) {
+      for (int i = 0; i < Array.getLength(iResult); i++) {
         Object item = Array.get(iResult, i);
-        if(condition.evaluate(item, ctx)){
+        if (condition.evaluate(item, ctx)) {
           result.add(item);
         }
       }
       return result;
     }
-    if(iResult instanceof Iterable){
+    if (iResult instanceof Iterable) {
       iResult = ((Iterable) iResult).iterator();
     }
-    if(iResult instanceof Iterator){
-      while(((Iterator) iResult).hasNext()){
+    if (iResult instanceof Iterator) {
+      while (((Iterator) iResult).hasNext()) {
         Object item = ((Iterator) iResult).next();
-        if(condition.evaluate(item, ctx)){
+        if (condition.evaluate(item, ctx)) {
           result.add(item);
         }
       }
     }
     return result;
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    if (condition != null && condition.needsAliases(aliases)) {
+      return true;
+    }
+
+    if (arraySingleValues != null && arraySingleValues.needsAliases(aliases)) {
+      return true;
+    }
+
+    if (arrayRange != null && arrayRange.needsAliases(aliases)) {
+      return true;
+    }
+
+    if (methodCall != null && methodCall.needsAliases(aliases)) {
+      return true;
+    }
+
+    if (next != null && next.needsAliases(aliases)) {
+      return true;
+    }
+
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

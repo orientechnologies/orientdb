@@ -142,5 +142,18 @@ public class OContainsCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if(left!=null && left.needsAliases(aliases)){
+      return true;
+    }
+    if(right!=null && right.needsAliases(aliases)){
+      return true;
+    }
+    if(condition!=null && condition.needsAliases(aliases)){
+      return true;
+    }
+    return false;
+  }
+
 }
 /* JavaCC - OriginalChecksum=bad1118296ea74860e88d66bfe9fa222 (do not edit this line) */

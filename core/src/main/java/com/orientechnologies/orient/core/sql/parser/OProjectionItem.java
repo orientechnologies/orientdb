@@ -80,6 +80,10 @@ public class OProjectionItem extends SimpleNode {
     return expression.execute(iCurrentRecord, ctx);
   }
 
+  /**
+   * returns the final alias for this projection item (the explicit alias, if defined, or the default alias)
+   * @return the final alias for this projection item
+   */
   public String getProjectionFieldAlias() {
     if (alias != null) {
       return alias.getStringValue();
@@ -89,6 +93,12 @@ public class OProjectionItem extends SimpleNode {
 
   public boolean isExpand() {
     return expression.isExpand();
+  }
+
+  public OProjectionItem getExpandContent() {
+    OProjectionItem result =new OProjectionItem(-1);
+    result.setExpression(expression.getExpandContent());
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

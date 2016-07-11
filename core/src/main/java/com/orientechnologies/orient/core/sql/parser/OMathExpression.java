@@ -4,17 +4,24 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OMathExpression extends SimpleNode {
 
   public boolean isExpand() {
     return false;//TODO
   }
+
+  public OExpression getExpandContent() {
+    throw new OCommandExecutionException("Invalid expand expression");
+  }
+
 
   public enum Operator {
     PLUS {
@@ -358,5 +365,15 @@ public class OMathExpression extends SimpleNode {
     }
     return true;
   }
+
+  public boolean needsAliases(Set<String> aliases) {
+    for(OMathExpression expr:childExpressions){
+      if(expr.needsAliases(aliases)){
+        return true;
+      }
+    }
+    return false;
+  }
+
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

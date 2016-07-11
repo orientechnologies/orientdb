@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Map;
+import java.util.Set;
 
 public class OArrayNumberSelector extends SimpleNode {
   private static final Object UNSET           = new Object();
@@ -59,5 +60,11 @@ public class OArrayNumberSelector extends SimpleNode {
     return null;
   }
 
+  public boolean needsAliases(Set<String> aliases) {
+    if(expressionValue!=null){
+      return expressionValue.needsAliases(aliases);
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=5b2e495391ede3ccdc6c25aa63c8e591 (do not edit this line) */

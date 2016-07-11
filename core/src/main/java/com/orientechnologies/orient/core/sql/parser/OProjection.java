@@ -7,8 +7,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OProjection extends SimpleNode {
 
@@ -92,6 +95,17 @@ public class OProjection extends SimpleNode {
         }
       }
     }
+  }
+
+  public OProjection getExpandContent() {
+    OProjection result = new OProjection(-1);
+    result.setItems(new ArrayList<>());
+    result.getItems().add(this.getItems().get(0).getExpandContent());
+    return result;
+  }
+
+  public Set<String> getAllAliases() {
+    return items.stream().map(i -> i.getProjectionFieldAlias()).collect(Collectors.toSet());
   }
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

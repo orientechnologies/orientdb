@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OArraySingleValuesSelector extends SimpleNode {
 
@@ -50,5 +51,13 @@ public class OArraySingleValuesSelector extends SimpleNode {
     return result;
   }
 
+  public boolean needsAliases(Set<String> aliases) {
+    for(OArraySelector item:items){
+      if(item.needsAliases(aliases)){
+        return true;
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=991998c77a4831184b6dca572513fd8d (do not edit this line) */

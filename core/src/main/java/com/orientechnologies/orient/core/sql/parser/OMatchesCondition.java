@@ -8,10 +8,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OMatchesCondition extends OBooleanExpression {
-  protected OExpression expression;
-  protected String      right;
+  protected OExpression     expression;
+  protected String          right;
   protected OInputParameter rightParam;
 
   public OMatchesCondition(int id) {
@@ -22,7 +23,9 @@ public class OMatchesCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -31,36 +34,39 @@ public class OMatchesCondition extends OBooleanExpression {
     return false;
   }
 
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     expression.toString(params, builder);
     builder.append(" MATCHES ");
-    if(right!=null) {
+    if (right != null) {
       builder.append(right);
-    }else{
+    } else {
       rightParam.toString(params, builder);
     }
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     return expression.supportsBasicCalculation();
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     if (expression != null && !expression.supportsBasicCalculation()) {
       return 1;
     }
     return 0;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     if (expression != null && !expression.supportsBasicCalculation()) {
       return (List) Collections.singletonList(expression);
     }
     return Collections.EMPTY_LIST;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if (expression.needsAliases(aliases)) {
+      return true;
+    }
+    return false;
   }
 
 }

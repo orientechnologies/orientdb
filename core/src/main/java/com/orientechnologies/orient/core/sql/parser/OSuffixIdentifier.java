@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Map;
+import java.util.Set;
 
 public class OSuffixIdentifier extends SimpleNode {
 
@@ -93,6 +94,20 @@ public class OSuffixIdentifier extends SimpleNode {
 
   public boolean isBaseIdentifier() {
     return identifier != null;
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    if(identifier!=null){
+      return aliases.contains(identifier.getStringValue());
+    }
+    if(recordAttribute!=null){
+      for(String s:aliases){
+        if(s.equalsIgnoreCase(recordAttribute.name)){
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

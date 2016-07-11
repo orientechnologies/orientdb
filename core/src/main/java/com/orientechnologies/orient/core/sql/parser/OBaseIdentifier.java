@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Map;
+import java.util.Set;
 
 public class OBaseIdentifier extends SimpleNode {
 
@@ -76,6 +77,20 @@ public class OBaseIdentifier extends SimpleNode {
   public boolean isExpand() {
     if(levelZero!=null){
       return levelZero.isExpand();
+    }
+    return false;
+  }
+
+  public OExpression getExpandContent() {
+    return levelZero.getExpandContent();
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    if(levelZero!=null && levelZero.needsAliases(aliases)){
+      return true;
+    }
+    if(suffix!=null && suffix.needsAliases(aliases)){
+      return true;
     }
     return false;
   }

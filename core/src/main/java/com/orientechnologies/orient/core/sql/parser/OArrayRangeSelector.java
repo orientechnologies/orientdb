@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 
 public class OArrayRangeSelector extends SimpleNode {
   protected Integer              from;
@@ -86,5 +87,14 @@ public class OArrayRangeSelector extends SimpleNode {
     return Arrays.asList(Arrays.copyOfRange(arrayResult, lFrom, lTo));
   }
 
+  public boolean needsAliases(Set<String> aliases) {
+    if(fromSelector!=null && fromSelector.needsAliases(aliases)){
+      return true;
+    }
+    if(toSelector!=null && toSelector.needsAliases(aliases)){
+      return true;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=594a372e31fcbcd3ed962c2260e76468 (do not edit this line) */

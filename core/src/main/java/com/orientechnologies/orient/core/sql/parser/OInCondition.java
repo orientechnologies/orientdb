@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OInCondition extends OBooleanExpression {
   protected OExpression            left;
@@ -107,5 +108,17 @@ public class OInCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if(left.needsAliases(aliases)){
+      return true;
+    }
+
+    if(rightMathExpression!=null && rightMathExpression.needsAliases(aliases)){
+      return true;
+    }
+    return false;
+  }
+
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */
+

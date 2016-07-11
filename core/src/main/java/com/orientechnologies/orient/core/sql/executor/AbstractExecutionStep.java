@@ -12,6 +12,7 @@ public abstract class AbstractExecutionStep implements OExecutionStep {
   protected final OCommandContext ctx;
   protected Optional<OExecutionStep> prev = Optional.empty();
   protected Optional<OExecutionStep> next = Optional.empty();
+  protected boolean timedOut = false;
 
   public AbstractExecutionStep(OCommandContext ctx) {
     this.ctx = ctx;
@@ -38,6 +39,7 @@ public abstract class AbstractExecutionStep implements OExecutionStep {
   }
 
   @Override public void sendTimeout() {
+    this.timedOut = true;
     prev.ifPresent(p -> p.sendTimeout());
   }
 

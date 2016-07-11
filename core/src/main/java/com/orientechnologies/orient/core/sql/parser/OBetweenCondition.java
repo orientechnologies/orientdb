@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OBetweenCondition extends OBooleanExpression {
 
@@ -101,6 +102,19 @@ public class OBetweenCondition extends OBooleanExpression {
   @Override
   protected List<Object> getExternalCalculationConditions() {
     return Collections.EMPTY_LIST;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if(first.needsAliases(aliases)){
+      return true;
+    }
+    if(second.needsAliases(aliases)){
+      return true;
+    }
+    if(third.needsAliases(aliases)){
+      return true;
+    }
+    return false;
   }
 
 }

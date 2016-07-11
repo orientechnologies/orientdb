@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OIsDefinedCondition extends OBooleanExpression {
 
@@ -49,6 +50,10 @@ public class OIsDefinedCondition extends OBooleanExpression {
   @Override
   protected List<Object> getExternalCalculationConditions() {
     return Collections.EMPTY_LIST;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    return expression.needsAliases(aliases);
   }
 
 }

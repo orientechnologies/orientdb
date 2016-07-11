@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OOrBlock extends OBooleanExpression {
   List<OBooleanExpression> subBlocks = new ArrayList<OBooleanExpression>();
@@ -126,6 +127,15 @@ public class OOrBlock extends OBooleanExpression {
       }
     }
     return result;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    for(OBooleanExpression expr:subBlocks){
+      if(expr.needsAliases(aliases)){
+        return true;
+      }
+    }
+    return false;
   }
 
 }

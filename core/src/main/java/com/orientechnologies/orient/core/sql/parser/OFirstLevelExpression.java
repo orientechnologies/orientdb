@@ -27,5 +27,6 @@ public class OFirstLevelExpression extends OMathExpression {
     }
     return false;
   }
+
 }
 /* JavaCC - OriginalChecksum=30dc1016b686d4841bbd57d6e6c0bfbd (do not edit this line) */

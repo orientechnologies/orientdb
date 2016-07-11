@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OFunctionCall extends SimpleNode {
 
@@ -131,6 +132,15 @@ public class OFunctionCall extends SimpleNode {
 
   public boolean isExpand() {
     return name.getStringValue().equals("expand");
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    for(OExpression param:params){
+      if(param.needsAliases(aliases)){
+        return true;
+      }
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */

@@ -213,7 +213,7 @@ public class OSelectStatement extends OStatement {
   }
 
   public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
-    if(projection!=null){
+    if (projection != null) {
       projection.validate();
     }
   }
@@ -232,5 +232,7 @@ public class OSelectStatement extends OStatement {
     OSelectExecutionPlan result = new OSelectExecutionPlan(this, ctx);
     return result;
   }
+
+
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

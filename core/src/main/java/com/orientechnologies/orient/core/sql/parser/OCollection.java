@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OCollection extends SimpleNode {
   protected List<OExpression> expressions = new ArrayList<OExpression>();
@@ -20,7 +21,9 @@ public class OCollection extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -44,6 +47,15 @@ public class OCollection extends SimpleNode {
       result.add(exp.execute(iCurrentRecord, ctx));
     }
     return result;
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    for (OExpression expr : this.expressions) {
+      if (expr.needsAliases(aliases)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=c93b20138b2ae58c5f76e458c34b5946 (do not edit this line) */

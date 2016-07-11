@@ -4,8 +4,6 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.parser.OOrderBy;
-import com.orientechnologies.orient.core.sql.parser.OOrderByItem;
 import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 
 import java.util.Arrays;
@@ -22,13 +20,27 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   private final OSelectStatement stm;
   FetchFromClusterExecutionStep[] subSteps;
   OTodoResultSet                  currentResultSet;
+  private boolean orderByRidAsc = false;
+  private boolean orderByRidDesc = false;
 
   int currentStep = 0;
 
-  public FetchFromClassExecutionStep(String className, OSelectStatement oSelectStatement, OCommandContext ctx) {
+  /**
+   * iterates over a class and its subclasses
+   * @param className the class name
+   * @param oSelectStatement the statement
+   * @param ctx the query context
+   * @param ridOrder true to sort by RID asc, false to sort by RID desc, null for no sort.
+   */
+  public FetchFromClassExecutionStep(String className, OSelectStatement oSelectStatement, OCommandContext ctx, Boolean ridOrder) {
     super(ctx);
     stm = oSelectStatement;
     this.className = className;
+    if(Boolean.TRUE.equals(ridOrder)){
+      orderByRidAsc = true;
+    }else if(Boolean.FALSE.equals(ridOrder)){
+      orderByRidDesc = true;
+    }
     OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(className);
     if (clazz == null) {
       throw new OCommandExecutionException("Class " + className + " not found");
@@ -38,9 +50,9 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     sortClusers(clusterIds);
     for (int i = 0; i < clusterIds.length; i++) {
       FetchFromClusterExecutionStep step = new FetchFromClusterExecutionStep(clusterIds[i], ctx);
-      if (orderByRidAsc()) {
+      if (orderByRidAsc) {
         step.setOrder(FetchFromClusterExecutionStep.ORDER_ASC);
-      } else if (orderByRidDesc()) {
+      } else if (orderByRidDesc) {
         step.setOrder(FetchFromClusterExecutionStep.ORDER_DESC);
       }
       subSteps[i] = step;
@@ -48,9 +60,9 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   }
 
   private void sortClusers(int[] clusterIds) {
-    if (orderByRidAsc()) {
+    if (orderByRidAsc) {
       Arrays.sort(clusterIds);
-    } else if (orderByRidDesc()) {
+    } else if (orderByRidDesc) {
       Arrays.sort(clusterIds);
       //revert order
       for (int i = 0; i < clusterIds.length / 2; i++) {
@@ -61,36 +73,6 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     }
   }
 
-  private boolean orderByRidAsc() {
-    OOrderBy orderBy = stm.getOrderBy();
-    if (orderBy == null) {
-      return false;
-    }
-    if (orderBy.getItems().size() == 1) {
-      OOrderByItem item = orderBy.getItems().get(0);
-      String recordAttr = item.getRecordAttr();
-      if (recordAttr != null && recordAttr.equalsIgnoreCase("@rid") &&
-          (item.getType() == null || OOrderByItem.ASC.equals(item.getType()))) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean orderByRidDesc() {
-    OOrderBy orderBy = stm.getOrderBy();
-    if (orderBy == null) {
-      return false;
-    }
-    if (orderBy.getItems().size() == 1) {
-      OOrderByItem item = orderBy.getItems().get(0);
-      String recordAttr = item.getRecordAttr();
-      if (recordAttr != null && recordAttr.equalsIgnoreCase("@rid") && OOrderByItem.DESC.equals(item.getType())) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
 
@@ -194,4 +176,5 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     }
     return builder.toString();
   }
+
 }

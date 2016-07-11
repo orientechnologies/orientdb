@@ -8,11 +8,12 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OIndexMatchCondition extends OBooleanExpression {
 
-  protected OBinaryCompareOperator  operator;
-  protected Boolean           between;
+  protected OBinaryCompareOperator operator;
+  protected Boolean                between;
 
   protected List<OExpression> leftExpressions;
   protected List<OExpression> rightExpressions;
@@ -25,16 +26,16 @@ public class OIndexMatchCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return false;
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("KEY ");
@@ -77,8 +78,7 @@ public class OIndexMatchCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     return 1;
   }
 
@@ -86,6 +86,24 @@ public class OIndexMatchCondition extends OBooleanExpression {
     List<Object> result = new ArrayList<Object>();
     result.add(this);
     return result;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if (leftExpressions != null) {
+      for (OExpression exp : leftExpressions) {
+        if (exp.needsAliases(aliases)) {
+          return true;
+        }
+      }
+    }
+    if (rightExpressions != null) {
+      for (OExpression exp : rightExpressions) {
+        if (exp.needsAliases(aliases)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
 }

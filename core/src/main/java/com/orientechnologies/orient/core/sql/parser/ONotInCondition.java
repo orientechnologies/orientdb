@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ONotInCondition extends OBooleanExpression {
 
@@ -106,6 +107,17 @@ public class ONotInCondition extends OBooleanExpression {
       result.add(rightMathExpression);
     }
     return result;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if(left.needsAliases(aliases)){
+      return true;
+    }
+
+    if(rightMathExpression!=null && rightMathExpression.needsAliases(aliases)){
+      return true;
+    }
+    return false;
   }
 
 }

@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OInstanceofCondition extends OBooleanExpression {
 
@@ -63,6 +64,13 @@ public class OInstanceofCondition extends OBooleanExpression {
       return (List) Collections.singletonList(left);
     }
     return Collections.EMPTY_LIST;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if(left.needsAliases(aliases)){
+      return true;
+    }
+    return false;
   }
 
 }

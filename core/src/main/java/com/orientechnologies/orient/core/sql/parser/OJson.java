@@ -6,10 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OJson extends SimpleNode {
 
@@ -92,6 +89,15 @@ public class OJson extends SimpleNode {
       }
     }
     return null;
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    for(OJsonItem item:items){
+      if(item.needsAliases(aliases)){
+        return true;
+      }
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=3beec9f6db486de944498588b51a505d (do not edit this line) */

@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by luigidellaquila on 07/11/14.
@@ -31,6 +32,10 @@ public abstract class OBooleanExpression extends SimpleNode {
 
     @Override protected List<Object> getExternalCalculationConditions() {
       return Collections.EMPTY_LIST;
+    }
+
+    @Override public boolean needsAliases(Set<String> aliases) {
+      return false;
     }
 
     @Override
@@ -60,6 +65,10 @@ public abstract class OBooleanExpression extends SimpleNode {
 
     @Override protected List<Object> getExternalCalculationConditions() {
       return Collections.EMPTY_LIST;
+    }
+
+    @Override public boolean needsAliases(Set<String> aliases) {
+      return false;
     }
 
     @Override
@@ -125,4 +134,5 @@ public abstract class OBooleanExpression extends SimpleNode {
     return result;
   }
 
+  public abstract boolean needsAliases(Set<String> aliases);
 }

@@ -17,11 +17,11 @@ public class OResult {
     content.put(name, value);
   }
 
-  public Object getProperty(String name) {
+  public <T> T getProperty(String name) {
     if (element != null) {
       return ((ODocument) element.getRecord()).getProperty(name);
     }
-    return content.get(name);
+    return (T)content.get(name);
   }
 
   public OIdentifiable getElement() {

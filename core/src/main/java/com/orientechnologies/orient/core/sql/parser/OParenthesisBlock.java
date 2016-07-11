@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OParenthesisBlock extends OBooleanExpression {
 
@@ -54,6 +55,10 @@ public class OParenthesisBlock extends OBooleanExpression {
 
   @Override public List<OAndBlock> flatten() {
     return subElement.flatten();
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    return subElement.needsAliases(aliases);
   }
 }
 /* JavaCC - OriginalChecksum=9a16b6cf7d051382acb94c45067631a9 (do not edit this line) */

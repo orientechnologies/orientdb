@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OIsNotNullCondition extends OBooleanExpression {
 
@@ -55,6 +56,10 @@ public class OIsNotNullCondition extends OBooleanExpression {
       return (List) Collections.singletonList(expression);
     }
     return Collections.EMPTY_LIST;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    return expression.needsAliases(aliases);
   }
 
 }

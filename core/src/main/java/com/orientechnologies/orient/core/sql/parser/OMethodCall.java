@@ -15,13 +15,14 @@ import java.util.*;
 
 public class OMethodCall extends SimpleNode {
 
-  static Set<String>          graphMethods         = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "outE",
-      "inE", "bothE", "bothV", "outV", "inV"      }));
+  static Set<String> graphMethods = new HashSet<String>(
+      Arrays.asList(new String[] { "out", "in", "both", "outE", "inE", "bothE", "bothV", "outV", "inV" }));
 
-  static Set<String>          bidirectionalMethods = new HashSet<String>(Arrays.asList(new String[] { "out", "in", "both", "oute", "ine", "inv", "outv" }));
+  static Set<String> bidirectionalMethods = new HashSet<String>(
+      Arrays.asList(new String[] { "out", "in", "both", "oute", "ine", "inv", "outv" }));
 
-  protected OIdentifier       methodName;
-  protected List<OExpression> params               = new ArrayList<OExpression>();
+  protected OIdentifier methodName;
+  protected List<OExpression> params = new ArrayList<OExpression>();
 
   public OMethodCall(int id) {
     super(id);
@@ -74,8 +75,9 @@ public class OMethodCall extends SimpleNode {
     if (graphMethods.contains(name)) {
       OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
       if (function instanceof OSQLFunctionFiltered) {
-        return ((OSQLFunctionFiltered) function).execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null,
-            paramValues.toArray(), iPossibleResults, ctx);
+        return ((OSQLFunctionFiltered) function)
+            .execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), iPossibleResults,
+                ctx);
       } else {
         return function.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), ctx);
       }
@@ -129,5 +131,13 @@ public class OMethodCall extends SimpleNode {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
+  public boolean needsAliases(Set<String> aliases) {
+    for (OExpression param : params) {
+      if (param.needsAliases(aliases)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=da95662da21ceb8dee3ad88c0d980413 (do not edit this line) */

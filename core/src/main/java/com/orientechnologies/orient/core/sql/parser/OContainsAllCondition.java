@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OContainsAllCondition extends OBooleanExpression {
 
@@ -106,6 +107,20 @@ public class OContainsAllCondition extends OBooleanExpression {
       result.addAll(rightBlock.getExternalCalculationConditions());
     }
     return result;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if(left.needsAliases(aliases)){
+      return true;
+    }
+
+    if(right!=null && right.needsAliases(aliases)){
+      return true;
+    }
+    if(rightBlock!=null && rightBlock.needsAliases(aliases)){
+      return true;
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=ab7b4e192a01cda09a82d5b80ef4ec60 (do not edit this line) */
