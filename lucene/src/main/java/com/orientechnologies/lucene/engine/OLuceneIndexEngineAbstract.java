@@ -505,7 +505,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   }
 
   @Override
-  public void acquireAtomicExclusiveLock() {
-    // do nothing
+  public boolean acquireAtomicExclusiveLock(Object key) {
+    return true; // do nothing
   }
 }

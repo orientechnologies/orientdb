@@ -406,8 +406,9 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void acquireAtomicExclusiveLock() {
+  public boolean acquireAtomicExclusiveLock(Object key) {
     hashTable.acquireAtomicExclusiveLock();
+    return true;
   }
 
   private ODatabaseDocumentInternal getDatabase() {

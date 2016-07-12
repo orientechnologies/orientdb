@@ -223,8 +223,9 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void acquireAtomicExclusiveLock() {
+  public boolean acquireAtomicExclusiveLock(Object key) {
     sbTree.acquireAtomicExclusiveLock();
+    return true;
   }
 
   private static final class OSBTreeIndexCursor extends OIndexAbstractCursor {

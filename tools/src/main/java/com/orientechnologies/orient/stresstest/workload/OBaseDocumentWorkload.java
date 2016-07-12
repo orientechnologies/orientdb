@@ -61,4 +61,14 @@ public abstract class OBaseDocumentWorkload extends OBaseWorkload {
 
     return database;
   }
+
+  @Override
+  protected void beginTransaction(final OBaseWorkLoadContext context) {
+    ((OWorkLoadContext) context).db.begin();
+  }
+
+  @Override
+  protected void commitTransaction(final OBaseWorkLoadContext context) {
+    ((OWorkLoadContext) context).db.commit();
+  }
 }

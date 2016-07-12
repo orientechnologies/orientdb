@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -39,28 +38,14 @@ public class OIndexDictionary extends OIndexOneValue {
   }
 
   public OIndexOneValue put(Object key, final OIdentifiable value) {
-
     key = getCollatingValue(key);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive) {
-      keyLockManager.acquireExclusiveLock(key);
-    }
-
+    acquireSharedLock();
     try {
-      acquireSharedLock();
-      try {
-        storage.putIndexValue(indexId, key, value);
-        return this;
-
-      } finally {
-        releaseSharedLock();
-      }
+      storage.putIndexValue(indexId, key, value);
+      return this;
     } finally {
-      if (!txIsActive)
-        keyLockManager.releaseExclusiveLock(key);
+      releaseSharedLock();
     }
   }
 

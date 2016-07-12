@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.stresstest.workload;
 
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
+import com.orientechnologies.orient.stresstest.OStressTesterSettings;
 
 /**
  * Represents a workload for the stress test.
@@ -31,7 +32,7 @@ public interface OWorkload {
   
   void parseParameters(String params);
 
-  void execute(int threadsNumber, ODatabaseIdentifier databaseIdentifier);
+  void execute(OStressTesterSettings settings, ODatabaseIdentifier databaseIdentifier);
 
   String getPartialResult();
 

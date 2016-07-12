@@ -22,25 +22,19 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.types.OModifiableBoolean;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
  * Fast index for full-text searches.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OIndexFullText extends OIndexMultiValues {
 
@@ -52,13 +46,13 @@ public class OIndexFullText extends OIndexMultiValues {
   private static final boolean DEF_INDEX_RADIX        = true;
   private static final String  DEF_SEPARATOR_CHARS    = " \r\n\t:;,.|+*/\\=!?[]()";
   private static final String  DEF_IGNORE_CHARS       = "'\"";
-  private static final String  DEF_STOP_WORDS         = "the in a at as and or for his her " + "him this that what which while "
-      + "up with be was were is";
-  private static int           DEF_MIN_WORD_LENGTH    = 3;
-  private boolean              indexRadix;
-  private String               separatorChars;
-  private String               ignoreChars;
-  private int                  minWordLength;
+  private static final String  DEF_STOP_WORDS         =
+      "the in a at as and or for his her " + "him this that what which while " + "up with be was were is";
+  private static       int     DEF_MIN_WORD_LENGTH    = 3;
+  private boolean indexRadix;
+  private String  separatorChars;
+  private String  ignoreChars;
+  private int     minWordLength;
 
   private Set<String> stopWords;
 
@@ -85,71 +79,58 @@ public class OIndexFullText extends OIndexMultiValues {
 
     key = getCollatingValue(key);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
+    final Set<String> words = splitIntoWords(key.toString());
 
-    if (!txIsActive)
-      keyLockManager.acquireExclusiveLock(key);
+    // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
+    for (final String word : words) {
+      acquireSharedLock();
+      try {
+        final Set<OIdentifiable> refs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
 
-    try {
-      final Set<String> words = splitIntoWords(key.toString());
+        final boolean durable;
+        if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+          durable = true;
+        else
+          durable = false;
 
-      // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
-      for (final String word : words) {
-        acquireSharedLock();
-        try {
-          final Set<OIdentifiable> refs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
+        // SAVE THE INDEX ENTRY
+        storage.updateIndexEntry(indexId, word, new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            Set<OIdentifiable> result = null;
 
-          final boolean durable;
-          if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-            durable = true;
-          else
-            durable = false;
-
-          // SAVE THE INDEX ENTRY
-          storage.updateIndexEntry(indexId, word, new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-              Set<OIdentifiable> result = null;
-
-              if (refs == null) {
-                // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-                if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-                  result = new OIndexRIDContainer(getName(), durable);
-                } else {
-                  throw new IllegalStateException("MBRBTreeContainer is not supported any more");
-                }
+            if (refs == null) {
+              // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+              if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+                result = new OIndexRIDContainer(getName(), durable);
               } else {
-                result = refs;
+                throw new IllegalStateException("MBRBTreeContainer is not supported any more");
               }
-
-              // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-              result.add(singleValue);
-
-              return result;
+            } else {
+              result = refs;
             }
-          });
 
-        } finally {
-          releaseSharedLock();
-        }
+            // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+            result.add(singleValue);
+
+            return result;
+          }
+        });
+
+      } finally {
+        releaseSharedLock();
       }
-      return this;
-
-    } finally {
-      if (!txIsActive)
-        keyLockManager.releaseExclusiveLock(key);
     }
+    return this;
   }
 
   /**
    * Splits passed in key on several words and remove records with keys equals to any item of split result and values equals to
    * passed in value.
-   * 
-   * @param key
-   *          Key to remove.
-   * @param value
-   *          Value to remove.
+   *
+   * @param key   Key to remove.
+   * @param value Value to remove.
+   *
    * @return <code>true</code> if at least one record is removed.
    */
   @Override
@@ -159,33 +140,23 @@ public class OIndexFullText extends OIndexMultiValues {
 
     key = getCollatingValue(key);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
+    final Set<String> words = splitIntoWords(key.toString());
+    final OModifiableBoolean removed = new OModifiableBoolean(false);
 
-    if (!txIsActive)
-      keyLockManager.acquireExclusiveLock(key);
-    try {
-      final Set<String> words = splitIntoWords(key.toString());
-      final OModifiableBoolean removed = new OModifiableBoolean(false);
+    for (final String word : words) {
+      acquireSharedLock();
+      try {
+        final Set<OIdentifiable> recs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
 
-      for (final String word : words) {
-        acquireSharedLock();
-        try {
-          final Set<OIdentifiable> recs = (Set<OIdentifiable>) storage.getIndexValue(indexId, word);
-
-          if (recs != null && !recs.isEmpty()) {
-            storage.updateIndexEntry(indexId, word, new EntityRemover(recs, value, removed));
-          }
-        } finally {
-          releaseSharedLock();
+        if (recs != null && !recs.isEmpty()) {
+          storage.updateIndexEntry(indexId, word, new EntityRemover(recs, value, removed));
         }
+      } finally {
+        releaseSharedLock();
       }
-
-      return removed.getValue();
-    } finally {
-      if (!txIsActive)
-        keyLockManager.releaseExclusiveLock(key);
     }
+
+    return removed.getValue();
   }
 
   @Override
@@ -211,8 +182,8 @@ public class OIndexFullText extends OIndexMultiValues {
   @Override
   public ODocument updateConfiguration() {
     super.updateConfiguration();
-    return ((FullTextIndexConfiguration) configuration).updateFullTextIndexConfiguration(separatorChars, ignoreChars, stopWords,
-        minWordLength, indexRadix);
+    return ((FullTextIndexConfiguration) configuration)
+        .updateFullTextIndexConfiguration(separatorChars, ignoreChars, stopWords, minWordLength, indexRadix);
   }
 
   @Override

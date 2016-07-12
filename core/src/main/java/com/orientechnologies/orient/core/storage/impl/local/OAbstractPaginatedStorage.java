@@ -1280,8 +1280,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
-    final Map<String, OIndexInternal<?>> indexesToCommit = getChangedIndexes(clientTx,
-        databaseRecord.getMetadata().getIndexManager());
+    final OIndexManagerProxy indexManager = databaseRecord.getMetadata().getIndexManager();
+    final TreeMap<String, OTransactionIndexChanges> indexesToCommit = getSortedIndexEntries(clientTx);
 
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
 
@@ -1311,19 +1311,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecord record = txEntry.getRecord();
         final ORID rid = record.getIdentity();
 
-        int clusterId = rid.getClusterId();
-
-        if (record.isDirty() && clusterId == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
+        if (record.isDirty() && rid.getClusterId() == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
           // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
 
           final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
           if (class_ != null) {
-            clusterId = class_.getClusterForNewInstance((ODocument) record);
+            final int clusterId = class_.getClusterForNewInstance((ODocument) record);
             clusterOverrides.put(txEntry, clusterId);
+            clustersToLock.put(clusterId, getClusterById(clusterId));
           }
+        } else {
+          final int clusterId = rid.getClusterId();
+          clustersToLock.put(clusterId, getClusterById(clusterId));
         }
-
-        clustersToLock.put(clusterId, getClusterById(clusterId));
       }
     }
 
@@ -1337,10 +1337,28 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           makeStorageDirty();
           startStorageTx(clientTx);
+
           for (OCluster cluster : clustersToLock.values())
             cluster.acquireAtomicExclusiveLock();
-          for (OIndexInternal<?> index : getSortedIndexes(indexesToCommit))
-            index.acquireAtomicExclusiveLock();
+
+          for (Map.Entry<String, OTransactionIndexChanges> entry : indexesToCommit.entrySet()) {
+            final String indexName = entry.getKey();
+            final OTransactionIndexChanges changes = entry.getValue();
+            assert changes.changesPerKey instanceof TreeMap;
+
+            final OIndexInternal<?> index = changes.resolveAssociatedIndex(indexName, indexManager);
+            if (index == null)
+              throw new OTransactionException("Cannot find index '" + indexName + "' while committing transaction");
+
+            boolean fullyLocked = false;
+            for (Object key : changes.changesPerKey.keySet())
+              if (index.acquireAtomicExclusiveLock(key)) {
+                fullyLocked = true;
+                break;
+              }
+            if (!fullyLocked && !changes.nullKeyChanges.entries.isEmpty())
+              index.acquireAtomicExclusiveLock(null);
+          }
 
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : newRecords) {
@@ -1373,7 +1391,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             result.add(txEntry);
           }
 
-          commitIndexes(clientTx, indexesToCommit);
+          commitIndexes(indexesToCommit);
 
           endStorageTx();
 
@@ -1396,65 +1414,44 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return result;
   }
 
-  private void commitIndexes(OTransaction clientTx, final Map<String, OIndexInternal<?>> indexesToCommit) {
-    assert clientTx instanceof OTransactionOptimistic;
+  private void commitIndexes(final Map<String, OTransactionIndexChanges> indexesToCommit) {
+    final Map<OIndex, OIndexAbstract.IndexTxSnapshot> snapshots = new IdentityHashMap<OIndex, OIndexAbstract.IndexTxSnapshot>();
 
-    Map<OIndex, OIndexAbstract.IndexTxSnapshot> snapshots = new IdentityHashMap<OIndex, OIndexAbstract.IndexTxSnapshot>();
-    for (OIndexInternal<?> indexInternal : indexesToCommit.values()) {
-      OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
-      snapshots.put(indexInternal, snapshot);
-      indexInternal.preCommit(snapshot);
+    for (OTransactionIndexChanges changes : indexesToCommit.values()) {
+      final OIndexInternal<?> index = changes.getAssociatedIndex();
+      final OIndexAbstract.IndexTxSnapshot snapshot = new OIndexAbstract.IndexTxSnapshot();
+      snapshots.put(index, snapshot);
+
+      index.preCommit(snapshot);
     }
 
-    Map<String, OTransactionIndexChanges> indexChanges = ((OTransactionOptimistic) clientTx).getIndexEntries();
+    for (OTransactionIndexChanges changes : indexesToCommit.values()) {
+      final OIndexInternal<?> index = changes.getAssociatedIndex();
+      final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
 
-    for (Map.Entry<String, OTransactionIndexChanges> indexEntry : indexChanges.entrySet()) {
-      final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
-
-      if (index == null) {
-        OLogManager.instance().error(this, "Index with name '" + indexEntry.getKey() + "' was not found.");
-        throw new OIndexException("Index with name '" + indexEntry.getKey() + "' was not found.");
-      } else {
-        OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
-        index.addTxOperation(snapshot, indexEntry.getValue());
-      }
+      index.addTxOperation(snapshot, changes);
     }
 
     try {
-      for (OIndexInternal<?> indexInternal : indexesToCommit.values()) {
-        OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(indexInternal);
-        indexInternal.commit(snapshot);
+      for (OTransactionIndexChanges changes : indexesToCommit.values()) {
+        final OIndexInternal<?> index = changes.getAssociatedIndex();
+        final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
+
+        index.commit(snapshot);
       }
     } finally {
-      for (OIndexInternal<?> indexInternal : indexesToCommit.values()) {
-        OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(indexInternal);
-        indexInternal.postCommit(snapshot);
+      for (OTransactionIndexChanges changes : indexesToCommit.values()) {
+        final OIndexInternal<?> index = changes.getAssociatedIndex();
+        final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
+
+        index.postCommit(snapshot);
       }
     }
   }
 
-  private Map<String, OIndexInternal<?>> getChangedIndexes(OTransaction clientTx, OIndexManager manager) {
+  private TreeMap<String, OTransactionIndexChanges> getSortedIndexEntries(OTransaction clientTx) {
     assert clientTx instanceof OTransactionOptimistic;
-
-    Map<String, OTransactionIndexChanges> indexChanges = ((OTransactionOptimistic) clientTx).getIndexEntries();
-
-    final Map<String, OIndexInternal<?>> indexesToCommit = new HashMap<String, OIndexInternal<?>>();
-
-    for (Map.Entry<String, OTransactionIndexChanges> indexChange : indexChanges.entrySet()) {
-      final OIndex<?> idx = manager.getIndex(indexChange.getKey());
-      if (idx == null)
-        throw new OTransactionException("Cannot find index '" + indexChange.getKey() + "' while committing transaction");
-
-      final OIndexInternal<?> index = idx.getInternal();
-      indexesToCommit.put(index.getName(), index.getInternal());
-    }
-    return indexesToCommit;
-  }
-
-  private OIndexInternal[] getSortedIndexes(Map<String, OIndexInternal<?>> indexes) {
-    final OIndexInternal[] sortedIndexes = indexes.values().toArray(new OIndexInternal[indexes.size()]);
-    Arrays.sort(sortedIndexes, OIndexInternal.ID_COMPARATOR);
-    return sortedIndexes;
+    return new TreeMap<String, OTransactionIndexChanges>(((OTransactionOptimistic) clientTx).getIndexEntries());
   }
 
   @Override public OUncompletedCommit<List<ORecordOperation>> initiateCommit(OTransaction clientTx, Runnable callback) {
@@ -1462,9 +1459,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkOpeness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
-
-    final Map<String, OIndexInternal<?>> indexesToCommit = getChangedIndexes(clientTx,
-        databaseRecord.getMetadata().getIndexManager());
+    final OIndexManagerProxy indexManager = databaseRecord.getMetadata().getIndexManager();
+    final TreeMap<String, OTransactionIndexChanges> indexesToCommit = getSortedIndexEntries(clientTx);
 
     ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
@@ -1499,19 +1495,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final ORecord record = txEntry.getRecord();
         final ORID rid = record.getIdentity();
 
-        int clusterId = rid.getClusterId();
-
-        if (record.isDirty() && clusterId == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
+        if (record.isDirty() && rid.getClusterId() == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
           // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
 
           final OImmutableClass class_ = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
           if (class_ != null) {
-            clusterId = class_.getClusterForNewInstance((ODocument) record);
+            final int clusterId = class_.getClusterForNewInstance((ODocument) record);
             clusterOverrides.put(txEntry, clusterId);
+            clustersToLock.put(clusterId, getClusterById(clusterId));
           }
+        } else {
+          final int clusterId = rid.getClusterId();
+          clustersToLock.put(clusterId, getClusterById(clusterId));
         }
-
-        clustersToLock.put(clusterId, getClusterById(clusterId));
       }
     }
 
@@ -1525,10 +1521,27 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           makeStorageDirty();
           startStorageTx(clientTx);
+
           for (OCluster cluster : clustersToLock.values())
             cluster.acquireAtomicExclusiveLock();
-          for (OIndexInternal<?> index : getSortedIndexes(indexesToCommit))
-            index.acquireAtomicExclusiveLock();
+
+          for (Map.Entry<String, OTransactionIndexChanges> entry : indexesToCommit.entrySet()) {
+            final String indexName = entry.getKey();
+            final OTransactionIndexChanges changes = entry.getValue();
+
+            final OIndexInternal<?> index = changes.resolveAssociatedIndex(indexName, indexManager);
+            if (index == null)
+              throw new OTransactionException("Cannot find index '" + indexName + "' while committing transaction");
+
+            boolean fullyLocked = false;
+            for (Object key : changes.changesPerKey.keySet())
+              if (index.acquireAtomicExclusiveLock(key)) {
+                fullyLocked = true;
+                break;
+              }
+            if (!fullyLocked && !changes.nullKeyChanges.entries.isEmpty())
+              index.acquireAtomicExclusiveLock(null);
+          }
 
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : newRecords) {
@@ -1561,7 +1574,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             result.add(txEntry);
           }
 
-          commitIndexes(clientTx, indexesToCommit);
+          commitIndexes(indexesToCommit);
 
           final OUncompletedCommit<List<ORecordOperation>> uncompletedCommit = new UncompletedCommit(clientTx, entries, result,
               atomicOperationsManager.initiateCommit());

@@ -132,16 +132,20 @@ public class NonDurableTxTest {
     final OLogSequenceNumber startLsn = wal.getFlushedLsn();
 
     atomicOperationsManager.switchOnUnsafeMode();
-    db.begin();
-    final ODocument doc1 = db.newInstance().field("tx-key", "tx-value").save();
-    db.commit();
+    try {
+      db.begin();
+      final ODocument doc1 = db.newInstance().field("tx-key", "tx-value").save();
+      db.commit();
 
-    doc1.field("non-tx-key", "non-tx-value").save();
+      doc1.field("non-tx-key", "non-tx-value").save();
 
-    wal.flush();
-    final OLogSequenceNumber endLsn = wal.getFlushedLsn();
+      wal.flush();
+      final OLogSequenceNumber endLsn = wal.getFlushedLsn();
 
-    Assert.assertEquals(startLsn, endLsn);
+      Assert.assertEquals(startLsn, endLsn);
+    } finally {
+      atomicOperationsManager.switchOffUnsafeMode();
+    }
   }
 
 }

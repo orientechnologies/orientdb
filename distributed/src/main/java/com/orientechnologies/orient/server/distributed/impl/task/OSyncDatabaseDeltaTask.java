@@ -82,7 +82,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
 
     } else
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-          "skip deploying database from the same node");
+          "Skip deploying database from the same node");
 
     return Boolean.FALSE;
   }
@@ -145,7 +145,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
         exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
       else
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-            "Delta backup of database '%s' completed. range=%s-%s...", databaseName, startLSN, endLSN);
+            "Delta backup of database '%s' completed. range=%s-%s", databaseName, startLSN, endLSN);
 
     } catch (Exception e) {
       // UNKNOWN ERROR, DELTA NOT AVAILABLE, TRY WITH FULL BACKUP

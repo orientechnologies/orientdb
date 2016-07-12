@@ -265,7 +265,7 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<List> field("linkCollection").add(docThree.getIdentity());
-      document.save();
+      loadedDocument.save();
       database.commit();
     } catch (Exception e) {
       database.rollback();
