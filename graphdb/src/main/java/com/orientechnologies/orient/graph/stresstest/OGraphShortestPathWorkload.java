@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
+import com.orientechnologies.orient.stresstest.OStressTesterSettings;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -86,7 +87,7 @@ public class OGraphShortestPathWorkload extends OBaseGraphWorkload {
   }
 
   @Override
-  public void execute(final int concurrencyLevel, final ODatabaseIdentifier databaseIdentifier) {
+  public void execute(final OStressTesterSettings settings, final ODatabaseIdentifier databaseIdentifier) {
     // RETRIEVE THE STARTING VERTICES
     final OrientGraphNoTx g = getGraphNoTx(databaseIdentifier);
     try {
@@ -100,7 +101,7 @@ public class OGraphShortestPathWorkload extends OBaseGraphWorkload {
     }
     result.total = startingVertices.size();
 
-    executeOperation(databaseIdentifier, result, concurrencyLevel, new OCallable<Void, OBaseWorkLoadContext>() {
+    executeOperation(databaseIdentifier, result, settings.concurrencyLevel, settings.operationsPerTransaction, new OCallable<Void, OBaseWorkLoadContext>() {
       @Override
       public Void call(final OBaseWorkLoadContext context) {
         final OWorkLoadContext graphContext = ((OWorkLoadContext) context);
@@ -145,7 +146,7 @@ public class OGraphShortestPathWorkload extends OBaseGraphWorkload {
     buffer.append(String.format("- Executed %d shortest paths in %.3f secs", result.current.get(), result.totalTime / 1000f));
     buffer.append(String.format("\n- Path depth: maximum %d, average %.3f, not connected %d", maxDepth.get(),
         totalDepth.get() / (float) startingVertices.size() / (float) startingVertices.size(), notConnected.get()));
-    buffer.append(result.toOutput());
+    buffer.append(result.toOutput(2));
 
     return buffer.toString();
   }

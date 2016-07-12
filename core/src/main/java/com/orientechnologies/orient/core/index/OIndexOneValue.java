@@ -19,22 +19,20 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
+import java.util.*;
+
 /**
  * Abstract Index implementation that allows only one value for a key.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public OIndexOneValue(String name, final String type, String algorithm, int version, OAbstractPaginatedStorage storage,
@@ -45,42 +43,22 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public OIdentifiable get(Object iKey) {
     iKey = getCollatingValue(iKey);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-    if (!txIsActive)
-      keyLockManager.acquireSharedLock(iKey);
+    acquireSharedLock();
     try {
-      acquireSharedLock();
-      try {
-        return (OIdentifiable) storage.getIndexValue(indexId, iKey);
-      } finally {
-        releaseSharedLock();
-      }
+      return (OIdentifiable) storage.getIndexValue(indexId, iKey);
     } finally {
-      if (!txIsActive)
-        keyLockManager.releaseSharedLock(iKey);
+      releaseSharedLock();
     }
-
   }
 
   public long count(Object iKey) {
     iKey = getCollatingValue(iKey);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-    if (!txIsActive)
-      keyLockManager.acquireSharedLock(iKey);
-
+    acquireSharedLock();
     try {
-      acquireSharedLock();
-      try {
-        return storage.indexContainsKey(indexId, iKey) ? 1 : 0;
-      } finally {
-        releaseSharedLock();
-      }
+      return storage.indexContainsKey(indexId, iKey) ? 1 : 0;
     } finally {
-      if (!txIsActive)
-        keyLockManager.releaseSharedLock(iKey);
+      releaseSharedLock();
     }
   }
 
@@ -88,33 +66,23 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public ODocument checkEntry(final OIdentifiable record, Object key) {
     key = getCollatingValue(key);
 
-    final ODatabase database = getDatabase();
-    final boolean txIsActive = database.getTransaction().isActive();
-
-    if (!txIsActive)
-      keyLockManager.acquireSharedLock(key);
-    try {
-      // CHECK IF ALREADY EXIST
-      final OIdentifiable indexedRID = get(key);
-      if (indexedRID != null && !indexedRID.getIdentity().equals(record.getIdentity())) {
-        final Boolean mergeSameKey = metadata != null && (Boolean) metadata.field(OIndex.MERGE_KEYS);
-        if (mergeSameKey != null && mergeSameKey)
-          return (ODocument) indexedRID.getRecord();
-        else
-          throw new OIndexException("Cannot index record : " + record + " found duplicated key '" + key + "' in index " + getName()
-              + " previously assigned to the record " + indexedRID);
-      }
-      return null;
-    } finally {
-      if (!txIsActive)
-        keyLockManager.releaseSharedLock(key);
+    // CHECK IF ALREADY EXIST
+    final OIdentifiable indexedRID = get(key);
+    if (indexedRID != null && !indexedRID.getIdentity().equals(record.getIdentity())) {
+      final Boolean mergeSameKey = metadata != null && (Boolean) metadata.field(OIndex.MERGE_KEYS);
+      if (mergeSameKey != null && mergeSameKey)
+        return (ODocument) indexedRID.getRecord();
+      else
+        throw new OIndexException("Cannot index record : " + record + " found duplicated key '" + key + "' in index " + getName()
+            + " previously assigned to the record " + indexedRID);
     }
+    return null;
   }
 
   public OIndexOneValue create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
-    return (OIndexOneValue) super.create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
-        determineValueSerializer());
+    return (OIndexOneValue) super
+        .create(indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener, determineValueSerializer());
   }
 
   @Override
