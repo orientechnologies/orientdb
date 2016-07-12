@@ -112,4 +112,9 @@ public class FilterStep extends AbstractExecutionStep {
   @Override public void sendResult(Object o, Status status) {
 
   }
+
+  @Override public String prettyPrint(int depth, int indent) {
+    return OExecutionStep.getIndent(depth, indent) + "+ CALCULATE WHERE CONDITION : " + whereClause.toString();
+  }
+
 }
