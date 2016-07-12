@@ -28,11 +28,9 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -59,8 +57,8 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OHashIndexBucket(int depth, OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OType[] keyTypes, OWALChanges changes) throws IOException {
-    super(cacheEntry, changes);
+      OBinarySerializer<V> valueSerializer, OType[] keyTypes) throws IOException {
+    super(cacheEntry);
 
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
@@ -71,8 +69,8 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OHashIndexBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
-      OType[] keyTypes, OWALChanges changes) {
-    super(cacheEntry, changes);
+      OType[] keyTypes) {
+    super(cacheEntry);
 
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;

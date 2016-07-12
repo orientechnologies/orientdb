@@ -4089,7 +4089,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OCachePointer cachePointer = cacheEntry.getCachePointer();
         cachePointer.acquireExclusiveLock();
         try {
-          ODurablePage durablePage = new ODurablePage(cacheEntry, null);
+          ODurablePage durablePage = new ODurablePage(cacheEntry);
           durablePage.restoreChanges(updatePageRecord.getChanges());
           durablePage.setLsn(updatePageRecord.getLsn());
         } finally {

@@ -20,132 +20,51 @@
 
 package com.orientechnologies.orient.core.storage.cache;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
+
 /**
  * @author Andrey Lomakin
  * @since 7/23/13
  */
-public class OCacheEntry {
-  OCachePointer dataPointer;
+public interface OCacheEntry {
 
-  final long    fileId;
-  final long    pageIndex;
+  void markDirty();
 
-  boolean       dirty;
-  int           usagesCount;
+  void clearDirty();
 
-  public OCacheEntry(long fileId, long pageIndex, OCachePointer dataPointer, boolean dirty) {
-    this.fileId = fileId;
-    this.pageIndex = pageIndex;
+  boolean isDirty();
 
-    this.dataPointer = dataPointer;
-    this.dirty = dirty;
-  }
+  OCachePointer getCachePointer();
 
-  public void markDirty() {
-    this.dirty = true;
-  }
+  void clearCachePointer();
 
-  public void clearDirty() {
-    this.dirty = false;
-  }
+  void setCachePointer(OCachePointer cachePointer);
 
-  public boolean isDirty() {
-    return dirty;
-  }
+  long getFileId();
 
-  public OCachePointer getCachePointer() {
-    return dataPointer;
-  }
+  long getPageIndex();
 
-  public void clearCachePointer() {
-    dataPointer = null;
-  }
+  void acquireExclusiveLock();
 
-  public void setCachePointer(OCachePointer cachePointer) {
-    this.dataPointer = cachePointer;
-  }
+  void releaseExclusiveLock();
 
-  public long getFileId() {
-    return fileId;
-  }
+  void acquireSharedLock();
 
-  public long getPageIndex() {
-    return pageIndex;
-  }
+  void releaseSharedLock();
 
-  public void acquireExclusiveLock() {
-    dataPointer.acquireExclusiveLock();
-  }
+  int getUsagesCount();
 
-  public void releaseExclusiveLock() {
-    dataPointer.releaseExclusiveLock();
-  }
-
-  public void acquireSharedLock() {
-    dataPointer.acquireSharedLock();
-  }
-
-  public void releaseSharedLock() {
-    dataPointer.releaseSharedLock();
-  }
-
-  public int getUsagesCount() {
-    return usagesCount;
-  }
-
-  public void incrementUsages() {
-    usagesCount++;
-  }
+  void incrementUsages();
 
   /**
    * DEBUG only !!
    *
    * @return Whether lock acquired on current entry
    */
-  public boolean isLockAcquiredByCurrentThread() {
-    return dataPointer.isLockAcquiredByCurrentThread();
-  }
+  boolean isLockAcquiredByCurrentThread();
 
-  public void decrementUsages() {
-    usagesCount--;
-  }
+  void decrementUsages();
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+  OWALChanges getChanges();
 
-    OCacheEntry that = (OCacheEntry) o;
-
-    if (fileId != that.fileId)
-      return false;
-    if (dirty != that.dirty)
-      return false;
-    if (pageIndex != that.pageIndex)
-      return false;
-    if (usagesCount != that.usagesCount)
-      return false;
-    if (dataPointer != null ? !dataPointer.equals(that.dataPointer) : that.dataPointer != null)
-      return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = (int) (fileId ^ (fileId >>> 32));
-    result = 31 * result + (int) (pageIndex ^ (pageIndex >>> 32));
-    result = 31 * result + (dataPointer != null ? dataPointer.hashCode() : 0);
-    result = 31 * result + (dirty ? 1 : 0);
-    result = 31 * result + usagesCount;
-    return result;
-  }
-
-  @Override
-  public String toString() {
-    return "OReadCacheEntry{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + ", dataPointer=" + dataPointer + ", dirty="
-        + dirty + ", usagesCount=" + usagesCount + '}';
-  }
 }
