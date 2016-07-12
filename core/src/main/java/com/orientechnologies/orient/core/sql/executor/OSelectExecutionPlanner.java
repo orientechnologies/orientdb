@@ -77,6 +77,7 @@ public class OSelectExecutionPlanner {
 
     if (target == null) {
       result.chain(new NoTargetProjectionEvaluator(projection, ctx));
+      projectionsCalculated = true;
     } else {
       OFromItem target = this.target.getItem();
       if (target.getIdentifier() != null) {
