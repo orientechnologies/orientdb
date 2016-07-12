@@ -1450,14 +1450,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OIndexInternal<?> index = changes.getAssociatedIndex();
         final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
 
-        changes.getAssociatedIndex().commit(snapshot);
+        index.commit(snapshot);
       }
     } finally {
       for (OTransactionIndexChanges changes : indexesToCommit.values()) {
         final OIndexInternal<?> index = changes.getAssociatedIndex();
         final OIndexAbstract.IndexTxSnapshot snapshot = snapshots.get(index);
 
-        changes.getAssociatedIndex().postCommit(snapshot);
+        index.postCommit(snapshot);
       }
     }
   }
