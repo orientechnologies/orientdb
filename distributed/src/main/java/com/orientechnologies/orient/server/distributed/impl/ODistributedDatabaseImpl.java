@@ -560,7 +560,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (elapsed > currentResponseMgr.getSynchTimeout()) {
 
         ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
-            "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=(%s)", elapsed,
+            "Timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=(%s)", elapsed,
             currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(), iRequest);
       }
     }

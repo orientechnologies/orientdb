@@ -177,6 +177,8 @@ public abstract class OBaseWorkload implements OWorkload {
 
     Arrays.sort(operationTiming);
 
+    result.throughputAvgNs = (int) (result.totalTime * 1000000 / operationTiming.length);
+
     // COMPUTE THE TOTAL COST OF OPERATIONS ONLY
     result.totalTimeOperationsNs = 0;
     for (long l : operationTiming)
@@ -184,9 +186,6 @@ public abstract class OBaseWorkload implements OWorkload {
 
     result.latencyMinNs = operationTiming[0];
     result.latencyMaxNs = operationTiming[operationTiming.length - 1];
-
-    // COMPUTE THE PERCENTILE
-    result.throughputAvgNs = (int) (result.totalTime * 1000000 / operationTiming.length);
 
     result.latencyAvgNs = (int) (result.totalTimeOperationsNs / operationTiming.length);
     result.latencyPercentileAvg = getPercentile(operationTiming, result.latencyAvgNs);

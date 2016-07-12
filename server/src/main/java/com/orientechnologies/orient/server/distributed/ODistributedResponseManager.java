@@ -293,7 +293,7 @@ public class ODistributedResponseManager {
         if (missingActiveNodes == 0) {
           // NO MORE ACTIVE NODES TO WAIT
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "no more active nodes to wait for request (%s): anticipate timeout (saved %d ms)", request, currentTimeout);
+              "No more active nodes to wait for request (%s): anticipate timeout (saved %d ms)", request, currentTimeout);
           break;
         }
 
@@ -302,7 +302,7 @@ public class ODistributedResponseManager {
           // CHANGED CLUSTER SHAPE DURING WAIT: ENLARGE TIMEOUT
           currentTimeout = synchTimeout;
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "cluster shape changed during request (%s): enlarge timeout +%dms, wait again for %dms", request, synchTimeout,
+              "Cluster shape changed during request (%s): enlarge timeout +%dms, wait again for %dms", request, synchTimeout,
               currentTimeout);
           continue;
         } else if (synchronizingNodes > 0) {
