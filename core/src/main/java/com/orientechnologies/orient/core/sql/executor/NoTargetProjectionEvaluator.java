@@ -98,6 +98,6 @@ public class NoTargetProjectionEvaluator implements OExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStep.getIndent(depth, indent) + "CALCULATE PROJECTIONS (no target): " + projection.toString();
+    return OExecutionStep.getIndent(depth, indent) + "+ CALCULATE PROJECTIONS (no target): " + projection.toString();
   }
 }
