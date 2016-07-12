@@ -35,12 +35,16 @@ public class OSelectStatementExecutionTest {
     Assert.assertEquals(1L, item.<Object>getProperty("one"));
     Assert.assertEquals(2L, item.<Object>getProperty("two"));
     Assert.assertEquals(5L, item.<Object>getProperty("2 + 3"));
+    printExecutionPlan(result);
+
     result.close();
   }
 
   @Test public void testSelectNoTargetSkip() {
     OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 1");
     Assert.assertFalse(result.hasNext());
+    printExecutionPlan(result);
+
     result.close();
   }
 
@@ -52,12 +56,16 @@ public class OSelectStatementExecutionTest {
     Assert.assertEquals(1L, item.<Object>getProperty("one"));
     Assert.assertEquals(2L, item.<Object>getProperty("two"));
     Assert.assertEquals(5L, item.<Object>getProperty("2 + 3"));
+    printExecutionPlan(result);
+
     result.close();
   }
 
   @Test public void testSelectNoTargetLimit0() {
     OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 limit 0");
     Assert.assertFalse(result.hasNext());
+    printExecutionPlan(result);
+
     result.close();
   }
 
@@ -69,12 +77,14 @@ public class OSelectStatementExecutionTest {
     Assert.assertEquals(1L, item.<Object>getProperty("one"));
     Assert.assertEquals(2L, item.<Object>getProperty("two"));
     Assert.assertEquals(5L, item.<Object>getProperty("2 + 3"));
+    printExecutionPlan(result);
+
     result.close();
   }
 
   @Test public void testSelectNoTargetLimitx() {
     OTodoResultSet result = db.query("select 1 as one, 2 as two, 2+3 skip 0 limit 0");
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    printExecutionPlan(result);
   }
 
   @Test public void testSelectFullScan1() {
@@ -94,7 +104,7 @@ public class OSelectStatementExecutionTest {
       Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
     }
     Assert.assertFalse(result.hasNext());
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    printExecutionPlan(result);
     result.close();
   }
 
@@ -108,7 +118,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     OTodoResultSet result = db.query("select from " + className + " ORDER BY @rid ASC");
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    printExecutionPlan(result);
     OIdentifiable lastItem = null;
     for (int i = 0; i < 100000; i++) {
       Assert.assertTrue(result.hasNext());
@@ -121,6 +131,7 @@ public class OSelectStatementExecutionTest {
       lastItem = item.getElement();
     }
     Assert.assertFalse(result.hasNext());
+
     result.close();
   }
 
@@ -134,7 +145,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     OTodoResultSet result = db.query("select from " + className + " ORDER BY @rid DESC");
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    printExecutionPlan(result);
     OIdentifiable lastItem = null;
     for (int i = 0; i < 100000; i++) {
       Assert.assertTrue(result.hasNext());
@@ -147,6 +158,7 @@ public class OSelectStatementExecutionTest {
       lastItem = item.getElement();
     }
     Assert.assertFalse(result.hasNext());
+
     result.close();
   }
 
@@ -160,7 +172,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     OTodoResultSet result = db.query("select from " + className + " limit 10");
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
@@ -183,7 +195,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     OTodoResultSet result = db.query("select from " + className + " skip 100 limit 10");
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
@@ -206,7 +218,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     OTodoResultSet result = db.query("select from " + className + " order by surname desc");
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    printExecutionPlan(result);
 
     String lastSurname = null;
     for (int i = 0; i < 30; i++) {
@@ -233,7 +245,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     OTodoResultSet result = db.query("select from " + className + " order by surname asc");
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    printExecutionPlan(result);
 
     String lastSurname = null;
     for (int i = 0; i < 30; i++) {
@@ -260,7 +272,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     OTodoResultSet result = db.query("select from " + className + " where name = 'name1' or name = 'name7' ");
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    printExecutionPlan(result);
 
     for (int i = 0; i < 2; i++) {
       Assert.assertTrue(result.hasNext());
@@ -283,7 +295,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     OTodoResultSet result = db.query("select from " + className + " where name <> 'name1' ");
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    printExecutionPlan(result);
 
     for (int i = 0; i < 299; i++) {
       Assert.assertTrue(result.hasNext());
@@ -307,7 +319,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
     OTodoResultSet result = db.query("select name from " + className );
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    printExecutionPlan(result);
 
     for (int i = 0; i < 300; i++) {
       Assert.assertTrue(result.hasNext());
@@ -381,4 +393,9 @@ public class OSelectStatementExecutionTest {
       System.out.println("old: " + ((end - begin) / 1000000));
     }
   }
+
+  private void printExecutionPlan(OTodoResultSet result) {
+    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+  }
+
 }
