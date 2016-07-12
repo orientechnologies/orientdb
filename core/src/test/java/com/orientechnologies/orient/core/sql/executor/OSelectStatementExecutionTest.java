@@ -297,7 +297,35 @@ public class OSelectStatementExecutionTest {
   }
 
 
+  @Test public void testProjections() {
+    String className = "testProjections";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 300; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select name from " + className );
+    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
 
+    for (int i = 0; i < 300; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      String name = item.getProperty("name");
+      String surname = item.getProperty("surname");
+      Assert.assertNotNull(name);
+      Assert.assertTrue(name.startsWith("name"));
+      Assert.assertNull(surname);
+      Assert.assertNull(item.getElement());
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+
+  @Test
   public void stressTestNew() {
     String className = "stressTestNew";
     db.getMetadata().getSchema().createClass(className);
@@ -310,7 +338,7 @@ public class OSelectStatementExecutionTest {
 
     for (int run = 0; run < 5; run++) {
       long begin = System.nanoTime();
-      OTodoResultSet result = db.query("select from " + className + " where name <> 'name1' ");
+      OTodoResultSet result = db.query("select name from " + className + " where name <> 'name1' ");
       for (int i = 0; i < 999999; i++) {
         //        Assert.assertTrue(result.hasNext());
         OResult item = result.next();
@@ -325,6 +353,7 @@ public class OSelectStatementExecutionTest {
     }
   }
 
+  @Test
   public void stressTestOld() {
     String className = "stressTestOld";
     db.getMetadata().getSchema().createClass(className);
@@ -336,7 +365,7 @@ public class OSelectStatementExecutionTest {
     }
     for (int run = 0; run < 5; run++) {
       long begin = System.nanoTime();
-      List<ODocument> r = db.query(new OSQLSynchQuery<ODocument>("select from " + className + " where name <> 'name1' "));
+      List<ODocument> r = db.query(new OSQLSynchQuery<ODocument>("select name from " + className + " where name <> 'name1' "));
       //      Iterator<ODocument> result = r.iterator();
       for (int i = 0; i < 999999; i++) {
         //        Assert.assertTrue(result.hasNext());

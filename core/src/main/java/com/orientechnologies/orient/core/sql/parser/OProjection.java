@@ -3,9 +3,9 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,16 +71,32 @@ public class OProjection extends SimpleNode {
     }
   }
 
-  public Object calculate(OCommandContext iContext, OIdentifiable iRecord) {
+  public OResult calculateSingle(OCommandContext iContext, OResult iRecord) {
     if (isExpand()) {
-      return items.get(0).getExpression().execute(iRecord, iContext);
-    } else {
-      OResult result = new OResult();
-      for (OProjectionItem item : items) {
-        result.setProperty(item.getProjectionFieldAlias(), item.execute(iRecord, iContext));
-      }
-      return result;
+      throw new IllegalStateException("This is not an expand projection, it cannot be calculated as a single result" + toString());
     }
+
+    if (items.size() == 0 || (items.size() == 1 && items.get(0).isAll())) {
+      return iRecord;
+    }
+
+    OResult result = new OResult();
+    for (OProjectionItem item : items) {
+      if (item.isAll()) {
+        for (String alias : iRecord.getPropertyNames()) {
+          result.setProperty(alias, iRecord.getProperty(alias));
+        }
+      }
+      result.setProperty(item.getProjectionFieldAlias(), item.execute(iRecord, iContext));
+    }
+    return result;
+  }
+
+  public OResultSet calculateExpand(OCommandContext iContext, OResult iRecord) {
+    if (!isExpand()) {
+      throw new IllegalStateException("This is not an expand projection:" + toString());
+    }
+    throw new UnsupportedOperationException("Implement expand in projection");
   }
 
   public boolean isExpand() {

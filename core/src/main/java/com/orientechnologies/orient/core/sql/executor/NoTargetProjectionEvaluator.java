@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.OProjection;
 
 /**
- * Created by luigidellaquila on 06/07/16.
+ * @author Luigi Dell'Aquila
  */
 public class NoTargetProjectionEvaluator implements OExecutionStep {
   //execution pipeline
@@ -25,8 +25,7 @@ public class NoTargetProjectionEvaluator implements OExecutionStep {
   }
 
   private OTodoResultSet calculate(OProjection projection, OCommandContext ctx) {
-
-    Object result = projection.calculate(ctx, null);
+    Object result = projection.calculateSingle(ctx, null);
     if (result instanceof OTodoResultSet) {
       return (OTodoResultSet) result;
     }

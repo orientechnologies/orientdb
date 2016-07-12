@@ -4,7 +4,6 @@ import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,7 +16,6 @@ import java.util.Optional;
 public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
   private final String           className;
-  private final OSelectStatement stm;
   FetchFromClusterExecutionStep[] subSteps;
   OTodoResultSet                  currentResultSet;
   private boolean orderByRidAsc = false;
@@ -28,13 +26,12 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   /**
    * iterates over a class and its subclasses
    * @param className the class name
-   * @param oSelectStatement the statement
    * @param ctx the query context
    * @param ridOrder true to sort by RID asc, false to sort by RID desc, null for no sort.
    */
-  public FetchFromClassExecutionStep(String className, OSelectStatement oSelectStatement, OCommandContext ctx, Boolean ridOrder) {
+  public FetchFromClassExecutionStep(String className, OCommandContext ctx, Boolean ridOrder) {
     super(ctx);
-    stm = oSelectStatement;
+
     this.className = className;
     if(Boolean.TRUE.equals(ridOrder)){
       orderByRidAsc = true;
