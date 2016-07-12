@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +22,9 @@ public abstract class OBooleanExpression extends SimpleNode {
       return true;
     }
 
+    @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+      return true;
+    }
 
     @Override protected boolean supportsBasicCalculation() {
       return true;
@@ -54,6 +58,9 @@ public abstract class OBooleanExpression extends SimpleNode {
       return false;
     }
 
+    @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+      return false;
+    }
 
     @Override protected boolean supportsBasicCalculation() {
       return true;
@@ -97,6 +104,7 @@ public abstract class OBooleanExpression extends SimpleNode {
 
   public abstract boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx);
 
+  public abstract boolean evaluate(OResult currentRecord, OCommandContext ctx);
 
     /**
      *

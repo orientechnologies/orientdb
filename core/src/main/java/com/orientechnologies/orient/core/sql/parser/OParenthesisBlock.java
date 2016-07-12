@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,11 @@ public class OParenthesisBlock extends OBooleanExpression {
     return subElement.evaluate(currentRecord, ctx);
   }
 
+
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    return subElement.evaluate(currentRecord, ctx);
+  }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("(");

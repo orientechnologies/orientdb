@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -67,7 +68,7 @@ public class OModifier extends SimpleNode {
     } else if (arrayRange != null) {
       result = arrayRange.execute(iCurrentRecord, result, ctx);
     } else if (condition != null) {
-      result = filterByCondition(iCurrentRecord, result, ctx);
+      result = filterByCondition(result, ctx);
     } else if (arraySingleValues != null) {
       result = arraySingleValues.execute(iCurrentRecord, result, ctx);
     }
@@ -77,7 +78,25 @@ public class OModifier extends SimpleNode {
     return result;
   }
 
-  private Object filterByCondition(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
+  public Object execute(OResult iCurrentRecord, Object result, OCommandContext ctx) {
+    if (methodCall != null) {
+      result = methodCall.execute(result, ctx);
+    } else if (suffix != null) {
+      result = suffix.execute(result, ctx);
+    } else if (arrayRange != null) {
+      result = arrayRange.execute(iCurrentRecord, result, ctx);
+    } else if (condition != null) {
+      result = filterByCondition(result, ctx);
+    } else if (arraySingleValues != null) {
+      result = arraySingleValues.execute(iCurrentRecord, result, ctx);
+    }
+    if (next != null) {
+      result = next.execute(iCurrentRecord, result, ctx);
+    }
+    return result;
+  }
+
+  private Object filterByCondition(Object iResult, OCommandContext ctx) {
     if (iResult == null) {
       return null;
     }
@@ -104,6 +123,7 @@ public class OModifier extends SimpleNode {
     }
     return result;
   }
+
 
   public boolean needsAliases(Set<String> aliases) {
     if (condition != null && condition.needsAliases(aliases)) {

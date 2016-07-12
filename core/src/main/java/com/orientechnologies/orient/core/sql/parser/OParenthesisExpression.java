@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +28,16 @@ public class OParenthesisExpression extends OMathExpression {
   }
 
   @Override public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if(expression!=null){
+      return expression.execute(iCurrentRecord, ctx);
+    }
+    if(statement!=null){
+      throw new UnsupportedOperationException("Execution of select in parentheses is not supported");
+    }
+    return super.execute(iCurrentRecord, ctx);
+  }
+
+  @Override public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     if(expression!=null){
       return expression.execute(iCurrentRecord, ctx);
     }

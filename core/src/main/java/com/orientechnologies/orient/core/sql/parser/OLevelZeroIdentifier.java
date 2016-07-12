@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +41,19 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (functionCall != null) {
+      return functionCall.execute(iCurrentRecord, ctx);
+    }
+    if (collection != null) {
+      return collection.execute(iCurrentRecord, ctx);
+    }
+    if (Boolean.TRUE.equals(self)) {
+      return iCurrentRecord;
+    }
+    throw new UnsupportedOperationException();
+  }
+
+  public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     if (functionCall != null) {
       return functionCall.execute(iCurrentRecord, ctx);
     }

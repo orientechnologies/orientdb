@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
 import java.util.Set;
@@ -58,9 +59,35 @@ public class OSuffixIdentifier extends SimpleNode {
     return null;
   }
 
+  public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
+    if (star) {
+      return iCurrentRecord;
+    }
+    if (identifier != null) {
+      String varName = identifier.getStringValue();
+      if (ctx!=null && ctx.getVariable(varName) != null) {
+        return ctx.getVariable(varName);
+      }
+      if(iCurrentRecord != null) {
+        return iCurrentRecord.getProperty(varName);
+      }
+      return null;
+    }
+    if (recordAttribute != null) {
+      return iCurrentRecord.getProperty(recordAttribute.name);
+    }
+    return null;
+  }
+
   public Object execute(Object currentValue, OCommandContext ctx) {
     if (currentValue == null) {
       return null;
+    }
+    if(currentValue instanceof OResult){
+      return execute((OResult)currentValue, ctx);
+    }
+    if(currentValue instanceof OIdentifiable){
+      return execute((OIdentifiable)currentValue, ctx);
     }
     if (star) {
       return currentValue;
@@ -70,9 +97,6 @@ public class OSuffixIdentifier extends SimpleNode {
       if (ctx.getVariable(varName) != null) {
         return ctx.getVariable(varName);
       }
-      if (currentValue instanceof OIdentifiable) {
-        return ((ODocument) ((OIdentifiable) currentValue).getRecord()).field(varName);
-      }
       if (currentValue instanceof Map) {
         return ((Map) currentValue).get(varName);
       }
@@ -80,9 +104,6 @@ public class OSuffixIdentifier extends SimpleNode {
       // TODO other cases?
     }
     if (recordAttribute != null) {
-      if (currentValue instanceof OIdentifiable) {
-        return ((ODocument) ((OIdentifiable) currentValue).getRecord()).field(recordAttribute.name);
-      }
       if (currentValue instanceof Map) {
         return ((Map) currentValue).get(recordAttribute.name);
       }

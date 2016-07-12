@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -115,7 +116,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
       if(preParsedStatement != null) {
         OExpression settingExp = ((OAlterPropertyStatement) preParsedStatement).settingValue;
         if (settingExp != null) {
-          Object expValue = settingExp.execute(null, context);
+          Object expValue = settingExp.execute((OIdentifiable)null, context);
           if(expValue == null){
             expValue = settingExp.toString();
           }

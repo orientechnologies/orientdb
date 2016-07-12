@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,6 +33,32 @@ public class OBetweenCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    Object firstValue = first.execute(currentRecord, ctx);
+    if (firstValue == null) {
+      return false;
+    }
+
+    Object secondValue = second.execute(currentRecord, ctx);
+    if (secondValue == null) {
+      return false;
+    }
+
+    secondValue = OType.convert(secondValue, firstValue.getClass());
+
+    Object thirdValue = third.execute(currentRecord, ctx);
+    if (thirdValue == null) {
+      return false;
+    }
+    thirdValue = OType.convert(thirdValue, firstValue.getClass());
+
+    final int leftResult = ((Comparable<Object>) firstValue).compareTo(secondValue);
+    final int rightResult = ((Comparable<Object>) firstValue).compareTo(thirdValue);
+
+    return leftResult >= 0 && rightResult <= 0;
+  }
+
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     Object firstValue = first.execute(currentRecord, ctx);
     if (firstValue == null) {
       return false;

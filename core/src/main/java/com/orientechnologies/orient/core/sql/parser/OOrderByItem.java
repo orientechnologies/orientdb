@@ -82,8 +82,8 @@ public class OOrderByItem {
       bVal = b.getProperty(alias);
     }
     if (modifier != null) {
-      aVal = modifier.execute(null, aVal, ctx);
-      bVal = modifier.execute(null, bVal, ctx);
+      aVal = modifier.execute(a, aVal, ctx);
+      bVal = modifier.execute(b, bVal, ctx);
     }
     if (aVal == null) {
       if (bVal == null) {

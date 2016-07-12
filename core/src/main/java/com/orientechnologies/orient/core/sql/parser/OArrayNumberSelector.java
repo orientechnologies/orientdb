@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +43,25 @@ public class OArrayNumberSelector extends SimpleNode {
   }
 
   public Integer getValue(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
+    Object result = null;
+    if (inputValue != null) {
+      result = inputValue.bindFromInputParams(ctx.getInputParameters());
+    } else if (expressionValue != null) {
+      result = expressionValue.execute(iCurrentRecord, ctx);
+    } else if (integer != null) {
+      result = integer;
+    }
+
+    if (result == null) {
+      return null;
+    }
+    if (result instanceof Number) {
+      return ((Number) result).intValue();
+    }
+    return null;
+  }
+
+  public Integer getValue(OResult iCurrentRecord, Object iResult, OCommandContext ctx) {
     Object result = null;
     if (inputValue != null) {
       result = inputValue.bindFromInputParams(ctx.getInputParameters());

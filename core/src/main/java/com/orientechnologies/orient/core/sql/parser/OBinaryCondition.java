@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
 
@@ -29,6 +30,11 @@ public class OBinaryCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
+  }
+
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
   }
 
@@ -86,11 +92,11 @@ public class OBinaryCondition extends OBooleanExpression {
   }
 
   public long estimateIndexed(OFromClause target, OCommandContext context) {
-    return left.estimateIndexedFunction(target, context, operator, right.execute(null, context));
+    return left.estimateIndexedFunction(target, context, operator, right.execute((OResult)null, context));
   }
 
   public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context) {
-    return left.executeIndexedFunction(target, context, operator, right.execute(null, context));
+    return left.executeIndexedFunction(target, context, operator, right.execute((OResult)null, context));
   }
 
   public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {

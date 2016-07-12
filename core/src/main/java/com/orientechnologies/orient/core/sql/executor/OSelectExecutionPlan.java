@@ -20,14 +20,14 @@ public class OSelectExecutionPlan implements OExecutionPlan {
   private boolean     expand     = false;
   private boolean     distinct   = false;
 
-  private boolean orderApplied = false;
+  private boolean orderApplied          = false;
   private boolean projectionsCalculated = false;
 
   public OSelectExecutionPlan(OSelectStatement oSelectStatement, OCommandContext ctx) {
     this.ctx = ctx;
 
     this.projection = oSelectStatement.getProjection();
-    if (this.projection.isExpand()) {
+    if (projection!=null && this.projection.isExpand()) {
       expand = true;
       this.projection = projection.getExpandContent();
     }
@@ -45,10 +45,9 @@ public class OSelectExecutionPlan implements OExecutionPlan {
     }
 
     handleLet(oSelectStatement.getLetClause(), ctx);
-
     handleProjectionsBeforeWhere(projection, oSelectStatement.getWhereClause(), ctx);
-
     handleWhere(oSelectStatement.getWhereClause(), ctx);
+    handleExpand(ctx);
 
     if (oSelectStatement.getOrderBy() != null) {
       handleOrderBy(oSelectStatement.getOrderBy(), ctx);
@@ -61,18 +60,28 @@ public class OSelectExecutionPlan implements OExecutionPlan {
     }
   }
 
+  private void handleExpand(OCommandContext ctx) {
+    if(expand) {
+      //TODO
+    }
+  }
+
   private void handleLet(OLetClause letClause, OCommandContext ctx) {
-    //TODO
+    if(letClause!=null) {
+      //TODO
+    }
   }
 
   private void handleWhere(OWhereClause whereClause, OCommandContext ctx) {
-    //TODO
+    if(whereClause!=null) {
+      chain(new FilterStep(whereClause, ctx));
+    }
   }
 
   private void handleProjectionsBeforeWhere(OProjection projection, OWhereClause whereClause, OCommandContext ctx) {
-    if(whereClause != null && projection != null){
+    if (whereClause != null && projection != null) {
       Set<String> aliases = projection.getAllAliases();
-      if(whereClause.needsAliases(aliases)){
+      if (whereClause.needsAliases(aliases)) {
         //TODO
       }
     }

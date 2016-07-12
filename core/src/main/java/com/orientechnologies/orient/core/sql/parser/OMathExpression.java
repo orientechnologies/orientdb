@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -188,6 +189,21 @@ public class OMathExpression extends SimpleNode {
   }
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (childExpressions.size() == 0) {
+      return null;
+    }
+
+    OMathExpression nextExpression = childExpressions.get(0);
+    Object nextValue = nextExpression.execute(iCurrentRecord, ctx);
+    for (int i = 0; i < operators.size() && i + 1 < childExpressions.size(); i++) {
+      Operator nextOperator = operators.get(i);
+      Object rightValue = childExpressions.get(i + 1).execute(iCurrentRecord, ctx);
+      nextValue = apply(nextValue, nextOperator, rightValue);
+    }
+    return nextValue;
+  }
+
+  public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     if (childExpressions.size() == 0) {
       return null;
     }

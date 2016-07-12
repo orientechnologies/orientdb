@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,8 +39,24 @@ public class OOrBlock extends OBooleanExpression {
     return false;
   }
 
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    if (getSubBlocks() == null) {
+      return true;
+    }
+
+    for (OBooleanExpression block : subBlocks) {
+      if (block.evaluate(currentRecord, ctx)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean evaluate(Object currentRecord, OCommandContext ctx) {
-    if (currentRecord instanceof OIdentifiable) {
+    if (currentRecord instanceof OResult) {
+      return evaluate((OResult) currentRecord, ctx);
+    } else if (currentRecord instanceof OIdentifiable) {
       return evaluate((OIdentifiable) currentRecord, ctx);
     } else if (currentRecord instanceof Map) {
       ODocument doc = new ODocument();

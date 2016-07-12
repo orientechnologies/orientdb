@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,18 @@ public class OArraySingleValuesSelector extends SimpleNode {
   }
 
   public Object execute(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
+    List<Object> result = new ArrayList<Object>();
+    for(OArraySelector item:items){
+      Integer index = item.getValue(iCurrentRecord, iResult, ctx);
+      if(this.items.size()==1){
+        return OMultiValue.getValue(iResult, index);
+      }
+      result.add(OMultiValue.getValue(iResult, index));
+    }
+    return result;
+  }
+
+  public Object execute(OResult iCurrentRecord, Object iResult, OCommandContext ctx) {
     List<Object> result = new ArrayList<Object>();
     for(OArraySelector item:items){
       Integer index = item.getValue(iCurrentRecord, iResult, ctx);

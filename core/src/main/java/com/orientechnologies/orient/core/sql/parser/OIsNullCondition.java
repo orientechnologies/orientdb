@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +30,12 @@ public class OIsNullCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    return false;
+    throw new UnsupportedOperationException("TODO Implement IS NULL!!!");//TODO
+  }
+
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    throw new UnsupportedOperationException("TODO Implement IS NULL!!!");//TODO
   }
 
   public OExpression getExpression() {

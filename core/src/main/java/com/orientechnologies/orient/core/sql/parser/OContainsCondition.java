@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
 
@@ -80,9 +81,14 @@ public class OContainsCondition extends OBooleanExpression {
     Object leftValue = left.execute(currentRecord, ctx);
     Object rightValue = right.execute(currentRecord, ctx);
     return execute(leftValue, rightValue);
-
   }
 
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    Object leftValue = left.execute(currentRecord, ctx);
+    Object rightValue = right.execute(currentRecord, ctx);
+    return execute(leftValue, rightValue);
+  }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);

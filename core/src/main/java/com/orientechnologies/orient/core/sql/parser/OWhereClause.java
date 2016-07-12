@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
 
@@ -34,6 +35,13 @@ public class OWhereClause extends SimpleNode {
   }
 
   public boolean matchesFilters(OIdentifiable currentRecord, OCommandContext ctx) {
+    if (baseExpression == null) {
+      return true;
+    }
+    return baseExpression.evaluate(currentRecord, ctx);
+  }
+
+  public boolean matchesFilters(OResult currentRecord, OCommandContext ctx) {
     if (baseExpression == null) {
       return true;
     }
@@ -224,7 +232,7 @@ public class OWhereClause extends SimpleNode {
         OBinaryCondition b = (OBinaryCondition) expression;
         if (b.operator instanceof OEqualsCompareOperator) {
           if (b.left.isBaseIdentifier() && b.right.isEarlyCalculated()) {
-            result.put(b.left.toString(), b.right.execute(null, ctx));
+            result.put(b.left.toString(), b.right.execute((OResult)null, ctx));
           }
         }
       }

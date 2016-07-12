@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
 import java.util.Set;
@@ -37,6 +38,16 @@ public class OBaseIdentifier extends SimpleNode {
 
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
+    if (levelZero != null) {
+      return levelZero.execute(iCurrentRecord, ctx);
+    }
+    if (suffix != null) {
+      return suffix.execute(iCurrentRecord, ctx);
+    }
+    return null;
+  }
+
+  public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     if (levelZero != null) {
       return levelZero.execute(iCurrentRecord, ctx);
     }

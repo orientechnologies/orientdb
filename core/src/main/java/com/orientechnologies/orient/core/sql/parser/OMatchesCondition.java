@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,8 +32,14 @@ public class OMatchesCondition extends OBooleanExpression {
   }
 
   @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    return false;
+    throw new UnsupportedOperationException("TODO Implement MATCHES!!!");//TODO
   }
+
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    throw new UnsupportedOperationException("TODO Implement MATCHES!!!");//TODO
+  }
+
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     expression.toString(params, builder);
