@@ -1750,6 +1750,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           writeAheadLog.logFuzzyCheckPointStart(minLsn);
 
           for (int intId : nameIdMap.values()) {
+            if (intId < 0)
+              continue;
+
             final long extFileId = composeFileId(id, intId);
             final OClosableEntry<Long, OFileClassic> entry = files.acquire(extFileId);
             try {
