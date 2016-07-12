@@ -26,14 +26,11 @@ import com.orientechnologies.lucene.tx.OLuceneTxChangesAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexableField;
-import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Set;
 
 /**
  * Created by Enrico Risa on 16/09/15.
@@ -41,7 +38,7 @@ import java.util.Set;
 public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
 
   private final String indexName;
-  protected int deletedMatchCount = 0;
+  protected int        deletedMatchCount = 0;
 
   public OLuceneTxResultSet(OLuceneIndexEngine manager, QueryContext queryContext) {
     super(manager, queryContext);
@@ -51,36 +48,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
   }
 
   private int calculateDeletedMatch() {
-
-    Set<Document> deletedDocs = queryContext.changes().getDeletedDocs();
-    MemoryIndex memoryIndex = new MemoryIndex();
-    int match = 0;
-    for (Document doc : deletedDocs) {
-      memoryIndex.reset();
-      for (IndexableField field : doc.getFields()) {
-
-        if (field.stringValue() != null) {
-          memoryIndex.addField(field.name(), field.stringValue(), manager.indexAnalyzer());
-        } else {
-          try {
-          memoryIndex.addField(field.name(), field.tokenStream(manager.indexAnalyzer(), null));
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        }
-      }
-      if (queryContext.filter != null) {
-        try {
-          TopDocs topDocs1 = memoryIndex.createSearcher().search(query, queryContext.filter, 1);
-          match += topDocs1.totalHits;
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      } else {
-        match += (memoryIndex.search(query) > 0.0f) ? 1 : 0;
-      }
-    }
-    return match;
+    return (int) queryContext.changes().deletedDocs(query, queryContext.filter);
   }
 
   @Override
@@ -95,7 +63,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
 
   private class OLuceneResultSetIteratorTx implements Iterator<OIdentifiable> {
 
-    ScoreDoc[] array;
+    ScoreDoc[]  array;
     private int index;
     private int localIndex;
     private int totalHits;
@@ -186,8 +154,8 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case FILTER_SORT:
-          topDocs = queryContext.getSearcher()
-              .searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE, queryContext.sort);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE,
+              queryContext.sort);
           break;
         case FILTER:
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE);
