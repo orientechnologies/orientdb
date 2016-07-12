@@ -125,7 +125,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
   public void testFilteredDirectDeleteAsWriter() throws IOException {
     database.open("writer", "writer");
     try {
-      // adminRecord.delete();
+      // adminRecord.delete(); // uncomment this line to hang the server on the next test case, see #6408
       database.delete(adminRecord.getIdentity());
     } catch (OSecurityException e) {
       // OK AS EXCEPTION
