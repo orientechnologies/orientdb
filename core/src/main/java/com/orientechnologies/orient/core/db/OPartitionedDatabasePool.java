@@ -24,6 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
@@ -71,7 +72,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 06/11/14
  */
-public class OPartitionedDatabasePool extends OOrientListenerAbstract {
+public class OPartitionedDatabasePool extends OOrientListenerAbstract implements  OPool<ODatabaseDocument> {
   private static final int           HASH_INCREMENT = 0x61c88647;
   private static final int           MIN_POOL_SIZE  = 2;
   private static final AtomicInteger nextHashCode   = new AtomicInteger();

@@ -223,13 +223,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
-  public void close(boolean force, boolean onDelete) {
-    super.close(force, onDelete);
-    if (writeAheadLog != null)
-      ((ODiskWriteAheadLog) writeAheadLog).removeLowDiskSpaceListener(this);
-  }
-
-  @Override
   protected OLogSequenceNumber copyWALToIncrementalBackup(ZipOutputStream zipOutputStream, long startSegment) throws IOException {
 
     File[] nonActiveSegments;

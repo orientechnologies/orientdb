@@ -169,6 +169,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
+    open(iProperties);
+  }
+
+  public void open(final Map<String, Object> iProperties) {
     stateLock.acquireReadLock();
     try {
       if (status == STATUS.OPEN)
@@ -3505,8 +3509,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         writeCache.removeBackgroundExceptionListener(this);
       }
 
-      if (writeAheadLog != null)
+      if (writeAheadLog != null) {
         writeAheadLog.removeFullCheckpointListener(this);
+        writeAheadLog.removeLowDiskSpaceListener(this);
+      }
 
       if (readCache != null)
         if (!onDelete)
@@ -4060,7 +4066,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         final OCachePointer cachePointer = cacheEntry.getCachePointer();
         cachePointer.acquireExclusiveLock();
         try {
-          ODurablePage durablePage = new ODurablePage(cacheEntry, null);
+          ODurablePage durablePage = new ODurablePage(cacheEntry);
           durablePage.restoreChanges(updatePageRecord.getChanges());
           durablePage.setLsn(updatePageRecord.getLsn());
         } finally {

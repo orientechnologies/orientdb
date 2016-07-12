@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionSt
 import java.io.*;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Condition;
 import java.util.zip.CRC32;
 
@@ -79,10 +80,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final Condition segmentCreationComplete = syncObject.newCondition();
 
   private final Set<OOperationUnitId>                               activeOperations        = new HashSet<OOperationUnitId>();
-  private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = Collections
-      .synchronizedList(new ArrayList<WeakReference<OLowDiskSpaceListener>>());
-  private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = Collections
-      .synchronizedList(new ArrayList<WeakReference<OFullCheckpointRequestListener>>());
+  private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = new CopyOnWriteArrayList<>();
+  private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<>();
 
   private static class FilenameFilter implements java.io.FilenameFilter {
     private final OLocalPaginatedStorage storage;

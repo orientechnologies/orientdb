@@ -487,7 +487,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
           final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(-1, -1), id, index);
           cachePointer.incrementReferrer();
 
-          cacheEntry = new OCacheEntry(composeFileId(storageId, id), index, cachePointer, false);
+          cacheEntry = new OCacheEntryImpl(composeFileId(storageId, id), index, cachePointer, false);
 
           OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
 

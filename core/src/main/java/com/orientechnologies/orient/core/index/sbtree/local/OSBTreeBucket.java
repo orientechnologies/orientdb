@@ -33,7 +33,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
@@ -72,8 +71,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OSBTreeBucket(OCacheEntry cacheEntry, boolean isLeaf, OBinarySerializer<K> keySerializer, OType[] keyTypes,
-      OBinarySerializer<V> valueSerializer, OWALChanges changes) throws IOException {
-    super(cacheEntry, changes);
+      OBinarySerializer<V> valueSerializer) throws IOException {
+    super(cacheEntry);
 
     this.isLeaf = isLeaf;
     this.keySerializer = keySerializer;
@@ -96,8 +95,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   @SuppressFBWarnings("EI_EXPOSE_REP2")
   public OSBTreeBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OType[] keyTypes,
-      OBinarySerializer<V> valueSerializer, OWALChanges changes) {
-    super(cacheEntry, changes);
+      OBinarySerializer<V> valueSerializer) {
+    super(cacheEntry);
     this.keyTypes = keyTypes;
 
     this.isLeaf = getByteValue(IS_LEAF_OFFSET) > 0;

@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 
 import java.io.IOException;
 
@@ -40,8 +39,8 @@ public class ODirectoryFirstPage extends ODirectoryPage {
   public static final int  NODES_PER_PAGE   = (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
                                                 / OHashTableDirectory.BINARY_LEVEL_SIZE;
 
-  public ODirectoryFirstPage(OCacheEntry cacheEntry, OWALChanges changes, OCacheEntry entry) {
-    super(cacheEntry, changes, entry);
+  public ODirectoryFirstPage(OCacheEntry cacheEntry, OCacheEntry entry) {
+    super(cacheEntry, entry);
   }
 
   public void setTreeSize(int treeSize) throws IOException {

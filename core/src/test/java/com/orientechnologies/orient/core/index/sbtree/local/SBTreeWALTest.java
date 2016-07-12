@@ -17,12 +17,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import org.assertj.core.api.Assertions;
 import org.junit.*;
+import org.testng.Assert;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * @author Andrey Lomakin
@@ -291,7 +293,7 @@ public class SBTreeWALTest extends SBTreeTest {
 
             cacheEntry.acquireExclusiveLock();
             try {
-              ODurablePage durablePage = new ODurablePage(cacheEntry, null);
+              ODurablePage durablePage = new ODurablePage(cacheEntry);
               durablePage.restoreChanges(updatePageRecord.getChanges());
               durablePage.setLsn(updatePageRecord.getLsn());
 

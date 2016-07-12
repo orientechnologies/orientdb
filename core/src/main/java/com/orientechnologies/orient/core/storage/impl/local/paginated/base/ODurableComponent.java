@@ -123,13 +123,6 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     return atomicOperationsManager.startAtomicOperation(this, trackNonTxOperations);
   }
 
-  protected OWALChanges getChanges(OAtomicOperation atomicOperation, OCacheEntry entry) {
-    if (atomicOperation == null)
-      return null;
-
-    return atomicOperation.getChanges(entry.getFileId(), entry.getPageIndex());
-  }
-
   protected long getFilledUpTo(OAtomicOperation atomicOperation, long fileId) throws IOException {
     if (atomicOperation == null)
       return writeCache.getFilledUpTo(fileId);
