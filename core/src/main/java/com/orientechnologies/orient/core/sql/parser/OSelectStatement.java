@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlanner;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -229,8 +229,8 @@ public class OSelectStatement extends OStatement {
   }
 
   public OExecutionPlan createExecutionPlan(OCommandContext ctx) {
-    OSelectExecutionPlan result = new OSelectExecutionPlan(this, ctx);
-    return result;
+    OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
+    return planner.createExecutionPlan(ctx);
   }
 
 
