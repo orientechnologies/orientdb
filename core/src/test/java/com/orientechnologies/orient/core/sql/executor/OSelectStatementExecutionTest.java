@@ -325,7 +325,7 @@ public class OSelectStatementExecutionTest {
   }
 
 
-  @Test
+
   public void stressTestNew() {
     String className = "stressTestNew";
     db.getMetadata().getSchema().createClass(className);
@@ -353,7 +353,7 @@ public class OSelectStatementExecutionTest {
     }
   }
 
-  @Test
+
   public void stressTestOld() {
     String className = "stressTestOld";
     db.getMetadata().getSchema().createClass(className);

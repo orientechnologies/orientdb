@@ -960,7 +960,7 @@ public class ODocument extends ORecordAbstract
     }
     return result;
   }
-  
+
   /**
    * Returns the array of field values.
    */

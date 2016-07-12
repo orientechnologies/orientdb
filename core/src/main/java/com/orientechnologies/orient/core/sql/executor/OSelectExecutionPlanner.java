@@ -14,11 +14,11 @@ public class OSelectExecutionPlanner {
   private boolean     expand     = false;
   private OProjection projection = null;
   private final OLetClause   letClause;
-  private OFromClause target;
+  private       OFromClause  target;
   private final OWhereClause whereClause;
-  private final OOrderBy orderBy;
-  private final OSkip skip;
-  private final OLimit limit;
+  private final OOrderBy     orderBy;
+  private final OSkip        skip;
+  private final OLimit       limit;
 
   private boolean orderApplied          = false;
   private boolean projectionsCalculated = false;
@@ -61,7 +61,7 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleProjections(OSelectExecutionPlan result, OProjection projection, OCommandContext ctx) {
-    if (!this.projectionsCalculated) {
+    if (!this.projectionsCalculated && projection != null) {
       result.chain(new ProjectionCalculationStep(projection, ctx));
     }
   }
@@ -107,7 +107,7 @@ public class OSelectExecutionPlanner {
 
   private void handleProjectionsBeforeWhere(OSelectExecutionPlan result, OProjection projection, OWhereClause whereClause,
       OCommandContext ctx) {
-    if (whereClause != null && projection != null) {
+    if (!projectionsCalculated && whereClause != null && projection != null) {
       Set<String> aliases = projection.getAllAliases();
       if (whereClause.needsAliases(aliases)) {
         //TODO
@@ -130,8 +130,7 @@ public class OSelectExecutionPlanner {
     } else if (isOrderByRidDesc()) {
       orderByRidAsc = false;
     }
-    FetchFromClassExecutionStep fetcher = new FetchFromClassExecutionStep(identifier.getStringValue(), ctx,
-        orderByRidAsc);
+    FetchFromClassExecutionStep fetcher = new FetchFromClassExecutionStep(identifier.getStringValue(), ctx, orderByRidAsc);
     if (orderByRidAsc != null) {
       this.orderApplied = true;
     }

@@ -48,7 +48,7 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
   }
 
   private OResult calculateProjections(OCommandContext ctx, OResult next) {
-    return this.projection.calculateSingle(ctx, next);
+      return this.projection.calculateSingle(ctx, next);
   }
 
   @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
