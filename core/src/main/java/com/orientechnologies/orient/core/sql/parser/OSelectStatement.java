@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlanner;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -215,7 +215,7 @@ public class OSelectStatement extends OStatement {
   public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
     if (projection != null) {
       projection.validate();
-      
+
       if (projection.isExpand() && groupBy != null) {
         throw new OCommandSQLParsingException("expand() cannot be used together with GROUP BY");
       }
@@ -226,13 +226,13 @@ public class OSelectStatement extends OStatement {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
     ctx.setArgs(args);
-    OExecutionPlan executionPlan = createExecutionPlan(ctx);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
 
-    return new OExternalResultSet(executionPlan);
+    return new OLocalResultSet(executionPlan);
 
   }
 
-  public OExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
     return planner.createExecutionPlan(ctx);
   }

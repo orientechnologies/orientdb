@@ -7,9 +7,7 @@ import com.orientechnologies.orient.core.sql.parser.OProjection;
 /**
  * @author Luigi Dell'Aquila
  */
-public class NoTargetProjectionEvaluator implements OExecutionStep {
-  //execution pipeline
-  private OExecutionStep next;
+public class NoTargetProjectionEvaluator extends AbstractExecutionStep {
 
   private boolean keepRunning = true;
 
@@ -20,7 +18,7 @@ public class NoTargetProjectionEvaluator implements OExecutionStep {
   private OTodoResultSet calculatedResult;
 
   public NoTargetProjectionEvaluator(OProjection projection, OCommandContext ctx) {
-    super();
+    super(ctx);
     this.projection = projection;
   }
 
@@ -75,15 +73,8 @@ public class NoTargetProjectionEvaluator implements OExecutionStep {
   }
 
   @Override public void sendTimeout() {
+    super.sendTimeout();
     this.keepRunning = false;
-  }
-
-  @Override public void setPrevious(OExecutionStep step) {
-    throw new UnsupportedOperationException("a " + getClass().getSimpleName() + " cannot have a previous step");
-  }
-
-  @Override public void setNext(OExecutionStep step) {
-    this.next = step;
   }
 
   @Override public void close() {
@@ -91,10 +82,11 @@ public class NoTargetProjectionEvaluator implements OExecutionStep {
     if (calculatedResult != null) {
       this.calculatedResult.close();
     }
+    getPrev().ifPresent(p -> p.close());
   }
 
   @Override public void sendResult(Object o, Status status) {
-    //Do nothing, nobody will send results to this step
+    //do nothig
   }
 
   @Override public String prettyPrint(int depth, int indent) {

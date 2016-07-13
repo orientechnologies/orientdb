@@ -10,16 +10,17 @@ import java.util.Set;
  */
 public class OSelectExecutionPlanner {
 
-  private boolean     distinct   = false;
-  private boolean     expand     = false;
-  private OProjection projection = null;
-  private final OLetClause   letClause;
-  private       OFromClause  target;
-  private final OWhereClause whereClause;
-  private final OGroupBy     groupBy;
-  private final OOrderBy     orderBy;
-  private final OSkip        skip;
-  private final OLimit       limit;
+  private boolean     distinct           = false;
+  private boolean     expand             = false;
+  private OProjection projection         = null;
+  private OLetClause  globalLetClause    = null;
+  private OLetClause  perRecordLetClause = null;
+  private OFromClause  target;
+  private OWhereClause whereClause;
+  private OGroupBy     groupBy;
+  private OOrderBy     orderBy;
+  private OSkip        skip;
+  private OLimit       limit;
 
   private boolean orderApplied          = false;
   private boolean projectionsCalculated = false;
@@ -29,19 +30,20 @@ public class OSelectExecutionPlanner {
     this.projection = oSelectStatement.getProjection();
     this.target = oSelectStatement.getTarget();
     this.whereClause = oSelectStatement.getWhereClause();
-    this.letClause = oSelectStatement.getLetClause();
+    this.perRecordLetClause = oSelectStatement.getLetClause();
     this.groupBy = oSelectStatement.getGroupBy();
     this.orderBy = oSelectStatement.getOrderBy();
     this.skip = oSelectStatement.getSkip();
     this.limit = oSelectStatement.getLimit();
   }
 
-  public OExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
     OSelectExecutionPlan result = new OSelectExecutionPlan(ctx);
     optimizeQuery();
 
+    handleGlobalLet(result, globalLetClause, ctx);
     handleFetchFromTarger(result, ctx);
-    handleLet(result, letClause, ctx);
+    handleLet(result, perRecordLetClause, ctx);
     handleProjectionsBeforeWhere(result, projection, whereClause, ctx);
     handleWhere(result, whereClause, ctx);
     handleExpand(result, ctx);
@@ -104,6 +106,16 @@ public class OSelectExecutionPlanner {
       expand = true;
       this.projection = projection.getExpandContent();
     }
+    extractSubQueries();
+  }
+
+  /**
+   * translates subqueries to LET statements
+   */
+  private void extractSubQueries() {
+    if (whereClause != null && whereClause.containsSubqueries()) {
+      //TODO
+    }
   }
 
   private void handleFetchFromTarger(OSelectExecutionPlan result, OCommandContext ctx) {
@@ -123,6 +135,12 @@ public class OSelectExecutionPlanner {
 
   private void handleExpand(OSelectExecutionPlan result, OCommandContext ctx) {
     if (expand) {
+      //TODO
+    }
+  }
+
+  private void handleGlobalLet(OSelectExecutionPlan result, OLetClause letClause, OCommandContext ctx) {
+    if (letClause != null) {
       //TODO
     }
   }

@@ -262,5 +262,10 @@ public class OWhereClause extends SimpleNode {
   public boolean needsAliases(Set<String> aliases) {
     return this.baseExpression.needsAliases(aliases);
   }
+
+  public boolean containsSubqueries() {
+
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

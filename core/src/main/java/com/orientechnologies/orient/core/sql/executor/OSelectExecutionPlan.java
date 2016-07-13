@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Created by luigidellaquila on 06/07/16.
  */
-public class OSelectExecutionPlan implements OExecutionPlan {
+public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   private final OCommandContext ctx;
 
@@ -34,6 +34,10 @@ public class OSelectExecutionPlan implements OExecutionPlan {
       result.append("\n");
     }
     return result.toString();
+  }
+
+  @Override public void reset(OCommandContext ctx) {
+    throw new UnsupportedOperationException();
   }
 
   protected void chain(OExecutionStep nextStep) {
