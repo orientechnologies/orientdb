@@ -259,8 +259,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           } else if (e instanceof OSecurityAccessException) {
             // THE CONNECTION COULD BE STALE, CREATE A NEW ONE AND RETRY
             manager.closeRemoteServer(node);
-            final ORemoteServerController remoteServer = manager.getRemoteServer(node);
             try {
+              final ORemoteServerController remoteServer = manager.getRemoteServer(node);
               remoteServer.sendRequest(iRequest);
               continue;
 
@@ -294,9 +294,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       return waitForResponse(iRequest, currentResponseMgr);
 
-    } catch (
-
-    RuntimeException e) {
+    } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
       throw OException.wrapException(new ODistributedException("Error on executing distributed request (" + iRequest
