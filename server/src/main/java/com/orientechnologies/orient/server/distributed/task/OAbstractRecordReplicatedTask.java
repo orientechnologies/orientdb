@@ -129,7 +129,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
   public boolean checkForClusterAvailability(final String localNode, final ODistributedConfiguration cfg) {
     final String clusterName = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.clusterId);
-    return cfg.hasCluster(localNode, clusterName);
+    return cfg.isServerContainingCluster(localNode, clusterName);
   }
 
   public ORecord prepareUndoOperation() {

@@ -80,6 +80,8 @@ public class OTxTask extends OAbstractReplicatedTask {
     // CREATE A CONTEXT OF TX
     final ODistributedTxContext reqContext = ddb.registerTxContext(requestId);
 
+    final ODistributedConfiguration dCfg = iManager.getDatabaseConfiguration(database.getName());
+
     database.begin();
     try {
       final OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
@@ -93,7 +95,9 @@ public class OTxTask extends OAbstractReplicatedTask {
           final int clId = createRT.clusterId > -1 ? createRT.clusterId
               : createRT.getRid().isValid() ? createRT.getRid().getClusterId() : -1;
           final String clusterName = clId > -1 ? database.getClusterNameById(clId) : null;
-          tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
+
+          if (dCfg.isServerContainingCluster(iManager.getLocalNodeName(), clusterName))
+            tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
         }
       }
 
@@ -101,7 +105,7 @@ public class OTxTask extends OAbstractReplicatedTask {
         final Object taskResult;
 
         // CHECK LOCAL CLUSTER IS AVAILABLE ON CURRENT SERVER
-        if (!task.checkForClusterAvailability(iManager.getLocalNodeName(), iManager.getDatabaseConfiguration(database.getName())))
+        if (!task.checkForClusterAvailability(iManager.getLocalNodeName(), dCfg))
           // SKIP EXECUTION BECAUSE THE CLUSTER IS NOT ON LOCAL NODE: THIS CAN HAPPENS IN CASE OF DISTRIBUTED TX WITH SHARDING
           taskResult = NON_LOCAL_CLUSTER;
         else {

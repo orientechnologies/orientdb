@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.*;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-
-import java.util.*;
 
 /**
  * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
@@ -323,6 +323,27 @@ public class ODistributedConfiguration {
   }
 
   /**
+   * Returns true if the local server has the requested cluster.
+   *
+   * @param server
+   *          Server name
+   * @param cluster
+   *          cluster names to find
+   */
+  public boolean isServerContainingCluster(final String server, String cluster) {
+    if (cluster == null)
+      cluster = ALL_WILDCARD;
+
+    synchronized (configuration) {
+      final List<String> serverList = getClusterConfiguration(cluster).field(SERVERS);
+      if (serverList != null) {
+        return serverList.contains(server);
+      }
+      return true;
+    }
+  }
+
+  /**
    * Returns the server list for the requested cluster cluster excluding any tags like <NEW_NODES> and iExclude if any.
    *
    * @param iClusterName
@@ -343,23 +364,6 @@ public class ODistributedConfiguration {
         return filteredServerList;
       }
       return Collections.EMPTY_LIST;
-    }
-  }
-
-  /**
-   * Returns true if the server has a cluster.
-   * 
-   * @param iServer
-   *          Server name
-   * @param iClusterName
-   *          Cluster name
-   */
-  public boolean hasCluster(final String iServer, final String iClusterName) {
-    synchronized (configuration) {
-      final List<String> serverList = getClusterConfiguration(iClusterName).field(SERVERS);
-      if (serverList != null)
-        return serverList.contains(iServer);
-      return false;
     }
   }
 
