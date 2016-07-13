@@ -613,10 +613,13 @@ public enum OGlobalConfiguration {
       Long.class, 3000l, true),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
-      "Maximum timeout (in ms) to wait for Command remote tasks", Long.class, 1000l, true),
+      "Maximum timeout (in ms) to wait for command distributed tasks", Long.class, 2 * 60 * 1000l, true),
+
+  DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT("distributed.commandQuickTaskTimeout",
+      "Maximum timeout (in ms) to wait for quick command distributed tasks", Long.class, 5 * 1000l, true),
 
   DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT("distributed.commandLongTaskTimeout",
-      "Maximum timeout (in ms) to wait for Long-running remote tasks", Long.class, 24 * 60 * 60 * 1000, true),
+      "Maximum timeout (in ms) to wait for Long-running distributed tasks", Long.class, 24 * 60 * 60 * 1000, true),
 
   DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
       "Maximum timeout (in ms) to wait for database deployment", Long.class, 1200000l, true),
