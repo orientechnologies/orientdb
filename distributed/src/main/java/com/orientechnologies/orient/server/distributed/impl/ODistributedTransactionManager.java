@@ -78,8 +78,6 @@ public class ODistributedTransactionManager {
 
   public List<ORecordOperation> commit(final ODatabaseDocumentInternal database, final OTransaction iTx, final Runnable callback,
       final ODistributedStorageEventListener eventListener) {
-    final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
-
     final String localNodeName = dManager.getLocalNodeName();
 
     try {
@@ -91,6 +89,7 @@ public class ODistributedTransactionManager {
       final int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
       final int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
 
+      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
       if (executionModeSynch == null)
         executionModeSynch = Boolean.TRUE;
@@ -151,9 +150,19 @@ public class ODistributedTransactionManager {
               ODistributedResponse lastResult = null;
               for (int retry = 1; retry <= maxAutoRetry; ++retry) {
                 boolean isLastRetry = maxAutoRetry == retry;
+
                 // SYNCHRONOUS CALL: REPLICATE IT
-                lastResult = dManager.sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(),
-                    EXECUTION_MODE.RESPONSE, localResult, null);
+                try {
+                  lastResult = dManager.sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(),
+                      EXECUTION_MODE.RESPONSE, localResult, null);
+
+                } catch (RuntimeException e) {
+                  storage.executeUndoOnLocalServer(requestId, txTask);
+                  throw e;
+                } catch (Exception e) {
+                  OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
+                }
+
                 if (!processCommitResult(localNodeName, iTx, txTask, involvedClusters, uResult, nodes, autoRetryDelay,
                     lastResult.getRequestId(), lastResult, isLastRetry)) {
 
@@ -374,6 +383,10 @@ public class ODistributedTransactionManager {
 
   private void sendTxCompleted(final String localNodeName, final Set<String> involvedClusters, final Collection<String> nodes,
       final ODistributedRequestId reqId, final boolean success) {
+    if (nodes.isEmpty())
+      // NO ACTIVE NODES TO SEND THE REQUESTS
+      return;
+
     // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
     final Object completedResult = dManager.sendRequest(storage.getName(), involvedClusters, nodes,
         new OCompletedTxTask(reqId, success), dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null).getPayload();
@@ -446,7 +459,8 @@ public class ODistributedTransactionManager {
   }
 
   /**
-   * Create undo content for distributed 2-phase rollback.
+   * Create undo content for distributed 2-phase rollback. This list of undo tasks is sent to all the nodes to revert a transaction
+   * and it's also applied locally.
    *
    * @param iTx
    *          Current transaction
@@ -468,6 +482,7 @@ public class ODistributedTransactionManager {
       case ORecordOperation.DELETED:
         // CREATE UNDO TASK WITH THE PREVIOUS RECORD CONTENT/VERSION
         final ORecordId rid = (ORecordId) record.getIdentity();
+
         final OStorageOperationResult<ORawBuffer> loaded = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying()
             .readRecord(rid, null, true, null);
 

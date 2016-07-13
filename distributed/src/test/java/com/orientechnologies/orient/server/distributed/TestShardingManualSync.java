@@ -81,6 +81,8 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
         // OK
       }
 
+      Assert.assertEquals(1, graphNoTxEurope.countVertices());
+
       // CHANGE THE WRITE QUORUM = 1
       final ODistributedConfiguration dCfg = serverInstance.get(0).server.getDistributedManager()
           .getDatabaseConfiguration(getDatabaseName());
@@ -88,6 +90,8 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       serverInstance.get(0).server.getDistributedManager().updateCachedDatabaseConfiguration(getDatabaseName(), newCfg, true, true);
 
       final OrientVertex v2 = graphNoTxEurope.addVertex("class:Client");
+
+      Assert.assertEquals(2, graphNoTxEurope.countVertices());
 
       clusterName = graphNoTxEurope.getRawGraph().getClusterNameById(v2.getIdentity().getClusterId());
 
