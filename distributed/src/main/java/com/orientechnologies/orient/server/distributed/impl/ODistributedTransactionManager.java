@@ -23,7 +23,6 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -42,8 +41,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -56,6 +53,7 @@ import com.orientechnologies.orient.server.distributed.task.*;
 
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Distributed transaction manager.
@@ -491,19 +489,31 @@ public class ODistributedTransactionManager {
         // CREATE UNDO TASK WITH THE PREVIOUS RECORD CONTENT/VERSION
         final ORecordId rid = (ORecordId) record.getIdentity();
 
-        final OStorageOperationResult<ORawBuffer> loaded = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying()
-            .readRecord(rid, null, true, null);
+        final AtomicReference<ORecord> previousRecord = new AtomicReference<ORecord>();
+        OScenarioThreadLocal.executeAsDefault(new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+            final ORecordOperation txEntry = db.getTransaction().getRecordEntry(rid);
+            if (txEntry != null && txEntry.type == ORecordOperation.DELETED)
+              // GET DELETED RECORD FROM TX
+              previousRecord.set(txEntry.getRecord());
+            else
+              // LOAD FROM DATABASE. WHY NOT JUST STORAGE? BECAUSE IT COULD BE SHARDED AND RESIDE ON ANOTHER SERVER
+              previousRecord.set(db.load(rid));
 
-        if (loaded == null || loaded.getResult() == null)
+            return null;
+          }
+        });
+
+        if (previousRecord.get() == null)
           throw new ORecordNotFoundException(rid);
 
-        final ORecord previousRecord = Orient.instance().getRecordFactoryManager().newInstance(loaded.getResult().recordType);
-        ORecordInternal.fill(previousRecord, rid, loaded.getResult().version, loaded.getResult().getBuffer(), false);
-
         if (op.type == ORecordOperation.UPDATED)
-          undoTask = new OUpdateRecordTask(previousRecord, ORecordVersionHelper.clearRollbackMode(previousRecord.getVersion()));
+          undoTask = new OUpdateRecordTask(previousRecord.get(),
+              ORecordVersionHelper.clearRollbackMode(previousRecord.get().getVersion()));
         else
-          undoTask = new OResurrectRecordTask(previousRecord);
+          undoTask = new OResurrectRecordTask(previousRecord.get());
         break;
 
       default:
