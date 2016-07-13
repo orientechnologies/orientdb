@@ -141,13 +141,13 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
   private void validateSequenceNoExists(final String iName) {
     if (sequences.containsKey(iName)) {
-      throw new OSequenceException("Sequence " + iName + " already exists!");
+      throw new OSequenceException("Sequence '" + iName + "' already exists");
     }
   }
 
   private void validateSequenceExists(final String iName) {
     if (!sequences.containsKey(iName)) {
-      throw new OSequenceException("Sequence " + iName + " does not exists!");
+      throw new OSequenceException("Sequence '" + iName + "' does not exists");
     }
   }
 }

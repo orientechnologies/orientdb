@@ -141,65 +141,73 @@ public class ODistributedTransactionManager {
 
             final OTxTask txTask = createTxTask(uResult);
             txTask.setLocalUndoTasks(undoTasks);
-            txTask.setLastLSN(((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN());
 
-            OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
+            try {
+              txTask.setLastLSN(((OAbstractPaginatedStorage) storage.getUnderlying()).getLSN());
 
-            if (finalExecutionModeSynch) {
-              // SYNCHRONOUS, AUTO-RETRY IN CASE RECORDS ARE LOCKED
-              ODistributedResponse lastResult = null;
-              for (int retry = 1; retry <= maxAutoRetry; ++retry) {
-                boolean isLastRetry = maxAutoRetry == retry;
+              OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
 
-                // SYNCHRONOUS CALL: REPLICATE IT
-                try {
+              if (finalExecutionModeSynch) {
+                // SYNCHRONOUS, AUTO-RETRY IN CASE RECORDS ARE LOCKED
+                ODistributedResponse lastResult = null;
+                for (int retry = 1; retry <= maxAutoRetry; ++retry) {
+                  boolean isLastRetry = maxAutoRetry == retry;
+
+                  // SYNCHRONOUS CALL: REPLICATE IT
                   lastResult = dManager.sendRequest(storage.getName(), involvedClusters, nodes, txTask, requestId.getMessageId(),
                       EXECUTION_MODE.RESPONSE, localResult, null);
 
-                } catch (RuntimeException e) {
-                  storage.executeUndoOnLocalServer(requestId, txTask);
-                  throw e;
-                } catch (Exception e) {
-                  OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
-                }
+                  if (!processCommitResult(localNodeName, iTx, txTask, involvedClusters, uResult, nodes, autoRetryDelay,
+                      lastResult.getRequestId(), lastResult, isLastRetry)) {
 
-                if (!processCommitResult(localNodeName, iTx, txTask, involvedClusters, uResult, nodes, autoRetryDelay,
-                    lastResult.getRequestId(), lastResult, isLastRetry)) {
+                    // RETRY
+                    continue;
+                  }
 
-                  // RETRY
-                  continue;
-                }
+                  ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                      "Distributed transaction succeeded. Tasks: %s", txTask.getTasks());
 
-                ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                    "Distributed transaction succeeded. Tasks: %s", txTask.getTasks());
-
-                // OK, DISTRIBUTED COMMIT SUCCEED
-                return null;
-              }
-
-              // ONLY CASE: ODistributedRecordLockedException MORE THAN AUTO-RETRY
-              ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                  "Distributed transaction retries exceed maximum auto-retries (%d). Task: %s - Payload: %s - Tasks: %s",
-                  maxAutoRetry, txTask, txTask.getPayload(), txTask.getTasks());
-
-              // ROLLBACK TX
-              storage.executeUndoOnLocalServer(requestId, txTask);
-              sendTxCompleted(localNodeName, involvedClusters, nodes, lastResult.getRequestId(), false);
-
-              throw (ODistributedRecordLockedException) lastResult.getPayload();
-
-            } else {
-              // ASYNC, MANAGE REPLICATION CALLBACK
-              final OCallable<Void, ODistributedRequestId> unlockCallback = new OCallable<Void, ODistributedRequestId>() {
-                @Override
-                public Void call(final ODistributedRequestId reqId) {
-                  // FREE THE CONTEXT
-                  ctx.destroy();
+                  // OK, DISTRIBUTED COMMIT SUCCEED
                   return null;
                 }
-              };
 
-              executeAsyncTx(nodes, localResult, involvedClusters, txTask, requestId.getMessageId(), localNodeName, unlockCallback);
+                // ONLY CASE: ODistributedRecordLockedException MORE THAN AUTO-RETRY
+                ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+                    "Distributed transaction retries exceed maximum auto-retries (%d). Task: %s - Payload: %s - Tasks: %s",
+                    maxAutoRetry, txTask, txTask.getPayload(), txTask.getTasks());
+
+                // ROLLBACK TX
+                storage.executeUndoOnLocalServer(requestId, txTask);
+                sendTxCompleted(localNodeName, involvedClusters, nodes, lastResult.getRequestId(), false);
+
+                throw (ODistributedRecordLockedException) lastResult.getPayload();
+
+              } else {
+                // ASYNC, MANAGE REPLICATION CALLBACK
+                final OCallable<Void, ODistributedRequestId> unlockCallback = new OCallable<Void, ODistributedRequestId>() {
+                  @Override
+                  public Void call(final ODistributedRequestId reqId) {
+                    // FREE THE CONTEXT
+                    localDistributedDatabase.popTxContext(requestId);
+                    ctx.destroy();
+                    return null;
+                  }
+                };
+
+                executeAsyncTx(nodes, localResult, involvedClusters, txTask, requestId.getMessageId(), localNodeName,
+                    unlockCallback);
+              }
+            } catch (Throwable e) {
+              // UNDO LOCAL TX
+              storage.executeUndoOnLocalServer(requestId, txTask);
+
+              localDistributedDatabase.popTxContext(requestId);
+              ctx.destroy();
+
+              if (e instanceof RuntimeException)
+                throw (RuntimeException) e;
+              else
+                OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
             }
 
           } catch (RuntimeException e) {
