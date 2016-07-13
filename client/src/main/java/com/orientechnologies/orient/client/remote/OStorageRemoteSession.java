@@ -11,7 +11,8 @@ import java.util.*;
 public class OStorageRemoteSession implements ODatabaseSessionMetadata {
   public boolean                                commandExecuting       = false;
   public int                                    serverURLIndex         = -1;
-  public Set<OChannelBinary>                    connections            = Collections.newSetFromMap( new WeakHashMap<OChannelBinary, Boolean>());
+  public Set<OChannelBinary>                    connections            = Collections
+      .newSetFromMap(new WeakHashMap<OChannelBinary, Boolean>());
   public String                                 connectionUserName     = null;
   public String                                 connectionUserPassword = null;
   public Map<String, OStorageRemoteNodeSession> sessions               = new HashMap<String, OStorageRemoteNodeSession>();
@@ -30,7 +31,7 @@ public class OStorageRemoteSession implements ODatabaseSessionMetadata {
     return sessions.get(serverURL);
   }
 
-  public OStorageRemoteNodeSession getOrCreate(String serverURL) {
+  public synchronized OStorageRemoteNodeSession getOrCreate(String serverURL) {
     OStorageRemoteNodeSession session = sessions.get(serverURL);
     if (session == null) {
       session = new OStorageRemoteNodeSession(serverURL, uniqueClientSessionId);
@@ -68,11 +69,11 @@ public class OStorageRemoteSession implements ODatabaseSessionMetadata {
     return curSession.getServerURL();
   }
 
-  public void remove(String serverURL) {
+  public synchronized void remove(String serverURL) {
     sessions.remove(serverURL);
   }
 
-  public Collection<OStorageRemoteNodeSession> getAll() {
+  public synchronized Collection<OStorageRemoteNodeSession> getAll() {
     return sessions.values();
   }
 }
