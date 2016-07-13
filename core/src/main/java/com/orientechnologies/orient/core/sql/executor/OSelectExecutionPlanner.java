@@ -16,6 +16,7 @@ public class OSelectExecutionPlanner {
   private final OLetClause   letClause;
   private       OFromClause  target;
   private final OWhereClause whereClause;
+  private final OGroupBy     groupBy;
   private final OOrderBy     orderBy;
   private final OSkip        skip;
   private final OLimit       limit;
@@ -29,6 +30,7 @@ public class OSelectExecutionPlanner {
     this.target = oSelectStatement.getTarget();
     this.whereClause = oSelectStatement.getWhereClause();
     this.letClause = oSelectStatement.getLetClause();
+    this.groupBy = oSelectStatement.getGroupBy();
     this.orderBy = oSelectStatement.getOrderBy();
     this.skip = oSelectStatement.getSkip();
     this.limit = oSelectStatement.getLimit();
@@ -44,9 +46,11 @@ public class OSelectExecutionPlanner {
     handleWhere(result, whereClause, ctx);
     handleExpand(result, ctx);
 
-    if (orderBy != null) {
-      handleOrderBy(result, orderBy, ctx);
-    }
+    handleProjectionsBeforeGroupBy(result, projection, groupBy, ctx);
+    handleGroupBy(result, groupBy, ctx);
+
+    handleProjectionsBeforeOrderBy(result, projection, orderBy, ctx);
+    handleOrderBy(result, orderBy, ctx);
 
     if (skip != null) {
       result.chain(new SkipExecutionStep(skip, ctx));
@@ -60,9 +64,38 @@ public class OSelectExecutionPlanner {
     return result;
   }
 
+  private void handleGroupBy(OSelectExecutionPlan result, OGroupBy groupBy, OCommandContext ctx) {
+    //TODO
+  }
+
+  private void handleProjectionsBeforeWhere(OSelectExecutionPlan result, OProjection projection, OWhereClause whereClause,
+      OCommandContext ctx) {
+    if (!projectionsCalculated && whereClause != null && projection != null) {
+      Set<String> aliases = projection.getAllAliases();
+      if (whereClause.needsAliases(aliases)) {
+        handleProjections(result, projection, ctx);
+      }
+    }
+  }
+
+  private void handleProjectionsBeforeOrderBy(OSelectExecutionPlan result, OProjection projection, OOrderBy orderBy,
+      OCommandContext ctx) {
+    if (!projectionsCalculated && orderBy != null) {
+      handleProjections(result, projection, ctx);
+    }
+  }
+
+  private void handleProjectionsBeforeGroupBy(OSelectExecutionPlan result, OProjection projection, OGroupBy groupBy,
+      OCommandContext ctx) {
+    if (!projectionsCalculated && groupBy != null) {
+      handleProjections(result, projection, ctx);
+    }
+  }
+
   private void handleProjections(OSelectExecutionPlan result, OProjection projection, OCommandContext ctx) {
     if (!this.projectionsCalculated && projection != null) {
       result.chain(new ProjectionCalculationStep(projection, ctx));
+      this.projectionsCalculated = true;
     }
   }
 
@@ -103,16 +136,6 @@ public class OSelectExecutionPlanner {
   private void handleWhere(OSelectExecutionPlan plan, OWhereClause whereClause, OCommandContext ctx) {
     if (whereClause != null) {
       plan.chain(new FilterStep(whereClause, ctx));
-    }
-  }
-
-  private void handleProjectionsBeforeWhere(OSelectExecutionPlan result, OProjection projection, OWhereClause whereClause,
-      OCommandContext ctx) {
-    if (!projectionsCalculated && whereClause != null && projection != null) {
-      Set<String> aliases = projection.getAllAliases();
-      if (whereClause.needsAliases(aliases)) {
-        //TODO
-      }
     }
   }
 
