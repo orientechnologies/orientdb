@@ -3388,7 +3388,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return null;
 
     final OTransaction originalTx = currentTx;
-    begin();
+//    begin();
     return originalTx;
   }
 
@@ -3397,10 +3397,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return;
 
     try {
-      if (success)
-        commit();
-      else
-        rollback();
+//      if (success)
+//        commit();
+//      else
+//        rollback();
     } finally {
       currentTx = originalTx;
     }
