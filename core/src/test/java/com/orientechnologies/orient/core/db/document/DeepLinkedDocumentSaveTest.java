@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.HashSet;
