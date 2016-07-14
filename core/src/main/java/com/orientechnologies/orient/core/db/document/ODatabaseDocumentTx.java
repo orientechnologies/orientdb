@@ -63,7 +63,10 @@ import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
-import com.orientechnologies.orient.core.record.impl.*;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODirtyManager;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSaveThreadLocal;
@@ -461,12 +464,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     callOnDropListeners();
 
-    closeOnDelete();
-
     if (metadata != null) {
       metadata.close();
       metadata = null;
     }
+
+    closeOnDelete();
 
     try {
       if (storage == null)
@@ -598,37 +601,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * Deletes the record checking the version.
    */
   public ODatabase<ORecord> delete(final ORID iRecord, final int iVersion) {
-    checkIfActive();
-
-    final ORecordId rid = (ORecordId) iRecord.getIdentity();
-    if (rid == null)
-      throw new ODatabaseException(
-          "Cannot delete record because it has no identity. Probably was created from scratch or contains projections of fields "
-              + "rather than a full record");
-
-    if (!rid.isValid())
-      return this;
-
-    final OTransaction originalTx = wrapInImplicitTxIfRequired();
-    try {
-      ORecord record = iRecord.getRecord();
-
-      if (record != null && record.getVersion() != iVersion) {
-        // load a new copy of the record and override the version
-
-        record = load(iRecord, null, true);
-        if (record != null)
-          ORecordInternal.setVersion(record, iVersion);
-      }
-
-      if (record != null)
-        currentTx.deleteRecord(record, OPERATION_MODE.SYNCHRONOUS);
-    } catch (final Exception e) {
-      unwrapIfWasWrappedInImplicitTx(originalTx, false);
-      throw OException.wrapException(new ODatabaseException("Error while deleting record."), e);
-    }
-    unwrapIfWasWrappedInImplicitTx(originalTx, true);
-
+    executeDeleteRecord(iRecord, iVersion, true, OPERATION_MODE.SYNCHRONOUS, false);
     return this;
   }
 
@@ -655,14 +628,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   public ODatabaseDocument delete(final ORecord iRecord, final OPERATION_MODE iMode) {
     checkIfActive();
-    final OTransaction originalTx = wrapInImplicitTxIfRequired();
-    try {
-      currentTx.deleteRecord(iRecord, iMode);
-    } catch (final Exception e) {
-      unwrapIfWasWrappedInImplicitTx(originalTx, false);
-      throw OException.wrapException(new ODatabaseException("Error while deleting record."), e);
-    }
-    unwrapIfWasWrappedInImplicitTx(originalTx, true);
+    currentTx.deleteRecord(iRecord, iMode);
     return this;
   }
 
@@ -2272,6 +2238,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       currentTx.rollback(true, 0);
     }
 
+    // CHECK IT'S NOT INSIDE A HOOK
+    if (!inHook.isEmpty())
+      throw new IllegalStateException("Cannot begin a transaction while a hook is executing");
+
     // WAKE UP LISTENERS
     for (ODatabaseListener listener : browseListeners())
       try {
@@ -2545,17 +2515,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     if (!(iRecord instanceof ODocument)) {
       assignAndCheckCluster(iRecord, iClusterName);
-      final OTransaction originalTx = wrapInImplicitTxIfRequired();
-      final RET ret;
-      try {
-        ret = (RET) currentTx
-            .saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-      } catch (final Exception e) {
-        unwrapIfWasWrappedInImplicitTx(originalTx, false);
-        throw OException.wrapException(new ODatabaseException("Error while updating record."), e);
-      }
-      unwrapIfWasWrappedInImplicitTx(originalTx, true);
-      return ret;
+      return (RET) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
     }
 
     ODocument doc = (ODocument) iRecord;
@@ -2577,15 +2537,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
     }
 
-    final OTransaction originalTx = wrapInImplicitTxIfRequired();
-    try {
-      doc = (ODocument) currentTx
-          .saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-    } catch (final Exception e) {
-      unwrapIfWasWrappedInImplicitTx(originalTx, false);
-      throw OException.wrapException(new ODatabaseException("Error while updating record."), e);
-    }
-    unwrapIfWasWrappedInImplicitTx(originalTx, true);
+    doc = (ODocument) currentTx
+        .saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     return (RET) doc;
   }
@@ -2613,22 +2566,17 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (record instanceof ODocument && ((ODocument) record).getClassName() != null)
       checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_DELETE, ((ODocument) record).getClassName());
 
-    final OTransaction originalTx = wrapInImplicitTxIfRequired();
     try {
       currentTx.deleteRecord(record, OPERATION_MODE.SYNCHRONOUS);
     } catch (OException e) {
-      unwrapIfWasWrappedInImplicitTx(originalTx, false);
       throw e;
-    } catch (final Exception e) {
-      unwrapIfWasWrappedInImplicitTx(originalTx, false);
+    } catch (Exception e) {
       if (record instanceof ODocument)
         throw OException.wrapException(new ODatabaseException(
             "Error on deleting record " + record.getIdentity() + " of class '" + ((ODocument) record).getClassName() + "'"), e);
       else
         throw OException.wrapException(new ODatabaseException("Error on deleting record " + record.getIdentity()), e);
     }
-    unwrapIfWasWrappedInImplicitTx(originalTx, true);
-
     return this;
   }
 
@@ -3383,26 +3331,4 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
-  private OTransaction wrapInImplicitTxIfRequired() {
-    if (currentTx.isActive())
-      return null;
-
-    final OTransaction originalTx = currentTx;
-//    begin();
-    return originalTx;
-  }
-
-  private void unwrapIfWasWrappedInImplicitTx(OTransaction originalTx, boolean success) {
-    if (originalTx == null)
-      return;
-
-    try {
-//      if (success)
-//        commit();
-//      else
-//        rollback();
-    } finally {
-      currentTx = originalTx;
-    }
-  }
 }

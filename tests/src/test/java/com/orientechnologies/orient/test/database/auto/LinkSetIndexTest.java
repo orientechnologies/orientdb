@@ -309,7 +309,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<Set<OIdentifiable>> field("linkSet").add(docThree);
-      loadedDocument.save();
+      document.save();
       database.commit();
     } catch (Exception e) {
       database.rollback();

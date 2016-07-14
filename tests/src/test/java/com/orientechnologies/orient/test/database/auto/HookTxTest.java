@@ -29,6 +29,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Test(groups = "hook")
 public class HookTxTest extends ORecordHookAbstract {
@@ -135,31 +136,35 @@ public class HookTxTest extends ORecordHookAbstract {
     database.unregisterHook(this);
   }
 
-//  @Test(dependsOnMethods = "testHookCallsDelete")
-//  public void testHookCanBeginTx() throws IOException {
-//    database.activateOnCurrentThread();
-//    database.registerHook(new ORecordHookAbstract() {
-//      @Override
-//      public RESULT onRecordBeforeCreate(ORecord iRecord) {
-//        database.activateOnCurrentThread();
-//        database.begin();
-//        ((ODocument) iRecord).field("test-hook", false).save();
-//        database.commit();
-//        return RESULT.RECORD_CHANGED;
-//      }
-//
-//      @Override
-//      public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-//        return DISTRIBUTED_EXECUTION_MODE.BOTH;
-//      }
-//    });
-//
-//    final ODocument doc = new ODocument().field("test-hook", true).save();
-//    Assert.assertFalse((Boolean) doc.field("test-hook"));
-//
-//    database.activateOnCurrentThread();
-//    database.close();
-//  }
+  @Test(dependsOnMethods = "testHookCallsDelete")
+  public void testHookCannotBeginTx() throws IOException {
+    final AtomicBoolean exc = new AtomicBoolean(false);
+    database.activateOnCurrentThread();
+    database.registerHook(new ORecordHookAbstract() {
+      @Override
+      public RESULT onRecordBeforeCreate(ORecord iRecord) {
+        try {
+          database.activateOnCurrentThread();
+          database.begin();
+        } catch (IllegalStateException e) {
+          exc.set(true);
+        }
+        return null;
+      }
+
+      @Override
+      public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+        return DISTRIBUTED_EXECUTION_MODE.BOTH;
+      }
+    });
+
+    Assert.assertFalse(exc.get());
+    new ODocument().field("test-hook", true).save();
+    Assert.assertTrue(exc.get());
+
+    database.activateOnCurrentThread();
+    database.close();
+  }
 
   @Override
   @Test(enabled = false)
