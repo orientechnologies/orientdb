@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
 import java.util.Enumeration;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OChannel extends OListenerManger<OChannelListener> {
@@ -85,8 +86,8 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
     socket.setTcpNoDelay(true);
     socket.setSendBufferSize(socketBufferSize);
     socket.setReceiveBufferSize(socketBufferSize);
-    //THIS TIMEOUT IS CORRECT BUT CREATE SOME PROBLEM ON REMOTE, NEED CHECK BEFORE BE ENABLED
-    //timeout = iConfig.getValueAsLong(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
+    // THIS TIMEOUT IS CORRECT BUT CREATE SOME PROBLEM ON REMOTE, NEED CHECK BEFORE BE ENABLED
+    // timeout = iConfig.getValueAsLong(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
   }
 
   public static String getLocalIpAddress(final boolean iFavoriteIp4) throws SocketException {
@@ -112,6 +113,10 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
 
   public void acquireWriteLock() {
     lockWrite.lock();
+  }
+
+  public boolean tryAcquireWriteLock(final long iTimeout) {
+    return lockWrite.tryAcquireLock(iTimeout, TimeUnit.MILLISECONDS);
   }
 
   public void releaseWriteLock() {
