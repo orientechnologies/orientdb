@@ -58,6 +58,14 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
     success = iSuccess;
   }
 
+  /**
+   * Random key.
+   */
+  @Override
+  public int getPartitionKey() {
+    return (int) System.currentTimeMillis();
+  }
+
   public void addFixTask(final ORemoteTask fixTask) {
     fixTasks.add(fixTask);
   }
@@ -83,7 +91,8 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
         else {
           // UNABLE TO FIND TX CONTEXT
           ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Error on committing transaction %s db=%s", requestId, database.getName());
+              "Error on committing distributed transaction %s db=%s", requestId, database.getName());
+          return Boolean.FALSE;
         }
 
       } else if (fixTasks.isEmpty()) {
@@ -93,17 +102,20 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
         else {
           // UNABLE TO FIND TX CONTEXT
           ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Error on rolling back transaction %s db=%s", requestId, database.getName());
+              "Error on rolling back distributed transaction %s db=%s", requestId, database.getName());
+          return Boolean.FALSE;
         }
       } else {
 
-        if (pRequest == null)
-          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-              "Tx %s db=%s was not found for fix, probably has been already fixed for timeout reason", requestId,
-              database.getName());
-        else
-          // FIX TRANSACTION CONTENT
+        // FIX TRANSACTION CONTENT
+        if (pRequest != null)
           pRequest.fix(database, fixTasks);
+        else {
+          // UNABLE TO FIX TX CONTEXT
+          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+              "Error on fixing distributed transaction %s db=%s", requestId, database.getName());
+          return Boolean.FALSE;
+        }
 
       }
     } finally {

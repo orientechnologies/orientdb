@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
@@ -52,10 +56,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRecordRepli
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Distributed transaction manager.
@@ -597,11 +597,9 @@ public class ODistributedTransactionManager {
       // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-            "Distributed transaction %s error: %s", reqId, result, result.toString());
+            "Distributed transaction %s received error: %s", reqId, result, result.toString());
 
-      // ROLLBACK TX NOT TO SEND TX COMPLETED BECAUSE ALREADY UNDO
-      storage.executeUndoOnLocalServer(dResponse.getRequestId(), txTask);
-
+      // LET TO THE CALLER TO UNDO IT
       if (result instanceof OTransactionException || result instanceof ONeedRetryException)
         throw (RuntimeException) result;
 
