@@ -2156,6 +2156,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         } catch (Exception t) {
           callbackHooks(ORecordHook.TYPE.DELETE_FAILED, rec);
           throw t;
+        } finally {
+          callbackHooks(ORecordHook.TYPE.FINALIZE_DELETION, rec);
         }
 
         clearDocumentTracking(rec);
