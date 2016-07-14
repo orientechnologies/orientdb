@@ -160,6 +160,30 @@ public class OTxTask extends OAbstractReplicatedTask {
     }
   }
 
+  /**
+   * Try to avoid returning -1 to prefer parallel execution.
+   */
+  @Override
+  public int getPartitionKey() {
+    if (tasks.size() == 1)
+      // ONE TASK, USE THE INNER TASK'S PARTITION KEY
+      return tasks.get(0).getPartitionKey();
+
+    int partition = -1;
+    for (OAbstractRecordReplicatedTask t : tasks) {
+      if (t instanceof OCreateRecordTask) {
+        final int tpk = t.getPartitionKey();
+        if (partition == -1)
+          // FIRST ONE
+          partition = tpk;
+        else if (partition != tpk)
+          // DIFFERENT
+          return -1;
+      }
+    }
+    return partition;
+  }
+
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
     return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
