@@ -59,7 +59,6 @@ import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -1355,27 +1354,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           makeStorageDirty();
           startStorageTx(clientTx);
 
-          for (OCluster cluster : clustersToLock.values())
-            cluster.acquireAtomicExclusiveLock();
-
-          for (Map.Entry<String, OTransactionIndexChanges> entry : indexesToCommit.entrySet()) {
-            final String indexName = entry.getKey();
-            final OTransactionIndexChanges changes = entry.getValue();
-            assert changes.changesPerKey instanceof TreeMap;
-
-            final OIndexInternal<?> index = changes.resolveAssociatedIndex(indexName, indexManager);
-            if (index == null)
-              throw new OTransactionException("Cannot find index '" + indexName + "' while committing transaction");
-
-            boolean fullyLocked = false;
-            for (Object key : changes.changesPerKey.keySet())
-              if (index.acquireAtomicExclusiveLock(key)) {
-                fullyLocked = true;
-                break;
-              }
-            if (!fullyLocked && !changes.nullKeyChanges.entries.isEmpty())
-              index.acquireAtomicExclusiveLock(null);
-          }
+          lockIndexKeys(indexManager, indexesToCommit);
+          lockIndexes(indexesToCommit);
+          lockClusters(clustersToLock);
 
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
           for (ORecordOperation txEntry : newRecords) {
@@ -1419,6 +1400,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         } catch (RuntimeException e) {
           makeRollback(clientTx, e);
         } finally {
+          unlockIndexKeys(indexesToCommit);
           transaction.set(null);
         }
       } finally {
@@ -4193,6 +4175,55 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       rids.add(rid);
     }
     return ridsPerCluster;
+  }
+
+  private void lockIndexKeys(OIndexManagerProxy manager, TreeMap<String, OTransactionIndexChanges> indexes) {
+    for (Map.Entry<String, OTransactionIndexChanges> entry : indexes.entrySet()) {
+      final String indexName = entry.getKey();
+      final OTransactionIndexChanges changes = entry.getValue();
+
+      final OIndexInternal<?> index = changes.resolveAssociatedIndex(indexName, manager);
+      if (index == null)
+        throw new OTransactionException("Cannot find index '" + indexName + "' while committing transaction");
+
+      index.lockKeysForUpdateNoTx(changes.changesPerKey.keySet());
+      if (!changes.nullKeyChanges.entries.isEmpty())
+        index.lockKeysForUpdateNoTx((Object) null);
+    }
+  }
+
+  private void unlockIndexKeys(TreeMap<String, OTransactionIndexChanges> indexes) {
+    for (OTransactionIndexChanges changes : indexes.values()) {
+      final OIndexInternal<?> index = changes.getAssociatedIndex();
+      if (index == null) // index may be unresolved at this point (and its keys are not locked) due to some failure
+        continue;
+
+      index.releaseKeysForUpdateNoTx(changes.changesPerKey.keySet());
+      if (!changes.nullKeyChanges.entries.isEmpty())
+        index.releaseKeysForUpdateNoTx((Object) null);
+    }
+  }
+
+  private void lockIndexes(TreeMap<String, OTransactionIndexChanges> indexes) {
+    for (OTransactionIndexChanges changes : indexes.values()) {
+      assert changes.changesPerKey instanceof TreeMap;
+
+      final OIndexInternal<?> index = changes.getAssociatedIndex();
+
+      boolean fullyLocked = false;
+      for (Object key : changes.changesPerKey.keySet())
+        if (index.acquireAtomicExclusiveLock(key)) {
+          fullyLocked = true;
+          break;
+        }
+      if (!fullyLocked && !changes.nullKeyChanges.entries.isEmpty())
+        index.acquireAtomicExclusiveLock(null);
+    }
+  }
+
+  private void lockClusters(TreeMap<Integer, OCluster> clustersToLock) {
+    for (OCluster cluster : clustersToLock.values())
+      cluster.acquireAtomicExclusiveLock();
   }
 
   private class UncompletedCommit implements OUncompletedCommit<List<ORecordOperation>> {

@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
@@ -484,6 +483,29 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
               ORecordOperation.DELETED);
     }
 
+    final OClass class_ = ODocumentInternal.getImmutableSchemaClass(iDocument);
+    if (class_ != null) {
+      final Collection<OIndex<?>> indexes = class_.getIndexes();
+
+      final Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
+      final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
+      for (final OIndex<?> index : indexes) {
+        if (index.getInternal() instanceof OIndexUnique) {
+          OIndexRecorder indexRecorder = new OIndexRecorder((OIndexUnique) index.getInternal());
+
+          addIndexEntry(iDocument, iDocument.getIdentity(), indexRecorder);
+          indexKeysMap.put(index, indexRecorder.getAffectedKeys());
+        }
+      }
+
+      for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
+        final OIndexInternal<?> index = entry.getKey().getInternal();
+        index.lockKeysForUpdateNoTx(entry.getValue());
+      }
+
+      indexKeysMapQueue.push(indexKeysMap);
+    }
+
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -596,6 +618,11 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     unlockKeys();
   }
 
+  @Override
+  public void onRecordFinalizeDeletion(ODocument document) {
+    unlockKeys();
+  }
+
   private void unlockKeys() {
     Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
     if (indexKeysMapQueue == null)
@@ -622,5 +649,4 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   protected void removeFromIndex(OIndex<?> index, Object key, OIdentifiable value) {
     index.remove(key, value);
   }
-
 }

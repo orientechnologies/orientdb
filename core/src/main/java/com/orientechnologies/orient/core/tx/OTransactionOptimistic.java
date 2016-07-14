@@ -537,6 +537,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       case ORecordOperation.UPDATED:
         database.callbackHooks(TYPE.FINALIZE_UPDATE, iRecord);
         break;
+      case ORecordOperation.DELETED:
+        database.callbackHooks(TYPE.FINALIZE_DELETION, iRecord);
+        break;
       }
     }
   }
