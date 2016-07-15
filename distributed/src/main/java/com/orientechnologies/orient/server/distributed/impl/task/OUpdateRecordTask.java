@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -93,27 +92,34 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%d",
           database.getName(), rid.toString(), version);
 
-    checkRecordExists();
+    prepareUndoOperation();
+    if (previousRecord == null) {
+      // RESURRECT/CREATE IT
 
-    ORecord loadedRecord = previousRecord.copy();
+      new OCreateRecordTask(rid, content, version, recordType).executeRecordTask(requestId, iServer, iManager, database);
 
-    if (loadedRecord instanceof ODocument) {
-      // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
-      final ODocument newDocument = (ODocument) getRecord();
+    } else {
+      // UPDATE IT
+      final ORecord loadedRecord = previousRecord.copy();
 
-      ODocument loadedDocument = (ODocument) loadedRecord;
-      int loadedRecordVersion = loadedDocument.merge(newDocument, false, false).getVersion();
-      ORecordInternal.setVersion(loadedDocument, version);
-    } else
-      ORecordInternal.fill(loadedRecord, rid, version, content, true);
+      if (loadedRecord instanceof ODocument) {
+        // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
+        final ODocument newDocument = (ODocument) getRecord();
 
-    loadedRecord.setDirty();
+        final ODocument loadedDocument = (ODocument) loadedRecord;
+        loadedDocument.merge(newDocument, false, false).getVersion();
+        ORecordInternal.setVersion(loadedDocument, version);
+      } else
+        ORecordInternal.fill(loadedRecord, rid, version, content, true);
 
-    record = database.save(loadedRecord);
+      loadedRecord.setDirty();
+
+      record = database.save(loadedRecord);
+    }
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%d [%s]",
-          database.getName(), rid.toString(), record.getVersion(), record);
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "+-> updated record %s/%s v.%d [%s]", database.getName(), rid.toString(), record.getVersion(), record);
 
     return record.getVersion();
   }

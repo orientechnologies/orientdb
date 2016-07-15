@@ -119,7 +119,7 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   @Override

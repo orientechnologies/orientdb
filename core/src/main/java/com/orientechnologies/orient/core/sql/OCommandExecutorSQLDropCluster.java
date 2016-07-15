@@ -40,7 +40,7 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
   public static final String KEYWORD_DROP    = "DROP";
   public static final String KEYWORD_CLUSTER = "CLUSTER";
 
-  private String clusterName;
+  private String             clusterName;
 
   public OCommandExecutorSQLDropCluster parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
@@ -108,7 +108,10 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    if (clusterName != null)
+      return 10 * getDatabase().countClusterElements(clusterName);
+
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   @Override

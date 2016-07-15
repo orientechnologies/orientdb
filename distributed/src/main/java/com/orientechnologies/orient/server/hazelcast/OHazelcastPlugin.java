@@ -267,7 +267,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (!enabled)
       return;
 
-    OLogManager.instance().warn(this, "Shutting down node %s...", nodeName);
+    OLogManager.instance().warn(this, "Shutting down node '%s'...", nodeName);
     setNodeStatus(NODE_STATUS.SHUTTINGDOWN);
 
     try {

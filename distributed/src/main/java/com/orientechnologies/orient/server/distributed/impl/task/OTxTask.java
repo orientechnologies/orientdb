@@ -80,6 +80,8 @@ public class OTxTask extends OAbstractReplicatedTask {
     // CREATE A CONTEXT OF TX
     final ODistributedTxContext reqContext = ddb.registerTxContext(requestId);
 
+    final ODistributedConfiguration dCfg = iManager.getDatabaseConfiguration(database.getName());
+
     database.begin();
     try {
       final OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
@@ -93,7 +95,9 @@ public class OTxTask extends OAbstractReplicatedTask {
           final int clId = createRT.clusterId > -1 ? createRT.clusterId
               : createRT.getRid().isValid() ? createRT.getRid().getClusterId() : -1;
           final String clusterName = clId > -1 ? database.getClusterNameById(clId) : null;
-          tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
+
+          if (dCfg.isServerContainingCluster(iManager.getLocalNodeName(), clusterName))
+            tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
         }
       }
 
@@ -101,7 +105,7 @@ public class OTxTask extends OAbstractReplicatedTask {
         final Object taskResult;
 
         // CHECK LOCAL CLUSTER IS AVAILABLE ON CURRENT SERVER
-        if (!task.checkForClusterAvailability(iManager.getLocalNodeName(), iManager.getDatabaseConfiguration(database.getName())))
+        if (!task.checkForClusterAvailability(iManager.getLocalNodeName(), dCfg))
           // SKIP EXECUTION BECAUSE THE CLUSTER IS NOT ON LOCAL NODE: THIS CAN HAPPENS IN CASE OF DISTRIBUTED TX WITH SHARDING
           taskResult = NON_LOCAL_CLUSTER;
         else {
@@ -154,6 +158,30 @@ public class OTxTask extends OAbstractReplicatedTask {
 
       return e;
     }
+  }
+
+  /**
+   * Try to avoid returning -1 to prefer parallel execution.
+   */
+  @Override
+  public int getPartitionKey() {
+    if (tasks.size() == 1)
+      // ONE TASK, USE THE INNER TASK'S PARTITION KEY
+      return tasks.get(0).getPartitionKey();
+
+    int partition = -1;
+    for (OAbstractRecordReplicatedTask t : tasks) {
+      if (t instanceof OCreateRecordTask) {
+        final int tpk = t.getPartitionKey();
+        if (partition == -1)
+          // FIRST ONE
+          partition = tpk;
+        else if (partition != tpk)
+          // DIFFERENT
+          return -1;
+      }
+    }
+    return partition;
   }
 
   @Override

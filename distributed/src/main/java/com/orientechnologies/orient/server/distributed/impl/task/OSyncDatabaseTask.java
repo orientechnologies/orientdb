@@ -76,7 +76,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
           if (lastDeployment != null && lastDeployment.longValue() == random) {
             // SKIP IT
             ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-                "skip deploying database '%s' because already executed", databaseName);
+                "Skip deploying database '%s' because already executed", databaseName);
             return Boolean.FALSE;
           }
 

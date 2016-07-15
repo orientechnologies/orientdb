@@ -46,7 +46,7 @@ import java.util.Map;
 public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_TRUNCATE = "TRUNCATE";
   public static final String KEYWORD_CLUSTER  = "CLUSTER";
-  private String clusterName;
+  private String             clusterName;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLTruncateCluster parse(final OCommandRequest iRequest) {

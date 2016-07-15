@@ -123,7 +123,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         if (anyQueueWorkerIsWorking > 0) {
           // WAIT ALL THE REQUESTS ARE MANAGED
           ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-              "Request %s on database %s waiting for all the previous requests to be completed", request, databaseName);
+              "Request %s on database '%s' waiting for all the previous requests to be completed", request, databaseName);
 
           final CountDownLatch emptyQueues = new CountDownLatch(anyQueueWorkerIsWorking);
 
@@ -154,7 +154,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         } else {
           // EMPTY QUEUES: JUST EXECUTE IT
           ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-              "Synchronous request %s on database %s dispatched to the worker 0", request, databaseName);
+              "Synchronous request %s on database '%s' dispatched to the worker 0", request, databaseName);
 
           workerThreads.get(0).processRequest(request);
         }
@@ -170,7 +170,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         final int partition = partitionKey % workerThreads.size();
 
         ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "Request %s on database %s dispatched to the worker %d", request, databaseName, partition);
+            "Request %s on database '%s' dispatched to the worker %d", request, databaseName, partition);
 
         final ODistributedWorker worker = workerThreads.get(partition);
         worker.processRequest(request);
@@ -259,8 +259,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           } else if (e instanceof OSecurityAccessException) {
             // THE CONNECTION COULD BE STALE, CREATE A NEW ONE AND RETRY
             manager.closeRemoteServer(node);
-            final ORemoteServerController remoteServer = manager.getRemoteServer(node);
             try {
+              final ORemoteServerController remoteServer = manager.getRemoteServer(node);
               remoteServer.sendRequest(iRequest);
               continue;
 
@@ -294,9 +294,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       return waitForResponse(iRequest, currentResponseMgr);
 
-    } catch (
-
-    RuntimeException e) {
+    } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
       throw OException.wrapException(new ODistributedException("Error on executing distributed request (" + iRequest
@@ -559,7 +557,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (elapsed > currentResponseMgr.getSynchTimeout()) {
 
         ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN,
-            "timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=(%s)", elapsed,
+            "Timeout (%dms) on waiting for synchronous responses from nodes=%s responsesSoFar=%s request=(%s)", elapsed,
             currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(), iRequest);
       }
     }

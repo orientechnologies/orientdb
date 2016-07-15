@@ -2715,7 +2715,7 @@ import java.util.concurrent.Callable;
         try {
           addClusterIdToIndexes(clusterId);
         } catch (RuntimeException e) {
-          OLogManager.instance().warn(this, "Error adding clusterId '%i' to index of class '%s'", e, clusterId, getName());
+          OLogManager.instance().warn(this, "Error adding clusterId '%d' to index of class '%s'", e, clusterId, getName());
           clusters.remove(clusterId);
         }
       }
