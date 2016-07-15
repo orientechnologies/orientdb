@@ -48,7 +48,7 @@ import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPD
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract implements OOrientStartupListener, OOrientShutdownListener {
-  private LockedKeysThreadLocal lockedKeys = new LockedKeysThreadLocal();
+  private Deque<TreeMap<OIndex<?>, List<Object>>> lockedKeys = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
 
   public OClassIndexManager(ODatabaseDocument database) {
     super(database);
@@ -65,7 +65,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   @Override
   public void onStartup() {
     if (lockedKeys == null)
-      lockedKeys = new LockedKeysThreadLocal();
+      lockedKeys = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
   }
 
   private void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
@@ -298,7 +298,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   private ODocument checkIndexedPropertiesOnCreation(final ODocument record, final Collection<OIndex<?>> indexes) {
     ODocument replaced = null;
 
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
 
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
@@ -336,7 +336,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   }
 
   private void checkIndexedPropertiesOnUpdate(final ODocument record, final Collection<OIndex<?>> indexes) {
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
 
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
@@ -481,7 +481,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     if (class_ != null) {
       final Collection<OIndex<?>> indexes = class_.getIndexes();
 
-      final Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
+      final Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
       final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
       for (final OIndex<?> index : indexes) {
         if (index.getInternal() instanceof OIndexUnique) {
@@ -618,7 +618,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   }
 
   private void unlockKeys() {
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
     if (indexKeysMapQueue == null)
       return;
 
@@ -643,12 +643,4 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   protected void removeFromIndex(OIndex<?> index, Object key, OIdentifiable value) {
     index.remove(key, value);
   }
-
-  private static class LockedKeysThreadLocal extends ThreadLocal<Deque<TreeMap<OIndex<?>, List<Object>>>> {
-    @Override
-    protected Deque<TreeMap<OIndex<?>, List<Object>>> initialValue() {
-      return new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
-    }
-  }
-
 }
