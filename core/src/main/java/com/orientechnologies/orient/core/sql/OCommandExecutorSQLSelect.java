@@ -635,13 +635,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private boolean checkSkipBlob() {
     if (expandTarget != null)
       return true;
-    if (projections != null) {
-      if (projections.size() > 1) {
-        return true;
-      }
-      if (projections.containsKey("@rid"))
-        return false;
-    }
     return false;
   }
 
