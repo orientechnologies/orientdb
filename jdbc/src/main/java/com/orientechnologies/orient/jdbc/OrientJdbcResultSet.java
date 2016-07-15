@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -29,9 +28,27 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Date;
-import java.util.*;
+import java.sql.NClob;
+import java.sql.Ref;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.RowId;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 /**
  * @author Roberto Franchini (CELI srl - franchin--at--celi.it)
@@ -134,6 +151,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
     cursor = iRowNumber;
     document = (ODocument) records.get(cursor).getRecord();
+    fieldNames = document.fieldNames();
     return true;
   }
 
@@ -198,12 +216,10 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public InputStream getAsciiStream(int columnIndex) throws SQLException {
-
     return null;
   }
 
   public InputStream getAsciiStream(final String columnLabel) throws SQLException {
-
     return null;
   }
 
@@ -239,9 +255,7 @@ public class OrientJdbcResultSet implements ResultSet {
   public InputStream getBinaryStream(String columnLabel) throws SQLException {
     try {
       Blob blob = getBlob(columnLabel);
-      if (blob == null)
-        return null;
-      return blob.getBinaryStream();
+      return blob != null ? blob.getBinaryStream() : null;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the binary stream at column '" + columnLabel + "'", e);
     }
@@ -330,22 +344,18 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public Reader getCharacterStream(int columnIndex) throws SQLException {
-
     return null;
   }
 
   public Reader getCharacterStream(String columnLabel) throws SQLException {
-
     return null;
   }
 
   public Clob getClob(int columnIndex) throws SQLException {
-
     return null;
   }
 
   public Clob getClob(String columnLabel) throws SQLException {
-
     return null;
   }
 
@@ -354,7 +364,6 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public String getCursorName() throws SQLException {
-
     return null;
   }
 
@@ -386,6 +395,7 @@ public class OrientJdbcResultSet implements ResultSet {
       java.util.Date date = document.field(columnLabel, OType.DATETIME);
       if (date == null)
         return null;
+
       cal.setTimeInMillis(date.getTime());
       return new Date(cal.getTimeInMillis());
     } catch (Exception e) {
@@ -408,12 +418,10 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public int getFetchDirection() throws SQLException {
-
     return 0;
   }
 
   public int getFetchSize() throws SQLException {
-
     return rowCount;
   }
 
@@ -436,7 +444,6 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public int getInt(int columnIndex) throws SQLException {
-
     return getInt(fieldNames[getFieldIndex(columnIndex)]);
   }
 
@@ -458,7 +465,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public long getLong(String columnLabel) throws SQLException {
     try {
-      Long r = document.field(columnLabel, OType.LONG);
+      final Long r = document.field(columnLabel, OType.LONG);
       return r != null ? r : 0;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the long value at column '" + columnLabel + "'", e);
@@ -504,17 +511,18 @@ public class OrientJdbcResultSet implements ResultSet {
   public Object getObject(String columnLabel) throws SQLException {
     try {
       Object value = document.field(columnLabel);
-      if (value == null)
+      if (value == null) {
         return null;
-      else {
+      } else {
         // resolve the links so that the returned set contains instances
         // of ODocument
         if (value instanceof ORecordLazyMultiValue) {
           ORecordLazyMultiValue lazyRecord = (ORecordLazyMultiValue) value;
           lazyRecord.convertLinks2Records();
           return lazyRecord;
-        } else
+        } else {
           return value;
+        }
       }
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the Java Object at column '" + columnLabel + "'", e);
@@ -605,36 +613,48 @@ public class OrientJdbcResultSet implements ResultSet {
   public Time getTime(String columnLabel) throws SQLException {
     try {
       java.util.Date date = document.field(columnLabel, OType.DATETIME);
-      if (date == null)
-        return null;
-      return new Time(date.getTime());
+      return getTime(date);
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the time value at column '" + columnLabel + "'", e);
     }
   }
 
   public Time getTime(int columnIndex, Calendar cal) throws SQLException {
-    return new Time(getDate(columnIndex, cal).getTime());
+    Date date = getDate(columnIndex, cal);
+    return getTime(date);
+  }
+
+  private Time getTime(java.util.Date date) {
+    return date != null ? new Time(date.getTime()) : null;
   }
 
   public Time getTime(String columnLabel, Calendar cal) throws SQLException {
-    return new Time(getDate(columnLabel, cal).getTime());
+    Date date = getDate(columnLabel, cal);
+    return getTime(date);
   }
 
   public Timestamp getTimestamp(int columnIndex) throws SQLException {
-    return new Timestamp(getDate(columnIndex).getTime());
+    Date date = getDate(columnIndex);
+    return getTimestamp(date);
+  }
+
+  private Timestamp getTimestamp(Date date) {
+    return date != null ? new Timestamp(date.getTime()) : null;
   }
 
   public Timestamp getTimestamp(String columnLabel) throws SQLException {
-    return new Timestamp(getDate(columnLabel).getTime());
+    Date date = getDate(columnLabel);
+    return getTimestamp(date);
   }
 
   public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-    return new Timestamp(getDate(columnIndex, cal).getTime());
+    Date date = getDate(columnIndex, cal);
+    return getTimestamp(date);
   }
 
   public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
-    return new Timestamp(getDate(columnLabel, cal).getTime());
+    Date date = getDate(columnLabel, cal);
+    return getTimestamp(date);
   }
 
   public int getType() throws SQLException {
