@@ -54,6 +54,8 @@ public class ORemoteServerChannel {
   private OContextConfiguration           contextConfig = new OContextConfiguration();
   private Date                            createdOn     = new Date();
 
+  private final static int                BUFFER_SIZE   = 1024;
+
   public ORemoteServerChannel(final ODistributedServerManager manager, final String iServer, final String iURL, final String user,
       final String passwd) throws IOException {
     this.manager = manager;
@@ -79,15 +81,16 @@ public class ORemoteServerChannel {
       public Object execute() throws IOException {
         try {
           final byte[] serializedRequest;
-          final ByteArrayOutputStream out = new ByteArrayOutputStream();
+          final ByteArrayOutputStream out = new ByteArrayOutputStream(BUFFER_SIZE);
           try {
             final ObjectOutputStream outStream = new ObjectOutputStream(out);
             try {
               req.writeExternal(outStream);
               serializedRequest = out.toByteArray();
 
-              ODistributedServerLog.debug(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-                  "Sending request %s (%d bytes)", req, serializedRequest.length);
+              if (ODistributedServerLog.isDebugEnabled())
+                ODistributedServerLog.debug(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+                    "Sending request %s (%d bytes)", req, serializedRequest.length);
 
               channel.writeBytes(serializedRequest);
 
@@ -112,15 +115,16 @@ public class ORemoteServerChannel {
       @Override
       public Object execute() throws IOException {
         try {
-          final ByteArrayOutputStream out = new ByteArrayOutputStream();
+          final ByteArrayOutputStream out = new ByteArrayOutputStream(BUFFER_SIZE);
           try {
             final ObjectOutputStream outStream = new ObjectOutputStream(out);
             try {
               response.writeExternal(outStream);
               final byte[] serializedResponse = out.toByteArray();
 
-              ODistributedServerLog.debug(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
-                  "Sending response %s (%d bytes)", response, serializedResponse.length);
+              if (ODistributedServerLog.isDebugEnabled())
+                ODistributedServerLog.debug(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+                    "Sending response %s to reqId=%s (%d bytes)", response, response.getRequestId(), serializedResponse.length);
 
               channel.writeBytes(serializedResponse);
 

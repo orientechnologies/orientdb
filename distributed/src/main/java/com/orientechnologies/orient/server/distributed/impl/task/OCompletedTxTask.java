@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -28,12 +34,6 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Task to manage the end of distributed transaction when no fix is needed (OFixTxTask) and all the locks must be released. Locks
@@ -56,6 +56,14 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   public OCompletedTxTask(final ODistributedRequestId iRequestId, final boolean iSuccess) {
     requestId = iRequestId;
     success = iSuccess;
+  }
+
+  /**
+   * Random key.
+   */
+  @Override
+  public int[] getPartitionKey() {
+    return PK;// new int[] { (int) System.currentTimeMillis() };
   }
 
   public void addFixTask(final ORemoteTask fixTask) {

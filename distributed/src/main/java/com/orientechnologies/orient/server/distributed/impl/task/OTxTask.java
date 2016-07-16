@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -92,6 +93,14 @@ public class OTxTask extends OAbstractReplicatedTask {
       for (OAbstractRecordReplicatedTask task : tasks) {
         if (task instanceof OCreateRecordTask) {
           final OCreateRecordTask createRT = (OCreateRecordTask) task;
+
+          final ORecordId rid = createRT.getRid();
+          if (rid != null && rid.isPersistent()) {
+            if (rid.getRecord() != null)
+              // ALREADY CREATED: SKIP REGISTERING IN TX
+              continue;
+          }
+
           final int clId = createRT.clusterId > -1 ? createRT.clusterId
               : createRT.getRid().isValid() ? createRT.getRid().getClusterId() : -1;
           final String clusterName = clId > -1 ? database.getClusterNameById(clId) : null;
@@ -161,27 +170,22 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   /**
-   * Try to avoid returning -1 to prefer parallel execution.
+   * Return the partition keys of all the sub-tasks.
    */
   @Override
-  public int getPartitionKey() {
+  public int[] getPartitionKey() {
     if (tasks.size() == 1)
       // ONE TASK, USE THE INNER TASK'S PARTITION KEY
       return tasks.get(0).getPartitionKey();
 
-    int partition = -1;
-    for (OAbstractRecordReplicatedTask t : tasks) {
-      if (t instanceof OCreateRecordTask) {
-        final int tpk = t.getPartitionKey();
-        if (partition == -1)
-          // FIRST ONE
-          partition = tpk;
-        else if (partition != tpk)
-          // DIFFERENT
-          return -1;
-      }
+    // MULTIPLE PARTITION
+    final int[] partitions = new int[tasks.size()];
+    for (int i = 0; i < tasks.size(); ++i) {
+      final OAbstractRecordReplicatedTask task = tasks.get(i);
+      partitions[i] = task.getPartitionKey()[0];
     }
-    return partition;
+
+    return partitions;
   }
 
   @Override

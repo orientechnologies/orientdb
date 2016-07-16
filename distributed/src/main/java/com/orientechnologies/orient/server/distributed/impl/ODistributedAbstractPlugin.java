@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
@@ -67,15 +77,6 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 /**
  * Abstract plugin to manage the distributed environment.
  *
@@ -105,7 +106,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected OClusterOwnershipAssignmentStrategy                  clusterAssignmentStrategy         = new ODefaultClusterOwnershipAssignmentStrategy(
       this);
 
-  protected Map<String, Long>                                    lastLSNWriting                    = new HashMap<String, Long>();
   protected static final int                                     DEPLOY_DB_MAX_RETRIES             = 10;
   protected Map<String, Member>                                  activeNodes                       = new ConcurrentHashMap<String, Member>();
   protected Map<String, String>                                  activeNodesNamesByMemberId        = new ConcurrentHashMap<String, String>();
@@ -116,15 +116,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected Date                                                 startedOn                         = new Date();
   protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
   protected String                                               nodeUuid;
-  protected ODistributedStrategy responseManagerFactory = new ODefaultDistributedStrategy();
+  protected ODistributedStrategy                                 responseManagerFactory            = new ODefaultDistributedStrategy();
 
   private volatile String                                        lastServerDump                    = "";
+  protected CountDownLatch                                       serverStarted                     = new CountDownLatch(1);
 
   protected abstract ODistributedConfiguration getLastDatabaseConfiguration(String databaseName);
 
   public void waitUntilNodeOnline() throws InterruptedException {
-    while (!status.equals(NODE_STATUS.ONLINE))
-      Thread.sleep(100);
+    serverStarted.await();
   }
 
   public void waitUntilNodeOnline(final String nodeName, final String databaseName) throws InterruptedException {
@@ -603,22 +603,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           else {
             // OK
             final String sourceNodeName = task.getNodeSource();
-            Long last = lastLSNWriting.get(sourceNodeName);
-            if (last == null)
-              last = 0l;
+            final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(database.getName());
 
-            if (task instanceof OAbstractReplicatedTask && System.currentTimeMillis() - last > 2000) {
-              final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(database.getName());
-              final OLogSequenceNumber lastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
-              if (lastLSN != null) {
-                ddb.getSyncConfiguration().setLSN(task.getNodeSource(), lastLSN);
-
-                ODistributedServerLog.debug(this, nodeName, task.getNodeSource(), DIRECTION.NONE,
-                    "Updating LSN table to the value %s", lastLSN);
-
-                lastLSNWriting.put(sourceNodeName, System.currentTimeMillis());
-              }
-            }
+            if (!(result instanceof Throwable) && task instanceof OAbstractReplicatedTask)
+              // UPDATE LSN WITH LAST OPERATION
+              ddb.setLSN(sourceNodeName, ((OAbstractReplicatedTask) task).getLastLSN());
           }
 
           return result;

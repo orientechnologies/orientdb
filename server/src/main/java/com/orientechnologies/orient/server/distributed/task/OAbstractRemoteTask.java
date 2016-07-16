@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.distributed.task;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -35,6 +34,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  */
 public abstract class OAbstractRemoteTask implements ORemoteTask {
   private static final long  serialVersionUID = 1L;
+  protected static final int[] PK               = new int[] { -1 };
 
   protected transient String nodeSource;
 
@@ -54,8 +54,8 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
       ODatabaseDocumentInternal database) throws Exception;
 
   @Override
-  public int getPartitionKey() {
-    return -1;
+  public int[] getPartitionKey() {
+    return PK;
   }
 
   @Override
