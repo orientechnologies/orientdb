@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.compression.impl;
 
 import java.util.Random;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.compression.OCompressionFactory;
@@ -33,7 +34,9 @@ public abstract class AbstractCompressionTest {
 
       compressedSize += compressedContent.length;
 
-      Assert.assertEquals(content, compression.uncompress(compressedContent));
+//      Assert.assertEquals(content, compression.uncompress(compressedContent));
+
+      Assertions.assertThat(content).isEqualTo(compression.uncompress(compressedContent));
     }
 
     System.out.println("Compression/Decompression test against " + name + " took: " + (System.currentTimeMillis() - seed)
