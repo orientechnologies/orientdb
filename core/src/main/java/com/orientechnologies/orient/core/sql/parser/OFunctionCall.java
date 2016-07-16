@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
@@ -18,7 +19,7 @@ import java.util.Set;
 public class OFunctionCall extends SimpleNode {
 
   protected OIdentifier name;
-  protected boolean           star   = false;
+
   protected List<OExpression> params = new ArrayList<OExpression>();
 
   public OFunctionCall(int id) {
@@ -37,11 +38,20 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean isStar() {
-    return star;
-  }
 
-  public void setStar(boolean star) {
-    this.star = star;
+    if (this.params.size() != 1) {
+      return false;
+    }
+    OExpression param = params.get(0);
+    if (param.mathExpression == null || !(param.mathExpression instanceof OBaseExpression)) {
+
+      return false;
+    }
+    OBaseExpression base = (OBaseExpression) param.mathExpression;
+    if (base.identifier == null || base.identifier.suffix == null) {
+      return false;
+    }
+    return base.identifier.suffix.star;
   }
 
   public List<OExpression> getParams() {
@@ -55,17 +65,13 @@ public class OFunctionCall extends SimpleNode {
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     name.toString(params, builder);
     builder.append("(");
-    if (star) {
-      builder.append("*");
-    } else {
-      boolean first = true;
-      for (OExpression expr : this.params) {
-        if (!first) {
-          builder.append(", ");
-        }
-        expr.toString(params, builder);
-        first = false;
+    boolean first = true;
+    for (OExpression expr : this.params) {
+      if (!first) {
+        builder.append(", ");
       }
+      expr.toString(params, builder);
+      first = false;
     }
     builder.append(")");
   }
@@ -83,7 +89,7 @@ public class OFunctionCall extends SimpleNode {
     if (function != null) {
       return function.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), ctx);
     }
-    throw new UnsupportedOperationException("finisho OFunctionCall implementation!");
+    throw new UnsupportedOperationException("finish OFunctionCall implementation!");
   }
 
   public static ODatabaseDocumentInternal getDatabase() {
@@ -135,12 +141,101 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    for(OExpression param:params){
-      if(param.needsAliases(aliases)){
+    for (OExpression param : params) {
+      if (param.needsAliases(aliases)) {
         return true;
       }
     }
     return false;
+  }
+
+  public boolean isAggregate() {
+    if (isAggregateFunction()) {
+      return true;
+    }
+
+    for (OExpression exp : params) {
+      if (exp.isAggregate()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+    if (isAggregate()) {
+      OFunctionCall newFunct = new OFunctionCall(-1);
+      newFunct.name = this.name;
+      OIdentifier functionResultAlias = aggregateProj.getNextAlias();
+
+      if (isAggregateFunction()) {
+
+        if (isStar()) {
+          for (OExpression param : params) {
+            newFunct.getParams().add(param);
+          }
+        } else {
+          for (OExpression param : params) {
+            if (param.isAggregate()) {
+              throw new OCommandExecutionException(
+                  "Cannot calculate an aggregate function of another aggregate function " + toString());
+            }
+            OIdentifier nextAlias = aggregateProj.getNextAlias();
+            OProjectionItem paramItem = new OProjectionItem(-1);
+            paramItem.alias = nextAlias;
+            paramItem.expression = param;
+            aggregateProj.getPreAggregate().add(paramItem);
+
+            newFunct.params.add(new OExpression(nextAlias));
+          }
+          aggregateProj.getAggregate().add(createProjection(newFunct, functionResultAlias));
+          return new OExpression(functionResultAlias);
+        }
+      } else {
+        if (isStar()) {
+          for (OExpression param : params) {
+            newFunct.getParams().add(param);
+          }
+        } else {
+          for (OExpression param : params) {
+            newFunct.getParams().add(param.splitForAggregation(aggregateProj));
+          }
+        }
+      }
+      return newFunct;
+    }
+    return this;
+  }
+
+  private boolean isAggregateFunction() {
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
+    function.config(this.params.toArray());
+    return function.aggregateResults();
+  }
+
+  private OProjectionItem createProjection(OFunctionCall newFunct, OIdentifier alias) {
+    OLevelZeroIdentifier l0 = new OLevelZeroIdentifier(-1);
+    l0.functionCall = newFunct;
+    OBaseIdentifier l1 = new OBaseIdentifier(-1);
+    l1.levelZero = l0;
+    OBaseExpression l2 = new OBaseExpression(-1);
+    l2.identifier = l1;
+    OExpression l3 = new OExpression(-1);
+    l3.mathExpression = l2;
+    OProjectionItem item = new OProjectionItem(-1);
+    item.alias = alias;
+    item.expression = l3;
+    return item;
+  }
+
+  public boolean isEarlyCalculated() {
+    for(OExpression param:params){
+      if(!param.isEarlyCalculated()){
+        return false;
+      }
+    }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */

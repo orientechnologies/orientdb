@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.ArrayList;
@@ -65,6 +66,40 @@ public class OCollection extends SimpleNode {
       }
     }
     return false;
+  }
+
+  public boolean isAggregate() {
+    for (OExpression exp : this.expressions) {
+      if (exp.isAggregate()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public OCollection splitForAggregation(AggregateProjectionSplit aggregateProj) {
+    if (isAggregate()) {
+      OCollection result = new OCollection(-1);
+      for (OExpression exp : this.expressions) {
+        if (exp.isAggregate() || exp.isEarlyCalculated()) {
+          result.expressions.add(exp.splitForAggregation(aggregateProj));
+        } else {
+          throw new OCommandExecutionException("Cannot mix aggregate and non-aggregate operations in a collection: " + toString());
+        }
+      }
+      return result;
+    } else {
+      return this;
+    }
+  }
+
+  public boolean isEarlyCalculated() {
+    for (OExpression exp : expressions) {
+      if (!exp.isEarlyCalculated()) {
+        return false;
+      }
+    }
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=c93b20138b2ae58c5f76e458c34b5946 (do not edit this line) */

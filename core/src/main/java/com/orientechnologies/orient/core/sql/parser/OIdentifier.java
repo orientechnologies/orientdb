@@ -9,6 +9,11 @@ public class OIdentifier extends SimpleNode {
   protected String  value;
   protected boolean quoted = false;
 
+  /**
+   * set to true by the query executor/optimizer for internally generated aliases for query optimization
+   */
+  protected boolean internalAlias = false;
+
   public OIdentifier(int id) {
     super(id);
   }
@@ -82,5 +87,8 @@ public class OIdentifier extends SimpleNode {
     }
   }
 
+  public void setQuoted(boolean quoted) {
+    this.quoted = quoted;
+  }
 }
 /* JavaCC - OriginalChecksum=691a2eb5096f7b5e634b2ca8ac2ded3a (do not edit this line) */

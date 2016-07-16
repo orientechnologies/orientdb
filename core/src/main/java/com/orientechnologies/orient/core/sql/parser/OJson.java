@@ -99,19 +99,40 @@ public class OJson extends SimpleNode {
     for (OJsonItem item : items) {
       String left = item.getLeftValue();
       if (left.toLowerCase().equals("@class")) {
-        return "" + item.right.execute((OResult)null, ctx);
+        return "" + item.right.execute((OResult) null, ctx);
       }
     }
     return null;
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    for(OJsonItem item:items){
-      if(item.needsAliases(aliases)){
+    for (OJsonItem item : items) {
+      if (item.needsAliases(aliases)) {
         return true;
       }
     }
     return false;
+  }
+
+  public boolean isAggregate() {
+    for (OJsonItem item : items) {
+      if (item.isAggregate()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public OJson splitForAggregation(AggregateProjectionSplit aggregateSplit) {
+    if(isAggregate()){
+      OJson result = new OJson(-1);
+      for(OJsonItem item:items){
+        result.items.add(item.splitForAggregation(aggregateSplit));
+      }
+      return result;
+    }else {
+      return this;
+    }
   }
 }
 /* JavaCC - OriginalChecksum=3beec9f6db486de944498588b51a505d (do not edit this line) */

@@ -15,19 +15,13 @@ import java.util.Set;
 
 public class OMathExpression extends SimpleNode {
 
-  public boolean isExpand() {
-    return false;//TODO
-  }
-
   public OExpression getExpandContent() {
     throw new OCommandExecutionException("Invalid expand expression");
   }
 
-
   public enum Operator {
     PLUS {
-      @Override
-      public Number apply(Integer left, Integer right) {
+      @Override public Number apply(Integer left, Integer right) {
         final Integer sum = left + right;
         if (sum < 0 && left.intValue() > 0 && right.intValue() > 0)
           // SPECIAL CASE: UPGRADE TO LONG
@@ -35,29 +29,24 @@ public class OMathExpression extends SimpleNode {
         return sum;
       }
 
-      @Override
-      public Number apply(Long left, Long right) {
+      @Override public Number apply(Long left, Long right) {
         return left + right;
       }
 
-      @Override
-      public Number apply(Float left, Float right) {
+      @Override public Number apply(Float left, Float right) {
         return left + right;
       }
 
-      @Override
-      public Number apply(Double left, Double right) {
+      @Override public Number apply(Double left, Double right) {
         return left + right;
       }
 
-      @Override
-      public Number apply(BigDecimal left, BigDecimal right) {
+      @Override public Number apply(BigDecimal left, BigDecimal right) {
         return left.add(right);
       }
     },
     MINUS {
-      @Override
-      public Number apply(Integer left, Integer right) {
+      @Override public Number apply(Integer left, Integer right) {
         int result = left - right;
         if (result > 0 && left.intValue() < 0 && right.intValue() > 0)
           // SPECIAL CASE: UPGRADE TO LONG
@@ -66,101 +55,82 @@ public class OMathExpression extends SimpleNode {
         return result;
       }
 
-      @Override
-      public Number apply(Long left, Long right) {
+      @Override public Number apply(Long left, Long right) {
         return left - right;
       }
 
-      @Override
-      public Number apply(Float left, Float right) {
+      @Override public Number apply(Float left, Float right) {
         return left - right;
       }
 
-      @Override
-      public Number apply(Double left, Double right) {
+      @Override public Number apply(Double left, Double right) {
         return left - right;
       }
 
-      @Override
-      public Number apply(BigDecimal left, BigDecimal right) {
+      @Override public Number apply(BigDecimal left, BigDecimal right) {
         return left.subtract(right);
       }
     },
     STAR {
-      @Override
-      public Number apply(Integer left, Integer right) {
+      @Override public Number apply(Integer left, Integer right) {
         return left * right;
       }
 
-      @Override
-      public Number apply(Long left, Long right) {
+      @Override public Number apply(Long left, Long right) {
         return left * right;
       }
 
-      @Override
-      public Number apply(Float left, Float right) {
+      @Override public Number apply(Float left, Float right) {
         return left * right;
       }
 
-      @Override
-      public Number apply(Double left, Double right) {
+      @Override public Number apply(Double left, Double right) {
         return left * right;
       }
 
-      @Override
-      public Number apply(BigDecimal left, BigDecimal right) {
+      @Override public Number apply(BigDecimal left, BigDecimal right) {
         return left.multiply(right);
       }
     },
     SLASH {
-      @Override
-      public Number apply(Integer left, Integer right) {
+      @Override public Number apply(Integer left, Integer right) {
         return left / right;
       }
 
-      @Override
-      public Number apply(Long left, Long right) {
+      @Override public Number apply(Long left, Long right) {
         return left / right;
       }
 
-      @Override
-      public Number apply(Float left, Float right) {
+      @Override public Number apply(Float left, Float right) {
         return left / right;
       }
 
-      @Override
-      public Number apply(Double left, Double right) {
+      @Override public Number apply(Double left, Double right) {
         return left / right;
       }
 
-      @Override
-      public Number apply(BigDecimal left, BigDecimal right) {
+      @Override public Number apply(BigDecimal left, BigDecimal right) {
         return left.divide(right, BigDecimal.ROUND_HALF_UP);
       }
     },
     REM {
-      @Override
-      public Number apply(Integer left, Integer right) {
+      @Override public Number apply(Integer left, Integer right) {
         return left % right;
       }
 
-      @Override
-      public Number apply(Long left, Long right) {
+      @Override public Number apply(Long left, Long right) {
         return left % right;
       }
 
-      @Override
-      public Number apply(Float left, Float right) {
+      @Override public Number apply(Float left, Float right) {
         return left % right;
       }
 
-      @Override
-      public Number apply(Double left, Double right) {
+      @Override public Number apply(Double left, Double right) {
         return left % right;
       }
 
-      @Override
-      public Number apply(BigDecimal left, BigDecimal right) {
+      @Override public Number apply(BigDecimal left, BigDecimal right) {
         return left.remainder(right);
       }
     };
@@ -218,7 +188,9 @@ public class OMathExpression extends SimpleNode {
     return nextValue;
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -271,8 +243,9 @@ public class OMathExpression extends SimpleNode {
     if (a instanceof String || b instanceof String) {
       return "" + a + b;
     }
-    throw new IllegalArgumentException("Cannot apply operaton " + operation + " to value '" + a + "' (" + a.getClass() + ") with '"
-        + b + "' (" + b.getClass() + ")");
+    throw new IllegalArgumentException(
+        "Cannot apply operaton " + operation + " to value '" + a + "' (" + a.getClass() + ") with '" + b + "' (" + b.getClass()
+            + ")");
 
   }
 
@@ -329,8 +302,8 @@ public class OMathExpression extends SimpleNode {
         return operation.apply((BigDecimal) a, (BigDecimal) b);
     }
 
-    throw new IllegalArgumentException("Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' ("
-        + b.getClass() + ")");
+    throw new IllegalArgumentException(
+        "Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' (" + b.getClass() + ")");
 
   }
 
@@ -383,12 +356,60 @@ public class OMathExpression extends SimpleNode {
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    for(OMathExpression expr:childExpressions){
-      if(expr.needsAliases(aliases)){
+    for (OMathExpression expr : childExpressions) {
+      if (expr.needsAliases(aliases)) {
         return true;
       }
     }
     return false;
+  }
+
+  public boolean isExpand() {
+    for (OMathExpression expr : this.childExpressions) {
+      if (expr.isExpand()) {
+        if (this.childExpressions.size() > 1) {
+          throw new OCommandExecutionException("Cannot calculate expand() with other expressions");
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean isAggregate() {
+    for (OMathExpression expr : this.childExpressions) {
+      if (expr.isAggregate()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+    if (isAggregate()) {
+      OMathExpression result = new OMathExpression(-1);
+      int i = 0;
+      for (OMathExpression expr : this.childExpressions) {
+        if (i > 0) {
+          result.operators.add(operators.get(i - 1));
+        }
+        SimpleNode splitResult = expr.splitForAggregation(aggregateProj);
+        if (splitResult instanceof OMathExpression) {
+          OMathExpression res = (OMathExpression) splitResult;
+          if (res.isEarlyCalculated() || res.isAggregate()) {
+            result.childExpressions.add(res);
+          } else {
+            throw new OCommandExecutionException("Cannot mix aggregate and single record attribute values in the same projection");
+          }
+        } else if (splitResult instanceof OExpression) {
+          result.childExpressions.add(((OExpression) splitResult).mathExpression);//this comes from a splitted aggregate function
+        }
+        i++;
+      }
+      return result;
+    } else {
+      return this;
+    }
   }
 
 }

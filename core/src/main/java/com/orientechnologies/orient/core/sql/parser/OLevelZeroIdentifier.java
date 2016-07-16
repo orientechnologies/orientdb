@@ -104,10 +104,55 @@ public class OLevelZeroIdentifier extends SimpleNode {
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    if(functionCall!=null && functionCall.needsAliases(aliases)){
+    if (functionCall != null && functionCall.needsAliases(aliases)) {
       return true;
     }
-    if(collection!=null && collection.needsAliases(aliases)){
+    if (collection != null && collection.needsAliases(aliases)) {
+      return true;
+    }
+    return false;
+  }
+
+  public boolean isAggregate() {
+    if (functionCall != null && functionCall.isAggregate()) {
+      return true;
+    }
+    if (collection != null && collection.isAggregate()) {
+      return true;
+    }
+    return false;
+  }
+
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+    if (isAggregate()) {
+      OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
+      if (functionCall != null) {
+        SimpleNode node = functionCall.splitForAggregation(aggregateProj);
+        if(node instanceof OFunctionCall){
+          result.functionCall = (OFunctionCall) node;
+        }else {
+          return node;
+        }
+      } else if (collection != null) {
+        result.collection = collection.splitForAggregation(aggregateProj);
+        return result;
+      } else {
+        throw new IllegalStateException();
+      }
+      return result;
+    } else {
+      return this;
+    }
+  }
+
+  public boolean isEarlyCalculated() {
+    if(functionCall!=null && functionCall.isEarlyCalculated()){
+      return true;
+    }
+    if(Boolean.TRUE.equals(self)){
+      return false;
+    }
+    if(collection!=null && collection.isEarlyCalculated()){
       return true;
     }
     return false;

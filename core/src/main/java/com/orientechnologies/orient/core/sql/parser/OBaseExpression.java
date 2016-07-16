@@ -33,6 +33,11 @@ public class OBaseExpression extends OMathExpression {
     super(p, id);
   }
 
+  public OBaseExpression(OIdentifier identifier) {
+    super(-1);
+    this.identifier = new OBaseIdentifier(identifier);
+  }
+
   /**
    * Accept the visitor.
    **/
@@ -129,6 +134,9 @@ public class OBaseExpression extends OMathExpression {
     if (number != null || inputParam != null || string != null) {
       return true;
     }
+    if(identifier!=null && identifier.isEarlyCalculated()){
+      return true;
+    }
     return false;
   }
 
@@ -151,6 +159,27 @@ public class OBaseExpression extends OMathExpression {
       return true;
     }
     return false;
+  }
+
+  @Override public boolean isAggregate() {
+    if(identifier!=null && identifier.isAggregate()){
+      return true;
+    }
+    return false;
+  }
+
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+    if(isAggregate()){
+      SimpleNode splitResult = identifier.splitForAggregation(aggregateProj);
+      if(splitResult instanceof OBaseIdentifier) {
+        OBaseExpression result = new OBaseExpression(-1);
+        result.identifier = (OBaseIdentifier) splitResult;
+        return result;
+      }
+      return splitResult;
+    }else{
+      return this;
+    }
   }
 }
 

@@ -73,7 +73,7 @@ public class OProjection extends SimpleNode {
 
   public OResult calculateSingle(OCommandContext iContext, OResult iRecord) {
     if (isExpand()) {
-      throw new IllegalStateException("This is not an expand projection, it cannot be calculated as a single result" + toString());
+      throw new IllegalStateException("This is an expand projection, it cannot be calculated as a single result" + toString());
     }
 
     if (items.size() == 0 || (items.size() == 1 && items.get(0).isAll())) {
@@ -87,7 +87,7 @@ public class OProjection extends SimpleNode {
           result.setProperty(alias, iRecord.getProperty(alias));
         }
       }
-      result.setProperty(item.getProjectionFieldAlias(), item.execute(iRecord, iContext));
+      result.setProperty(item.getProjectionAliasAsString(), item.execute(iRecord, iContext));
     }
     return result;
   }
@@ -121,7 +121,8 @@ public class OProjection extends SimpleNode {
   }
 
   public Set<String> getAllAliases() {
-    return items.stream().map(i -> i.getProjectionFieldAlias()).collect(Collectors.toSet());
+    return items.stream().map(i -> i.getProjectionAliasAsString()).collect(Collectors.toSet());
   }
+
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

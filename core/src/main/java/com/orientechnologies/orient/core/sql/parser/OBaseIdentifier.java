@@ -13,7 +13,7 @@ public class OBaseIdentifier extends SimpleNode {
 
   protected OLevelZeroIdentifier levelZero;
 
-  protected OSuffixIdentifier    suffix;
+  protected OSuffixIdentifier suffix;
 
   public OBaseIdentifier(int id) {
     super(id);
@@ -23,7 +23,13 @@ public class OBaseIdentifier extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  public OBaseIdentifier(OIdentifier identifier) {
+    this.suffix = new OSuffixIdentifier(identifier);
+  }
+
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -35,7 +41,6 @@ public class OBaseIdentifier extends SimpleNode {
       suffix.toString(params, builder);
     }
   }
-
 
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     if (levelZero != null) {
@@ -58,14 +63,14 @@ public class OBaseIdentifier extends SimpleNode {
   }
 
   public boolean isIndexedFunctionCall() {
-    if(levelZero!=null){
+    if (levelZero != null) {
       return levelZero.isIndexedFunctionCall();
     }
     return false;
   }
 
   public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
-    if(levelZero!=null){
+    if (levelZero != null) {
       return levelZero.estimateIndexedFunction(target, context, operator, right);
     }
 
@@ -74,7 +79,7 @@ public class OBaseIdentifier extends SimpleNode {
 
   public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
       OBinaryCompareOperator operator, Object right) {
-    if(levelZero!=null){
+    if (levelZero != null) {
       return levelZero.executeIndexedFunction(target, context, operator, right);
     }
 
@@ -82,11 +87,11 @@ public class OBaseIdentifier extends SimpleNode {
   }
 
   public boolean isBaseIdentifier() {
-    return suffix!=null && suffix.isBaseIdentifier();
+    return suffix != null && suffix.isBaseIdentifier();
   }
 
   public boolean isExpand() {
-    if(levelZero!=null){
+    if (levelZero != null) {
       return levelZero.isExpand();
     }
     return false;
@@ -97,10 +102,51 @@ public class OBaseIdentifier extends SimpleNode {
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    if(levelZero!=null && levelZero.needsAliases(aliases)){
+    if (levelZero != null && levelZero.needsAliases(aliases)) {
       return true;
     }
-    if(suffix!=null && suffix.needsAliases(aliases)){
+    if (suffix != null && suffix.needsAliases(aliases)) {
+      return true;
+    }
+    return false;
+  }
+
+  public boolean isAggregate() {
+    if (levelZero != null && levelZero.isAggregate()) {
+      return true;
+    }
+    if (suffix != null && suffix.isAggregate()) {
+      return true;
+    }
+    return false;
+  }
+
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+    if (isAggregate()) {
+      OBaseIdentifier result = new OBaseIdentifier(-1);
+      if (levelZero != null) {
+        SimpleNode splitResult = levelZero.splitForAggregation(aggregateProj);
+        if(splitResult instanceof OLevelZeroIdentifier) {
+          result.levelZero = (OLevelZeroIdentifier) splitResult;
+        }else {
+          return splitResult;
+        }
+      } else if (suffix != null) {
+        result.suffix = suffix.splitForAggregation(aggregateProj);
+      } else {
+        throw new IllegalStateException();
+      }
+      return result;
+    } else {
+      return this;
+    }
+  }
+
+  public boolean isEarlyCalculated() {
+    if(levelZero!=null && levelZero.isEarlyCalculated()){
+      return true;
+    }
+    if(suffix!=null && suffix.isEarlyCalculated()){
       return true;
     }
     return false;

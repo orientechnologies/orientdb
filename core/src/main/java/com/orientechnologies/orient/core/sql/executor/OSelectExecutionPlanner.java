@@ -3,18 +3,22 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.parser.*;
 
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * Created by luigidellaquila on 06/07/16.
  */
 public class OSelectExecutionPlanner {
 
-  private boolean     distinct           = false;
-  private boolean     expand             = false;
-  private OProjection projection         = null;
-  private OLetClause  globalLetClause    = null;
-  private OLetClause  perRecordLetClause = null;
+  private boolean distinct = false;
+  private boolean expand   = false;
+
+  private OProjection preAggregateProjection;
+  private OProjection aggregateProjection;
+  private OProjection projection = null;
+
+  private OLetClause globalLetClause    = null;
+  private OLetClause perRecordLetClause = null;
   private OFromClause  target;
   private OWhereClause whereClause;
   private OGroupBy     groupBy;
@@ -44,12 +48,9 @@ public class OSelectExecutionPlanner {
     handleGlobalLet(result, globalLetClause, ctx);
     handleFetchFromTarger(result, ctx);
     handleLet(result, perRecordLetClause, ctx);
-    handleProjectionsBeforeWhere(result, projection, whereClause, ctx);
+
     handleWhere(result, whereClause, ctx);
     handleExpand(result, ctx);
-
-    handleProjectionsBeforeGroupBy(result, projection, groupBy, ctx);
-    handleGroupBy(result, groupBy, ctx);
 
     handleProjectionsBeforeOrderBy(result, projection, orderBy, ctx);
     handleOrderBy(result, orderBy, ctx);
@@ -61,42 +62,32 @@ public class OSelectExecutionPlanner {
     if (limit != null) {
       result.chain(new LimitExecutionStep(limit, ctx));
     }
-    handleProjections(result, projection, ctx);
+    handleProjections(result, ctx);
 
     return result;
   }
 
-  private void handleGroupBy(OSelectExecutionPlan result, OGroupBy groupBy, OCommandContext ctx) {
+  private void handleAggregate(OSelectExecutionPlan result, OGroupBy groupBy, OCommandContext ctx) {
     //TODO
-  }
-
-  private void handleProjectionsBeforeWhere(OSelectExecutionPlan result, OProjection projection, OWhereClause whereClause,
-      OCommandContext ctx) {
-    if (!projectionsCalculated && whereClause != null && projection != null) {
-      Set<String> aliases = projection.getAllAliases();
-      if (whereClause.needsAliases(aliases)) {
-        handleProjections(result, projection, ctx);
-      }
-    }
   }
 
   private void handleProjectionsBeforeOrderBy(OSelectExecutionPlan result, OProjection projection, OOrderBy orderBy,
       OCommandContext ctx) {
-    if (!projectionsCalculated && orderBy != null) {
-      handleProjections(result, projection, ctx);
+    if (orderBy != null) {
+      handleProjections(result, ctx);
     }
   }
 
-  private void handleProjectionsBeforeGroupBy(OSelectExecutionPlan result, OProjection projection, OGroupBy groupBy,
-      OCommandContext ctx) {
-    if (!projectionsCalculated && groupBy != null) {
-      handleProjections(result, projection, ctx);
-    }
-  }
-
-  private void handleProjections(OSelectExecutionPlan result, OProjection projection, OCommandContext ctx) {
+  private void handleProjections(OSelectExecutionPlan result, OCommandContext ctx) {
     if (!this.projectionsCalculated && projection != null) {
+      if (preAggregateProjection != null) {
+        result.chain(new ProjectionCalculationStep(preAggregateProjection, ctx));
+      }
+      if (aggregateProjection != null) {
+        result.chain(new AggregateProjectionCalculationStep(aggregateProjection, groupBy, ctx));
+      }
       result.chain(new ProjectionCalculationStep(projection, ctx));
+
       this.projectionsCalculated = true;
     }
   }
@@ -106,7 +97,50 @@ public class OSelectExecutionPlanner {
       expand = true;
       this.projection = projection.getExpandContent();
     }
+
+    extractAggregateProjections();
     extractSubQueries();
+  }
+
+  private void extractAggregateProjections() {
+    if (projection == null) {
+      return;
+    }
+
+    OProjection preAggregate = new OProjection(-1);
+    preAggregate.setItems(new ArrayList<>());
+    OProjection aggregate = new OProjection(-1);
+    aggregate.setItems(new ArrayList<>());
+    OProjection postAggregate = new OProjection(-1);
+    postAggregate.setItems(new ArrayList<>());
+
+    boolean projectionChanged = false;
+    AggregateProjectionSplit result = new AggregateProjectionSplit();
+    for (OProjectionItem item : this.projection.getItems()) {
+      result.reset();
+      if (item.isAggregate()) {
+        projectionChanged = true;
+        OProjectionItem post = item.splitForAggregation(result);
+        OIdentifier postAlias = item.getProjectionAlias();
+        postAlias.setQuoted(true);
+        post.setAlias(postAlias);
+        postAggregate.getItems().add(post);
+        aggregate.getItems().addAll(result.getAggregate());
+        preAggregate.getItems().addAll(result.getPreAggregate());
+      } else {
+        preAggregate.getItems().add(item);
+        //also push the alias forward in the chain
+        OProjectionItem aggItem = new OProjectionItem(-1);
+        aggItem.setExpression(new OExpression(item.getProjectionAlias()));
+        aggregate.getItems().add(aggItem);
+        postAggregate.getItems().add(aggItem);
+      }
+    }
+    if (projectionChanged) {
+      this.projection = postAggregate;
+      this.preAggregateProjection = preAggregate;
+      this.aggregateProjection = aggregate;
+    }
   }
 
   /**
@@ -121,7 +155,7 @@ public class OSelectExecutionPlanner {
   private void handleFetchFromTarger(OSelectExecutionPlan result, OCommandContext ctx) {
 
     if (target == null) {
-      result.chain(new NoTargetProjectionEvaluator(projection, ctx));
+      result.chain(new ProjectionCalculationNoTargetStep(projection, ctx));
       projectionsCalculated = true;
     } else {
       OFromItem target = this.target.getItem();

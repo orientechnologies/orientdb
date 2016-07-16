@@ -65,7 +65,9 @@ public class OProjectionItem extends SimpleNode {
     if (all) {
       builder.append("*");
     } else {
-      expression.toString(params, builder);
+      if(expression!=null) {
+        expression.toString(params, builder);
+      }
       if (alias != null) {
 
         builder.append(" AS ");
@@ -90,13 +92,20 @@ public class OProjectionItem extends SimpleNode {
 
   /**
    * returns the final alias for this projection item (the explicit alias, if defined, or the default alias)
+   *
    * @return the final alias for this projection item
    */
-  public String getProjectionFieldAlias() {
+  public String getProjectionAliasAsString() {
+    return getProjectionAlias().getStringValue();
+  }
+
+  public OIdentifier getProjectionAlias() {
     if (alias != null) {
-      return alias.getStringValue();
+      return alias;
     }
-    return this.toString();
+    OIdentifier result = new OIdentifier(-1);
+    result.setStringValue(this.toString());
+    return result;
   }
 
   public boolean isExpand() {
@@ -104,9 +113,36 @@ public class OProjectionItem extends SimpleNode {
   }
 
   public OProjectionItem getExpandContent() {
-    OProjectionItem result =new OProjectionItem(-1);
+    OProjectionItem result = new OProjectionItem(-1);
     result.setExpression(expression.getExpandContent());
     return result;
+  }
+
+  public boolean isAggregate() {
+    if (all) {
+      return false;
+    }
+    if (expression.isAggregate()) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * INTERNAL USE ONLY
+   * this has to be invoked ONLY if the item is aggregate!!!
+   *
+   * @param aggregateSplit
+   */
+  public OProjectionItem splitForAggregation(AggregateProjectionSplit aggregateSplit) {
+    if (isAggregate()) {
+      OProjectionItem result = new OProjectionItem(-1);
+      result.alias = alias;
+      result.expression = expression.splitForAggregation(aggregateSplit);
+      return result;
+    } else {
+      return this;
+    }
   }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

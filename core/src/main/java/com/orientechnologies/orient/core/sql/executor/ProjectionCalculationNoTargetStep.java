@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.sql.parser.OProjection;
 /**
  * @author Luigi Dell'Aquila
  */
-public class NoTargetProjectionEvaluator extends AbstractExecutionStep {
+public class ProjectionCalculationNoTargetStep extends AbstractExecutionStep {
 
   private boolean keepRunning = true;
 
@@ -17,7 +17,7 @@ public class NoTargetProjectionEvaluator extends AbstractExecutionStep {
   //data context
   private OTodoResultSet calculatedResult;
 
-  public NoTargetProjectionEvaluator(OProjection projection, OCommandContext ctx) {
+  public ProjectionCalculationNoTargetStep(OProjection projection, OCommandContext ctx) {
     super(ctx);
     this.projection = projection;
   }
@@ -90,6 +90,7 @@ public class NoTargetProjectionEvaluator extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStep.getIndent(depth, indent) + "+ CALCULATE PROJECTIONS (no target): " + projection.toString();
+    String spaces = OExecutionStep.getIndent(depth, indent);
+    return spaces + "+ CALCULATE PROJECTIONS (no target)\n"+spaces+"      " + projection.toString() + "";
   }
 }

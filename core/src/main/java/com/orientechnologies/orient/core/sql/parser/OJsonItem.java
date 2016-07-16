@@ -37,12 +37,28 @@ public class OJsonItem {
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    if(aliases.contains(leftIdentifier.getStringValue())){
+    if (aliases.contains(leftIdentifier.getStringValue())) {
       return true;
     }
-    if(right.needsAliases(aliases)){
+    if (right.needsAliases(aliases)) {
       return true;
     }
     return false;
+  }
+
+  public boolean isAggregate() {
+    return right.isAggregate();
+  }
+
+  public OJsonItem splitForAggregation(AggregateProjectionSplit aggregateSplit) {
+    if(isAggregate()){
+      OJsonItem item = new OJsonItem();
+      item.leftIdentifier = leftIdentifier;
+      item.leftString = leftString;
+      item.right = right.splitForAggregation(aggregateSplit);
+      return item;
+    }else {
+      return this;
+    }
   }
 }

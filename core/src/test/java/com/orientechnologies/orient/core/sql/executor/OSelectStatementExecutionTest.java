@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.AfterClass;
@@ -336,6 +337,71 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testCountStar() {
+    String className = "testCountStar";
+    db.getMetadata().getSchema().createClass(className);
+
+    try {
+      OTodoResultSet result = db.query("select count(*) from " + className);
+      printExecutionPlan(result);
+    }catch(Exception e){
+      Assert.fail();
+    }
+  }
+
+  @Test public void testAggretateMixedWithNonAggregate() {
+    String className = "testAggretateMixedWithNonAggregate";
+    db.getMetadata().getSchema().createClass(className);
+
+    try {
+      db.query("select max(a) + max(b) + pippo + pluto as foo, max(d) + max(e), f from " + className);
+      Assert.fail();
+    }catch(OCommandExecutionException x){
+
+    }catch(Exception e){
+      Assert.fail();
+    }
+  }
+
+  @Test public void testAggretateMixedWithNonAggregateInCollection() {
+    String className = "testAggretateMixedWithNonAggregateInCollection";
+    db.getMetadata().getSchema().createClass(className);
+
+    try {
+      db.query("select [max(a), max(b), foo] from " + className);
+      Assert.fail();
+    }catch(OCommandExecutionException x){
+
+    }catch(Exception e){
+      Assert.fail();
+    }
+  }
+
+  @Test public void testAggretateInCollection() {
+    String className = "testAggretateInCollection";
+    db.getMetadata().getSchema().createClass(className);
+
+    try {
+      String query = "select [max(a), max(b)] from " + className;
+      OTodoResultSet result = db.query(query);
+      printExecutionPlan(query, result);
+    }catch(Exception x){
+      Assert.fail();
+    }
+  }
+
+  @Test public void testAggretateMixedWithNonAggregateConstants() {
+    String className = "testAggretateMixedWithNonAggregateConstants";
+    db.getMetadata().getSchema().createClass(className);
+
+    try {
+      OTodoResultSet result = db.query("select max(a + b) + (max(b + c * 2) + 1 + 2) * 3 as foo, max(d) + max(e), f from " + className);
+      printExecutionPlan(result);
+    }catch(Exception e){
+      e.printStackTrace();
+      Assert.fail();
+    }
+  }
 
 
   public void stressTestNew() {
@@ -395,6 +461,13 @@ public class OSelectStatementExecutionTest {
   }
 
   private void printExecutionPlan(OTodoResultSet result) {
+    printExecutionPlan(null, result);
+  }
+
+  private void printExecutionPlan(String query, OTodoResultSet result) {
+    if(query!=null){
+      System.out.println(query);
+    }
     result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
   }
 

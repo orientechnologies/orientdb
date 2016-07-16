@@ -11,7 +11,7 @@ import java.util.Optional;
  * Created by luigidellaquila on 12/07/16.
  */
 public class ProjectionCalculationStep extends AbstractExecutionStep {
-  private final OProjection projection;
+  protected final OProjection projection;
 
   public ProjectionCalculationStep(OProjection projection, OCommandContext ctx) {
     super(ctx);
@@ -48,7 +48,7 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
   }
 
   private OResult calculateProjections(OCommandContext ctx, OResult next) {
-      return this.projection.calculateSingle(ctx, next);
+    return this.projection.calculateSingle(ctx, next);
   }
 
   @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
@@ -61,6 +61,6 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
 
   @Override public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStep.getIndent(depth, indent);
-    return spaces + "+ CALCULATE PROJECTIONS";
+    return spaces + "+ CALCULATE PROJECTIONS\n"+spaces+"      " + projection.toString() + "";
   }
 }

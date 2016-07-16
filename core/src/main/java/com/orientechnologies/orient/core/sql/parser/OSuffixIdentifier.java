@@ -14,7 +14,7 @@ public class OSuffixIdentifier extends SimpleNode {
 
   protected OIdentifier      identifier;
   protected ORecordAttribute recordAttribute;
-  protected boolean          star = false;
+  protected boolean star = false;
 
   public OSuffixIdentifier(int id) {
     super(id);
@@ -24,7 +24,13 @@ public class OSuffixIdentifier extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  public OSuffixIdentifier(OIdentifier identifier) {
+    this.identifier = identifier;
+  }
+
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -45,10 +51,10 @@ public class OSuffixIdentifier extends SimpleNode {
     }
     if (identifier != null) {
       String varName = identifier.getStringValue();
-      if (ctx!=null && ctx.getVariable(varName) != null) {
+      if (ctx != null && ctx.getVariable(varName) != null) {
         return ctx.getVariable(varName);
       }
-      if(iCurrentRecord != null) {
+      if (iCurrentRecord != null) {
         return ((ODocument) iCurrentRecord.getRecord()).field(varName);
       }
       return null;
@@ -65,10 +71,10 @@ public class OSuffixIdentifier extends SimpleNode {
     }
     if (identifier != null) {
       String varName = identifier.getStringValue();
-      if (ctx!=null && ctx.getVariable(varName) != null) {
+      if (ctx != null && ctx.getVariable(varName) != null) {
         return ctx.getVariable(varName);
       }
-      if(iCurrentRecord != null) {
+      if (iCurrentRecord != null) {
         return iCurrentRecord.getProperty(varName);
       }
       return null;
@@ -83,11 +89,11 @@ public class OSuffixIdentifier extends SimpleNode {
     if (currentValue == null) {
       return null;
     }
-    if(currentValue instanceof OResult){
-      return execute((OResult)currentValue, ctx);
+    if (currentValue instanceof OResult) {
+      return execute((OResult) currentValue, ctx);
     }
-    if(currentValue instanceof OIdentifiable){
-      return execute((OIdentifiable)currentValue, ctx);
+    if (currentValue instanceof OIdentifiable) {
+      return execute((OIdentifiable) currentValue, ctx);
     }
     if (star) {
       return currentValue;
@@ -118,15 +124,30 @@ public class OSuffixIdentifier extends SimpleNode {
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    if(identifier!=null){
+    if (identifier != null) {
       return aliases.contains(identifier.getStringValue());
     }
-    if(recordAttribute!=null){
-      for(String s:aliases){
-        if(s.equalsIgnoreCase(recordAttribute.name)){
+    if (recordAttribute != null) {
+      for (String s : aliases) {
+        if (s.equalsIgnoreCase(recordAttribute.name)) {
           return true;
         }
       }
+    }
+    return false;
+  }
+
+  public boolean isAggregate() {
+    return false;
+  }
+
+  public OSuffixIdentifier splitForAggregation(AggregateProjectionSplit aggregateProj) {
+    return this;
+  }
+
+  public boolean isEarlyCalculated() {
+    if (identifier != null && identifier.internalAlias) {
+      return true;
     }
     return false;
   }

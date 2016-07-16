@@ -29,6 +29,11 @@ public class OExpression extends SimpleNode {
     super(p, id);
   }
 
+  public OExpression(OIdentifier identifier) {
+
+    mathExpression = new OBaseExpression(identifier);
+  }
+
   /**
    * Accept the visitor.
    **/
@@ -55,7 +60,6 @@ public class OExpression extends SimpleNode {
     if (value instanceof ONumber) {
       return ((ONumber) value).getValue();//only for old executor (manually replaced params)
     }
-
 
     //from here it's old stuff, only for the old executor
     if (value instanceof ORid) {
@@ -94,7 +98,6 @@ public class OExpression extends SimpleNode {
       return ((ONumber) value).getValue();//only for old executor (manually replaced params)
     }
 
-
     //from here it's old stuff, only for the old executor
     if (value instanceof ORid) {
       ORid v = (ORid) value;
@@ -112,8 +115,6 @@ public class OExpression extends SimpleNode {
     return value;
   }
 
-
-
   public boolean isBaseIdentifier() {
     if (value instanceof OMathExpression) {
       return ((OMathExpression) value).isBaseIdentifier();
@@ -123,6 +124,9 @@ public class OExpression extends SimpleNode {
   }
 
   public boolean isEarlyCalculated() {
+    if(this.mathExpression!=null ){
+      return this.mathExpression.isEarlyCalculated();
+    }
     if (value instanceof Number) {
       return true;
     }
@@ -143,19 +147,19 @@ public class OExpression extends SimpleNode {
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-//    if (value == null) {
-//      builder.append("null");
-//    } else if (value instanceof SimpleNode) {
-//      ((SimpleNode) value).toString(params, builder);
-//    } else if (value instanceof String) {
-//      if (Boolean.TRUE.equals(singleQuotes)) {
-//        builder.append("'" + value + "'");
-//      } else {
-//        builder.append("\"" + value + "\"");
-//      }
-//    } else {
-//      builder.append("" + value);
-//    }
+    //    if (value == null) {
+    //      builder.append("null");
+    //    } else if (value instanceof SimpleNode) {
+    //      ((SimpleNode) value).toString(params, builder);
+    //    } else if (value instanceof String) {
+    //      if (Boolean.TRUE.equals(singleQuotes)) {
+    //        builder.append("'" + value + "'");
+    //      } else {
+    //        builder.append("\"" + value + "\"");
+    //      }
+    //    } else {
+    //      builder.append("" + value);
+    //    }
 
     if (isNull) {
       builder.append("null");
@@ -169,15 +173,15 @@ public class OExpression extends SimpleNode {
       builder.append(booleanValue.toString());
     } else if (value instanceof SimpleNode) {
       ((SimpleNode) value).toString(params, builder);//only for translated input params, will disappear with new executor
-    } else if(value instanceof String) {
-    if (Boolean.TRUE.equals(singleQuotes)) {
-      builder.append("'" + value + "'");
-    } else {
-      builder.append("\"" + value + "\"");
-    }
+    } else if (value instanceof String) {
+      if (Boolean.TRUE.equals(singleQuotes)) {
+        builder.append("'" + value + "'");
+      } else {
+        builder.append("\"" + value + "\"");
+      }
 
     } else {
-      builder.append(""+value);//only for translated input params, will disappear with new executor
+      builder.append("" + value);//only for translated input params, will disappear with new executor
     }
   }
 
@@ -250,7 +254,7 @@ public class OExpression extends SimpleNode {
   }
 
   public boolean isExpand() {
-    if (mathExpression!=null) {
+    if (mathExpression != null) {
       return mathExpression.isExpand();
     }
     return false;
@@ -261,13 +265,45 @@ public class OExpression extends SimpleNode {
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    if(mathExpression!=null){
+    if (mathExpression != null) {
       return mathExpression.needsAliases(aliases);
     }
-    if(json!=null){
+    if (json != null) {
       return json.needsAliases(aliases);
     }
     return false;
+  }
+
+  public boolean isAggregate() {
+    if (mathExpression != null && mathExpression.isAggregate()) {
+      return true;
+    }
+    if (json != null && json.isAggregate()) {
+      return true;
+    }
+    return false;
+  }
+
+  public OExpression splitForAggregation(AggregateProjectionSplit aggregateSplit) {
+    if (isAggregate()) {
+      OExpression result = new OExpression(-1);
+      if (mathExpression != null) {
+        SimpleNode splitResult = mathExpression.splitForAggregation(aggregateSplit);
+        if (splitResult instanceof OMathExpression) {
+          result.mathExpression = (OMathExpression) splitResult;
+        } else if (splitResult instanceof OExpression) {
+          return (OExpression) splitResult;
+        } else {
+          throw new IllegalStateException("something went wrong while splitting expression for aggregate " + toString());
+        }
+      }
+      if (json != null) {
+        result.json = json.splitForAggregation(aggregateSplit);
+      }
+      return result;
+    } else {
+      return this;
+    }
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */
