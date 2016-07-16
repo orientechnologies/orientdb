@@ -1409,7 +1409,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     int n = 0;
     while (jsonReader.lastChar() != ']') {
-      jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+      jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
+      if(jsonReader.lastChar() == ']'){
+        break;
+      }
 
       String blueprintsIndexClass = null;
       String indexName = null;
