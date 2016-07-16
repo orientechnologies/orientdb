@@ -71,10 +71,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -84,29 +81,32 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedStorage implements OStorage, OFreezableStorageComponent, OAutoshardedStorage {
-  protected final OServer                              serverInstance;
-  protected final ODistributedServerManager            dManager;
-  protected OAbstractPaginatedStorage                  wrapped;
+  private final OServer                              serverInstance;
+  private final ODistributedServerManager            dManager;
+  private OAbstractPaginatedStorage                  wrapped;
 
-  protected BlockingQueue<OAsynchDistributedOperation> asynchronousOperationsQueue;
-  protected Thread                                     asynchWorker;
-  protected volatile boolean                           running               = true;
-  protected volatile File                              lastValidBackup       = null;
-  private ODistributedServerManager.DB_STATUS          prevStatus;
-  private ODistributedDatabase                         localDistributedDatabase;
-  private ODistributedTransactionManager               txManager;
-  private final ReentrantReadWriteLock                 messageManagementLock = new ReentrantReadWriteLock();
+  private BlockingQueue<OAsynchDistributedOperation> asynchronousOperationsQueue;
+  private Thread                                     asynchWorker;
+  private ODistributedServerManager.DB_STATUS        prevStatus;
+  private ODistributedDatabase                       localDistributedDatabase;
+  private ODistributedTransactionManager             txManager;
+  private final ReentrantReadWriteLock               messageManagementLock = new ReentrantReadWriteLock();
   // ARRAY OF LOCKS FOR CONCURRENT OPERATIONS ON CLUSTERS
-  private Semaphore[]                                  clusterLocks;
-  private ODistributedStorageEventListener             eventListener;
-  private volatile ODistributedConfiguration           distributedConfiguration;
+  private Semaphore[]                                clusterLocks;
+  private ODistributedStorageEventListener           eventListener;
+
+  private volatile ODistributedConfiguration         distributedConfiguration;
+  private volatile boolean                           running               = true;
+  private volatile File                              lastValidBackup       = null;
+  private ReentrantReadWriteLock                     operationLock         = new ReentrantReadWriteLock();
+  private volatile CountDownLatch                    frozen                = new CountDownLatch(1);
 
   public ODistributedStorage(final OServer iServer) {
     this.serverInstance = iServer;
     this.dManager = iServer.getDistributedManager();
   }
 
-  public void wrap(final OAbstractPaginatedStorage wrapped) {
+  public synchronized void wrap(final OAbstractPaginatedStorage wrapped) {
     if (this.wrapped != null)
       // ALREADY WRAPPED
       return;

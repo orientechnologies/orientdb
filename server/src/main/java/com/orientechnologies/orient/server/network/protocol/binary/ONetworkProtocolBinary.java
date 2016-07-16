@@ -245,8 +245,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     OClientConnection connection = server.getClientConnectionManager().getConnection(clientTxId, this);
     try {
       boolean noToken = false;
-      if (connection == null && clientTxId < 0 && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
-          || requestType == OChannelBinaryProtocol.REQUEST_CONNECT)) {
+      if (connection == null && clientTxId < 0
+          && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || requestType == OChannelBinaryProtocol.REQUEST_CONNECT)) {
         // OPEN OF OLD STYLE SESSION.
         noToken = true;
       }
@@ -260,8 +260,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         noToken = true;
       }
 
-      if(connection == null && clientTxId < 0  && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE)
-        //CLOSE OF NOT EXISTING SESSION, DO NOTHING
+      if (connection == null && clientTxId < 0 && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE)
+        // CLOSE OF NOT EXISTING SESSION, DO NOTHING
         return null;
 
       if (noToken) {
@@ -833,13 +833,18 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       in.close();
     }
 
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getId().getNodeId()),
-        ODistributedServerLog.DIRECTION.IN, "Received request %s (%d bytes)", req, serializedReq.length);
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getId().getNodeId()),
+          ODistributedServerLog.DIRECTION.IN, "Received request %s (%d bytes)", req, serializedReq.length);
 
     final String dbName = req.getDatabaseName();
     if (dbName != null) {
       if (distributedRequests == 0) {
         if (req.getTask().isNodeOnlineRequired()) {
+          ODistributedServerLog.debug(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getId().getNodeId()),
+              ODistributedServerLog.DIRECTION.IN, "First distributed request, waiting for the node to be online", req,
+              serializedReq.length);
+
           try {
             manager.waitUntilNodeOnline(manager.getLocalNodeName(), dbName);
           } catch (InterruptedException e) {
@@ -881,8 +886,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       throw new IOException("Error on unmarshalling of remote task", e);
     }
 
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(),
-        ODistributedServerLog.DIRECTION.IN, "Executing distributed response %s", response);
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(),
+          ODistributedServerLog.DIRECTION.IN, "Executing distributed response %s", response);
 
     manager.getMessageService().dispatchResponseToThread(response);
 
@@ -1331,7 +1337,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     byte type = channel.readByte();
     final boolean live = type == 'l';
     final boolean asynch = type == 'a';
-    if(connection == null && connection.getDatabase() == null)
+    if (connection == null && connection.getDatabase() == null)
       throw new IOException("Found invalid session");
 
     String dbSerializerName = connection.getDatabase().getSerializer().toString();

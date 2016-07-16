@@ -292,6 +292,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     expected = writerCount * count * serverId + baseCount;
 
+    System.out.println("Expected records="+expected);
+
     List<Future<Void>> futures = executors.invokeAll(workers);
 
     System.out.println("Threads started, waiting for the end");

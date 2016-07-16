@@ -48,12 +48,12 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
-  protected ORecordId          rid;
-  protected int                version;
-  protected int                partitionKey = -1;
-  protected boolean            lockRecords  = true;
+  protected ORecordId         rid;
+  protected int               version;
+  protected int               partitionKey = -1;
+  protected boolean           lockRecords  = true;
 
-  protected transient ORecord  previousRecord;
+  protected transient ORecord previousRecord;
 
   public OAbstractRecordReplicatedTask() {
   }
@@ -110,8 +110,8 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   }
 
   @Override
-  public int getPartitionKey() {
-    return partitionKey > -1 ? partitionKey : rid.clusterId;
+  public int[] getPartitionKey() {
+    return new int[] { partitionKey > -1 ? partitionKey : rid.clusterId };
   }
 
   @Override

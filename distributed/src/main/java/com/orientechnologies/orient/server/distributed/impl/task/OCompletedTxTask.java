@@ -62,8 +62,8 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
    * Random key.
    */
   @Override
-  public int getPartitionKey() {
-    return (int) System.currentTimeMillis();
+  public int[] getPartitionKey() {
+    return PK;// new int[] { (int) System.currentTimeMillis() };
   }
 
   public void addFixTask(final ORemoteTask fixTask) {

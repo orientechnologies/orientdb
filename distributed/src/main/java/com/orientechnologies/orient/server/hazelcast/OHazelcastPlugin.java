@@ -104,10 +104,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.setValue(true);
 
     // FORCE HZ TO USE THE MINIMUM OF THREADS, BECAUSE STARTING FROM V2.2 WE USE HZ ONLY FOR SMALL TASKS
-    // System.setProperty("hazelcast.operation.thread.count", "1");
-    // System.setProperty("hazelcast.operation.generic.thread.count", "1");
-    // System.setProperty("hazelcast.client.event.thread.count", "1");
-    // System.setProperty("hazelcast.event.thread.count", "1");
+    System.setProperty("hazelcast.operation.thread.count", "1");
+    System.setProperty("hazelcast.operation.generic.thread.count", "1");
+    System.setProperty("hazelcast.client.event.thread.count", "1");
+    System.setProperty("hazelcast.event.thread.count", "1");
 
     // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
     serverInstance.addTemporaryUser(REPLICATOR_USER, "" + new SecureRandom().nextLong(), "*");
@@ -235,6 +235,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         };
         Orient.instance().scheduleTask(publishLocalNodeConfigurationTask, delay, delay);
       }
+
+      serverStarted.countDown();
 
     } catch (Exception e) {
       ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "Error on starting distributed plugin", e);

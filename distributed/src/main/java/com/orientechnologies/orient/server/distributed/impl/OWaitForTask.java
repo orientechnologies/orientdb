@@ -25,7 +25,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -33,22 +32,15 @@ import java.io.ObjectOutput;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * Task wrapper to manage synchronized operations like transactions.
+ * Task implementation that waits for a task to be completed.
  * 
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  * 
  */
-public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
+public class OWaitForTask extends OAbstractRemoteTask {
   private CountDownLatch latch;
-  private ORemoteTask    task;
 
-  public OSynchronizedTaskWrapper(final CountDownLatch iLatch, final String iNodeName, final ORemoteTask iTask) {
-    latch = iLatch;
-    task = iTask;
-    task.setNodeSource(iNodeName);
-  }
-
-  public OSynchronizedTaskWrapper(final CountDownLatch iLatch) {
+  public OWaitForTask(final CountDownLatch iLatch) {
     latch = iLatch;
   }
 
@@ -65,14 +57,9 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
   @Override
   public Object execute(ODistributedRequestId requestId, OServer iServer, ODistributedServerManager iManager,
       ODatabaseDocumentInternal database) throws Exception {
-    try {
-      if (task != null)
-        return task.execute(requestId, iServer, iManager, database);
-      return null;
-    } finally {
-      // RELEASE ALL PENDING WORKERS
-      latch.countDown();
-    }
+    // WAIT UNTIL THE REAL TASK IS EXECUTED
+    latch.await();
+    return null;
   }
 
   @Override
