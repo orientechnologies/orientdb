@@ -90,7 +90,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
-    if( server == null )
+    if (server == null)
       return null;
     return lastLSN.get(server);
   }
@@ -110,9 +110,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
       final OLogSequenceNumber lastLSN = getLastLSN(task.getNodeSource());
 
-      if (taskLastLSN != null && lastLSN != null && taskLastLSN.compareTo(lastLSN) < 0)
+      if (taskLastLSN != null && lastLSN != null && taskLastLSN.compareTo(lastLSN) < 0) {
         // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
+        ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+            "Skipped request %s on database '%s' because LSN %s < current LSN %s", request, databaseName, taskLastLSN, lastLSN);
         return;
+      }
     }
 
     final int[] partitionKeys = task.getPartitionKey();
@@ -192,6 +195,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected void processRequest(final int partitionKey, final ODistributedRequest request) {
+    if (workerThreads.isEmpty())
+      throw new ODistributedException("There are no worker threads to process request " + request);
+
     final int partition = partitionKey % workerThreads.size();
 
     ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,

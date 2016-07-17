@@ -428,13 +428,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void updateCachedDatabaseConfiguration(final String iDatabaseName, final ODocument cfg, final boolean iSaveToDisk,
       final boolean iDeployToCluster) {
     // VALIDATE THE CONFIGURATION FIRST
-    getDistributedStrategy().validateConfiguration(new ODistributedConfiguration(cfg));
+    final ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
+    getDistributedStrategy().validateConfiguration(dCfg);
 
     final boolean updated = super.updateCachedDatabaseConfiguration(iDatabaseName, cfg, iSaveToDisk);
 
     if (updated) {
       if (iDeployToCluster) {
-        // DEPLOY THE CONFIGURATION TO THE CLUSTER
         ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
         configurationMap.put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + iDatabaseName, cfg);
       } else

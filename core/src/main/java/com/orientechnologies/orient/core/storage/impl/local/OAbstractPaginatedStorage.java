@@ -1291,12 +1291,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
     final OIndexManagerProxy indexManager = databaseRecord.getMetadata().getIndexManager();
     final TreeMap<String, OTransactionIndexChanges> indexesToCommit = getSortedIndexEntries(clientTx);
+    final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<ORecordOperation, Integer>();
 
-    ((OMetadataInternal) databaseRecord.getMetadata()).makeThreadLocalSchemaSnapshot();
+    databaseRecord.getMetadata().makeThreadLocalSchemaSnapshot();
+
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance().debug(this, "%d Committing transaction %d on database '%s' (items=%d)...",
+          Thread.currentThread().getId(), clientTx.getId(), databaseRecord.getName(), clientTx.getEntryCount());
 
     final Iterable<ORecordOperation> entries = (Iterable<ORecordOperation>) clientTx.getAllRecordEntries();
     final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<Integer, OCluster>();
-    final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<ORecordOperation, Integer>();
 
     final Set<ORecordOperation> newRecords = new TreeSet<ORecordOperation>(new Comparator<ORecordOperation>() {
       @Override
@@ -1336,8 +1340,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         clustersToLock.put(clusterId, getClusterById(clusterId));
       }
     }
-
-    ORecordId rid2Delete = null;
 
     final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
     stateLock.acquireReadLock();
@@ -1406,6 +1408,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } finally {
       stateLock.releaseReadLock();
     }
+
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance().debug(this, "%d Committed transaction %d on database '%s' (LSN=%s, result=%s)",
+          Thread.currentThread().getId(), clientTx.getId(), databaseRecord.getName(), getLSN(), result);
 
     return result;
   }
@@ -3106,7 +3112,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         callback.call(rid, ppos.clusterPosition);
 
       if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Created record %s v.%s size=%d bytes", rid, recordVersion, content.length);
+        OLogManager.instance().debug(this, "%d Created record %s v.%s size=%d bytes", Thread.currentThread().getId(), rid,
+            recordVersion, content.length);
 
       return new OStorageOperationResult<OPhysicalPosition>(ppos);
     } catch (IOException ioe) {

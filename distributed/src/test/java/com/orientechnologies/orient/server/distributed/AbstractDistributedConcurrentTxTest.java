@@ -66,7 +66,8 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
 
         try {
           if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
+            System.out.println("\nWriter " + databaseUrl + " id=" + Thread.currentThread().getId() + " managed " + (i + 1) + "/"
+                + count + " vertices so far");
 
           int retry = 0;
           boolean success = false;
@@ -74,7 +75,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
             try {
               updateVertex(localVertex);
               graph.commit();
-              OLogManager.instance().info(this, "Success count %d retry %d", i, retry);
+              OLogManager.instance().debug(this, "Success count %d retry %d", i, retry);
               success = true;
               break;
 
@@ -83,7 +84,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
               OLogManager.instance().info(this, "increment lockExceptions %d", lockExceptions.get());
 
             } catch (ONeedRetryException e) {
-              OLogManager.instance().info(this, "Concurrent Exceptions %s", e, e);
+              OLogManager.instance().info(this, "Concurrent Exceptions " + e);
 
             } catch (Exception e) {
               graph.rollback();

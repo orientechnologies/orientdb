@@ -402,10 +402,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {
-    ODistributedConfiguration dCfg = null;
-
     final ODistributedStorage stg = getStorage(iDatabaseName);
-    dCfg = stg.getDistributedConfiguration();
+    final ODistributedConfiguration dCfg = stg.getDistributedConfiguration();
     if (dCfg != null)
       return dCfg;
 
@@ -601,11 +599,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           else {
             // OK
             final String sourceNodeName = task.getNodeSource();
-            final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(database.getName());
 
-            if (!(result instanceof Throwable) && task instanceof OAbstractReplicatedTask)
-              // UPDATE LSN WITH LAST OPERATION
-              ddb.setLSN(sourceNodeName, ((OAbstractReplicatedTask) task).getLastLSN());
+            if (database != null) {
+              final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(database.getName());
+
+              if (!(result instanceof Throwable) && task instanceof OAbstractReplicatedTask)
+                // UPDATE LSN WITH LAST OPERATION
+                ddb.setLSN(sourceNodeName, ((OAbstractReplicatedTask) task).getLastLSN());
+            }
           }
 
           return result;
@@ -798,6 +799,19 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final String node = it.next();
 
       if (!isNodeAvailable(node, databaseName))
+        it.remove();
+    }
+    return iNodes.size();
+  }
+
+  /**
+   * Returns the online nodes and clears the node list by removing the non online nodes.
+   */
+  public int getOnlineNodes(final Collection<String> iNodes, final String databaseName) {
+    for (Iterator<String> it = iNodes.iterator(); it.hasNext();) {
+      final String node = it.next();
+
+      if (!isNodeOnline(node, databaseName))
         it.remove();
     }
     return iNodes.size();
@@ -1365,68 +1379,91 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
    */
   public <T> T executeInDistributedDatabaseLock(final String databaseName, final long timeoutLocking,
       final OCallable<T, ODistributedConfiguration> iCallback) {
+
+    final ODistributedConfiguration lastCfg = getDatabaseConfiguration(databaseName);
     if (OScenarioThreadLocal.INSTANCE.isInDatabaseLock()) {
       // ALREADY IN LOCK
-      final ODistributedConfiguration lastCfg = getDatabaseConfiguration(databaseName);
       return (T) iCallback.call(lastCfg);
     }
 
-    boolean locked = false;
-    final Lock lock = getLock(databaseName + ".cfg");
-    if (timeoutLocking > 0) {
-      try {
-        if (lock.tryLock(timeoutLocking, TimeUnit.MILLISECONDS))
-          locked = true;
-      } catch (InterruptedException e) {
-        // IGNORE IT
-      }
-    } else {
-      lock.lock();
-      locked = true;
-    }
+    // // DEPLOY THE CONFIGURATION TO THE CLUSTER
+    // final Collection<String> servers = lastCfg.getAllConfiguredServers();
+    // servers.remove(getLocalNodeName());
+    //
+    // // FILTER ONLY ACTIVE NODES
+    // getOnlineNodes(servers, databaseName);
+    //
+    // boolean suspended = false;
+    // if (!servers.isEmpty() && messageService.getDatabase(databaseName) != null) {
+    // sendRequest(databaseName, null, servers, new OUpdateConfigurationTask(true), getNextMessageIdCounter(),
+    // ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+    // getStorage(databaseName).suspendCreateOperations();
+    // suspended = true;
+    // }
 
-    if (locked)
-      try {
-        OScenarioThreadLocal.INSTANCE.setInDatabaseLock(true);
-
-        // GET LAST VERSION IN LOCK
-        final ODistributedConfiguration lastCfg = getLastDatabaseConfiguration(databaseName);
-        final int cfgVersion = lastCfg.getVersion();
-
+    try {
+      boolean locked = false;
+      final Lock lock = getLock(databaseName + ".cfg");
+      if (timeoutLocking > 0) {
         try {
+          if (lock.tryLock(timeoutLocking, TimeUnit.MILLISECONDS))
+            locked = true;
+        } catch (InterruptedException e) {
+          // IGNORE IT
+        }
+      } else {
+        lock.lock();
+        locked = true;
+      }
 
-          return (T) iCallback.call(lastCfg);
+      if (locked)
+        try {
+          OScenarioThreadLocal.INSTANCE.setInDatabaseLock(true);
+
+          // GET LAST VERSION IN LOCK
+          final int cfgVersion = lastCfg.getVersion();
+
+          try {
+
+            return (T) iCallback.call(lastCfg);
+
+          } finally {
+            if (lastCfg.getVersion() > cfgVersion)
+              // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
+              updateCachedDatabaseConfiguration(databaseName, lastCfg.getDocument(), true, true);
+
+            OScenarioThreadLocal.INSTANCE.setInDatabaseLock(false);
+          }
+
+        } catch (RuntimeException e) {
+          throw e;
+        } catch (Exception e) {
+          throw new RuntimeException(e);
 
         } finally {
-          if (lastCfg.getVersion() > cfgVersion)
-            // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
-            updateCachedDatabaseConfiguration(databaseName, lastCfg.getDocument(), true, true);
-
-          OScenarioThreadLocal.INSTANCE.setInDatabaseLock(false);
+          lock.unlock();
         }
-
-      } catch (RuntimeException e) {
-        throw e;
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-
-      } finally {
-        lock.unlock();
-      }
+    } finally {
+      // if (suspended) {
+      // getStorage(databaseName).resumeCreateOperations();
+      // sendRequest(databaseName, null, servers, new OUpdateConfigurationTask(false), getNextMessageIdCounter(),
+      // ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+      // }
+    }
 
     throw new OLockException("Cannot lock distributed database resource after " + timeoutLocking + "ms");
   }
 
   protected void onDatabaseEvent(final ODocument config, final String databaseName) {
     if (messageService.getDatabase(databaseName) != null) {
-      executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Object, ODistributedConfiguration>() {
-        @Override
-        public Object call(ODistributedConfiguration iArgument) {
-          // DATABASE IS CONFIGURED ON LOCAL NODE, UPDATE THE CFG ON DISK ONLY
-          updateCachedDatabaseConfiguration(databaseName, config, true, false);
-          return null;
-        }
-      });
+      // executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Object, ODistributedConfiguration>() {
+      // @Override
+      // public Object call(ODistributedConfiguration iArgument) {
+      // DATABASE IS CONFIGURED ON LOCAL NODE, UPDATE THE CFG ON DISK ONLY
+      updateCachedDatabaseConfiguration(databaseName, config, true, false);
+      // return null;
+      // }
+      // });
     }
 
     installDatabase(false, databaseName, config);
@@ -1689,7 +1726,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         in.close();
       }
 
-      ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Installed database '%s'", databaseName);
+      ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Installed database '%s' (LSN=%s)", databaseName,
+          ((OAbstractPaginatedStorage) db.getStorage().getUnderlying()).getLSN());
 
       return db;
 
@@ -1782,7 +1820,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
   }
 
-  protected ODistributedStorage getStorage(final String dbName) {
+  public ODistributedStorage getStorage(final String dbName) {
     ODistributedStorage storage = storages.get(dbName);
     if (storage == null) {
       storage = new ODistributedStorage(serverInstance);

@@ -148,7 +148,8 @@ public class ServerRun {
   public void terminateServer() {
     if (server != null) {
       try {
-        if (((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().isRunning())
+        final OHazelcastPlugin dPlugin = (OHazelcastPlugin) server.getDistributedManager();
+        if (dPlugin != null && dPlugin.getHazelcastInstance().getLifecycleService().isRunning())
           ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
       } catch (Exception e) {
       }

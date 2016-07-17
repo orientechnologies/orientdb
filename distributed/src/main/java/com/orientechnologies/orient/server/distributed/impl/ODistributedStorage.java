@@ -73,6 +73,7 @@ import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -81,6 +82,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedStorage implements OStorage, OFreezableStorageComponent, OAutoshardedStorage {
+  private volatile CountDownLatch                    configurationSemaphore = new CountDownLatch(0);
+
   private final OServer                              serverInstance;
   private final ODistributedServerManager            dManager;
   private OAbstractPaginatedStorage                  wrapped;
@@ -90,16 +93,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   private ODistributedServerManager.DB_STATUS        prevStatus;
   private ODistributedDatabase                       localDistributedDatabase;
   private ODistributedTransactionManager             txManager;
-  private final ReentrantReadWriteLock               messageManagementLock = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock               messageManagementLock  = new ReentrantReadWriteLock();
   // ARRAY OF LOCKS FOR CONCURRENT OPERATIONS ON CLUSTERS
   private Semaphore[]                                clusterLocks;
   private ODistributedStorageEventListener           eventListener;
 
   private volatile ODistributedConfiguration         distributedConfiguration;
-  private volatile boolean                           running               = true;
-  private volatile File                              lastValidBackup       = null;
-  private ReentrantReadWriteLock                     operationLock         = new ReentrantReadWriteLock();
-  private volatile CountDownLatch                    frozen                = new CountDownLatch(1);
+  private volatile boolean                           running                = true;
+  private volatile File                              lastValidBackup        = null;
+  private AtomicInteger                              configurationUpdated   = new AtomicInteger(0);
 
   public ODistributedStorage(final OServer iServer) {
     this.serverInstance = iServer;
@@ -506,10 +508,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     checkLocalNodeIsAvailable();
 
+    checkClusterRebalanceIsNotRunning();
+
     try {
       // ASSIGN DESTINATION NODE
-      String clusterName = getClusterNameByRID(iRecordId);
-
       final int clusterId = iRecordId.getClusterId();
       if (clusterId == ORID.CLUSTER_ID_INVALID)
         throw new IllegalArgumentException("Cluster not valid");
@@ -520,58 +522,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       checkNodeIsMaster(localNodeName, dbCfg);
 
-      final List<String> nodes = dbCfg.getServers(clusterName, null);
+      final String clusterName = checkForCluster(iRecordId, localNodeName, dbCfg);
 
-      if (nodes.isEmpty())
+      final List<String> servers = dbCfg.getServers(clusterName, null);
+
+      if (servers.isEmpty())
         // NO NODES: EXECUTE LOCALLY ONLY
         return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
-
-      String masterNode = nodes.get(0);
-      if (!masterNode.equals(localNodeName)) {
-        final OCluster cl = getClusterByName(clusterName);
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
-        final OClass cls = db.getMetadata().getSchema().getClassByClusterId(cl.getId());
-        String newClusterName = null;
-        if (cls != null) {
-          OClusterSelectionStrategy clSel = cls.getClusterSelection();
-          if (!(clSel instanceof OLocalClusterStrategy)) {
-            dManager.propagateSchemaChanges(db);
-            clSel = cls.getClusterSelection();
-          }
-
-          if (!(clSel instanceof OLocalClusterStrategy))
-            throw new ODistributedException("Cannot install local cluster strategy on class '" + cls.getName() + "'");
-
-          OLogManager.instance().warn(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
-              + "' (it is '" + masterNode + "'). Reloading distributed configuration for database '" + getName() + "'");
-
-          ((OLocalClusterStrategy) clSel).readConfiguration();
-
-          newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
-          nodes.clear();
-          nodes.addAll(dbCfg.getServers(newClusterName, null));
-          dManager.getAvailableNodes(nodes, getName());
-          masterNode = nodes.get(0);
-        }
-
-        if (!masterNode.equals(localNodeName))
-          throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '" + localNodeName
-              + "' is not the master of it, but it is '" + masterNode + "'");
-
-        OLogManager.instance().warn(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
-            + "' (it is '" + masterNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
-
-        // OVERWRITE CLUSTER
-        clusterName = newClusterName;
-        iRecordId.clusterId = db.getClusterIdByName(newClusterName);
-      }
 
       final String finalClusterName = clusterName;
 
       final Set<String> clusterNames = Collections.singleton(finalClusterName);
 
       // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
-      nodes.remove(localNodeName);
+      servers.remove(localNodeName);
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(finalClusterName);
       if (executionModeSynch == null)
@@ -596,12 +560,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
               final OCreateRecordTask task = new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType);
               task.setLastLSN(wrapped.getLSN());
 
-              if (!nodes.isEmpty()) {
+              if (!servers.isEmpty()) {
                 if (syncMode) {
 
                   // SYNCHRONOUS CALL: REPLICATE IT
                   try {
-                    final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
+                    final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, servers, task,
                         dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localPlaceholder, unlockCallback);
                     final Object payload = dResponse.getPayload();
                     if (payload != null) {
@@ -630,7 +594,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
                 } else {
                   // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
-                  asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(finalClusterName), nodes,
+                  asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(finalClusterName), servers,
                       task, dManager.getNextMessageIdCounter(), localPlaceholder, unlockCallback, null));
                 }
               } else
@@ -1095,21 +1059,48 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     }
   }
 
-  Object executeOperationInLock(final boolean iExclusiveLock, final OCallable<Object, Void> callback) {
-    if (iExclusiveLock)
-      messageManagementLock.writeLock().lock();
-    else
-      messageManagementLock.readLock().lock();
-
+  Object executeOperationInLock(final OCallable<Object, Void> callback) throws InterruptedException {
+    // TEMPORARY EXCLUSIVE LOCK (Test LocalConcurrentTxNoAutoRetryTest ignored)
+    messageManagementLock.writeLock().lock();
     try {
-      return callback.call(null);
-    } finally {
-      if (iExclusiveLock)
-        messageManagementLock.writeLock().unlock();
-      else
-        messageManagementLock.readLock().unlock();
-    }
 
+      return callback.call(null);
+
+    } finally {
+      messageManagementLock.writeLock().unlock();
+    }
+  }
+
+  public void checkClusterRebalanceIsNotRunning() {
+    // WAIT FOR NO CFG SYNCHRONIZATION PENDING
+    try {
+      if (configurationSemaphore.getCount() > 0)
+        ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Create operations are suspended, waiting for the resume");
+
+      configurationSemaphore.await();
+    } catch (InterruptedException e) {
+      throw new ODistributedException("Cannot assign cluster id because the operation has been interrupted");
+    }
+  }
+
+  public int getConfigurationUpdated() {
+    return configurationUpdated.get();
+  }
+
+  public void suspendCreateOperations() {
+    ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+        "Suspending create operations");
+
+    configurationSemaphore = new CountDownLatch(1);
+    configurationUpdated.incrementAndGet();
+  }
+
+  public void resumeCreateOperations() {
+    ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+        "Resuming create operations");
+
+    configurationSemaphore.countDown();
   }
 
   @Override
@@ -1239,6 +1230,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     checkLocalNodeIsAvailable();
     checkNodeIsMaster(localNodeName, dbCfg);
+
+    checkClusterRebalanceIsNotRunning();
 
     try {
       if (!dbCfg.isReplicationActive(null, localNodeName)) {
@@ -1770,5 +1763,54 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     } catch (InterruptedException e) {
       // IGNORE IT
     }
+  }
+
+  protected String checkForCluster(final ORecordId iRecordId, final String localNodeName, final ODistributedConfiguration dbCfg) {
+    String clusterName = getClusterNameByRID(iRecordId);
+
+    String ownerNode = dbCfg.getClusterOwner(clusterName);
+
+    if (ownerNode.equals(localNodeName))
+      return clusterName;
+
+    final OCluster cl = getClusterByName(clusterName);
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final OClass cls = db.getMetadata().getSchema().getClassByClusterId(cl.getId());
+    String newClusterName = null;
+    if (cls != null) {
+      OClusterSelectionStrategy clSel = cls.getClusterSelection();
+      if (!(clSel instanceof OLocalClusterStrategy)) {
+        dManager.propagateSchemaChanges(db);
+        clSel = cls.getClusterSelection();
+      }
+
+      if (!(clSel instanceof OLocalClusterStrategy))
+        throw new ODistributedException("Cannot install local cluster strategy on class '" + cls.getName() + "'");
+
+      OLogManager.instance().info(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
+          + "' (it is '" + ownerNode + "'). Reloading distributed configuration for database '" + getName() + "'");
+
+      ((OLocalClusterStrategy) clSel).readConfiguration();
+
+      newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
+      ownerNode = dbCfg.getClusterOwner(newClusterName);
+    }
+
+    if (!ownerNode.equals(localNodeName))
+      throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '" + localNodeName
+          + "' is not the master of it, but it is '" + ownerNode + "'");
+
+    OLogManager.instance().info(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
+        + "' (it is '" + ownerNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
+
+    // OVERWRITE CLUSTER
+    clusterName = newClusterName;
+    final ORecordId oldRID = iRecordId.copy();
+    iRecordId.clusterId = db.getClusterIdByName(newClusterName);
+
+    OLogManager.instance().warn(this, "Reassigned local cluster '%s' to the record %s. New RID is %s", newClusterName, oldRID,
+        iRecordId);
+
+    return clusterName;
   }
 }

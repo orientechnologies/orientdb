@@ -97,6 +97,8 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       // RESURRECT/CREATE IT
 
       new OCreateRecordTask(rid, content, version, recordType).executeRecordTask(requestId, iServer, iManager, database);
+      prepareUndoOperation();
+      record = previousRecord;
 
     } else {
       // UPDATE IT

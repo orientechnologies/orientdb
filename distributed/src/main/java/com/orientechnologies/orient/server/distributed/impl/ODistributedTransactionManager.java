@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
@@ -57,6 +53,10 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * Distributed transaction manager.
  *
@@ -83,31 +83,33 @@ public class ODistributedTransactionManager {
     try {
       OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.BEGUN);
 
-      // CREATE UNDO CONTENT FOR DISTRIBUTED 2-PHASE ROLLBACK
-      final List<OAbstractRemoteTask> undoTasks = createUndoTasksFromTx(iTx);
-
-      final int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
-      final int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
-
-      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
-      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
-      if (executionModeSynch == null)
-        executionModeSynch = Boolean.TRUE;
-
-      final boolean finalExecutionModeSynch = executionModeSynch;
-
-      // SYNCHRONIZE THE ENTIRE BLOCK TO BE LINEARIZABLE WITH CREATE OPERATION
-      final boolean exclusiveLock = iTx.hasRecordCreation();
-
-      final ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),
-          dManager.getNextMessageIdCounter());
-
-      final ODistributedTxContext ctx = localDistributedDatabase.registerTxContext(requestId);
-
-      return (List<ORecordOperation>) storage.executeOperationInLock(exclusiveLock, new OCallable<Object, Void>() {
+      return (List<ORecordOperation>) storage.executeOperationInLock(new OCallable<Object, Void>() {
 
         @Override
         public Object call(final Void nothing) {
+
+          final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
+
+          // CHECK THE LOCAL NODE IS THE OWNER OF THE CLUSTER IDS
+          checkForClusterIds(iTx, localNodeName, dbCfg);
+
+          // CREATE UNDO CONTENT FOR DISTRIBUTED 2-PHASE ROLLBACK
+          final List<OAbstractRemoteTask> undoTasks = createUndoTasksFromTx(iTx);
+
+          final int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
+          final int autoRetryDelay = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
+
+          Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(null);
+          if (executionModeSynch == null)
+            executionModeSynch = Boolean.TRUE;
+
+          final boolean finalExecutionModeSynch = executionModeSynch;
+
+          final ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),
+              dManager.getNextMessageIdCounter());
+
+          final ODistributedTxContext ctx = localDistributedDatabase.registerTxContext(requestId);
+
           try {
             acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay, eventListener, ctx);
 
@@ -179,7 +181,7 @@ public class ODistributedTransactionManager {
 
                 // ROLLBACK TX
                 storage.executeUndoOnLocalServer(requestId, txTask);
-                sendTxCompleted(localNodeName, involvedClusters, nodes, lastResult.getRequestId(), false);
+                sendTxCompleted(localNodeName, involvedClusters, nodes, lastResult.getRequestId(), false, txTask.getPartitionKey());
 
                 throw (ODistributedRecordLockedException) lastResult.getPayload();
 
@@ -239,6 +241,17 @@ public class ODistributedTransactionManager {
     return null;
   }
 
+  protected void checkForClusterIds(OTransaction iTx, String localNodeName, ODistributedConfiguration dbCfg) {
+    for (ORecordOperation op : iTx.getAllRecordEntries()) {
+      final ORecordId rid = (ORecordId) op.getRecord().getIdentity();
+      switch (op.type) {
+      case ORecordOperation.CREATED:
+        storage.checkForCluster(rid, localNodeName, dbCfg);
+        break;
+      }
+    }
+  }
+
   protected Set<String> getAvailableNodesButLocal(ODistributedConfiguration dbCfg, Set<String> involvedClusters,
       String localNodeName) {
     final Set<String> nodes = dbCfg.getServers(involvedClusters);
@@ -267,7 +280,7 @@ public class ODistributedTransactionManager {
 
               if (value instanceof OTxTaskResult) {
                 // SEND 2-PHASE DISTRIBUTED COMMIT TX
-                sendTxCompleted(localNodeName, involvedClusters, nodes, reqId, true);
+                sendTxCompleted(localNodeName, involvedClusters, nodes, reqId, true, txTask.getPartitionKey());
 
                 if (onAsyncReplicationOk != null)
                   onAsyncReplicationOk.onAsyncReplicationOk();
@@ -282,7 +295,7 @@ public class ODistributedTransactionManager {
                         "Async distributed transaction failed: %s", value);
 
                   // SEND 2-PHASE DISTRIBUTED ROLLBACK TX
-                  sendTxCompleted(localNodeName, involvedClusters, nodes, reqId, false);
+                  sendTxCompleted(localNodeName, involvedClusters, nodes, reqId, false, txTask.getPartitionKey());
 
                   if (value instanceof RuntimeException)
                     throw (RuntimeException) value;
@@ -395,14 +408,14 @@ public class ODistributedTransactionManager {
   }
 
   private void sendTxCompleted(final String localNodeName, final Set<String> involvedClusters, final Collection<String> nodes,
-      final ODistributedRequestId reqId, final boolean success) {
+      final ODistributedRequestId reqId, final boolean success, final int[] partitionKey) {
     if (nodes.isEmpty())
       // NO ACTIVE NODES TO SEND THE REQUESTS
       return;
 
     // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
     final Object completedResult = dManager.sendRequest(storage.getName(), involvedClusters, nodes,
-        new OCompletedTxTask(reqId, success), dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null).getPayload();
+        new OCompletedTxTask(reqId, success, partitionKey), dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null).getPayload();
 
     if (!(completedResult instanceof Boolean) || !((Boolean) completedResult).booleanValue()) {
       // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
@@ -553,7 +566,9 @@ public class ODistributedTransactionManager {
         if (task instanceof OCreateRecordTask) {
           final OCreateRecordTask t = (OCreateRecordTask) task;
           iTx.updateIdentityAfterCommit(t.getRid(), ((OPlaceholder) o).getIdentity());
-          ORecordInternal.setVersion(iTx.getRecord(t.getRid()), ((OPlaceholder) o).getVersion());
+          final ORecord rec = iTx.getRecord(t.getRid());
+          if (rec != null)
+            ORecordInternal.setVersion(rec, ((OPlaceholder) o).getVersion());
         } else if (task instanceof OUpdateRecordTask) {
           final OUpdateRecordTask t = (OUpdateRecordTask) task;
           ORecordInternal.setVersion(iTx.getRecord(t.getRid()), (Integer) o);
@@ -573,7 +588,7 @@ public class ODistributedTransactionManager {
         ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
             "Distributed transaction %s completed", reqId);
 
-      sendTxCompleted(localNodeName, involvedClusters, nodes, reqId, true);
+      sendTxCompleted(localNodeName, involvedClusters, nodes, reqId, true, txTask.getPartitionKey());
 
     } else if (result instanceof ODistributedRecordLockedException) {
       // AUTO RETRY
@@ -613,7 +628,7 @@ public class ODistributedTransactionManager {
 
       // ROLLBACK TX
       storage.executeUndoOnLocalServer(dResponse.getRequestId(), txTask);
-      sendTxCompleted(localNodeName, involvedClusters, nodes, dResponse.getRequestId(), false);
+      sendTxCompleted(localNodeName, involvedClusters, nodes, dResponse.getRequestId(), false, txTask.getPartitionKey());
 
       throw new OTransactionException("Error on committing distributed transaction, received unknown response type " + result);
     }
