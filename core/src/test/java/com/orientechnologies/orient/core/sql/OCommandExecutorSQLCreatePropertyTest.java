@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 
 /**
@@ -55,14 +56,14 @@ public class OCommandExecutorSQLCreatePropertyTest {
     db.command(new OCommandSQL("CREATE property company.name STRING")).execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
-    OProperty nameProperty = companyClass.getProperty(PROP_NAME);
+    OProperty property = companyClass.getProperty(PROP_NAME);
 
-    assertEquals(nameProperty.getName(), PROP_NAME);
-    assertEquals(nameProperty.getFullName(), PROP_FULL_NAME);
-    assertEquals(nameProperty.getType(), OType.STRING);
-    assertFalse(nameProperty.isMandatory());
-    assertFalse(nameProperty.isNotNull());
-    assertFalse(nameProperty.isReadonly());
+    assertEquals(property.getName(), PROP_NAME);
+    assertEquals(property.getFullName(), PROP_FULL_NAME);
+    assertEquals(property.getType(), OType.STRING);
+    assertFalse(property.isMandatory());
+    assertFalse(property.isNotNull());
+    assertFalse(property.isReadonly());
 
     db.close();
   }
@@ -77,14 +78,14 @@ public class OCommandExecutorSQLCreatePropertyTest {
     db.command(new OCommandSQL("CREATE property company.name STRING UNSAFE")).execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
-    OProperty nameProperty = companyClass.getProperty(PROP_NAME);
+    OProperty property = companyClass.getProperty(PROP_NAME);
 
-    assertEquals(nameProperty.getName(), PROP_NAME);
-    assertEquals(nameProperty.getFullName(), PROP_FULL_NAME);
-    assertEquals(nameProperty.getType(), OType.STRING);
-    assertFalse(nameProperty.isMandatory());
-    assertFalse(nameProperty.isNotNull());
-    assertFalse(nameProperty.isReadonly());
+    assertEquals(property.getName(), PROP_NAME);
+    assertEquals(property.getFullName(), PROP_FULL_NAME);
+    assertEquals(property.getType(), OType.STRING);
+    assertFalse(property.isMandatory());
+    assertFalse(property.isNotNull());
+    assertFalse(property.isReadonly());
 
     db.close();
   }
@@ -100,15 +101,15 @@ public class OCommandExecutorSQLCreatePropertyTest {
     db.command(new OCommandSQL("CREATE property company.division LINK division")).execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
-    OProperty nameProperty = companyClass.getProperty(PROP_DIVISION);
+    OProperty property = companyClass.getProperty(PROP_DIVISION);
 
-    assertEquals(nameProperty.getName(), PROP_DIVISION);
-    assertEquals(nameProperty.getFullName(), PROP_FULL_DIVISION);
-    assertEquals(nameProperty.getType(), OType.LINK);
-    assertEquals(nameProperty.getLinkedClass().getName(), "division");
-    assertFalse(nameProperty.isMandatory());
-    assertFalse(nameProperty.isNotNull());
-    assertFalse(nameProperty.isReadonly());
+    assertEquals(property.getName(), PROP_DIVISION);
+    assertEquals(property.getFullName(), PROP_FULL_DIVISION);
+    assertEquals(property.getType(), OType.LINK);
+    assertEquals(property.getLinkedClass().getName(), "division");
+    assertFalse(property.isMandatory());
+    assertFalse(property.isNotNull());
+    assertFalse(property.isReadonly());
 
     db.close();
   }
@@ -123,15 +124,15 @@ public class OCommandExecutorSQLCreatePropertyTest {
     db.command(new OCommandSQL("CREATE Property company.officers EMBEDDEDLIST STRING")).execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
-    OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
+    OProperty property = companyClass.getProperty(PROP_OFFICERS);
 
-    assertEquals(nameProperty.getName(), PROP_OFFICERS);
-    assertEquals(nameProperty.getFullName(), PROP_FULL_OFFICERS);
-    assertEquals(nameProperty.getType(), OType.EMBEDDEDLIST);
-    assertEquals(nameProperty.getLinkedType(), OType.STRING);
-    assertFalse(nameProperty.isMandatory());
-    assertFalse(nameProperty.isNotNull());
-    assertFalse(nameProperty.isReadonly());
+    assertEquals(property.getName(), PROP_OFFICERS);
+    assertEquals(property.getFullName(), PROP_FULL_OFFICERS);
+    assertEquals(property.getType(), OType.EMBEDDEDLIST);
+    assertEquals(property.getLinkedType(), OType.STRING);
+    assertFalse(property.isMandatory());
+    assertFalse(property.isNotNull());
+    assertFalse(property.isReadonly());
 
     db.close();
   }
@@ -146,13 +147,13 @@ public class OCommandExecutorSQLCreatePropertyTest {
     db.command(new OCommandSQL("CREATE property company.name STRING (MANDATORY)")).execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
-    OProperty nameProperty = companyClass.getProperty(PROP_NAME);
+    OProperty property = companyClass.getProperty(PROP_NAME);
 
-    assertEquals(nameProperty.getName(), PROP_NAME);
-    assertEquals(nameProperty.getFullName(), PROP_FULL_NAME);
-    assertTrue(nameProperty.isMandatory());
-    assertFalse(nameProperty.isNotNull());
-    assertFalse(nameProperty.isReadonly());
+    assertEquals(property.getName(), PROP_NAME);
+    assertEquals(property.getFullName(), PROP_FULL_NAME);
+    assertTrue(property.isMandatory());
+    assertFalse(property.isNotNull());
+    assertFalse(property.isReadonly());
 
     db.close();
   }
@@ -167,13 +168,13 @@ public class OCommandExecutorSQLCreatePropertyTest {
     db.command(new OCommandSQL("CREATE property company.name STRING (NOTNULL)")).execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
-    OProperty nameProperty = companyClass.getProperty(PROP_NAME);
+    OProperty property = companyClass.getProperty(PROP_NAME);
 
-    assertEquals(nameProperty.getName(), PROP_NAME);
-    assertEquals(nameProperty.getFullName(), PROP_FULL_NAME);
-    assertFalse(nameProperty.isMandatory());
-    assertTrue(nameProperty.isNotNull());
-    assertFalse(nameProperty.isReadonly());
+    assertEquals(property.getName(), PROP_NAME);
+    assertEquals(property.getFullName(), PROP_FULL_NAME);
+    assertFalse(property.isMandatory());
+    assertTrue(property.isNotNull());
+    assertFalse(property.isReadonly());
 
     db.close();
   }
@@ -188,13 +189,13 @@ public class OCommandExecutorSQLCreatePropertyTest {
     db.command(new OCommandSQL("CREATE property company.name STRING (READONLY)")).execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
-    OProperty nameProperty = companyClass.getProperty(PROP_NAME);
+    OProperty property = companyClass.getProperty(PROP_NAME);
 
-    assertEquals(nameProperty.getName(), PROP_NAME);
-    assertEquals(nameProperty.getFullName(), PROP_FULL_NAME);
-    assertFalse(nameProperty.isMandatory());
-    assertFalse(nameProperty.isNotNull());
-    assertTrue(nameProperty.isReadonly());
+    assertEquals(property.getName(), PROP_NAME);
+    assertEquals(property.getFullName(), PROP_FULL_NAME);
+    assertFalse(property.isMandatory());
+    assertFalse(property.isNotNull());
+    assertTrue(property.isReadonly());
 
     db.close();
   }
@@ -209,11 +210,11 @@ public class OCommandExecutorSQLCreatePropertyTest {
     db.command(new OCommandSQL("CREATE property company.name STRING (READONLY false)")).execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
-    OProperty nameProperty = companyClass.getProperty(PROP_NAME);
+    OProperty property = companyClass.getProperty(PROP_NAME);
 
-    assertEquals(nameProperty.getName(), PROP_NAME);
-    assertEquals(nameProperty.getFullName(), PROP_FULL_NAME);
-    assertFalse(nameProperty.isReadonly());
+    assertEquals(property.getName(), PROP_NAME);
+    assertEquals(property.getFullName(), PROP_FULL_NAME);
+    assertFalse(property.isReadonly());
 
     db.close();
   }
@@ -228,15 +229,15 @@ public class OCommandExecutorSQLCreatePropertyTest {
     db.command(new OCommandSQL("CREATE Property company.officers EMBEDDEDLIST STRING (MANDATORY)")).execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
-    OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
+    OProperty property = companyClass.getProperty(PROP_OFFICERS);
 
-    assertEquals(nameProperty.getName(), PROP_OFFICERS);
-    assertEquals(nameProperty.getFullName(), PROP_FULL_OFFICERS);
-    assertEquals(nameProperty.getType(), OType.EMBEDDEDLIST);
-    assertEquals(nameProperty.getLinkedType(), OType.STRING);
-    assertTrue(nameProperty.isMandatory());
-    assertFalse(nameProperty.isNotNull());
-    assertFalse(nameProperty.isReadonly());
+    assertEquals(property.getName(), PROP_OFFICERS);
+    assertEquals(property.getFullName(), PROP_FULL_OFFICERS);
+    assertEquals(property.getType(), OType.EMBEDDEDLIST);
+    assertEquals(property.getLinkedType(), OType.STRING);
+    assertTrue(property.isMandatory());
+    assertFalse(property.isNotNull());
+    assertFalse(property.isReadonly());
 
     db.close();
   }
@@ -251,12 +252,12 @@ public class OCommandExecutorSQLCreatePropertyTest {
     db.command(new OCommandSQL("CREATE Property company.officers EMBEDDEDLIST STRING UNSAFE")).execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
-    OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
+    OProperty property = companyClass.getProperty(PROP_OFFICERS);
 
-    assertEquals(nameProperty.getName(), PROP_OFFICERS);
-    assertEquals(nameProperty.getFullName(), PROP_FULL_OFFICERS);
-    assertEquals(nameProperty.getType(), OType.EMBEDDEDLIST);
-    assertEquals(nameProperty.getLinkedType(), OType.STRING);
+    assertEquals(property.getName(), PROP_OFFICERS);
+    assertEquals(property.getFullName(), PROP_FULL_OFFICERS);
+    assertEquals(property.getType(), OType.EMBEDDEDLIST);
+    assertEquals(property.getLinkedType(), OType.STRING);
 
     db.close();
   }
@@ -272,15 +273,15 @@ public class OCommandExecutorSQLCreatePropertyTest {
         .execute();
 
     OClass companyClass = db.getMetadata().getSchema().getClass("company");
-    OProperty nameProperty = companyClass.getProperty(PROP_OFFICERS);
+    OProperty property = companyClass.getProperty(PROP_OFFICERS);
 
-    assertEquals(nameProperty.getName(), PROP_OFFICERS);
-    assertEquals(nameProperty.getFullName(), PROP_FULL_OFFICERS);
-    assertEquals(nameProperty.getType(), OType.EMBEDDEDLIST);
-    assertEquals(nameProperty.getLinkedType(), OType.STRING);
-    assertTrue(nameProperty.isMandatory());
-    assertTrue(nameProperty.isNotNull());
-    assertTrue(nameProperty.isReadonly());
+    assertEquals(property.getName(), PROP_OFFICERS);
+    assertEquals(property.getFullName(), PROP_FULL_OFFICERS);
+    assertEquals(property.getType(), OType.EMBEDDEDLIST);
+    assertEquals(property.getLinkedType(), OType.STRING);
+    assertTrue(property.isMandatory());
+    assertTrue(property.isNotNull());
+    assertTrue(property.isReadonly());
 
     db.close();
   }
@@ -448,6 +449,97 @@ public class OCommandExecutorSQLCreatePropertyTest {
     assertEquals(idProperty.getLinkedClass(), mandatoryClass);
     assertFalse(idProperty.isMandatory());
 
+    db.close();
+  }
+  
+  @Test
+  public void testLowerCase() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+
+    db.create();
+
+    db.command(new OCommandSQL("CREATE class division")).execute();
+    db.command(new OCommandSQL("CREATE class company")).execute();
+    db.command(new OCommandSQL("CREATE property company.division LINK division (mandatory, readonly, notnull, default 3, min 4, max 5, collate ci) unsafe")).execute();
+
+    OClass companyClass = db.getMetadata().getSchema().getClass("company");
+    OProperty property = companyClass.getProperty(PROP_DIVISION);
+
+    assertEquals(property.getName(), PROP_DIVISION);
+    assertEquals(property.getFullName(), PROP_FULL_DIVISION);
+    assertEquals(property.getType(), OType.LINK);
+    assertEquals(property.getLinkedClass().getName(), "division");
+    assertTrue(property.isMandatory());
+    assertTrue(property.isNotNull());
+    assertTrue(property.isReadonly());
+    assertEquals(property.getDefaultValue(), "3");
+    assertEquals(property.getMin(), "4");
+    assertEquals(property.getMax(), "5");
+    assertEquals(property.getCollate().getName(), "ci");
+
+    db.close();
+  }
+  
+  @Test
+  public void testExpressionAsValue() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+
+    db.create();
+
+    db.command(new OCommandSQL("CREATE class company")).execute();
+    db.command(new OCommandSQL("CREATE property company.founded Date (default sysdate(), mandatory) unsafe")).execute();
+
+    OClass companyClass = db.getMetadata().getSchema().getClass("company");
+    OProperty foundedProperty = companyClass.getProperty("founded");
+
+    assertTrue(foundedProperty.isMandatory());
+    assertFalse(foundedProperty.isNotNull());
+    assertFalse(foundedProperty.isReadonly());
+    assertEquals(foundedProperty.getDefaultValue(), "sysdate()");
+    assertEquals(foundedProperty.getMin(), null);
+    assertEquals(foundedProperty.getMax(), null);
+    assertEquals(foundedProperty.getCollate().getName(), "default");
+
+    db.close();
+  }
+  
+  @Test
+  public void testRegex() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+
+    db.create();
+
+    db.command(new OCommandSQL("CREATE class myClass")).execute();
+    db.command(new OCommandSQL("CREATE property myClass.regexp String (REGEX \"[M|F]\", mandatory) unsafe")).execute();
+
+    OClass companyClass = db.getMetadata().getSchema().getClass("myClass");
+    OProperty regexp = companyClass.getProperty("regexp");
+
+    assertTrue(regexp.isMandatory());
+    assertEquals(regexp.getRegexp(), "[M|F]");
+    
+    ODocument doc = db.newInstance("myClass");
+    doc.field("regexp", "M");
+    doc.save();
+    
+    db.close();
+  }
+  
+  @Test
+  public void testNullAttributeRegex() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLCreatePropertyTest" + System.nanoTime());
+
+    db.create();
+
+    db.command(new OCommandSQL("CREATE class myClass")).execute();
+    db.command(new OCommandSQL("CREATE property myClass.regexp String (REGEX null, mandatory) unsafe")).execute();
+
+    OClass companyClass = db.getMetadata().getSchema().getClass("myClass");
+    OProperty regexp = companyClass.getProperty("regexp");
+
+    assertTrue(regexp.isMandatory());
+    assertEquals(regexp.getRegexp(), null);
+    
     db.close();
   }
 }
