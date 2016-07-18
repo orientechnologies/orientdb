@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCallable;
@@ -35,6 +26,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -46,6 +38,15 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each others.
@@ -470,26 +471,44 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public ODatabaseDocumentInternal getDatabaseInstance() {
-    return manager.getServerInstance().openDatabase(databaseName, "internal", "internal", null, true);
+  public ODatabaseDocumentTx getDatabaseInstance() {
+    return (ODatabaseDocumentTx) manager.getServerInstance().openDatabase(databaseName, "internal", "internal", null, true);
   }
 
   public void shutdown() {
+    // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
+    for (ODistributedWorker workerThread : workerThreads) {
+      if (workerThread != null)
+        workerThread.shutdown();
+    }
+
+    // WAIT A BIT FOR PROPER SHUTDOWN
     for (ODistributedWorker workerThread : workerThreads) {
       if (workerThread != null) {
-        workerThread.shutdown();
         try {
           workerThread.join(2000);
         } catch (InterruptedException e) {
         }
       }
     }
+    workerThreads.clear();
+
+    for (String server : lastLSN.keySet()) {
+      try {
+        saveLSNTable(server);
+      } catch (IOException e) {
+        // IGNORE IT
+      }
+    }
+    lastLSN.clear();
 
     ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
         "Shutting down distributed database manager '%s'. Pending objects: txs=%d locks=%d", databaseName, activeTxContexts.size(),
         lockManager.size());
 
-    workerThreads.clear();
+    lockManager.clear();
+    activeTxContexts.clear();
+
   }
 
   protected void checkForServerOnline(final ODistributedRequest iRequest) throws ODistributedException {
@@ -586,7 +605,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected void checkLocalNodeInConfiguration() {
-    manager.executeInDistributedDatabaseLock(databaseName, new OCallable<Void, ODistributedConfiguration>() {
+    manager.executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Void, ODistributedConfiguration>() {
       @Override
       public Void call(final ODistributedConfiguration cfg) {
         // GET LAST VERSION IN LOCK
@@ -594,8 +613,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         if (foundPartition != null) {
           manager.setDatabaseStatus(localNodeName, databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-          ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Adding node '%s' in partition: db=%s %s",
-              localNodeName, databaseName, foundPartition);
+          ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Adding node '%s' in partition: %s db=%s v=%d",
+              localNodeName, databaseName, foundPartition, cfg.getVersion());
         }
         return null;
       }
@@ -628,12 +647,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     lastLSN.put(sourceNodeName, taskLastLSN);
 
     if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000) {
-      getSyncConfiguration().setLSN(sourceNodeName, taskLastLSN);
-
-      ODistributedServerLog.debug(this, localNodeName, sourceNodeName, DIRECTION.NONE, "Updating LSN table to the value %s",
-          taskLastLSN);
-
-      lastLSNWrittenOnDisk = System.currentTimeMillis();
+      saveLSNTable(sourceNodeName);
     }
+  }
+
+  protected void saveLSNTable(final String sourceNodeName) throws IOException {
+    final OLogSequenceNumber storedLSN = lastLSN.get(sourceNodeName);
+
+    getSyncConfiguration().setLSN(sourceNodeName, storedLSN);
+
+    ODistributedServerLog.debug(this, localNodeName, sourceNodeName, DIRECTION.NONE, "Updating LSN table to the value %s",
+        storedLSN);
+
+    lastLSNWrittenOnDisk = System.currentTimeMillis();
   }
 }

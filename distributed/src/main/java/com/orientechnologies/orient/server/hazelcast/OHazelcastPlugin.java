@@ -365,7 +365,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (messageService.getDatabase(databaseName) == null) {
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Opening database '%s'...", databaseName);
 
-        executeInDistributedDatabaseLock(databaseName, new OCallable<Object, ODistributedConfiguration>() {
+        // INIT THE STORAGE
+        getStorage(databaseName);
+
+        executeInDistributedDatabaseLock(databaseName, 0, new OCallable<Object, ODistributedConfiguration>() {
           @Override
           public Object call(ODistributedConfiguration cfg) {
             ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
@@ -608,7 +611,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         updateLastClusterChange();
 
       } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
-        ODistributedServerLog.debug(this, nodeName, getNodeName(iEvent.getMember()), DIRECTION.IN, "received removed status %s=%s",
+        ODistributedServerLog.debug(this, nodeName, getNodeName(iEvent.getMember()), DIRECTION.IN, "Received removed status %s=%s",
             key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
 
         // CALL DATABASE EVENT
@@ -769,7 +772,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       final String dbName = iDatabase.getName();
 
       if (configurationMap.containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName))
-        throw new ODistributedException("Cannot create a new database with the same name of one available distributed");
+        throw new ODistributedException("Cannot create the new database '" + dbName + "' because it is already present in distributed configuration");
 
       // INIT THE STORAGE
       getStorage(dbName);

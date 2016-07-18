@@ -43,8 +43,6 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
 
         banner("DROPPING DATABASE ON SERVER " + server.getServerId());
         db.drop();
-
-        Thread.sleep(1000);
       }
 
       ServerRun server = serverInstance.get(s);
@@ -54,6 +52,8 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
       final ODatabaseDocumentTx db = new ODatabaseDocumentTx(getDatabaseURL(server));
       db.create();
       db.close();
+
+      Thread.sleep(2000);
 
     } while (++s < serverInstance.size());
   }

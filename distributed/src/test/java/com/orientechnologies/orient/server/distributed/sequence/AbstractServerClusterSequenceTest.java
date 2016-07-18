@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class AbstractServerClusterSequenceTest extends AbstractServerClusterTest {
   private static final boolean                  RUN_PARALLEL_SYNC_TEST = true;
-  private static final int                      SEQ_RUN_COUNT          = 100;
+  private static final int                      SEQ_RUN_COUNT          = 50;
 
   private static final int                      DB_COUNT               = 2;
   private static final int                      THREAD_POOL_SIZE       = 2;
