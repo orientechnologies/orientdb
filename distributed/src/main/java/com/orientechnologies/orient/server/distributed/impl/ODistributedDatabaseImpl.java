@@ -478,25 +478,43 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public ODatabaseDocumentTx getDatabaseInstance() {
-    return (ODatabaseDocumentTx) manager.getServerInstance().openDatabase(databaseName, "internal", "internal", null, true);
+    return manager.getServerInstance().openDatabase(databaseName, "internal", "internal", null, true);
   }
 
   public void shutdown() {
+    // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
+    for (ODistributedWorker workerThread : workerThreads) {
+      if (workerThread != null)
+        workerThread.shutdown();
+    }
+
+    // WAIT A BIT FOR PROPER SHUTDOWN
     for (ODistributedWorker workerThread : workerThreads) {
       if (workerThread != null) {
-        workerThread.shutdown();
         try {
           workerThread.join(2000);
         } catch (InterruptedException e) {
         }
       }
     }
+    workerThreads.clear();
+
+    for (String server : lastLSN.keySet()) {
+      try {
+        saveLSNTable(server);
+      } catch (IOException e) {
+        // IGNORE IT
+      }
+    }
+    lastLSN.clear();
 
     ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
         "Shutting down distributed database manager '%s'. Pending objects: txs=%d locks=%d", databaseName, activeTxContexts.size(),
         lockManager.size());
 
-    workerThreads.clear();
+    lockManager.clear();
+    activeTxContexts.clear();
+
   }
 
   protected void checkForServerOnline(final ODistributedRequest iRequest) throws ODistributedException {
@@ -601,8 +619,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         if (foundPartition != null) {
           manager.setDatabaseStatus(localNodeName, databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-          ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Adding node '%s' in partition: db=%s %s",
-              localNodeName, databaseName, foundPartition);
+          ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Adding node '%s' in partition: %s db=%s v=%d",
+              localNodeName, databaseName, foundPartition, cfg.getVersion());
         }
         return null;
       }
@@ -635,12 +653,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     lastLSN.put(sourceNodeName, taskLastLSN);
 
     if (System.currentTimeMillis() - lastLSNWrittenOnDisk > 2000) {
-      getSyncConfiguration().setLSN(sourceNodeName, taskLastLSN);
-
-      ODistributedServerLog.debug(this, localNodeName, sourceNodeName, DIRECTION.NONE, "Updating LSN table to the value %s",
-          taskLastLSN);
-
-      lastLSNWrittenOnDisk = System.currentTimeMillis();
+      saveLSNTable(sourceNodeName);
     }
+  }
+
+  protected void saveLSNTable(final String sourceNodeName) throws IOException {
+    final OLogSequenceNumber storedLSN = lastLSN.get(sourceNodeName);
+
+    getSyncConfiguration().setLSN(sourceNodeName, storedLSN);
+
+    ODistributedServerLog.debug(this, localNodeName, sourceNodeName, DIRECTION.NONE, "Updating LSN table to the value %s",
+        storedLSN);
+
+    lastLSNWrittenOnDisk = System.currentTimeMillis();
   }
 }

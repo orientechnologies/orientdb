@@ -19,13 +19,16 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import org.junit.Ignore;
 import org.junit.Test;
+
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * Distributed TX test against "plocal" protocol. <br>
  * This test is ignored because TX are not parallel on distributed yet (exclusive lock on dstorage.commit()).
  */
+@Ignore
 public class LocalConcurrentTxNoAutoRetryTest extends AbstractDistributedConcurrentTxTest {
 
   private static final int SERVERS = 3;

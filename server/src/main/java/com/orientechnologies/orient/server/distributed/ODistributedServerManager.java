@@ -146,6 +146,8 @@ public interface ODistributedServerManager {
 
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
+  ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName, boolean createIfNotPresent);
+
   /**
    * Sends a distributed request against multiple servers.
    * 

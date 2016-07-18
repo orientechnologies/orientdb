@@ -87,4 +87,9 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
   }
+  
+  @Override
+  public String toString() {
+    return "(" + (task != null ? task.toString() : "-") + ")";
+  }
 }

@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.*;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+
+import java.util.*;
 
 /**
  * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
@@ -283,7 +283,7 @@ public class ODistributedConfiguration {
   public Set<String> getServers(Collection<String> iClusterNames) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
-        iClusterNames = DEFAULT_CLUSTER_NAME;
+        return getAllConfiguredServers();
 
       final Set<String> partitions = new HashSet<String>(iClusterNames.size());
       for (String p : iClusterNames) {
@@ -601,8 +601,9 @@ public class ODistributedConfiguration {
       }
 
       List<String> serverList = getClusterConfiguration(iClusterName).field(SERVERS);
-      if (serverList == null)
+      if (serverList == null) {
         serverList = initClusterServers(cluster);
+      }
 
       if (!serverList.isEmpty() && serverList.get(0).equals(iServerName))
         // ALREADY OWNER
@@ -831,7 +832,7 @@ public class ODistributedConfiguration {
     ODocumentInternal.addOwner(cluster, clusters);
     clusters.field(iClusterName, cluster, OType.EMBEDDED);
 
-    initClusterServers(cluster);
+    final List<String> servers = initClusterServers(cluster);
 
     return cluster;
   }
