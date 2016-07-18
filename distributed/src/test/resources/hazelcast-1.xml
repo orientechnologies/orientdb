@@ -15,6 +15,12 @@
 		<name>orientdb</name>
 		<password>orientdb</password>
 	</group>
+	<properties>
+		<property name="hazelcast.mancenter.enabled">false</property>
+		<property name="hazelcast.memcache.enabled">false</property>
+		<property name="hazelcast.rest.enabled">false</property>
+		<property name="hazelcast.wait.seconds.before.join">0</property>
+	</properties>
 	<network>
 		<port auto-increment="false">2435</port>
 		<join>
