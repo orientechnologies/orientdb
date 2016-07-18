@@ -1428,6 +1428,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       stateLock.releaseReadLock();
     }
 
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance().debug(this, "%d Committed transaction %d on database '%s' (result=%s)",
+          Thread.currentThread().getId(), clientTx.getId(), databaseRecord.getName(), result);
+
     return result;
   }
 
