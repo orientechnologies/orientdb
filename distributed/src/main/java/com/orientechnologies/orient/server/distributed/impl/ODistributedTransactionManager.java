@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
@@ -63,15 +62,15 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedTransactionManager {
-  private final OServer                   serverInstance;
   private final ODistributedServerManager dManager;
   private final ODistributedStorage       storage;
   private final ODistributedDatabase      localDistributedDatabase;
 
-  public ODistributedTransactionManager(final ODistributedStorage storage, final OServer iServer,
+  private static final boolean            SYNC_TX_COMPLETED = false;
+
+  public ODistributedTransactionManager(final ODistributedStorage storage, final ODistributedServerManager manager,
       final ODistributedDatabase iDDatabase) {
-    this.serverInstance = iServer;
-    this.dManager = iServer.getDistributedManager();
+    this.dManager = manager;
     this.storage = storage;
     this.localDistributedDatabase = iDDatabase;
   }
@@ -414,13 +413,19 @@ public class ODistributedTransactionManager {
       return;
 
     // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
-    final Object completedResult = dManager.sendRequest(storage.getName(), involvedClusters, nodes,
-        new OCompletedTxTask(reqId, success, partitionKey), dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null).getPayload();
+    final ODistributedResponse response = dManager.sendRequest(storage.getName(), involvedClusters, nodes,
+        new OCompletedTxTask(reqId, success, partitionKey), dManager.getNextMessageIdCounter(),
+        SYNC_TX_COMPLETED ? EXECUTION_MODE.NO_RESPONSE : EXECUTION_MODE.NO_RESPONSE, null, null);
 
-    if (!(completedResult instanceof Boolean) || !((Boolean) completedResult).booleanValue()) {
-      // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
-      ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-          "Distributed transaction complete error: %s", completedResult);
+    if (SYNC_TX_COMPLETED) {
+      // WAIT FOR THE RESPONSE
+      final Object result = response.getPayload();
+      if (!(result instanceof Boolean) || !((Boolean) result).booleanValue()) {
+        // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
+        ODistributedServerLog.error(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+            "Distributed transaction complete error: %s", response);
+
+      }
     }
   }
 

@@ -115,7 +115,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     this.wrapped = wrapped;
     this.localDistributedDatabase = dManager.getMessageService().getDatabase(getName());
-    this.txManager = new ODistributedTransactionManager(this, serverInstance, localDistributedDatabase);
+    this.txManager = new ODistributedTransactionManager(this, dManager, localDistributedDatabase);
 
     ODistributedServerLog.debug(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
         ODistributedServerLog.DIRECTION.NONE, "Installing distributed storage on database '%s'", wrapped.getName());

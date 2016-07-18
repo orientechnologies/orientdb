@@ -150,7 +150,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         // WAIT ALL THE INVOLVED QUEUES ARE FREE AND SYNCHORIZED
         final CountDownLatch syncLatch = new CountDownLatch(involvedWorkerQueues.size());
         final ODistributedRequest syncRequest = new ODistributedRequest(manager.getTaskFactory(), request.getId().getNodeId(), -1,
-            databaseName, new OSynchronizedTaskWrapper(syncLatch), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+            databaseName, new OSynchronizedTaskWrapper(syncLatch));
         for (int queue : involvedWorkerQueues)
           workerThreads.get(queue).processRequest(syncRequest);
 
@@ -175,7 +175,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             req = request;
           } else
             req = new ODistributedRequest(manager.getTaskFactory(), request.getId().getNodeId(), -1, databaseName,
-                new OWaitForTask(queueLatch), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+                new OWaitForTask(queueLatch));
 
           workerThreads.get(queue).processRequest(req);
         }
@@ -317,7 +317,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (iAfterSentCallback != null)
         iAfterSentCallback.call(iRequest.getId());
 
-      return waitForResponse(iRequest, currentResponseMgr);
+      if (iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
+        return waitForResponse(iRequest, currentResponseMgr);
+
+      return null;
 
     } catch (RuntimeException e) {
       throw e;
@@ -590,9 +593,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   protected ODistributedResponse waitForResponse(final ODistributedRequest iRequest,
       final ODistributedResponseManager currentResponseMgr) throws InterruptedException {
-    if (iRequest.getExecutionMode() == ODistributedRequest.EXECUTION_MODE.NO_RESPONSE)
-      return null;
-
     final long beginTime = System.currentTimeMillis();
 
     // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (QUORUM)

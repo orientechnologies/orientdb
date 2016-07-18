@@ -558,7 +558,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
       final OCallable<Void, ODistributedRequestId> iAfterSentCallback) {
 
-    final ODistributedRequest req = new ODistributedRequest(taskFactory, nodeId, reqId, iDatabaseName, iTask, iExecutionMode);
+    final ODistributedRequest req = new ODistributedRequest(taskFactory, nodeId, reqId, iDatabaseName, iTask);
 
     final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (currentDatabase != null && currentDatabase.getUser() != null)
@@ -1641,6 +1641,23 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)
       final FileInputStream in = new FileInputStream(f) {
         @Override
+        public int read() throws IOException {
+          while (true) {
+            final int read = super.read();
+            if (read > -1)
+              return read;
+
+            if (fCompleted.exists())
+              return 0;
+
+            try {
+              Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+          }
+        }
+
+        @Override
         public int read(final byte[] b, final int off, final int len) throws IOException {
           while (true) {
             final int read = super.read(b, off, len);
@@ -1748,7 +1765,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of stopping node '%s'...", iNode);
 
     final ODistributedRequest request = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), null,
-        new OStopServerTask(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+        new OStopServerTask());
 
     getRemoteServer(iNode).sendRequest(request);
   }
@@ -1757,7 +1774,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of restarting node '%s'...", iNode);
 
     final ODistributedRequest request = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), null,
-        new ORestartServerTask(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+        new ORestartServerTask());
 
     getRemoteServer(iNode).sendRequest(request);
   }
