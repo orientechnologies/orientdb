@@ -25,7 +25,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -111,9 +110,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
       final OLogSequenceNumber lastLSN = getLastLSN(task.getNodeSource());
 
-      if (taskLastLSN != null && lastLSN != null && taskLastLSN.compareTo(lastLSN) < 0)
+      if (taskLastLSN != null && lastLSN != null && taskLastLSN.compareTo(lastLSN) < 0) {
         // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
+        ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+            "Skipped request %s on database '%s' because LSN %s < current LSN %s", request, databaseName, taskLastLSN, lastLSN);
         return;
+      }
     }
 
     final int[] partitionKeys = task.getPartitionKey();
@@ -148,7 +150,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         // WAIT ALL THE INVOLVED QUEUES ARE FREE AND SYNCHORIZED
         final CountDownLatch syncLatch = new CountDownLatch(involvedWorkerQueues.size());
         final ODistributedRequest syncRequest = new ODistributedRequest(manager.getTaskFactory(), request.getId().getNodeId(), -1,
-            databaseName, new OSynchronizedTaskWrapper(syncLatch), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+            databaseName, new OSynchronizedTaskWrapper(syncLatch));
         for (int queue : involvedWorkerQueues)
           workerThreads.get(queue).processRequest(syncRequest);
 
@@ -173,7 +175,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             req = request;
           } else
             req = new ODistributedRequest(manager.getTaskFactory(), request.getId().getNodeId(), -1, databaseName,
-                new OWaitForTask(queueLatch), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+                new OWaitForTask(queueLatch));
 
           workerThreads.get(queue).processRequest(req);
         }
@@ -193,6 +195,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   protected void processRequest(final int partitionKey, final ODistributedRequest request) {
+    if (workerThreads.isEmpty())
+      throw new ODistributedException("There are no worker threads to process request " + request);
+
     final int partition = partitionKey % workerThreads.size();
 
     ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
@@ -312,7 +317,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (iAfterSentCallback != null)
         iAfterSentCallback.call(iRequest.getId());
 
-      return waitForResponse(iRequest, currentResponseMgr);
+      if (iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
+        return waitForResponse(iRequest, currentResponseMgr);
+
+      return null;
 
     } catch (RuntimeException e) {
       throw e;
@@ -444,15 +452,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     int rollbacks = 0;
     int tasks = 0;
 
-    final ODatabaseDocumentInternal database = getDatabaseInstance();
+    final ODatabaseDocumentTx database = getDatabaseInstance();
     try {
       final Iterator<ODistributedTxContextImpl> pendingReqIterator = activeTxContexts.values().iterator();
       while (pendingReqIterator.hasNext()) {
         final ODistributedTxContextImpl pReq = pendingReqIterator.next();
-        if (pReq != null) {
+        if (pReq != null && pReq.getReqId().getNodeId() == iNodeId) {
           tasks += pReq.rollback(database);
           rollbacks++;
           pReq.destroy();
+          pendingReqIterator.remove();
         }
       }
     } finally {
@@ -584,9 +593,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   protected ODistributedResponse waitForResponse(final ODistributedRequest iRequest,
       final ODistributedResponseManager currentResponseMgr) throws InterruptedException {
-    if (iRequest.getExecutionMode() == ODistributedRequest.EXECUTION_MODE.NO_RESPONSE)
-      return null;
-
     final long beginTime = System.currentTimeMillis();
 
     // WAIT FOR THE MINIMUM SYNCHRONOUS RESPONSES (QUORUM)

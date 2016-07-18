@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -39,12 +45,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRecordRepli
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Distributed transaction task.
@@ -203,7 +203,7 @@ public class OTxTask extends OAbstractReplicatedTask {
       return null;
     }
 
-    final OCompletedTxTask fixTask = new OCompletedTxTask(iRequest.getId(), false);
+    final OCompletedTxTask fixTask = new OCompletedTxTask(iRequest.getId(), false, null);
 
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRecordReplicatedTask t = tasks.get(i);
@@ -221,7 +221,7 @@ public class OTxTask extends OAbstractReplicatedTask {
 
   @Override
   public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
-    final OCompletedTxTask fixTask = new OCompletedTxTask(reqId, false);
+    final OCompletedTxTask fixTask = new OCompletedTxTask(reqId, false, null);
 
     for (ORemoteTask undoTask : localUndoTasks)
       fixTask.addFixTask(undoTask);

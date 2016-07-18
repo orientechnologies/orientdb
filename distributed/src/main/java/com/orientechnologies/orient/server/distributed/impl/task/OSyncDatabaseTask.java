@@ -98,10 +98,6 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
             final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
 
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "Creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
-                backupFile.getAbsolutePath());
-
             if (backupFile.exists())
               backupFile.delete();
             else
@@ -115,6 +111,11 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
               completedFile.delete();
 
             endLSN = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN();
+
+            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                "Creating backup of database '%s' (compressionRate=%d) in directory: %s. LSN=%s...", databaseName, compressionRate,
+                backupFile.getAbsolutePath(), endLSN);
+
 
             new Thread(new Runnable() {
               @Override

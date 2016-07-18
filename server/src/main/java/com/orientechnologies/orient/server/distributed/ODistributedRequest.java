@@ -39,7 +39,6 @@ public class ODistributedRequest implements Externalizable {
 
   private final ORemoteTaskFactory taskFactory;
   private ODistributedRequestId    id;
-  private EXECUTION_MODE           executionMode;
   private String                   databaseName;
   private long                     senderThreadId;
   private ORemoteTask              task;
@@ -50,13 +49,12 @@ public class ODistributedRequest implements Externalizable {
   }
 
   public ODistributedRequest(final ORemoteTaskFactory taskFactory, final int senderNodeId, final long msgSequence,
-      final String databaseName, final ORemoteTask payload, EXECUTION_MODE iExecutionMode) {
+      final String databaseName, final ORemoteTask payload) {
     this.taskFactory = taskFactory;
     this.id = new ODistributedRequestId(senderNodeId, msgSequence);
     this.databaseName = databaseName;
     this.senderThreadId = Thread.currentThread().getId();
     this.task = payload;
-    this.executionMode = iExecutionMode;
   }
 
   public ODistributedRequestId getId() {
@@ -91,15 +89,6 @@ public class ODistributedRequest implements Externalizable {
 
   public void setUserRID(final ORID iUserRID) {
     this.userRID = iUserRID;
-  }
-
-  public EXECUTION_MODE getExecutionMode() {
-    return executionMode;
-  }
-
-  public ODistributedRequest setExecutionMode(final EXECUTION_MODE executionMode) {
-    this.executionMode = executionMode;
-    return this;
   }
 
   @Override

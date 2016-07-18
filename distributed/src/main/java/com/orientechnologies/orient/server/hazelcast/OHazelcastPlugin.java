@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.security.SecureRandom;
-import java.util.*;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.*;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
@@ -52,6 +44,14 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedAbstract
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedMessageServiceImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -431,13 +431,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void updateCachedDatabaseConfiguration(final String iDatabaseName, final ODocument cfg, final boolean iSaveToDisk,
       final boolean iDeployToCluster) {
     // VALIDATE THE CONFIGURATION FIRST
-    getDistributedStrategy().validateConfiguration(new ODistributedConfiguration(cfg));
+    final ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
+    getDistributedStrategy().validateConfiguration(dCfg);
 
     final boolean updated = super.updateCachedDatabaseConfiguration(iDatabaseName, cfg, iSaveToDisk);
 
     if (updated) {
       if (iDeployToCluster) {
-        // DEPLOY THE CONFIGURATION TO THE CLUSTER
         ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
         configurationMap.put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + iDatabaseName, cfg);
       } else

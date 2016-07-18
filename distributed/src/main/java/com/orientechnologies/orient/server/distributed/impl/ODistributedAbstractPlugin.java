@@ -558,7 +558,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final ODistributedRequest.EXECUTION_MODE iExecutionMode, final Object localResult,
       final OCallable<Void, ODistributedRequestId> iAfterSentCallback) {
 
-    final ODistributedRequest req = new ODistributedRequest(taskFactory, nodeId, reqId, iDatabaseName, iTask, iExecutionMode);
+    final ODistributedRequest req = new ODistributedRequest(taskFactory, nodeId, reqId, iDatabaseName, iTask);
 
     final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (currentDatabase != null && currentDatabase.getUser() != null)
@@ -607,11 +607,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           else {
             // OK
             final String sourceNodeName = task.getNodeSource();
-            final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(database.getName());
 
-            if (!(result instanceof Throwable) && task instanceof OAbstractReplicatedTask)
-              // UPDATE LSN WITH LAST OPERATION
-              ddb.setLSN(sourceNodeName, ((OAbstractReplicatedTask) task).getLastLSN());
+            if (database != null) {
+              final ODistributedDatabaseImpl ddb = getMessageService().getDatabase(database.getName());
+
+              if (!(result instanceof Throwable) && task instanceof OAbstractReplicatedTask)
+                // UPDATE LSN WITH LAST OPERATION
+                ddb.setLSN(sourceNodeName, ((OAbstractReplicatedTask) task).getLastLSN());
+            }
           }
 
           return result;
@@ -810,6 +813,19 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final String node = it.next();
 
       if (!isNodeAvailable(node, databaseName))
+        it.remove();
+    }
+    return iNodes.size();
+  }
+
+  /**
+   * Returns the online nodes and clears the node list by removing the non online nodes.
+   */
+  public int getOnlineNodes(final Collection<String> iNodes, final String databaseName) {
+    for (Iterator<String> it = iNodes.iterator(); it.hasNext();) {
+      final String node = it.next();
+
+      if (!isNodeOnline(node, databaseName))
         it.remove();
     }
     return iNodes.size();
@@ -1268,7 +1284,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
     }
 
-    final ODatabaseDocumentInternal db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
+    final ODatabaseDocumentTx db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
         uniqueClustersBackupDirectory);
     if (db != null) {
       try {
@@ -1372,14 +1388,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   /**
    * Executes an operation protected by a distributed lock (one per database).
    *
-   * @param databaseName
-   * @param timeoutLocking
-   *          Maximum time to wait for the lock. 0 means unlimited Database name
-   * @param iCallback
-   *          Operation
    * @param <T>
    *          Return type
-   * @return The operation's result of type T
+   * @param databaseName
+   *          Database name
+   * @param timeoutLocking
+   * @param iCallback
+   *          Operation @return The operation's result of type T
    */
   public <T> T executeInDistributedDatabaseLock(final String databaseName, final long timeoutLocking,
       final OCallable<T, ODistributedConfiguration> iCallback) {
@@ -1612,7 +1627,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return chunk.buffer.length;
   }
 
-  protected ODatabaseDocumentInternal installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode,
+  protected ODatabaseDocumentTx installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode,
       final String iDatabaseCompressedFile, final boolean delta, final File uniqueClustersBackupDirectory) {
     ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "Installing database '%s' to: %s...", databaseName, dbPath);
 
@@ -1621,10 +1636,27 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final File fCompleted = new File(iDatabaseCompressedFile + ".completed");
 
       new File(dbPath).mkdirs();
-      final ODatabaseDocumentInternal db = new ODatabaseDocumentTx("plocal:" + dbPath);
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath);
 
       // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)
       final FileInputStream in = new FileInputStream(f) {
+        @Override
+        public int read() throws IOException {
+          while (true) {
+            final int read = super.read();
+            if (read > -1)
+              return read;
+
+            if (fCompleted.exists())
+              return 0;
+
+            try {
+              Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+          }
+        }
+
         @Override
         public int read(final byte[] b, final int off, final int len) throws IOException {
           while (true) {
@@ -1707,7 +1739,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         in.close();
       }
 
-      ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Installed database '%s'", databaseName);
+      ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Installed database '%s' (LSN=%s)", databaseName,
+          ((OAbstractPaginatedStorage) db.getStorage().getUnderlying()).getLSN());
 
       return db;
 
@@ -1732,7 +1765,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of stopping node '%s'...", iNode);
 
     final ODistributedRequest request = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), null,
-        new OStopServerTask(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+        new OStopServerTask());
 
     getRemoteServer(iNode).sendRequest(request);
   }
@@ -1741,7 +1774,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "Sending request of restarting node '%s'...", iNode);
 
     final ODistributedRequest request = new ODistributedRequest(taskFactory, nodeId, getNextMessageIdCounter(), null,
-        new ORestartServerTask(), ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+        new ORestartServerTask());
 
     getRemoteServer(iNode).sendRequest(request);
   }
