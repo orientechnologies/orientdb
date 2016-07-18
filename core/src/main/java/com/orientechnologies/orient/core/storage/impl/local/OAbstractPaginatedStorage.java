@@ -1410,8 +1410,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
 
     if (OLogManager.instance().isDebugEnabled())
-      OLogManager.instance().debug(this, "%d Committed transaction %d on database '%s' (LSN=%s, result=%s)",
-          Thread.currentThread().getId(), clientTx.getId(), databaseRecord.getName(), getLSN(), result);
+      OLogManager.instance().debug(this, "%d Committed transaction %d on database '%s' (result=%s)",
+          Thread.currentThread().getId(), clientTx.getId(), databaseRecord.getName(), result);
 
     return result;
   }
