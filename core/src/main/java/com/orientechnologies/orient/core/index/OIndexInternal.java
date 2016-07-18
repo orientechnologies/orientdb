@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 import java.util.Collection;
 import java.util.Set;
@@ -92,18 +93,6 @@ public interface OIndexInternal<T> extends OIndex<T> {
   public boolean canBeUsedInEqualityOperators();
 
   public boolean hasRangeQuerySupport();
-
-
-  /**
-   * Is used to indicate that several index changes are going to be seen as single unit from users point of view. This command is
-   * used with conjunction of {@link com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage#freeze(boolean)} command.
-   */
-  public void acquireModificationLock();
-
-  /**
-   * Is used to indicate that several index changes are going to be seen as single unit from users point of view were completed.
-   */
-  public void releaseModificationLock();
 
   /**
    * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
@@ -198,6 +187,18 @@ public interface OIndexInternal<T> extends OIndex<T> {
   public void commit();
 
   public void postCommit();
+
+  /**
+   * Interprets transaction index changes for a certain key. Override it to customize index behaviour on interpreting index changes.
+   * This may be viewed as an optimization, but in some cases this is a requirement. For example, if you put multiple values under
+   * the same key during the transaction for single-valued/unique index, but remove all of them except one before commit, there is
+   * no point in throwing {@link com.orientechnologies.orient.core.storage.ORecordDuplicatedException} while applying index changes.
+   *
+   * @param changes the changes to interpret.
+   * @return the interpreted index key changes.
+   */
+  Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(OTransactionIndexChangesPerKey changes);
+
 
   public final class IndexMetadata {
     private final String           name;

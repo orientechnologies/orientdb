@@ -74,10 +74,6 @@ public class OMetadataDefault implements OMetadataInternal {
 
     try {
       init(true);
-
-      if (schemaClusterId == -1 || getDatabase().countClusterElements(CLUSTER_INTERNAL_NAME) == 0)
-        return;
-
     } finally {
       PROFILER.stopChrono(PROFILER.getDatabaseMetric(getDatabase().getName(), "metadata.load"), "Loading of database metadata",
           timer, "db.*.metadata.load");

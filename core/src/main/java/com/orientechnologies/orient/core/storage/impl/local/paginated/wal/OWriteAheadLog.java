@@ -70,7 +70,13 @@ public interface OWriteAheadLog {
 
   void cutTill(OLogSequenceNumber lsn) throws IOException;
 
-	public void addFullCheckpointListener(OFullCheckpointRequestListener listener);
+	void addFullCheckpointListener(OFullCheckpointRequestListener listener);
 
-	public void removeFullCheckpointListener(OFullCheckpointRequestListener listener);
+	void removeFullCheckpointListener(OFullCheckpointRequestListener listener);
+
+  /**
+   * @return preferred segment count this WAL instance tries to keep under. In fact, there may be less segments or more segments
+   * in this WAL instance than the returned count, but the returned count is preferred by this WAL instance.
+   */
+  long getPreferredSegmentCount();
 }

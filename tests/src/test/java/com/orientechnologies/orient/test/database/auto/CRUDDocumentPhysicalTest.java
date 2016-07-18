@@ -73,7 +73,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   @Test
   public void testPool() throws IOException {
     OPartitionedDatabasePool pool = new OPartitionedDatabasePool(url, "admin", "admin");
-    final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[pool.getMaxSize()];
+    final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[pool.getMaxPartitonSize()];
 
     for (int i = 0; i < 10; ++i) {
       for (int db = 0; db < dbs.length; ++db)

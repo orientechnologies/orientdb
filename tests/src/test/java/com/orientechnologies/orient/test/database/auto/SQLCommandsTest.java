@@ -100,7 +100,7 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
     Collection<String> names = database.getClusterNames();
     Assert.assertFalse(names.contains("testClusterRename".toLowerCase()));
 
-    database.command(new OCommandSQL("create cluster testClusterRename physical")).execute();
+    database.command(new OCommandSQL("create cluster testClusterRename")).execute();
 
     names = database.getClusterNames();
     Assert.assertTrue(names.contains("testClusterRename".toLowerCase()));

@@ -1,28 +1,30 @@
 /**
  * Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  *
  * For more information: http://www.orientechnologies.com
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.jdbc.OrientJdbcParameterMetadata.ParameterDefinition;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,11 +42,21 @@ import java.util.*;
  */
 public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements PreparedStatement {
 
-  private final String               sql;
-  private final Map<Integer, Object> params;
+  protected final String               sql;
+  protected final Map<Integer, Object> params;
 
   public OrientJdbcPreparedStatement(OrientJdbcConnection iConnection, String sql) {
-    super(iConnection);
+    this(iConnection, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT, sql);
+  }
+
+  public OrientJdbcPreparedStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency, String sql)
+      throws SQLException {
+    this(iConnection, resultSetType, resultSetConcurrency, ResultSet.HOLD_CURSORS_OVER_COMMIT, sql);
+  }
+
+  public OrientJdbcPreparedStatement(OrientJdbcConnection iConnection, int resultSetType, int resultSetConcurrency,
+      int resultSetHoldability, String sql) {
+    super(iConnection, resultSetType, resultSetConcurrency, resultSetHoldability);
     this.sql = sql;
     params = new HashMap<Integer, Object>();
   }
@@ -60,7 +72,10 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
         query = new OSQLSynchQuery<ODocument>(sql);
         documents = database.query((OQuery<? extends Object>) query, params.values().toArray());
       } catch (OQueryParsingException e) {
-        throw new SQLSyntaxErrorException("Error on parsing the query", e);
+        throw new SQLSyntaxErrorException("Error while parsing query", e);
+      } catch (OException e) {
+        throw new SQLException("Error while executing query", e);
+
       }
     }
 
@@ -74,8 +89,13 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   @Override
-  public <RET> RET executeCommand(OCommandRequest query) {
+  protected <RET> RET executeCommand(OCommandRequest query) throws SQLException {
+
+    try {
     return database.command(query).execute(params.values().toArray());
+    } catch (OException e) {
+      throw new SQLException("Error while executing command", e);
+    }
   }
 
   public void setNull(int parameterIndex, int sqlType) throws SQLException {
@@ -214,20 +234,22 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
     params.put(parameterIndex, null);
   }
 
+  @Override
   public ParameterMetaData getParameterMetaData() throws SQLException {
-    final List<OrientJdbcParameterMetadata.ParameterDefinition> definitions = new ArrayList<OrientJdbcParameterMetadata.ParameterDefinition>();
 
+    OrientJdbcParameterMetadata parameterMetadata = new OrientJdbcParameterMetadata();
     int start = 0;
     int index = sql.indexOf('?', start);
     while (index > 0) {
-      final OrientJdbcParameterMetadata.ParameterDefinition def = new OrientJdbcParameterMetadata.ParameterDefinition();
+      final ParameterDefinition def = new ParameterDefinition();
       // TODO find a way to know a bit more on each parameter
-      definitions.add(def);
+
+      parameterMetadata.add(def);
       start = index + 1;
       index = sql.indexOf('?', start);
     }
 
-    return new OrientJdbcParameterMetadata(definitions);
+    return parameterMetadata;
   }
 
   public void setRowId(int parameterIndex, RowId x) throws SQLException {

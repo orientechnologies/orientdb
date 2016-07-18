@@ -65,6 +65,112 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     assertEmbedded(bag.isEmbedded());
   }
 
+  public void testAddRemoveInTheMiddleOfIteration() {
+    ORidBag bag = new ORidBag();
+    bag.setAutoConvertToRecord(false);
+
+    bag.add(new ORecordId("#77:2"));
+    bag.add(new ORecordId("#77:2"));
+    bag.add(new ORecordId("#77:3"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:4"));
+    bag.add(new ORecordId("#77:5"));
+    bag.add(new ORecordId("#77:6"));
+
+    final List<OIdentifiable> initialRids = new ArrayList<OIdentifiable>();
+
+    initialRids.add(new ORecordId("#77:2"));
+    initialRids.add(new ORecordId("#77:2"));
+    initialRids.add(new ORecordId("#77:3"));
+    initialRids.add(new ORecordId("#77:4"));
+    initialRids.add(new ORecordId("#77:4"));
+    initialRids.add(new ORecordId("#77:4"));
+    initialRids.add(new ORecordId("#77:5"));
+    initialRids.add(new ORecordId("#77:6"));
+
+    int counter = 0;
+    Iterator<OIdentifiable> iterator = bag.iterator();
+
+    bag.remove(new ORecordId("#77:2"));
+    initialRids.remove(new ORecordId("#77:2"));
+
+    while (iterator.hasNext()) {
+      counter++;
+      if (counter == 1) {
+        bag.remove(new ORecordId("#77:1"));
+        initialRids.remove(new ORecordId("#77:1"));
+
+        bag.remove(new ORecordId("#77:2"));
+        initialRids.remove(new ORecordId("#77:2"));
+      }
+
+      if (counter == 3) {
+        bag.remove(new ORecordId("#77:4"));
+        initialRids.remove(new ORecordId("#77:4"));
+      }
+
+      if (counter == 5) {
+        bag.remove(new ORecordId("#77:6"));
+        initialRids.remove(new ORecordId("#77:6"));
+      }
+
+      initialRids.contains(iterator.next());
+    }
+
+    Assert.assertTrue(bag.contains(new ORecordId("#77:3")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:4")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:5")));
+
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:2")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:6")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:1")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:0")));
+
+    assertEmbedded(bag.isEmbedded());
+
+    final List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
+    rids.add(new ORecordId("#77:3"));
+    rids.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:4"));
+    rids.add(new ORecordId("#77:5"));
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+
+    for (OIdentifiable identifiable : bag)
+      rids.add(identifiable);
+
+    ODocument doc = new ODocument();
+    doc.field("ridbag", bag);
+    doc.save();
+
+    ORID rid = doc.getIdentity();
+
+    doc = database.load(rid);
+    doc.setLazyLoad(false);
+
+    bag = doc.field("ridbag");
+    assertEmbedded(bag.isEmbedded());
+
+    Assert.assertTrue(bag.contains(new ORecordId("#77:3")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:4")));
+    Assert.assertTrue(bag.contains(new ORecordId("#77:5")));
+
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:2")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:6")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:1")));
+    Assert.assertTrue(!bag.contains(new ORecordId("#77:0")));
+
+    for (OIdentifiable identifiable : bag)
+      assertTrue(rids.remove(identifiable));
+
+    assertTrue(rids.isEmpty());
+
+  }
+
   public void testAddRemove() {
     ORidBag bag = new ORidBag();
     bag.setAutoConvertToRecord(false);
@@ -1019,6 +1125,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
       OServerAdmin server = new OServerAdmin(database.getURL()).connect("root", ODatabaseHelper.getServerRootPassword());
       server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, 7);
       server.setGlobalConfiguration(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, 4);
+      server.close();
     }
 
     ORidBag ridBag = new ORidBag();
@@ -1233,7 +1340,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     Assert.assertNotSame(document, documentCopy);
     Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
-    Iterator<OIdentifiable> iterator = documentCopy.<ORidBag> field("ridBag").iterator();
+    Iterator<OIdentifiable> iterator = documentCopy.<ORidBag>field("ridBag").iterator();
     iterator.next();
     iterator.remove();
 
@@ -1243,7 +1350,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     embeddedList = documentCopy.field("embeddedList");
     ODocument doc = embeddedList.get(0);
 
-    iterator = doc.<ORidBag> field("ridBag").iterator();
+    iterator = doc.<ORidBag>field("ridBag").iterator();
     iterator.next();
     iterator.remove();
 
@@ -1253,25 +1360,25 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     ODocument docToAdd = new ODocument();
     docToAdd.save();
 
-    iterator = documentCopy.<ORidBag> field("ridBag").iterator();
+    iterator = documentCopy.<ORidBag>field("ridBag").iterator();
     iterator.next();
     iterator.remove();
 
-    documentCopy.<ORidBag> field("ridBag").add(docToAdd.getIdentity());
+    documentCopy.<ORidBag>field("ridBag").add(docToAdd.getIdentity());
     Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
 
     documentCopy.reload("*:-1", true);
     embeddedList = documentCopy.field("embeddedList");
     doc = embeddedList.get(0);
 
-    iterator = doc.<ORidBag> field("ridBag").iterator();
+    iterator = doc.<ORidBag>field("ridBag").iterator();
     OIdentifiable remvedItem = iterator.next();
     iterator.remove();
-    doc.<ORidBag> field("ridBag").add(docToAdd.getIdentity());
+    doc.<ORidBag>field("ridBag").add(docToAdd.getIdentity());
 
     Assert.assertTrue(!ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
-    doc.<ORidBag> field("ridBag").remove(docToAdd.getIdentity());
-    doc.<ORidBag> field("ridBag").add(remvedItem);
+    doc.<ORidBag>field("ridBag").remove(docToAdd.getIdentity());
+    doc.<ORidBag>field("ridBag").add(remvedItem);
 
     Assert.assertTrue(ODocumentHelper.hasSameContentOf(document, database, documentCopy, database, null));
   }

@@ -33,23 +33,23 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
  * @since 05.08.13
  */
 public class OCachePointer {
-  private static final int            WRITERS_OFFSET         = 32;
-  private static final int            READERS_MASK           = 0xFFFFFFFF;
+  private static final int WRITERS_OFFSET = 32;
+  private static final int READERS_MASK   = 0xFFFFFFFF;
 
-  private final ReadWriteLock         readWriteLock          = new ReentrantReadWriteLock();
+  private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
-  private final AtomicInteger         referrersCount         = new AtomicInteger();
-  private final AtomicLong            readersWritersReferrer = new AtomicLong();
+  private final AtomicInteger referrersCount         = new AtomicInteger();
+  private final AtomicLong    readersWritersReferrer = new AtomicLong();
 
-  private final AtomicInteger         usagesCounter          = new AtomicInteger();
+  private final AtomicInteger usagesCounter = new AtomicInteger();
 
   private volatile OLogSequenceNumber lastFlushedLsn;
 
-  private volatile WritersListener    writersListener;
+  private volatile WritersListener writersListener;
 
-  private final ODirectMemoryPointer  dataPointer;
-  private final long                  fileId;
-  private final long                  pageIndex;
+  private final ODirectMemoryPointer dataPointer;
+  private final long                 fileId;
+  private final long                 pageIndex;
 
   public OCachePointer(ODirectMemoryPointer dataPointer, OLogSequenceNumber lastFlushedLsn, long fileId, long pageIndex) {
     this.lastFlushedLsn = lastFlushedLsn;
@@ -211,6 +211,15 @@ public class OCachePointer {
     readWriteLock.readLock().lock();
   }
 
+  /**
+   * DEBUG only !!!
+   *
+   * @return Whether pointer lock (read or write )is acquired
+   */
+  public boolean isLockAcquiredByCurrentThread() {
+    return  readWriteLock.getReadHoldCount() > 0 || readWriteLock.isWriteLockedByCurrentThread();
+  }
+
   public void releaseSharedLock() {
     readWriteLock.readLock().unlock();
   }
@@ -249,8 +258,8 @@ public class OCachePointer {
 
   @Override
   public String toString() {
-    return "OCachePointer{" + "referrersCount=" + referrersCount + ", usagesCount=" + usagesCounter + ", dataPointer="
-        + dataPointer + '}';
+    return "OCachePointer{" + "referrersCount=" + referrersCount + ", usagesCount=" + usagesCounter + ", dataPointer=" + dataPointer
+        + '}';
   }
 
   private long composeReadersWriters(int readers, int writers) {

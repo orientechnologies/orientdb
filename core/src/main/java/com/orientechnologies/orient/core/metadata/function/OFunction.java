@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandFunction;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -169,9 +170,18 @@ public class OFunction extends ODocumentWrapper {
   public Object execute(final Map<Object, Object> iArgs) {
     final long start = Orient.instance().getProfiler().startChrono();
 
-    final OCommandExecutorScript command = new OCommandExecutorScript();
-    command.parse(new OCommandScript(getLanguage(), getCode()));
-    final Object result = command.execute(iArgs);
+    Object result;
+    while (true) {
+      try {
+        final OCommandExecutorScript command = new OCommandExecutorScript();
+        command.parse(new OCommandScript(getLanguage(), getCode()));
+
+        result = command.execute(iArgs);
+        break;
+      } catch (ORetryQueryException e) {
+        continue;
+      }
+    }
 
     if (Orient.instance().getProfiler().isRecording())
       Orient

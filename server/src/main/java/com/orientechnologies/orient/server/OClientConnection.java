@@ -37,6 +37,7 @@ public class OClientConnection {
   public volatile ONetworkProtocol         protocol;
   public volatile ODatabaseDocumentTx      database;
   public volatile OServerUserConfiguration serverUser;
+  public Boolean                        tokenBased;
   private Lock lock = new ReentrantLock();
 
   public ONetworkProtocolData data = new ONetworkProtocolData();

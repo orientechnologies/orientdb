@@ -47,8 +47,6 @@ public interface OCluster {
 
   void delete() throws IOException;
 
-  OModificationLock getExternalModificationLock();
-
   Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
   void convertToTombstone(long iPosition) throws IOException;

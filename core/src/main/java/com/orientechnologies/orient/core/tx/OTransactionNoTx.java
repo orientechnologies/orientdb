@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * No operation transaction.
@@ -236,7 +237,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void setUsingLog(final boolean useLog) {
   }
 
-  public ODocument getIndexChanges() {
+  public ODocument getIndexChanges(Map<String, OIndex<?>> indexes) {
     return null;
   }
 

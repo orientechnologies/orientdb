@@ -19,28 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage.cache.local;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.lang.management.ManagementFactory;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.zip.CRC32;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
-
 import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -69,26 +47,14 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import javax.management.ObjectName;
+import javax.management.*;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.management.ManagementFactory;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -115,40 +81,43 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
   public static final long MAGIC_NUMBER = 0xFACB03FEL;
 
+  private static final double MAX_LSN_SEGMENT_DISTANCE_FACTOR = 0.75;
+
   private final long freeSpaceLimit = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024L * 1024L;
 
   private final int                                        diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL_IN_PAGES
       .getValueAsInteger();
   private final List<WeakReference<OLowDiskSpaceListener>> listeners             = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
 
-  private final AtomicLong lastDiskSpaceCheck = new AtomicLong(System.currentTimeMillis());
+  private final AtomicLong lastDiskSpaceCheck = new AtomicLong(0);
   private final String storagePath;
 
   private final ConcurrentSkipListMap<PagedKey, PageGroup> writeCachePages     = new ConcurrentSkipListMap<PagedKey, PageGroup>();
   private final ConcurrentSkipListSet<PagedKey>            exclusiveWritePages = new ConcurrentSkipListSet<PagedKey>();
 
-  private final OBinarySerializer<String>  stringSerializer;
-  private final Map<Integer, OFileClassic> files;
-  private final boolean                    syncOnPageFlush;
-  private final int                        pageSize;
-  private final long                       groupTTL;
-  private final OWriteAheadLog             writeAheadLog;
+  private final OBinarySerializer<String>            stringSerializer;
+  private final ConcurrentMap<Integer, OFileClassic> files;
+  private final boolean                              syncOnPageFlush;
+  private final int                                  pageSize;
+  private final long                                 groupTTL;
+  private final OWriteAheadLog                       writeAheadLog;
   private final AtomicLong amountOfNewPagesAdded = new AtomicLong();
 
   private final ODistributedCounter writeCacheSize          = new ODistributedCounter();
   private final ODistributedCounter exclusiveWriteCacheSize = new ODistributedCounter();
 
-  private final ONewLockManager<PagedKey> lockManager = new ONewLockManager<PagedKey>();
+  private final ONewLockManager<PagedKey> lockManager = new ONewLockManager<PagedKey>(
+      OGlobalConfiguration.ENVNRONMENT_CONCURRENCY_LEVEL.getValueAsInteger());
   private final OLocalPaginatedStorage storageLocal;
   private final OReadersWriterSpinLock filesLock = new OReadersWriterSpinLock();
   private final ScheduledExecutorService commitExecutor;
 
   private final ExecutorService lowSpaceEventsPublisher;
 
-  private       Map<String, Integer> nameIdMap;
-  private       RandomAccessFile     nameIdMapHolder;
-  private final int                  writeCacheMaxSize;
-  private final int                  cacheMaxSize;
+  private volatile ConcurrentMap<String, Integer> nameIdMap;
+  private          RandomAccessFile               nameIdMapHolder;
+  private final    int                            writeCacheMaxSize;
+  private final    int                            cacheMaxSize;
 
   private int fileCounter = 1;
 
@@ -248,7 +217,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final long newPagesAdded = amountOfNewPagesAdded.incrementAndGet();
     final long lastSpaceCheck = lastDiskSpaceCheck.get();
 
-    if (newPagesAdded - lastSpaceCheck > diskSizeCheckInterval) {
+    if (newPagesAdded - lastSpaceCheck > diskSizeCheckInterval || lastSpaceCheck == 0) {
       final File storageDir = new File(storagePath);
 
       final long freeSpace = storageDir.getFreeSpace();
@@ -663,6 +632,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   public Long isOpen(String fileName) throws IOException {
+    final Long lr = lightOpenCheck(fileName);
+
+    if (lr != null)
+      return lr;
+
     filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
@@ -679,6 +653,27 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     } finally {
       filesLock.releaseWriteLock();
     }
+  }
+
+  private Long lightOpenCheck(String fileName) {
+    final ConcurrentMap<String, Integer> map = this.nameIdMap;
+
+    if (map != null) {
+      ConcurrentMap<Integer, OFileClassic> fl = this.files;
+
+      final Integer fileId = map.get(fileName);
+
+      if (fileId == null || fileId < 0)
+        return null;
+
+      final OFileClassic fileClassic = fl.get(fileId);
+      if (fileClassic == null || !fileClassic.isOpen())
+        return null;
+
+      return composeFileId(id, fileId);
+    }
+
+    return null;
   }
 
   public void deleteFile(long fileId) throws IOException {
@@ -1229,8 +1224,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final int crc32 = calculatePageCrc(content);
     OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
 
-      final OFileClassic fileClassic = files.get(fileId);
-      fileClassic.write(pageIndex * pageSize, content);
+    final OFileClassic fileClassic = files.get(fileId);
+    fileClassic.write(pageIndex * pageSize, content);
 
     if (syncOnPageFlush)
       fileClassic.synch();
@@ -1322,6 +1317,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     public String toString() {
       return "PagedKey{" + "fileId=" + fileId + ", pageIndex=" + pageIndex + '}';
     }
+
+    public PagedKey previous() {
+      return pageIndex == -1 ? this : new PagedKey(fileId, pageIndex - 1);
+    }
   }
 
   private final class PeriodicFlushTask implements Runnable {
@@ -1339,6 +1338,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         final long wcs = exclusiveWriteCacheSize.get();
         final long cs = writeCacheSize.get();
+
+        assert wcs >= 0;
+        assert cs >= 0;
 
         boolean iterateByWritePagesFirst = false;
         boolean forceFlush = false;
@@ -1365,6 +1367,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         writePagesToFlush = Math.max(4, Math.min(MAX_PAGES_PER_FLUSH, writePagesToFlush));
 
         int flushedPages = 0;
+
+        // Obtain page keys with minimum LSNs and rewind them one position back to include them into tailSet/tailMap view later.
+        lastPageKey = findNonExclusivePageKeyWithMinimumLsn().previous();
+        lastWritePageKey = findExclusivePageKeyWithMinimumLsn().previous();
 
         flushedPages = flushRing(writePagesToFlush, flushedPages, false, iterateByWritePagesFirst);
         if (flushedPages < writePagesToFlush) {
@@ -1394,6 +1400,53 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         final long end = System.currentTimeMillis();
         durationOfLastFlush.lazySet(end - start);
       }
+    }
+
+    private PagedKey findExclusivePageKeyWithMinimumLsn() {
+      PagedKey result = lastWritePageKey;
+
+      OLogSequenceNumber minimumLsn = new OLogSequenceNumber(Long.MAX_VALUE, Long.MAX_VALUE);
+      for (PagedKey pageKey : exclusiveWritePages) {
+        final Lock lock = lockManager.acquireExclusiveLock(pageKey);
+        try {
+          final PageGroup pageGroup = writeCachePages.get(pageKey);
+          if (pageGroup == null)
+            continue;
+
+          final OLogSequenceNumber lsn = pageGroup.page.getLastFlushedLsn();
+          if (lsn != null && lsn.compareTo(minimumLsn) < 0) {
+            minimumLsn = lsn;
+            result = pageKey;
+          }
+        } finally {
+          lockManager.releaseLock(lock);
+        }
+      }
+
+      return result;
+    }
+
+    private PagedKey findNonExclusivePageKeyWithMinimumLsn() {
+      PagedKey result = lastPageKey;
+
+      OLogSequenceNumber minimumLsn = new OLogSequenceNumber(Long.MAX_VALUE, Long.MAX_VALUE);
+      for (Map.Entry<PagedKey, PageGroup> entry : writeCachePages.entrySet()) {
+        final PagedKey pageKey = entry.getKey();
+        final Lock lock = lockManager.acquireExclusiveLock(pageKey);
+        try {
+          final PageGroup pageGroup = entry.getValue();
+
+          final OLogSequenceNumber lsn = pageGroup.page.getLastFlushedLsn();
+          if (lsn != null && lsn.compareTo(minimumLsn) < 0) {
+            minimumLsn = lsn;
+            result = pageKey;
+          }
+        } finally {
+          lockManager.releaseLock(lock);
+        }
+      }
+
+      return result;
     }
 
     private int flushRing(int writePagesToFlush, int flushedPages, boolean forceFlush, boolean iterateByWritePagesFirst)
@@ -1432,6 +1485,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         boolean forceFlush) throws IOException {
       Iterator<PagedKey> entriesIterator = subSet.iterator();
       long currentTime = System.currentTimeMillis();
+      final long maxSegmentDistance =
+          writeAheadLog == null ? -1 : (long) (writeAheadLog.getPreferredSegmentCount() * MAX_LSN_SEGMENT_DISTANCE_FACTOR);
 
       int flushedRegions = 0;
 
@@ -1456,16 +1511,22 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             continue;
           }
 
-          final boolean weakLockMode = group.creationTime - currentTime < groupTTL && !forceFlush;
-          if (group.recencyBit && weakLockMode)
+          final OCachePointer pagePointer = group.page;
+          final boolean weakLockMode =
+              currentTime - group.creationTime < groupTTL && !forceFlush && !tooOldLsn(pagePointer.getLastFlushedLsn(),
+                  maxSegmentDistance);
+
+          if (group.recencyBit && weakLockMode) {
             group.recencyBit = false;
-          else {
+            continue;
+          } else {
             group.recencyBit = false;
 
-            final OCachePointer pagePointer = group.page;
-
-            if (!pagePointer.tryAcquireSharedLock())
-              continue;
+            if (weakLockMode) {
+              if (!pagePointer.tryAcquireSharedLock())
+                continue;
+            } else
+              pagePointer.acquireSharedLock();
 
             try {
               flushPage(entry.fileId, entry.pageIndex, pagePointer.getDataPointer());
@@ -1501,6 +1562,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         boolean forceFlush) throws IOException {
       Iterator<Map.Entry<PagedKey, PageGroup>> entriesIterator = subMap.entrySet().iterator();
       long currentTime = System.currentTimeMillis();
+      final long maxSegmentDistance =
+          writeAheadLog == null ? -1 : (long) (writeAheadLog.getPreferredSegmentCount() * MAX_LSN_SEGMENT_DISTANCE_FACTOR);
 
       int flushedRegions = 0;
 
@@ -1520,7 +1583,11 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           }
         }
 
-        final boolean weakLockMode = group.creationTime - currentTime < groupTTL && !forceFlush;
+        final OCachePointer pagePointer = group.page;
+        final boolean weakLockMode =
+            currentTime - group.creationTime < groupTTL && !forceFlush && !tooOldLsn(pagePointer.getLastFlushedLsn(),
+                maxSegmentDistance);
+
         if (group.recencyBit && weakLockMode) {
           group.recencyBit = false;
           continue;
@@ -1528,15 +1595,17 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         Lock groupLock = lockManager.acquireExclusiveLock(entry.getKey());
         try {
-          if (group.recencyBit && weakLockMode)
+          if (group.recencyBit && weakLockMode) {
             group.recencyBit = false;
-          else {
+            continue;
+          } else {
             group.recencyBit = false;
 
-            final OCachePointer pagePointer = group.page;
-
-            if (!pagePointer.tryAcquireSharedLock())
-              continue;
+            if (weakLockMode) {
+              if (!pagePointer.tryAcquireSharedLock())
+                continue;
+            } else
+              pagePointer.acquireSharedLock();
 
             try {
               flushPage(pagedKey.fileId, pagedKey.pageIndex, pagePointer.getDataPointer());
@@ -1566,6 +1635,14 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
       return flushedWritePages;
     }
+
+    private boolean tooOldLsn(OLogSequenceNumber lsn, long maxSegmentDistance) {
+      if (lsn == null || maxSegmentDistance == -1)
+        return false;
+
+      final OLogSequenceNumber walLsn = writeAheadLog.getFlushedLSN();
+      return walLsn != null && Math.abs(walLsn.getSegment() - lsn.getSegment()) > maxSegmentDistance;
+    }
   }
 
   private final class PeriodicalFuzzyCheckpointTask implements Runnable {
@@ -1574,9 +1651,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
     @Override
     public void run() {
-      OLogSequenceNumber minLsn = writeAheadLog.getFlushedLSN();
-
-      minLsn = findMinLsn(minLsn, writeCachePages);
+      OLogSequenceNumber minLsn = findMinLsn(writeAheadLog.getFlushedLSN(), writeCachePages);
 
       OLogManager.instance().debug(this, "Start fuzzy checkpoint flushed LSN is %s", minLsn);
       try {
@@ -1652,6 +1727,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
           try {
             flushPage(pagedKey.fileId, pagedKey.pageIndex, pagePointer.getDataPointer());
+
+            final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(pagePointer.getDataPointer());
+            pagePointer.setLastFlushedLsn(flushedLSN);
           } finally {
             pagePointer.releaseSharedLock();
           }

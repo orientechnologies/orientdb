@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 /**
  * Dictionary index similar to unique index but does not check for updates, just executes changes. Last put always wins and override
@@ -49,22 +49,15 @@ public class OIndexDictionary extends OIndexOneValue {
       keyLockManager.acquireExclusiveLock(key);
 
     try {
-      if (modificationLock != null)
-        modificationLock.requestModificationLock();
+      checkForKeyType(key);
+      acquireSharedLock();
       try {
-        checkForKeyType(key);
-        acquireSharedLock();
-        try {
-          markStorageDirty();
-          indexEngine.put(key, value);
-          return this;
+        markStorageDirty();
+        indexEngine.put(key, value);
+        return this;
 
-        } finally {
-          releaseSharedLock();
-        }
       } finally {
-        if (modificationLock != null)
-          modificationLock.releaseModificationLock();
+        releaseSharedLock();
       }
     } finally {
       if (!txIsActive)
@@ -86,5 +79,11 @@ public class OIndexDictionary extends OIndexOneValue {
 
   public boolean supportsOrderedIterations() {
     return false;
+  }
+
+  @Override
+  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+      OTransactionIndexChangesPerKey changes) {
+    return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.Dictionary);
   }
 }

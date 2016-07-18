@@ -26,6 +26,7 @@ public class SBTreeNonLeafBucketTest {
         .createPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
     cachePointer.incrementReferrer();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, false,
@@ -39,6 +40,7 @@ public class SBTreeNonLeafBucketTest {
     Assert.assertEquals(treeBucket.getLeftSibling(), -1);
     Assert.assertEquals(treeBucket.getRightSibling(), -1);
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -57,6 +59,7 @@ public class SBTreeNonLeafBucketTest {
         .createPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
     cachePointer.incrementReferrer();
 
     OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, false,
@@ -101,6 +104,7 @@ public class SBTreeNonLeafBucketTest {
       prevLeft = entry.leftChild;
     }
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -119,6 +123,7 @@ public class SBTreeNonLeafBucketTest {
         .createPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     cachePointer.incrementReferrer();
 
@@ -187,6 +192,7 @@ public class SBTreeNonLeafBucketTest {
     Assert.assertEquals(treeBucket.size(), originalSize);
     Assert.assertEquals(addedKeys, keysToAdd);
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 

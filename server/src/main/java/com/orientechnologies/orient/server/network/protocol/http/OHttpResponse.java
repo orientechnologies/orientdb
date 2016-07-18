@@ -340,6 +340,10 @@ public class OHttpResponse {
             json.endCollection(-1, true);
           } else
             json.writeAttribute(entry.getKey(), v);
+
+          if (Thread.currentThread().isInterrupted())
+            break;
+
         }
       }
 

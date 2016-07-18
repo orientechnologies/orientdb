@@ -19,10 +19,6 @@
   */
 package com.orientechnologies.orient.core.sql.operator.math;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Date;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -30,6 +26,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * MINUS "-" operator.
@@ -57,29 +56,19 @@ public class OQueryOperatorMinus extends OQueryOperator {
     if (iLeft instanceof Number && iRight instanceof Number) {
       final Number l = (Number) iLeft;
       final Number r = (Number) iRight;
-      if (l instanceof Integer)
-        return l.intValue() - r.intValue();
-      else if (l instanceof Long)
+      Class maxPrecisionClass = OQueryOperatorMultiply.getMaxPrecisionClass(l, r);
+      if (Integer.class.equals(maxPrecisionClass))
+        return OQueryOperatorMultiply.tryDownscaleToInt(l.longValue() - r.longValue());
+      else if (Long.class.equals(maxPrecisionClass))
         return l.longValue() - r.longValue();
-      else if (l instanceof Short)
+      else if (Short.class.equals(maxPrecisionClass))
         return l.shortValue() - r.shortValue();
-      else if (l instanceof Float)
+      else if (Float.class.equals(maxPrecisionClass))
         return l.floatValue() - r.floatValue();
-      else if (l instanceof Double)
+      else if (Double.class.equals(maxPrecisionClass))
         return l.doubleValue() - r.doubleValue();
-      else if (l instanceof BigDecimal) {
-        if (r instanceof BigDecimal)
-          return ((BigDecimal) l).subtract((BigDecimal) r);
-        else if (r instanceof Float)
-          return ((BigDecimal) l).subtract(new BigDecimal(r.floatValue()));
-        else if (r instanceof Double)
-          return ((BigDecimal) l).subtract(new BigDecimal(r.doubleValue()));
-        else if (r instanceof Long)
-          return ((BigDecimal) l).subtract(new BigDecimal(r.longValue()));
-        else if (r instanceof Integer)
-          return ((BigDecimal) l).subtract(new BigDecimal(r.intValue()));
-        else if (r instanceof Short)
-          return ((BigDecimal) l).subtract(new BigDecimal(r.shortValue()));
+      else if (BigDecimal.class.equals(maxPrecisionClass)) {
+          return (OQueryOperatorMultiply.toBigDecimal(l)).subtract(OQueryOperatorMultiply.toBigDecimal(r));
       }
     }
 

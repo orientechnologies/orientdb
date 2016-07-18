@@ -25,6 +25,7 @@ public class SBTreeValuePageTest {
     cachePointerOne.incrementReferrer();
 
     OCacheEntry cacheEntryOne = new OCacheEntry(0, 0, cachePointerOne, false);
+    cacheEntryOne.acquireExclusiveLock();
     OSBTreeValuePage valuePageOne = new OSBTreeValuePage(cacheEntryOne, null, true);
 
     byte[] data = new byte[ODurablePage.MAX_PAGE_SIZE_BYTES + 100];
@@ -39,6 +40,7 @@ public class SBTreeValuePageTest {
     cachePointerTwo.incrementReferrer();
 
     OCacheEntry cacheEntryTwo = new OCacheEntry(0, 0, cachePointerTwo, false);
+    cacheEntryTwo.acquireExclusiveLock();
     OSBTreeValuePage valuePageTwo = new OSBTreeValuePage(cacheEntryTwo, null, true);
     offset = valuePageTwo.fillBinaryContent(data, offset);
 
@@ -57,6 +59,9 @@ public class SBTreeValuePageTest {
 
     Assert.assertEquals(data, readData);
 
+    cacheEntryOne.releaseExclusiveLock();
+    cacheEntryTwo.releaseExclusiveLock();
+
     cachePointerOne.decrementReferrer();
     cachePointerTwo.decrementReferrer();
   }
@@ -68,10 +73,12 @@ public class SBTreeValuePageTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
     OSBTreeValuePage valuePage = new OSBTreeValuePage(cacheEntry, null, true);
     valuePage.setNextFreeListPage(124);
     Assert.assertEquals(valuePage.getNextFreeListPage(), 124);
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 }

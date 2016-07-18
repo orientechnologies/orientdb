@@ -65,11 +65,11 @@ public class OJSONFetchContext implements OFetchContext {
       }
   }
 
-  public void onBeforeStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject) {
-    manageTypes(iFieldName, iFieldValue);
+  public void onBeforeStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject, OType fieldType) {
+    manageTypes(iFieldName, iFieldValue, fieldType);
   }
 
-  public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
+  public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject, OType fieldType) {
   }
 
   public void onBeforeArray(final ODocument iRootRecord, final String iFieldName, final Object iUserObject, final OIdentifiable[] iArray) {
@@ -82,7 +82,7 @@ public class OJSONFetchContext implements OFetchContext {
 
   public void onBeforeCollection(final ODocument iRootRecord, final String iFieldName, final Object iUserObject, final Iterable<?> iterable) {
     try {
-      manageTypes(iFieldName, iterable);
+      manageTypes(iFieldName, iterable, null);
       jsonWriter.beginCollection(++settings.indentLevel, true, iFieldName);
       collectionStack.add(iRootRecord);
     } catch (IOException e) {
@@ -198,7 +198,7 @@ public class OJSONFetchContext implements OFetchContext {
     return settings.alwaysFetchEmbeddedDocuments;
   }
 
-  protected void manageTypes(final String iFieldName, final Object iFieldValue) {
+  protected void manageTypes(final String iFieldName, final Object iFieldValue, OType fieldType) {
     if (settings.keepTypes) {
       if (iFieldValue instanceof Long)
         appendType(typesStack.peek(), iFieldName, 'l');
@@ -223,7 +223,9 @@ public class OJSONFetchContext implements OFetchContext {
       else if (iFieldValue instanceof ORidBag)
         appendType(typesStack.peek(), iFieldName, 'g');
       else {
-        final OType t = OType.getTypeByValue(iFieldValue);
+        OType t = fieldType;
+        if (t == null)
+          t = OType.getTypeByValue(iFieldValue);
         if (t == OType.LINKLIST)
           appendType(typesStack.peek(), iFieldName, 'z');
         else if (t == OType.LINKMAP)

@@ -18,22 +18,23 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * @author Andrey Lomakin
  * @since 5/8/13
  */
 public class OWALPage {
-  public static final long           MAGIC_NUMBER        = 0xFACB03FEL;
-  public static final int            PAGE_SIZE           = 65536;
-  public static final int            MIN_RECORD_SIZE     = OIntegerSerializer.INT_SIZE + 3;
+  public static final long MAGIC_NUMBER    = 0xFACB03FEL;
+  public static final int  PAGE_SIZE       = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  public static final int  MIN_RECORD_SIZE = OIntegerSerializer.INT_SIZE + 3;
 
-  public static final int            CRC_OFFSET          = 0;
-  public static final int            MAGIC_NUMBER_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
-  private static final int           FREE_SPACE_OFFSET   = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
-  public static final int            RECORDS_OFFSET      = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final  int CRC_OFFSET          = 0;
+  public static final  int MAGIC_NUMBER_OFFSET = CRC_OFFSET + OIntegerSerializer.INT_SIZE;
+  private static final int FREE_SPACE_OFFSET   = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  public static final  int RECORDS_OFFSET      = FREE_SPACE_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int           MAX_ENTRY_SIZE      = PAGE_SIZE - RECORDS_OFFSET;
+  private static final int MAX_ENTRY_SIZE = PAGE_SIZE - RECORDS_OFFSET;
 
   private final ODirectMemoryPointer pagePointer;
 
@@ -67,8 +68,8 @@ public class OWALPage {
     pagePointer.set(position, content, 0, content.length);
     position += content.length;
 
-    OIntegerSerializer.INSTANCE.serializeInDirectMemory(freeSpace - 2 - OIntegerSerializer.INT_SIZE - content.length, pagePointer,
-        FREE_SPACE_OFFSET);
+    OIntegerSerializer.INSTANCE
+        .serializeInDirectMemory(freeSpace - 2 - OIntegerSerializer.INT_SIZE - content.length, pagePointer, FREE_SPACE_OFFSET);
 
     return freePosition;
   }

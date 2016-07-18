@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.lucene.search.IndexSearcher;
 
 import java.io.IOException;
@@ -55,27 +54,18 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
   @Override
   public OIndexMultiValues put(Object key, OIdentifiable iSingleValue) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
-    if (modificationLock != null)
-      modificationLock.requestModificationLock();
+    acquireSharedLock();
     try {
-      acquireExclusiveLock();
-      try {
-        checkForKeyType(key);
-        Set<OIdentifiable> values = new HashSet<OIdentifiable>();
-        values.add(iSingleValue);
-        indexEngine.put(key, values);
-        return this;
+      checkForKeyType(key);
+      Set<OIdentifiable> values = new HashSet<OIdentifiable>();
+      values.add(iSingleValue);
+      indexEngine.put(key, values);
+      return this;
 
-      } finally {
-        releaseExclusiveLock();
-      }
     } finally {
-      if (modificationLock != null)
-        modificationLock.releaseModificationLock();
+      releaseSharedLock();
     }
   }
 
@@ -104,8 +94,6 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
   @Override
   public Set<OIdentifiable> get(Object key) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     acquireSharedLock();
@@ -158,25 +146,18 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
 
   @Override
   public boolean remove(Object key, OIdentifiable value) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
-    modificationLock.requestModificationLock();
+    acquireExclusiveLock();
     try {
-      acquireExclusiveLock();
-      try {
 
-        if (indexEngine instanceof OLuceneIndexEngine) {
-          return ((OLuceneIndexEngine) indexEngine).remove(key, value);
-        } else {
-          return false;
-        }
-
-      } finally {
-        releaseExclusiveLock();
+      if (indexEngine instanceof OLuceneIndexEngine) {
+        return ((OLuceneIndexEngine) indexEngine).remove(key, value);
+      } else {
+        return false;
       }
+
     } finally {
-      modificationLock.releaseModificationLock();
+      releaseExclusiveLock();
     }
   }
 

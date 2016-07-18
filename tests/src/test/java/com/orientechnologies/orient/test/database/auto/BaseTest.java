@@ -18,6 +18,31 @@ import java.io.IOException;
 
 @Test
 public abstract class BaseTest<T extends ODatabase> {
+
+  private static boolean keepDatabase = Boolean.getBoolean("orientdb.test.keepDatabase");
+
+  public static String prepareUrl(String url) {
+    if (url != null)
+      return url;
+
+    String storageType;
+    final String config = System.getProperty("orientdb.test.env");
+    if ("ci".equals(config) || "release".equals(config))
+      storageType = "plocal";
+    else
+      storageType = System.getProperty("storageType");
+
+    if (storageType == null)
+      storageType = "memory";
+
+    if ("remote".equals(storageType))
+      return storageType + ":localhost/demo";
+    else {
+      final String buildDirectory = System.getProperty("buildDirectory", ".");
+      return storageType + ":" + buildDirectory + "/test-db/demo";
+    }
+  }
+
   protected T      database;
   protected String url;
   private boolean  dropDb             = false;
@@ -41,15 +66,15 @@ public abstract class BaseTest<T extends ODatabase> {
     if (url == null) {
       if ("remote".equals(storageType)) {
         url = getStorageType() + ":localhost/demo";
-        dropDb = true;
+        dropDb = !keepDatabase;
       } else {
         final String buildDirectory = System.getProperty("buildDirectory", ".");
         url = getStorageType() + ":" + buildDirectory + "/test-db/demo";
-        dropDb = true;
+        dropDb = !keepDatabase;
       }
     }
 
-    if (url.startsWith("memory:") && !url.startsWith("remote")) {
+    if (!url.startsWith("remote:")) {
       final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
       if (!db.exists())
         db.create().close();
@@ -60,12 +85,27 @@ public abstract class BaseTest<T extends ODatabase> {
 
   @Parameters(value = "url")
   public BaseTest(@Optional String url, String prefix) {
+    String config = System.getProperty("orientdb.test.env");
+    if ("ci".equals(config) || "release".equals(config))
+      storageType = "plocal";
+    else
+      storageType = System.getProperty("storageType");
+
+    if (storageType == null)
+      storageType = "memory";
+
     if (url == null) {
       final String buildDirectory = System.getProperty("buildDirectory", ".");
       url = getStorageType() + ":" + buildDirectory + "/test-db/demo" + prefix;
-      dropDb = true;
+      dropDb = !keepDatabase;
     } else
       url = url + prefix;
+
+    if (!url.startsWith("remote:")) {
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
+      if (!db.exists())
+        db.create().close();
+    }
 
     this.url = url;
   }
@@ -204,6 +244,6 @@ public abstract class BaseTest<T extends ODatabase> {
   }
 
   protected void setDropDb(final boolean dropDb) {
-    this.dropDb = dropDb;
+    this.dropDb = !keepDatabase && dropDb;
   }
 }

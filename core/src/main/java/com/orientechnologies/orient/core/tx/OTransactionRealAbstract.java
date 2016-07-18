@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -37,7 +38,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
@@ -57,6 +57,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int                                               id;
   protected int                                               newObjectCounter      = -2;
+
+
 
   /**
    * This set is used to track which documents are changed during tx, if documents are changed but not saved all changes are made
@@ -267,11 +269,12 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return list;
   }
 
-  public ODocument getIndexChanges() {
-
+  public ODocument getIndexChanges(Map<String, OIndex<?>> indexes) {
     final ODocument result = new ODocument().setAllowChainedAccess(false).setTrackingChanges(false);
 
     for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
+      final OIndexInternal<?> index = indexes == null ? null : indexes.get(indexEntry.getKey()).getInternal();
+
       final ODocument indexDoc = new ODocument().setTrackingChanges(false);
       ODocumentInternal.addOwner(indexDoc, result);
 
@@ -284,10 +287,16 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       indexDoc.field("entries", entries, OType.EMBEDDEDLIST);
 
       // STORE INDEX ENTRIES
-      for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values())
-        entries.add(serializeIndexChangeEntry(entry, indexDoc));
+      for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
+        if (!entry.clientTrackOnly)
+          entries
+              .add(serializeIndexChangeEntry(entry, index == null ? entry.entries : index.interpretTxKeyChanges(entry), indexDoc));
+      }
 
-      indexDoc.field("nullEntries", serializeIndexChangeEntry(indexEntry.getValue().nullKeyChanges, indexDoc));
+      final OTransactionIndexChangesPerKey nullKeyChanges = indexEntry.getValue().nullKeyChanges;
+      if (!nullKeyChanges.clientTrackOnly)
+        indexDoc.field("nullEntries", serializeIndexChangeEntry(nullKeyChanges,
+            index == null ? nullKeyChanges.entries : index.interpretTxKeyChanges(nullKeyChanges), indexDoc));
     }
 
     indexEntries.clear();
@@ -304,11 +313,17 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return indexEntries.get(iIndexName);
   }
 
+
+  public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
+      final Object key, final OIdentifiable iValue){
+    addIndexEntry(delegate, iIndexName, iOperation, key, iValue, false);
+  }
+
   /**
    * Bufferizes index changes to be flushed at commit time.
    */
   public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OTransactionIndexChanges.OPERATION iOperation,
-      final Object key, final OIdentifiable iValue) {
+      final Object key, final OIdentifiable iValue, boolean clientTrackOnly) {
     OTransactionIndexChanges indexEntry = indexEntries.get(iIndexName);
     if (indexEntry == null) {
       indexEntry = new OTransactionIndexChanges();
@@ -318,19 +333,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     if (iOperation == OPERATION.CLEAR)
       indexEntry.setCleared();
     else {
-      if (iOperation == OPERATION.REMOVE && iValue != null && iValue.getIdentity().isTemporary()) {
-
-        // TEMPORARY RECORD: JUST REMOVE IT
-        for (OTransactionIndexChangesPerKey changes : indexEntry.changesPerKey.values())
-          for (int i = 0; i < changes.entries.size(); ++i)
-            if (changes.entries.get(i).value.equals(iValue)) {
-              changes.entries.remove(i);
-              break;
-            }
-      }
-
       OTransactionIndexChangesPerKey changes = indexEntry.getChangesPerKey(key);
-
+      changes.clientTrackOnly = clientTrackOnly;
       changes.add(iValue, iOperation);
 
       if (iValue == null)
@@ -394,7 +398,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
   }
 
-  protected ODocument serializeIndexChangeEntry(OTransactionIndexChangesPerKey entry, final ODocument indexDoc) {
+  protected ODocument serializeIndexChangeEntry(OTransactionIndexChangesPerKey entry, Iterable<OTransactionIndexEntry> changes,
+      final ODocument indexDoc) {
     // SERIALIZE KEY
 
     ODocument keyContainer = new ODocument();
@@ -425,7 +430,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
     // SERIALIZE VALUES
     if (entry.entries != null && !entry.entries.isEmpty()) {
-      for (OTransactionIndexEntry e : entry.entries) {
+      for (OTransactionIndexEntry e : changes) {
+
         final ODocument changeDoc = new ODocument().setAllowChainedAccess(false);
         ODocumentInternal.addOwner((ODocument) changeDoc, indexDoc);
 

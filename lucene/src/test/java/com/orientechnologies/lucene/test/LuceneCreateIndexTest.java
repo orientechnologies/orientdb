@@ -25,11 +25,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+
+import org.assertj.core.api.Assertions;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -52,8 +56,16 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
 
     databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
-    databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-    databaseDocumentTx.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
+    databaseDocumentTx.command(new OCommandSQL(
+        "create index Song.title on Song (title) FULLTEXT ENGINE LUCENE METADATA {"
+            + "\"analyzer\":\"" + StandardAnalyzer.class.getName() + "\","
+            + "\"analyzer_stopwords\": [ \"the\" , \"is\" , \"mountain\"] }"))
+        .execute();
+    databaseDocumentTx.command(new OCommandSQL(
+        "create index Song.author on Song (author) FULLTEXT ENGINE LUCENE METADATA {"
+            + "\"analyzer\":\"" + StandardAnalyzer.class.getName()
+            + "\"}"))
+        .execute();
 
     ODocument doc = new ODocument("Song");
 
@@ -61,6 +73,7 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
     doc.field("author", "Local");
 
     databaseDocumentTx.save(doc);
+    testMetadata();
     assertQuery();
 
     assertNewQuery();
@@ -74,22 +87,31 @@ public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
     assertNewQuery();
   }
 
+  protected void testMetadata() {
+    final ODocument index = databaseDocumentTx.getMetadata().getIndexManager().getIndex("Song.title").getMetadata();
+
+    Assert.assertEquals(index.field("analyzer"), StandardAnalyzer.class.getName());
+    Collection<String> stopwords = index.field("analyzer_stopwords");
+
+    Assertions.assertThat(stopwords).hasSize(3);
+    Assertions.assertThat(stopwords).contains("the","is","mountain");
+  }
+
   protected void assertQuery() {
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select * from Song where [title] LUCENE \"(title:mountain)\""));
+        "select * from Song where title LUCENE \"(title:mountain)\""));
 
-    Assert.assertEquals(docs.size(), 4);
+    //mountain is a SW, no documents!
+    Assert.assertEquals(docs.size(), 0);
 
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from Song where [author] LUCENE \"(author:Fabbio)\""));
 
     Assert.assertEquals(docs.size(), 87);
 
-    // not WORK BECAUSE IT USES only the first index
-    // String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and [author] LUCENE \"(author:Fabbio)\""
     String query = "select * from Song where [title] LUCENE \"(title:mountain)\"  and author = 'Fabbio'";
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
 
-    Assert.assertEquals(docs.size(), 1);
+    Assert.assertEquals(docs.size(), 0);
   }
 
   protected void assertNewQuery() {

@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.OQueryRuntimeValueMulti;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -86,7 +87,7 @@ public class OSQLFilterCondition {
     Object r = evaluate(iCurrentRecord, iCurrentResult, right, iContext);
 
     // no collate for regular expressions, otherwise quotes will result in no match
-    final OCollate collate = operator instanceof OQueryOperatorMatches ? null : getCollate();
+    final OCollate collate = operator instanceof OQueryOperatorMatches ? null : getCollate(iCurrentRecord);
 
     final Object[] convertedValues = checkForConversion(iCurrentRecord, l, r, collate);
     if (convertedValues != null) {
@@ -122,6 +123,15 @@ public class OSQLFilterCondition {
       return ((OSQLFilterItemField) left).getCollate();
     } else if (right instanceof OSQLFilterItemField) {
       return ((OSQLFilterItemField) right).getCollate();
+    }
+    return null;
+  }
+
+  public OCollate getCollate(OIdentifiable doc) {
+    if (left instanceof OSQLFilterItemField) {
+      return ((OSQLFilterItemField) left).getCollate(doc);
+    } else if (right instanceof OSQLFilterItemField) {
+      return ((OSQLFilterItemField) right).getCollate(doc);
     }
     return null;
   }
@@ -302,7 +312,7 @@ public class OSQLFilterCondition {
 
     if (iCurrentRecord != null) {
       iCurrentRecord = iCurrentRecord.getRecord();
-      if (iCurrentRecord != null && ((ODocument) iCurrentRecord).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+      if (iCurrentRecord != null && ((ORecord) iCurrentRecord).getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
         try {
           iCurrentRecord = iCurrentRecord.getRecord().load();
         } catch (ORecordNotFoundException e) {

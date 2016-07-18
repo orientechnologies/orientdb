@@ -28,8 +28,6 @@ public class OExpression extends SimpleNode {
 
     if (value instanceof ORid) {
       return null;// TODO
-    } else if (value instanceof OInputParameter) {
-      return null;// TODO
     } else if (value instanceof OMathExpression) {
       return ((OMathExpression) value).createExecutorFilter();
     } else if (value instanceof OJson) {
@@ -52,8 +50,6 @@ public class OExpression extends SimpleNode {
     // TODO create an interface for this;
 
     // if (value instanceof ORid) {
-    // return null;// TODO
-    // } else if (value instanceof OInputParameter) {
     // return null;// TODO
     // } else if (value instanceof OMathExpression) {
     // return null;// TODO
@@ -121,9 +117,7 @@ public class OExpression extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if (value instanceof OInputParameter) {
-      value = ((OInputParameter) value).bindFromInputParams(params);
-    } else if (value instanceof OBaseExpression) {
+    if (value instanceof OBaseExpression) {
       ((OBaseExpression) value).replaceParameters(params);
     } else if (value instanceof OParenthesisExpression) {
       ((OParenthesisExpression) value).replaceParameters(params);

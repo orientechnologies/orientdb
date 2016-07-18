@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -25,6 +26,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -311,6 +313,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     Assert.assertEquals(confirmDeleted.intValue(), 1);
   }
 
+
   public void checkSetPropertyCustomInTransaction() {
     OrientVertexType typedef = database.createVertexType("SetPropertyCustomInTransaction");
     OrientVertexType.OrientVertexProperty prop = typedef.createProperty("foo", OType.STRING);
@@ -322,6 +325,39 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     Assert.assertEquals(prop.getMin(), "10");
     prop.setDefaultValue("FooBarBaz1");
     Assert.assertEquals(prop.getDefaultValue(), "FooBarBaz1");
+  }
+
+  public void testEmbeddedDoc() {
+    database.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
+      @Override public Object call(OrientBaseGraph iArgument) {
+        return iArgument.getRawGraph().getMetadata().getSchema().createClass("NonVertex");
+      }
+    });
+    Vertex vertex = database.addVertex(null, "name", "vertexWithEmbedded");
+    ODocument doc = new ODocument();
+    doc.field("foo", "bar");
+    vertex.setProperty("emb1", doc);
+
+    ODocument doc2 = new ODocument("V");
+    doc2.field("foo", "bar");
+    vertex.setProperty("emb2", doc2);
+
+    ODocument doc3 = new ODocument("NonVertex");
+    doc3.field("foo", "bar");
+    vertex.setProperty("emb3", doc3);
+
+    Object res1 = vertex.getProperty("emb1");
+    Assert.assertNotNull(res1);
+    Assert.assertTrue(res1 instanceof ODocument);
+
+    Object res2 = vertex.getProperty("emb2");
+    Assert.assertNotNull(res2);
+    Assert.assertFalse(res2 instanceof ODocument);
+
+    Object res3 = vertex.getProperty("emb3");
+    Assert.assertNotNull(res3);
+    Assert.assertTrue(res3 instanceof ODocument);
+    database.commit();
   }
 
 }

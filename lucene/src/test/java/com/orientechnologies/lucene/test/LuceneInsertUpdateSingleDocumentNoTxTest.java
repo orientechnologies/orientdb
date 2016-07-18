@@ -48,7 +48,7 @@ public class LuceneInsertUpdateSingleDocumentNoTxTest extends BaseLuceneTest {
 
   @Override
   protected String getDatabaseName() {
-    return "insertUpdateTransaction";
+    return "insertUpdateTransactionNoTx";
   }
 
   @BeforeClass

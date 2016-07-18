@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.common.concur.lock;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,10 +32,11 @@ public class OLockManager<T> {
     SHARED, EXCLUSIVE
   }
 
-  private static final int                                        DEFAULT_CONCURRENCY_LEVEL = 16;
-  protected long                                                  acquireTimeout;
+  protected       long                                acquireTimeout;
   protected final ConcurrentHashMap<T, CountableLock> map;
-  private final boolean                                           enabled;
+  private final   boolean                             enabled;
+
+  private static final int MAXIMUM_CAPACITY = 1 << 30;
 
   @SuppressWarnings("serial")
   protected static class CountableLock {
@@ -68,13 +71,9 @@ public class OLockManager<T> {
   }
 
   public OLockManager(final boolean iEnabled, final int iAcquireTimeout, final int concurrencyLevel) {
-    int cL = 1;
+    final int cL = tableSizeFor(concurrencyLevel << 4);
 
-    while (cL < concurrencyLevel) {
-      cL <<= 1;
-    }
-
-    map = new ConcurrentHashMap<T, CountableLock>(cL);
+    map = new ConcurrentHashMap<T, CountableLock>(cL, 0.75f, cL);
     acquireTimeout = iAcquireTimeout;
     enabled = iEnabled;
   }
@@ -121,12 +120,12 @@ public class OLockManager<T> {
         try {
           if (iLockType == LOCK.SHARED) {
             if (!lock.readWriteLock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException("Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId
-                  + "' because is locked from another thread");
+              throw new OLockException(
+                  "Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
           } else {
             if (!lock.readWriteLock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException("Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId
-                  + "' because is locked from another thread");
+              throw new OLockException(
+                  "Timeout (" + iTimeout + "ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
@@ -142,16 +141,16 @@ public class OLockManager<T> {
     }
   }
 
-  public void releaseLock(final Object iRequester, final T iResourceId, final LOCK iLockType)
-      throws OLockException {
+  public void releaseLock(final Object iRequester, final T iResourceId, final LOCK iLockType) throws OLockException {
     if (!enabled)
       return;
 
     final CountableLock lock;
     lock = map.get(iResourceId);
     if (lock == null)
-      throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
-          + "' against the resource: '" + iResourceId + "'");
+      throw new OLockException(
+          "Error on releasing a non acquired lock by the requester '" + iRequester + "' against the resource: '" + iResourceId
+              + "'");
 
     final int usages = lock.countLocks.decrementAndGet();
     if (usages == 0)
@@ -163,19 +162,31 @@ public class OLockManager<T> {
       lock.readWriteLock.writeLock().unlock();
   }
 
-
   // For tests purposes.
   public int getCountCurrentLocks() {
     return map.size();
   }
-
 
   protected T getImmutableResourceId(final T iResourceId) {
     return iResourceId;
   }
 
   private static int defaultConcurrency() {
-    return Runtime.getRuntime().availableProcessors() * 64 > DEFAULT_CONCURRENCY_LEVEL ? Runtime.getRuntime().availableProcessors() * 64
-        : DEFAULT_CONCURRENCY_LEVEL;
+    return OGlobalConfiguration.ENVNRONMENT_CONCURRENCY_LEVEL.getValueAsInteger();
   }
+
+  /**
+   * Returns a power of two table size for the given desired capacity.
+   * See Hackers Delight, sec 3.2
+   */
+  private static int tableSizeFor(int c) {
+    int n = c - 1;
+    n |= n >>> 1;
+    n |= n >>> 2;
+    n |= n >>> 4;
+    n |= n >>> 8;
+    n |= n >>> 16;
+    return (n < 0) ? 1 : (n >= MAXIMUM_CAPACITY) ? MAXIMUM_CAPACITY : n + 1;
+  }
+
 }

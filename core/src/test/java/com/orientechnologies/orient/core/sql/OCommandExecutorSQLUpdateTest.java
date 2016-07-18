@@ -378,4 +378,107 @@ public class OCommandExecutorSQLUpdateTest {
       db.close();
     }
   }
+
+  @Test
+  public void testUpdateLockLimit() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTest_testUpdateLockLimit");
+    db.create();
+    try {
+      db.getMetadata().getSchema().createClass("foo");
+      db.command(new OCommandSQL("insert into foo set name = 'foo'")).execute();
+      db.command(new OCommandSQL("UPDATE foo set name = 'bar' where name = 'foo' lock record limit 1")).execute();
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from foo"));
+      ODocument doc = (ODocument) result.iterator().next();
+      assertEquals(doc.field("name"), "bar");
+      db.command(new OCommandSQL("UPDATE foo set name = 'foo' where name = 'bar' lock record limit 1")).execute();
+    } finally {
+      db.close();
+    }
+  }
+
+
+  @Test
+  public void testUpdateContentOnClusterTarget() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:UpdateContentOnClusterTarget");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class Foo")).execute();
+      db.command(new OCommandSQL("CREATE class Bar")).execute();
+      db.command(new OCommandSQL("CREATE property Foo.bar EMBEDDED Bar")).execute();
+
+      db.command(new OCommandSQL("insert into cluster:foo set bar = {\"value\":\"zz\\\\\"}")).execute();
+      db.command(new OCommandSQL("UPDATE cluster:foo set bar = {\"value\":\"foo\\\\\"}")).execute();
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from cluster:foo"));
+      ODocument doc = (ODocument) result.iterator().next();
+      assertEquals(((ODocument)doc.field("bar")).field("value"), "foo\\");
+
+
+
+    } finally {
+      db.close();
+    }
+  }
+
+  @Test
+  public void testUpdateContentOnClusterTargetMultiple() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:UpdateContentOnClusterTargetMultiple");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class Foo")).execute();
+      db.command(new OCommandSQL("ALTER CLASS Foo addcluster fooadditional1")).execute();
+      db.command(new OCommandSQL("ALTER CLASS Foo addcluster fooadditional2")).execute();
+      db.command(new OCommandSQL("CREATE class Bar")).execute();
+      db.command(new OCommandSQL("CREATE property Foo.bar EMBEDDED Bar")).execute();
+
+      db.command(new OCommandSQL("insert into cluster:foo set bar = {\"value\":\"zz\\\\\"}")).execute();
+      db.command(new OCommandSQL("UPDATE cluster:foo set bar = {\"value\":\"foo\\\\\"}")).execute();
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from cluster:foo"));
+      Iterator iterator = result.iterator();
+      assertTrue(iterator.hasNext());
+      ODocument doc = (ODocument) iterator.next();
+      assertEquals(((ODocument)doc.field("bar")).field("value"), "foo\\");
+      assertFalse(iterator.hasNext());
+
+      db.command(new OCommandSQL("insert into cluster:fooadditional1 set bar = {\"value\":\"zz\\\\\"}")).execute();
+      db.command(new OCommandSQL("UPDATE cluster:fooadditional1 set bar = {\"value\":\"foo\\\\\"}")).execute();
+      result = db.query(new OSQLSynchQuery<Object>("select from cluster:fooadditional1"));
+      iterator = result.iterator();
+      assertTrue(iterator.hasNext());
+      doc = (ODocument) iterator.next();
+      assertEquals(((ODocument)doc.field("bar")).field("value"), "foo\\");
+      assertFalse(iterator.hasNext());
+    } finally {
+      db.close();
+    }
+  }
+
+  @Test
+  public void testUpdateContentOnClusterTargetMultipleSelection() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:UpdateContentOnClusterTargetMultipleSelection");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class Foo")).execute();
+      db.command(new OCommandSQL("ALTER CLASS Foo addcluster fooadditional1")).execute();
+      db.command(new OCommandSQL("ALTER CLASS Foo addcluster fooadditional2")).execute();
+      db.command(new OCommandSQL("ALTER CLASS Foo addcluster fooadditional3")).execute();
+      db.command(new OCommandSQL("CREATE class Bar")).execute();
+      db.command(new OCommandSQL("CREATE property Foo.bar EMBEDDED Bar")).execute();
+
+      db.command(new OCommandSQL("insert into cluster:fooadditional1 set bar = {\"value\":\"zz\\\\\"}")).execute();
+      db.command(new OCommandSQL("insert into cluster:fooadditional2 set bar = {\"value\":\"zz\\\\\"}")).execute();
+      db.command(new OCommandSQL("insert into cluster:fooadditional3 set bar = {\"value\":\"zz\\\\\"}")).execute();
+      db.command(new OCommandSQL("UPDATE cluster:[fooadditional1, fooadditional2] set bar = {\"value\":\"foo\\\\\"}")).execute();
+      List<?> result = db.query(new OSQLSynchQuery<Object>("select from cluster:[ fooadditional1, fooadditional2 ]"));
+      Iterator<?> iterator = result.iterator();
+      assertTrue(iterator.hasNext());
+      ODocument doc = (ODocument) iterator.next();
+      assertEquals(((ODocument)doc.field("bar")).field("value"), "foo\\");
+      assertTrue(iterator.hasNext());
+      doc = (ODocument) iterator.next();
+      assertEquals(((ODocument)doc.field("bar")).field("value"), "foo\\");
+      assertFalse(iterator.hasNext());
+    } finally {
+      db.close();
+    }
+  }
 }

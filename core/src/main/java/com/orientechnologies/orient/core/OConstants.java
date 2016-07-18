@@ -20,10 +20,10 @@
 package com.orientechnologies.orient.core;
 
 public class OConstants {
-  public static final String ORIENT_VERSION = "2.1.13-SNAPSHOT";
+  public static final String ORIENT_VERSION = "2.1.20-SNAPSHOT";
 
   public static final String ORIENT_URL     = "www.orientdb.com";
-  public static final String COPYRIGHT      = "Copyrights (c) 2015 Orient Technologies LTD";
+  public static final String COPYRIGHT      = "Copyrights (c) 2016 OrientDB LTD";
 
   public static String getVersion() {
     final StringBuilder buffer = new StringBuilder();

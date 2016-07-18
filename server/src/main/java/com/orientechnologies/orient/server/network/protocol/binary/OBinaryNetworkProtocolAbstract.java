@@ -214,7 +214,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
         onBeforeRequest();
       } catch (Exception e) {
         sendError(clientTxId, e);
-        handleConnectionError(channel, e);
+        try {
+          channel.flush();
+        } catch (IOException e1) {
+          OLogManager.instance().debug(this, "Error during channel flush", e1);
+        }
         sendShutdown();
         return;
       }
@@ -230,7 +234,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       }
 
     } catch (IOException e) {
-      handleConnectionError(channel, e);
+      OLogManager.instance().debug(this, "Exception executing request", e);
       sendShutdown();
     } catch (OException e) {
       sendErrorOrDropConnection(clientTxId, e);
@@ -253,7 +257,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   protected void sendErrorOrDropConnection(final int iClientTxId, final Throwable t) throws IOException {
-    if (okSent) {
+    if (okSent || requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
       handleConnectionError(channel, t);
       sendShutdown();
     } else {
@@ -411,6 +415,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     } catch (IOException e1) {
       OLogManager.instance().debug(this, "Error during channel flush", e1);
     }
+    OLogManager.instance().error(this, "Error executing request", e);
   }
 
   public byte[] getRecordBytes(final ORecord iRecord) {

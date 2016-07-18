@@ -64,9 +64,11 @@ public class OStorageRemoteThread implements OStorageProxy {
   private static AtomicInteger sessionSerialId = new AtomicInteger(-1);
 
   private final OStorageRemote delegate;
-  private String               serverURL;
-  private int                  sessionId;
-  private byte[]               token;
+  private       String         serverURL;
+  private       int            sessionId;
+  private       byte[]         token;
+  private       String         connectionUserName;
+  private       String         connectionUserPassword;
 
   public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
     delegate = iSharedStorage;
@@ -87,18 +89,15 @@ public class OStorageRemoteThread implements OStorageProxy {
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
     pushSession();
     try {
+      this.connectionUserName = iUserName;
+      this.connectionUserPassword = iUserPassword;
       delegate.open(iUserName, iUserPassword, iOptions);
+    } catch (RuntimeException e) {
+      Orient.instance().unregisterStorage(this);
+      throw e;
     } finally {
       popSession();
     }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public OModificationLock getModificationLock() {
-    return null;
   }
 
   @Override
@@ -232,7 +231,8 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public List<String> backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+  public List<String> backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
@@ -741,13 +741,23 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   protected void pushSession() {
-    delegate.setSessionId(serverURL, sessionId, token);
+    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
+    if (instance != null) {
+      final OStorageRemoteThreadLocal.OStorageRemoteSession tl = instance.get();
+      tl.serverURL = serverURL;
+      tl.sessionId = sessionId;
+      tl.token = token;
+      tl.connectionUserName = connectionUserName;
+      tl.connectionUserPassword = connectionUserPassword;
+    }
   }
 
   protected void popSession() {
     serverURL = delegate.getServerURL();
     sessionId = delegate.getSessionId();
     token = delegate.getSessionToken();
+    connectionUserName = delegate.getUserName();
+    connectionUserPassword = delegate.getUserPassword();
     // delegate.clearSession();
   }
 }

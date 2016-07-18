@@ -115,7 +115,7 @@ import com.orientechnologies.common.log.OLogManager;
            + Arrays.toString(networkPort));
 
      channel.writeByte(OChannelBinaryProtocol.REQUEST_SHUTDOWN);
-     channel.writeInt(0);
+     channel.writeInt(-1);
      channel.writeString(OServerConfiguration.SRV_ROOT_ADMIN);
      channel.writeString(rootPassword);
      channel.flush();

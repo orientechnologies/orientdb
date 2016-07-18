@@ -38,37 +38,37 @@ import java.io.IOException;
 /**
  * Base page class for all durable data structures, that is data structures state of which can be consistently restored after system
  * crash but results of last operations in small interval before crash may be lost.
- * 
+ * <p>
  * This page has several booked memory areas with following offsets at the beginning:
  * <ol>
  * <li>from 0 to 7 - Magic number</li>
  * <li>from 8 to 11 - crc32 of all page content, which is calculated by cache system just before save</li>
  * <li>from 12 to 23 - LSN of last operation which was stored for given page</li>
  * </ol>
- * 
+ * <p>
  * Developer which will extend this class should use all page memory starting from {@link #NEXT_FREE_POSITION} offset.
- * 
+ * <p>
  * {@link OReadCache#release(OCacheEntry, com.orientechnologies.orient.core.storage.cache.OWriteCache)} back to the cache.
- * 
+ * <p>
  * All data structures which use this kind of pages should be derived from
  * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent} class.
- * 
+ *
  * @author Andrey Lomakin
  * @since 16.08.13
  */
 public class ODurablePage {
-  public static final int            PAGE_PADDING        = OWOWCache.PAGE_PADDING;
+  public static final int PAGE_PADDING = OWOWCache.PAGE_PADDING;
 
-  protected static final int         MAGIC_NUMBER_OFFSET = 0;
-  protected static final int         CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  protected static final int MAGIC_NUMBER_OFFSET = 0;
+  protected static final int CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public static final int            WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
-  public static final int            WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
-  public static final int            MAX_PAGE_SIZE_BYTES = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  public static final int WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
+  public static final int MAX_PAGE_SIZE_BYTES = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
-  protected static final int         NEXT_FREE_POSITION  = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+  protected static final int NEXT_FREE_POSITION = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  protected OWALChangesTree          changesTree;
+  protected OWALChangesTree changesTree;
 
   private final OCacheEntry          cacheEntry;
   private final ODirectMemoryPointer pagePointer;
@@ -95,6 +95,8 @@ public class ODurablePage {
   }
 
   protected int getIntValue(int pageOffset) {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     if (changesTree == null)
       return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
 
@@ -102,6 +104,8 @@ public class ODurablePage {
   }
 
   protected long getLongValue(int pageOffset) {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     if (changesTree == null)
       return OLongSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
 
@@ -109,6 +113,8 @@ public class ODurablePage {
   }
 
   protected byte[] getBinaryValue(int pageOffset, int valLen) {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     if (changesTree == null)
       return pagePointer.get(pageOffset + PAGE_PADDING, valLen);
 
@@ -116,6 +122,8 @@ public class ODurablePage {
   }
 
   protected int getObjectSizeInDirectMemory(OBinarySerializer binarySerializer, long offset) {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     if (changesTree == null)
       return binarySerializer.getObjectSizeInDirectMemory(pagePointer, offset + PAGE_PADDING);
 
@@ -123,6 +131,8 @@ public class ODurablePage {
   }
 
   protected <T> T deserializeFromDirectMemory(OBinarySerializer<T> binarySerializer, long offset) {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     if (changesTree == null)
       return binarySerializer.deserializeFromDirectMemoryObject(pagePointer, offset + PAGE_PADDING);
 
@@ -130,6 +140,8 @@ public class ODurablePage {
   }
 
   protected byte getByteValue(int pageOffset) {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     if (changesTree == null)
       return pagePointer.getByte(pageOffset + PAGE_PADDING);
 
@@ -137,6 +149,8 @@ public class ODurablePage {
   }
 
   protected int setIntValue(int pageOffset, int value) throws IOException {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     if (changesTree != null) {
       byte[] svalue = new byte[OIntegerSerializer.INT_SIZE];
       OIntegerSerializer.INSTANCE.serializeNative(value, svalue, 0);
@@ -152,6 +166,8 @@ public class ODurablePage {
   }
 
   protected int setByteValue(int pageOffset, byte value) {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     if (changesTree != null) {
       changesTree.add(new byte[] { value }, pageOffset + PAGE_PADDING);
     } else
@@ -163,6 +179,8 @@ public class ODurablePage {
   }
 
   protected int setLongValue(int pageOffset, long value) throws IOException {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     if (changesTree != null) {
       byte[] svalue = new byte[OLongSerializer.LONG_SIZE];
       OLongSerializer.INSTANCE.serializeNative(value, svalue, 0);
@@ -177,6 +195,8 @@ public class ODurablePage {
   }
 
   protected int setBinaryValue(int pageOffset, byte[] value) throws IOException {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     if (value.length == 0)
       return 0;
 
@@ -191,6 +211,8 @@ public class ODurablePage {
   }
 
   protected void moveData(int from, int to, int len) throws IOException {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     if (len == 0)
       return;
 
@@ -209,11 +231,15 @@ public class ODurablePage {
   }
 
   public void restoreChanges(OWALChangesTree changesTree) {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     changesTree.applyChanges(cacheEntry.getCachePointer().getDataPointer());
     cacheEntry.markDirty();
   }
 
   public OLogSequenceNumber getLsn() {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     final long segment = getLongValue(WAL_SEGMENT_OFFSET);
     final long position = getLongValue(WAL_POSITION_OFFSET);
 
@@ -221,6 +247,8 @@ public class ODurablePage {
   }
 
   public void setLsn(OLogSequenceNumber lsn) {
+    assert cacheEntry.isLockAcquiredByCurrentThread();
+
     OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getSegment(), pagePointer, WAL_SEGMENT_OFFSET + PAGE_PADDING);
     OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getPosition(), pagePointer, WAL_POSITION_OFFSET + PAGE_PADDING);
 

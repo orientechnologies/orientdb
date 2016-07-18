@@ -26,17 +26,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -57,17 +48,8 @@ import java.lang.reflect.Array;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Helper class to manage documents.
@@ -229,13 +211,12 @@ public class ODocumentHelper {
     return (RET) iValue;
   }
 
-  @SuppressWarnings("unchecked")
-  public static <RET> RET getFieldValue(Object value, final String iFieldName) {
+  @SuppressWarnings("unchecked") public static <RET> RET getFieldValue(Object value, final String iFieldName) {
     return (RET) getFieldValue(value, iFieldName, null);
   }
 
-  @SuppressWarnings("unchecked")
-  public static <RET> RET getFieldValue(Object value, final String iFieldName, final OCommandContext iContext) {
+  @SuppressWarnings("unchecked") public static <RET> RET getFieldValue(Object value, final String iFieldName,
+      final OCommandContext iContext) {
     if (value == null)
       return null;
 
@@ -274,7 +255,7 @@ public class ODocumentHelper {
           else if (value instanceof Map<?, ?>)
             value = getMapEntry((Map<String, ?>) value, fieldName);
           else if (OMultiValue.isMultiValue(value)) {
-            final HashSet<Object> temp = new HashSet<Object>();
+            final HashSet<Object> temp = new LinkedHashSet<Object>();
             for (Object o : OMultiValue.getMultiValueIterable(value)) {
               if (o instanceof OIdentifiable) {
                 Object r = getFieldValue(o, iFieldName);
@@ -291,7 +272,8 @@ public class ODocumentHelper {
         else if (value instanceof OIdentifiable)
           currentRecord = (OIdentifiable) value;
 
-        final int end = iFieldName.indexOf(']', nextSeparatorPos);
+        //        final int end = iFieldName.indexOf(']', nextSeparatorPos);
+        final int end = findClosingBracketPosition(iFieldName, nextSeparatorPos);
         if (end == -1)
           throw new IllegalArgumentException("Missed closed ']'");
 
@@ -311,8 +293,8 @@ public class ODocumentHelper {
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
 
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',',
-              OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+          final List<String> indexParts = OStringSerializerHelper
+              .smartSplit(indexAsString, ',', OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
@@ -336,8 +318,8 @@ public class ODocumentHelper {
 
             final String[] fieldNames = doc.fieldNames();
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.length - 1)
-                : fieldNames.length - 1;
+            final int rangeTo =
+                to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.length - 1) : fieldNames.length - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
@@ -367,8 +349,8 @@ public class ODocumentHelper {
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
 
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',',
-              OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
+          final List<String> indexParts = OStringSerializerHelper
+              .smartSplit(indexAsString, ',', OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
@@ -421,7 +403,7 @@ public class ODocumentHelper {
 
         } else if (OMultiValue.isMultiValue(value)) {
           // MULTI VALUE
-            final Object index = getIndexPart(iContext, indexPart);
+          final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
 
           final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',');
@@ -444,9 +426,9 @@ public class ODocumentHelper {
             final Object[] values = new Object[indexParts.size()];
             for (int i = 0; i < indexParts.size(); ++i)
               values[i] = OMultiValue.getValue(value, Integer.parseInt(indexParts.get(i)));
-            if(indexParts.size() > 1){
+            if (indexParts.size() > 1) {
               value = values;
-            }else{
+            } else {
               value = values[0];
             }
 
@@ -457,8 +439,9 @@ public class ODocumentHelper {
             String to = indexRanges.get(1);
 
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
-            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1)
-                : OMultiValue.getSize(value) - 1;
+            final int rangeTo = to != null && !to.isEmpty() ?
+                Math.min(Integer.parseInt(to), OMultiValue.getSize(value) - 1) :
+                OMultiValue.getSize(value) - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
             for (int i = rangeFrom; i <= rangeTo; ++i)
@@ -468,7 +451,7 @@ public class ODocumentHelper {
           } else {
             // CONDITION
             OSQLPredicate pred = new OSQLPredicate(indexAsString);
-            final HashSet<Object> values = new HashSet<Object>();
+            final HashSet<Object> values = new LinkedHashSet<Object>();
 
             for (Object v : OMultiValue.getMultiValueIterable(value)) {
               if (v instanceof OIdentifiable) {
@@ -532,7 +515,7 @@ public class ODocumentHelper {
           } else if (value instanceof Map<?, ?>)
             value = getMapEntry((Map<String, ?>) value, fieldName);
           else if (OMultiValue.isMultiValue(value)) {
-            final Set<Object> values = new HashSet<Object>();
+            final Set<Object> values = new LinkedHashSet<Object>();
             for (Object v : OMultiValue.getMultiValueIterable(value)) {
               final Object item;
 
@@ -569,6 +552,36 @@ public class ODocumentHelper {
     } while (nextSeparatorPos < fieldNameLength && value != null);
 
     return (RET) value;
+  }
+
+  private static int findClosingBracketPosition(String iFieldName, int nextSeparatorPos) {
+    Character currentQuote = null;
+    boolean escaping = false;
+    int innerBrackets = 0;
+    char[] chars = iFieldName.toCharArray();
+    for (int i = nextSeparatorPos + 1; i < chars.length; i++) {
+      char next = chars[i];
+      if (escaping) {
+        escaping = false;
+      } else if (next == '\\') {
+        escaping = true;
+      } else if (next == '`' || next == '\'' || next == '"') {
+        if (currentQuote == null) {
+          currentQuote = next;
+        } else if (currentQuote == next) {
+          currentQuote = null;
+        }
+
+      } else if (next == '[') {
+        innerBrackets++;
+      } else if (next == ']') {
+        if (innerBrackets == 0) {
+          return i;
+        }
+        innerBrackets--;
+      }
+    }
+    return -1;
   }
 
   private static boolean isFieldName(String indexAsString) {
@@ -632,8 +645,8 @@ public class ODocumentHelper {
     return index;
   }
 
-  @SuppressWarnings("unchecked")
-  protected static Object filterItem(final String iConditionFieldName, final Object iConditionFieldValue, final Object iValue) {
+  @SuppressWarnings("unchecked") protected static Object filterItem(final String iConditionFieldName,
+      final Object iConditionFieldValue, final Object iValue) {
     if (iValue instanceof OIdentifiable) {
       final ORecord rec = ((OIdentifiable) iValue).getRecord();
       if (rec instanceof ODocument) {
@@ -663,10 +676,10 @@ public class ODocumentHelper {
    * Retrieves the value crossing the map with the dotted notation
    *
    * @param iKey Field(s) to retrieve. If are multiple fields, then the dot must be used as separator
+   * @param iMap
    * @return
    */
-  @SuppressWarnings("unchecked")
-  public static Object getMapEntry(final Map<String, ?> iMap, final Object iKey) {
+  @SuppressWarnings("unchecked") public static Object getMapEntry(final Map<String, ?> iMap, final Object iKey) {
     if (iMap == null || iKey == null)
       return null;
 
@@ -846,8 +859,7 @@ public class ODocumentHelper {
     return result;
   }
 
-  @SuppressWarnings("unchecked")
-  public static Object cloneValue(ODocument iCloned, final Object fieldValue) {
+  @SuppressWarnings("unchecked") public static Object cloneValue(ODocument iCloned, final Object fieldValue) {
 
     if (fieldValue != null) {
       if (fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid()) {
@@ -946,9 +958,9 @@ public class ODocumentHelper {
    * @return true if the two document are identical, otherwise false
    * @see #equals(Object)
    */
-  @SuppressWarnings("unchecked")
-  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseDocumentInternal iMyDb, final ODocument iOther,
-      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper) {
+  @SuppressWarnings("unchecked") public static boolean hasSameContentOf(final ODocument iCurrent,
+      final ODatabaseDocumentInternal iMyDb, final ODocument iOther, final ODatabaseDocumentInternal iOtherDb,
+      RIDMapper ridMapper) {
     return hasSameContentOf(iCurrent, iMyDb, iOther, iOtherDb, ridMapper, true);
   }
 
@@ -960,9 +972,9 @@ public class ODocumentHelper {
    * @return true if the two document are identical, otherwise false
    * @see #equals(Object)
    */
-  @SuppressWarnings("unchecked")
-  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseDocumentInternal iMyDb, final ODocument iOther,
-      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper, final boolean iCheckAlsoIdentity) {
+  @SuppressWarnings("unchecked") public static boolean hasSameContentOf(final ODocument iCurrent,
+      final ODatabaseDocumentInternal iMyDb, final ODocument iOther, final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper,
+      final boolean iCheckAlsoIdentity) {
     if (iOther == null)
       return false;
 

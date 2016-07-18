@@ -68,7 +68,6 @@ public class OResourcePool<K, V> {
         throw new OLockException("No more resources available in pool (max=" + maxResources + "). Requested resource: " + key);
 
     } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
       throw new OInterruptedException(e);
     }
 

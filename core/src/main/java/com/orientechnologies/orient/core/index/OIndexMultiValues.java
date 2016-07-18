@@ -57,8 +57,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public Set<OIdentifiable> get(Object key) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -88,8 +86,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public long count(Object key) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -118,8 +114,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public OIndexMultiValues put(Object key, final OIdentifiable iSingleValue) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -128,46 +122,39 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     if (!txIsActive)
       keyLockManager.acquireExclusiveLock(key);
     try {
-      if (modificationLock != null)
-        modificationLock.requestModificationLock();
+      checkForKeyType(key);
+      acquireSharedLock();
+      startStorageAtomicOperation();
       try {
-        checkForKeyType(key);
-        acquireSharedLock();
-        startStorageAtomicOperation();
-        try {
-          Set<OIdentifiable> values = indexEngine.get(key);
+        Set<OIdentifiable> values = indexEngine.get(key);
 
-          if (values == null) {
-            if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-              boolean durable = false;
-              if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-                durable = true;
+        if (values == null) {
+          if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+            boolean durable = false;
+            if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+              durable = true;
 
-              values = new OIndexRIDContainer(getName(), durable);
-            } else {
-              values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
-              ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
-            }
+            values = new OIndexRIDContainer(getName(), durable);
+          } else {
+            values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
+            ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
           }
-
-          if (!iSingleValue.getIdentity().isValid())
-            ((ORecord) iSingleValue).save();
-
-          values.add(iSingleValue.getIdentity());
-          indexEngine.put(key, values);
-
-          commitStorageAtomicOperation();
-          return this;
-
-        } catch (RuntimeException e) {
-          rollbackStorageAtomicOperation();
-          throw new OIndexException("Error during insertion of key in index", e);
-        } finally {
-          releaseSharedLock();
         }
+
+        if (!iSingleValue.getIdentity().isValid())
+          ((ORecord) iSingleValue).save();
+
+        values.add(iSingleValue.getIdentity());
+        indexEngine.put(key, values);
+
+        commitStorageAtomicOperation();
+        return this;
+
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during insertion of key in index", e);
       } finally {
-        if (modificationLock != null)
-          modificationLock.releaseModificationLock();
+        releaseSharedLock();
       }
     } finally {
       if (!txIsActive)
@@ -177,8 +164,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public boolean remove(Object key, final OIdentifiable value) {
-    checkForRebuild();
-
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
@@ -188,44 +173,37 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       keyLockManager.acquireExclusiveLock(key);
 
     try {
-      if (modificationLock != null)
-        modificationLock.requestModificationLock();
+      acquireSharedLock();
+      startStorageAtomicOperation();
       try {
-        acquireSharedLock();
-        startStorageAtomicOperation();
-        try {
 
-          Set<OIdentifiable> values = indexEngine.get(key);
+        Set<OIdentifiable> values = indexEngine.get(key);
 
-          if (values == null) {
-            commitStorageAtomicOperation();
-            return false;
-          }
-
-          if (value == null) {
-            indexEngine.remove(key);
-          } else if (values.remove(value)) {
-            if (values.isEmpty())
-              indexEngine.remove(key);
-            else
-              indexEngine.put(key, values);
-
-            commitStorageAtomicOperation();
-            return true;
-          }
-
+        if (values == null) {
           commitStorageAtomicOperation();
           return false;
-
-        } catch (RuntimeException e) {
-          rollbackStorageAtomicOperation();
-          throw new OIndexException("Error during removal of entry by key", e);
-        } finally {
-          releaseSharedLock();
         }
+
+        if (value == null) {
+          indexEngine.remove(key);
+        } else if (values.remove(value)) {
+          if (values.isEmpty())
+            indexEngine.remove(key);
+          else
+            indexEngine.put(key, values);
+
+          commitStorageAtomicOperation();
+          return true;
+        }
+
+        commitStorageAtomicOperation();
+        return false;
+
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during removal of entry by key", e);
       } finally {
-        if (modificationLock != null)
-          modificationLock.releaseModificationLock();
+        releaseSharedLock();
       }
     } finally {
       if (!txIsActive)
@@ -252,8 +230,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   @Override
   public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
       boolean ascOrder) {
-    checkForRebuild();
-
     fromKey = getCollatingValue(fromKey);
     toKey = getCollatingValue(toKey);
 
@@ -268,8 +244,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
-    checkForRebuild();
-
     fromKey = getCollatingValue(fromKey);
 
     acquireSharedLock();
@@ -283,8 +257,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
-    checkForRebuild();
-
     toKey = getCollatingValue(toKey);
 
     acquireSharedLock();
@@ -297,8 +269,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
-    checkForRebuild();
-
     final List<Object> sortedKeys = new ArrayList<Object>(keys);
     final Comparator<Object> comparator;
     if (ascSortOrder)
@@ -366,7 +336,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public long getSize() {
-    checkForRebuild();
     acquireSharedLock();
     try {
       return indexEngine.size(MultiValuesTransformer.INSTANCE);
@@ -377,7 +346,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   public long getKeySize() {
-    checkForRebuild();
     acquireSharedLock();
     try {
       return indexEngine.size(null);
@@ -388,8 +356,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public OIndexCursor cursor() {
-    checkForRebuild();
-
     acquireSharedLock();
     try {
       return indexEngine.cursor(MultiValuesTransformer.INSTANCE);
@@ -400,8 +366,6 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   @Override
   public OIndexCursor descCursor() {
-    checkForRebuild();
-
     acquireSharedLock();
     try {
       return indexEngine.descCursor(MultiValuesTransformer.INSTANCE);

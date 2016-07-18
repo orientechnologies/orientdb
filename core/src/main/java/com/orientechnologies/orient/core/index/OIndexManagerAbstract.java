@@ -206,9 +206,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
     if (index.getInternal() == null)
       throw new OIndexException("Index with name " + indexName + " has no internal presentation.");
-
-    index.getInternal().addCluster(clusterName);
-    save();
+    if(!index.getInternal().getClusters().contains(clusterName)) {
+      index.getInternal().addCluster(clusterName);
+      save();
+    }
   }
 
   @Override
@@ -469,6 +470,11 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       else if (index instanceof OIndexDictionary)
         return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) index);
       else if (index instanceof OIndexOneValue)
+        return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
+    } else {
+      if (index instanceof OIndexRemoteMultiValue)
+        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
+      else if (index instanceof OIndexRemoteOneValue)
         return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
     }
     return index;

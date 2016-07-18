@@ -171,6 +171,23 @@ public class OCommandExecutorSQLSelectTest {
     initMaxLongNumber(db);
     initFilterAndOrderByTest(db);
     initComplexFilterInSquareBrackets(db);
+    initCollateOnLinked(db);
+  }
+
+  private void initCollateOnLinked(ODatabaseDocumentTx db) {
+    db.command(new OCommandSQL("CREATE CLASS CollateOnLinked")).execute();
+    db.command(new OCommandSQL("CREATE CLASS CollateOnLinked2")).execute();
+    db.command(new OCommandSQL("CREATE PROPERTY CollateOnLinked.name String")).execute();
+    db.command(new OCommandSQL("ALTER PROPERTY CollateOnLinked.name collate ci")).execute();
+
+    ODocument doc = new ODocument("CollateOnLinked");
+    doc.field("name", "foo");
+    doc.save();
+
+    ODocument doc2 = new ODocument("CollateOnLinked2");
+    doc2.field("linked", doc.getIdentity());
+    doc2.save();
+
   }
 
   private void initComplexFilterInSquareBrackets(ODatabaseDocumentTx db) {
@@ -1121,6 +1138,7 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(results.size(), 0);
   }
 
+  @Test
   public void testFilterAndOrderBy() {
     //issue http://www.prjhub.com/#/issues/6199
 
@@ -1144,6 +1162,7 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  @Test
   public void testComplexFilterInSquareBrackets() {
     //issues #513 #5451
 
@@ -1188,6 +1207,7 @@ public class OCommandExecutorSQLSelectTest {
 
   }
 
+  @Test
   public void testCollateOnCollections() {
     //issue #4851
     db.command(new OCommandSQL("create class OCommandExecutorSqlSelectTest_collateOnCollections")).execute();
@@ -1201,6 +1221,37 @@ public class OCommandExecutorSQLSelectTest {
     results =db.query(new OSQLSynchQuery<ODocument>("select from OCommandExecutorSqlSelectTest_collateOnCollections where 'math' in categories"));
     assertEquals(results.size(), 1);
   }
+
+  @Test
+  public void testParamConcat() {
+    //issue #6049
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from TestParams where surname like ? + '%'"), "fo");
+    assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void testEvalLong() {
+    //http://www.prjhub.com/#/issues/6472
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT EVAL(\"86400000 * 26\") AS value"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.get(0).field("value"), 86400000l*26);
+  }
+
+  @Test
+  public void testCollateOnLinked() {
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from CollateOnLinked2 where linked.name = 'foo' "));
+    assertEquals(results.size(), 1);
+    results =db.query(new OSQLSynchQuery<ODocument>("select from CollateOnLinked2 where linked.name = 'FOO' "));
+    assertEquals(results.size(), 1);
+  }
+
+  @Test
+  public void testDateFormat(){
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select date('2015-07-20', 'yyyy-MM-dd').format('dd.MM.yyyy') as dd"));
+    assertEquals(results.size(), 1);
+    assertEquals(results.get(0).field("dd"), "20.07.2015");
+  }
+
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

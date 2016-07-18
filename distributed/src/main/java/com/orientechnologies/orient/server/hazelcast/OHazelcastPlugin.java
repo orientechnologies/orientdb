@@ -22,8 +22,8 @@ package com.orientechnologies.orient.server.hazelcast;
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
-import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
+import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
@@ -1359,7 +1359,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin
       System.out.println("+---------------------------------------------------------------+");
       System.out.print("\nNode name [BLANK=auto generate it]: ");
 
-      OConsoleReader reader = new DefaultConsoleReader();
+      OConsoleReader reader = new ODefaultConsoleReader();
       try {
         nodeName = reader.readLine();
       } catch (IOException e) {

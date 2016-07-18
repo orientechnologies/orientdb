@@ -435,14 +435,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
 
-    if (isWindowsOS()) {
-      // WINDOWS ONLY: REMOVE DOUBLE SLASHES NOT AS PREFIX (WINDOWS PATH COULD NEED STARTING FOR "\\". EXAMPLE: "\\mydrive\db"). AT
-      // THIS LEVEL BACKSLASHES ARRIVES AS SLASHES
-      iURL = iURL.charAt(0) + iURL.substring(1).replace("//", "/");
-    } else
-      // REMOVE ANY //
-      iURL = iURL.replace("//", "/");
-
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
     if (pos <= 0)
@@ -461,6 +453,16 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       // SEARCH FOR DB-NAME
       iURL = iURL.substring(pos + 1);
+
+      if (isWindowsOS()) {
+        // WINDOWS ONLY: REMOVE DOUBLE SLASHES NOT AS PREFIX (WINDOWS PATH COULD NEED STARTING FOR "\\". EXAMPLE: "\\mydrive\db"). AT
+        // THIS LEVEL BACKSLASHES ARRIVES AS SLASHES
+        iURL = iURL.charAt(0) + iURL.substring(1).replace("//", "/");
+      } else
+        // REMOVE ANY //
+        iURL = iURL.replace("//", "/");
+
+
       pos = iURL.indexOf('?');
 
       Map<String, String> parameters = null;

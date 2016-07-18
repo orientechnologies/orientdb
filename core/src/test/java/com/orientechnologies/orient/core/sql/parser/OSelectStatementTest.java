@@ -641,6 +641,21 @@ public class OSelectStatementTest {
     checkRightSyntax("SELECT FROM Def fetchplan *:2 [*]in_*:-2");
   }
 
+  @Test
+  public void testJsonQuoting(){
+    //issue #5911
+    checkRightSyntax("SELECT '\\/\\/'");
+    checkRightSyntax("SELECT \"\\/\\/\"");
+
+  }
+
+  @Test
+  public void testParamConcat(){
+    //issue #6049
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? ");
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like ? + '%'");
+    checkRightSyntax("Select * From ACNodeAuthentication where acNodeID like \"%\" + ? + '%'");
+  }
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

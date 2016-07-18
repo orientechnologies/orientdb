@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
@@ -51,6 +52,7 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -123,9 +125,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private ORemoteServerEventListener    asynchEventListener;
   private String                        connectionDbType;
 
-  private volatile String connectionUserName;
-
-  private String              connectionUserPassword;
   private Map<String, Object> connectionOptions;
   private OEngineRemote       engine;
   private String              recordFormat;
@@ -215,8 +214,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     stateLock.acquireWriteLock();
     try {
 
-      connectionUserName = iUserName;
-      connectionUserPassword = iUserPassword;
+      OStorageRemoteThreadLocal.INSTANCE.get().connectionUserName = iUserName;
+      OStorageRemoteThreadLocal.INSTANCE.get().connectionUserPassword = iUserPassword;
       connectionOptions = iOptions != null ? new HashMap<String, Object>(iOptions) : null; // CREATE A COPY TO AVOID USER
       // MANIPULATION
       // POST OPEN
@@ -229,6 +228,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
     } catch (Exception e) {
+      removeUser();
       if (e instanceof RuntimeException)
         // PASS THROUGH
         throw (RuntimeException) e;
@@ -238,14 +238,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } finally {
       stateLock.releaseWriteLock();
     }
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public OModificationLock getModificationLock() {
-    return null;
   }
 
   public void reload() {
@@ -298,11 +290,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     OChannelBinaryAsynchClient network = null;
 
+    if(getSessionId() == -1)
+      //SESSION ALREADY CLOSED, DO NOTHING
+      return;
+
+
     stateLock.acquireWriteLock();
     try {
       if (status == STATUS.CLOSED)
         return;
-
       network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
       try {
         setSessionId(null, -1, null);
@@ -1380,8 +1376,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // END OF RECORD ENTRIES
           network.writeByte((byte) 0);
 
-          // SEND INDEX ENTRIES
-          network.writeBytes(iTx.getIndexChanges().toStream());
+          // OLD SEND INDEX ENTRIES, NON NEEDED, CALCULATED SERVER SIDE
+          network.writeBytes(iTx.getIndexChanges((Map<String, OIndex<?>>) null).toStream());
         } finally {
           endRequest(network);
         }
@@ -1753,7 +1749,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   @Override
   public String getUserName() {
-    return connectionUserName;
+    return OStorageRemoteThreadLocal.INSTANCE.get().connectionUserName;
   }
 
   /**
@@ -1861,10 +1857,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     OChannelBinaryAsynchClient network = null;
     String currentURL = getCurrentServerURL();
+    int retryCountDown = connectionRetry;
     do {
       do {
         try {
           clearToken();
+          setSessionId(null, -1, null);
           network = getAvailableNetwork(currentURL);
           try {
             network.writeByte(OChannelBinaryProtocol.REQUEST_DB_OPEN);
@@ -1878,8 +1876,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             if (network.getSrvProtocolVersion() >= 8)
               network.writeString(connectionDbType);
 
-            network.writeString(connectionUserName);
-            network.writeString(connectionUserPassword);
+            network.writeString(getUserName());
+            network.writeString(getUserPassword());
 
           } finally {
             endRequest(network);
@@ -1922,7 +1920,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             engine.getConnectionManager().remove(network);
             network = null;
           }
-
+          if (retryCountDown <= 0)
+            throw e;
           OLogManager.instance().error(this, "Cannot open database with url " + currentURL, e);
 
         } catch (OException e) {
@@ -1940,9 +1939,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
             network = null;
           }
+          if (retryCountDown <= 0)
+            throw OException.wrapException(new OStorageException("error opening database"), e);
 
           OLogManager.instance().error(this, "Cannot open database url=" + currentURL, e);
         }
+        retryCountDown--;
       } while (engine.getConnectionManager().getReusableConnections(currentURL) > 0);
 
       currentURL = useNewServerURL(currentURL);
@@ -2134,12 +2136,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         OLogManager.instance().debug(this, "Error during acquiring of connection to URL " + lastURL, e);
         network = null;
         cause = e;
+        if (cause instanceof OInterruptedException)
+          throw (OInterruptedException) cause;
       }
 
       if (network == null) {
         lastURL = useNewServerURL(lastURL);
         if (lastURL == null) {
           parseServerURLs();
+          if (cause instanceof OInterruptedException)
+            throw (OInterruptedException) cause;
           if (cause instanceof IOException)
             throw (IOException) cause;
           throw new OIOException("Cannot open a connection to remote server: " + iCurrentURL, cause);
@@ -2404,5 +2410,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }
     return false;
+  }
+
+  public String getUserPassword() {
+    return OStorageRemoteThreadLocal.INSTANCE.get().connectionUserPassword;
   }
 }

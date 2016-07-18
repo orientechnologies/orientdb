@@ -67,14 +67,15 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private static final long                                         ONE_KB                  = 1024L;
 
   private final long                                                freeSpaceLimit          = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
-                                                                                                .getValueAsLong() * 1024L * 1024L;
+                                                                                                .getValueAsLong() * ONE_KB * ONE_KB;
   private final long                                                walSizeLimit            = OGlobalConfiguration.WAL_MAX_SIZE
-                                                                                                .getValueAsLong() * 1024L * 1024L;
+                                                                                                .getValueAsLong() * ONE_KB * ONE_KB;
 
   private final List<LogSegment>                                    logSegments             = new ArrayList<LogSegment>();
   private final int                                                 maxPagesCacheSize;
   private final int                                                 commitDelay;
   private final long                                                maxSegmentSize;
+  private final long                                                preferredSegmentCount;
   private final File                                                walLocation;
   private final RandomAccessFile                                    masterRecordLSNHolder;
   private final OLocalPaginatedStorage                              storage;
@@ -131,9 +132,14 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       @Override
       public void run() {
         try {
-          commit();
-        } catch (Throwable e) {
-          OLogManager.instance().error(this, "Error during WAL background flush", e);
+          try {
+            commit();
+          } catch (Throwable e) {
+            OLogManager.instance().error(this, "Error during WAL background flush", e);
+          }
+        }
+        finally {
+          checkFreeSpace();
         }
       }
 
@@ -217,16 +223,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         }
 
         assert !pagesCache.isEmpty();
-
-        final long freeSpace = walLocation.getFreeSpace();
-        if (freeSpace < freeSpaceLimit) {
-          for (WeakReference<OLowDiskSpaceListener> listenerWeakReference : lowDiskSpaceListeners) {
-            final OLowDiskSpaceListener lowDiskSpaceListener = listenerWeakReference.get();
-
-            if (lowDiskSpaceListener != null)
-              lowDiskSpaceListener.lowDiskSpace(new OLowDiskSpaceInformation(freeSpace, freeSpaceLimit));
-          }
-        }
       }
 
       private void flushPage(byte[] content) throws IOException {
@@ -635,6 +631,18 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       lowDiskSpaceListeners.remove(ref);
   }
 
+  public void checkFreeSpace() {
+    final long freeSpace = walLocation.getFreeSpace();
+    if (freeSpace < freeSpaceLimit) {
+      for (WeakReference<OLowDiskSpaceListener> listenerWeakReference : lowDiskSpaceListeners) {
+        final OLowDiskSpaceListener lowDiskSpaceListener = listenerWeakReference.get();
+
+        if (lowDiskSpaceListener != null)
+          lowDiskSpaceListener.lowDiskSpace(new OLowDiskSpaceInformation(freeSpace, freeSpaceLimit));
+      }
+    }
+  }
+
   public void addFullCheckpointListener(OFullCheckpointRequestListener listener) {
     fullCheckpointListeners.add(new WeakReference<OFullCheckpointRequestListener>(listener));
   }
@@ -658,6 +666,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
+    this.preferredSegmentCount = walSizeLimit / maxSegmentSize;
     this.storage = storage;
 
     try {
@@ -1112,6 +1121,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     } finally {
       syncObject.unlock();
     }
+  }
+
+  @Override
+  public long getPreferredSegmentCount() {
+    return preferredSegmentCount;
   }
 
   private LogSegment removeHeadSegmentFromList() {

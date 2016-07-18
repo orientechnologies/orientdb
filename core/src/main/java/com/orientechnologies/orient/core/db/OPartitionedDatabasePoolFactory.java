@@ -19,15 +19,15 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.googlecode.concurrentlinkedhashmap.EvictionListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
 
 /**
  * Factory for {@link OPartitionedDatabasePool} pool, which also works as LRU cache with good mutlicore architecture support.
@@ -87,7 +87,7 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
       poolStore.remove(poolIdentity, pool);
 
     while (true) {
-      pool = new OPartitionedDatabasePool(url, userName, userPassword, maxPoolSize);
+      pool = new OPartitionedDatabasePool(url, userName, userPassword, 64, maxPoolSize);
 
       final OPartitionedDatabasePool oldPool = poolStore.putIfAbsent(poolIdentity, pool);
 

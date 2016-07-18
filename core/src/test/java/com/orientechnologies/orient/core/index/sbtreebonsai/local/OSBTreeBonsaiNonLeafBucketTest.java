@@ -26,6 +26,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointer.incrementReferrer();
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(cacheEntry, 0, false,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
@@ -39,6 +40,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     Assert.assertEquals(treeBucket.getLeftSibling().getPageIndex(), -1);
     Assert.assertEquals(treeBucket.getRightSibling().getPageIndex(), -1);
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -58,6 +60,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     cachePointer.incrementReferrer();
 
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(cacheEntry, 0, false,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
@@ -101,6 +104,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
       prevLeft = entry.leftChild;
     }
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
@@ -119,6 +123,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0), 0, 0);
     cachePointer.incrementReferrer();
     OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+    cacheEntry.acquireExclusiveLock();
 
     OSBTreeBonsaiBucket<Long, OIdentifiable> treeBucket = new OSBTreeBonsaiBucket<Long, OIdentifiable>(cacheEntry, 0, false,
         OLongSerializer.INSTANCE, OLinkSerializer.INSTANCE, null);
@@ -185,6 +190,7 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     Assert.assertEquals(treeBucket.size(), originalSize);
     Assert.assertEquals(addedKeys, keysToAdd);
 
+    cacheEntry.releaseExclusiveLock();
     cachePointer.decrementReferrer();
   }
 
