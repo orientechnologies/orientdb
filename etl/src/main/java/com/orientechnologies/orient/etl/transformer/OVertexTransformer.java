@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
@@ -66,10 +67,12 @@ public class OVertexTransformer extends OAbstractTransformer {
   @Override
   public Object executeTransform(final Object input) {
 
-    final OrientVertex v = pipeline.getGraphDatabase().getVertex(input);
+    OrientBaseGraph graph = pipeline.getGraphDatabase();
+    final OrientVertex v = graph.getVertex(input);
 
-    if (v == null)
+    if (v == null) {
       return null;
+    }
 
     if (vertexClass != null && !vertexClass.equals(v.getRecord().getClassName()))
       try {
@@ -82,8 +85,9 @@ public class OVertexTransformer extends OAbstractTransformer {
         } else {
           throw e;
         }
-      }
+      } finally {
 
+      }
     return v;
   }
 }

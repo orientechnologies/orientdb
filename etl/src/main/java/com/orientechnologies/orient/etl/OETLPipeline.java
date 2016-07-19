@@ -18,10 +18,6 @@
 
 package com.orientechnologies.orient.etl;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
-
-import java.util.List;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -34,19 +30,23 @@ import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.transformer.OTransformer;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
+import java.util.List;
+
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
+
 /**
  * ETL pipeline: sequence of OTransformer and a OLoader.
  *
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLPipeline {
-  protected final OETLProcessor      processor;
-  protected final List<OTransformer> transformers;
-  protected final OLoader            loader;
-  protected final OCommandContext    context;
-  protected final LOG_LEVELS         logLevel;
-  protected final int                maxRetries;
-  protected       boolean            haltOnError;
+  protected final OETLProcessor          processor;
+  protected final List<OTransformer>     transformers;
+  protected final OLoader                loader;
+  protected final OCommandContext        context;
+  protected final LOG_LEVELS             logLevel;
+  protected final int                    maxRetries;
+  protected       boolean                haltOnError;
   protected       ODatabaseDocument  db;
   protected       OrientBaseGraph    graph;
 
@@ -61,10 +61,13 @@ public class OETLPipeline {
 
     context = new OBasicCommandContext();
 
-    for (OTransformer t : this.transformers)
+    for (OTransformer t : this.transformers) {
+//      processor.out(INFO, "passing pipeline to :: " + t.getName());
       t.setPipeline(this);
+    }
 
   }
+
 
   public synchronized void begin() {
     loader.beginLoader(this);

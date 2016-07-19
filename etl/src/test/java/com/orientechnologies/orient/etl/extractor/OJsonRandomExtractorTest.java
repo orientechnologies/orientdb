@@ -37,8 +37,9 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
   public void shouldLoadSingleThread() {
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10} }, "
-        + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
-        + "classes: [{name: 'Person', extends: 'V'}] } } }");
+            + "loader: { orientdb: {batchCommit: 10000 , dbURL: 'memory:OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
+            + "classes: [{name: 'Person', extends: 'V'}] } } }",
+        new OBasicCommandContext().setVariable("parallel", Boolean.FALSE).setVariable("dumpEveryMs", 1000));
 
     assertThat(graph.countVertices("Person")).isEqualTo(TOTAL);
 
@@ -49,8 +50,8 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
   public void shouldLoadMultipleThreadsInParallel() {
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
-            + "loader: { orientdb: { dbURL: 'plocal:./target/OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
-            + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",
+            + "loader: { orientdb: { dbURL: 'memory:OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
+            + "classes: [{name: 'Person', extends: 'V', clusters: 8  }] } } }",
         new OBasicCommandContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
     assertThat(graph.countVertices("Person")).isEqualTo(TOTAL);
@@ -62,7 +63,7 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
   public void shouldLoadMultipleThreadsInParallelWithBatchCommit() {
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "
-            + "loader: { orientdb: {batchCommit: 10000 ,dbURL: 'plocal:./target/OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
+            + "loader: { orientdb: {batchCommit: 10000 ,dbURL: 'memory:OETLBaseTest', dbType:'graph', class: 'Person', useLightweightEdges:false, "
             + "classes: [{name: 'Person', extends: 'V', clusters: 8 }] } } }",
         new OBasicCommandContext().setVariable("parallel", Boolean.TRUE).setVariable("dumpEveryMs", 1000));
 
@@ -70,5 +71,8 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
 
     graph.getRawGraph().browseClass("Person").forEach(doc -> assertThat(doc.fields()).isEqualTo(10));
   }
+
+
+
 
 }
