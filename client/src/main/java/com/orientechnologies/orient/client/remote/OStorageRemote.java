@@ -2345,4 +2345,36 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return this;
   }
 
+  public void importDatabase(final String options, final InputStream inputStream, final String name, final OCommandOutputListener listener) {
+    networkOperation(new OStorageRemoteOperation<Void>() {
+      @Override
+      public Void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+        try {
+          beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_IMPORT, session);
+          network.writeString(options);
+          network.writeString(name);
+          byte[] buffer = new byte[1024];
+          int size;
+          while ((size = inputStream.read(buffer)) > 0) {
+            network.writeBytes(buffer, size);
+          }
+          network.writeBytes(null);
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network, session);
+          String message;
+          while ((message = network.readString()) != null) {
+            listener.onMessage(message);
+          }
+        } finally {
+          endResponse(network);
+        }
+        return null;
+      }
+    }, "Error sending import request");
+  }
+
 }
