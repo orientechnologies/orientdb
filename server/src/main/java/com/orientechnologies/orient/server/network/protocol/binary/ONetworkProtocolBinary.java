@@ -33,6 +33,7 @@ import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCommandCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -47,6 +48,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.*;
@@ -95,10 +97,7 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
@@ -519,6 +518,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       case OChannelBinaryProtocol.DISTRIBUTED_RESPONSE:
         executeDistributedResponse(connection);
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_IMPORT:
+        importDatabase(connection);
         break;
 
       default:
@@ -2797,6 +2800,45 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       return remoteAddress.getAddress().getHostAddress() + ":" + remoteAddress.getPort();
     }
     return null;
+  }
+
+  public void importDatabase(OClientConnection connection) throws IOException {
+    setDataCommandInfo(connection, "Create record");
+
+    if (!isConnectionAlive(connection))
+      return;
+
+    String options = channel.readString();
+    String originalName = channel.readString();
+    File file = File.createTempFile(connection.getDatabase().getName() + "import", originalName);
+    FileOutputStream output = new FileOutputStream(file);
+    byte[] bytes;
+    while ((bytes = channel.readBytes()) != null) {
+      output.write(bytes);
+    }
+    output.close();
+    beginResponse();
+    sendOk(connection,clientTxId);
+    try {
+      ODatabaseImport imp = new ODatabaseImport(connection.getDatabase(), file.getAbsolutePath(), new OCommandOutputListener() {
+        @Override
+        public void onMessage(String iText) {
+          try {
+            if (iText != null)
+              channel.writeString(iText);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
+      });
+      imp.setOptions(options);
+      imp.importDatabase();
+      imp.close();
+      channel.writeString(null);
+    } finally {
+      endResponse(connection);
+    }
+
   }
 
 }

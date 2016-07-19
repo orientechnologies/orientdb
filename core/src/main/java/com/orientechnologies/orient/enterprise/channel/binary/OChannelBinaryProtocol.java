@@ -101,6 +101,9 @@ public class OChannelBinaryProtocol {
   public static final byte REQUEST_DATACLUSTER_FREEZE  = 96;
   public static final byte REQUEST_DATACLUSTER_RELEASE = 97;
 
+  // IMPORT
+  public static final byte REQUEST_DB_IMPORT = 98;
+
   // REMOTE SB-TREE COLLECTIONS
   public static final byte REQUEST_CREATE_SBTREE_BONSAI            = 110;
   public static final byte REQUEST_SBTREE_BONSAI_GET               = 111;
