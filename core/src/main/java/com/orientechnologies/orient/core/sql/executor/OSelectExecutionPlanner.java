@@ -152,6 +152,10 @@ public class OSelectExecutionPlanner {
     }
   }
 
+  /**
+   * if GROUP BY is performed on an expression that is not explicitly in the pre-aggregate projections, then
+   * that expression has to be put in the pre-aggregate (only here, in subsequent steps it's removed)
+   */
   private void addGroupByExpressionsToProjections() {
     if (this.groupBy == null || this.groupBy.getItems() == null || this.groupBy.getItems().size() == 0) {
       return;
@@ -172,6 +176,8 @@ public class OSelectExecutionPlanner {
         newItem.setExpression(exp);
         preAggregateProjection.getItems().add(newItem);
       }
+
+      //TODO check ORDER BY and see if that projection has to be also propagated
     }
 
   }
