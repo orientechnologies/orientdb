@@ -521,6 +521,29 @@ public class OSelectStatementExecutionTest {
   }
 
 
+  @Test public void testAggregateSumNoGroupByInProjection2() {
+    String className = "testAggregateSumNoGroupByInProjection2";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("type", i % 2 == 0 ? "dd1" : "dd2");
+      doc.setProperty("val", i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select sum(val) from " + className + " group by type.substring(0,1)");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Object sum = item.<Object>getProperty("sum(val)");
+      Assert.assertEquals(45, sum);
+
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   public void stressTestNew() {
     String className = "stressTestNew";
     db.getMetadata().getSchema().createClass(className);

@@ -68,10 +68,6 @@ public class OSelectExecutionPlanner {
     return result;
   }
 
-  private void handleAggregate(OSelectExecutionPlan result, OGroupBy groupBy, OCommandContext ctx) {
-    //TODO
-  }
-
   private void handleProjectionsBeforeOrderBy(OSelectExecutionPlan result, OProjection projection, OOrderBy orderBy,
       OCommandContext ctx) {
     if (orderBy != null) {
@@ -160,6 +156,8 @@ public class OSelectExecutionPlanner {
     if (this.groupBy == null || this.groupBy.getItems() == null || this.groupBy.getItems().size() == 0) {
       return;
     }
+    OGroupBy newGroupBy = new OGroupBy(-1);
+    int i = 0;
     for (OExpression exp : groupBy.getItems()) {
       if (exp.isAggregate()) {
         throw new OCommandExecutionException("Cannot group by an aggregate function");
@@ -168,15 +166,22 @@ public class OSelectExecutionPlanner {
       for (String alias : preAggregateProjection.getAllAliases()) {
         if (alias.equals(exp.getDefaultAlias().getStringValue())) {
           found = true;
+          newGroupBy.getItems().add(exp);
           break;
         }
       }
       if (!found) {
         OProjectionItem newItem = new OProjectionItem(-1);
         newItem.setExpression(exp);
+        OIdentifier groupByAlias = new OIdentifier(-1);
+        groupByAlias.setStringValue("__$$$GROUP_BY_ALIAS$$$__"+i);
+        newItem.setAlias(groupByAlias);
         preAggregateProjection.getItems().add(newItem);
+        newGroupBy.getItems().add(new OExpression(groupByAlias));
       }
 
+      groupBy = newGroupBy;
+      
       //TODO check ORDER BY and see if that projection has to be also propagated
     }
 

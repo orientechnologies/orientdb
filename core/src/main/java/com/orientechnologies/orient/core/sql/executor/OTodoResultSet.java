@@ -8,9 +8,9 @@ import java.util.Optional;
  */
 public interface OTodoResultSet {
 
-  public boolean hasNext();
+  boolean hasNext();
 
-  public OResult next();
+  OResult next();
 
   void close();
 
