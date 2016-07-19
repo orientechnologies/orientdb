@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
@@ -150,6 +151,14 @@ public class OSuffixIdentifier extends SimpleNode {
       return true;
     }
     return false;
+  }
+
+  public void aggregate(Object value, OCommandContext ctx) {
+    throw new UnsupportedOperationException("this operation does not support plain aggregation: "+toString());
+  }
+
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    throw new UnsupportedOperationException("this operation does not support plain aggregation: "+toString());
   }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

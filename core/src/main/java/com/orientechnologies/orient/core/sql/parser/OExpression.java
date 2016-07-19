@@ -4,7 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
@@ -124,7 +126,7 @@ public class OExpression extends SimpleNode {
   }
 
   public boolean isEarlyCalculated() {
-    if(this.mathExpression!=null ){
+    if (this.mathExpression != null) {
       return this.mathExpression.isEarlyCalculated();
     }
     if (value instanceof Number) {
@@ -303,6 +305,14 @@ public class OExpression extends SimpleNode {
       return result;
     } else {
       return this;
+    }
+  }
+
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    if (mathExpression != null) {
+      return mathExpression.getAggregationContext(ctx);
+    } else {
+      throw new OCommandExecutionException("Cannot aggregate on " + toString());
     }
   }
 }

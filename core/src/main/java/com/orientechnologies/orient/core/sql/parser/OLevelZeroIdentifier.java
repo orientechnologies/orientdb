@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
@@ -123,14 +124,27 @@ public class OLevelZeroIdentifier extends SimpleNode {
     return false;
   }
 
+  public boolean isEarlyCalculated() {
+    if (functionCall != null && functionCall.isEarlyCalculated()) {
+      return true;
+    }
+    if (Boolean.TRUE.equals(self)) {
+      return false;
+    }
+    if (collection != null && collection.isEarlyCalculated()) {
+      return true;
+    }
+    return false;
+  }
+
   public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
     if (isAggregate()) {
       OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
       if (functionCall != null) {
         SimpleNode node = functionCall.splitForAggregation(aggregateProj);
-        if(node instanceof OFunctionCall){
+        if (node instanceof OFunctionCall) {
           result.functionCall = (OFunctionCall) node;
-        }else {
+        } else {
           return node;
         }
       } else if (collection != null) {
@@ -145,17 +159,14 @@ public class OLevelZeroIdentifier extends SimpleNode {
     }
   }
 
-  public boolean isEarlyCalculated() {
-    if(functionCall!=null && functionCall.isEarlyCalculated()){
-      return true;
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    if (isAggregate()) {
+      OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
+      if (functionCall != null) {
+        return functionCall.getAggregationContext(ctx);
+      }
     }
-    if(Boolean.TRUE.equals(self)){
-      return false;
-    }
-    if(collection!=null && collection.isEarlyCalculated()){
-      return true;
-    }
-    return false;
+    throw new OCommandExecutionException("cannot aggregate on " + toString());
   }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */

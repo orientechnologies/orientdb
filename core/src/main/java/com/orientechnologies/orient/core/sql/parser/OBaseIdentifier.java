@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
@@ -121,6 +123,17 @@ public class OBaseIdentifier extends SimpleNode {
     return false;
   }
 
+
+  public boolean isEarlyCalculated() {
+    if(levelZero!=null && levelZero.isEarlyCalculated()){
+      return true;
+    }
+    if(suffix!=null && suffix.isEarlyCalculated()){
+      return true;
+    }
+    return false;
+  }
+
   public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
     if (isAggregate()) {
       OBaseIdentifier result = new OBaseIdentifier(-1);
@@ -142,14 +155,21 @@ public class OBaseIdentifier extends SimpleNode {
     }
   }
 
-  public boolean isEarlyCalculated() {
-    if(levelZero!=null && levelZero.isEarlyCalculated()){
-      return true;
+
+
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    if (isAggregate()) {
+
+      if (levelZero != null) {
+      return levelZero.getAggregationContext(ctx);
+      } else if (suffix != null) {
+        return suffix.getAggregationContext(ctx);
+      } else {
+        throw new OCommandExecutionException("cannot aggregate on " + toString());
+      }
+    } else {
+      throw new OCommandExecutionException("cannot aggregate on " + toString());
     }
-    if(suffix!=null && suffix.isEarlyCalculated()){
-      return true;
-    }
-    return false;
   }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

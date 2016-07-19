@@ -309,7 +309,6 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-
   @Test public void testProjections() {
     String className = "testProjections";
     db.getMetadata().getSchema().createClass(className);
@@ -319,7 +318,7 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("surname", "surname" + i);
       doc.save();
     }
-    OTodoResultSet result = db.query("select name from " + className );
+    OTodoResultSet result = db.query("select name from " + className);
     printExecutionPlan(result);
 
     for (int i = 0; i < 300; i++) {
@@ -344,7 +343,7 @@ public class OSelectStatementExecutionTest {
     try {
       OTodoResultSet result = db.query("select count(*) from " + className);
       printExecutionPlan(result);
-    }catch(Exception e){
+    } catch (Exception e) {
       Assert.fail();
     }
   }
@@ -356,9 +355,9 @@ public class OSelectStatementExecutionTest {
     try {
       db.query("select max(a) + max(b) + pippo + pluto as foo, max(d) + max(e), f from " + className);
       Assert.fail();
-    }catch(OCommandExecutionException x){
+    } catch (OCommandExecutionException x) {
 
-    }catch(Exception e){
+    } catch (Exception e) {
       Assert.fail();
     }
   }
@@ -370,9 +369,9 @@ public class OSelectStatementExecutionTest {
     try {
       db.query("select [max(a), max(b), foo] from " + className);
       Assert.fail();
-    }catch(OCommandExecutionException x){
+    } catch (OCommandExecutionException x) {
 
-    }catch(Exception e){
+    } catch (Exception e) {
       Assert.fail();
     }
   }
@@ -385,7 +384,7 @@ public class OSelectStatementExecutionTest {
       String query = "select [max(a), max(b)] from " + className;
       OTodoResultSet result = db.query(query);
       printExecutionPlan(query, result);
-    }catch(Exception x){
+    } catch (Exception x) {
       Assert.fail();
     }
   }
@@ -395,13 +394,102 @@ public class OSelectStatementExecutionTest {
     db.getMetadata().getSchema().createClass(className);
 
     try {
-      OTodoResultSet result = db.query("select max(a + b) + (max(b + c * 2) + 1 + 2) * 3 as foo, max(d) + max(e), f from " + className);
+      OTodoResultSet result = db
+          .query("select max(a + b) + (max(b + c * 2) + 1 + 2) * 3 as foo, max(d) + max(e), f from " + className);
       printExecutionPlan(result);
-    }catch(Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
       Assert.fail();
     }
   }
+
+  @Test public void testAggregateSum() {
+    String className = "testAggregateSum";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("val", i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select sum(val) from " + className);
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals(45, (Object) item.getProperty("sum(val)"));
+
+    result.close();
+  }
+
+  @Test public void testAggregateSumGroupBy() {
+    String className = "testAggregateSumGroupBy";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("type", i % 2 == 0 ? "even" : "odd");
+      doc.setProperty("val", i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select sum(val), type from " + className + " group by type");
+    printExecutionPlan(result);
+    boolean evenFound = false;
+    boolean oddFound = false;
+    for (int i = 0; i < 2; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      if ("even".equals(item.getProperty("type"))) {
+        Assert.assertEquals(20, item.<Object>getProperty("sum(val)"));
+        evenFound = true;
+      } else if ("odd".equals(item.getProperty("type"))) {
+        Assert.assertEquals(25, item.<Object>getProperty("sum(val)"));
+        oddFound = true;
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    Assert.assertTrue(evenFound);
+    Assert.assertTrue(oddFound);
+    result.close();
+  }
+
+
+  @Test public void testAggregateSumMaxMinGroupBy() {
+    String className = "testAggregateSumMaxMinGroupBy";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("type", i % 2 == 0 ? "even" : "odd");
+      doc.setProperty("val", i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select sum(val), max(val), min(val), type from " + className + " group by type");
+    printExecutionPlan(result);
+    boolean evenFound = false;
+    boolean oddFound = false;
+    for (int i = 0; i < 2; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      if ("even".equals(item.getProperty("type"))) {
+        Assert.assertEquals(20, item.<Object>getProperty("sum(val)"));
+        Assert.assertEquals(8, item.<Object>getProperty("max(val)"));
+        Assert.assertEquals(0, item.<Object>getProperty("min(val)"));
+        evenFound = true;
+      } else if ("odd".equals(item.getProperty("type"))) {
+        Assert.assertEquals(25, item.<Object>getProperty("sum(val)"));
+        Assert.assertEquals(9, item.<Object>getProperty("max(val)"));
+        Assert.assertEquals(1, item.<Object>getProperty("min(val)"));
+        oddFound = true;
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    Assert.assertTrue(evenFound);
+    Assert.assertTrue(oddFound);
+    result.close();
+  }
+
+
 
 
   public void stressTestNew() {
@@ -430,7 +518,6 @@ public class OSelectStatementExecutionTest {
       System.out.println("new: " + ((end - begin) / 1000000));
     }
   }
-
 
   public void stressTestOld() {
     String className = "stressTestOld";
@@ -465,7 +552,7 @@ public class OSelectStatementExecutionTest {
   }
 
   private void printExecutionPlan(String query, OTodoResultSet result) {
-    if(query!=null){
+    if (query != null) {
       System.out.println(query);
     }
     result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));

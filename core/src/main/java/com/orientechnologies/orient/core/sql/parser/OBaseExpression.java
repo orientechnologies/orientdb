@@ -4,7 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
@@ -134,7 +136,7 @@ public class OBaseExpression extends OMathExpression {
     if (number != null || inputParam != null || string != null) {
       return true;
     }
-    if(identifier!=null && identifier.isEarlyCalculated()){
+    if (identifier != null && identifier.isEarlyCalculated()) {
       return true;
     }
     return false;
@@ -162,25 +164,34 @@ public class OBaseExpression extends OMathExpression {
   }
 
   @Override public boolean isAggregate() {
-    if(identifier!=null && identifier.isAggregate()){
+    if (identifier != null && identifier.isAggregate()) {
       return true;
     }
     return false;
   }
 
   public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
-    if(isAggregate()){
+    if (isAggregate()) {
       SimpleNode splitResult = identifier.splitForAggregation(aggregateProj);
-      if(splitResult instanceof OBaseIdentifier) {
+      if (splitResult instanceof OBaseIdentifier) {
         OBaseExpression result = new OBaseExpression(-1);
         result.identifier = (OBaseIdentifier) splitResult;
         return result;
       }
       return splitResult;
-    }else{
+    } else {
       return this;
     }
   }
+
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    if (identifier != null) {
+      return identifier.getAggregationContext(ctx);
+    } else {
+      throw new OCommandExecutionException("cannot aggregate on " + toString());
+    }
+  }
+
 }
 
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

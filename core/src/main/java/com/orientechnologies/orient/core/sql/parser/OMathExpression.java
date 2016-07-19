@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.math.BigDecimal;
@@ -18,6 +19,7 @@ public class OMathExpression extends SimpleNode {
   public OExpression getExpandContent() {
     throw new OCommandExecutionException("Invalid expand expression");
   }
+
 
   public enum Operator {
     PLUS {
@@ -411,6 +413,12 @@ public class OMathExpression extends SimpleNode {
       return this;
     }
   }
+
+
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    throw new UnsupportedOperationException("multiple math expressions do not allow plain aggregation");
+  }
+
 
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

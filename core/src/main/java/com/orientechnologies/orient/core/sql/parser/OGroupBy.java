@@ -18,7 +18,9 @@ public class OGroupBy extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -33,6 +35,8 @@ public class OGroupBy extends SimpleNode {
     }
   }
 
-
+  public List<OExpression> getItems() {
+    return items;
+  }
 }
 /* JavaCC - OriginalChecksum=4739190aa6c1a3533a89b76a15bd6fdf (do not edit this line) */

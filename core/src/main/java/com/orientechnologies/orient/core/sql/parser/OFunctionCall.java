@@ -8,6 +8,8 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
+import com.orientechnologies.orient.core.sql.executor.OFuncitonAggregationContext;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 
@@ -230,12 +232,20 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean isEarlyCalculated() {
-    for(OExpression param:params){
-      if(!param.isEarlyCalculated()){
+    for (OExpression param : params) {
+      if (!param.isEarlyCalculated()) {
         return false;
       }
     }
     return true;
+  }
+
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
+    function.config(this.params.toArray());
+
+    OFuncitonAggregationContext result = new OFuncitonAggregationContext(function, this.params);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */

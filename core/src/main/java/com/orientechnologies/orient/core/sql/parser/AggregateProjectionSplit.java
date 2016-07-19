@@ -4,7 +4,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by luigidellaquila on 15/07/16.
+ *
+ * This class is used by the query planner to split projections in three parts:
+ * <ul>
+ * <li>pre-aggregate projections</li>
+ * <li>aggregate projections</li>
+ * <li>post-aggregate projections</li>
+ * </ul>
+ *
+ * An example:
+ * <code>
+ *   select max(a + b) + (max(b + c * 2) + 1 + 2) * 3 as foo, max(d) + max(e), f from " + className
+ * </code>
+ * will become
+ * <code>
+ *
+ *   a + b AS _$$$OALIAS$$_1, b + c * 2 AS _$$$OALIAS$$_3, d AS _$$$OALIAS$$_5, e AS _$$$OALIAS$$_7, f
+ *
+ *   max(_$$$OALIAS$$_1) AS _$$$OALIAS$$_0, max(_$$$OALIAS$$_3) AS _$$$OALIAS$$_2, max(_$$$OALIAS$$_5) AS _$$$OALIAS$$_4, max(_$$$OALIAS$$_7) AS _$$$OALIAS$$_6, f
+ *
+ *   _$$$OALIAS$$_0 + (_$$$OALIAS$$_2 + 1 + 2) * 3 AS `foo`, _$$$OALIAS$$_4 + _$$$OALIAS$$_6 AS `max(d) + max(e)`, f
+ * </code>
+ *
+ *
+ * @author Luigi Dell'Aquila
  */
 public class AggregateProjectionSplit {
 

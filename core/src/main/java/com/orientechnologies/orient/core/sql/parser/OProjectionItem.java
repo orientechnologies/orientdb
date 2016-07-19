@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Map;
@@ -15,6 +17,8 @@ public class OProjectionItem extends SimpleNode {
   protected OIdentifier alias;
 
   protected OExpression expression;
+
+  protected Boolean aggregate;
 
   public OProjectionItem(int id) {
     super(id);
@@ -65,7 +69,7 @@ public class OProjectionItem extends SimpleNode {
     if (all) {
       builder.append("*");
     } else {
-      if(expression!=null) {
+      if (expression != null) {
         expression.toString(params, builder);
       }
       if (alias != null) {
@@ -119,12 +123,18 @@ public class OProjectionItem extends SimpleNode {
   }
 
   public boolean isAggregate() {
+    if (aggregate != null) {
+      return aggregate;
+    }
     if (all) {
+      aggregate = false;
       return false;
     }
     if (expression.isAggregate()) {
+      aggregate = true;
       return true;
     }
+    aggregate = false;
     return false;
   }
 
@@ -143,6 +153,14 @@ public class OProjectionItem extends SimpleNode {
     } else {
       return this;
     }
+  }
+
+
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    if(expression==null){
+      throw new OCommandExecutionException("Cannot aggregate on this projection: "+toString());
+    }
+    return expression.getAggregationContext(ctx);
   }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */
