@@ -20,6 +20,10 @@
 		<property name="hazelcast.memcache.enabled">false</property>
 		<property name="hazelcast.rest.enabled">false</property>
 		<property name="hazelcast.wait.seconds.before.join">0</property>
+		<property name="hazelcast.operation.thread.count">1</property>
+		<property name="hazelcast.operation.generic.thread.count">1</property>
+		<property name="hazelcast.client.event.thread.count">1</property>
+		<property name="hazelcast.event.thread.count">1</property>
 	</properties>
 	<network>
 		<port auto-increment="false">2435</port>
