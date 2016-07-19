@@ -685,13 +685,17 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             Orient.instance().scheduleTask(new TimerTask() {
               @Override
               public void run() {
-                final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
-                if (lastTimeNodeLeft == null)
-                  // NODE WAS BACK ONLINE
-                  return;
+                try {
+                  final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
+                  if (lastTimeNodeLeft == null)
+                    // NODE WAS BACK ONLINE
+                    return;
 
-                if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
-                  removeNodeFromConfiguration(nodeLeftName);
+                  if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
+                    removeNodeFromConfiguration(nodeLeftName);
+                  }
+                } catch (Exception e) {
+                  // IGNORE IT
                 }
               }
             }, autoRemoveOffLineServer, 0);
@@ -766,7 +770,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       final String dbName = iDatabase.getName();
 
       if (configurationMap.containsKey(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName))
-        throw new ODistributedException("Cannot create the new database '" + dbName + "' because it is already present in distributed configuration");
+        throw new ODistributedException(
+            "Cannot create the new database '" + dbName + "' because it is already present in distributed configuration");
 
       // INIT THE STORAGE
       getStorage(dbName);

@@ -392,7 +392,7 @@ public class OClientConnectionManager {
             channel.flush();
 
             pushed.add(c.getRemoteAddress());
-            OLogManager.instance().info(this, "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
+            OLogManager.instance().debug(this, "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
 
           } finally {
             channel.releaseWriteLock();
