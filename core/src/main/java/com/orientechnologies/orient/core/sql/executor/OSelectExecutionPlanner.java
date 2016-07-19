@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.ArrayList;
@@ -114,12 +115,12 @@ public class OSelectExecutionPlanner {
     OProjection postAggregate = new OProjection(-1);
     postAggregate.setItems(new ArrayList<>());
 
-    boolean projectionChanged = false;
+    boolean isAggregate = false;
     AggregateProjectionSplit result = new AggregateProjectionSplit();
     for (OProjectionItem item : this.projection.getItems()) {
       result.reset();
       if (item.isAggregate()) {
-        projectionChanged = true;
+        isAggregate = true;
         OProjectionItem post = item.splitForAggregation(result);
         OIdentifier postAlias = item.getProjectionAlias();
         postAlias.setQuoted(true);
@@ -136,11 +137,43 @@ public class OSelectExecutionPlanner {
         postAggregate.getItems().add(aggItem);
       }
     }
-    if (projectionChanged) {
-      this.projection = postAggregate;
+    if (isAggregate) {
       this.preAggregateProjection = preAggregate;
+      if (preAggregateProjection.getItems() == null || preAggregateProjection.getItems().size() == 0) {
+        preAggregateProjection = null;
+      }
       this.aggregateProjection = aggregate;
+      if (aggregateProjection.getItems() == null || aggregateProjection.getItems().size() == 0) {
+        aggregateProjection = null;
+      }
+      this.projection = postAggregate;
+
+      addGroupByExpressionsToProjections();
     }
+  }
+
+  private void addGroupByExpressionsToProjections() {
+    if (this.groupBy == null || this.groupBy.getItems() == null || this.groupBy.getItems().size() == 0) {
+      return;
+    }
+    for (OExpression exp : groupBy.getItems()) {
+      if (exp.isAggregate()) {
+        throw new OCommandExecutionException("Cannot group by an aggregate function");
+      }
+      boolean found = false;
+      for (String alias : preAggregateProjection.getAllAliases()) {
+        if (alias.equals(exp.getDefaultAlias().getStringValue())) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        OProjectionItem newItem = new OProjectionItem(-1);
+        newItem.setExpression(exp);
+        preAggregateProjection.getItems().add(newItem);
+      }
+    }
+
   }
 
   /**

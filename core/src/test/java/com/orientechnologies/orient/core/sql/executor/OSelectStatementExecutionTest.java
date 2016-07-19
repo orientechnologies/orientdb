@@ -490,6 +490,35 @@ public class OSelectStatementExecutionTest {
   }
 
 
+  @Test public void testAggregateSumNoGroupByInProjection() {
+    String className = "testAggregateSumNoGroupByInProjection";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("type", i % 2 == 0 ? "even" : "odd");
+      doc.setProperty("val", i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select sum(val) from " + className + " group by type");
+    printExecutionPlan(result);
+    boolean evenFound = false;
+    boolean oddFound = false;
+    for (int i = 0; i < 2; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Object sum = item.<Object>getProperty("sum(val)");
+      if(sum.equals(20)){
+        evenFound = true;
+      } else if (sum.equals(25)) {
+        oddFound = true;
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    Assert.assertTrue(evenFound);
+    Assert.assertTrue(oddFound);
+    result.close();
+  }
 
 
   public void stressTestNew() {
