@@ -94,7 +94,7 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
   }
 
   protected String getDatabaseURL(final ServerRun server) {
-    return "remote:" + server.getDatabasePath(getDatabaseName());
+    return "remote:localhost:2424;localhost:2425;localhost:2426/" + getDatabaseName();
   }
 
   @Override

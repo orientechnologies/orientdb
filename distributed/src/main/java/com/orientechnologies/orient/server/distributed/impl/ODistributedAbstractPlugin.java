@@ -1175,7 +1175,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   /**
-   * Returns the clusters where sync is required.
+   * Installs a database from the network.
    */
   protected void installDatabaseFromNetwork(final String dbPath, final String databaseName,
       final ODistributedDatabaseImpl distrDatabase, final String iNode, final ODistributedDatabaseChunk firstChunk,

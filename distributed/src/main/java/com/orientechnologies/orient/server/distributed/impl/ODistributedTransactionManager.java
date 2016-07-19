@@ -245,7 +245,8 @@ public class ODistributedTransactionManager {
       final ORecordId rid = (ORecordId) op.getRecord().getIdentity();
       switch (op.type) {
       case ORecordOperation.CREATED:
-        storage.checkForCluster(rid, localNodeName, dbCfg);
+        if (!rid.isNew())
+          storage.checkForCluster(rid, localNodeName, dbCfg);
         break;
       }
     }
