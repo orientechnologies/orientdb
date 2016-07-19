@@ -1767,7 +1767,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   protected String checkForCluster(final ORecordId iRecordId, final String localNodeName, final ODistributedConfiguration dbCfg) {
 
-    if (iRecordId.isNew())
+    if (iRecordId.getClusterId() < 0)
       throw new IllegalArgumentException("RID " + iRecordId + " is not valid");
 
     String clusterName = getClusterNameByRID(iRecordId);
