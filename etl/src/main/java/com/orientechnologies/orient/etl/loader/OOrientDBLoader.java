@@ -27,7 +27,11 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLPipeline;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -41,8 +45,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
-import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.DOCUMENT;
-import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.GRAPH;
+import static com.orientechnologies.orient.etl.loader.OOrientDBLoader.DB_TYPE.*;
 
 /**
  * ETL Loader that saves record into OrientDB database.
@@ -106,10 +109,15 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
       final ODocument doc = (ODocument) input;
 
-      doc.setClassName(className);
+      if (className != null) {
+        doc.setClassName(className);
+      }
 
-      doc.save(clusterName);
-
+      if (clusterName != null) {
+        doc.save(clusterName);
+      } else {
+        doc.save();
+      }
     }
 
     progress.incrementAndGet();
