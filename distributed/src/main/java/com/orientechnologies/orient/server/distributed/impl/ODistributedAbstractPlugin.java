@@ -65,6 +65,7 @@ import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHA
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.hazelcast.OClusterHealthChecker;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
@@ -98,6 +99,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected List<ODistributedLifecycleListener>                  listeners                         = new ArrayList<ODistributedLifecycleListener>();
   protected final ConcurrentMap<String, ORemoteServerController> remoteServers                     = new ConcurrentHashMap<String, ORemoteServerController>();
   protected TimerTask                                            publishLocalNodeConfigurationTask = null;
+  protected OClusterHealthChecker                                healthCheckerTask                 = null;
 
   // LOCAL MSG COUNTER
   protected AtomicLong                                           localMessageIdCounter             = new AtomicLong();
@@ -206,6 +208,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     if (publishLocalNodeConfigurationTask != null)
       publishLocalNodeConfigurationTask.cancel();
+
+    if (healthCheckerTask != null)
+      healthCheckerTask.cancel();
 
     if (messageService != null)
       messageService.shutdown();

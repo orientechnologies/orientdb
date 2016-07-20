@@ -20,8 +20,10 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -30,6 +32,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Date;
+import java.util.TimerTask;
 
 /**
  * Remote server channel.
@@ -46,15 +49,18 @@ public class ORemoteServerChannel {
   private final String                    server;
   private OChannelBinarySynchClient       channel;
 
-  private static final int                MAX_RETRY     = 3;
-  private static final String             CLIENT_TYPE   = "OrientDB Server";
-  private static final boolean            COLLECT_STATS = false;
-  private int                             sessionId     = -1;
+  private static final int                MAX_RETRY              = 3;
+  private static final String             CLIENT_TYPE            = "OrientDB Server";
+  private static final boolean            COLLECT_STATS          = false;
+  private int                             sessionId              = -1;
   private byte[]                          sessionToken;
-  private OContextConfiguration           contextConfig = new OContextConfiguration();
-  private Date                            createdOn     = new Date();
+  private OContextConfiguration           contextConfig          = new OContextConfiguration();
+  private Date                            createdOn              = new Date();
 
-  private final static int                BUFFER_SIZE   = 1024;
+  private volatile int                    totalConsecutiveErrors = 0;
+  private final static int                MAX_CONSECUTIVE_ERRORS = 10;
+
+  private final static int                BUFFER_SIZE            = 1024;
 
   public ORemoteServerChannel(final ODistributedServerManager manager, final String iServer, final String iURL, final String user,
       final String passwd) throws IOException {
@@ -190,11 +196,17 @@ public class ORemoteServerChannel {
         channel.setWaitResponseTimeout();
         channel.beginRequest(operationId, sessionId, sessionToken);
 
-        return operation.execute();
+        T result = operation.execute();
+
+        // RESET ERRORS
+        totalConsecutiveErrors = 0;
+
+        return result;
 
       } catch (Exception e) {
         // DIRTY CONNECTION, CLOSE IT AND RE-ACQUIRE A NEW ONE
         lastException = e;
+        handleNewError();
 
         close();
 
@@ -216,8 +228,13 @@ public class ORemoteServerChannel {
 
         try {
           connect();
+
+          // RESET ERRORS
+          totalConsecutiveErrors = 0;
+
         } catch (IOException e1) {
           lastException = e1;
+          handleNewError();
 
           ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
               "Error on reconnecting to distributed node (%s)", lastException.toString());
@@ -238,5 +255,29 @@ public class ORemoteServerChannel {
 
   public Date getCreatedOn() {
     return createdOn;
+  }
+
+  private void handleNewError() {
+    totalConsecutiveErrors++;
+
+    if (totalConsecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
+      ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+          "Reached %d consecutive errors on connection, remove the server '%s' from the cluster", totalConsecutiveErrors, server);
+
+      // REMOVE THE SERVER ASYNCHRONOUSLY
+      Orient.instance().scheduleTask(new TimerTask() {
+        @Override
+        public void run() {
+          try {
+            manager.removeServer(server);
+          } catch (Throwable e) {
+            // IGNORE IT
+          }
+        }
+      }, 100, 0);
+
+      throw new OIOException("Reached " + totalConsecutiveErrors + " consecutive errors on connection, remove the server '" + server
+          + "' from the cluster");
+    }
   }
 }

@@ -141,7 +141,7 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
     out.writeBoolean(success);
     out.writeInt(fixTasks.size());
     for (ORemoteTask task : fixTasks)
-      out.writeInt(fixTasks.size());
+      out.writeObject(task);
     out.writeInt(partitionKey.length);
     for (int pk : partitionKey)
       out.writeInt(pk);

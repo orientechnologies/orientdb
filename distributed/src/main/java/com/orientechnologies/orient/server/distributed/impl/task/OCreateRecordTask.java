@@ -304,7 +304,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       out.writeInt(content.length);
       out.write(content);
     }
-    out.write(recordType);
+    out.writeByte(recordType);
     out.writeInt(clusterId);
   }
 

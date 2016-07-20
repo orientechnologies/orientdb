@@ -895,6 +895,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(),
           ODistributedServerLog.DIRECTION.IN, "Executing distributed response %s", response);
 
+    // WHILE MSG SERVICE IS UP & RUNNING
+    while (manager.getMessageService() == null)
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        return;
+      }
+
     manager.getMessageService().dispatchResponseToThread(response);
 
     distributedResponses++;
