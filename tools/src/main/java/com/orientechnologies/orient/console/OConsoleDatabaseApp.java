@@ -1510,7 +1510,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           resultSet.add(row);
 
           row.field("NAME", p.getName());
-          row.field("TYPE", p.getType());
+          row.field("TYPE", (Object) p.getType());
           row.field("LINKED-TYPE/CLASS", p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType());
           row.field("MANDATORY", p.isMandatory());
           row.field("READONLY", p.isReadonly());
