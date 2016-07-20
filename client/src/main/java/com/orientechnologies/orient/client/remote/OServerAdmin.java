@@ -691,7 +691,18 @@ public class OServerAdmin {
     OChannelBinaryAsynchClient network = null;
     try {
       //TODO:replace this api with one that get connection for only the specified url.
-      network = storage.getNetwork(storage.getCurrentServerURL());
+      String serverUrl = storage.getNextAvailableServerURL(false, session);
+      do {
+        try {
+          network = storage.getNetwork(serverUrl);
+        } catch (OException e) {
+          serverUrl = storage.useNewServerURL(serverUrl);
+          if (serverUrl == null)
+            throw e;
+        }
+      } while (network == null);
+
+
       T res = operation.execute(network, storage.getCurrentSession());
       storage.connectionManager.release(network);
       return res;
@@ -702,5 +713,4 @@ public class OServerAdmin {
       throw OException.wrapException(new OStorageException(errorMessage), e);
     }
   }
-
 }
