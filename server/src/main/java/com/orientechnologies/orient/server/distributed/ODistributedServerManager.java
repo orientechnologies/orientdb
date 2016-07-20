@@ -84,6 +84,8 @@ public interface ODistributedServerManager {
 
   boolean checkNodeStatus(NODE_STATUS string);
 
+  void removeServer(String nodeLeftName);
+
   DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName);
 
   void setDatabaseStatus(String iNode, String iDatabaseName, DB_STATUS iStatus);

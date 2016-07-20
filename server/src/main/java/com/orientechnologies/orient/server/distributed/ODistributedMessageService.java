@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.Set;
+
 /**
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -26,6 +28,8 @@ package com.orientechnologies.orient.server.distributed;
  */
 public interface ODistributedMessageService {
   ODistributedDatabase registerDatabase(String iDatabaseName);
+
+  Set<String> getDatabases();
 
   ODistributedDatabase getDatabase(String iDatabaseName);
 

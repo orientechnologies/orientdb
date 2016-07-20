@@ -20,16 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
 import com.orientechnologies.common.concur.lock.OComparableLockManager;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
@@ -92,8 +82,17 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 import com.orientechnologies.orient.core.tx.*;
-
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * @author Andrey Lomakin
@@ -767,6 +766,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final SortedSet<ORID> sortedRids = new TreeSet<ORID>();
 
       final OLogSequenceNumber startLsn = writeAheadLog.next(lsn);
+      if (startLsn == null) {
+        OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation", lsn);
+        return null;
+      }
 
       writeAheadLog.preventCutTill(startLsn);
       try {

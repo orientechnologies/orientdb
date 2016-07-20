@@ -167,7 +167,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     super.writeExternal(out);
     out.writeInt(content.length);
     out.write(content);
-    out.write(recordType);
+    out.writeByte(recordType);
   }
 
   @Override
