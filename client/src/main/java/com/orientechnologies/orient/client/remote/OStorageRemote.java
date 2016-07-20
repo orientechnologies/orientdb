@@ -263,7 +263,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   }
 
-  private int handleIOException(int retry, OChannelBinaryAsynchClient network, Exception e) {
+  private int handleIOException(int retry, final OChannelBinaryAsynchClient network, final Exception e) {
     OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", e.getMessage());
     OLogManager.instance().debug(this, "I/O error stack: ", e);
     connectionManager.remove(network);
@@ -1821,18 +1821,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     do {
       do {
         OChannelBinaryAsynchClient network = null;
-        network = getNetwork(currentURL);
         try {
+          network = getNetwork(currentURL);
           openRemoteDatabase(network);
           return currentURL;
         } catch (OIOException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             connectionManager.remove(network);
-            network = null;
           }
 
-          OLogManager.instance().error(this, "Cannot open database with url " + currentURL, e);
+          OLogManager.instance().debug(this, "Cannot open database with url " + currentURL, e);
 
         } catch (OException e) {
           connectionManager.release(network);
@@ -1848,7 +1847,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               // IGNORE ANY EXCEPTION
               OLogManager.instance().debug(this, "Cannot remove connection or database url=" + currentURL, e);
             }
-            network = null;
           }
 
           OLogManager.instance().error(this, "Cannot open database url=" + currentURL, e);
@@ -2091,6 +2089,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     do {
       try {
         network = connectionManager.acquire(iCurrentURL, clientConfiguration, connectionOptions, asynchEventListener);
+      } catch (OIOException cause) {
+        throw cause;
       } catch (Exception cause) {
         throw OException.wrapException(new OStorageException("Cannot open a connection to remote server: " + iCurrentURL), cause);
       }
@@ -2343,6 +2343,38 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       ODatabaseRecordThreadLocal.INSTANCE.set(origin);
     }
     return this;
+  }
+
+  public void importDatabase(final String options, final InputStream inputStream, final String name, final OCommandOutputListener listener) {
+    networkOperation(new OStorageRemoteOperation<Void>() {
+      @Override
+      public Void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+        try {
+          beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_IMPORT, session);
+          network.writeString(options);
+          network.writeString(name);
+          byte[] buffer = new byte[1024];
+          int size;
+          while ((size = inputStream.read(buffer)) > 0) {
+            network.writeBytes(buffer, size);
+          }
+          network.writeBytes(null);
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network, session);
+          String message;
+          while ((message = network.readString()) != null) {
+            listener.onMessage(message);
+          }
+        } finally {
+          endResponse(network);
+        }
+        return null;
+      }
+    }, "Error sending import request");
   }
 
 }

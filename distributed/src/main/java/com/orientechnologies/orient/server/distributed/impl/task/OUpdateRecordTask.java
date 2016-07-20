@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -96,7 +97,9 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     if (previousRecord == null) {
       // RESURRECT/CREATE IT
 
-      new OCreateRecordTask(rid, content, version, recordType).executeRecordTask(requestId, iServer, iManager, database);
+      final OPlaceholder ph = (OPlaceholder) new OCreateRecordTask(rid, content, version, recordType)
+          .executeRecordTask(requestId, iServer, iManager, database);
+      record = ph.getRecord();
 
     } else {
       // UPDATE IT
@@ -164,7 +167,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     super.writeExternal(out);
     out.writeInt(content.length);
     out.write(content);
-    out.write(recordType);
+    out.writeByte(recordType);
   }
 
   @Override

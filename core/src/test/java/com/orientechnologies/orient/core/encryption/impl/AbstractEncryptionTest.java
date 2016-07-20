@@ -2,9 +2,11 @@ package com.orientechnologies.orient.core.encryption.impl;
 
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.encryption.OEncryptionFactory;
-import org.junit.Assert;
+
 import java.util.Arrays;
 import java.util.Random;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * @author Luca Garulli
@@ -34,24 +36,24 @@ public abstract class AbstractEncryptionTest {
 
       encryptedSize += encryptedContent.length;
 
-      Assert.assertEquals(content, en.decrypt(encryptedContent));
-
+      assertThat(content).isEqualTo(en.decrypt(encryptedContent));
       // PARTIAL (BUT FULL)
       encryptedContent = en.encrypt(content, 0, content.length);
 
       encryptedSize += encryptedContent.length;
 
-      Assert.assertEquals(content, en.decrypt(encryptedContent));
+      assertThat(content).isEqualTo(en.decrypt(encryptedContent));
 
       // REAL PARTIAL
       encryptedContent = en.encrypt(content, 1, content.length - 2);
 
       encryptedSize += encryptedContent.length - 2;
 
-      Assert.assertEquals(Arrays.copyOfRange(content, 1, content.length - 1), en.decrypt(encryptedContent));
+      assertThat(Arrays.copyOfRange(content, 1, content.length - 1)).isEqualTo(en.decrypt(encryptedContent));
     }
 
-    System.out.println("Encryption/Decryption test against " + name + " took: " + (System.currentTimeMillis() - seed)
-        + "ms, total byte size: " + encryptedSize);
+    System.out.println(
+        "Encryption/Decryption test against " + name + " took: " + (System.currentTimeMillis() - seed) + "ms, total byte size: "
+            + encryptedSize);
   }
 }

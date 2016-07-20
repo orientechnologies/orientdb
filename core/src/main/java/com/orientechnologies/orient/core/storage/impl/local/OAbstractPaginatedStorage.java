@@ -761,8 +761,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OLogSequenceNumber endLsn = writeAheadLog.end();
 
       if (endLsn == null || lsn.compareTo(endLsn) >= 0) {
-        OLogManager.instance()
-            .warn(this, "Cannot find requested LSN=%s for database sync operation. Last available LSN is %s", endLsn);
+        OLogManager.instance().warn(this, "Cannot find requested LSN=%s for database sync operation. Last available LSN is %s", lsn,
+            endLsn);
         return null;
       }
 
@@ -770,6 +770,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final SortedSet<ORID> sortedRids = new TreeSet<ORID>();
 
       final OLogSequenceNumber startLsn = writeAheadLog.next(lsn);
+      if (startLsn == null) {
+        OLogManager.instance().info(this, "Cannot find requested LSN=%s for database sync operation", lsn);
+        return null;
+      }
 
       writeAheadLog.preventCutTill(startLsn);
       try {
@@ -1409,6 +1413,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } finally {
       stateLock.releaseReadLock();
     }
+
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance().debug(this, "%d Committed transaction %d on database '%s' (result=%s)", Thread.currentThread().getId(),
+          clientTx.getId(), databaseRecord.getName(), result);
 
     return result;
   }

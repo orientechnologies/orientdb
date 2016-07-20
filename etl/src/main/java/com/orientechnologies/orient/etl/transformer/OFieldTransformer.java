@@ -24,9 +24,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.etl.OETLProcessor;
 
 import java.util.List;
+
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
 
 public class OFieldTransformer extends OAbstractTransformer {
   private String       fieldName;
@@ -98,22 +99,22 @@ public class OFieldTransformer extends OAbstractTransformer {
           // SET THE TRANSFORMED FIELD BACK
           doc.field(fieldName, newValue);
 
-          log(OETLProcessor.LOG_LEVELS.DEBUG, "set %s=%s in document=%s", fieldName, newValue, doc);
+          log(DEBUG, "set %s=%s in document=%s", fieldName, newValue, doc);
         } else {
           if (fieldName != null) {
             final Object prev = doc.removeField(fieldName);
-            log(OETLProcessor.LOG_LEVELS.DEBUG, "removed %s (value=%s) from document=%s", fieldName, prev, doc);
+            log(DEBUG, "removed %s (value=%s) from document=%s", fieldName, prev, doc);
           } else {
             for (String f : fieldNames) {
               final Object prev = doc.removeField(f);
-              log(OETLProcessor.LOG_LEVELS.DEBUG, "removed %s (value=%s) from document=%s", f, prev, doc);
+              log(DEBUG, "removed %s (value=%s) from document=%s", f, prev, doc);
             }
           }
         }
 
         if (save) {
-          log(OETLProcessor.LOG_LEVELS.DEBUG, "saving record %s", doc);
-          final ODatabaseDocument db = super.pipeline.getDocumentDatabase();
+          log(DEBUG, "saving record %s", doc);
+          final ODatabaseDocument db = pipeline.getDocumentDatabase();
           db.save(doc);
         }
       }

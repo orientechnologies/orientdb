@@ -6,11 +6,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert; import org.junit.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
@@ -23,18 +23,22 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
   private static final String DBNAME_CLUSTERTEST  = "testCreatedNothingEncryptedCluster";
   private static final String DBNAME_DATABASETEST = "testCreatedNothingEncryptedDatabase";
 
+  @Test
   public void testONothingEncryptedCompressionNoKey() {
     testEncryption(ONothingEncryption.NAME);
   }
 
+  @Test
   public void testONothingEncryptedCompressionInvalidKey() {
     testEncryption(ONothingEncryption.NAME, "no");
   }
 
+  @Test
   public void testONothingEncryptedCompression() {
     testEncryption(ONothingEncryption.NAME, "T1JJRU5UREI=");
   }
 
+  @Test
   public void testCreatedNothingEncryptedDatabase() {
     OFileUtils.deleteRecursively(new File("target/" + DBNAME_DATABASETEST));
 
@@ -101,6 +105,7 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
     }
   }
 
+  @Test
   public void testCreatedNothingEncryptedCluster() {
     OFileUtils.deleteRecursively(new File("target/" + DBNAME_CLUSTERTEST));
 

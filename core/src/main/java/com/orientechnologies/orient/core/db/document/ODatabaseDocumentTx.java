@@ -231,6 +231,25 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (user != null && !user.getName().equals(iUserName))
         initialized = false;
 
+      final String encKey = (String)getProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey());
+      String currKey = null;
+        
+      if (storage.getConfiguration() != null && storage.getConfiguration().getContextConfiguration() != null) {
+        currKey = (String)storage.getConfiguration().
+          getContextConfiguration().getValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+
+        // If an encryption key is set as a database property, and
+        // the storage engine is open and has an encryption key value, and
+        // the two encryption keys differ, force the storage closed so that the
+        // new encryption key in properties will be used.
+        if (encKey != null && currKey != null && !encKey.equals(currKey)) {
+          // If the storage is open...
+          if (!storage.isClosed()) {
+             storage.close(true, false); // force it closed
+          }
+        }
+      }
+
       if (storage.isClosed()) {
         storage.open(iUserName, iUserPassword, properties);
         initialized = false;

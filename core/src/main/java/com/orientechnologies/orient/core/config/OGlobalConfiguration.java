@@ -643,6 +643,11 @@ public enum OGlobalConfiguration {
       Long.class, 15000l),
 
   /**
+   * @Since 2.2.5
+   */
+  DISTRIBUTED_CHECK_HEALTH_EVERY("distributed.checkHealthEvery", "Time in ms to check the cluster health. Set to 0 to disable it", Long.class, 10000l),
+
+  /**
    * Since 2.2.4
    */
   DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS("distributed.autoRemoveOfflineServers",

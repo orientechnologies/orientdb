@@ -117,6 +117,7 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
                 try {
                   final String nodeName = server.server.getDistributedManager().getLocalNodeName();
                   ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager()).restartNode(nodeName);
+                  delayWriter = 5;
                 } catch (Exception e) {
                   e.printStackTrace();
                 }

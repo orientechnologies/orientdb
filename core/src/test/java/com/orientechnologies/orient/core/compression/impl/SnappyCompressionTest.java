@@ -6,6 +6,7 @@ import org.junit.Test;
  * @since 05.06.13
  */
 public class SnappyCompressionTest extends AbstractCompressionTest {
+  @Test
   public void testSnappyCompression() {
     testCompression(OSnappyCompression.NAME);
   }

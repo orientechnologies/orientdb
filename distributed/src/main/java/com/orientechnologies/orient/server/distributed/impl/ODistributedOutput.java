@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.text.SimpleDateFormat;
-import java.util.*;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.orient.console.OTableFormatter;
@@ -31,6 +28,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Formats information about distributed cfg.
@@ -96,7 +96,10 @@ public class ODistributedOutput {
           int serverNum = 0;
           for (String dbName : databases) {
             final StringBuilder buffer = new StringBuilder();
-            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName);
+
+            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName, false);
+            if (dbCfg == null)
+              continue;
 
             buffer.append(dbName);
             buffer.append("=");
@@ -154,14 +157,17 @@ public class ODistributedOutput {
 
         final String serverName = m.field("name");
         buffer.append(serverName);
-        buffer.append(m.<Object>field("status"));
+        buffer.append(m.<String>field("status"));
 
         final Collection<String> databases = m.field("databases");
         if (databases != null) {
           buffer.append("{");
           int dbCount = 0;
           for (String dbName : databases) {
-            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName);
+            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName, false);
+
+            if (dbCfg == null)
+              continue;
 
             if (dbCount++ > 0)
               buffer.append(",");

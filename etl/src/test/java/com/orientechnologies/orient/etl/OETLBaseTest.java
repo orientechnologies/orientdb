@@ -60,10 +60,6 @@ public abstract class OETLBaseTest {
   }
 
   protected void process(final String cfgJson) {
-//    ODocument cfg = new ODocument().fromJSON(cfgJson, "noMap");
-//
-//    proc = configurator.parse(cfg, new OBasicCommandContext());
-//    proc.execute();
 
     process(cfgJson,new OBasicCommandContext());
   }

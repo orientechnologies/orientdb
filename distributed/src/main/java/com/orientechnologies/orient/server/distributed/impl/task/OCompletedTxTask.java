@@ -37,7 +37,8 @@ import java.util.List;
 
 /**
  * Task to manage the end of distributed transaction when no fix is needed (OFixTxTask) and all the locks must be released. Locks
- * are necessary to prevent concurrent modification of records before the transaction is finished.
+ * are necessary to prevent concurrent modification of records before the transaction is finished. <br>
+ * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
@@ -49,13 +50,24 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   private ODistributedRequestId requestId;
   private boolean               success;
   private List<ORemoteTask>     fixTasks         = new ArrayList<ORemoteTask>();
+  private int[]                 partitionKey;
 
   public OCompletedTxTask() {
+    partitionKey = PK;
   }
 
-  public OCompletedTxTask(final ODistributedRequestId iRequestId, final boolean iSuccess) {
-    requestId = iRequestId;
-    success = iSuccess;
+  public OCompletedTxTask(final ODistributedRequestId iRequestId, final boolean iSuccess, final int[] partitionKey) {
+    this.requestId = iRequestId;
+    this.success = iSuccess;
+    this.partitionKey = partitionKey != null ? partitionKey : PK;
+  }
+
+  /**
+   * This task uses the same partition keys used by TxTask to avoid synchronizing all the worker threads (and queues).
+   */
+  @Override
+  public int[] getPartitionKey() {
+    return partitionKey;
   }
 
   public void addFixTask(final ORemoteTask fixTask) {
@@ -130,15 +142,22 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
     out.writeInt(fixTasks.size());
     for (ORemoteTask task : fixTasks)
       out.writeObject(task);
+    out.writeInt(partitionKey.length);
+    for (int pk : partitionKey)
+      out.writeInt(pk);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     requestId = (ODistributedRequestId) in.readObject();
     success = in.readBoolean();
-    final int size = in.readInt();
-    for (int i = 0; i < size; ++i)
+    final int tasksSize = in.readInt();
+    for (int i = 0; i < tasksSize; ++i)
       fixTasks.add((ORemoteTask) in.readObject());
+    final int pkSize = in.readInt();
+    partitionKey = new int[pkSize];
+    for (int i = 0; i < pkSize; ++i)
+      partitionKey[i] = in.readInt();
   }
 
   /**
