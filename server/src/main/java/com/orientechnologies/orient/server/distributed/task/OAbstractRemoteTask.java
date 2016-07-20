@@ -102,4 +102,9 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   public boolean isNodeOnlineRequired() {
     return true;
   }
+
+  @Override
+  public boolean isUsingDatabase() {
+    return true;
+  }
 }

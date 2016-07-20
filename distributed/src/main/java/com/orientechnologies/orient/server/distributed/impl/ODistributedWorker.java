@@ -26,6 +26,7 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.server.distributed.*;
@@ -116,9 +117,37 @@ public class ODistributedWorker extends Thread {
     ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE, "end of reading requests for database %s", databaseName);
   }
 
-  public void initDatabaseInstance() {
+  /**
+   * Opens the database.
+   * 
+   * @param waitForDatabaseIsOpen
+   *          If true, it will wait until the database is open
+   */
+  public void initDatabaseInstance(final boolean waitForDatabaseIsOpen) {
     if (database == null) {
-      database = distributed.getDatabaseInstance();
+      for (int retry = 0; retry < 100; ++retry) {
+        try {
+          database = distributed.getDatabaseInstance();
+          // OK
+          break;
+
+        } catch (OConfigurationException e) {
+          // CONTINUE THE LOOP
+          if (!waitForDatabaseIsOpen)
+            break;
+
+          // WAIT FOR A WHILE, THEN RETRY
+          try {
+            Thread.sleep(100);
+          } catch (InterruptedException e1) {
+            Thread.currentThread().interrupt();
+            return;
+          }
+        }
+      }
+
+      if (database == null)
+        throw new ODistributedException("Cannot open database '" + databaseName + "'");
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
@@ -216,7 +245,7 @@ public class ODistributedWorker extends Thread {
     try {
       task.setNodeSource(senderNodeName);
       waitNodeIsOnline();
-      initDatabaseInstance();
+      initDatabaseInstance(task.isUsingDatabase());
 
       // keep original user in database, check the username passed in request and set new user in DB, after document saved,
       // reset to original user

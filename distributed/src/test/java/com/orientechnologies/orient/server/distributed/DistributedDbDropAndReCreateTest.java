@@ -53,8 +53,6 @@ public class DistributedDbDropAndReCreateTest extends AbstractServerClusterTxTes
       db.create();
       db.close();
 
-      Thread.sleep(2000);
-
     } while (++s < serverInstance.size());
   }
 

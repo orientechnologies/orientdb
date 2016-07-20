@@ -48,8 +48,6 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
         db.drop();
       }
 
-      Thread.sleep(2000);
-
       ServerRun server = serverInstance.get(lastServerNum);
 
       ++lastServerNum;
@@ -62,11 +60,7 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
       onAfterDatabaseCreation(db);
       db.shutdown();
 
-      Thread.sleep(2000);
-
     } while (lastServerNum < serverInstance.size());
-
-    Thread.sleep(2000);
 
     executeMultipleTest(0);
   }

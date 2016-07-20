@@ -92,4 +92,10 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
   public String toString() {
     return "(" + (task != null ? task.toString() : "-") + ")";
   }
+
+
+  @Override
+  public boolean isUsingDatabase() {
+    return task != null ? task.isUsingDatabase() : true;
+  }
 }

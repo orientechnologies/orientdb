@@ -22,8 +22,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -95,4 +93,9 @@ public class ORestartServerTask extends OAbstractRemoteTask {
     return FACTORYID;
   }
 
+
+  @Override
+  public boolean isUsingDatabase() {
+    return false;
+  }
 }
