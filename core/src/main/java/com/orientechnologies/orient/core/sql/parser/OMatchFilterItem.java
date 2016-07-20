@@ -12,6 +12,7 @@ public class OMatchFilterItem extends SimpleNode {
   protected OWhereClause        whileCondition;
   protected OArrayRangeSelector depth;
   protected OInteger            maxDepth;
+  protected Boolean             optional;
 
   public OMatchFilterItem(int id) {
     super(id);
@@ -21,7 +22,9 @@ public class OMatchFilterItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -61,6 +64,12 @@ public class OMatchFilterItem extends SimpleNode {
       builder.append("while: (");
       whileCondition.toString(params, builder);
       builder.append(")");
+      return;
+    }
+
+    if (optional != null) {
+      builder.append("optional: ");
+      builder.append(optional);
       return;
     }
   }

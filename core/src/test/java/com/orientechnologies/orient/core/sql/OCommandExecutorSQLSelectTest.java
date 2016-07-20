@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import sun.misc.BASE64Encoder;
 
 import java.util.*;
 import java.util.regex.Pattern;
@@ -43,12 +44,12 @@ import static org.testng.Assert.*;
 
 @Test
 public class OCommandExecutorSQLSelectTest {
-  private static String DB_STORAGE             = "memory";
-  private static String DB_NAME                = "OCommandExecutorSQLSelectTest";
+  private static String DB_STORAGE = "memory";
+  private static String DB_NAME    = "OCommandExecutorSQLSelectTest";
 
-  private int           ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
+  private int ORDER_SKIP_LIMIT_ITEMS = 100 * 1000;
 
-  ODatabaseDocumentTx   db;
+  ODatabaseDocumentTx db;
 
   @BeforeClass
   public void beforeClass() throws Exception {
@@ -1388,7 +1389,47 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(((Collection)differenceFieldValue).iterator().next(), 3);
   }
 
+  @Test
+  public void testBinaryField(){
+    //issue #6379
 
+    byte[] array = new byte[]{1,4,5,74,3,45,6,127,-120,2};
+
+    db.command(new OCommandSQL("create class TestBinaryField")).execute();
+
+    ODocument doc = db.newInstance("TestBinaryField");
+    doc.field("binaryField", array);
+    doc.save();
+
+    doc = db.newInstance("TestBinaryField");
+    doc.field("binaryField", "foobar");
+    doc.save();
+
+    String base64Value = new BASE64Encoder().encode(array);
+
+    List<ODocument> results =db.query(new OSQLSynchQuery<ODocument>("select from TestBinaryField where binaryField = decode(?, 'base64')"), base64Value);
+    assertEquals(results.size(), 1);
+    Object value = results.get(0).field("binaryField");
+    assertEquals(value, array);
+  }
+
+  @Test
+  public void testDateComparison(){
+    //issue #6389
+
+    byte[] array = new byte[]{1,4,5,74,3,45,6,127,-120,2};
+
+    db.command(new OCommandSQL("create class TestDateComparison")).execute();
+    db.command(new OCommandSQL("create property TestDateComparison.dateProp DATE")).execute();
+
+    db.command(new OCommandSQL("insert into TestDateComparison set dateProp = '2016-05-01'")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("SELECT from TestDateComparison WHERE dateProp >= '2016-05-01'"));
+    assertEquals(results.size(), 1);
+    results =db.query(new OSQLSynchQuery<ODocument>("SELECT from TestDateComparison WHERE dateProp <= '2016-05-01'"));
+    assertEquals(results.size(), 1);
+
+  }
   private long indexUsages(ODatabaseDocumentTx db) {
     final long oldIndexUsage;
     try {

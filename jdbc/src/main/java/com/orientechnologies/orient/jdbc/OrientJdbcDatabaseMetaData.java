@@ -42,6 +42,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.orientechnologies.orient.core.OConstants.ORIENT_VERSION_MAJOR;
+import static com.orientechnologies.orient.core.OConstants.ORIENT_VERSION_MINOR;
+
 /**
  * @author Roberto Franchini (CELI srl - franchini--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
@@ -119,11 +122,11 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public int getDriverMajorVersion() {
-    return OrientJdbcDriver.MAJOR_VERSION;
+    return ORIENT_VERSION_MAJOR;
   }
 
   public int getDriverMinorVersion() {
-    return OrientJdbcDriver.MINOR_VERSION;
+    return ORIENT_VERSION_MINOR;
   }
 
   public boolean usesLocalFiles() throws SQLException {

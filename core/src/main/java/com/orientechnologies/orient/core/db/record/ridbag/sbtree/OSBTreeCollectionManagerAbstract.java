@@ -96,13 +96,14 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
         tree = container.tree;
       } else {
         tree = loadTree(collectionPointer);
+        if (tree != null) {
+          assert tree.getRootBucketPointer().equals(collectionPointer.getRootPointer());
 
-        assert tree.getRootBucketPointer().equals(collectionPointer.getRootPointer());
+          container = new SBTreeBonsaiContainer(tree);
+          container.usagesCounter++;
 
-        container = new SBTreeBonsaiContainer(tree);
-        container.usagesCounter++;
-
-				treeCache.put(collectionPointer, container);
+          treeCache.put(collectionPointer, container);
+        }
       }
 
 

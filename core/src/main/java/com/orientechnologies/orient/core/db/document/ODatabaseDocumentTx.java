@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.*;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleter;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.*;
@@ -227,6 +227,25 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       if (user != null && !user.getName().equals(iUserName))
         initialized = false;
+
+      final String encKey = (String)getProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey());
+      String currKey = null;
+        
+      if (storage.getConfiguration() != null && storage.getConfiguration().getContextConfiguration() != null) {
+        currKey = (String)storage.getConfiguration().
+          getContextConfiguration().getValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+
+        // If an encryption key is set as a database property, and
+        // the storage engine is open and has an encryption key value, and
+        // the two encryption keys differ, force the storage closed so that the
+        // new encryption key in properties will be used.
+        if (encKey != null && currKey != null && !encKey.equals(currKey)) {
+          // If the storage is open...
+          if (!storage.isClosed()) {
+             storage.close(true, false); // force it closed
+          }
+        }
+      }
 
       if (storage.isClosed()) {
         storage.open(iUserName, iUserPassword, properties);
@@ -1975,8 +1994,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       ORecordCallback<Integer> recordUpdatedCallback) {
     checkOpeness();
     checkIfActive();
-    checkLowDiskSpaceAndFullCheckpointRequests();
-
     if (!record.isDirty())
       return (RET) record;
 
@@ -2060,6 +2077,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
           if (operationResult.getModifiedRecordContent() != null)
             stream = operationResult.getModifiedRecordContent();
+          else if (version > record.getVersion() + 1)
+            // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+            record.unload();
 
           ORecordInternal.fill(record, rid, version, stream, false);
 
@@ -2102,7 +2122,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       boolean prohibitTombstones) {
     checkOpeness();
     checkIfActive();
-    checkLowDiskSpaceAndFullCheckpointRequests();
 
     final ORecordId rid = (ORecordId) record.getIdentity();
 
@@ -2128,8 +2147,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       try {
         // if cache is switched off record will be unreachable after delete.
         ORecord rec = record.getRecord();
-        if (rec != null)
+        if (rec != null) {
           callbackHooks(ORecordHook.TYPE.BEFORE_DELETE, rec);
+
+          if(rec instanceof ODocument)
+            ORidBagDeleter.deleteAllRidBags((ODocument) rec);
+        }
 
         final OStorageOperationResult<Boolean> operationResult;
         try {
@@ -2152,6 +2175,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         } catch (Exception t) {
           callbackHooks(ORecordHook.TYPE.DELETE_FAILED, rec);
           throw t;
+        } finally {
+          callbackHooks(ORecordHook.TYPE.FINALIZE_DELETION, rec);
         }
 
         clearDocumentTracking(rec);
@@ -2172,7 +2197,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
                 t);
       }
     } finally {
-      callbackHooks(ORecordHook.TYPE.FINALIZE_DELETE, record);
       ORecordSerializationContext.pullContext();
       getMetadata().clearThreadLocalSchemaSnapshot();
     }
@@ -3042,7 +3066,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     registerHook(new OSequenceTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
     registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new ORidBagDeleteHook(this), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OLiveQueryHook(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
@@ -3329,10 +3352,4 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
-  private void checkLowDiskSpaceAndFullCheckpointRequests() {
-    if (!(storage instanceof OAbstractPaginatedStorage))
-      return;
-    final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
-    paginatedStorage.checkLowDiskSpaceAndFullCheckpointRequests();
-  }
 }

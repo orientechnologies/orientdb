@@ -95,6 +95,7 @@ public class TestSharding extends AbstractServerClusterTest {
           Assert.assertEquals("Error on assigning cluster client_" + nodeName, clId, clusterId);
 
           vertices[i].setProperty("name-property", "shard_" + i);
+          vertices[i].setProperty("blob", new byte[1000]);
 
           long amount = i * 10000;
           vertices[i].setProperty("amount", amount);
@@ -104,9 +105,11 @@ public class TestSharding extends AbstractServerClusterTest {
           System.out
               .println("Create vertex, class: " + vertices[i].getLabel() + ", cluster: " + clId + " -> " + vertices[i].getRecord());
 
-          if (i > 1)
+          if (i > 1) {
             // CREATE A LIGHT-WEIGHT EDGE
-            vertices[i].addEdge("Knows-Type", vertices[i - 1]);
+            final Edge e = vertices[i].addEdge("Knows-Type", vertices[i - 1]);
+            e.setProperty("blob", new byte[1000]);
+          }
 
           // CREATE A REGULAR EDGE
           final Edge edge = vertices[i].addEdge("Buy-Type", product, new Object[] { "price", 1000 * i });

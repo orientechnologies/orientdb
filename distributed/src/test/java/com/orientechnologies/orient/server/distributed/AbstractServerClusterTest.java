@@ -234,9 +234,7 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void log(final String iMessage) {
-    OLogManager.instance().flush();
-    System.out.println("\n" + iMessage);
-    System.out.flush();
+    OLogManager.instance().info(this, iMessage);
   }
 
   protected void onServerStarting(ServerRun server) {
@@ -384,7 +382,7 @@ public abstract class AbstractServerClusterTest {
 
   protected void waitForDatabaseIsOnline(final String serverName, final String dbName, final long timeout) {
     final long startTime = System.currentTimeMillis();
-    while (! serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
+    while (!serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
         OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");

@@ -264,6 +264,6 @@ public class OOfflineCluster implements OCluster {
 
   @Override
   public void acquireAtomicExclusiveLock() {
-    throw new UnsupportedOperationException("offline cluster doesn't support atomic locking");
+    // do nothing, anyway there is no real data behind to lock it
   }
 }

@@ -18,13 +18,11 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.OETLStubRandomExtractor;
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
@@ -35,10 +33,10 @@ import static org.junit.Assert.assertEquals;
  */
 public class OJsonRandomExtractorTest extends OETLBaseTest {
 
-  private final static int TOTAL = 1000000;
-
-  @Ignore
+  @Test
   public void testNonParallel() {
+    final int TOTAL = 1000000;
+
     proc.getFactory().registerExtractor(OETLStubRandomExtractor.class);
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10} }, "
@@ -56,6 +54,8 @@ public class OJsonRandomExtractorTest extends OETLBaseTest {
 
   @Test
   public void testParallel() {
+    final int TOTAL = 2000000;
+
     proc.getFactory().registerExtractor(OETLStubRandomExtractor.class);
 
     process("{extractor : { random: {items: " + TOTAL + ", fields: 10, delay: 0} }, "

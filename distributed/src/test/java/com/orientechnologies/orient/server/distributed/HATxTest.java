@@ -15,16 +15,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import org.junit.Test;
-
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import org.junit.Test;
 
 /**
  * Distributed TX test by using transactions against "plocal" protocol + shutdown and restart of a node.
  */
-public class HATxTest extends AbstractServerClusterTxTest {
+public class HATxTest extends AbstractHARemoveNode {
   final static int SERVERS = 3;
 
   @Test
@@ -56,21 +53,6 @@ public class HATxTest extends AbstractServerClusterTxTest {
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " UP...");
 
     executeMultipleTest();
-  }
-
-  @Override
-  protected void onBeforeChecks() throws InterruptedException {
-    // // WAIT UNTIL THE END
-    waitFor(2, new OCallable<Boolean, ODatabaseDocumentTx>() {
-      @Override
-      public Boolean call(ODatabaseDocumentTx db) {
-        final boolean ok = db.countClass("Person") >= count * writerCount * SERVERS + baseCount;
-        if (!ok)
-          System.out.println(
-              "FOUND " + db.countClass("Person") + " people instead of expected " + (count * writerCount * SERVERS) + baseCount);
-        return ok;
-      }
-    }, 10000);
   }
 
   protected String getDatabaseURL(final ServerRun server) {

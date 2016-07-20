@@ -34,6 +34,7 @@ public class LocalConcurrentTxAutoRetryTest extends AbstractDistributedConcurren
     expectedConcurrentException = false;
     writerCount = 3;
 
+    final int old = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
     OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(100);
     try {
 
@@ -42,7 +43,7 @@ public class LocalConcurrentTxAutoRetryTest extends AbstractDistributedConcurren
       execute();
 
     } finally {
-      OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(10);
+      OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(old);
     }
   }
 

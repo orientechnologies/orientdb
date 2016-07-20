@@ -7,10 +7,11 @@ import java.util.Set;
  * Created by luigidellaquila on 28/07/15.
  */
 class PatternNode {
-  String           alias;
+  String alias;
   Set<PatternEdge> out        = new LinkedHashSet<PatternEdge>();
   Set<PatternEdge> in         = new LinkedHashSet<PatternEdge>();
   int              centrality = 0;
+  boolean          optional   = false;
 
   int addEdge(OMatchPathItem item, PatternNode to) {
     PatternEdge edge = new PatternEdge();
@@ -20,5 +21,9 @@ class PatternNode {
     this.out.add(edge);
     to.in.add(edge);
     return 1;
+  }
+
+  public boolean isOptionalNode() {
+    return optional;
   }
 }

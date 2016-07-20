@@ -157,7 +157,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void acquireAtomicExclusiveLock() {
+  public boolean acquireAtomicExclusiveLock(Object key) {
     throw new UnsupportedOperationException("atomic locking is not supported by remote index engine");
   }
 

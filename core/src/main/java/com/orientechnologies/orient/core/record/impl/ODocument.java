@@ -1870,7 +1870,7 @@ public class ODocument extends ORecordAbstract
   }
 
   @Override
-  public void writeExternal(ObjectOutput stream) throws IOException {
+  public void writeExternal(final ObjectOutput stream) throws IOException {
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getFormat(ORecordSerializerNetwork.NAME);
     final byte[] idBuffer = _recordId.toStream();
     stream.writeInt(-1);
@@ -1887,7 +1887,7 @@ public class ODocument extends ORecordAbstract
   }
 
   @Override
-  public void readExternal(ObjectInput stream) throws IOException, ClassNotFoundException {
+  public void readExternal(final ObjectInput stream) throws IOException, ClassNotFoundException {
     int i = stream.readInt();
     int size;
     if (i < 0)
@@ -1905,12 +1905,20 @@ public class ODocument extends ORecordAbstract
     stream.readFully(content);
 
     _dirty = stream.readBoolean();
-    if (i < 0) {
-      String str = (String) stream.readObject();
-      _recordFormat = ORecordSerializerFactory.instance().getFormat(str);
-    }
-    fromStream(content);
 
+    ORecordSerializer serializer = _recordFormat;
+    if (i < 0) {
+      final String str = (String) stream.readObject();
+      // TODO: WHEN TO USE THE SERIALIZER?
+      serializer = ORecordSerializerFactory.instance().getFormat(str);
+    }
+
+    _status = ORecordElement.STATUS.UNMARSHALLING;
+    try {
+      serializer.fromStream(content, this, null);
+    } finally {
+      _status = ORecordElement.STATUS.LOADED;
+    }
   }
 
   /**
@@ -2006,13 +2014,13 @@ public class ODocument extends ORecordAbstract
    * @see OProperty
    */
   public void validate() throws OValidationException {
-    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !getDatabase().isValidationEnabled())
-      return;
-
     checkForLoading();
     checkForFields();
 
     autoConvertValues();
+
+    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !getDatabase().isValidationEnabled())
+      return;
 
     final OImmutableClass immutableSchemaClass = getImmutableSchemaClass();
     if (immutableSchemaClass != null) {
@@ -2411,7 +2419,7 @@ public class ODocument extends ORecordAbstract
         break;
       case LINKLIST:
         if (fieldValue instanceof List<?>)
-          newValue = new ORecordLazyList(this,(Collection<OIdentifiable>) fieldValue);
+          newValue = new ORecordLazyList(this, (Collection<OIdentifiable>) fieldValue);
         break;
       case LINKSET:
         if (fieldValue instanceof Set<?>)
@@ -2437,21 +2445,21 @@ public class ODocument extends ORecordAbstract
         addCollectionChangeListener(fieldEntry.getValue());
         fieldEntry.getValue().value = newValue;
         if (fieldType == OType.LINKSET || fieldType == OType.LINKLIST) {
-          boolean pre = ((OAutoConvertToRecord)newValue).isAutoConvertToRecord();
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(false);
+          boolean pre = ((OAutoConvertToRecord) newValue).isAutoConvertToRecord();
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(false);
           for (OIdentifiable rec : (Collection<OIdentifiable>) newValue) {
             if (rec instanceof ODocument)
               ((ODocument) rec).convertAllMultiValuesToTrackedVersions();
           }
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(pre);
-        } else if (fieldType == OType.LINKMAP){
-          boolean pre = ((OAutoConvertToRecord)newValue).isAutoConvertToRecord();
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(false);
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(pre);
+        } else if (fieldType == OType.LINKMAP) {
+          boolean pre = ((OAutoConvertToRecord) newValue).isAutoConvertToRecord();
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(false);
           for (OIdentifiable rec : (Collection<OIdentifiable>) ((Map<?, ?>) newValue).values()) {
             if (rec instanceof ODocument)
               ((ODocument) rec).convertAllMultiValuesToTrackedVersions();
           }
-          ((OAutoConvertToRecord)newValue).setAutoConvertToRecord(pre);
+          ((OAutoConvertToRecord) newValue).setAutoConvertToRecord(pre);
         }
       }
     }
@@ -2724,5 +2732,17 @@ public class ODocument extends ORecordAbstract
       }
     }
 
+  }
+
+  @Override
+  protected void track(OIdentifiable id) {
+    if (isTrackingChanges() && id.getIdentity().getClusterId() != -2)
+      super.track(id);
+  }
+
+  @Override
+  protected void unTrack(OIdentifiable id) {
+    if (isTrackingChanges() && id.getIdentity().getClusterId() != -2)
+      super.unTrack(id);
   }
 }

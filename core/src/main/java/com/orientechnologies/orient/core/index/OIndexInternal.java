@@ -23,24 +23,16 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 
+import java.util.Collection;
 import java.util.Comparator;
 
 /**
  * Interface to handle index.
- *
+ * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * 
  */
 public interface OIndexInternal<T> extends OIndex<T> {
-
-  /**
-   * Orders indexes by its index ID.
-   */
-  Comparator<OIndexInternal> ID_COMPARATOR = new Comparator<OIndexInternal>() {
-    @Override
-    public int compare(OIndexInternal o1, OIndexInternal o2) {
-      return o2.getIndexId() - o1.getIndexId();
-    }
-  };
 
   String CONFIG_KEYTYPE            = "keyType";
   String CONFIG_AUTOMATIC          = "automatic";
@@ -57,34 +49,35 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
   /**
    * Loads the index giving the configuration.
-   *
-   * @param iConfig ODocument instance containing the configuration
+   * 
+   * @param iConfig
+   *          ODocument instance containing the configuration
+   * 
    */
   boolean loadFromConfiguration(ODocument iConfig);
 
   /**
    * Saves the index configuration to disk.
-   *
+   * 
    * @return The configuration as ODocument instance
-   *
    * @see #getConfiguration()
    */
   ODocument updateConfiguration();
 
   /**
    * Add given cluster to the list of clusters that should be automatically indexed.
-   *
-   * @param iClusterName Cluster to add.
-   *
+   * 
+   * @param iClusterName
+   *          Cluster to add.
    * @return Current index instance.
    */
   OIndex<T> addCluster(final String iClusterName);
 
   /**
    * Remove given cluster from the list of clusters that should be automatically indexed.
-   *
-   * @param iClusterName Cluster to remove.
-   *
+   * 
+   * @param iClusterName
+   *          Cluster to remove.
    * @return Current index instance.
    */
   OIndex<T> removeCluster(final String iClusterName);
@@ -92,13 +85,94 @@ public interface OIndexInternal<T> extends OIndex<T> {
   /**
    * Indicates whether given index can be used to calculate result of
    * {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
-   *
+   * 
    * @return {@code true} if given index can be used to calculate result of
-   * {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
+   *         {@link com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquality} operators.
+   * 
    */
   boolean canBeUsedInEqualityOperators();
 
   boolean hasRangeQuerySupport();
+
+  /**
+   * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
+   *
+   * <ol>
+   * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
+   * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #remove(Object)}</li>
+   * </ol>
+   *
+   * <p>
+   * If you want to lock several keys in single thread, you should pass all those keys in single method call. Several calls of this
+   * method in single thread are not allowed because it may lead to deadlocks. Lock is applied only in case if there are no
+   * transactions.
+   * </p>
+   *
+   * This is internal method and cannot be used by end users.
+   *
+   * @param key
+   *          Keys to lock.
+   */
+  void lockKeysForUpdateNoTx(Object... key);
+
+  /**
+   * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
+   *
+   * <ol>
+   * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
+   * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #remove(Object)}</li>
+   * </ol>
+   *
+   * <p>
+   * If you want to lock several keys in single thread, you should pass all those keys in single method call. Several calls of this
+   * method in single thread are not allowed because it may lead to deadlocks. Lock is applied only in case if there are no
+   * transactions.
+   * </p>
+   *
+   * This is internal method and cannot be used by end users.
+   *
+   * @param keys
+   *          Keys to lock.
+   */
+  void lockKeysForUpdateNoTx(Collection<Object> keys);
+
+  /**
+   * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
+   *
+   * <ol>
+   * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
+   * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #remove(Object)}</li>
+   * </ol>
+   *
+   * This is internal method and cannot be used by end users.
+   *
+   * @param key
+   *          Keys to unlock.
+   */
+  void releaseKeysForUpdateNoTx(Object... key);
+
+  /**
+   * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
+   *
+   * <ol>
+   * <li>{@link #put(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #checkEntry(com.orientechnologies.orient.core.db.record.OIdentifiable, Object)}</li>
+   * <li>{@link #remove(Object, com.orientechnologies.orient.core.db.record.OIdentifiable)}</li>
+   * <li>{@link #remove(Object)}</li>
+   * </ol>
+   *
+   * This is internal method and cannot be used by end users.
+   *
+   * @param keys
+   *          Keys to unlock.
+   */
+  void releaseKeysForUpdateNoTx(Collection<Object> keys);
 
   OIndexMetadata loadMetadata(ODocument iConfig);
 
@@ -117,7 +191,15 @@ public interface OIndexInternal<T> extends OIndex<T> {
   void setType(OType type);
 
   /**
-   * Acquires exclusive lock in the active atomic operation running on the current thread for this index.
+   * <p>Acquires exclusive lock in the active atomic operation running on the current thread for this index.
+   *
+   * <p>If this index supports a more narrow locking, for example key-based sharding, it may use the provided {@code key} to infer
+   * a more narrow lock scope, but that is not a requirement.
+   *
+   * @param key the index key to lock.
+   *
+   * @return {@code true} if this index was locked entirely, {@code false} if this index locking is sensitive to the provided {@code
+   * key} and only some subset of this index was locked.
    */
-  void acquireAtomicExclusiveLock();
+  boolean acquireAtomicExclusiveLock(Object key);
 }

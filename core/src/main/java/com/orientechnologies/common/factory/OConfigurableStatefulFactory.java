@@ -70,7 +70,7 @@ public class OConfigurableStatefulFactory<K, V> {
     return null;
   }
 
-  public Set<K> getKeys() {
+  public Set<K> getRegisteredNames() {
     return registry.keySet();
   }
 

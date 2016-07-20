@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.zip.CRC32;
 
+import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import org.testng.Assert;
@@ -42,15 +43,15 @@ public class ReadWriteDiskCacheTest {
   public static final  int writeCacheAmountOfPages = 15000;
   public static final  int WRITE_CACHE_MAX_SIZE    = writeCacheAmountOfPages * PAGE_SIZE;
 
-  private O2QCache    readBuffer;
-  private OWriteCache writeBuffer;
+  private O2QCache  readBuffer;
+  private OWOWCache writeBuffer;
+  private OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<Long, OFileClassic>(1024);
 
   private OLocalPaginatedStorage storageLocal;
   private String                 fileName;
   private byte                   seed;
   private ODiskWriteAheadLog     writeAheadLog;
   private String                 storagePath;
-
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -98,6 +99,7 @@ public class ReadWriteDiskCacheTest {
       writeAheadLog.delete();
       writeAheadLog = null;
     }
+    files.clear();
 
     File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "readWriteDiskCacheTest.tst");
     if (testFile.exists()) {
@@ -142,7 +144,8 @@ public class ReadWriteDiskCacheTest {
 
   private void initBuffer() throws IOException {
     writeBuffer = new OWOWCache(false, PAGE_SIZE, new OByteBufferPool(PAGE_SIZE), -1, writeAheadLog, -1, WRITE_CACHE_MAX_SIZE,
-        WRITE_CACHE_MAX_SIZE + READ_CACHE_MAX_MEMORY, storageLocal, false, 1);
+        WRITE_CACHE_MAX_SIZE + READ_CACHE_MAX_MEMORY, storageLocal, false, files, 1);
+    writeBuffer.loadRegisteredFiles();
 
     readBuffer = new O2QCache(READ_CACHE_MAX_MEMORY, PAGE_SIZE, false, 50);
   }
@@ -1132,7 +1135,8 @@ public class ReadWriteDiskCacheTest {
     segmentConfiguration.fileType = OFileClassic.NAME;
 
     writeBuffer = new OWOWCache(false, 8 + systemOffset, new OByteBufferPool(8 + systemOffset), 10000, writeAheadLog, 100,
-        2 * (8 + systemOffset), 2 * (8 + systemOffset) + 4 * (8 + systemOffset), storageLocal, false, 10);
+        2 * (8 + systemOffset), 2 * (8 + systemOffset) + 4 * (8 + systemOffset), storageLocal, false, files, 10);
+    writeBuffer.loadRegisteredFiles();
     readBuffer = new O2QCache(4 * (8 + systemOffset), 8 + systemOffset, false, 20);
 
     long fileId = readBuffer.addFile(fileName, writeBuffer);

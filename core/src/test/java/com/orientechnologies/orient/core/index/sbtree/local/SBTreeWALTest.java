@@ -295,18 +295,14 @@ public class SBTreeWALTest extends SBTreeTest {
             final OFileCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedWALRecord) restoreRecord;
             final String fileName = fileCreatedCreatedRecord.getFileName().replace("actualSBTree", "expectedSBTree");
 
-            if (expectedWriteCache.exists(fileName))
-              expectedReadCache.openFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
-            else
+            if (!expectedWriteCache.exists(fileName))
               expectedReadCache.addFile(fileName, fileCreatedCreatedRecord.getFileId(), expectedWriteCache);
+
           } else {
             final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
 
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
-
-            if (!expectedWriteCache.isOpen(fileId))
-              expectedReadCache.openFile(fileId, expectedWriteCache);
 
             OCacheEntry cacheEntry = expectedReadCache.load(fileId, pageIndex, true, expectedWriteCache, 1);
             if (cacheEntry == null) {

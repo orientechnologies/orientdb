@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.zip.CRC32;
 
+import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.storage.cache.OCachePointer;
@@ -42,7 +43,8 @@ public class WOWCacheTest {
 
   private ODiskWriteAheadLog writeAheadLog;
 
-  private OWriteCache wowCache;
+  private OWOWCache wowCache;
+  private OClosableLinkedContainer<Long, OFileClassic> files = new OClosableLinkedContainer<Long, OFileClassic>(1024);
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -100,7 +102,8 @@ public class WOWCacheTest {
 
   private void initBuffer() throws IOException {
     wowCache = new OWOWCache(true, pageSize, new OByteBufferPool(pageSize), 10000, writeAheadLog, 10, 100, 100, storageLocal, false,
-        1);
+        files, 1);
+    wowCache.loadRegisteredFiles();
   }
 
   public void testLoadStore() throws IOException {

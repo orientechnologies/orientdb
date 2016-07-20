@@ -28,6 +28,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.ODatabaseImportRemote;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -1509,7 +1510,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           resultSet.add(row);
 
           row.field("NAME", p.getName());
-          row.field("TYPE", p.getType());
+          row.field("TYPE", (Object) p.getType());
           row.field("LINKED-TYPE/CLASS", p.getLinkedClass() != null ? p.getLinkedClass() : p.getLinkedType());
           row.field("MANDATORY", p.isMandatory());
           row.field("READONLY", p.isReadonly());
@@ -2120,11 +2121,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() : text;
 
     try {
-      ODatabaseImport databaseImport = new ODatabaseImport(currentDatabase, fileName, this);
+      if (currentDatabase.getStorage().isRemote()) {
+        ODatabaseImportRemote databaseImport = new ODatabaseImportRemote(currentDatabase, fileName, this);
 
-      databaseImport.setOptions(options).importDatabase();
+        databaseImport.setOptions(options);
+        databaseImport.importDatabase();
+        databaseImport.close();
 
-      databaseImport.close();
+      } else {
+        ODatabaseImport databaseImport = new ODatabaseImport(currentDatabase, fileName, this);
+
+        databaseImport.setOptions(options);
+        databaseImport.importDatabase();
+        databaseImport.close();
+      }
     } catch (ODatabaseImportException e) {
       printError(e);
     }

@@ -62,6 +62,8 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
 
             System.out
                 .println(iClient + " - successfully committed version: " + vertex1.getRecord().getVersion() + " retry: " + retry);
+            break;
+
           } catch (ONeedRetryException e) {
             System.out.println(
                 iClient + " - caught conflict, reloading vertex. v=" + vertex1.getRecord().getVersion() + " retry: " + retry);
@@ -71,10 +73,10 @@ public class TestAsyncReplMode2Servers2OpsCommitConcurrent extends BareBoneBase2
         }
       }
 
-      // STATISTICALLY HERE AT LEAST ON CONFLICT HAS BEEN RECEIVED
+      // STATISTICALLY HERE AT LEAST ONE CONFLICT HAS BEEN RECEIVED
       vertex1.reload();
 
-      Assert.assertTrue(vertex1.getRecord().getVersion() > TOTAL * 2 + 1);
+      Assert.assertTrue(vertex1.getRecord().getVersion() > TOTAL + 1);
       Assert.assertEquals(TOTAL, i);
 
     } catch (Throwable e) {

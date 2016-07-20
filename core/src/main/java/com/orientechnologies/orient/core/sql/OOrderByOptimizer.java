@@ -110,5 +110,4 @@ public class OOrderByOptimizer {
 
     return true;
   }
-
 }

@@ -11,17 +11,17 @@ import java.util.Map;
 public class OBaseExpression extends OMathExpression {
 
   private static final Object UNSET           = new Object();
-  private Object              inputFinalValue = UNSET;
+  private              Object inputFinalValue = UNSET;
 
-  protected ONumber           number;
+  protected ONumber number;
 
-  protected OBaseIdentifier   identifier;
+  protected OBaseIdentifier identifier;
 
-  protected OInputParameter   inputParam;
+  protected OInputParameter inputParam;
 
-  protected String            string;
+  protected String string;
 
-  OModifier                   modifier;
+  OModifier modifier;
 
   public OBaseExpression(int id) {
     super(id);
@@ -31,13 +31,14 @@ public class OBaseExpression extends OMathExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  @Override public String toString() {
     return super.toString();
   }
 
@@ -75,13 +76,11 @@ public class OBaseExpression extends OMathExpression {
     return result;
   }
 
-  @Override
-  protected boolean supportsBasicCalculation() {
+  @Override protected boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override
-  public boolean isIndexedFunctionCall() {
+  @Override public boolean isIndexedFunctionCall() {
     if (this.identifier == null) {
       return false;
     }
@@ -103,9 +102,12 @@ public class OBaseExpression extends OMathExpression {
     return identifier.executeIndexedFunction(target, context, operator, right);
   }
 
-  @Override
-  public boolean isBaseIdentifier() {
+  @Override public boolean isBaseIdentifier() {
     return identifier != null && modifier == null && identifier.isBaseIdentifier();
+  }
+
+  public OIdentifier getBaseIdentifier() {
+    return identifier.suffix.identifier;
   }
 
   public boolean isEarlyCalculated() {

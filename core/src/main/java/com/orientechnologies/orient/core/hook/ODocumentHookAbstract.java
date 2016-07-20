@@ -198,13 +198,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   public void onRecordFinalizeCreation(final ODocument document) {
   }
 
-  /**
-   * Invoked when the {@code document} delete dispatching is finished successfully or unsuccessfully. That is the last method to be
-   * invoked while processing deletion. Override this method to customize this hook behavior.
-   *
-   * @param document the document/record of interest.
-   */
-  public void onRecordFinalizeDelete(final ODocument document) {
+  public void onRecordFinalizeDeletion(final ODocument document) {
   }
 
   public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
@@ -288,8 +282,8 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
       onRecordFinalizeUpdate(document);
       break;
 
-    case FINALIZE_DELETE:
-      onRecordFinalizeDelete(document);
+    case FINALIZE_DELETION:
+      onRecordFinalizeDeletion(document);
       break;
 
     default:

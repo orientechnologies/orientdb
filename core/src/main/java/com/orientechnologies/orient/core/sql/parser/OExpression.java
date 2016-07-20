@@ -21,7 +21,9 @@ public class OExpression extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -44,23 +46,23 @@ public class OExpression extends SimpleNode {
 
   }
 
-  public boolean isBaseIdentifier(){
-    if(value instanceof OMathExpression) {
-      return ((OMathExpression)value).isBaseIdentifier();
+  public boolean isBaseIdentifier() {
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).isBaseIdentifier();
     }
 
     return false;
   }
 
-  public boolean isEarlyCalculated(){
-    if(value instanceof Number) {
+  public boolean isEarlyCalculated() {
+    if (value instanceof Number) {
       return true;
     }
-    if(value instanceof String) {
+    if (value instanceof String) {
       return true;
     }
-    if(value instanceof OMathExpression) {
-      return ((OMathExpression)value).isEarlyCalculated();
+    if (value instanceof OMathExpression) {
+      return ((OMathExpression) value).isEarlyCalculated();
     }
 
     return false;
@@ -70,7 +72,7 @@ public class OExpression extends SimpleNode {
 
     if (value instanceof String) {
       OIdentifier identifier = new OIdentifier(-1);
-      identifier.setValue((String)value);
+      identifier.setValue((String) value);
       return identifier;
     }
     // TODO create an interface for this;
@@ -82,6 +84,10 @@ public class OExpression extends SimpleNode {
     // } else if (value instanceof OJson) {
     // return null;// TODO
     // }
+
+    if (value instanceof OBaseExpression && ((OBaseExpression) value).isBaseIdentifier()) {
+      return ((OBaseExpression) value).identifier.suffix.identifier;
+    }
 
     String result = ("" + value).replaceAll("\\.", "_").replaceAll(" ", "_").replaceAll("\n", "_").replaceAll("\b", "_")
         .replaceAll("\\[", "_").replaceAll("\\]", "_").replaceAll("\\(", "_").replaceAll("\\)", "_");
@@ -108,16 +114,16 @@ public class OExpression extends SimpleNode {
 
   public static String encode(String s) {
     StringBuilder builder = new StringBuilder(s.length());
-    for(char c:s.toCharArray()){
-      if(c=='\n'){
+    for (char c : s.toCharArray()) {
+      if (c == '\n') {
         builder.append("\\n");
         continue;
       }
-      if(c=='\t'){
+      if (c == '\t') {
         builder.append("\\t");
         continue;
       }
-      if(c=='\\' || c == '"'){
+      if (c == '\\' || c == '"') {
         builder.append("\\");
       }
       builder.append(c);
@@ -142,16 +148,16 @@ public class OExpression extends SimpleNode {
   public static String encodeSingle(String s) {
 
     StringBuilder builder = new StringBuilder(s.length());
-    for(char c:s.toCharArray()){
-      if(c=='\n'){
+    for (char c : s.toCharArray()) {
+      if (c == '\n') {
         builder.append("\\n");
         continue;
       }
-      if(c=='\t'){
+      if (c == '\t') {
         builder.append("\\t");
         continue;
       }
-      if(c=='\\' || c == '\''){
+      if (c == '\\' || c == '\'') {
         builder.append("\\");
       }
       builder.append(c);

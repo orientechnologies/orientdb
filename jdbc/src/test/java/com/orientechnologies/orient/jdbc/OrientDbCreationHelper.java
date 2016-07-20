@@ -11,6 +11,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -38,6 +42,7 @@ public class OrientDbCreationHelper {
     createAuthorAndArticles(db, 50, 50);
     createArticleWithAttachmentSplitted(db);
 
+    createWriterAndPosts(new OrientGraphNoTx(db), 10, 10);
   }
 
   public static void createSchemaDB(ODatabaseDocumentTx db) {
@@ -78,6 +83,21 @@ public class OrientDbCreationHelper {
 
     // link article-->author
     article.createProperty("author", OType.LINK, author);
+
+    //Graph
+    OrientGraphNoTx graph = new OrientGraphNoTx(db);
+
+    OrientVertexType post = graph.createVertexType("Post");
+    post.createProperty("uuid", OType.LONG);
+    post.createProperty("title", OType.STRING);
+    post.createProperty("date", OType.DATE).createIndex(INDEX_TYPE.NOTUNIQUE);
+    post.createProperty("content", OType.STRING);
+
+    OrientVertexType writer = graph.createVertexType("Writer");
+    writer.createProperty("uuid", OType.LONG).createIndex(INDEX_TYPE.UNIQUE);
+    writer.createProperty("name", OType.STRING);
+
+    graph.createEdgeType("Writes");
 
     schema.reload();
 
@@ -143,6 +163,46 @@ public class OrientDbCreationHelper {
 
       author.save();
     }
+  }
+
+  public static void createWriterAndPosts(OrientBaseGraph db, int totAuthors, int totArticles) throws IOException {
+    int articleSerial = 0;
+    for (int a = 1; a <= totAuthors; ++a) {
+      OrientVertex writer = db.addVertex("class:Writer");
+      writer.setProperty("uuid", a);
+      writer.setProperty("name", "happy writer");
+
+      for (int i = 1; i <= totArticles; ++i) {
+
+        OrientVertex post = db.addVertex("class:Post");
+
+        Calendar instance = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        Date time = instance.getTime();
+        post.setProperty("date", time, OType.DATE);
+        post.setProperty("uuid", articleSerial++);
+        post.setProperty("title", "the title");
+        post.setProperty("content", "the content");
+
+        db.addEdge("class:Writes", writer, post, null);
+      }
+
+    }
+
+    //additional wrong data
+    OrientVertex writer = db.addVertex("class:Writer");
+    writer.setProperty("uuid", totAuthors * 2);
+    writer.setProperty("name", "happy writer");
+
+    OrientVertex post = db.addVertex("class:Post");
+
+    //no date!!
+
+    post.setProperty("uuid", articleSerial * 2);
+    post.setProperty("title", "the title");
+    post.setProperty("content", "the content");
+
+    db.addEdge("class:Writes", writer, post, null);
+
   }
 
   public static ODocument createArticleWithAttachmentSplitted(ODatabaseDocumentTx db) throws IOException {

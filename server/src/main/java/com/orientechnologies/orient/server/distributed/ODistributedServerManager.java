@@ -23,6 +23,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -59,6 +60,8 @@ public interface ODistributedServerManager {
 
   void waitUntilNodeOnline(final String nodeName, final String databaseName) throws InterruptedException;
 
+  OStorage getStorage(String databaseName);
+
   OServer getServerInstance();
 
   boolean isEnabled();
@@ -81,11 +84,17 @@ public interface ODistributedServerManager {
 
   boolean checkNodeStatus(NODE_STATUS string);
 
+  void removeServer(String nodeLeftName);
+
   DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName);
 
   void setDatabaseStatus(String iNode, String iDatabaseName, DB_STATUS iStatus);
 
   ODistributedMessageService getMessageService();
+
+  ODistributedStrategy getDistributedStrategy();
+
+  void setDistributedStrategy(final ODistributedStrategy streatgy);
 
   void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster);
 
@@ -138,6 +147,8 @@ public interface ODistributedServerManager {
   Lock getLock(String iLockName);
 
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
+
+  ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName, boolean createIfNotPresent);
 
   /**
    * Sends a distributed request against multiple servers.

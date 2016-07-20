@@ -53,6 +53,11 @@ public class ServerRun {
     return getServerHome(iServerId) + "/databases/" + iDatabaseName;
   }
 
+  @Override
+  public String toString() {
+    return server.getDistributedManager().getLocalNodeName() + "(" + serverId + ")";
+  }
+
   public OServer getServerInstance() {
     return server;
   }
@@ -143,7 +148,8 @@ public class ServerRun {
   public void terminateServer() {
     if (server != null) {
       try {
-        if (((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().isRunning())
+        final OHazelcastPlugin dPlugin = (OHazelcastPlugin) server.getDistributedManager();
+        if (dPlugin != null && dPlugin.getHazelcastInstance().getLifecycleService().isRunning())
           ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().getLifecycleService().terminate();
       } catch (Exception e) {
       }

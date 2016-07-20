@@ -7,9 +7,33 @@ import java.sql.*;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import static java.sql.Types.BIGINT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
+
+  @Test
+  public void shouldMapOrientTypesToJavaSQLTypes() throws Exception {
+
+    ResultSet rs = conn.createStatement().executeQuery("SELECT stringKey, intKey, text, length, date, score FROM Item");
+
+    ResultSetMetaData metaData = rs.getMetaData();
+    assertThat(metaData).isNotNull();
+    assertThat(metaData.getColumnCount()).isEqualTo(6);
+
+    assertThat(metaData.getColumnType(1)).isEqualTo(Types.VARCHAR);
+    assertThat(metaData.getColumnClassName(1)).isEqualTo(String.class.getName());
+
+    assertThat(metaData.getColumnType(2)).isEqualTo(Types.INTEGER);
+
+    assertThat(metaData.getColumnType(3)).isEqualTo(Types.VARCHAR);
+    assertThat(rs.getObject(3)).isInstanceOf(String.class);
+
+    assertThat(metaData.getColumnType(4)).isEqualTo(BIGINT);
+    assertThat(metaData.getColumnType(5)).isEqualTo(Types.TIMESTAMP);
+
+    assertThat(metaData.getColumnType(6)).isEqualTo(Types.DECIMAL);
+  }
 
   @Test
   public void shouldMapReturnTypes() throws Exception {
@@ -40,50 +64,28 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  public void shouldNavigateResultSet() throws Exception {
+  public void shouldMapRatingToDouble() throws Exception {
 
-    assertThat(conn.isClosed()).isFalse();
-    Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT * FROM Item");
-    assertThat(rs.getFetchSize()).isEqualTo(20);
+    ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM Author limit 10");
+    int size = 0;
+    while (rs.next()) {
+      assertThat(rs.getDouble("rating")).isNotNull().isInstanceOf(Double.class);
 
-    assertThat(rs.isBeforeFirst()).isTrue();
-
-    assertThat(rs.next()).isTrue();
-
-    assertThat(rs.getRow()).isEqualTo(0);
-
-    rs.last();
-
-    assertThat(rs.getRow()).isEqualTo(19);
-
-    assertThat(rs.next()).isFalse();
-
-    rs.afterLast();
-
-    assertThat(rs.next()).isFalse();
-
-    rs.close();
-
-    assertThat(rs.isClosed()).isTrue();
-
-    stmt.close();
-
-    assertThat(stmt.isClosed()).isTrue();
+      size++;
+    }
+    assertThat(size).isEqualTo(10);
   }
 
   @Test
-  public void shouldReturnResultSetAfterExecute() throws Exception {
+  public void shouldConvertUUIDToDouble() throws Exception {
 
-    assertThat(conn.isClosed()).isFalse();
-
-    Statement stmt = conn.createStatement();
-
-    assertThat(stmt.execute("SELECT stringKey, intKey, text, length, date FROM Item")).isTrue();
-    ResultSet rs = stmt.getResultSet();
-    assertThat(rs).isNotNull();
-    assertThat(rs.getFetchSize()).isEqualTo(20);
-
+    ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM Author limit 10");
+    int count = 0;
+    while (rs.next()) {
+      assertThat(rs.getDouble("uuid")).isNotNull().isInstanceOf(Double.class);
+      count++;
+    }
+    assertThat(count).isEqualTo(10);
   }
 
   @Test
@@ -112,31 +114,26 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
   }
 
   @Test
-  public void shouldMapOrientTypesToJavaSQL() throws Exception {
-    assertThat(conn.isClosed()).isFalse();
-
+  public void shouldMapMissingFieldsToNull() throws Exception {
     Statement stmt = conn.createStatement();
-    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date, score FROM Item");
 
-    rs.next();
+    ResultSet rs = stmt.executeQuery(
+        "select uuid, posts.* as post_ from (\n" + " select uuid, out('Writes') as posts from writer  unwind posts) order by uuid");
+
     ResultSetMetaData metaData = rs.getMetaData();
-
-    assertThat(metaData.getColumnCount()).isEqualTo(6);
-
-    assertThat(metaData.getColumnType(2)).isEqualTo(java.sql.Types.INTEGER);
-
-    assertThat(metaData.getColumnType(3)).isEqualTo(java.sql.Types.VARCHAR);
-    assertThat(rs.getObject(3)).isInstanceOf(String.class);
-
-    assertThat(metaData.getColumnType(4)).isEqualTo(java.sql.Types.BIGINT);
-
-    assertThat(metaData.getColumnType(5)).isEqualTo(java.sql.Types.TIMESTAMP);
-
-    assertThat(metaData.getColumnType(6)).isEqualTo(Types.DECIMAL);
-
-    assertThat(metaData.getColumnClassName(1)).isEqualTo(String.class.getName());
-    assertThat(metaData.getColumnType(1)).isEqualTo(java.sql.Types.VARCHAR);
-
+    while (rs.next()) {
+      if (rs.getMetaData().getColumnCount() == 6) {
+        //record with all attributes
+        assertThat(rs.getTimestamp("post_date")).isNotNull();
+        assertThat(rs.getTime("post_date")).isNotNull();
+        assertThat(rs.getDate("post_date")).isNotNull();
+      } else {
+        //record missing date; only 5 column
+        assertThat(rs.getTimestamp("post_date")).isNull();
+        assertThat(rs.getTime("post_date")).isNull();
+        assertThat(rs.getDate("post_date")).isNull();
   }
 
+}
+  }
 }

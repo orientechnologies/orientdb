@@ -15,24 +15,26 @@
  */
 package com.orientechnologies.orient.core.conflict;
 
-import com.orientechnologies.common.factory.OConfigurableStatefulFactory;
+import com.orientechnologies.common.factory.OConfigurableStatelessFactory;
 
 /**
  * Factory to manage the record conflict strategy implementations.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ORecordConflictStrategyFactory extends OConfigurableStatefulFactory<String, ORecordConflictStrategy> {
+public class ORecordConflictStrategyFactory extends OConfigurableStatelessFactory<String, ORecordConflictStrategy> {
   public ORecordConflictStrategyFactory() {
-    setDefaultClass(OVersionRecordConflictStrategy.class);
+    final OVersionRecordConflictStrategy def = new OVersionRecordConflictStrategy();
 
-    register(OVersionRecordConflictStrategy.NAME, OVersionRecordConflictStrategy.class);
-    register(OAutoMergeRecordConflictStrategy.NAME, OAutoMergeRecordConflictStrategy.class);
-    register(OContentRecordConflictStrategy.NAME, OContentRecordConflictStrategy.class);
+    registerImplementation(OVersionRecordConflictStrategy.NAME, def);
+    registerImplementation(OAutoMergeRecordConflictStrategy.NAME, new OAutoMergeRecordConflictStrategy());
+    registerImplementation(OContentRecordConflictStrategy.NAME, new OContentRecordConflictStrategy());
+
+    setDefaultImplementation(def);
   }
 
   public ORecordConflictStrategy getStrategy(final String iStrategy) {
-    return newInstance(iStrategy);
+    return getImplementation(iStrategy);
   }
 
   public String getDefaultStrategy() {

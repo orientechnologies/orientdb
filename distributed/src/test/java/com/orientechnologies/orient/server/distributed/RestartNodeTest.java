@@ -45,7 +45,7 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
   public void test() throws Exception {
     startupNodesInSequence = true;
     useTransactions = false;
-    count = 600;
+    count = 300;
     maxRetries = 10;
     delayWriter = 0;
     init(SERVERS);
@@ -102,7 +102,7 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
               // CONDITION
               @Override
               public Boolean call(ODatabaseDocumentTx database) {
-                return database.countClass("Person") > (count * writerCount * (SERVERS-1) * 1 / 5);
+                return database.countClass("Person") > (count * writerCount * (SERVERS-1) * 1 / 3);
               }
             }, // ACTION
                 new OCallable<Boolean, ODatabaseDocumentTx>() {
@@ -117,6 +117,7 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
                 try {
                   final String nodeName = server.server.getDistributedManager().getLocalNodeName();
                   ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager()).restartNode(nodeName);
+                  delayWriter = 5;
                 } catch (Exception e) {
                   e.printStackTrace();
                 }

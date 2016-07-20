@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationMetadata;
 
 import java.io.File;
@@ -93,4 +94,9 @@ public interface OWriteAheadLog {
    * in this WAL instance than the returned count, but the returned count is preferred by this WAL instance.
    */
   long getPreferredSegmentCount();
+
+  void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
+
+  void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);
+
 }

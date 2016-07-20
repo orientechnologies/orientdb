@@ -47,15 +47,8 @@ public class OSingleFileSegment {
     file = new OFileClassic(iStorage.getVariableParser().resolveVariables(iConfig.path), iStorage.getMode());
   }
 
-  public boolean open() throws IOException {
-    boolean softClosed = file.open();
-    if (!softClosed) {
-      // LAST TIME THE FILE WAS NOT CLOSED IN SOFT WAY
-      OLogManager.instance().warn(this, "segment file '%s' was not closed correctly last time", OFileUtils.getPath(file.getName()));
-      wasSoftlyClosedAtPreviousTime = false;
-    }
-
-    return softClosed;
+  public void open() throws IOException {
+    file.open();
   }
 
   public void create(final int iStartSize) throws IOException {

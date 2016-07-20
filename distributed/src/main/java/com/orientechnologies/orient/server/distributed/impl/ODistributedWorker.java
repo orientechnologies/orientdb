@@ -147,7 +147,7 @@ public class ODistributedWorker extends Thread {
         }
 
       ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-          "Shutdown distributed worker completed");
+          "Shutdown distributed worker '%s' completed", getName());
 
       localQueue.clear();
 
@@ -158,7 +158,7 @@ public class ODistributedWorker extends Thread {
 
     } catch (Exception e) {
       ODistributedServerLog.warn(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-          "Error on shutting down distributed worker", e);
+          "Error on shutting down distributed worker '%s'", e, getName());
 
     }
   }
@@ -301,7 +301,7 @@ public class ODistributedWorker extends Thread {
       ODistributedServerLog.debug(this, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Sending response %s back", response);
 
-      remoteSenderServer.sendResponse(response, senderNodeName);
+      remoteSenderServer.sendResponse(response);
 
     } catch (Exception e) {
       ODistributedServerLog.debug(this, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,

@@ -33,17 +33,28 @@ import java.util.*;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedConfiguration {
-  public static final String        NEW_NODE_TAG         = "<NEW_NODE>";
-  public static final String        ALL_WILDCARD         = "*";
+  public static final String        NEW_NODE_TAG               = "<NEW_NODE>";
+  public static final String        ALL_WILDCARD               = "*";
+  private static final String       SERVERS                    = "servers";
+  private static final String       DCS                        = "dataCenters";
+  private static final String       OWNER                      = "owner";
+  private static final String       CLUSTERS                   = "clusters";
+  private static final String       VERSION                    = "version";
 
-  public static final String        QUORUM_MAJORITY      = "majority";
-  public static final String        QUORUM_ALL           = "all";
-  public static final Integer       DEFAULT_READ_QUORUM  = 1;
-  public static final String        DEFAULT_WRITE_QUORUM = QUORUM_MAJORITY;
+  private static final String       READ_QUORUM                = "readQuorum";
+  private static final String       WRITE_QUORUM               = "writeQuorum";
+  public static final String        QUORUM_MAJORITY            = "majority";
+  public static final String        QUORUM_ALL                 = "all";
+  public static final String        QUORUM_LOCAL_DC            = "localDataCenter";
+  public static final Integer       DEFAULT_READ_QUORUM        = 1;
+  public static final String        DEFAULT_WRITE_QUORUM       = QUORUM_MAJORITY;
 
-  private static final List<String> DEFAULT_CLUSTER_NAME = Collections.singletonList(ALL_WILDCARD);
+  private static final String       READ_YOUR_WRITES           = "readYourWrites";
+  private static final String       EXECUTION_MODE             = "executionMode";
+  private static final String       EXECUTION_MODE_SYNCHRONOUS = "synchronous";
 
   private final ODocument           configuration;
+  private static final List<String> DEFAULT_CLUSTER_NAME       = Collections.singletonList(ALL_WILDCARD);
 
   public enum ROLES {
     MASTER, REPLICA
@@ -61,7 +72,7 @@ public class ODistributedConfiguration {
    */
   public boolean isReplicationActive(final String iClusterName, final String iLocalNode) {
     synchronized (configuration) {
-      final Collection<String> servers = getClusterConfiguration(iClusterName).field("servers");
+      final Collection<String> servers = getClusterConfiguration(iClusterName).field(SERVERS);
       if (servers != null && !servers.isEmpty()) {
         return true;
       }
@@ -70,27 +81,12 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the read quorum.
-   *
-   * @param iClusterName
-   *          Cluster name, or null for *
-   * @param iAvailableNodes
-   *          Total node available
+   * Returns true if the configuration per data centers is specified.
    */
-  public int getReadQuorum(final String iClusterName, final int iAvailableNodes) {
-    return getQuorum("readQuorum", iClusterName, iAvailableNodes, DEFAULT_READ_QUORUM);
-  }
-
-  /**
-   * Returns the write quorum.
-   *
-   * @param iClusterName
-   *          Cluster name, or null for *
-   * @param iAvailableNodes
-   *          Total node available
-   */
-  public int getWriteQuorum(final String iClusterName, final int iAvailableNodes) {
-    return getQuorum("writeQuorum", iClusterName, iAvailableNodes, DEFAULT_WRITE_QUORUM);
+  public boolean hasDataCenterConfiguration() {
+    synchronized (configuration) {
+      return configuration.field(DCS) != null;
+    }
   }
 
   /**
@@ -102,9 +98,9 @@ public class ODistributedConfiguration {
    */
   public Boolean isExecutionModeSynchronous(final String iClusterName) {
     synchronized (configuration) {
-      Object value = getClusterConfiguration(iClusterName).field("executionMode");
+      Object value = getClusterConfiguration(iClusterName).field(EXECUTION_MODE);
       if (value == null) {
-        value = configuration.field("executionMode");
+        value = configuration.field(EXECUTION_MODE);
         if (value == null)
           return null;
       }
@@ -112,7 +108,7 @@ public class ODistributedConfiguration {
       if (value.toString().equalsIgnoreCase("undefined"))
         return null;
 
-      return value.toString().equalsIgnoreCase("synchronous");
+      return value.toString().equalsIgnoreCase(EXECUTION_MODE_SYNCHRONOUS);
     }
   }
 
@@ -124,11 +120,11 @@ public class ODistributedConfiguration {
    */
   public Boolean isReadYourWrites(final String iClusterName) {
     synchronized (configuration) {
-      Object value = getClusterConfiguration(iClusterName).field("readYourWrites");
+      Object value = getClusterConfiguration(iClusterName).field(READ_YOUR_WRITES);
       if (value == null) {
-        value = configuration.field("readYourWrites");
+        value = configuration.field(READ_YOUR_WRITES);
         if (value == null) {
-          OLogManager.instance().warn(this, "readYourWrites setting not found for cluster=%s in distributed-config.json",
+          OLogManager.instance().warn(this, "%s setting not found for cluster=%s in distributed-config.json", READ_YOUR_WRITES,
               iClusterName);
           return true;
         }
@@ -156,7 +152,7 @@ public class ODistributedConfiguration {
       // TRY TO SEE IF IT CAN BE EXECUTED ON LOCAL NODE ONLY
       boolean canUseLocalNode = true;
       for (String p : iClusterNames) {
-        final List<String> serverList = getClusterConfiguration(p).field("servers");
+        final List<String> serverList = getClusterConfiguration(p).field(SERVERS);
         if (serverList != null && !serverList.contains(iLocalNode)) {
           canUseLocalNode = false;
           break;
@@ -170,7 +166,7 @@ public class ODistributedConfiguration {
       }
 
       if (iClusterNames.size() == 1) {
-        final List<String> serverList = getClusterConfiguration(iClusterNames.iterator().next()).field("servers");
+        final List<String> serverList = getClusterConfiguration(iClusterNames.iterator().next()).field(SERVERS);
 
         for (String s : serverList) {
           if (NEW_NODE_TAG.equalsIgnoreCase(s))
@@ -185,7 +181,7 @@ public class ODistributedConfiguration {
       // GROUP BY SERVER WITH THE NUMBER OF CLUSTERS
       final Map<String, Collection<String>> serverMap = new HashMap<String, Collection<String>>();
       for (String p : iClusterNames) {
-        final List<String> serverList = getClusterConfiguration(p).field("servers");
+        final List<String> serverList = getClusterConfiguration(p).field(SERVERS);
         for (String s : serverList) {
           if (NEW_NODE_TAG.equalsIgnoreCase(s))
             continue;
@@ -282,16 +278,16 @@ public class ODistributedConfiguration {
    * Returns the set of server names involved on the passed cluster collection.
    *
    * @param iClusterNames
-   *          Set of cluster names to find
+   *          Collection of cluster names to find
    */
   public Set<String> getServers(Collection<String> iClusterNames) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
-        iClusterNames = DEFAULT_CLUSTER_NAME;
+        return getAllConfiguredServers();
 
       final Set<String> partitions = new HashSet<String>(iClusterNames.size());
       for (String p : iClusterNames) {
-        final List<String> serverList = getClusterConfiguration(p).field("servers");
+        final List<String> serverList = getClusterConfiguration(p).field(SERVERS);
         if (serverList != null) {
           for (String s : serverList)
             if (!s.equals(NEW_NODE_TAG))
@@ -299,6 +295,51 @@ public class ODistributedConfiguration {
         }
       }
       return partitions;
+    }
+  }
+
+  /**
+   * Returns true if the local server has all the requested clusters.
+   *
+   * @param server
+   *          Server name
+   * @param clusters
+   *          Collection of cluster names to find
+   */
+  public boolean isServerContainingAllClusters(final String server, Collection<String> clusters) {
+    synchronized (configuration) {
+      if (clusters == null || clusters.isEmpty())
+        clusters = DEFAULT_CLUSTER_NAME;
+
+      for (String cluster : clusters) {
+        final List<String> serverList = getClusterConfiguration(cluster).field(SERVERS);
+        if (serverList != null) {
+          if (!serverList.contains(server))
+            return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  /**
+   * Returns true if the local server has the requested cluster.
+   *
+   * @param server
+   *          Server name
+   * @param cluster
+   *          cluster names to find
+   */
+  public boolean isServerContainingCluster(final String server, String cluster) {
+    if (cluster == null)
+      cluster = ALL_WILDCARD;
+
+    synchronized (configuration) {
+      final List<String> serverList = getClusterConfiguration(cluster).field(SERVERS);
+      if (serverList != null) {
+        return serverList.contains(server);
+      }
+      return true;
     }
   }
 
@@ -312,7 +353,7 @@ public class ODistributedConfiguration {
    */
   public List<String> getServers(final String iClusterName, final String iExclude) {
     synchronized (configuration) {
-      final List<String> serverList = getClusterConfiguration(iClusterName).field("servers");
+      final List<String> serverList = getClusterConfiguration(iClusterName).field(SERVERS);
       if (serverList != null) {
         // COPY AND REMOVE ANY NEW_NODE_TAG
         List<String> filteredServerList = new ArrayList<String>(serverList.size());
@@ -327,23 +368,6 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns true if the server has a cluster.
-   * 
-   * @param iServer
-   *          Server name
-   * @param iClusterName
-   *          Cluster name
-   */
-  public boolean hasCluster(final String iServer, final String iClusterName) {
-    synchronized (configuration) {
-      final List<String> serverList = getClusterConfiguration(iClusterName).field("servers");
-      if (serverList != null)
-        return serverList.contains(iServer);
-      return false;
-    }
-  }
-
-  /**
    * Returns the complete list of servers found in configuration.
    */
   public Set<String> getAllConfiguredServers() {
@@ -351,7 +375,7 @@ public class ODistributedConfiguration {
       final Set<String> servers = new HashSet<String>();
 
       for (String p : getClusterNames()) {
-        final List<String> serverList = getClusterConfiguration(p).field("servers");
+        final List<String> serverList = getClusterConfiguration(p).field(SERVERS);
         if (serverList != null) {
           for (String s : serverList)
             if (!s.equals(NEW_NODE_TAG))
@@ -409,11 +433,11 @@ public class ODistributedConfiguration {
       final ODocument cfg = clusters.field(iClusterName);
 
       if (cfg != null) {
-        owner = cfg.field("owner");
+        owner = cfg.field(OWNER);
         if (owner != null)
           return owner;
 
-        final List<String> serverList = cfg.field("servers");
+        final List<String> serverList = cfg.field(SERVERS);
         if (serverList != null && !serverList.isEmpty()) {
           // RETURN THE FIRST ONE
           owner = serverList.get(0);
@@ -444,7 +468,7 @@ public class ODistributedConfiguration {
       // GET THE CLUSTER CFG
       final ODocument cfg = clusters.field(iClusterName);
       if (cfg != null)
-        owner = cfg.field("owner");
+        owner = cfg.field(OWNER);
 
       return owner;
     }
@@ -458,8 +482,7 @@ public class ODistributedConfiguration {
    */
   public List<String> getServers(final String iClusterName) {
     synchronized (configuration) {
-      final Collection<? extends String> list = (Collection<? extends String>) getClusterConfiguration(iClusterName)
-          .field("servers");
+      final Collection<? extends String> list = (Collection<? extends String>) getClusterConfiguration(iClusterName).field(SERVERS);
       return list != null ? new ArrayList<String>(list) : null;
     }
   }
@@ -469,7 +492,7 @@ public class ODistributedConfiguration {
    */
   public String[] getClusterNames() {
     synchronized (configuration) {
-      final ODocument clusters = configuration.field("clusters");
+      final ODocument clusters = configuration.field(CLUSTERS);
       return clusters.fieldNames();
     }
   }
@@ -479,7 +502,7 @@ public class ODistributedConfiguration {
    */
   public ROLES getDefaultServerRole() {
     synchronized (configuration) {
-      final ODocument servers = configuration.field("servers");
+      final ODocument servers = configuration.field(SERVERS);
       if (servers == null)
         // DEFAULT: MASTER
         return ROLES.MASTER;
@@ -498,7 +521,7 @@ public class ODistributedConfiguration {
    */
   public ROLES getServerRole(final String iServerName) {
     synchronized (configuration) {
-      final ODocument servers = configuration.field("servers");
+      final ODocument servers = configuration.field(SERVERS);
       if (servers == null)
         // DEFAULT: MASTER
         return ROLES.MASTER;
@@ -533,7 +556,7 @@ public class ODistributedConfiguration {
       final List<String> changedPartitions = new ArrayList<String>();
       // NOT FOUND: ADD THE NODE IN CONFIGURATION. LOOK FOR $newNode TAG
       for (String clusterName : getClusterNames()) {
-        final List<String> partitions = getClusterConfiguration(clusterName).field("servers");
+        final List<String> partitions = getClusterConfiguration(clusterName).field(SERVERS);
         if (partitions != null) {
           final int newNodePos = partitions.indexOf(ODistributedConfiguration.NEW_NODE_TAG);
           if (newNodePos > -1 && !partitions.contains(iNode)) {
@@ -563,7 +586,7 @@ public class ODistributedConfiguration {
       throw new IllegalArgumentException("cluster name cannot be null");
 
     synchronized (configuration) {
-      final ODocument clusters = configuration.field("clusters");
+      final ODocument clusters = configuration.field(CLUSTERS);
       ODocument cluster = clusters.field(iClusterName);
 
       if (cluster == null)
@@ -571,15 +594,16 @@ public class ODistributedConfiguration {
         cluster = createCluster(iClusterName);
       else {
         // CHECK IF THE OWNER IS ALREADY CONFIGURED
-        final String owner = cluster.field("owner");
+        final String owner = cluster.field(OWNER);
         if (owner != null && !iServerName.equalsIgnoreCase(owner))
           throw new ODistributedException("Cannot overwrite ownership of cluster '" + iClusterName + "' to the server '"
               + iServerName + "', because server '" + owner + "' was already configured as owner");
       }
 
-      List<String> serverList = getClusterConfiguration(iClusterName).field("servers");
-      if (serverList == null)
+      List<String> serverList = getClusterConfiguration(iClusterName).field(SERVERS);
+      if (serverList == null) {
         serverList = initClusterServers(cluster);
+      }
 
       if (!serverList.isEmpty() && serverList.get(0).equals(iServerName))
         // ALREADY OWNER
@@ -613,7 +637,7 @@ public class ODistributedConfiguration {
       final List<String> changedPartitions = new ArrayList<String>();
 
       for (String clusterName : getClusterNames()) {
-        final Collection<String> nodes = getClusterConfiguration(clusterName).field("servers");
+        final Collection<String> nodes = getClusterConfiguration(clusterName).field(SERVERS);
         if (nodes != null) {
           for (String node : nodes) {
             if (node.equals(iNode)) {
@@ -635,6 +659,97 @@ public class ODistributedConfiguration {
   }
 
   /**
+   * Returns all the configured data centers' names, if any.
+   */
+  public Set<String> getDataCenters() {
+    synchronized (configuration) {
+      final ODocument dcs = configuration.field(DCS);
+      if (dcs == null)
+        return Collections.EMPTY_SET;
+
+      final Set<String> result = new HashSet<String>();
+      for (String dc : dcs.fieldNames()) {
+        result.add(dc);
+      }
+      return result;
+    }
+  }
+
+  /**
+   * Returns the data center write quorum.
+   *
+   * @param dataCenter
+   *          Data center name
+   */
+  public int getDataCenterWriteQuorum(final String dataCenter) {
+    synchronized (configuration) {
+      final ODocument dc = getDataCenterConfiguration(dataCenter);
+
+      Object wq = dc.field(WRITE_QUORUM);
+      if (wq instanceof String) {
+        if (wq.toString().equalsIgnoreCase(ODistributedConfiguration.QUORUM_MAJORITY)) {
+          final List<String> servers = dc.field(SERVERS);
+          wq = servers.size() / 2 + 1;
+        } else if (wq.toString().equalsIgnoreCase(ODistributedConfiguration.QUORUM_ALL)) {
+          final List<String> servers = dc.field(SERVERS);
+          wq = servers.size();
+        }
+      }
+
+      return (Integer) wq;
+    }
+  }
+
+  /**
+   * Returns the list of servers in a data center.
+   *
+   * @param dataCenter
+   *          Data center name
+   * @throws OConfigurationException
+   *           if the list of servers is not found in data center configuration
+   */
+  public List<String> getDataCenterServers(final String dataCenter) {
+    synchronized (configuration) {
+      final ODocument dc = getDataCenterConfiguration(dataCenter);
+
+      final List<String> servers = dc.field(SERVERS);
+      if (servers == null || servers.isEmpty())
+        throw new OConfigurationException(
+            "Data center '" + dataCenter + "' does not contain any server in distributed database configuration");
+
+      return new ArrayList<String>(servers);
+    }
+  }
+
+  /**
+   * Returns the data center where the server belongs.
+   *
+   * @param server
+   *          Server name
+   */
+  public String getDataCenterOfServer(final String server) {
+    synchronized (configuration) {
+      final ODocument dcs = configuration.field(DCS);
+      if (dcs != null) {
+        for (String dc : dcs.fieldNames()) {
+          final ODocument dcConfig = dcs.field(dc);
+          if (dcConfig != null) {
+            final List<String> dcServers = dcConfig.field("servers");
+            if (dcServers != null && !dcServers.isEmpty()) {
+              if (dcServers.contains(server))
+                // FOUND
+                return dc;
+            }
+          }
+        }
+      }
+    }
+
+    // NOT FOUND
+    return null;
+  }
+
+  /**
    * Set a server offline. It assures the offline server is never on top of the list.<br>
    * NOTE: It must be executed in distributed database lock.
    * 
@@ -650,7 +765,7 @@ public class ODistributedConfiguration {
     final String[] clusters = getClusterNames();
     synchronized (configuration) {
       for (String clusterName : clusters) {
-        final List<String> nodes = getClusterConfiguration(clusterName).field("servers");
+        final List<String> nodes = getClusterConfiguration(clusterName).field(SERVERS);
         if (nodes != null && nodes.size() > 1) {
           for (String node : nodes) {
             if (node.equals(iNode)) {
@@ -687,7 +802,7 @@ public class ODistributedConfiguration {
   }
 
   public int getVersion() {
-    final Integer v = configuration.field("version");
+    final Integer v = configuration.field(VERSION);
     if (v == null)
       return 0;
     return v;
@@ -697,16 +812,16 @@ public class ODistributedConfiguration {
     final ODocument any = getClusterConfiguration(ALL_WILDCARD);
 
     // COPY THE SERVER LIST FROM ALL_WILDCARD
-    final List<String> anyServers = any.field("servers");
+    final List<String> anyServers = any.field(SERVERS);
     final List<String> servers = new ArrayList<String>(anyServers);
-    cluster.field("servers", servers);
+    cluster.field(SERVERS, servers);
 
     return servers;
   }
 
   private ODocument createCluster(final String iClusterName) {
     // CREATE IT
-    final ODocument clusters = configuration.field("clusters");
+    final ODocument clusters = configuration.field(CLUSTERS);
 
     ODocument cluster = clusters.field(iClusterName);
     if (cluster != null)
@@ -717,60 +832,77 @@ public class ODistributedConfiguration {
     ODocumentInternal.addOwner(cluster, clusters);
     clusters.field(iClusterName, cluster, OType.EMBEDDED);
 
-    initClusterServers(cluster);
+    final List<String> servers = initClusterServers(cluster);
 
     return cluster;
   }
 
   private void incrementVersion() {
     // INCREMENT VERSION
-    Integer oldVersion = configuration.field("version");
+    Integer oldVersion = configuration.field(VERSION);
     if (oldVersion == null)
       oldVersion = 0;
-    configuration.field("version", oldVersion.intValue() + 1);
+    configuration.field(VERSION, oldVersion.intValue() + 1);
+  }
+
+  /**
+   * Returns true if the global write quorum is "localDataCenter".
+   *
+   */
+  public boolean isLocalDataCenterWriteQuorum() {
+    synchronized (configuration) {
+      return QUORUM_LOCAL_DC.equals(configuration.field(WRITE_QUORUM));
+    }
+  }
+
+  /**
+   * Returns the global read quorum.
+   *
+   * @param iClusterName
+   *          Cluster name, or null for *
+   */
+  public Object getGlobalReadQuorum(final String iClusterName) {
+    synchronized (configuration) {
+      Object value = getClusterConfiguration(iClusterName).field(READ_QUORUM);
+      if (value == null)
+        value = configuration.field(READ_QUORUM);
+      return value;
+    }
   }
 
   /**
    * Returns the read quorum.
    *
-   * @param iClusterName
+   * @param clusterName
    *          Cluster name, or null for *
-   * @param iAvailableNodes
-   *          Total nodes available
+   * @param availableNodes
+   *          Total node available
    */
-  private int getQuorum(final String quorumSetting, final String iClusterName, final int iAvailableNodes,
-      final Object defaultValue) {
-    synchronized (configuration) {
-      Object value = getClusterConfiguration(iClusterName).field(quorumSetting);
-      if (value == null) {
-        value = configuration.field(quorumSetting);
-        if (value == null) {
-          OLogManager.instance().warn(this, "%s setting not found for cluster=%s in distributed-config.json", quorumSetting,
-              iClusterName);
-          value = defaultValue;
-        }
-      }
+  public int getReadQuorum(final String clusterName, final int availableNodes, final String server) {
+    return getQuorum("readQuorum", clusterName, availableNodes, DEFAULT_READ_QUORUM, server);
+  }
 
-      if (value instanceof String) {
-        if (value.toString().equalsIgnoreCase(ODistributedConfiguration.QUORUM_MAJORITY)) {
-          value = iAvailableNodes / 2 + 1;
-        } else if (value.toString().equalsIgnoreCase(ODistributedConfiguration.QUORUM_ALL))
-          value = iAvailableNodes;
-      }
-
-      return (Integer) value;
-    }
+  /**
+   * Returns the write quorum.
+   *
+   * @param clusterName
+   *          Cluster name, or null for *
+   * @param availableNodes
+   *          Total node available
+   */
+  public int getWriteQuorum(final String clusterName, final int availableNodes, final String server) {
+    return getQuorum("writeQuorum", clusterName, availableNodes, DEFAULT_WRITE_QUORUM, server);
   }
 
   private ODocument getConfiguredClusters() {
-    final ODocument clusters = configuration.field("clusters");
+    final ODocument clusters = configuration.field(CLUSTERS);
     if (clusters == null)
-      throw new OConfigurationException("Cannot find 'clusters' in distributed database configuration");
+      throw new OConfigurationException("Cannot find '" + CLUSTERS + "' in distributed database configuration");
     return clusters;
   }
 
   /**
-   * Get the document representing the cluster configuration.
+   * Gets the document representing the cluster configuration.
    *
    * @param iClusterName
    *          Cluster name, or null for *
@@ -797,6 +929,64 @@ public class ODistributedConfiguration {
         return new ODocument();
 
       return cfg;
+    }
+  }
+
+  /**
+   * Gets the document representing the dc configuration.
+   *
+   * @param dataCenter
+   *          Data center name
+   * @return Always a ODocument
+   * @throws OConfigurationException
+   *           if the data center configuration is not found
+   */
+  private ODocument getDataCenterConfiguration(final String dataCenter) {
+    synchronized (configuration) {
+      final ODocument dcs = configuration.field(DCS);
+      if (dcs != null)
+        return dcs.field(dataCenter);
+    }
+    throw new OConfigurationException("Cannot find the data center '" + dataCenter + "' in distributed database configuration");
+  }
+
+  /**
+   * Returns the read quorum.
+   *
+   * @param iClusterName
+   *          Cluster name, or null for *
+   * @param iAvailableNodes
+   *          Total nodes available
+   */
+  private int getQuorum(final String quorumSetting, final String iClusterName, final int iAvailableNodes, final Object defaultValue,
+      final String server) {
+    synchronized (configuration) {
+      Object value = getClusterConfiguration(iClusterName).field(quorumSetting);
+      if (value == null) {
+        value = configuration.field(quorumSetting);
+        if (value == null) {
+          OLogManager.instance().warn(this, "%s setting not found for cluster=%s in distributed-config.json", quorumSetting,
+              iClusterName);
+          value = defaultValue;
+        }
+      }
+
+      if (value instanceof String) {
+        if (value.toString().equalsIgnoreCase(QUORUM_MAJORITY))
+          value = iAvailableNodes / 2 + 1;
+        else if (value.toString().equalsIgnoreCase(QUORUM_ALL))
+          value = iAvailableNodes;
+        else if (value.toString().equalsIgnoreCase(QUORUM_LOCAL_DC)) {
+          final String dc = getDataCenterOfServer(server);
+          if (dc == null)
+            throw new OConfigurationException("Data center not specified for server '" + server + "' in distributed configuration");
+          value = getDataCenterWriteQuorum(dc);
+        } else
+          throw new OConfigurationException(
+              "The value '" + value + "' is not supported for " + quorumSetting + " in distributed configuration");
+      }
+
+      return (Integer) value;
     }
   }
 }

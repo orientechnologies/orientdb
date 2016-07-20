@@ -1732,6 +1732,26 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   @Test
+  public void testBinaryClusterSelect2() {
+    database.command(new OCommandSQL("create blob cluster testBinaryClusterSelect2")).execute();
+    database.reload();
+    OBlob bytes = new ORecordBytes(new byte[]{1,2,3});
+    database.save(bytes, "testBinaryClusterSelect2");
+
+
+    List<OIdentifiable> result = database.query(
+        new OSQLSynchQuery<OIdentifiable>("select @rid, @version, @size, 1 as uno, foo from cluster:testBinaryClusterSelect2"));
+
+    Assert.assertEquals(result.size(), 1);
+    ODocument item = (ODocument) result.get(0);
+    Assert.assertEquals(item.field("size"), 3);
+    Assert.assertEquals(item.field("version"), 1);
+    Assert.assertEquals(item.field("uno"), 1);
+    Assert.assertEquals(item.field("foo"), null);
+    Assert.assertNotNull(item.field("rid"));
+  }
+
+  @Test
   public void testExpandSkip() {
     OSchemaProxy schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");

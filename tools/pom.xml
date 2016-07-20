@@ -26,7 +26,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>2.2.4-SNAPSHOT</version>
+        <version>2.2.6-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 
@@ -38,7 +38,8 @@
         <osgi.import>sun.misc;resolution:=optional,*</osgi.import>
         <osgi.export>
             com.orientechnologies.orient.console.*,
-            com.orientechnologies.orient.server.config.*
+            com.orientechnologies.orient.server.config.*,
+            com.orientechnologies.orient.stresstest.*
         </osgi.export>
         <jar.manifest.mainclass>com.orientechnologies.orient.console.OConsoleDatabaseApp</jar.manifest.mainclass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

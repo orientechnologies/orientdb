@@ -19,28 +19,32 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OPlaceholder;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.*;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.*;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OPlaceholder;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
  * Distributed transaction task.
@@ -77,6 +81,8 @@ public class OTxTask extends OAbstractReplicatedTask {
     // CREATE A CONTEXT OF TX
     final ODistributedTxContext reqContext = ddb.registerTxContext(requestId);
 
+    final ODistributedConfiguration dCfg = iManager.getDatabaseConfiguration(database.getName());
+
     database.begin();
     try {
       final OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
@@ -87,10 +93,20 @@ public class OTxTask extends OAbstractReplicatedTask {
       for (OAbstractRecordReplicatedTask task : tasks) {
         if (task instanceof OCreateRecordTask) {
           final OCreateRecordTask createRT = (OCreateRecordTask) task;
+
+          final ORecordId rid = createRT.getRid();
+          if (rid != null && rid.isPersistent()) {
+            if (rid.getRecord() != null)
+              // ALREADY CREATED: SKIP REGISTERING IN TX
+              continue;
+          }
+
           final int clId = createRT.clusterId > -1 ? createRT.clusterId
               : createRT.getRid().isValid() ? createRT.getRid().getClusterId() : -1;
           final String clusterName = clId > -1 ? database.getClusterNameById(clId) : null;
-          tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
+
+          if (dCfg.isServerContainingCluster(iManager.getLocalNodeName(), clusterName))
+            tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
         }
       }
 
@@ -98,7 +114,7 @@ public class OTxTask extends OAbstractReplicatedTask {
         final Object taskResult;
 
         // CHECK LOCAL CLUSTER IS AVAILABLE ON CURRENT SERVER
-        if (!task.checkForClusterAvailability(iManager.getLocalNodeName(), iManager.getDatabaseConfiguration(database.getName())))
+        if (!task.checkForClusterAvailability(iManager.getLocalNodeName(), dCfg))
           // SKIP EXECUTION BECAUSE THE CLUSTER IS NOT ON LOCAL NODE: THIS CAN HAPPENS IN CASE OF DISTRIBUTED TX WITH SHARDING
           taskResult = NON_LOCAL_CLUSTER;
         else {
@@ -139,23 +155,37 @@ public class OTxTask extends OAbstractReplicatedTask {
 
       return result;
 
-    } catch (ONeedRetryException e) {
+    } catch (Throwable e) {
       database.rollback();
-      return e;
-    } catch (OTransactionException e) {
-      database.rollback();
-      return e;
-    } catch (ORecordDuplicatedException e) {
-      database.rollback();
-      return e;
-    } catch (ORecordNotFoundException e) {
-      database.rollback();
-      return e;
-    } catch (Exception e) {
-      database.rollback();
-      ODistributedServerLog.info(this, getNodeSource(), null, DIRECTION.NONE, "Error on distributed transaction commit", e);
+      // ddb.popTxContext(requestId);
+      reqContext.unlock();
+
+      if (!(e instanceof ONeedRetryException || e instanceof OTransactionException || e instanceof ORecordDuplicatedException
+          || e instanceof ORecordNotFoundException))
+        // DUMP ONLY GENERIC EXCEPTIONS
+        ODistributedServerLog.info(this, getNodeSource(), null, DIRECTION.NONE, "Error on distributed transaction commit", e);
+
       return e;
     }
+  }
+
+  /**
+   * Return the partition keys of all the sub-tasks.
+   */
+  @Override
+  public int[] getPartitionKey() {
+    if (tasks.size() == 1)
+      // ONE TASK, USE THE INNER TASK'S PARTITION KEY
+      return tasks.get(0).getPartitionKey();
+
+    // MULTIPLE PARTITION
+    final int[] partitions = new int[tasks.size()];
+    for (int i = 0; i < tasks.size(); ++i) {
+      final OAbstractRecordReplicatedTask task = tasks.get(i);
+      partitions[i] = task.getPartitionKey()[0];
+    }
+
+    return partitions;
   }
 
   @Override
@@ -173,7 +203,7 @@ public class OTxTask extends OAbstractReplicatedTask {
       return null;
     }
 
-    final OCompletedTxTask fixTask = new OCompletedTxTask(iRequest.getId(), false);
+    final OCompletedTxTask fixTask = new OCompletedTxTask(iRequest.getId(), false, null);
 
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRecordReplicatedTask t = tasks.get(i);
@@ -191,7 +221,7 @@ public class OTxTask extends OAbstractReplicatedTask {
 
   @Override
   public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
-    final OCompletedTxTask fixTask = new OCompletedTxTask(reqId, false);
+    final OCompletedTxTask fixTask = new OCompletedTxTask(reqId, false, null);
 
     for (ORemoteTask undoTask : localUndoTasks)
       fixTask.addFixTask(undoTask);
@@ -204,6 +234,11 @@ public class OTxTask extends OAbstractReplicatedTask {
     out.writeInt(tasks.size());
     for (OAbstractRecordReplicatedTask task : tasks)
       out.writeObject(task);
+    if (lastLSN != null) {
+      out.writeBoolean(true);
+      lastLSN.writeExternal(out);
+    } else
+      out.writeBoolean(false);
   }
 
   @Override
@@ -211,6 +246,9 @@ public class OTxTask extends OAbstractReplicatedTask {
     final int size = in.readInt();
     for (int i = 0; i < size; ++i)
       tasks.add((OAbstractRecordReplicatedTask) in.readObject());
+    final boolean hasLastLSN = in.readBoolean();
+    if (hasLastLSN)
+      lastLSN = new OLogSequenceNumber(in);
   }
 
   /**
@@ -253,5 +291,14 @@ public class OTxTask extends OAbstractReplicatedTask {
 
   public void setLocalUndoTasks(final List<OAbstractRemoteTask> undoTasks) {
     this.localUndoTasks = undoTasks;
+  }
+
+  @Override
+  public OLogSequenceNumber getLastLSN() {
+    return lastLSN;
+  }
+
+  public void setLastLSN(final OLogSequenceNumber lastLSN) {
+    this.lastLSN = lastLSN;
   }
 }

@@ -103,17 +103,19 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   protected final Map<String, OCluster>          clusterMap              = new ConcurrentHashMap<String, OCluster>();
   private final ExecutorService asynchExecutor;
   private final ODocument clusterConfiguration = new ODocument();
-  private final String                clientId;
+  private final String clientId;
   private final AtomicInteger users = new AtomicInteger(0);
-  private       OContextConfiguration clientConfiguration;
-  private       int                   connectionRetry;
-  private       int                   connectionRetryDelay;
+  private OContextConfiguration clientConfiguration;
+  private int                   connectionRetry;
+  private int                   connectionRetryDelay;
   private OCluster[] clusters = OCommonConst.EMPTY_CLUSTER_ARRAY;
-  private int                               defaultClusterId;
-  private OStorageRemoteAsynchEventListener asynchEventListener;
-  private Map<String, Object>               connectionOptions;
-  private String                            recordFormat;
-  protected ORemoteConnectionManager        connectionManager;
+  private   int                               defaultClusterId;
+  private   OStorageRemoteAsynchEventListener asynchEventListener;
+  private   Map<String, Object>               connectionOptions;
+  private   String                            recordFormat;
+  protected ORemoteConnectionManager          connectionManager;
+  private final Set<OStorageRemoteSession> sessions = Collections
+      .newSetFromMap(new ConcurrentHashMap<OStorageRemoteSession, Boolean>());
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     this(iClientId, iURL, iMode, null, true);
@@ -241,6 +243,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         synchronized (serverURLs) {
           serverURLs.remove(serverUrl);
         }
+        for (OStorageRemoteSession activeSession : sessions) {
+          //Not thread Safe ...
+          activeSession.remove(serverUrl);
+        }
+
       } catch (IOException e) {
         retry = handleIOException(retry, network, e);
       } catch (OIOException e) {
@@ -256,7 +263,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   }
 
-  private int handleIOException(int retry, OChannelBinaryAsynchClient network, Exception e) {
+  private int handleIOException(int retry, final OChannelBinaryAsynchClient network, final Exception e) {
     OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", e.getMessage());
     OLogManager.instance().debug(this, "I/O error stack: ", e);
     connectionManager.remove(network);
@@ -420,6 +427,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
           }
           session.close();
+          sessions.remove(session);
           if (!checkForClose(iForce))
             return;
         } else {
@@ -744,7 +752,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }, iMode, iRid, iCallback, "Error on update record " + iRid);
 
-    if(resVersion == null)
+    if (resVersion == null)
       //Returning given version in case of no answer from server
       resVersion = iVersion;
     return new OStorageOperationResult<Integer>(resVersion);
@@ -1313,10 +1321,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             ORecordId rid;
             for (int i = 0; i < updatedRecords; ++i) {
               rid = network.readRID();
-
+              int version = network.readVersion();
               ORecordOperation rop = iTx.getRecordEntry(rid);
-              if (rop != null)
-                ORecordInternal.setVersion(rop.getRecord(), network.readVersion());
+              if (rop != null) {
+                if (version > rop.getRecord().getVersion() + 1)
+                  // IN CASE OF REMOTE CONFLICT STRATEGY FORCE UNLOAD DUE TO INVALID CONTENT
+                  rop.getRecord().unload();
+                ORecordInternal.setVersion(rop.getRecord(), version);
+              }
             }
 
             if (network.getSrvProtocolVersion() >= 20)
@@ -1572,13 +1584,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     // UPDATE IT
     synchronized (serverURLs) {
-
+      Set<String> old = new HashSet<String>(serverURLs);
       if (members != null) {
         // serverURLs.clear();
 
         // ADD CURRENT SERVER AS FIRST
-        if (iConnectedURL != null)
+        if (iConnectedURL != null) {
           addHost(iConnectedURL);
+          old.remove(iConnectedURL);
+        }
 
         for (ODocument m : members) {
           if (m == null)
@@ -1594,10 +1608,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                   String url = (String) listener.get("listen");
                   if (!serverURLs.contains(url))
                     addHost(url);
+                  old.remove(url);
                 }
               }
           }
         }
+        for (String oldUrl : old) {
+          serverURLs.remove(oldUrl);
+          for (OStorageRemoteSession session : sessions) {
+            session.remove(oldUrl + "/" + getName());
+          }
+        }
+
       }
     }
   }
@@ -1802,18 +1824,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     do {
       do {
         OChannelBinaryAsynchClient network = null;
-        network = getNetwork(currentURL);
         try {
+          network = getNetwork(currentURL);
           openRemoteDatabase(network);
           return currentURL;
         } catch (OIOException e) {
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             connectionManager.remove(network);
-            network = null;
           }
 
-          OLogManager.instance().error(this, "Cannot open database with url " + currentURL, e);
+          OLogManager.instance().debug(this, "Cannot open database with url " + currentURL, e);
 
         } catch (OException e) {
           connectionManager.release(network);
@@ -1829,7 +1850,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               // IGNORE ANY EXCEPTION
               OLogManager.instance().debug(this, "Cannot remove connection or database url=" + currentURL, e);
             }
-            network = null;
           }
 
           OLogManager.instance().error(this, "Cannot open database url=" + currentURL, e);
@@ -1860,6 +1880,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     synchronized (serverURLs) {
       // REMOVE INVALID URL
       serverURLs.remove(url);
+      for (OStorageRemoteSession activeSession : sessions) {
+        //Not thread Safe ...
+        activeSession.remove(url + "/" + getName());
+      }
 
       OLogManager.instance().debug(this, "Updated server list: %s...", serverURLs);
 
@@ -1971,7 +1995,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     synchronized (serverURLs) {
       if (!serverURLs.contains(host)) {
         serverURLs.add(host);
-        OLogManager.instance().info(this, "Registered the new available server '%s'", host);
+        OLogManager.instance().debug(this, "Registered the new available server '%s'", host);
       }
     }
 
@@ -2068,6 +2092,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     do {
       try {
         network = connectionManager.acquire(iCurrentURL, clientConfiguration, connectionOptions, asynchEventListener);
+      } catch (OIOException cause) {
+        throw cause;
       } catch (Exception cause) {
         throw OException.wrapException(new OStorageException("Cannot open a connection to remote server: " + iCurrentURL), cause);
       }
@@ -2284,6 +2310,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(db);
     if (session == null) {
       session = new OStorageRemoteSession(sessionSerialId.decrementAndGet());
+      sessions.add(session);
       ODatabaseDocumentTxInternal.setSessionMetadata(db, session);
     }
     return session;
@@ -2320,6 +2347,38 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       ODatabaseRecordThreadLocal.INSTANCE.set(origin);
     }
     return this;
+  }
+
+  public void importDatabase(final String options, final InputStream inputStream, final String name, final OCommandOutputListener listener) {
+    networkOperation(new OStorageRemoteOperation<Void>() {
+      @Override
+      public Void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
+        try {
+          beginRequest(network, OChannelBinaryProtocol.REQUEST_DB_IMPORT, session);
+          network.writeString(options);
+          network.writeString(name);
+          byte[] buffer = new byte[1024];
+          int size;
+          while ((size = inputStream.read(buffer)) > 0) {
+            network.writeBytes(buffer, size);
+          }
+          network.writeBytes(null);
+        } finally {
+          endRequest(network);
+        }
+
+        try {
+          beginResponse(network, session);
+          String message;
+          while ((message = network.readString()) != null) {
+            listener.onMessage(message);
+          }
+        } finally {
+          endResponse(network);
+        }
+        return null;
+      }
+    }, "Error sending import request");
   }
 
 }

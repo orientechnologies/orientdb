@@ -60,7 +60,7 @@ public class ODistributedOutput {
 
         final Date date = m.field("startedOn");
 
-        if( date != null ) {
+        if (date != null) {
           final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
           if (sdf.format(date).equals(sdf.format(new Date())))
             // TODAY, PUT ONLY THE HOUR
@@ -96,7 +96,10 @@ public class ODistributedOutput {
           int serverNum = 0;
           for (String dbName : databases) {
             final StringBuilder buffer = new StringBuilder();
-            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName);
+
+            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName, false);
+            if (dbCfg == null)
+              continue;
 
             buffer.append(dbName);
             buffer.append("=");
@@ -161,7 +164,10 @@ public class ODistributedOutput {
           buffer.append("{");
           int dbCount = 0;
           for (String dbName : databases) {
-            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName);
+            final ODistributedConfiguration dbCfg = manager.getDatabaseConfiguration(dbName, false);
+
+            if (dbCfg == null)
+              continue;
 
             if (dbCount++ > 0)
               buffer.append(",");
@@ -201,9 +207,11 @@ public class ODistributedOutput {
     table.setColumnAlignment("writeQuorum", OTableFormatter.ALIGNMENT.CENTER);
     table.setColumnAlignment("readQuorum", OTableFormatter.ALIGNMENT.CENTER);
 
+    final String localNodeName = manager.getLocalNodeName();
+
     // READ DEFAULT CFG (CLUSTER=*)
-    final int defaultWQ = cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes);
-    final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes);
+    final int defaultWQ = cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes, localNodeName);
+    final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes, localNodeName);
     final String defaultOwner = "" + cfg.getClusterOwner(ODistributedConfiguration.ALL_WILDCARD);
     final List<String> defaultServers = cfg.getServers(ODistributedConfiguration.ALL_WILDCARD);
 
@@ -211,8 +219,8 @@ public class ODistributedOutput {
     final Set<String> allServers = new HashSet<String>();
 
     for (String cluster : cfg.getClusterNames()) {
-      final int wQ = cfg.getWriteQuorum(cluster, availableNodes);
-      final int rQ = cfg.getReadQuorum(cluster, availableNodes);
+      final int wQ = cfg.getWriteQuorum(cluster, availableNodes, localNodeName);
+      final int rQ = cfg.getReadQuorum(cluster, availableNodes, localNodeName);
       final String owner = cfg.getClusterOwner(cluster);
       final List<String> servers = cfg.getServers(cluster);
 

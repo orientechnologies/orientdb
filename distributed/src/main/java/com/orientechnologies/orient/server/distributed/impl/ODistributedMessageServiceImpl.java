@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -123,6 +124,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     return db;
   }
 
+  @Override
   public Set<String> getDatabases() {
     return databases.keySet();
   }

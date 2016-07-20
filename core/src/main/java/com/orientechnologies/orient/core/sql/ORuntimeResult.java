@@ -53,7 +53,8 @@ public class ORuntimeResult {
   private final ODocument           value;
   private       OCommandContext     context;
 
-  public ORuntimeResult(final Object iFieldValue, final Map<String, Object> iProjections, final int iProgressive, final OCommandContext iContext) {
+  public ORuntimeResult(final Object iFieldValue, final Map<String, Object> iProjections, final int iProgressive,
+      final OCommandContext iContext) {
     fieldValue = iFieldValue;
     projections = iProjections;
     context = iContext;
@@ -68,16 +69,28 @@ public class ORuntimeResult {
     return doc;
   }
 
-  @SuppressWarnings("unchecked")
-  public static ODocument applyRecord(final ODocument iValue, final Map<String, Object> iProjections, final OCommandContext iContext, final OIdentifiable iRecord) {
+  @SuppressWarnings("unchecked") public static ODocument applyRecord(final ODocument iValue, final Map<String, Object> iProjections,
+      final OCommandContext iContext, final OIdentifiable iRecord) {
     // APPLY PROJECTIONS
 
     ORecord record = (iRecord != null ? iRecord.getRecord() : null);
     //MANAGE SPECIFIC CASES FOR RECORD BYTES
     if (ORecordBytes.RECORD_TYPE == ORecordInternal.getRecordType(record)) {
+
       for (Entry<String, Object> projection : iProjections.entrySet()) {
-        if ("rid".equalsIgnoreCase(projection.getKey())) {
+        if ("@rid".equalsIgnoreCase("" + projection.getValue())) {
           iValue.field(projection.getKey(), record.getIdentity());
+        } else if ("@size".equalsIgnoreCase("" + projection.getValue())) {
+          iValue.field(projection.getKey(), record.getSize());
+        } else if ("@version".equalsIgnoreCase("" + projection.getValue())) {
+          iValue.field(projection.getKey(), record.getVersion());
+        } else {
+          Object val = projection.getValue();
+          if (val instanceof Number || val instanceof String || val instanceof Boolean) {
+            iValue.field(projection.getKey(), val);
+          } else {
+            iValue.field(projection.getKey(), (Object) null);
+          }
         }
       }
       return iValue;
@@ -109,7 +122,8 @@ public class ORuntimeResult {
         } else if (v instanceof OSQLFilterItemVariable || v instanceof OSQLFilterItemField) {
           final OSQLFilterItemAbstract var = (OSQLFilterItemAbstract) v;
           final OPair<OSQLMethodRuntime, Object[]> last = var.getLastChainOperator();
-          if (last != null && last.getKey().getMethod() instanceof OSQLMethodField && last.getValue() != null && last.getValue().length == 1 && last.getValue()[0].equals("*")) {
+          if (last != null && last.getKey().getMethod() instanceof OSQLMethodField && last.getValue() != null
+              && last.getValue().length == 1 && last.getValue()[0].equals("*")) {
             final Object value = ((OSQLFilterItemAbstract) v).getValue(inputDocument, iValue, iContext);
             if (inputDocument != null && value != null && inputDocument instanceof ODocument && value instanceof ODocument) {
               // COPY FIELDS WITH PROJECTION NAME AS PREFIX
@@ -137,7 +151,8 @@ public class ORuntimeResult {
         if (projectionValue != null)
           if (projectionValue instanceof ORidBag)
             iValue.field(prjName, new ORidBag((ORidBag) projectionValue));
-          else if (projectionValue instanceof OIdentifiable && !(projectionValue instanceof ORID) && !(projectionValue instanceof ORecord))
+          else if (projectionValue instanceof OIdentifiable && !(projectionValue instanceof ORID)
+              && !(projectionValue instanceof ORecord))
             iValue.field(prjName, ((OIdentifiable) projectionValue).getRecord());
           else if (projectionValue instanceof Iterator) {
             boolean link = true;
@@ -191,7 +206,7 @@ public class ORuntimeResult {
       Iterator<OIdentifiable> it = ((ORecordLazyMultiValue) projectionValue).rawIterator();
       while (it.hasNext()) {
         OIdentifiable rec = it.next();
-        if (rec!= null && !rec.getIdentity().isPersistent())
+        if (rec != null && !rec.getIdentity().isPersistent())
           return false;
       }
     } else {
@@ -234,8 +249,11 @@ public class ORuntimeResult {
     return iValue;
   }
 
-  public static ODocument getProjectionResult(final int iId, final Map<String, Object> iProjections, final OCommandContext iContext, final OIdentifiable iRecord) {
-    return ORuntimeResult.getResult(ORuntimeResult.applyRecord(ORuntimeResult.createProjectionDocument(iId), iProjections, iContext, iRecord), iProjections);
+  public static ODocument getProjectionResult(final int iId, final Map<String, Object> iProjections, final OCommandContext iContext,
+      final OIdentifiable iRecord) {
+    return ORuntimeResult
+        .getResult(ORuntimeResult.applyRecord(ORuntimeResult.createProjectionDocument(iId), iProjections, iContext, iRecord),
+            iProjections);
   }
 
   public ODocument applyRecord(final OIdentifiable iRecord) {

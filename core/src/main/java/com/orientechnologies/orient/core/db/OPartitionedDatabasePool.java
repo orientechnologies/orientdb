@@ -194,7 +194,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   }
 
   public OPartitionedDatabasePool(String url, String userName, String password) {
-    this(url, userName, password, 64, -1);
+    this(url, userName, password, Runtime.getRuntime().availableProcessors() << 1, Runtime.getRuntime().availableProcessors());
   }
 
   public OPartitionedDatabasePool(String url, String userName, String password, int maxPartitionSize, int maxPoolSize) {

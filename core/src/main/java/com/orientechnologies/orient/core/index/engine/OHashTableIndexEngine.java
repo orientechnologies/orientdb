@@ -97,7 +97,6 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void flush() {
-    hashTable.flush();
   }
 
   @Override
@@ -407,8 +406,9 @@ public final class OHashTableIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void acquireAtomicExclusiveLock() {
+  public boolean acquireAtomicExclusiveLock(Object key) {
     hashTable.acquireAtomicExclusiveLock();
+    return true;
   }
 
   private ODatabaseDocumentInternal getDatabase() {

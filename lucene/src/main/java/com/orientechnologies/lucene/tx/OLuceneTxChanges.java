@@ -20,7 +20,9 @@ package com.orientechnologies.lucene.tx;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 
 import java.io.IOException;
 import java.util.Set;
@@ -44,4 +46,6 @@ public interface OLuceneTxChanges {
 
   public boolean isUpdated(Document document, Object key, OIdentifiable value);
 
+
+  public long deletedDocs(Query query, Filter filter);
 }

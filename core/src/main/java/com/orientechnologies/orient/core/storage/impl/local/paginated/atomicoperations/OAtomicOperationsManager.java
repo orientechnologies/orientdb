@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ONonTxOperationPerformedWALRecord;
@@ -137,7 +138,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   public OAtomicOperation startAtomicOperation(ODurableComponent durableComponent, boolean trackNonTxOperations)
       throws IOException {
     if (durableComponent != null)
-      return startAtomicOperation(durableComponent.getFullName(), trackNonTxOperations);
+      return startAtomicOperation(durableComponent.getLockName(), trackNonTxOperations);
 
     return startAtomicOperation((String) null, trackNonTxOperations);
   }
@@ -167,9 +168,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * @return Instance of active atomic operation.
    */
   public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
-    if (unsafeMode.get() || writeAheadLog == null)
-      return null;
-
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
       operation.incrementCounter();
@@ -202,8 +200,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
     assert freezeRequests.get() >= 0;
 
+    final boolean useWal = useWal();
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
+    final OLogSequenceNumber lsn = useWal ? writeAheadLog.logAtomicOperationStartRecord(true, unitId) : null;
 
     operation = new OAtomicOperation(lsn, unitId, readCache, writeCache, storage.getId(), performanceStatisticManager);
     currentOperation.set(operation);
@@ -213,7 +212,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       activeAtomicOperations.put(unitId, new OPair<String, StackTraceElement[]>(thread.getName(), thread.getStackTrace()));
     }
 
-    if (trackNonTxOperations && storage.getStorageTransaction() == null)
+    if (useWal && trackNonTxOperations && storage.getStorageTransaction() == null)
       writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
     if (lockName != null)
@@ -298,8 +297,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public long freezeAtomicOperations(Class<? extends OException> exceptionClass, String message) {
-    if (getCurrentOperation() != null)
-      throw new IllegalStateException("atomic operation is active on current thread, can't freeze atomic operations");
 
     final long id = freezeIdGen.incrementAndGet();
 
@@ -309,8 +306,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     while (atomicOperationsCount.get() > 0) {
       Thread.yield();
     }
-
-    assert atomicOperationsCount.get() == 0;
 
     return id;
   }
@@ -392,9 +387,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public OAtomicOperation endAtomicOperation(boolean rollback, Exception exception) throws IOException {
-    if (unsafeMode.get() || writeAheadLog == null)
-      return null;
-
     final OAtomicOperation operation = currentOperation.get();
     assert operation != null;
 
@@ -421,11 +413,14 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     assert counter > 0;
 
     if (counter == 1) {
-      if (!operation.isRollback())
-        operation.commitChanges(writeAheadLog);
+      final boolean useWal = useWal();
 
-      writeAheadLog
-          .logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(), operation.getMetadata());
+      if (!operation.isRollback())
+        operation.commitChanges(useWal ? writeAheadLog : null);
+
+      if (useWal)
+        writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN(),
+            operation.getMetadata());
 
       // We have to decrement the counter after the disk operations, otherwise, if they
       // fail, we will be unable to rollback the atomic operation later.
@@ -447,9 +442,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public OUncompletedCommit<OAtomicOperation> initiateCommit() throws IOException {
-    if (unsafeMode.get() || writeAheadLog == null)
-      return new OUncompletedCommit.NoOperation<OAtomicOperation>(null);
-
     final OAtomicOperation operation = currentOperation.get();
     assert operation != null;
 
@@ -459,7 +451,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     if (counter > 0)
       return new OUncompletedCommit.NoOperation<OAtomicOperation>(operation);
 
-    return new UncompletedCommit(operation, operation.initiateCommit(writeAheadLog));
+    return new UncompletedCommit(operation, operation.initiateCommit(useWal() ? writeAheadLog : null));
   }
 
   private void acquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String fullName) {
@@ -480,18 +472,12 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   }
 
   public void acquireReadLock(ODurableComponent durableComponent) {
-    if (unsafeMode.get() || writeAheadLog == null)
-      return;
-
     assert durableComponent.getLockName() != null;
 
     lockManager.acquireLock(durableComponent.getLockName(), OOneEntryPerKeyLockManager.LOCK.SHARED);
   }
 
   public void releaseReadLock(ODurableComponent durableComponent) {
-    if (unsafeMode.get() || writeAheadLog == null)
-      return;
-
     assert durableComponent.getName() != null;
     assert durableComponent.getLockName() != null;
 
@@ -614,6 +600,17 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     }
   }
 
+  private boolean useWal() {
+    if (writeAheadLog == null)
+      return false;
+
+    if (unsafeMode.get())
+      return false;
+
+    final OStorageTransaction storageTransaction = storage.getStorageTransaction();
+    return storageTransaction == null || storageTransaction.getClientTx().isUsingLog();
+  }
+
   private class UncompletedCommit implements OUncompletedCommit<OAtomicOperation> {
     private final OAtomicOperation         operation;
     private final OUncompletedCommit<Void> nestedCommit;
@@ -628,8 +625,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       nestedCommit.complete();
 
       try {
-        writeAheadLog
-            .logAtomicOperationEndRecord(operation.getOperationUnitId(), false, operation.getStartLSN(), operation.getMetadata());
+        if (useWal())
+          writeAheadLog
+              .logAtomicOperationEndRecord(operation.getOperationUnitId(), false, operation.getStartLSN(), operation.getMetadata());
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error while completing an uncompleted commit."), e);
       }
@@ -654,8 +652,9 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
       nestedCommit.rollback();
 
       try {
-        writeAheadLog
-            .logAtomicOperationEndRecord(operation.getOperationUnitId(), true, operation.getStartLSN(), operation.getMetadata());
+        if (useWal())
+          writeAheadLog
+              .logAtomicOperationEndRecord(operation.getOperationUnitId(), true, operation.getStartLSN(), operation.getMetadata());
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error while rollbacking an uncompleted commit."), e);
       }

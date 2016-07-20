@@ -43,7 +43,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     assertEquals(2, metaData.getDatabaseMinorVersion());
 
     assertEquals("OrientDB JDBC Driver", metaData.getDriverName());
-    assertEquals("OrientDB 2.2 JDBC Driver", metaData.getDriverVersion());
+    assertEquals("OrientDB "+OConstants.getVersion()+" JDBC Driver", metaData.getDriverVersion());
     assertEquals(2, metaData.getDriverMajorVersion());
     assertEquals(2, metaData.getDriverMinorVersion());
 
@@ -145,7 +145,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSet rs = this.metaData.getTables(null, null, null, null);
     int tableCount = rsSizeOf(rs);
 
-    assertThat(tableCount).isEqualTo(13);
+    assertThat(tableCount).isEqualTo(16);
 
   }
 
@@ -178,7 +178,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     }
     rs = this.metaData.getTables(null, null, null, tableTypes.toArray(new String[2]));
     int tableCount = rsSizeOf(rs);
-    assertThat(tableCount).isEqualTo(13);
+    assertThat(tableCount).isEqualTo(16);
   }
 
   @Test

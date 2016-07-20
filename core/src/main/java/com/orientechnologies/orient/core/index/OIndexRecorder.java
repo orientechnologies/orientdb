@@ -27,14 +27,20 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OIdentifiable> {
   private final OIndexInternal<OIdentifiable> delegate;
 
-  private final Set<Object>                removedKeys = new HashSet<Object>();
-  private final Map<Object, OIdentifiable> updatedKeys = new HashMap<Object, OIdentifiable>();
+  private final Set<Object>                   removedKeys = new HashSet<Object>();
+  private final Map<Object, OIdentifiable>    updatedKeys = new HashMap<Object, OIdentifiable>();
 
   public OIndexRecorder(OIndexInternal<OIdentifiable> delegate) {
     this.delegate = delegate;
@@ -280,8 +286,7 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  @Override
-  public int getIndexId() {
+  @Override public int getIndexId() {
     return delegate.getIndexId();
   }
 
@@ -331,6 +336,22 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
+  public void lockKeysForUpdateNoTx(Object... key) {
+  }
+
+  @Override
+  public void lockKeysForUpdateNoTx(Collection<Object> keys) {
+  }
+
+  @Override
+  public void releaseKeysForUpdateNoTx(Object... key) {
+  }
+
+  @Override
+  public void releaseKeysForUpdateNoTx(Collection<Object> keys) {
+  }
+
+  @Override
   public void setType(OType type) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
@@ -376,7 +397,7 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public void acquireAtomicExclusiveLock() {
+  public boolean acquireAtomicExclusiveLock(Object key) {
     throw new UnsupportedOperationException("atomic locking is not supported by index recorder");
   }
 }

@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -87,5 +86,10 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
 
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+  }
+  
+  @Override
+  public String toString() {
+    return "(" + (task != null ? task.toString() : "-") + ")";
   }
 }

@@ -76,7 +76,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
           if (lastDeployment != null && lastDeployment.longValue() == random) {
             // SKIP IT
             ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-                "skip deploying database '%s' because already executed", databaseName);
+                "Skip deploying database '%s' because already executed", databaseName);
             return Boolean.FALSE;
           }
 
@@ -98,10 +98,6 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
             final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
 
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "Creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
-                backupFile.getAbsolutePath());
-
             if (backupFile.exists())
               backupFile.delete();
             else
@@ -116,12 +112,19 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
             endLSN = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN();
 
+            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                "Creating backup of database '%s' (compressionRate=%d) in directory: %s. LSN=%s...", databaseName, compressionRate,
+                backupFile.getAbsolutePath(), endLSN);
+
+
             new Thread(new Runnable() {
               @Override
               public void run() {
                 Thread.currentThread().setName("OrientDB SyncDatabase node=" + iManager.getLocalNodeName() + " db=" + databaseName);
 
                 try {
+
+                  database.activateOnCurrentThread();
                   database.backup(fileOutputStream, null, null,
                       ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
                         @Override

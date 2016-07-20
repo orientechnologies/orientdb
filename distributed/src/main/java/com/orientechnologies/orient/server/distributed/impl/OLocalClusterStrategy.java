@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -66,13 +67,19 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
     if (!iClass.equals(cls))
       throw new IllegalArgumentException("Class '" + iClass + "' is different than the configured one: " + cls);
 
+    final OStorage storage = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage();
+    if (!(storage instanceof ODistributedStorage))
+      throw new IllegalStateException("Storage is not distributed");
+
     if (bestClusterIds.isEmpty())
       readConfiguration();
     else {
-      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
-      if (lastVersion != cfg.getVersion()) {
+      if (lastVersion != ((ODistributedStorage) storage).getConfigurationUpdated()) {
         // DISTRIBUTED CFG IS CHANGED: GET BEST CLUSTER AGAIN
         readConfiguration();
+
+        ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "New cluster list for class '%s': %s (dCfgVersion=%d)", cls.getName(), bestClusterIds, lastVersion);
       }
     }
 
@@ -84,7 +91,14 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
       // ONLY ONE: RETURN THE FIRST ONE
       return bestClusterIds.get(0);
 
-    return bestClusterIds.get((int) (pointer.getAndIncrement() % size));
+    final int cluster = bestClusterIds.get((int) (pointer.getAndIncrement() % size));
+
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "%d Selected cluster %d for class '%s' from %s (dCfgVersion=%d)", Thread.currentThread().getId(), cluster, cls.getName(),
+          bestClusterIds, lastVersion);
+
+    return cluster;
   }
 
   @Override
@@ -142,6 +156,7 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
       newBestClusters.add(db.getClusterIdByName(c));
     bestClusterIds = newBestClusters;
 
-    lastVersion = cfg.getVersion();
+    final ODistributedStorage storage = (ODistributedStorage) manager.getStorage(databaseName);
+    lastVersion = storage.getConfigurationUpdated();
   }
 }

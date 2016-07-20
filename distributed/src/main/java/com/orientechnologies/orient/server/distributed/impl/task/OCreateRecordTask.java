@@ -23,14 +23,11 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordVersionHelper;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
@@ -124,9 +121,11 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       final OStorageOperationResult<ORawBuffer> loadedRecord = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
           .readRecord(rid, null, true, null);
 
-      if (loadedRecord.getResult() != null)
+      if (loadedRecord.getResult() != null) {
         // ALREADY PRESENT
-        return new OPlaceholder(forceUpdate(requestId, iManager, database, loadedRecord));
+        record = forceUpdate(requestId, iManager, database, loadedRecord);
+        return new OPlaceholder(record);
+      }
 
       // GOES DOWN
 
@@ -202,22 +201,24 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // SAME CONTENT
       return loadedRecordInstance;
 
-    ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "Overwriting content of record %s/%s v.%d reqId=%s previous content: %s (stored) vs %s (network)", database.getName(),
-        rid.toString(), version, requestId, loadedRecord.getResult(), getRecord());
-
-    if (loadedRecord.getResult().recordType == ODocument.RECORD_TYPE) {
-      // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
-      final ODocument newDocument = (ODocument) getRecord();
-
-      ODocument loadedDocument = (ODocument) loadedRecordInstance;
-      loadedDocument.merge(newDocument, false, false).getVersion();
-      loadedDocument.setDirty();
-      ORecordInternal.setVersion(loadedDocument, ORecordVersionHelper.setRollbackMode(version));
-    } else
-      ORecordInternal.fill(loadedRecordInstance, rid, ORecordVersionHelper.setRollbackMode(version), content, true);
-
-    return loadedRecordInstance.save();
+    throw new ODistributedException("Cannot create the record " + rid + " in an already existent position");
+    //
+    // ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+    // "Overwriting content of record %s/%s v.%d reqId=%s previous content: %s (stored) vs %s (network)", database.getName(),
+    // rid.toString(), version, requestId, loadedRecord.getResult(), getRecord());
+    //
+    // if (loadedRecord.getResult().recordType == ODocument.RECORD_TYPE) {
+    // // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
+    // final ODocument newDocument = (ODocument) getRecord();
+    //
+    // ODocument loadedDocument = (ODocument) loadedRecordInstance;
+    // loadedDocument.merge(newDocument, false, false).getVersion();
+    // loadedDocument.setDirty();
+    // ORecordInternal.setVersion(loadedDocument, ORecordVersionHelper.setRollbackMode(version));
+    // } else
+    // ORecordInternal.fill(loadedRecordInstance, rid, ORecordVersionHelper.setRollbackMode(version), content, true);
+    //
+    // return loadedRecordInstance.save();
   }
 
   @Override
@@ -303,7 +304,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       out.writeInt(content.length);
       out.write(content);
     }
-    out.write(recordType);
+    out.writeByte(recordType);
     out.writeInt(clusterId);
   }
 

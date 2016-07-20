@@ -54,6 +54,8 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
   public static final String KEYWORD_MIN = "MIN";
   public static final String KEYWORD_MAX = "MAX";
   public static final String KEYWORD_DEFAULT = "DEFAULT";
+  public static final String KEYWORD_COLLATE = "COLLATE";
+  public static final String KEYWORD_REGEX = "REGEX";
 
   private String             className;
   private String             fieldName;
@@ -67,6 +69,8 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
   private String             max              = null;
   private String             min              = null;
   private String             defaultValue     = null;
+  private String             collate          = null;
+  private String             regex            = null;
 
   private boolean            unsafe           = false;
 
@@ -117,15 +121,15 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
       // Use a REGEX for the rest because we know exactly what we are looking for.
       // If we are in strict mode, the parser took care of strict matching.
-      String rest = parserTextUpperCase.substring(pos).trim();
+      String rest = parserText.substring(pos).trim();
       String pattern = "(`[^`]*`|[^\\(]\\S*)?\\s*(\\(.*\\))?\\s*(UNSAFE)?";
 
-      Pattern r = Pattern.compile(pattern);
-      Matcher m = r.matcher(rest.toUpperCase().trim());
+      Pattern r = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
+      Matcher m = r.matcher(rest.trim());
 
       if (m.matches()) {
         // Linked Type / Class
-        if (m.group(1) != null && !m.group(1).equals("UNSAFE")) {
+        if (m.group(1) != null && !m.group(1).equalsIgnoreCase("UNSAFE")) {
           linked = m.group(1);
           if (linked.startsWith("`") && linked.endsWith("`") && linked.length() > 1) {
             linked = linked.substring(1, linked.length() - 1);
@@ -161,18 +165,22 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       }
       
       String att = parts[0].trim();
-      if (att.equals(KEYWORD_MANDATORY)) {
+      if (att.equalsIgnoreCase(KEYWORD_MANDATORY)) {
         this.mandatory = getOptionalBoolean(parts);
-      } else if (att.equals(KEYWORD_READONLY)) {
+      } else if (att.equalsIgnoreCase(KEYWORD_READONLY)) {
         this.readonly = getOptionalBoolean(parts);
-      } else if (att.equals(KEYWORD_NOTNULL)) {
+      } else if (att.equalsIgnoreCase(KEYWORD_NOTNULL)) {
         this.notnull = getOptionalBoolean(parts);
-      } else if (att.equals(KEYWORD_MIN)) {
+      } else if (att.equalsIgnoreCase(KEYWORD_MIN)) {
         this.min = getRequiredValue(attDef, parts);
-      } else if (att.equals(KEYWORD_MAX)) {
+      } else if (att.equalsIgnoreCase(KEYWORD_MAX)) {
         this.max = getRequiredValue(attDef, parts);
-      } else if (att.equals(KEYWORD_DEFAULT)) {
+      } else if (att.equalsIgnoreCase(KEYWORD_DEFAULT)) {
         this.defaultValue = getRequiredValue(attDef, parts);
+      } else if (att.equalsIgnoreCase(KEYWORD_COLLATE)) {
+        this.collate = getRequiredValue(attDef, parts);
+      } else if (att.equalsIgnoreCase(KEYWORD_REGEX)) {
+        this.regex = getRequiredValue(attDef, parts);
       } else {
         onInvalidAttributeDefinition(attDef);
       }
@@ -201,12 +209,20 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       onInvalidAttributeDefinition(attDef);
     }
     
-    String trimmed = parts[1].trim();
-    if (trimmed.length() == 0) {
+    String value = parts[1].trim();
+    if (value.length() == 0) {
       onInvalidAttributeDefinition(attDef);
     }
     
-    return trimmed;
+    if (value.equalsIgnoreCase("null")) {
+      value = null;
+    }
+    
+    if (value != null && isQuoted(value)) {
+      value = removeQuotes(value);
+    }
+    
+    return value;
   }
 
   private String[] split(StringBuilder word) {
@@ -243,7 +259,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   /**
@@ -307,12 +323,39 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       internalProp.setDefaultValue(defaultValue);
       toSave = true;
     }
+    
+    if (collate != null) {
+      internalProp.setCollate(collate);
+      toSave = true;
+    }
+    
+    if (regex != null) {
+      internalProp.setRegexp(regex);
+      toSave = true;
+    }
 
     if(toSave) {
       internalProp.save();
     }
 
     return sourceClass.properties().size();
+  }
+  
+  private String removeQuotes(String s) {
+    s = s.trim();
+    return s.substring(1, s.length() - 1).replaceAll("\\\\\"", "\"");
+  }
+  
+  private boolean isQuoted(String s) {
+    s = s.trim();
+    if (s.startsWith("\"") && s.endsWith("\""))
+      return true;
+    if (s.startsWith("'") && s.endsWith("'"))
+      return true;
+    if (s.startsWith("`") && s.endsWith("`"))
+      return true;
+
+    return false;
   }
 
   @Override

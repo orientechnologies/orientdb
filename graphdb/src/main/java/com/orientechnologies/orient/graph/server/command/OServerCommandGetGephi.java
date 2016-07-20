@@ -19,16 +19,9 @@
  */
 package com.orientechnologies.orient.graph.server.command;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
@@ -44,6 +37,13 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "GET|gephi/*" };
@@ -150,14 +150,20 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
 
     for (OrientEdge edge : edges) {
 
+      final ORID sourceVertex = (ORID) edge.getVertex(Direction.OUT).getId();
+      final ORID targetVertex = (ORID) edge.getVertex(Direction.IN).getId();
+
+      if (!vertexes.contains(sourceVertex) || !vertexes.contains(targetVertex))
+        continue;
+
       json.resetAttributes();
       json.beginObject();
       json.beginObject(1, false, "ae");
       json.beginObject(2, false, edge.getId());
       json.writeAttribute(3, false, "directed", false);
 
-      json.writeAttribute(3, false, "source", edge.getVertex(Direction.IN).getId());
-      json.writeAttribute(3, false, "target", edge.getVertex(Direction.OUT).getId());
+      json.writeAttribute(3, false, "source", sourceVertex);
+      json.writeAttribute(3, false, "target", targetVertex);
 
       for (String field : edge.getPropertyKeys()) {
         final Object v = edge.getProperty(field);

@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.distributed.task;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -49,13 +48,12 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedTask {
-  protected ORecordId          rid;
-  protected int                version;
-  protected int                partitionKey = -1;
-  protected boolean            lockRecords  = true;
-  protected OLogSequenceNumber lastLSN;
+  protected ORecordId         rid;
+  protected int               version;
+  protected int               partitionKey = -1;
+  protected boolean           lockRecords  = true;
 
-  protected transient ORecord  previousRecord;
+  protected transient ORecord previousRecord;
 
   public OAbstractRecordReplicatedTask() {
   }
@@ -112,8 +110,8 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   }
 
   @Override
-  public int getPartitionKey() {
-    return partitionKey > -1 ? partitionKey : rid.clusterId;
+  public int[] getPartitionKey() {
+    return new int[] { partitionKey > -1 ? partitionKey : rid.clusterId };
   }
 
   @Override
@@ -131,7 +129,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
   public boolean checkForClusterAvailability(final String localNode, final ODistributedConfiguration cfg) {
     final String clusterName = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.clusterId);
-    return cfg.hasCluster(localNode, clusterName);
+    return cfg.isServerContainingCluster(localNode, clusterName);
   }
 
   public ORecord prepareUndoOperation() {
@@ -153,14 +151,6 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     prepareUndoOperation();
     if (previousRecord == null)
       throw new ORecordNotFoundException(rid);
-  }
-
-  public OLogSequenceNumber getLastLSN() {
-    return lastLSN;
-  }
-
-  public void setLastLSN(final OLogSequenceNumber lastLSN) {
-    this.lastLSN = lastLSN;
   }
 
   @Override
@@ -192,5 +182,13 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   @Override
   public String getPayload() {
     return "rid=" + rid + " v=" + version;
+  }
+
+  public OLogSequenceNumber getLastLSN() {
+    return lastLSN;
+  }
+
+  public void setLastLSN(final OLogSequenceNumber lastLSN) {
+    this.lastLSN = lastLSN;
   }
 }
