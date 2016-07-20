@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.compression.impl;
 
-import org.junit.Ignore;
 import org.junit.Test;
 /**
  * @author Andrey Lomakin
@@ -8,7 +7,6 @@ import org.junit.Test;
  */
 public class SnappyCompressionTest extends AbstractCompressionTest {
   @Test
-  @Ignore
   public void testSnappyCompression() {
     testCompression(OSnappyCompression.NAME);
   }
