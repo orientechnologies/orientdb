@@ -2066,7 +2066,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, clusterName);
           triggerType = ORecordHook.TYPE.BEFORE_UPDATE;
         }
-        stream = record.toStream();
+        stream = getSerializer().toStream(record, false);
 
         final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
 
@@ -3217,7 +3217,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     ORecordSerializationContext.pushContext();
     ORecordInternal.unsetDirty(record);
     record.setDirty();
-    return record.toStream();
+    return serializer.toStream(record, false);
   }
 
   protected void init() {
