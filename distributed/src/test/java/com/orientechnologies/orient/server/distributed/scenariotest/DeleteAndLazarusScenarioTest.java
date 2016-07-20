@@ -30,14 +30,21 @@ import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 /**
- * It checks the consistency in the cluster with the following scenario: - 3 servers (writeQuorum=majority) - record r1 (version x)
- * is present in full replica on all the servers - server3 is isolated (simulated by: shutdown + opening plocal db) - update of r1
- * on server3 succeeds, so we have r1* on server3 - server3 joins the cluster (restart) - shutdown server1 (so quorum for CRUD
- * operation on r1 will not be reached) - delete request for r1 on server3: - quorum not reached because r1* on server3 is not
- * consistent with r1 on server2 (different values and versions) - delete operation is aborted on server2 and is rolled back on
- * server3 (resurrection) - restart server1 (so quorum for CRUD operation on r1 will be reached) - check consistency: r1 is still
- * present on server1 and server2, and r1* is present on server3. - delete request for r1 on server1: - quorum reached - check
- * consistency: r1 is not present on server1 and server2, and r1* is not present on server3.
+ * It checks the consistency in the cluster with the following scenario:
+ * - 3 servers (writeQuorum=majority)
+ * - record r1 (version x) is present in full replica on all the servers
+ * - server3 is isolated (simulated by: shutdown + opening plocal db)
+ * - update of r1 on server3 succeeds, so we have r1* on server3
+ * - server3 joins the cluster (restart)
+ * - shutdown server1 (so quorum for CRUD operation on r1 will not be reached)
+ * - delete request for r1 on server3:
+ *    - quorum not reached because r1* on server3 is not consistent with r1 on server2 (different values and versions)
+ *    - delete operation is aborted on server2 and is rolled back on server3 (resurrection)
+ * - restart server1 (so quorum for CRUD operation on r1 will be reached)
+ * - check consistency: r1 is still present on server1 and server2, and r1* is present on server3.
+ * - delete request for r1 on server1:
+ *    - quorum reached
+ *    - check consistency: r1 is not present on server1 and server2, and r1* is not present on server3.
  *
  * @author Gabriele Ponzi
  * @email <gabriele.ponzi--at--gmail.com>

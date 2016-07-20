@@ -845,7 +845,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public List<String> backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
       final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException(
-        "backup is not supported against remote storage. Open the database with plocal or use Enterprise Edition");
+        "backup is not supported against remote storage. Open the database with plocal or use the incremental backup in the Enterprise Edition");
   }
 
   @Override
