@@ -452,7 +452,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public void beginRequest(final byte iCommand, final OStorageRemoteSession session)
       throws IOException {
-    final OStorageRemoteNodeSession nodeSession = session.get(getServerURL());
+    final OStorageRemoteNodeSession nodeSession = session.getServerSession(getServerURL());
 
     if( nodeSession == null )
       throw new OIOException("Invalid session for URL '"+getServerURL()+"'");
@@ -460,9 +460,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     writeByte(iCommand);
     writeInt(nodeSession.getSessionId());
     if (nodeSession.getToken() != null) {
-      if (!session.has(this)) {
+      if (!session.hasConnection(this)) {
         writeBytes(nodeSession.getToken());
-        session.add(this);
+        session.addConnection(this);
       } else
         writeBytes(new byte[] {});
     }
