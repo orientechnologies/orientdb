@@ -90,7 +90,7 @@ public class OServerAdmin {
     networkAdminOperation(new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        OStorageRemoteNodeSession nodeSession = storage.getCurrentSession().getOrCreate(network.getServerURL());
+        OStorageRemoteNodeSession nodeSession = storage.getCurrentSession().getOrCreateServerSession(network.getServerURL());
         try {
           storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONNECT, session);
 

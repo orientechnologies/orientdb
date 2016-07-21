@@ -252,7 +252,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         initialized = false;
       } else if (storage instanceof OStorageProxy) {
         final String name = ((OStorageProxy) storage).getUserName();
-        if (!name.equals(iUserName)) {
+        if (name == null || !name.equals(iUserName)) {
           storage.close();
           storage.open(iUserName, iUserPassword, properties);
         }

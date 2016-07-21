@@ -216,7 +216,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       try {
         // In case i do not have a token or i'm switching between server i've to execute a open operation.
-        OStorageRemoteNodeSession nodeSession = session.get(network.getServerURL());
+        OStorageRemoteNodeSession nodeSession = session.getServerSession(network.getServerURL());
         if (nodeSession == null || !nodeSession.isValid()) {
           openRemoteDatabase(network);
           if (!network.tryLock())
@@ -229,12 +229,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         handleDBFreeze();
       } catch (OTokenException e) {
         connectionManager.release(network);
-        session.remove(network.getServerURL());
+        session.removeServerSession(network.getServerURL());
         if (--retry <= 0)
           throw OException.wrapException(new OStorageException(errorMessage), e);
       } catch (OTokenSecurityException e) {
         connectionManager.release(network);
-        session.remove(network.getServerURL());
+        session.removeServerSession(network.getServerURL());
         if (--retry <= 0)
           throw OException.wrapException(new OStorageException(errorMessage), e);
       } catch (OOfflineNodeException e) {
@@ -245,7 +245,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
         for (OStorageRemoteSession activeSession : sessions) {
           //Not thread Safe ...
-          activeSession.remove(serverUrl);
+          activeSession.removeServerSession(serverUrl);
         }
 
       } catch (IOException e) {
@@ -407,7 +407,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       final OStorageRemoteSession session = getCurrentSession();
       if (session != null) {
-        final Collection<OStorageRemoteNodeSession> nodes = session.getAll();
+        final Collection<OStorageRemoteNodeSession> nodes = session.getAllServerSessions();
         if (!nodes.isEmpty()) {
           for (OStorageRemoteNodeSession nodeSession : nodes) {
             OChannelBinaryAsynchClient network = null;
@@ -1616,7 +1616,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         for (String oldUrl : old) {
           serverURLs.remove(oldUrl);
           for (OStorageRemoteSession session : sessions) {
-            session.remove(oldUrl + "/" + getName());
+            session.removeServerSession(oldUrl + "/" + getName());
           }
         }
 
@@ -1660,7 +1660,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   @Override
   public String getUserName() {
-    OStorageRemoteSession session = getCurrentSession();
+    final OStorageRemoteSession session = getCurrentSession();
     if (session == null)
       return null;
     return session.connectionUserName;
@@ -1673,7 +1673,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         final OChannelBinaryAsynchClient network = getNetwork(currentURL);
         try {
           OStorageRemoteSession session = getCurrentSession();
-          OStorageRemoteNodeSession nodeSession = session.getOrCreate(network.getServerURL());
+          OStorageRemoteNodeSession nodeSession = session.getOrCreateServerSession(network.getServerURL());
           if (nodeSession == null || !nodeSession.isValid()) {
             openRemoteDatabase(network);
             return network.getServerURL();
@@ -1720,7 +1720,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         } catch (OSecurityException ex) {
           OLogManager.instance().debug(this, "Invalidate token for url=%s", ex, currentURL);
           OStorageRemoteSession session = getCurrentSession();
-          session.remove(currentURL);
+          session.removeServerSession(currentURL);
 
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
@@ -1771,7 +1771,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     stateLock.acquireWriteLock();
     try {
       OStorageRemoteSession session = getCurrentSession();
-      OStorageRemoteNodeSession nodeSession = session.getOrCreate(network.getServerURL());
+      OStorageRemoteNodeSession nodeSession = session.getOrCreateServerSession(network.getServerURL());
       try {
         network.writeByte(OChannelBinaryProtocol.REQUEST_DB_OPEN);
         network.writeInt(nodeSession.getSessionId());
@@ -1882,7 +1882,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       serverURLs.remove(url);
       for (OStorageRemoteSession activeSession : sessions) {
         //Not thread Safe ...
-        activeSession.remove(url + "/" + getName());
+        activeSession.removeServerSession(url + "/" + getName());
       }
 
       OLogManager.instance().debug(this, "Updated server list: %s...", serverURLs);
@@ -2108,7 +2108,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public void beginResponse(OChannelBinaryAsynchClient iNetwork, OStorageRemoteSession session) throws IOException {
-    OStorageRemoteNodeSession nodeSession = session.get(iNetwork.getServerURL());
+    OStorageRemoteNodeSession nodeSession = session.getServerSession(iNetwork.getServerURL());
     byte[] newToken = iNetwork.beginResponse(nodeSession.getSessionId(), true);
     if (newToken != null && newToken.length > 0) {
       nodeSession.setSession(nodeSession.getSessionId(), newToken);
@@ -2304,7 +2304,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   protected OStorageRemoteSession getCurrentSession() {
-    ODatabaseDocumentTx db = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentTx db = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db == null)
       return null;
     OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(db);
@@ -2320,20 +2320,20 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public boolean isClosed() {
     if (super.isClosed())
       return true;
-    OStorageRemoteSession session = getCurrentSession();
+    final OStorageRemoteSession session = getCurrentSession();
     if (session == null)
       return false;
-    return session.getAll().isEmpty();
+    return session.isClosed();
   }
 
   @Override
-  public OStorageRemote copy(ODatabaseDocumentTx source, ODatabaseDocumentTx dest) {
+  public OStorageRemote copy(final ODatabaseDocumentTx source, final ODatabaseDocumentTx dest) {
     ODatabaseDocumentInternal origin = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
-    OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(source);
+    final OStorageRemoteSession session = (OStorageRemoteSession) ODatabaseDocumentTxInternal.getSessionMetadata(source);
     if (session != null) {
       // TODO:may run a session reopen
-      OStorageRemoteSession newSession = new OStorageRemoteSession(sessionSerialId.decrementAndGet());
+      final OStorageRemoteSession newSession = new OStorageRemoteSession(sessionSerialId.decrementAndGet());
       newSession.connectionUserName = session.connectionUserName;
       newSession.connectionUserPassword = session.connectionUserPassword;
       ODatabaseDocumentTxInternal.setSessionMetadata(dest, newSession);
