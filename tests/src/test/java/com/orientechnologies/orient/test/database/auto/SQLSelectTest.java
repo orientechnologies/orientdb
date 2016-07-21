@@ -1675,7 +1675,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testOutFilterInclude() {
-    OSchemaProxy schema = database.getMetadata().getSchema();
+    OSchema schema = database.getMetadata().getSchema();
     schema.createClass("TestOutFilterInclude", schema.getClass("V"));
     database.command(new OCommandSQL("create class linkedToOutFilterInclude extends E")).execute();
     database.command(new OCommandSQL("insert into TestOutFilterInclude content { \"name\": \"one\" }")).execute();
@@ -1733,7 +1733,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testExpandSkip() {
-    OSchemaProxy schema = database.getMetadata().getSchema();
+    OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("TestExpandSkip", v);
     cls.createProperty("name", OType.STRING);
@@ -1775,7 +1775,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testPolymorphicEdges() {
-    OSchemaProxy schema = database.getMetadata().getSchema();
+    OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     OClass e = schema.getClass("E");
     final OClass v1 = schema.createClass("TestPolymorphicEdges_V", v);
@@ -1803,7 +1803,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testSizeOfLink() {
-    OSchemaProxy schema = database.getMetadata().getSchema();
+    OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("TestSizeOfLink", v);
     database.command(new OCommandSQL("CREATE VERTEX TestSizeOfLink set name = '1'")).execute();
@@ -1818,7 +1818,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testEmbeddedMapAndDotNotation() {
-    OSchemaProxy schema = database.getMetadata().getSchema();
+    OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("EmbeddedMapAndDotNotation", v);
     database.command(new OCommandSQL("CREATE VERTEX EmbeddedMapAndDotNotation set name = 'foo'")).execute();
@@ -1840,7 +1840,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testLetWithQuotedValue() {
-    OSchemaProxy schema = database.getMetadata().getSchema();
+    OSchema schema = database.getMetadata().getSchema();
     OClass v = schema.getClass("V");
     final OClass cls = schema.createClass("LetWithQuotedValue", v);
     database.command(new OCommandSQL("CREATE VERTEX LetWithQuotedValue set name = \"\\\"foo\\\"\"")).execute();

@@ -145,12 +145,12 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
     super.close();
   }
 
-  @Override
+//  @Override
   protected void checkOpeness() {
     if (ownerPool == null)
       throw new ODatabaseException(
           "Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
 
-    super.checkOpeness();
+//    super.checkOpeness();
   }
 }

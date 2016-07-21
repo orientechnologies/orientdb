@@ -41,7 +41,7 @@ public class DuplicateNonUniqueIndexChangesTxTest {
 
   @BeforeClass
   public static void before() {
-    db = new ODatabaseDocumentTx("memory:" + DuplicateNonUniqueIndexChangesTxTest.class.getSimpleName(), false, true);
+    db = new ODatabaseDocumentTx("memory:" + DuplicateNonUniqueIndexChangesTxTest.class.getSimpleName());
   }
 
   @AfterClass

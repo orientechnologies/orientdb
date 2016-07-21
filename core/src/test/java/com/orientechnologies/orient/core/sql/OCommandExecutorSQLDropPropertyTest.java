@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.junit.Assert;
@@ -42,7 +43,7 @@ public class OCommandExecutorSQLDropPropertyTest {
 
   @Test
   public void test() {
-    OSchemaProxy schema = db.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass foo = schema.createClass("Foo");
 
     foo.createProperty("name", OType.STRING);

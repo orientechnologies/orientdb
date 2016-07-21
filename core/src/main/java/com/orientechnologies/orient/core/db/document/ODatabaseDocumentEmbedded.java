@@ -44,7 +44,7 @@ import java.util.concurrent.Callable;
 /**
  * Created by tglman on 27/06/16.
  */
-public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
+public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTxOrig {
 
   private OrientDBConfig config;
   

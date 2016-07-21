@@ -1045,7 +1045,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       {
         return null;
       }
-      OSchemaProxy schema = getGraph().getRawGraph().getMetadata().getSchema();
+      OSchema schema = getGraph().getRawGraph().getMetadata().getSchema();
 
       Set<String> allClassNames = new HashSet<String>();
       for (String className : iClassNames) {

@@ -36,7 +36,7 @@ public class DuplicateDictionaryIndexChangesTxTest {
 
   @BeforeClass
   public static void before() {
-    db = new ODatabaseDocumentTx("memory:" + DuplicateDictionaryIndexChangesTxTest.class.getSimpleName(), false, true);
+    db = new ODatabaseDocumentTx("memory:" + DuplicateDictionaryIndexChangesTxTest.class.getSimpleName());
   }
 
   @AfterClass

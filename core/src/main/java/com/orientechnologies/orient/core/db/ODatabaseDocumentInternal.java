@@ -36,6 +36,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.Set;
+
 public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseInternal<ORecord> {
 
   /**
@@ -88,6 +90,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   OMetadataInternal getMetadata();
 
   ODatabaseDocumentInternal copy();
+
+  Set<ORecord> executeReadRecords(final Set<ORecordId> iRids, final boolean ignoreCache);
 
   void checkIfActive();
 

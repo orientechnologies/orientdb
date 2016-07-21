@@ -151,7 +151,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
         config = solveConfig(config);
         OAbstractPaginatedStorage storage;
         if (type == DatabaseType.MEMORY) {
-          storage = (OAbstractPaginatedStorage) memory.createStorage(buildName(name), new HashMap<>());
+          storage = (OAbstractPaginatedStorage) memory.createStorage(name, new HashMap<>());
         } else {
           storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
         }
@@ -178,24 +178,6 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
   }
   
-  private void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
-    storage.create(config.getConfigurations());
-    ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
-    if (serializer.toString().equals("ORecordDocument2csv"))
-      throw new ODatabaseException("Impossible to create the database with ORecordDocument2csv serializer");
-    storage.getConfiguration().setRecordSerializer(serializer.toString());
-    storage.getConfiguration().setRecordSerializerVersion(serializer.getCurrentVersion());
-    // since 2.1 newly created databases use strict SQL validation by default
-    storage.getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
-
-    storage.getConfiguration().update();
-
-    try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
-      embedded.setSerializer(serializer);
-      embedded.internalCreate(config);
-    }
-  }
-
   private void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
     storage.create(config.getConfigurations());
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();

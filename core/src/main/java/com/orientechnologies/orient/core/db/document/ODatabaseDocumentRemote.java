@@ -42,7 +42,7 @@ import java.util.Map.Entry;
 /**
  * Created by tglman on 30/06/16.
  */
-public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
+public class ODatabaseDocumentRemote extends ODatabaseDocumentTxOrig {
 
   private OrientDBConfig config;
 
