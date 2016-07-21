@@ -526,4 +526,27 @@ public class OCommandExecutorSQLUpdateTest {
       db.close();
     }
   }
+
+  @Test
+  public void testUpdateReturnCount() throws Exception {
+    //issue #5564
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testUpdateReturnCount");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class Foo")).execute();
+
+      ODocument d = new ODocument("Foo");
+      d.field("name", "foo");
+      d.save();
+      d = new ODocument("Foo");
+      d.field("name", "bar");
+      d.save();
+
+      Object result = db.command(new OCommandSQL("update Foo set surname = 'baz' return count")).execute();
+
+      assertEquals(2, result);
+    } finally {
+      db.close();
+    }
+  }
 }

@@ -106,6 +106,7 @@ public class OUpdateStatementTest {
     checkRightSyntax("update $publishedVersionEdge.row set isPublished = false");
   }
 
+  @Test
   public void testLockRecord() {
     checkRightSyntax("update foo set bar = 1 lock record");
     checkRightSyntax("update foo set bar = 1 lock none");
@@ -117,6 +118,12 @@ public class OUpdateStatementTest {
     checkRightSyntax("update foo set bar = 1 LOCK DEFAULT");
 
     checkWrongSyntax("update foo set bar = 1 LOCK Foo");
+  }
+
+  @Test
+  public void testReturnCount() {
+    checkRightSyntax("update foo set bar = 1 RETURN COUNT");
+    checkRightSyntax("update foo set bar = 1 return count");
   }
 
   private void printTree(String s) {
