@@ -348,6 +348,8 @@ TOKEN:
 	|
 	< OPTIONAL: ( "O" | "o") ( "P" | "p") ( "T" | "t") ( "I" | "i") ( "O" | "o") ( "N" | "n") ( "A" | "a") ( "L" | "l") >
 	|
+	< COUNT: ( "C" | "c") ( "O" | "o") ( "U" | "u") ( "N" | "n") ( "T" | "t") >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -792,6 +794,8 @@ OIdentifier Identifier():
     token = <START>
     |
     token = <OPTIONAL>
+    |
+    token = <COUNT>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -1512,7 +1516,7 @@ OUpdateStatement UpdateStatement():
     	[ <UPSERT> { jjtThis.upsert = true; } ]
     	[
     	    <RETURN>
-    	    ( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } )
+    	    ( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } | <COUNT> { jjtThis.returnCount = true; })
     	    [
     	        jjtThis.returnProjection = Projection()
     	    ]
