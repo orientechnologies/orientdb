@@ -114,7 +114,7 @@ public class ODistributedWorker extends Thread {
       }
     }
 
-    ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE, "end of reading requests for database %s", databaseName);
+    ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE, "End of reading requests for database %s", databaseName);
   }
 
   /**
@@ -138,7 +138,9 @@ public class ODistributedWorker extends Thread {
 
           // WAIT FOR A WHILE, THEN RETRY
           try {
-            Thread.sleep(100);
+            ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+                "Database not present, waiting for it (retry=%d/%d)...", retry, 100);
+            Thread.sleep(300);
           } catch (InterruptedException e1) {
             Thread.currentThread().interrupt();
             return;
