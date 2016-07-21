@@ -33,5 +33,13 @@ public class OCluster extends SimpleNode {
       builder.append("cluster:" + clusterNumber);
     }
   }
+
+  public String getClusterName() {
+    return clusterName;
+  }
+
+  public Integer getClusterNumber() {
+    return clusterNumber;
+  }
 }
 /* JavaCC - OriginalChecksum=d27abf009fe7db482fbcaac9d52ba192 (do not edit this line) */

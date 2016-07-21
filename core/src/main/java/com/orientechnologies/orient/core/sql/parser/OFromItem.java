@@ -18,8 +18,8 @@ public class OFromItem extends SimpleNode {
   protected OFunctionCall       functionCall;
   protected OModifier           modifier;
 
-  private static final Object   UNSET           = new Object();
-  private Object                inputFinalValue = UNSET;
+  private static final Object UNSET           = new Object();
+  private              Object inputFinalValue = UNSET;
 
   public OFromItem(int id) {
     super(id);
@@ -29,7 +29,9 @@ public class OFromItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -73,7 +75,7 @@ public class OFromItem extends SimpleNode {
       return;
     } else if (inputParam != null) {
       inputParam.toString(params, builder);
-    }else if(functionCall!=null){
+    } else if (functionCall != null) {
       functionCall.toString(params, builder);
     } else if (identifier != null) {
       identifier.toString(params, builder);
@@ -83,9 +85,44 @@ public class OFromItem extends SimpleNode {
     }
   }
 
-
   public OIdentifier getIdentifier() {
     return identifier;
+  }
+
+  public List<ORid> getRids() {
+    return rids;
+  }
+
+  public OCluster getCluster() {
+    return cluster;
+  }
+
+  public OClusterList getClusterList() {
+    return clusterList;
+  }
+
+  public OIndexIdentifier getIndex() {
+    return index;
+  }
+
+  public OMetadataIdentifier getMetadata() {
+    return metadata;
+  }
+
+  public OStatement getStatement() {
+    return statement;
+  }
+
+  public OInputParameter getInputParam() {
+    return inputParam;
+  }
+
+  public OFunctionCall getFunctionCall() {
+    return functionCall;
+  }
+
+  public OModifier getModifier() {
+    return modifier;
   }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

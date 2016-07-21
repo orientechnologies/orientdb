@@ -1,10 +1,13 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Luigi Dell'Aquila
@@ -175,7 +178,7 @@ public class OSelectExecutionPlanner {
         OProjectionItem newItem = new OProjectionItem(-1);
         newItem.setExpression(exp);
         OIdentifier groupByAlias = new OIdentifier(-1);
-        groupByAlias.setStringValue("__$$$GROUP_BY_ALIAS$$$__"+i);
+        groupByAlias.setStringValue("__$$$GROUP_BY_ALIAS$$$__" + i);
         newItem.setAlias(groupByAlias);
         preAggregateProjection.getItems().add(newItem);
         newGroupBy.getItems().add(new OExpression(groupByAlias));
@@ -193,13 +196,12 @@ public class OSelectExecutionPlanner {
    */
   private void extractSubQueries() {
     if (whereClause != null && whereClause.containsSubqueries()) {
-//      whereClause.extractSubQueries(ctx);
+      //      whereClause.extractSubQueries(ctx);
       //TODO
     }
   }
 
   private void handleFetchFromTarger(OSelectExecutionPlan result, OCommandContext ctx) {
-
     if (target == null) {
       result.chain(new ProjectionCalculationNoTargetStep(projection, ctx));
       projectionsCalculated = true;
@@ -207,6 +209,10 @@ public class OSelectExecutionPlanner {
       OFromItem target = this.target.getItem();
       if (target.getIdentifier() != null) {
         handleClassAsTarget(result, target.getIdentifier(), ctx);
+      } else if (target.getCluster() != null) {
+        handleClustersAsTarget(result, Collections.singletonList(target.getCluster()), ctx);
+      } else if (target.getClusterList() != null) {
+        handleClustersAsTarget(result, target.getClusterList().toListOfClusters(), ctx);
       } else {
         throw new UnsupportedOperationException();
       }
@@ -260,8 +266,53 @@ public class OSelectExecutionPlanner {
 
   }
 
+  private void handleClustersAsTarget(OSelectExecutionPlan plan, List<OCluster> clusters, OCommandContext ctx) {
+    ODatabase db = ctx.getDatabase();
+    Boolean orderByRidAsc = null;//null: no order. true: asc, false:desc
+    if (isOrderByRidAsc()) {
+      orderByRidAsc = true;
+    } else if (isOrderByRidDesc()) {
+      orderByRidAsc = false;
+    }
+    if (orderByRidAsc != null) {
+      this.orderApplied = true;
+    }
+    if (clusters.size() == 1) {
+      OCluster cluster = clusters.get(0);
+      Integer clusterId = cluster.getClusterNumber();
+      if (clusterId == null) {
+        clusterId = db.getClusterIdByName(cluster.getClusterName());
+      }
+      if (clusterId == null) {
+        throw new OCommandExecutionException("Cluster " + cluster + " does not exist");
+      }
+      FetchFromClusterExecutionStep step = new FetchFromClusterExecutionStep(clusterId, ctx);
+      if (Boolean.TRUE.equals(orderByRidAsc)) {
+        step.setOrder(FetchFromClusterExecutionStep.ORDER_ASC);
+      } else if (Boolean.FALSE.equals(orderByRidAsc)) {
+        step.setOrder(FetchFromClusterExecutionStep.ORDER_DESC);
+      }
+      plan.chain(step);
+    } else {
+      int[] clusterIds = new int[clusters.size()];
+      for (int i = 0; i < clusters.size(); i++) {
+        OCluster cluster = clusters.get(i);
+        Integer clusterId = cluster.getClusterNumber();
+        if (clusterId == null) {
+          clusterId = db.getClusterIdByName(cluster.getClusterName());
+        }
+        if (clusterId == null) {
+          throw new OCommandExecutionException("Cluster " + cluster + " does not exist");
+        }
+        clusterIds[i] = clusterId;
+      }
+      FetchFromClustersExecutionStep step = new FetchFromClustersExecutionStep(clusterIds, ctx, orderByRidAsc);
+      plan.chain(step);
+    }
+  }
+
   private boolean isOrderByRidDesc() {
-    if (!hasClassAsTarget()) {
+    if (!hasTargetWithSortedRids()) {
       return false;
     }
 
@@ -279,7 +330,7 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean isOrderByRidAsc() {
-    if (!hasClassAsTarget()) {
+    if (!hasTargetWithSortedRids()) {
       return false;
     }
 
@@ -297,7 +348,7 @@ public class OSelectExecutionPlanner {
     return false;
   }
 
-  private boolean hasClassAsTarget() {
+  private boolean hasTargetWithSortedRids() {
     if (target == null) {
       return false;
     }
@@ -305,6 +356,10 @@ public class OSelectExecutionPlanner {
       return false;
     }
     if (target.getItem().getIdentifier() != null) {
+      return true;
+    } else if (target.getItem().getCluster() != null) {
+      return true;
+    } else if (target.getItem().getClusterList() != null) {
       return true;
     }
     return false;

@@ -18,7 +18,9 @@ public class OClusterList extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -35,6 +37,16 @@ public class OClusterList extends SimpleNode {
       first = false;
     }
     builder.append("]");
+  }
+
+  public List<OCluster> toListOfClusters() {
+    List<OCluster> result = new ArrayList<>();
+    for (OIdentifier id : clusters) {
+      OCluster cluster = new OCluster(-1);
+      cluster.clusterName = id.getStringValue();
+      result.add(cluster);
+    }
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=bd90ffa0b9d17f204b3cf2d47eedb409 (do not edit this line) */

@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.AfterClass;
@@ -453,7 +455,6 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-
   @Test public void testAggregateSumMaxMinGroupBy() {
     String className = "testAggregateSumMaxMinGroupBy";
     db.getMetadata().getSchema().createClass(className);
@@ -489,7 +490,6 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-
   @Test public void testAggregateSumNoGroupByInProjection() {
     String className = "testAggregateSumNoGroupByInProjection";
     db.getMetadata().getSchema().createClass(className);
@@ -508,7 +508,7 @@ public class OSelectStatementExecutionTest {
       OResult item = result.next();
       Assert.assertNotNull(item);
       Object sum = item.<Object>getProperty("sum(val)");
-      if(sum.equals(20)){
+      if (sum.equals(20)) {
         evenFound = true;
       } else if (sum.equals(25)) {
         oddFound = true;
@@ -519,7 +519,6 @@ public class OSelectStatementExecutionTest {
     Assert.assertTrue(oddFound);
     result.close();
   }
-
 
   @Test public void testAggregateSumNoGroupByInProjection2() {
     String className = "testAggregateSumNoGroupByInProjection2";
@@ -540,6 +539,126 @@ public class OSelectStatementExecutionTest {
       Assert.assertEquals(45, sum);
 
     }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClusterNumber() {
+    String className = "testFetchFromClusterNumber";
+    OSchemaProxy schema = db.getMetadata().getSchema();
+    OClass clazz = schema.createClass(className);
+    int targetCluster = clazz.getClusterIds()[0];
+    String targetClusterName = db.getClusterNameById(targetCluster);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("val", i);
+      doc.save(targetClusterName);
+    }
+    OTodoResultSet result = db.query("select from cluster:" + targetClusterName);
+    printExecutionPlan(result);
+    int sum = 0;
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Integer val = item.getProperty("val");
+      Assert.assertNotNull(val);
+      sum += val;
+    }
+    Assert.assertEquals(45, sum);
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClusterNumberOrderByRidDesc() {
+    String className = "testFetchFromClusterNumberOrderByRidDesc";
+    OSchemaProxy schema = db.getMetadata().getSchema();
+    OClass clazz = schema.createClass(className);
+    int targetCluster = clazz.getClusterIds()[0];
+    String targetClusterName = db.getClusterNameById(targetCluster);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("val", i);
+      doc.save(targetClusterName);
+    }
+    OTodoResultSet result = db.query("select from cluster:" + targetClusterName + " order by @rid desc");
+    printExecutionPlan(result);
+    int sum = 0;
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Integer val = item.getProperty("val");
+      Assert.assertEquals(i, 9 - val);
+
+    }
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClusterNumberOrderByRidAsc() {
+    String className = "testFetchFromClusterNumberOrderByRidAsc";
+    OSchemaProxy schema = db.getMetadata().getSchema();
+    OClass clazz = schema.createClass(className);
+    int targetCluster = clazz.getClusterIds()[0];
+    String targetClusterName = db.getClusterNameById(targetCluster);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("val", i);
+      doc.save(targetClusterName);
+    }
+    OTodoResultSet result = db.query("select from cluster:" + targetClusterName + " order by @rid asc");
+    printExecutionPlan(result);
+    int sum = 0;
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Integer val = item.getProperty("val");
+      Assert.assertEquals((Object) i, val);
+
+    }
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClustersNumberOrderByRidAsc() {
+    String className = "testFetchFromClusterNumberOrderByRidAsc";
+    OSchemaProxy schema = db.getMetadata().getSchema();
+    OClass clazz = schema.createClass(className);
+    if (clazz.getClusterIds().length < 2) {
+      clazz.addCluster("testFetchFromClusterNumberOrderByRidAsc_2");
+    }
+    int targetCluster = clazz.getClusterIds()[0];
+    String targetClusterName = db.getClusterNameById(targetCluster);
+
+    int targetCluster2 = clazz.getClusterIds()[1];
+    String targetClusterName2 = db.getClusterNameById(targetCluster2);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("val", i);
+      doc.save(targetClusterName);
+    }
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("val", i);
+      doc.save(targetClusterName2);
+    }
+
+    OTodoResultSet result = db
+        .query("select from cluster:[" + targetClusterName + ", " + targetClusterName2 + "] order by @rid asc");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 20; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Integer val = item.getProperty("val");
+      Assert.assertEquals((Object) (i%10), val );
+    }
+
     Assert.assertFalse(result.hasNext());
     result.close();
   }
