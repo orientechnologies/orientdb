@@ -1,9 +1,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
-import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.*;
 
 import java.util.HashMap;
 import java.util.Map;

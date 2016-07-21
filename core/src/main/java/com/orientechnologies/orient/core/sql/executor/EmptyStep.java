@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 /**
  * Created by luigidellaquila on 08/07/16.
  */
-public class EmptyStep implements OExecutionStep {
+public class EmptyStep implements OExecutionStepInternal {
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     return new OInternalResultSet();
   }
@@ -19,11 +19,11 @@ public class EmptyStep implements OExecutionStep {
 
   }
 
-  @Override public void setPrevious(OExecutionStep step) {
+  @Override public void setPrevious(OExecutionStepInternal step) {
 
   }
 
-  @Override public void setNext(OExecutionStep step) {
+  @Override public void setNext(OExecutionStepInternal step) {
 
   }
 

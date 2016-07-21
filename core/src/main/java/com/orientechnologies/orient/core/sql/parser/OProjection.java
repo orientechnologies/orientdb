@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 
 import java.util.ArrayList;
@@ -80,7 +81,7 @@ public class OProjection extends SimpleNode {
       return iRecord;
     }
 
-    OResult result = new OResult();
+    OResultInternal result = new OResultInternal();
     for (OProjectionItem item : items) {
       if (item.isAll()) {
         for (String alias : iRecord.getPropertyNames()) {

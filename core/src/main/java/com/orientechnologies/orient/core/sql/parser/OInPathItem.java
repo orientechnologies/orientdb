@@ -29,7 +29,7 @@ public class OInPathItem extends OMatchPathItem {
         if (!first) {
           builder.append(", ");
         }
-        builder.append(exp.execute((OResult)null, null));
+        builder.append(exp.execute((OResult) null, null));
         first = false;
       }
     }

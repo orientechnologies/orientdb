@@ -1,37 +1,19 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.orient.core.command.OCommandContext;
+import java.util.List;
 
 /**
- * Created by luigidellaquila on 06/07/16.
+ * Created by luigidellaquila on 20/07/16.
  */
-public interface OExecutionStep extends OExecutionCallback {
+public interface OExecutionStep {
 
-  OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException;
+  String getName();
 
-  void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException;
+  String getType();
 
-  void sendTimeout();
+  String getTargetNode();
 
-  void setPrevious(OExecutionStep step);
+  String getDescription();
 
-  void setNext(OExecutionStep step);
-
-  void close();
-
-  static String getIndent(int depth, int indent) {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < depth; i++) {
-      for (int j = 0; j < indent; j++) {
-        result.append(" ");
-      }
-    }
-    return result.toString();
-  }
-
-  default String prettyPrint(int depth, int indent) {
-    String spaces = getIndent(depth, indent);
-    return spaces + getClass().getSimpleName();
-  }
+  List<OExecutionStep> getSubSteps();
 }

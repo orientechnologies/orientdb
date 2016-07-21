@@ -66,7 +66,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
           record = iterator.next();
         }
         nFetched++;
-        OResult result = new OResult();
+        OResultInternal result = new OResultInternal();
         result.element = record;
         return result;
       }
@@ -103,7 +103,9 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStep.getIndent(depth, indent) + "+ FETCH FROM CLUSTER " + clusterId;
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM CLUSTER " + clusterId + " " + (ORDER_DESC.equals(order) ?
+        "DESC" :
+        "ASC");
   }
 
   public void setOrder(Object order) {

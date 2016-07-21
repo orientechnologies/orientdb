@@ -1,56 +1,20 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
- * Created by luigidellaquila on 06/07/16.
+ * Created by luigidellaquila on 21/07/16.
  */
-public class OResult {
-  protected Map<String, Object> content = new HashMap<>();
-  protected OIdentifiable element;
+public interface OResult {
+  <T> T getProperty(String name);
 
-  public void setProperty(String name, Object value) {
-    content.put(name, value);
-  }
+  Set<String> getPropertyNames();
 
-  public <T> T getProperty(String name) {
-    if (element != null) {
-      return ((ODocument) element.getRecord()).getProperty(name);
-    }
-    return (T) content.get(name);
-  }
+  boolean isElement();
 
-  public Set<String> getPropertyNames() {
-    Set<String> result = new HashSet<>();
-    if (element != null) {
-      result.addAll(((ODocument) element.getRecord()).getPropertyNames());
-    }
-    result.addAll(content.keySet());
-    return result;
-  }
+  OIdentifiable getElement();
 
-  public OIdentifiable getElement() {
-    return element;
-  }
-
-  public void setElement(OIdentifiable element) {
-    this.element = element;
-  }
-
-  @Override public String toString() {
-
-    if (element != null) {
-      return element.toString();
-    }
-    return "{\n" +
-        content.entrySet().stream().map(x -> x.getKey() + ": \n" + x.getValue()).reduce("", (a, b) -> a + b + "\n\n") + "}\n";
-
-  }
-
+  OIdentifiable toElement();
 }

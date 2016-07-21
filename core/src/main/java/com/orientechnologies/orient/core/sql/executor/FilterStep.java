@@ -22,7 +22,7 @@ public class FilterStep extends AbstractExecutionStep {
     if (!prev.isPresent()) {
       throw new IllegalStateException("filter step requires a previous step");
     }
-    OExecutionStep prevStep = prev.get();
+    OExecutionStepInternal prevStep = prev.get();
 
     return new OTodoResultSet() {
       public boolean finished = false;
@@ -114,7 +114,7 @@ public class FilterStep extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStep.getIndent(depth, indent) + "+ CALCULATE WHERE CONDITION : " + whereClause.toString();
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ CALCULATE WHERE CONDITION : " + whereClause.toString();
   }
 
 }

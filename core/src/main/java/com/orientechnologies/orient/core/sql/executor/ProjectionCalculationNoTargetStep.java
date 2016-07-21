@@ -90,7 +90,7 @@ public class ProjectionCalculationNoTargetStep extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    String spaces = OExecutionStep.getIndent(depth, indent);
+    String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ CALCULATE PROJECTIONS (no target)\n"+spaces+"      " + projection.toString() + "";
   }
 }

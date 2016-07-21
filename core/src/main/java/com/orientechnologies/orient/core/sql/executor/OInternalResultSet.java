@@ -7,7 +7,7 @@ import java.util.*;
  */
 public class OInternalResultSet implements OTodoResultSet {
   List<OResult> content = new ArrayList<>();
-  int           next    = 0;
+  int                   next    = 0;
 
   @Override public boolean hasNext() {
     return content.size() > next;

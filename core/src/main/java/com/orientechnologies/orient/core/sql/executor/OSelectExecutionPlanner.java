@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.sql.parser.*;
 import java.util.ArrayList;
 
 /**
- * Created by luigidellaquila on 06/07/16.
+ * @author Luigi Dell'Aquila
  */
 public class OSelectExecutionPlanner {
 
@@ -44,6 +44,7 @@ public class OSelectExecutionPlanner {
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
     OSelectExecutionPlan result = new OSelectExecutionPlan(ctx);
+
     optimizeQuery();
 
     handleGlobalLet(result, globalLetClause, ctx);
@@ -181,7 +182,7 @@ public class OSelectExecutionPlanner {
       }
 
       groupBy = newGroupBy;
-      
+
       //TODO check ORDER BY and see if that projection has to be also propagated
     }
 
@@ -192,6 +193,7 @@ public class OSelectExecutionPlanner {
    */
   private void extractSubQueries() {
     if (whereClause != null && whereClause.containsSubqueries()) {
+//      whereClause.extractSubQueries(ctx);
       //TODO
     }
   }

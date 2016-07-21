@@ -7,22 +7,22 @@ import java.util.Optional;
 /**
  * @author Luigi Dell'Aquila
  */
-public abstract class AbstractExecutionStep implements OExecutionStep {
+public abstract class AbstractExecutionStep implements OExecutionStepInternal {
 
   protected final OCommandContext ctx;
-  protected Optional<OExecutionStep> prev = Optional.empty();
-  protected Optional<OExecutionStep> next = Optional.empty();
-  protected boolean timedOut = false;
+  protected Optional<OExecutionStepInternal> prev     = Optional.empty();
+  protected Optional<OExecutionStepInternal> next     = Optional.empty();
+  protected boolean                          timedOut = false;
 
   public AbstractExecutionStep(OCommandContext ctx) {
     this.ctx = ctx;
   }
 
-  @Override public void setPrevious(OExecutionStep step) {
+  @Override public void setPrevious(OExecutionStepInternal step) {
     this.prev = Optional.ofNullable(step);
   }
 
-  @Override public void setNext(OExecutionStep step) {
+  @Override public void setNext(OExecutionStepInternal step) {
     this.next = Optional.ofNullable(step);
   }
 
@@ -30,11 +30,11 @@ public abstract class AbstractExecutionStep implements OExecutionStep {
     return ctx;
   }
 
-  public Optional<OExecutionStep> getPrev() {
+  public Optional<OExecutionStepInternal> getPrev() {
     return prev;
   }
 
-  public Optional<OExecutionStep> getNext() {
+  public Optional<OExecutionStepInternal> getNext() {
     return next;
   }
 

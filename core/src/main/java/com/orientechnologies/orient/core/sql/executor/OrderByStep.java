@@ -13,7 +13,7 @@ public class OrderByStep extends AbstractExecutionStep {
   private final OOrderBy orderBy;
 
   List<OResult> cachedResult = null;
-  int           nextElement  = 0;
+  int                   nextElement  = 0;
 
   public OrderByStep(OOrderBy orderBy, OCommandContext ctx) {
     super(ctx);
@@ -67,7 +67,7 @@ public class OrderByStep extends AbstractExecutionStep {
     };
   }
 
-  private void init(OExecutionStep p, OCommandContext ctx) {
+  private void init(OExecutionStepInternal p, OCommandContext ctx) {
     do {
       OTodoResultSet lastBatch = p.syncPull(ctx, 100);
       if (!lastBatch.hasNext()) {
@@ -92,6 +92,6 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStep.getIndent(depth, indent) + "+ SORT";
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ SORT";
   }
 }

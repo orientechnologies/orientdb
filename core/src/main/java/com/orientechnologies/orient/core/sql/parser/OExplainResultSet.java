@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class OExplainResultSet implements OTodoResultSet {
     if (!hasNext) {
       throw new IllegalStateException();
     }
-    OResult result = new OResult();
+    OResultInternal result = new OResultInternal();
     getExecutionPlan().ifPresent(x -> result.setProperty("executionPlan", x.prettyPrint(3)));
     hasNext = false;
     return result;

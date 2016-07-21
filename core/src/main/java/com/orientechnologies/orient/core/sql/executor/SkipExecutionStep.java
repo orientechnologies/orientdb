@@ -59,7 +59,7 @@ public class SkipExecutionStep extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStep.getIndent(depth, indent) + "+ SKIP (" + skip.toString() + ")";
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ SKIP (" + skip.toString() + ")";
   }
 
 }

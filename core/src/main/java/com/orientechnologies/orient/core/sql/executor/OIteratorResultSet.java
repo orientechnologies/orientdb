@@ -27,7 +27,7 @@ public class OIteratorResultSet implements OTodoResultSet {
       return (OResult) val;
     }
 
-    OResult result = new OResult();
+    OResultInternal result = new OResultInternal();
     if (val instanceof OIdentifiable) {
       result.setElement((OIdentifiable) val);
     } else {

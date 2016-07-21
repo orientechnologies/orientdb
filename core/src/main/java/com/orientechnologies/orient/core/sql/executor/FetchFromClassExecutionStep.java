@@ -142,14 +142,14 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
   }
 
   @Override public void sendTimeout() {
-    for (OExecutionStep step : subSteps) {
+    for (OExecutionStepInternal step : subSteps) {
       step.sendTimeout();
     }
     prev.ifPresent(p -> p.sendTimeout());
   }
 
   @Override public void close() {
-    for (OExecutionStep step : subSteps) {
+    for (OExecutionStepInternal step : subSteps) {
       step.close();
     }
     prev.ifPresent(p -> p.close());
@@ -161,11 +161,11 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
   @Override public String prettyPrint(int depth, int indent) {
     StringBuilder builder = new StringBuilder();
-    String ind = OExecutionStep.getIndent(depth, indent);
+    String ind = OExecutionStepInternal.getIndent(depth, indent);
     builder.append(ind);
     builder.append("+ FETCH FROM CLASS " + className + "\n");
     for (int i = 0; i < subSteps.length; i++) {
-      OExecutionStep step = subSteps[i];
+      OExecutionStepInternal step = subSteps[i];
       builder.append(step.prettyPrint(depth + 1, indent));
       if (i < subSteps.length - 1) {
         builder.append("\n");

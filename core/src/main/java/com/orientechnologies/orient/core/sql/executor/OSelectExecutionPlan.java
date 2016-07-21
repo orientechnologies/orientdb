@@ -10,10 +10,13 @@ import java.util.List;
  */
 public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
+  private String location;
+
   private final OCommandContext ctx;
 
-  protected List<OExecutionStep> steps = new ArrayList<>();
-  OExecutionStep lastStep = null;
+  protected List<OExecutionStepInternal> steps = new ArrayList<>();
+
+  OExecutionStepInternal lastStep = null;
 
   public OSelectExecutionPlan(OCommandContext ctx) {
     this.ctx = ctx;
@@ -29,7 +32,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   @Override public String prettyPrint(int indent) {
     StringBuilder result = new StringBuilder();
-    for (OExecutionStep step : steps) {
+    for (OExecutionStepInternal step : steps) {
       result.append(step.prettyPrint(0, indent));
       result.append("\n");
     }
@@ -40,7 +43,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     throw new UnsupportedOperationException();
   }
 
-  protected void chain(OExecutionStep nextStep) {
+  protected void chain(OExecutionStepInternal nextStep) {
     if (lastStep != null) {
       lastStep.setNext(nextStep);
       nextStep.setPrevious(lastStep);
@@ -48,4 +51,14 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     lastStep = nextStep;
     steps.add(nextStep);
   }
+
+  @Override public List<OExecutionStep> getSteps() {
+    //TODO do a copy of the steps
+    return (List)steps;
+  }
+
+  @Override public OResult toResult() {
+    return new OResultInternal();
+  }
 }
+

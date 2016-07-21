@@ -45,7 +45,7 @@ public class LimitExecutionStep extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStep.getIndent(depth, indent) + "+ LIMIT (" + limit.toString() + ")";
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ LIMIT (" + limit.toString() + ")";
   }
 
 }

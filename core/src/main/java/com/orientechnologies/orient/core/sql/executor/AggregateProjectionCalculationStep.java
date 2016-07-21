@@ -18,8 +18,8 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   private final OGroupBy groupBy;
 
   //the key is the GROUP BY key, the value is the (partially) aggregated value
-  private Map<List, OResult> aggregateResults = new LinkedHashMap<>();
-  private List<OResult>      finalResults     = null;
+  private Map<List, OResultInternal> aggregateResults = new LinkedHashMap<>();
+  private List<OResultInternal>      finalResults     = null;
 
   private int nextItem = 0;
 
@@ -71,7 +71,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     if (!prev.isPresent()) {
       throw new OCommandExecutionException("Cannot execute an aggregation or a GROUP BY without a previous result");
     }
-    OExecutionStep prevStep = prev.get();
+    OExecutionStepInternal prevStep = prev.get();
     OTodoResultSet lastRs = prevStep.syncPull(ctx, nRecords);
     while (lastRs.hasNext()) {
       aggregate(lastRs.next(), ctx);
@@ -82,7 +82,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     finalResults = new ArrayList<>();
     finalResults.addAll(aggregateResults.values());
     aggregateResults.clear();
-    for (OResult item : finalResults) {
+    for (OResultInternal item : finalResults) {
       for (String name : item.getPropertyNames()) {
         Object prevVal = item.getProperty(name);
         if (prevVal instanceof AggregationContext) {
@@ -100,9 +100,9 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
         key.add(val);
       }
     }
-    OResult preAggr = aggregateResults.get(key);
+    OResultInternal preAggr = aggregateResults.get(key);
     if (preAggr == null) {
-      preAggr = new OResult();
+      preAggr = new OResultInternal();
       aggregateResults.put(key, preAggr);
     }
 
@@ -122,7 +122,7 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    String spaces = OExecutionStep.getIndent(depth, indent);
+    String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ CALCULATE AGGREGATE PROJECTIONS\n" +
         spaces + "      " + projection.toString() + "" +
         (groupBy == null ? "" : (spaces + "\n      " + groupBy.toString()));
