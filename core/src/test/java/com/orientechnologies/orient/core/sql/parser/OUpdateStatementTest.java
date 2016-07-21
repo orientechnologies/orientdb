@@ -102,6 +102,12 @@ public class OUpdateStatementTest {
     checkRightSyntax("update $publishedVersionEdge.row set isPublished = false");
   }
 
+  @Test
+  public void testReturnCount() {
+    checkRightSyntax("update foo set bar = 1 RETURN COUNT");
+    checkRightSyntax("update foo set bar = 1 return count");
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {

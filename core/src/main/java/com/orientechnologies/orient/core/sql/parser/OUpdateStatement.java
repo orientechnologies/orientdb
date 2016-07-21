@@ -21,6 +21,7 @@ public class OUpdateStatement extends OStatement {
 
   protected boolean                 returnBefore = false;
   protected boolean                 returnAfter  = false;
+  protected boolean                 returnCount  = false;
   protected OProjection             returnProjection;
 
   public OWhereClause               whereClause;
@@ -75,12 +76,14 @@ public class OUpdateStatement extends OStatement {
       result.append(" UPSERT");
     }
 
-    if (returnBefore || returnAfter) {
+    if (returnBefore || returnAfter || returnCount) {
       result.append(" RETURN");
       if (returnBefore) {
         result.append(" BEFORE");
-      } else {
+      } else if (returnAfter){
         result.append(" AFTER");
+      }else{
+        result.append(" COUNT");
       }
       if (returnProjection != null) {
         result.append(" ");

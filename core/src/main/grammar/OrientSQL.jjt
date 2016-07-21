@@ -218,6 +218,8 @@ TOKEN:
 	|
 	< REFERENCES: ( "r" | "R" ) ( "e" | "E" ) ( "f" | "F" ) ( "e" | "E" ) ( "r" | "R" ) ( "e" | "E" ) ( "n" | "N" ) ( "c" | "C" ) ( "e" | "E" ) ( "s" | "S" ) >
 	|
+	< COUNT: ( "c" | "C" ) ( "o" | "O" ) ( "u" | "U" ) ( "n" | "N" ) ( "t" | "T" ) >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -517,6 +519,8 @@ OIdentifier Identifier():
     token = <FIND>
     |
     token = <REFERENCES>
+    |
+    token = <COUNT>
     |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
@@ -1040,7 +1044,7 @@ OUpdateStatement UpdateStatement():
     	[ <UPSERT> { jjtThis.upsert = true; } ]
     	[
     	    <RETURN>
-    	    ( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } )
+    	    ( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } | <COUNT> { jjtThis.returnCount = true; } )
     	    [
     	        jjtThis.returnProjection = Projection()
     	    ]
