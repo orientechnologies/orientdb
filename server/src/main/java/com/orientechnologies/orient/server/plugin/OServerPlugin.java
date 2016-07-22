@@ -34,22 +34,22 @@ public interface OServerPlugin extends OService {
   /**
    * Callback invoked when a client connection begins.
    */
-  public void onClientConnection(OClientConnection iConnection);
+  void onClientConnection(OClientConnection iConnection);
 
   /**
    * Callback invoked when a client connection ends.
    */
-  public void onClientDisconnection(OClientConnection iConnection);
+  void onClientDisconnection(OClientConnection iConnection);
 
   /**
    * Callback invoked before a client request is processed.
    */
-  public void onBeforeClientRequest(OClientConnection iConnection, byte iRequestType);
+  void onBeforeClientRequest(OClientConnection iConnection, byte iRequestType);
 
   /**
    * Callback invoked after a client request is processed.
    */
-  public void onAfterClientRequest(OClientConnection iConnection, byte iRequestType);
+  void onAfterClientRequest(OClientConnection iConnection, byte iRequestType);
 
   /**
    * Callback invoked when a client connection has errors.
@@ -57,14 +57,14 @@ public interface OServerPlugin extends OService {
    * @param iThrowable
    *          Throwable instance received
    */
-  public void onClientError(OClientConnection iConnection, Throwable iThrowable);
+  void onClientError(OClientConnection iConnection, Throwable iThrowable);
 
   /**
    * Configures the handler. Called at startup.
    */
-  public void config(OServer oServer, OServerParameterConfiguration[] iParams);
+  void config(OServer oServer, OServerParameterConfiguration[] iParams);
 
-  public void sendShutdown();
+  void sendShutdown();
 
-  public Object getContent(final String iURL);
+  Object getContent(final String iURL);
 }

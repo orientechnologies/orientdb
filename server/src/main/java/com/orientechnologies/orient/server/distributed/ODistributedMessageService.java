@@ -35,5 +35,5 @@ public interface ODistributedMessageService {
 
   ODistributedDatabase unregisterDatabase(String iDatabaseName);
 
-  long dispatchResponseToThread(final ODistributedResponse response);
+  void dispatchResponseToThread(final ODistributedResponse response);
 }

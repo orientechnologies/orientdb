@@ -135,7 +135,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private boolean initialized = false;
   private OTransaction currentTx;
   private boolean                 keepStorageOpen = false;
-  private AtomicReference<Thread> owner           = new AtomicReference<Thread>();
+  private final AtomicReference<Thread> owner           = new AtomicReference<Thread>();
 
   protected ODatabaseSessionMetadata sessionMetadata;
 
@@ -230,7 +230,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       final String encKey = (String)getProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey());
       String currKey = null;
-        
+
       if (storage.getConfiguration() != null && storage.getConfiguration().getContextConfiguration() != null) {
         currKey = (String)storage.getConfiguration().
           getContextConfiguration().getValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
@@ -1188,38 +1188,42 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public void close() {
     checkIfActive();
 
-    localCache.shutdown();
-
-    if (isClosed()) {
-      status = STATUS.CLOSED;
-      return;
-    }
-
     try {
-      commit(true);
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Exception during commit of active transaction", e);
+      localCache.shutdown();
+
+      if (isClosed()) {
+        status = STATUS.CLOSED;
+        return;
+      }
+
+      try {
+        commit(true);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Exception during commit of active transaction", e);
+      }
+
+      if (status != STATUS.OPEN)
+        return;
+
+      callOnCloseListeners();
+
+      if (currentIntent != null) {
+        currentIntent.end(this);
+        currentIntent = null;
+      }
+
+      status = STATUS.CLOSED;
+
+      localCache.clear();
+
+      if (!keepStorageOpen && storage != null)
+        storage.close();
+
+    } finally {
+      // ALWAYS RESET TL
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      clearOwner();
     }
-
-    if (status != STATUS.OPEN)
-      return;
-
-    callOnCloseListeners();
-
-    if (currentIntent != null) {
-      currentIntent.end(this);
-      currentIntent = null;
-    }
-
-    status = STATUS.CLOSED;
-
-    localCache.clear();
-
-    if (!keepStorageOpen && storage != null)
-      storage.close();
-
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
-    clearOwner();
   }
 
   private void clearOwner() {

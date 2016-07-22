@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.hazelcast;
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.*;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -254,6 +255,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public Throwable convertException(final Throwable original) {
+    if (!Orient.instance().isActive() || isOffline() )
+      return new OOfflineNodeException("Server " + nodeName + " is offline");
+
     if (original instanceof HazelcastException || original instanceof HazelcastInstanceNotActiveException)
       return new IOException("Hazelcast wrapped exception: " + original.getMessage(), original.getCause());
 

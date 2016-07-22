@@ -33,10 +33,11 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  *
  */
 public abstract class OAbstractRemoteTask implements ORemoteTask {
-  private static final long  serialVersionUID = 1L;
+  private static final long    serialVersionUID = 1L;
   protected static final int[] PK               = new int[] { -1 };
+  protected static final int[] ANY              = new int[] { -2 };
 
-  protected transient String nodeSource;
+  protected transient String   nodeSource;
 
   /**
    * Constructor used from unmarshalling.

@@ -68,7 +68,11 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   public ODistributedDatabaseImpl getDatabase(final String iDatabaseName) {
-    return databases.get(iDatabaseName);
+    if (databases != null)
+      return databases.get(iDatabaseName);
+
+    // NOT INITIALIZED YET
+    return null;
   }
 
   public void shutdown() {
@@ -131,12 +135,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
   /**
    * Not synchronized, it's called when a message arrives
-   * 
-   * @param response
    */
-  public long dispatchResponseToThread(final ODistributedResponse response) {
-    final long chrono = Orient.instance().getProfiler().startChrono();
-
+  public void dispatchResponseToThread(final ODistributedResponse response) {
     try {
       final long msgId = response.getRequestId().getMessageId();
 
@@ -148,24 +148,18 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
               "received response for message %d after the timeout (%dms)", msgId,
               OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
       } else if (asynchMgr.collectResponse(response)) {
+
         // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
         responsesByRequestIds.remove(msgId);
 
-        // RETURN THE ASYNCH RESPONSE TIME
-        return System.currentTimeMillis() - asynchMgr.getSentOn();
       }
     } finally {
-      Orient.instance().getProfiler().stopChrono("distributed.node." + response.getExecutorNodeName() + ".latency",
-          "Latency in ms from current node", chrono);
-
       Orient.instance().getProfiler().updateCounter("distributed.node.msgReceived",
           "Number of replication messages received in current node", +1, "distributed.node.msgReceived");
 
       Orient.instance().getProfiler().updateCounter("distributed.node." + response.getExecutorNodeName() + ".msgReceived",
           "Number of replication messages received in current node from a node", +1, "distributed.node.*.msgReceived");
     }
-
-    return -1;
   }
 
   protected void purgePendingMessages() {
