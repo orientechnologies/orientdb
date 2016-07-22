@@ -61,6 +61,7 @@ public class TestShardingManualSync extends AbstractServerClusterTest {
       Assert.assertEquals(1, graphNoTxUsa.countVertices());
 
       // SHUTDOWN USA SERVER
+      banner("Shutting down USA server");
       serverInstance.get(1).shutdownServer();
 
     } finally {

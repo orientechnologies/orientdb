@@ -248,14 +248,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected void publishLocalNodeConfiguration() {
-    final ODocument cfg = getLocalNodeConfiguration();
-    ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
-    configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, cfg);
+    try {
+      final ODocument cfg = getLocalNodeConfiguration();
+      ORecordInternal.setRecordSerializer(cfg, ODatabaseDocumentTx.getDefaultSerializer());
+      configurationMap.put(CONFIG_NODE_PREFIX + nodeUuid, cfg);
+    } catch (Throwable t) {
+      ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "Error on publishing local server configuration");
+    }
   }
 
   @Override
   public Throwable convertException(final Throwable original) {
-    if (!Orient.instance().isActive() || isOffline() )
+    if (!Orient.instance().isActive() || isOffline())
       return new OOfflineNodeException("Server " + nodeName + " is offline");
 
     if (original instanceof HazelcastException || original instanceof HazelcastInstanceNotActiveException)
@@ -872,7 +876,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void removeServer(final String nodeLeftName) {
+  public synchronized void removeServer(final String nodeLeftName) {
     if (nodeLeftName == null)
       return;
 

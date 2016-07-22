@@ -396,8 +396,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
         nodes.clear();
         nodes.add(nodeName);
 
-        results.put(nodeName, dManager.sendRequest(getName(), involvedClusters, nodes, task, dManager.getNextMessageIdCounter(),
-            EXECUTION_MODE.RESPONSE, null, null).getPayload());
+        final ODistributedResponse response = dManager.sendRequest(getName(), involvedClusters, nodes, task,
+            dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, null, null);
+
+        if (response != null)
+          results.put(nodeName, response.getPayload());
       }
     }
 

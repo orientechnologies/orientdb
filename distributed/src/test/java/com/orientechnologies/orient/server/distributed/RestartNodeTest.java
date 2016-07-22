@@ -44,8 +44,8 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
   @Test
   public void test() throws Exception {
     startupNodesInSequence = true;
-    useTransactions = false;
-    count = 300;
+    useTransactions = true;
+    count = 500;
     maxRetries = 10;
     delayWriter = 0;
     init(SERVERS);
@@ -91,13 +91,12 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
 
     if (serverStarted++ == (SERVERS - 1)) {
 
-      // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
       new Thread(new Runnable() {
 
         @Override
         public void run() {
           try {
-            // CRASH LAST SERVER try {
+            // RESTART LAST SERVER
             executeWhen(0, new OCallable<Boolean, ODatabaseDocumentTx>() {
               // CONDITION
               @Override
@@ -112,12 +111,11 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
 
                 banner("RESTARTING SERVER " + (SERVERS - 1));
 
-                delayWriter = 10;
+                delayWriter = 100;
 
                 try {
                   final String nodeName = server.server.getDistributedManager().getLocalNodeName();
                   ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager()).restartNode(nodeName);
-                  delayWriter = 5;
                 } catch (Exception e) {
                   e.printStackTrace();
                 }

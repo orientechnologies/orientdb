@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
@@ -59,6 +58,8 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   protected OCommandDistributedReplicateRequest.QUORUM_TYPE quorumType;
   protected long                                            timeout;
 
+  protected boolean                                         idempotent;
+
   public OSQLCommandTask() {
     clusters = new HashSet<String>();
   }
@@ -73,6 +74,7 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     executor.parse(iCommand);
     quorumType = ((OCommandDistributedReplicateRequest) executor).getQuorumType();
     timeout = ((OCommandDistributedReplicateRequest) executor).getDistributedTimeout();
+    idempotent = executor.isIdempotent();
   }
 
   public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
@@ -196,6 +198,11 @@ public class OSQLCommandTask extends OAbstractCommandTask {
     }
 
     return super.getUndoTask(reqId);
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return idempotent;
   }
 
   @Override
