@@ -688,6 +688,23 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testQuerySchema() {
+    String className = "testQuerySchema";
+    OSchemaProxy schema = db.getMetadata().getSchema();
+    OClass clazz = schema.createClass(className);
+
+    OTodoResultSet result = db.query("select from metadata:schema");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item.getProperty("classes"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   public void stressTestNew() {
     String className = "stressTestNew";
     db.getMetadata().getSchema().createClass(className);

@@ -3,7 +3,9 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.ArrayList;
@@ -216,20 +218,32 @@ public class OSelectExecutionPlanner {
         handleClustersAsTarget(result, target.getClusterList().toListOfClusters(), ctx);
       } else if (target.getStatement() != null) {
         handleSubqueryAsTarget(result, target.getStatement(), ctx);
-      } else if (target.getRids() != null) {
-        //        handleRidsAsTarget(result, target.getRids(), ctx);//TODO
       } else if (target.getFunctionCall() != null) {
         //        handleFunctionCallAsTarget(result, target.getFunctionCall(), ctx);//TODO
       } else if (target.getInputParam() != null) {
         //        handleInputParamAsTarget(result, target.getInputParam(), ctx);//TODO
       } else if (target.getIndex() != null) {
-        //        handleIndexAsTarget(result, target.getIndex(), ctx);//TODO
+        //handleIndexAsTarget(result, target.getIndex(), ctx);//TODO
       } else if (target.getMetadata() != null) {
-        //        handleMetadataAsTarget(result, target.getMetadata(), ctx);//TODO
+        handleMetadataAsTarget(result, target.getMetadata(), ctx);//TODO
+      } else if (target.getRids() != null && target.getRids().size() > 0) {
+        //        handleRidsAsTarget(result, target.getRids(), ctx);//TODO
       } else {
         throw new UnsupportedOperationException();
       }
     }
+  }
+
+  private void handleMetadataAsTarget(OSelectExecutionPlan plan, OMetadataIdentifier metadata, OCommandContext ctx) {
+    if (metadata.getName().equalsIgnoreCase("schema")) {
+      ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
+      String schemaRecordIdAsString = db.getStorage().getConfiguration().schemaRecordId;
+      ORecordId schemaRid = new ORecordId(schemaRecordIdAsString);
+      plan.chain(new FetchFromRidsStep(Collections.singleton(schemaRid), ctx));
+    } else {
+      throw new UnsupportedOperationException();//TODO
+    }
+
   }
 
   private void handleExpand(OSelectExecutionPlan result, OCommandContext ctx) {

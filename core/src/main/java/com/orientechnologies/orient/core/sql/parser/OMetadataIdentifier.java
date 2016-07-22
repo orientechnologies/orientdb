@@ -25,5 +25,9 @@ public class OMetadataIdentifier extends SimpleNode {
     builder.append("metadata:");
     builder.append(name);
   }
+
+  public String getName() {
+    return name;
+  }
 }
 /* JavaCC - OriginalChecksum=85e179b9505270f0596904070fdf0745 (do not edit this line) */
