@@ -127,8 +127,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   protected boolean initialized = false;
   protected OTransaction currentTx;
   protected boolean                 keepStorageOpen = false;
-  protected AtomicReference<Thread> owner           = new AtomicReference<Thread>();
+  protected final AtomicReference<Thread> owner           = new AtomicReference<Thread>();
   protected boolean                 ownerProtection = true;
+
 
   protected ODatabaseSessionMetadata sessionMetadata;
 
@@ -233,7 +234,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       final String encKey = (String)getProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey());
       String currKey = null;
-        
+
       if (storage.getConfiguration() != null && storage.getConfiguration().getContextConfiguration() != null) {
         currKey = (String)storage.getConfiguration().
           getContextConfiguration().getValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
@@ -1223,23 +1224,24 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public void close() {
     checkIfActive();
 
-    localCache.shutdown();
-
-    if (isClosed()) {
-      status = STATUS.CLOSED;
-      return;
-    }
-
     try {
-      commit(true);
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Exception during commit of active transaction", e);
-    }
+      localCache.shutdown();
 
-    if (status != STATUS.OPEN)
-      return;
+      if (isClosed()) {
+        status = STATUS.CLOSED;
+        return;
+      }
 
-    callOnCloseListeners();
+      try {
+        commit(true);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Exception during commit of active transaction", e);
+      }
+
+      if (status != STATUS.OPEN)
+        return;
+
+      callOnCloseListeners();
 
     if (currentIntent != null) {
       currentIntent.end(this);
@@ -1248,13 +1250,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     sharedContext = null;
     status = STATUS.CLOSED;
 
-    localCache.clear();
+      localCache.clear();
 
-    if (!keepStorageOpen && storage != null)
-      storage.close();
+      if (!keepStorageOpen && storage != null)
+        storage.close();
 
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
-    clearOwner();
+    } finally {
+      // ALWAYS RESET TL
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
+      clearOwner();
+    }
   }
 
   protected void clearOwner() {

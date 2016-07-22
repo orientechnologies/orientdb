@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -116,9 +117,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected volatile int   requestType;
   protected int            clientTxId;
   protected boolean        okSent;
-  private boolean          tokenConnection      = false;
-  private long             distributedRequests  = 0;
-  private long             distributedResponses = 0;
+  private boolean          tokenConnection = false;
+  private long             requests        = 0;
 
   public ONetworkProtocolBinary(OServer server) {
     this(server, "OrientDB <- BinaryClient/?");
@@ -206,6 +206,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               new ONetworkProtocolException("Request not supported. Code: " + requestType));
         }
       } finally {
+        requests++;
         onAfterRequest(connection);
       }
 
@@ -299,6 +300,16 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         }
 
         if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
+          if (requests == 0) {
+            final ODistributedServerManager manager = server.getDistributedManager();
+            try {
+              manager.waitUntilNodeOnline(manager.getLocalNodeName(), connection.getToken().getDatabase());
+            } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+              throw new OInterruptedException("Request interrupted");
+            }
+          }
+
           connection.init(server);
         }
         if (connection.getData().serverUser) {
@@ -844,34 +855,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     final String dbName = req.getDatabaseName();
     if (dbName != null) {
-      if (distributedRequests == 0) {
-        if (req.getTask().isNodeOnlineRequired()) {
-          ODistributedServerLog.debug(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getId().getNodeId()),
-              ODistributedServerLog.DIRECTION.IN, "First distributed request, waiting for the node to be online", req,
-              serializedReq.length);
-
-          try {
-            manager.waitUntilNodeOnline(manager.getLocalNodeName(), dbName);
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            ODistributedServerLog.error(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getId().getNodeId()),
-                ODistributedServerLog.DIRECTION.IN, "Distributed request %s interrupted waiting for the database to be online",
-                req);
-            throw new ODistributedException(
-                "Distributed request " + req.getId() + " interrupted waiting for the database to be online");
-          }
-        }
-      }
-
-      ODistributedDatabase ddb = manager.getMessageService().getDatabase(dbName);
+      final ODistributedDatabase ddb = manager.getMessageService().getDatabase(dbName);
       if (ddb == null)
         throw new ODistributedException("Database configuration not found for database '" + req.getDatabaseName() + "'");
 
       ddb.processRequest(req);
     } else
       manager.executeOnLocalNode(req.getId(), req.getTask(), null);
-
-    distributedRequests++;
   }
 
   private void executeDistributedResponse(OClientConnection connection) throws IOException {
@@ -904,8 +894,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       }
 
     manager.getMessageService().dispatchResponseToThread(response);
-
-    distributedResponses++;
   }
 
   protected void sendError(final OClientConnection connection, final int iClientTxId, final Throwable t) throws IOException {
@@ -2826,7 +2814,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     }
     output.close();
     beginResponse();
-    sendOk(connection,clientTxId);
+    sendOk(connection, clientTxId);
     try {
       ODatabaseImport imp = new ODatabaseImport(connection.getDatabase(), file.getAbsolutePath(), new OCommandOutputListener() {
         @Override

@@ -122,6 +122,7 @@ public class ODistributedWorker extends Thread {
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
+      database.close();
       manager.getServerInstance().openDatabase(database, "internal", "internal", null, true);
     }
   }

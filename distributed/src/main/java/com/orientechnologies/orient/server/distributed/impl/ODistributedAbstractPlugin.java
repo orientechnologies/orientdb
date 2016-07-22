@@ -288,13 +288,20 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
-    synchronized (storages) {
-      storages.remove(iDatabase.getName());
-    }
+    removeStorage(iDatabase.getName());
 
     final ODistributedMessageService msgService = getMessageService();
     if (msgService != null) {
       msgService.unregisterDatabase(iDatabase.getName());
+    }
+  }
+
+  public void removeStorage(final String name) {
+    synchronized (storages) {
+      final ODistributedStorage storage = storages.remove(name);
+      if (storage != null) {
+        storage.close(true, false);
+      }
     }
   }
 
@@ -785,6 +792,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         }
       });
     } finally {
+      database.activateOnCurrentThread();
       database.close();
     }
   }
@@ -823,19 +831,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return iNodes.size();
   }
 
-  /**
-   * Returns the online nodes and clears the node list by removing the non online nodes.
-   */
-  public int getOnlineNodes(final Collection<String> iNodes, final String databaseName) {
-    for (Iterator<String> it = iNodes.iterator(); it.hasNext();) {
-      final String node = it.next();
-
-      if (!isNodeOnline(node, databaseName))
-        it.remove();
-    }
-    return iNodes.size();
-  }
-
   @Override
   public String toString() {
     return nodeName;
@@ -860,7 +855,18 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return availableNodes;
   }
 
-  public boolean installDatabase(final boolean iStartup, final String databaseName, final ODocument config) {
+  @Override
+  public List<String> getOnlineNodes(final String iDatabaseName) {
+    final List<String> onlineNodes = new ArrayList<String>(activeNodes.size());
+    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
+      if (isNodeOnline(entry.getKey(), iDatabaseName))
+        onlineNodes.add(entry.getKey());
+    }
+    return onlineNodes;
+  }
+
+  @Override
+  public synchronized boolean installDatabase(final boolean iStartup, final String databaseName, final ODocument config) {
 
     final ODistributedConfiguration cfg = new ODistributedConfiguration(config);
 
@@ -872,6 +878,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return false;
 
     // INIT STORAGE + UPDATE LOCAL FILE ONLY
+    removeStorage(databaseName);
     getStorage(databaseName);
     updateCachedDatabaseConfiguration(databaseName, config, true, false);
 
@@ -900,6 +907,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
       } catch (ODistributedDatabaseDeltaSyncException e) {
         // FALL BACK TO FULL BACKUP
+        removeStorage(databaseName);
         databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup);
       }
     }
@@ -979,6 +987,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
           ODistributedServerLog.warn(this, nodeName, r.getKey(), DIRECTION.IN, "Requesting full database '%s' sync...",
               databaseName);
+
+          // RESTORE STATUS TO ONLINE
+          setDatabaseStatus(r.getKey(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
 
           throw (ODistributedDatabaseDeltaSyncException) value;
 
@@ -1488,6 +1499,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     if (iDatabase.isClosed())
       getServerInstance().openDatabase(iDatabase);
+    iDatabase.activateOnCurrentThread();
 
     ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Reassigning cluster ownership for database %s",
         iDatabase.getName());

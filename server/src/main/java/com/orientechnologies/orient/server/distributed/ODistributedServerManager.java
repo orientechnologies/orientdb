@@ -30,9 +30,7 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -173,6 +171,10 @@ public interface ODistributedServerManager {
   ODocument getStats();
 
   Throwable convertException(Throwable original);
+
+  List<String> getOnlineNodes(String iDatabaseName);
+
+  boolean installDatabase(boolean iStartup, String databaseName, ODocument config);
 
   ORemoteTaskFactory getTaskFactory();
 }

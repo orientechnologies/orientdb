@@ -97,13 +97,15 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     if (previousRecord == null) {
       // RESURRECT/CREATE IT
 
-      final OPlaceholder ph = (OPlaceholder) new OCreateRecordTask(rid, content, version, recordType)
-          .executeRecordTask(requestId, iServer, iManager, database);
+      final OPlaceholder ph = (OPlaceholder) new OCreateRecordTask(rid, content, version, recordType).executeRecordTask(requestId,
+          iServer, iManager, database);
       record = ph.getRecord();
 
     } else {
       // UPDATE IT
       final ORecord loadedRecord = previousRecord.copy();
+
+      final int loadedVersion = loadedRecord.getVersion();
 
       if (loadedRecord instanceof ODocument) {
         // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
@@ -118,6 +120,10 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       loadedRecord.setDirty();
 
       record = database.save(loadedRecord);
+
+      if (version < 0 && ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+            "+-> Reverted %s from version %d to %d", rid, loadedVersion, record.getVersion());
     }
 
     if (ODistributedServerLog.isDebugEnabled())

@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -44,7 +45,6 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -68,8 +68,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected ConcurrentHashMap<ODistributedRequestId, ODistributedTxContextImpl> activeTxContexts               = new ConcurrentHashMap<ODistributedRequestId, ODistributedTxContextImpl>(
       64);
   protected final List<ODistributedWorker>                                      workerThreads                  = new ArrayList<ODistributedWorker>();
-  protected AtomicBoolean                                                       status                         = new AtomicBoolean(
-      false);
   private String                                                                localNodeName;
 
   private Map<String, OLogSequenceNumber>                                       lastLSN                        = new ConcurrentHashMap<String, OLogSequenceNumber>();
@@ -124,7 +122,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE, "Request %s on database '%s' partitionKeys=%s", request,
         databaseName, Arrays.toString(partitionKeys));
 
-    if (partitionKeys.length > 1 || partitionKeys[0] < 0) {
+    if (partitionKeys.length > 1 || partitionKeys[0] == -1) {
 
       final Set<Integer> involvedWorkerQueues;
       if (partitionKeys.length > 1)
@@ -180,6 +178,21 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           workerThreads.get(queue).processRequest(req);
         }
       }
+    } else if (partitionKeys.length > 1 || partitionKeys[0] == -2) {
+      // ANY PARTITION: USE THE FIRST EMPTY IF ANY, OTHERWISE THE FIRST IN THE LIST
+      boolean found = false;
+      for (ODistributedWorker q : workerThreads) {
+        if (q.localQueue.isEmpty()) {
+          q.processRequest(request);
+          found = true;
+          break;
+        }
+      }
+
+      if (!found)
+        // EXEC ON THE FIRST QUEUE
+        workerThreads.get(0).processRequest(request);
+
     } else {
       processRequest(partitionKeys[0], request);
     }
@@ -336,13 +349,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void setOnline() {
-    if (status.compareAndSet(false, true)) {
-      ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Publishing ONLINE status for database %s.%s...",
-          localNodeName, databaseName);
+    ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Publishing ONLINE status for database %s.%s...",
+        localNodeName, databaseName);
 
-      // SET THE NODE.DB AS ONLINE
-      manager.setDatabaseStatus(localNodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
-    }
+    // SET THE NODE.DB AS ONLINE
+    manager.setDatabaseStatus(localNodeName, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
   }
 
   @Override
@@ -362,6 +373,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
             "Distributed transaction: %s locked record %s in database '%s' owned by %s", iRequestId, iRecord, databaseName,
             iRequestId);
+        return null;
+      }
+
+      // CHECK THE OWNER SERVER IS ONLINE. THIS AVOIDS ANY "WALKING DEAD" LOCKS
+      final String lockingNodeName = manager.getNodeNameById(oldReqId.getNodeId());
+      if (lockingNodeName == null || !manager.isNodeAvailable(lockingNodeName)) {
+        ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+            "Distributed transaction: forcing unlock of record %s in database '%s' because the owner server '%s' is offline (reqId=%s ownerReqId=%s)",
+            iRecord.getIdentity(), databaseName, iRequestId, oldReqId);
+
+        // FORCE THE UNLOCK AND LOCK OF CURRENT REQ-ID
+        lockManager.put(rid, iRequestId);
         return null;
       }
     }
@@ -458,8 +481,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       while (pendingReqIterator.hasNext()) {
         final ODistributedTxContextImpl pReq = pendingReqIterator.next();
         if (pReq != null && pReq.getReqId().getNodeId() == iNodeId) {
-          tasks += pReq.rollback(database);
-          rollbacks++;
+          try {
+            tasks += pReq.rollback(database);
+            rollbacks++;
+          } catch (Throwable t) {
+            // IGNORE IT
+            OLogManager.instance().error(this, "Error on rolling back transaction (req=%s)", pReq.getReqId());
+          }
           pReq.destroy();
           pendingReqIterator.remove();
         }
@@ -468,10 +496,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       database.close();
     }
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-          "Distributed transaction: rolled back %d transactions (%d total operations) in database '%s' owned by server '%s'",
-          rollbacks, tasks, databaseName, manager.getNodeNameById(iNodeId));
+    ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+        "Distributed transaction: rolled back %d transactions (%d total operations) in database '%s' owned by server '%s'",
+        rollbacks, tasks, databaseName, manager.getNodeNameById(iNodeId));
   }
 
   @Override

@@ -209,7 +209,7 @@ public class OClientConnection {
 
   }
 
-  public void init(OServer server) {
+  public void init(final OServer server) {
     if (database == null) {
       setData(server.getTokenHandler().getProtocolDataFromToken(this, token));
 

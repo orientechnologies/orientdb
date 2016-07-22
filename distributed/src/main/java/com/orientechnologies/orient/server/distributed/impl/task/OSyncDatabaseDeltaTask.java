@@ -140,9 +140,10 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
     try {
       endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream, excludedClusterNames));
 
-      if (endLSN.get() == null)
+      if (endLSN.get() == null) {
         // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
         exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
+      }
       else
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
             "Delta backup of database '%s' completed. range=%s-%s", databaseName, startLSN, endLSN);
