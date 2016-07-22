@@ -24,13 +24,17 @@ import com.orientechnologies.lucene.manager.OLuceneSpatialIndexManager;
 import com.orientechnologies.lucene.shape.OShapeFactoryImpl;
 import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -41,6 +45,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointListe
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleListener, OOrientListener, OFullCheckpointListener {
 
@@ -193,32 +198,21 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   @Override
   public void fullCheckpointMade(OAbstractPaginatedStorage storage) {
 
-    if (storage.isClosed()) {
-      return;
-    }
+    OIndexManager indexManager = storage.getResource(OIndexManager.class.getSimpleName(), new Callable<OIndexManager>() {
+      @Override
+      public OIndexManager call() throws Exception {
+        return null;
+      }
+    });
 
-    ODatabaseInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    boolean opened = false;
-
-    if (db == null) {
-      db = openDatabase(storage.getURL());
-      opened = true;
-    }
     try {
-
-      if (!db.isClosed()) {
-        for (OIndex idx : db.getMetadata().getIndexManager().getIndexes()) {
-          if (idx.getInternal() instanceof OLuceneIndex) {
-            idx.flush();
-          }
+      for (OIndex idx : indexManager.getIndexes()) {
+        if (idx.getInternal() instanceof OLuceneIndex) {
+          idx.flush();
         }
       }
     } catch (Exception e) {
       OLogManager.instance().warn(this, "Error on flushing Lucene indexes", e);
-    } finally {
-      if (opened) {
-        db.close();
-      }
     }
   }
 
