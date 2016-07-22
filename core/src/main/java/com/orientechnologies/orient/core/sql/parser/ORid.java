@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.id.ORecordId;
+
 import java.util.Map;
 
 public class ORid extends SimpleNode {
@@ -16,18 +18,23 @@ public class ORid extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString(String prefix) {
+  @Override public String toString(String prefix) {
     return "#" + cluster.getValue() + ":" + position.getValue();
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("#" + cluster.getValue() + ":" + position.getValue());
+  }
+
+  public ORecordId toRecordId() {
+    return new ORecordId(cluster.value.intValue(), position.value.longValue());
   }
 }
 /* JavaCC - OriginalChecksum=c2c6d67d7722e29212e438574698d7cd (do not edit this line) */

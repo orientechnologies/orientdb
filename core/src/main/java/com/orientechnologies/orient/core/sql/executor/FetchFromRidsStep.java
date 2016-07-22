@@ -5,22 +5,22 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Created by luigidellaquila on 22/07/16.
  */
 public class FetchFromRidsStep extends AbstractExecutionStep {
-  private final Set<ORecordId> rids;
+  private final Collection<ORecordId> rids;
 
   private Iterator<ORecordId> iterator;
 
   private OResult nextResult = null;
 
-  public FetchFromRidsStep(Set<ORecordId> rids, OCommandContext ctx) {
+  public FetchFromRidsStep(Collection<ORecordId> rids, OCommandContext ctx) {
     super(ctx);
     this.rids = rids;
     reset();
@@ -98,6 +98,7 @@ public class FetchFromRidsStep extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM RIDs " + rids;
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM RIDs\n" +
+        OExecutionStepInternal.getIndent(depth, indent) + "  " + rids;
   }
 }

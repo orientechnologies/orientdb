@@ -705,6 +705,53 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testNonExistingRids() {
+    OTodoResultSet result = db.query("select from #0:100000000");
+    printExecutionPlan(result);
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromSingleRid() {
+    OTodoResultSet result = db.query("select from #0:1");
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    Assert.assertNotNull(result.next());
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromSingleRid2() {
+    OTodoResultSet result = db.query("select from [#0:1]");
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    Assert.assertNotNull(result.next());
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromSingleRid3() {
+    OTodoResultSet result = db.query("select from [#0:1, #0:2]");
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    Assert.assertNotNull(result.next());
+    Assert.assertTrue(result.hasNext());
+    Assert.assertNotNull(result.next());
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromSingleRid4() {
+    OTodoResultSet result = db.query("select from [#0:1, #0:2, #0:100000]");
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    Assert.assertNotNull(result.next());
+    Assert.assertTrue(result.hasNext());
+    Assert.assertNotNull(result.next());
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   public void stressTestNew() {
     String className = "stressTestNew";
     db.getMetadata().getSchema().createClass(className);

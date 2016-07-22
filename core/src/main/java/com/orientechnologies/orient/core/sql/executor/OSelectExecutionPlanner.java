@@ -227,7 +227,7 @@ public class OSelectExecutionPlanner {
       } else if (target.getMetadata() != null) {
         handleMetadataAsTarget(result, target.getMetadata(), ctx);//TODO
       } else if (target.getRids() != null && target.getRids().size() > 0) {
-        //        handleRidsAsTarget(result, target.getRids(), ctx);//TODO
+        handleRidsAsTarget(result, target.getRids(), ctx);
       } else {
         throw new UnsupportedOperationException();
       }
@@ -244,6 +244,14 @@ public class OSelectExecutionPlanner {
       throw new UnsupportedOperationException();//TODO
     }
 
+  }
+
+  private void handleRidsAsTarget(OSelectExecutionPlan plan, List<ORid> rids, OCommandContext ctx) {
+    List<ORecordId> actualRids = new ArrayList<>();
+    for (ORid rid : rids) {
+      actualRids.add(rid.toRecordId());
+    }
+    plan.chain(new FetchFromRidsStep(actualRids, ctx));
   }
 
   private void handleExpand(OSelectExecutionPlan result, OCommandContext ctx) {
