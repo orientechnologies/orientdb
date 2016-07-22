@@ -23,6 +23,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -158,4 +159,13 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       releaseExclusiveLock();
     }
   }
+
+  protected OIndex<?> preProcessBeforeReturn(final OIndex<?> index) {
+    if (index instanceof OIndexRemoteMultiValue)
+      return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
+    else if (index instanceof OIndexRemoteOneValue)
+      return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
+    return index;
+  }
+
 }
