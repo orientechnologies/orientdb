@@ -488,22 +488,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return result;
   }
 
-  protected static OIndex<?> preProcessBeforeReturn(final OIndex<?> index) {
-    if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
-      if (index instanceof OIndexMultiValues)
-        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
-      else if (index instanceof OIndexDictionary)
-        return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) index);
-      else if (index instanceof OIndexOneValue)
-        return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
-    } else {
-      if (index instanceof OIndexRemoteMultiValue)
-        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
-      else if (index instanceof OIndexRemoteOneValue)
-        return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
-    }
-    return index;
-  }
+  protected abstract OIndex<?> preProcessBeforeReturn(final OIndex<?> index);
 
   private OIndex<?> createDictionaryIfNeeded() {
     acquireExclusiveLock();
