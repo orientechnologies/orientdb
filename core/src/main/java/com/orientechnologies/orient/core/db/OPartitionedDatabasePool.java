@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
@@ -72,22 +74,313 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 06/11/14
  */
-public class OPartitionedDatabasePool extends OOrientListenerAbstract implements  OPool<ODatabaseDocument> {
-  private static final int           HASH_INCREMENT = 0x61c88647;
-  private static final int           MIN_POOL_SIZE  = 2;
-  private static final AtomicInteger nextHashCode   = new AtomicInteger();
+public class OPartitionedDatabasePool extends OOrientListenerAbstract implements OPool<ODatabaseDocument> {
+  private static final int                 HASH_INCREMENT = 0x61c88647;
+  private static final int                 MIN_POOL_SIZE  = 2;
+  private static final AtomicInteger       nextHashCode   = new AtomicInteger();
+  protected final      Map<String, Object> properties     = new HashMap<String, Object>();
   private final String url;
   private final String userName;
   private final String password;
   private final int    maxPartitonSize;
-
-  private volatile ThreadLocal<PoolData> poolData      = new ThreadPoolData();
-  private final    AtomicBoolean         poolBusy      = new AtomicBoolean();
-  private final    int                   maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
+  private final AtomicBoolean poolBusy      = new AtomicBoolean();
+  private final int           maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
+  private final Semaphore connectionsCounter;
+  private volatile ThreadLocal<PoolData> poolData = new ThreadPoolData();
   private volatile PoolPartition[] partitions;
   private volatile boolean closed     = false;
   private          boolean autoCreate = false;
-  private final Semaphore connectionsCounter;
+
+  public OPartitionedDatabasePool(String url, String userName, String password) {
+    this(url, userName, password, 64, -1);
+  }
+
+  public OPartitionedDatabasePool(String url, String userName, String password, int maxPartitionSize, int maxPoolSize) {
+    this.url = url;
+    this.userName = userName;
+    this.password = password;
+    this.maxPartitonSize = maxPartitionSize;
+    if (maxPoolSize > 0) {
+      connectionsCounter = new Semaphore(maxPoolSize);
+    } else {
+      connectionsCounter = null;
+    }
+
+    final PoolPartition[] pts = new PoolPartition[2];
+
+    for (int i = 0; i < pts.length; i++) {
+      final PoolPartition partition = new PoolPartition();
+      pts[i] = partition;
+
+      initQueue(url, partition);
+    }
+
+    partitions = pts;
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
+  }
+
+  private static int nextHashCode() {
+    return nextHashCode.getAndAdd(HASH_INCREMENT);
+  }
+
+  public String getUrl() {
+    return url;
+  }
+
+  public String getUserName() {
+    return userName;
+  }
+
+  public int getMaxPartitonSize() {
+    return maxPartitonSize;
+  }
+
+  public int getAvailableConnections() {
+    checkForClose();
+
+    int result = 0;
+
+    for (PoolPartition partition : partitions) {
+      if (partition != null) {
+        result += partition.currentSize.get() - partition.acquiredConnections.get();
+      }
+    }
+
+    if (result < 0)
+      return 0;
+
+    return result;
+  }
+
+  public int getCreatedInstances() {
+    checkForClose();
+
+    int result = 0;
+
+    for (PoolPartition partition : partitions) {
+      if (partition != null) {
+        result += partition.currentSize.get();
+      }
+    }
+
+    if (result < 0)
+      return 0;
+
+    return result;
+  }
+
+  public ODatabaseDocumentTx acquire() {
+    checkForClose();
+
+    final PoolData data = poolData.get();
+    if (data.acquireCount > 0) {
+      data.acquireCount++;
+
+      assert data.acquiredDatabase != null;
+
+      final ODatabaseDocumentTx db = data.acquiredDatabase;
+
+      db.activateOnCurrentThread();
+
+      properties.entrySet().forEach(p -> db.setProperty(p.getKey(), p.getValue()));
+      return db;
+    }
+
+    try {
+      if (connectionsCounter != null)
+        connectionsCounter.acquire();
+    } catch (InterruptedException ie) {
+      throw OException.wrapException(new OInterruptedException("Acquiring of new connection was interrupted"), ie);
+    }
+
+    boolean acquired = false;
+    try {
+      while (true) {
+        final PoolPartition[] pts = partitions;
+
+        final int index = (pts.length - 1) & data.hashCode;
+
+        PoolPartition partition = pts[index];
+        if (partition == null) {
+          if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
+            if (pts == partitions) {
+              partition = pts[index];
+
+              if (partition == null) {
+                partition = new PoolPartition();
+                initQueue(url, partition);
+                pts[index] = partition;
+              }
+            }
+
+            poolBusy.set(false);
+          }
+
+          continue;
+        } else {
+          final DatabaseDocumentTxPooled db = partition.queue.poll();
+          if (db == null) {
+            if (pts.length < maxPartitions) {
+              if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
+                if (pts == partitions) {
+                  final PoolPartition[] newPartitions = new PoolPartition[partitions.length << 1];
+                  System.arraycopy(partitions, 0, newPartitions, 0, partitions.length);
+
+                  partitions = newPartitions;
+                }
+
+                poolBusy.set(false);
+              }
+
+              continue;
+            } else {
+              if (partition.currentSize.get() >= maxPartitonSize)
+                throw new IllegalStateException("You have reached maximum pool size for given partition");
+
+              final DatabaseDocumentTxPooled newDb = new DatabaseDocumentTxPooled(url);
+              properties.entrySet().forEach(p -> newDb.setProperty(p.getKey(), p.getValue()));
+              openDatabase(newDb);
+              newDb.partition = partition;
+
+              data.acquireCount = 1;
+              data.acquiredDatabase = newDb;
+
+              partition.acquiredConnections.incrementAndGet();
+              partition.currentSize.incrementAndGet();
+
+              acquired = true;
+              return newDb;
+            }
+          } else {
+            openDatabase(db);
+            db.partition = partition;
+            partition.acquiredConnections.incrementAndGet();
+
+            data.acquireCount = 1;
+            data.acquiredDatabase = db;
+
+            acquired = true;
+            properties.entrySet().forEach(p -> db.setProperty(p.getKey(), p.getValue()));
+
+            return db;
+          }
+        }
+      }
+    } finally {
+      if (!acquired && connectionsCounter != null)
+        connectionsCounter.release();
+    }
+  }
+
+  public boolean isAutoCreate() {
+    return autoCreate;
+  }
+
+  public OPartitionedDatabasePool setAutoCreate(final boolean autoCreate) {
+    this.autoCreate = autoCreate;
+    return this;
+  }
+
+  public boolean isClosed() {
+    return closed;
+  }
+
+  protected void openDatabase(final DatabaseDocumentTxPooled db) {
+    if (autoCreate) {
+      if (!db.getURL().startsWith("remote:") && !db.exists()) {
+        try {
+          db.create();
+        } catch (OStorageExistsException ex) {
+          OLogManager.instance().debug(this, "Can not create storage " + db.getStorage() + " because it already exists.");
+          db.internalOpen();
+        }
+      } else {
+        db.internalOpen();
+      }
+    } else {
+      db.internalOpen();
+    }
+  }
+
+  @Override
+  public void onShutdown() {
+    close();
+  }
+
+  @Override
+  public void onStartup() {
+    if (poolData == null)
+      poolData = new ThreadPoolData();
+  }
+
+  public void close() {
+    if (closed)
+      return;
+
+    closed = true;
+
+    for (PoolPartition partition : partitions) {
+      if (partition == null)
+        continue;
+
+      final Queue<DatabaseDocumentTxPooled> queue = partition.queue;
+
+      while (!queue.isEmpty()) {
+        DatabaseDocumentTxPooled db = queue.poll();
+        db.activateOnCurrentThread();
+        OStorage storage = db.getStorage();
+        storage.close();
+        ODatabaseRecordThreadLocal.INSTANCE.remove();
+      }
+    }
+
+    partitions = null;
+    poolData = null;
+  }
+
+  private void initQueue(String url, PoolPartition partition) {
+    ConcurrentLinkedQueue<DatabaseDocumentTxPooled> queue = partition.queue;
+
+    for (int n = 0; n < MIN_POOL_SIZE; n++) {
+      final DatabaseDocumentTxPooled db = new DatabaseDocumentTxPooled(url);
+      properties.entrySet().forEach(p -> db.setProperty(p.getKey(), p.getValue()));
+      queue.add(db);
+    }
+
+    partition.currentSize.addAndGet(MIN_POOL_SIZE);
+  }
+
+  private void checkForClose() {
+    if (closed)
+      throw new IllegalStateException("Pool is closed");
+  }
+
+  /**
+   * Sets a property value
+   *
+   * @param iName  Property name
+   * @param iValue new value to set
+   * @return The previous value if any, otherwise null
+   */
+  public Object setProperty(final String iName, final Object iValue) {
+    if (iValue != null) {
+      return properties.put(iName.toLowerCase(), iValue);
+    } else {
+      return properties.remove(iName.toLowerCase());
+    }
+  }
+
+  /**
+   * Gets the property value.
+   *
+   * @param iName Property name
+   * @return The previous value if any, otherwise null
+   */
+  public Object getProperty(final String iName) {
+    return properties.get(iName.toLowerCase());
+  }
 
   private static final class PoolData {
     private final int                      hashCode;
@@ -194,261 +487,4 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract implements
     }
   }
 
-  public OPartitionedDatabasePool(String url, String userName, String password) {
-    this(url, userName, password, 64, -1);
-  }
-
-  public OPartitionedDatabasePool(String url, String userName, String password, int maxPartitionSize, int maxPoolSize) {
-    this.url = url;
-    this.userName = userName;
-    this.password = password;
-    this.maxPartitonSize = maxPartitionSize;
-    if (maxPoolSize > 0) {
-      connectionsCounter = new Semaphore(maxPoolSize);
-    } else {
-      connectionsCounter = null;
-    }
-
-    final PoolPartition[] pts = new PoolPartition[2];
-
-    for (int i = 0; i < pts.length; i++) {
-      final PoolPartition partition = new PoolPartition();
-      pts[i] = partition;
-
-      initQueue(url, partition);
-    }
-
-    partitions = pts;
-
-    Orient.instance().registerWeakOrientStartupListener(this);
-    Orient.instance().registerWeakOrientShutdownListener(this);
-  }
-
-  private static int nextHashCode() {
-    return nextHashCode.getAndAdd(HASH_INCREMENT);
-  }
-
-  public String getUrl() {
-    return url;
-  }
-
-  public String getUserName() {
-    return userName;
-  }
-
-  public int getMaxPartitonSize() {
-    return maxPartitonSize;
-  }
-
-  public int getAvailableConnections() {
-    checkForClose();
-
-    int result = 0;
-
-    for (PoolPartition partition : partitions) {
-      if (partition != null) {
-        result += partition.currentSize.get() - partition.acquiredConnections.get();
-      }
-    }
-
-    if (result < 0)
-      return 0;
-
-    return result;
-  }
-
-  public int getCreatedInstances() {
-    checkForClose();
-
-    int result = 0;
-
-    for (PoolPartition partition : partitions) {
-      if (partition != null) {
-        result += partition.currentSize.get();
-      }
-    }
-
-    if (result < 0)
-      return 0;
-
-    return result;
-  }
-
-  public ODatabaseDocumentTx acquire() {
-    checkForClose();
-
-    final PoolData data = poolData.get();
-    if (data.acquireCount > 0) {
-      data.acquireCount++;
-
-      assert data.acquiredDatabase != null;
-
-      data.acquiredDatabase.activateOnCurrentThread();
-      return data.acquiredDatabase;
-    }
-
-    try {
-      if (connectionsCounter != null)
-        connectionsCounter.acquire();
-    } catch (InterruptedException ie) {
-      throw OException.wrapException(new OInterruptedException("Acquiring of new connection was interrupted"), ie);
-    }
-
-    boolean acquired = false;
-    try {
-      while (true) {
-        final PoolPartition[] pts = partitions;
-
-        final int index = (pts.length - 1) & data.hashCode;
-
-        PoolPartition partition = pts[index];
-        if (partition == null) {
-          if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
-            if (pts == partitions) {
-              partition = pts[index];
-
-              if (partition == null) {
-                partition = new PoolPartition();
-                initQueue(url, partition);
-                pts[index] = partition;
-              }
-            }
-
-            poolBusy.set(false);
-          }
-
-          continue;
-        } else {
-          DatabaseDocumentTxPooled db = partition.queue.poll();
-          if (db == null) {
-            if (pts.length < maxPartitions) {
-              if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
-                if (pts == partitions) {
-                  final PoolPartition[] newPartitions = new PoolPartition[partitions.length << 1];
-                  System.arraycopy(partitions, 0, newPartitions, 0, partitions.length);
-
-                  partitions = newPartitions;
-                }
-
-                poolBusy.set(false);
-              }
-
-              continue;
-            } else {
-              if (partition.currentSize.get() >= maxPartitonSize)
-                throw new IllegalStateException("You have reached maximum pool size for given partition");
-
-              db = new DatabaseDocumentTxPooled(url);
-              openDatabase(db);
-              db.partition = partition;
-
-              data.acquireCount = 1;
-              data.acquiredDatabase = db;
-
-              partition.acquiredConnections.incrementAndGet();
-              partition.currentSize.incrementAndGet();
-
-              acquired = true;
-              return db;
-            }
-          } else {
-            openDatabase(db);
-            db.partition = partition;
-            partition.acquiredConnections.incrementAndGet();
-
-            data.acquireCount = 1;
-            data.acquiredDatabase = db;
-
-            acquired = true;
-            return db;
-          }
-        }
-      }
-    } finally {
-      if (!acquired && connectionsCounter != null)
-        connectionsCounter.release();
-    }
-  }
-
-  public boolean isAutoCreate() {
-    return autoCreate;
-  }
-
-  public OPartitionedDatabasePool setAutoCreate(final boolean autoCreate) {
-    this.autoCreate = autoCreate;
-    return this;
-  }
-
-  public boolean isClosed() {
-    return closed;
-  }
-
-  protected void openDatabase(final DatabaseDocumentTxPooled db) {
-    if (autoCreate) {
-      if (!db.getURL().startsWith("remote:") && !db.exists()) {
-        try {
-          db.create();
-        } catch (OStorageExistsException ex) {
-          OLogManager.instance().debug(this, "Can not create storage " + db.getStorage() + " because it already exists.");
-          db.internalOpen();
-        }
-      } else {
-        db.internalOpen();
-      }
-    } else {
-      db.internalOpen();
-    }
-  }
-
-  @Override
-  public void onShutdown() {
-    close();
-  }
-
-  @Override
-  public void onStartup() {
-    if (poolData == null)
-      poolData = new ThreadPoolData();
-  }
-
-  public void close() {
-    if (closed)
-      return;
-
-    closed = true;
-
-    for (PoolPartition partition : partitions) {
-      if (partition == null)
-        continue;
-
-      final Queue<DatabaseDocumentTxPooled> queue = partition.queue;
-
-      while (!queue.isEmpty()) {
-        DatabaseDocumentTxPooled db = queue.poll();
-        db.activateOnCurrentThread();
-        OStorage storage = db.getStorage();
-        storage.close();
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
-      }
-    }
-
-    partitions = null;
-    poolData = null;
-  }
-
-  private void initQueue(String url, PoolPartition partition) {
-    ConcurrentLinkedQueue<DatabaseDocumentTxPooled> queue = partition.queue;
-
-    for (int n = 0; n < MIN_POOL_SIZE; n++) {
-      final DatabaseDocumentTxPooled db = new DatabaseDocumentTxPooled(url);
-      queue.add(db);
-    }
-
-    partition.currentSize.addAndGet(MIN_POOL_SIZE);
-  }
-
-  private void checkForClose() {
-    if (closed)
-      throw new IllegalStateException("Pool is closed");
-  }
 }

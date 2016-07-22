@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -14,6 +15,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.*;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.STORAGE_ENCRYPTION_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -115,4 +118,18 @@ public class OPartitionedDatabasePoolTest {
     futures.forEach(cf -> cf.join());
   }
 
+  @Test
+  public void shouldUseEncryption() throws Exception {
+
+
+    pool.setProperty(STORAGE_ENCRYPTION_METHOD.getKey(), "aes");
+    pool.setProperty(STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
+
+    ODatabaseDocumentTx dbFromPool = pool.acquire();
+
+    assertThat(dbFromPool.getProperty(STORAGE_ENCRYPTION_METHOD.getKey())).isEqualTo("aes");
+    assertThat(dbFromPool.getProperty(STORAGE_ENCRYPTION_KEY.getKey())).isEqualTo("T1JJRU5UREJfSVNfQ09PTA==");
+
+
+  }
 }
