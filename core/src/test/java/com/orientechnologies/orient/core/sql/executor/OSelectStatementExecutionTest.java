@@ -625,11 +625,11 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test public void testFetchFromClustersNumberOrderByRidAsc() {
-    String className = "testFetchFromClusterNumberOrderByRidAsc";
+    String className = "testFetchFromClustersNumberOrderByRidAsc";
     OSchemaProxy schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
     if (clazz.getClusterIds().length < 2) {
-      clazz.addCluster("testFetchFromClusterNumberOrderByRidAsc_2");
+      clazz.addCluster("testFetchFromClustersNumberOrderByRidAsc_2");
     }
     int targetCluster = clazz.getClusterIds()[0];
     String targetClusterName = db.getClusterNameById(targetCluster);
@@ -656,9 +656,34 @@ public class OSelectStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Integer val = item.getProperty("val");
-      Assert.assertEquals((Object) (i%10), val );
+      Assert.assertEquals((Object) (i % 10), val);
     }
 
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testQueryAsTarget() {
+    String className = "testQueryAsTarget";
+    OSchemaProxy schema = db.getMetadata().getSchema();
+    OClass clazz = schema.createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("val", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from (select from " + className + " where val > 2)  where val < 8");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 5; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Integer val = item.getProperty("val");
+      Assert.assertTrue(val > 2);
+      Assert.assertTrue(val < 8);
+    }
     Assert.assertFalse(result.hasNext());
     result.close();
   }
@@ -726,7 +751,8 @@ public class OSelectStatementExecutionTest {
     if (query != null) {
       System.out.println(query);
     }
-    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(3)));
+    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 3)));
+    System.out.println();
   }
 
 }

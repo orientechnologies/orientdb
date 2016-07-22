@@ -10,7 +10,7 @@ public interface OExecutionPlan extends Serializable{
 
   List<OExecutionStep> getSteps();
 
-  String prettyPrint(int indent);
+  String prettyPrint(int depth, int indent);
 
   OResult toResult();
 }

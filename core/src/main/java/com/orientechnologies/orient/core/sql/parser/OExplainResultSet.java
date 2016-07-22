@@ -29,7 +29,7 @@ public class OExplainResultSet implements OTodoResultSet {
       throw new IllegalStateException();
     }
     OResultInternal result = new OResultInternal();
-    getExecutionPlan().ifPresent(x -> result.setProperty("executionPlan", x.prettyPrint(3)));
+    getExecutionPlan().ifPresent(x -> result.setProperty("executionPlan", x.prettyPrint(0, 3)));
     hasNext = false;
     return result;
   }

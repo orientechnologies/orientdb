@@ -30,11 +30,14 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     return lastStep.syncPull(ctx, n);
   }
 
-  @Override public String prettyPrint(int indent) {
+  @Override public String prettyPrint(int depth, int indent) {
     StringBuilder result = new StringBuilder();
-    for (OExecutionStepInternal step : steps) {
-      result.append(step.prettyPrint(0, indent));
-      result.append("\n");
+    for (int i = 0; i < steps.size(); i++) {
+      OExecutionStepInternal step = steps.get(i);
+      result.append(step.prettyPrint(depth, indent));
+      if (i < steps.size() - 1) {
+        result.append("\n");
+      }
     }
     return result.toString();
   }
@@ -54,7 +57,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
 
   @Override public List<OExecutionStep> getSteps() {
     //TODO do a copy of the steps
-    return (List)steps;
+    return (List) steps;
   }
 
   @Override public OResult toResult() {

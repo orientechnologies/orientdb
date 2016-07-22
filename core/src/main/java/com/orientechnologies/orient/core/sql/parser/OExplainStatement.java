@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 
 import java.util.Map;
@@ -38,7 +39,7 @@ public class OExplainStatement extends OStatement {
     return result;
   }
 
-  @Override public OExecutionPlan createExecutionPlan(OCommandContext ctx) {
+  @Override public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
     return statement.createExecutionPlan(ctx);
   }
 }

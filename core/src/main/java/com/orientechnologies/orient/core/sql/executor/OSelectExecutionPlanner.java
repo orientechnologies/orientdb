@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -213,6 +214,18 @@ public class OSelectExecutionPlanner {
         handleClustersAsTarget(result, Collections.singletonList(target.getCluster()), ctx);
       } else if (target.getClusterList() != null) {
         handleClustersAsTarget(result, target.getClusterList().toListOfClusters(), ctx);
+      } else if (target.getStatement() != null) {
+        handleSubqueryAsTarget(result, target.getStatement(), ctx);
+      } else if (target.getRids() != null) {
+        //        handleRidsAsTarget(result, target.getRids(), ctx);//TODO
+      } else if (target.getFunctionCall() != null) {
+        //        handleFunctionCallAsTarget(result, target.getFunctionCall(), ctx);//TODO
+      } else if (target.getInputParam() != null) {
+        //        handleInputParamAsTarget(result, target.getInputParam(), ctx);//TODO
+      } else if (target.getIndex() != null) {
+        //        handleIndexAsTarget(result, target.getIndex(), ctx);//TODO
+      } else if (target.getMetadata() != null) {
+        //        handleMetadataAsTarget(result, target.getMetadata(), ctx);//TODO
       } else {
         throw new UnsupportedOperationException();
       }
@@ -309,6 +322,13 @@ public class OSelectExecutionPlanner {
       FetchFromClustersExecutionStep step = new FetchFromClustersExecutionStep(clusterIds, ctx, orderByRidAsc);
       plan.chain(step);
     }
+  }
+
+  private void handleSubqueryAsTarget(OSelectExecutionPlan plan, OStatement subQuery, OCommandContext ctx) {
+    OBasicCommandContext subCtx = new OBasicCommandContext();
+    subCtx.setDatabase(ctx.getDatabase());
+    OInternalExecutionPlan subExecutionPlan = subQuery.createExecutionPlan(subCtx);
+    plan.chain(new SubQueryStep(subExecutionPlan, ctx, subCtx));
   }
 
   private boolean isOrderByRidDesc() {
