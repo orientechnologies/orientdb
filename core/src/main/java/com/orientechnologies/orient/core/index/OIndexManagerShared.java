@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -39,6 +40,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.Collection;
@@ -581,4 +583,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       ODatabaseRecordThreadLocal.INSTANCE.set(newDb);
     }
   }
+
+  protected OIndex<?> preProcessBeforeReturn(final OIndex<?> index) {
+    if (index instanceof OIndexMultiValues)
+      return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
+    else if (index instanceof OIndexDictionary)
+      return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) index);
+    else if (index instanceof OIndexOneValue)
+      return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
+
+    return index;
+  }
+
 }
