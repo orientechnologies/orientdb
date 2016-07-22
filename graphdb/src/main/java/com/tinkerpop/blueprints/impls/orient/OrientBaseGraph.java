@@ -141,6 +141,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.pool = pool;
 
     database = pool.acquire();
+
     makeActive();
     putInInitializationStack();
     this.username = getDatabase().getUser() != null ? getDatabase().getUser().getName() : null;
@@ -803,7 +804,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     if (iKey.equals("@class"))
       return getVerticesOfClass(iValue.toString());
-    
+
     int pos = iKey.indexOf('.');
     final String className = pos > -1 ? iKey.substring(0, pos):OrientVertexType.CLASS_NAME;
     final String key = pos > -1 ? iKey.substring(pos + 1) : iKey;
