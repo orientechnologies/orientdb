@@ -40,16 +40,15 @@ import java.util.concurrent.locks.ReentrantLock;
  * Asynchronous response manager
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
  */
 public class ODistributedResponseManager {
   public static final int                        ADDITIONAL_TIMEOUT_CLUSTER_SHAPE = 10000;
-  private static final String                    NO_RESPONSE                      = "waiting-for-response";
+  private static final OResponseData             NO_RESPONSE                      = new OResponseData("waiting-for-response", 0);
   private final ODistributedServerManager        dManager;
   private final ODistributedRequest              request;
   private final long                             sentOn;
   private final Set<String>                      nodesConcurInQuorum;
-  private final HashMap<String, Object>          responses                        = new HashMap<String, Object>();
+  private final HashMap<String, OResponseData>   responses                        = new HashMap<String, OResponseData>();
   private final boolean                          groupResponsesByResult;
   private final List<List<ODistributedResponse>> responseGroups                   = new ArrayList<List<ODistributedResponse>>();
   private int                                    totalExpectedResponses;
@@ -63,13 +62,23 @@ public class ODistributedResponseManager {
   private volatile int                           receivedResponses                = 0;
   private volatile boolean                       receivedCurrentNode;
 
+  public static class OResponseData {
+    public long   receivedOn;
+    public Object response;
+
+    public OResponseData(final Object value, final long receivedOn) {
+      this.response = value;
+      this.receivedOn = receivedOn;
+    }
+  }
+
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final Set<String> iNodesConcurInQuorum, final int iTotalExpectedResponses,
       final int iQuorum, final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout,
       final boolean iGroupResponsesByResult) {
     this.dManager = iManager;
     this.request = iRequest;
-    this.sentOn = System.currentTimeMillis();
+    this.sentOn = System.nanoTime();
     this.totalExpectedResponses = iTotalExpectedResponses;
     this.quorum = iQuorum;
     this.waitForLocalNode = iWaitForLocalNode;
@@ -108,13 +117,14 @@ public class ODistributedResponseManager {
         return false;
       }
 
-      Orient.instance().getProfiler().stopChrono("distributed.node.latency", "Latency of distributed messages", sentOn,
+      final long sentOnInMs = getSentOn();
+      Orient.instance().getProfiler().stopChrono("distributed.node.latency", "Latency of distributed messages", sentOnInMs,
           "distributed.node.latency");
 
       Orient.instance().getProfiler().stopChrono("distributed.node." + executorNode + ".latency",
-          "Latency of distributed messages per node", sentOn, "distributed.node.*.latency");
+          "Latency of distributed messages per node", sentOnInMs, "distributed.node.*.latency");
 
-      responses.put(executorNode, response);
+      responses.put(executorNode, new OResponseData(response, System.nanoTime()));
       receivedResponses++;
 
       if (waitForLocalNode && executorNode.equals(senderNode))
@@ -195,8 +205,11 @@ public class ODistributedResponseManager {
     return request.getId();
   }
 
+  /**
+   * Return the timestamp the request has been sent converted in ms (internally the time is r.
+   */
   public long getSentOn() {
-    return sentOn;
+    return sentOn / 1000000;
   }
 
   @SuppressWarnings("unchecked")
@@ -204,15 +217,16 @@ public class ODistributedResponseManager {
     final StringBuilder executor = new StringBuilder(64);
     HashSet<Object> mergedPayload = new HashSet<Object>();
 
-    for (Map.Entry<String, Object> entry : responses.entrySet()) {
-      if (entry.getValue() != NO_RESPONSE) {
+    for (Map.Entry<String, OResponseData> entry : responses.entrySet()) {
+      final OResponseData r = entry.getValue();
+      if (r != NO_RESPONSE) {
         // APPEND THE EXECUTOR
         if (executor.length() > 0)
           executor.append(',');
         executor.append(entry.getKey());
 
         // MERGE THE RESULTSET
-        final ODistributedResponse response = (ODistributedResponse) entry.getValue();
+        final ODistributedResponse response = (ODistributedResponse) r.response;
         final Object payload = response.getPayload();
         mergedPayload = (HashSet<Object>) OMultiValue.add(mergedPayload, payload);
       }
@@ -268,8 +282,8 @@ public class ODistributedResponseManager {
 
         synchronousResponsesLock.lock();
         try {
-          for (Iterator<Map.Entry<String, Object>> iter = responses.entrySet().iterator(); iter.hasNext();) {
-            final Map.Entry<String, Object> curr = iter.next();
+          for (Iterator<Map.Entry<String, OResponseData>> iter = responses.entrySet().iterator(); iter.hasNext();) {
+            final Map.Entry<String, OResponseData> curr = iter.next();
 
             if (curr.getValue() == NO_RESPONSE) {
               // ANALYZE THE NODE WITHOUT A RESPONSE
@@ -358,9 +372,11 @@ public class ODistributedResponseManager {
       case UNION: {
         // COLLECT ALL THE RESPONSE IN A MAP OF <NODE, RESULT>
         final Map<String, Object> payloads = new HashMap<String, Object>();
-        for (Map.Entry<String, Object> entry : responses.entrySet())
-          if (entry.getValue() != NO_RESPONSE)
-            payloads.put(entry.getKey(), ((ODistributedResponse) entry.getValue()).getPayload());
+        for (Map.Entry<String, OResponseData> entry : responses.entrySet()) {
+          final OResponseData r = entry.getValue();
+          if (r != NO_RESPONSE)
+            payloads.put(entry.getKey(), ((ODistributedResponse) r.response).getPayload());
+        }
 
         final ODistributedResponse response = getReceivedResponses().iterator().next();
         response.setExecutorNodeName(responses.keySet().toString());
@@ -403,7 +419,7 @@ public class ODistributedResponseManager {
     try {
 
       final List<String> missingNodes = new ArrayList<String>();
-      for (Map.Entry<String, Object> entry : responses.entrySet())
+      for (Map.Entry<String, OResponseData> entry : responses.entrySet())
         if (entry.getValue() == NO_RESPONSE)
           missingNodes.add(entry.getKey());
       return missingNodes;
@@ -429,7 +445,7 @@ public class ODistributedResponseManager {
     final List<String> respondedNodes = new ArrayList<String>();
     synchronousResponsesLock.lock();
     try {
-      for (Map.Entry<String, Object> entry : responses.entrySet())
+      for (Map.Entry<String, OResponseData> entry : responses.entrySet())
         if (entry.getValue() != NO_RESPONSE)
           respondedNodes.add(entry.getKey());
     } finally {
@@ -519,7 +535,7 @@ public class ODistributedResponseManager {
     } else {
       if (receivedResponses >= quorum) {
         int responsesForQuorum = 0;
-        for (Map.Entry<String, Object> response : responses.entrySet()) {
+        for (Map.Entry<String, OResponseData> response : responses.entrySet()) {
           if (response.getValue() != NO_RESPONSE && nodesConcurInQuorum.contains(response.getKey()))
             if (++responsesForQuorum >= quorum)
               // QUORUM REACHED
@@ -535,14 +551,22 @@ public class ODistributedResponseManager {
     return false;
   }
 
+  public Map<String, Long> getResponsesLatency() {
+    final Map<String, Long> latencies = new HashMap<String, Long>();
+    for (Map.Entry<String, OResponseData> entry : responses.entrySet())
+      if (entry.getValue() != NO_RESPONSE)
+        latencies.put(entry.getKey(), entry.getValue().receivedOn);
+    return latencies;
+  }
+
   /**
    * Returns the received response objects.
    */
   protected List<ODistributedResponse> getReceivedResponses() {
     final List<ODistributedResponse> parsed = new ArrayList<ODistributedResponse>();
-    for (Object r : responses.values())
+    for (OResponseData r : responses.values())
       if (r != NO_RESPONSE)
-        parsed.add((ODistributedResponse) r);
+        parsed.add((ODistributedResponse) r.response);
     return parsed;
   }
 
@@ -589,9 +613,9 @@ public class ODistributedResponseManager {
     }
 
     // CHECK IF THERE IS AT LEAST ONE ODistributedRecordLockedException
-    for (Object r : responses.values()) {
-      if (r instanceof ODistributedRecordLockedException)
-        throw (ODistributedRecordLockedException) r;
+    for (OResponseData r : responses.values()) {
+      if (r.response instanceof ODistributedRecordLockedException)
+        throw (ODistributedRecordLockedException) r.response;
     }
 
     final Object goodResponsePayload = bestResponsesGroup.isEmpty() ? null : bestResponsesGroup.get(0).getPayload();
@@ -619,7 +643,7 @@ public class ODistributedResponseManager {
   private String composeConflictMessage() {
     final StringBuilder msg = new StringBuilder(256);
     msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Elapsed="
-        + (System.currentTimeMillis() - sentOn) + "ms");
+        + ((System.nanoTime() - sentOn) / 1000000f) + "ms");
     final List<ODistributedResponse> res = getConflictResponses();
     if (res.isEmpty())
       msg.append(" No server in conflict. ");
@@ -635,11 +659,11 @@ public class ODistributedResponseManager {
     }
 
     msg.append("Received: ");
-    for (Map.Entry<String, Object> response : responses.entrySet()) {
+    for (Map.Entry<String, OResponseData> response : responses.entrySet()) {
       msg.append("\n - ");
       msg.append(response.getKey());
       msg.append(": ");
-      msg.append(response.getValue());
+      msg.append(response.getValue().response);
     }
 
     return msg.toString();
