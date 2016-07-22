@@ -302,12 +302,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
           if (requests == 0) {
             final ODistributedServerManager manager = server.getDistributedManager();
-            try {
-              manager.waitUntilNodeOnline(manager.getLocalNodeName(), connection.getToken().getDatabase());
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-              throw new OInterruptedException("Request interrupted");
-            }
+            if (manager != null)
+              try {
+                manager.waitUntilNodeOnline(manager.getLocalNodeName(), connection.getToken().getDatabase());
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new OInterruptedException("Request interrupted");
+              }
           }
 
           connection.init(server);

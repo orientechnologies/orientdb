@@ -645,6 +645,16 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.5
    */
+  DISTRIBUTED_HEARTBEAT_TIMEOUT("distributed.heartbeatTimeout", "Maximum time in ms to wait for the heartbeat. If the server does not respond in time, it is put offline", Long.class, 10000l),
+
+  /**
+   * @Since 2.2.5
+   */
+  DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER("distributed.checkHealthCanOfflineServer", "In case a server does not respond to the heartbeat message, it is set offline", Boolean.class, false),
+
+  /**
+   * @Since 2.2.5
+   */
   DISTRIBUTED_CHECK_HEALTH_EVERY("distributed.checkHealthEvery", "Time in ms to check the cluster health. Set to 0 to disable it", Long.class, 10000l),
 
   /**
