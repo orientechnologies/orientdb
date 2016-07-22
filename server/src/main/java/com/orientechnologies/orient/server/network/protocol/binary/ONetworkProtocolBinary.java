@@ -2831,6 +2831,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       imp.setOptions(options);
       imp.importDatabase();
       imp.close();
+      file.delete();
       channel.writeString(null);
     } finally {
       endResponse(connection);
