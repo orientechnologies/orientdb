@@ -127,6 +127,8 @@ public class ORemoteConnectionManager {
   }
 
   public void remove(final OChannelBinaryAsynchClient conn) {
+    if( conn == null )
+      return;
 
     final ORemoteConnectionPool pool = connections.get(conn.getServerURL());
     if (pool == null)
