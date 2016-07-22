@@ -186,6 +186,7 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
       } catch (OSecurityException e) {
         Assert.assertTrue(true);
       } finally {
+        db.activateOnCurrentThread();
         db.close();
         storage.close(true, false);
       }

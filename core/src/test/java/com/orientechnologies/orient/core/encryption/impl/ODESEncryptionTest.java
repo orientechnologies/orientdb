@@ -158,6 +158,7 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       } catch (OSecurityException e) {
         Assert.assertTrue(true);
       } finally {
+        db.activateOnCurrentThread();
         db.close();
         Orient.instance().getStorage(DBNAME_CLUSTERTEST).close(true, false);
       }
@@ -170,6 +171,7 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       } catch (OSecurityException e) {
         Assert.assertTrue(true);
       } finally {
+        db.activateOnCurrentThread();
         db.close();
         Orient.instance().getStorage(DBNAME_CLUSTERTEST).close(true, false);
       }
@@ -181,7 +183,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
 
     } finally {
       db.activateOnCurrentThread();
-      db.drop();
+      if (db.exists())
+        db.drop();
     }
   }
 }
