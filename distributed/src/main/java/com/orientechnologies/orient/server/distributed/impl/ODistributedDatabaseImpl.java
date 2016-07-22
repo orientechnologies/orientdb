@@ -288,6 +288,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           remoteServer.sendRequest(iRequest);
 
         } catch (Throwable e) {
+          currentResponseMgr.removeServerBecauseUnreachable(node);
+
           String reason = e.getMessage();
           if (e instanceof ODistributedException && e.getCause() instanceof IOException) {
             // CONNECTION ERROR: REMOVE THE CONNECTION

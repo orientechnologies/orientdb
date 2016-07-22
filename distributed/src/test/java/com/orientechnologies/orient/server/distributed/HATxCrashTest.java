@@ -17,7 +17,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.Callable;
@@ -33,7 +32,6 @@ public class HATxCrashTest extends AbstractHARemoveNode {
   volatile boolean lastServerOn  = false;
 
   @Test
-  @Ignore
   public void test() throws Exception {
     startupNodesInSequence = true;
     count = 500;
@@ -75,6 +73,7 @@ public class HATxCrashTest extends AbstractHARemoveNode {
               public Object call() throws Exception {
                 Assert.assertTrue("Insert was too fast", inserting);
                 banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
+                delayWriter = 100;
                 serverInstance.get(SERVERS - 1).crashServer();
                 poolFactory.reset();
                 lastServerOn = false;
@@ -99,7 +98,6 @@ public class HATxCrashTest extends AbstractHARemoveNode {
                     try {
                       serverInstance.get(SERVERS - 1)
                           .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-                      delayWriter = 10;
                       lastServerOn = true;
                     } catch (Exception e) {
                       e.printStackTrace();

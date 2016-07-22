@@ -23,7 +23,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -32,7 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Date;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
 
 /**
  * Remote server channel.
@@ -265,16 +264,17 @@ public class ORemoteServerChannel {
           "Reached %d consecutive errors on connection, remove the server '%s' from the cluster", totalConsecutiveErrors, server);
 
       // REMOVE THE SERVER ASYNCHRONOUSLY
-      Orient.instance().scheduleTask(new TimerTask() {
+      Executors.newSingleThreadExecutor().execute(new Runnable() {
         @Override
         public void run() {
           try {
             manager.removeServer(server);
           } catch (Throwable e) {
-            // IGNORE IT
+            ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
+                "Error on removing server '%s' from the cluster", server);
           }
         }
-      }, 100, 0);
+      });
 
       throw new OIOException("Reached " + totalConsecutiveErrors + " consecutive errors on connection, remove the server '" + server
           + "' from the cluster");

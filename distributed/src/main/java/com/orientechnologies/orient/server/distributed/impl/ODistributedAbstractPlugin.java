@@ -112,7 +112,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected List<String>                                         registeredNodeById;
   protected Map<String, Integer>                                 registeredNodeByName;
   protected Map<String, Long>                                    autoRemovalOfServers              = new ConcurrentHashMap<String, Long>();
-  protected ODistributedMessageServiceImpl                       messageService;
+  protected volatile ODistributedMessageServiceImpl              messageService;
   protected Date                                                 startedOn                         = new Date();
   protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
   protected String                                               nodeUuid;
@@ -838,6 +838,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public ODistributedMessageServiceImpl getMessageService() {
+    while (messageService == null)
+      // THIS COULD HAPPEN ONLY AT STARTUP
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        Thread.interrupted();
+        throw new OOfflineNodeException("Message Service is not available");
+      }
     return messageService;
   }
 

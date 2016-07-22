@@ -70,6 +70,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
                 Assert.assertTrue("Insert was too fast", inserting);
                 banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
 
+                delayWriter = 50;
                 serverInstance.get(SERVERS - 1).crashServer();
                 lastServerOn = false;
 
@@ -83,13 +84,13 @@ public class HACrashTest extends AbstractServerClusterTxTest {
                   public Boolean call(ODatabaseDocumentTx db) {
                     Assert.assertTrue("Insert was too fast", inserting);
 
-                    delayWriter = 10;
-
                     banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
                     try {
                       serverInstance.get(SERVERS - 1)
                           .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
                       lastServerOn = true;
+                      delayWriter = 0;
+
                     } catch (Exception e) {
                       e.printStackTrace();
                     }

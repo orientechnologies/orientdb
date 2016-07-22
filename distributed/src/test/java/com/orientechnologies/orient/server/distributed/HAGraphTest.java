@@ -44,6 +44,7 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
 
   List<Future<?>>             ths                     = new ArrayList<Future<?>>();
   private TimerTask           task;
+  private long                sleep                   = 0;
 
   @Test
   public void test() throws Exception {
@@ -80,6 +81,9 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
             }
 
           } else if (!serverDown.get() && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL / 3) {
+
+            // SLOW DOWN A LITTLE BIT
+            sleep = 10;
 
             // SHUTDOWN LASt SERVER AT 1/3 OF PROGRESS
             banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
@@ -154,6 +158,10 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
                   + (et - st) / 1000 + "] seconds");
               st = System.currentTimeMillis();
             }
+
+            if (sleep > 0)
+              Thread.sleep(sleep);
+
             OrientGraph graph = graphFactory.getTx();
             try {
               if (useSQL) {
@@ -190,8 +198,17 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
                   }
                 }
               } else {
-                Iterable<Vertex> vtxs = graph.command(new OCommandSQL(query)).execute();
                 boolean retry = true;
+
+                Iterable<Vertex> vtxs = null;
+                for (int k = 0; k < 100 && retry; k++)
+                  try {
+                    vtxs = graph.command(new OCommandSQL(query)).execute();
+                    break;
+                  } catch (ONeedRetryException e) {
+                    // RETRY
+                  }
+
                 for (Vertex vtx : vtxs) {
                   if (retry) {
                     retry = true;

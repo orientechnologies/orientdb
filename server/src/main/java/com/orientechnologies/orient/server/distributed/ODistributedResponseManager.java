@@ -52,7 +52,7 @@ public class ODistributedResponseManager {
   private final HashMap<String, Object>          responses                        = new HashMap<String, Object>();
   private final boolean                          groupResponsesByResult;
   private final List<List<ODistributedResponse>> responseGroups                   = new ArrayList<List<ODistributedResponse>>();
-  private final int                              totalExpectedResponses;
+  private int                                    totalExpectedResponses;
   private final long                             synchTimeout;
   private final long                             totalTimeout;
   private final Lock                             synchronousResponsesLock         = new ReentrantLock();
@@ -341,7 +341,7 @@ public class ODistributedResponseManager {
         return new ODistributedResponse(request.getId(), dManager.getLocalNodeName(), dManager.getLocalNodeName(), failure);
 
       if (receivedResponses == 0) {
-        if (quorum > 0)
+        if (quorum > 0 && !request.getTask().isIdempotent())
           throw new ODistributedOperationException(
               "No response received from any of nodes " + getExpectedNodes() + " for request " + request);
 
@@ -583,7 +583,10 @@ public class ODistributedResponseManager {
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
 
-    undoRequest();
+    if (!undoRequest()) {
+      // SKIP UNDO
+      return null;
+    }
 
     // CHECK IF THERE IS AT LEAST ONE ODistributedRecordLockedException
     for (Object r : responses.values()) {
@@ -642,7 +645,16 @@ public class ODistributedResponseManager {
     return msg.toString();
   }
 
-  protected void undoRequest() {
+  protected boolean undoRequest() {
+    final ORemoteTask task = request.getTask();
+
+    if (task.isIdempotent()) {
+      // NO UNDO IS NECESSARY
+      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+          "No undo because the task (%s) is idempotent", task);
+      return false;
+    }
+
     // DETERMINE IF ANY CREATE FAILED TO RESTORE RIDS
     for (ODistributedResponse r : getReceivedResponses()) {
       if (r.getPayload() instanceof Throwable)
@@ -659,7 +671,6 @@ public class ODistributedResponseManager {
         // AVOID TO UNDO LOCAL NODE BECAUSE THE OPERATION IS MANAGED APART
         continue;
 
-      final ORemoteTask task = request.getTask();
       if (task instanceof OAbstractReplicatedTask) {
         final ORemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request.getId());
 
@@ -672,6 +683,7 @@ public class ODistributedResponseManager {
         }
       }
     }
+    return true;
   }
 
   protected boolean fixNodesInConflict(final List<ODistributedResponse> bestResponsesGroup, final int conflicts) {
@@ -748,5 +760,12 @@ public class ODistributedResponseManager {
   public void setLocalResult(final String localNodeName, final Serializable localResult) {
     localResponse = new ODistributedResponse(request.getId(), localNodeName, localNodeName, localResult);
     collectResponse(localResponse);
+  }
+
+  public void removeServerBecauseUnreachable(final String node) {
+    if (responses.remove(node) != null) {
+      totalExpectedResponses--;
+      nodesConcurInQuorum.remove(node);
+    }
   }
 }

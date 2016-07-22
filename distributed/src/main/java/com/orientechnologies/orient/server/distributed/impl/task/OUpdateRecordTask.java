@@ -101,6 +101,10 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
           iServer, iManager, database);
       record = ph.getRecord();
 
+      if (record == null)
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+            "+-> Error on updating record %s", rid);
+
     } else {
       // UPDATE IT
       final ORecord loadedRecord = previousRecord.copy();
@@ -120,6 +124,10 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       loadedRecord.setDirty();
 
       record = database.save(loadedRecord);
+
+      if (record == null)
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+            "+-> Error on updating record %s", rid);
 
       if (version < 0 && ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
