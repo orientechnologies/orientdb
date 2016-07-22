@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleter;
@@ -71,6 +72,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.cache.*;
 import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptionListener;
@@ -1389,7 +1391,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
 
           for (ORecordOperation txEntry : entries) {
-            commitEntry(txEntry, positions.get(txEntry));
+            commitEntry(txEntry, positions.get(txEntry), databaseRecord.getSerializer());
             result.add(txEntry);
           }
 
@@ -1579,7 +1581,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
 
           for (ORecordOperation txEntry : entries) {
-            commitEntry(txEntry, positions.get(txEntry));
+            commitEntry(txEntry, positions.get(txEntry), databaseRecord.getSerializer());
             result.add(txEntry);
           }
 
@@ -3630,7 +3632,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     return null;
   }
 
-  private void commitEntry(final ORecordOperation txEntry, final OPhysicalPosition allocated) throws IOException {
+  private void commitEntry(final ORecordOperation txEntry, final OPhysicalPosition allocated, ORecordSerializer serializer)
+      throws IOException {
 
     final ORecord rec = txEntry.getRecord();
     if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
@@ -3660,7 +3663,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         break;
 
       case ORecordOperation.CREATED: {
-        final byte[] stream = rec.toStream();
+
+        final byte[] stream = serializer.toStream(rec, false);
         if (allocated != null) {
           final OPhysicalPosition ppos;
           final byte recordType = ORecordInternal.getRecordType(rec);
@@ -3681,7 +3685,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
 
       case ORecordOperation.UPDATED: {
-        final byte[] stream = rec.toStream();
+        final byte[] stream = serializer.toStream(rec, false);
 
         final OStorageOperationResult<Integer> updateRes = doUpdateRecord(rid, ORecordInternal.isContentChanged(rec), stream,
             rec.getVersion(), ORecordInternal.getRecordType(rec), null, cluster);

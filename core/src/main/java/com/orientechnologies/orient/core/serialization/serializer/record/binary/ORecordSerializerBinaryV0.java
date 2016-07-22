@@ -187,6 +187,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           final int valuePos = readInteger(bytes);
           final OType type = readOType(bytes);
 
+          if (valuePos == 0)
+            return null;
+
           if (!match)
             continue;
 
@@ -212,6 +215,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
             type = prop.getType();
           else
             type = readOType(bytes);
+
+          if (valuePos == 0)
+            return null;
 
           if (!ORecordSerializerBinary.INSTANCE.getCurrentSerializer().getComparator().isBinaryComparable(type))
             return null;
