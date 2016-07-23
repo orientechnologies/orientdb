@@ -19,12 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.Collection;
+
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-
-import java.util.Collection;
 
 /**
  * Generic Distributed Database interface.

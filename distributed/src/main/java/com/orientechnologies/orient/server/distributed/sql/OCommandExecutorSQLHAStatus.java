@@ -52,6 +52,7 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
   private boolean            servers        = false;
   private boolean            db             = false;
   private boolean            latency        = false;
+  private boolean            messages = false;
   private boolean            textOutput     = false;
 
   public OCommandExecutorSQLHAStatus parse(final OCommandRequest iRequest) {
@@ -81,8 +82,10 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
         db = true;
       else if (option.equalsIgnoreCase("-latency"))
         latency = true;
+      else if (option.equalsIgnoreCase("-messages"))
+        latency = true;
       else if (option.equalsIgnoreCase("-all"))
-        servers = db = latency = true;
+        servers = db = latency = messages = true;
       else if (option.equalsIgnoreCase("-output=text"))
         textOutput = true;
 
@@ -120,6 +123,8 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
         output.append(ODistributedOutput.formatClusterTable(dManager, databaseName, cfg, dManager.getAvailableNodes(databaseName)));
       if (latency)
         output.append(ODistributedOutput.formatLatency(dManager, dManager.getClusterConfiguration()));
+      if (messages)
+        output.append(ODistributedOutput.formatMessages(dManager, dManager.getClusterConfiguration()));
       return output.toString();
     }
 
@@ -144,6 +149,6 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
 
   @Override
   public String getSyntax() {
-    return "HA STATUS [-servers] [-db] [-latency] [-all] [-output=text]";
+    return "HA STATUS [-servers] [-db] [-latency] [-messages] [-all] [-output=text]";
   }
 }

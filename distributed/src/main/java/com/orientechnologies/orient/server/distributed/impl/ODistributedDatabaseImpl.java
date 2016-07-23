@@ -546,7 +546,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     lockManager.clear();
     activeTxContexts.clear();
-
   }
 
   protected void checkForServerOnline(final ODistributedRequest iRequest) throws ODistributedException {

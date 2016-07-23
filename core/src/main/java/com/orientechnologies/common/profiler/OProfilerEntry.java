@@ -40,8 +40,13 @@ public class OProfilerEntry {
   public long        total   = 0;
   public final long  firstExecution;
   public long        lastExecution;
+
   public String      payLoad;
   public String      description;
+
+  public long        lastResetEntries = 0;
+  public long        lastReset;
+
   public Set<String> users   = new HashSet<String>();
 
   public OProfilerEntry() {
@@ -63,6 +68,8 @@ public class OProfilerEntry {
     doc.field("total", total);
     doc.field("firstExecution", firstExecution);
     doc.field("lastExecution", lastExecution);
+    doc.field("lastReset", lastReset);
+    doc.field("lastResetEntries", lastResetEntries);
     if (payLoad != null)
       doc.field("payload", payLoad);
     return doc;
@@ -84,6 +91,8 @@ public class OProfilerEntry {
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "total", total));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "firstExecution", firstExecution));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "lastExecution", lastExecution));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "lastReset", lastReset));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "lastResetEntries", lastResetEntries));
     if (payLoad != null)
       buffer.append(String.format(Locale.ENGLISH, ",\"%s\":\"%s\"", "payload", payLoad));
     buffer.append(String.format(Locale.ENGLISH, ",\"%s\": [", "users"));
