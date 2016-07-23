@@ -69,7 +69,7 @@ public class ODistributedResponseManager {
       final boolean iGroupResponsesByResult) {
     this.dManager = iManager;
     this.request = iRequest;
-    this.sentOn = System.currentTimeMillis();
+    this.sentOn = System.nanoTime();
     this.totalExpectedResponses = iTotalExpectedResponses;
     this.quorum = iQuorum;
     this.waitForLocalNode = iWaitForLocalNode;
@@ -108,11 +108,7 @@ public class ODistributedResponseManager {
         return false;
       }
 
-      Orient.instance().getProfiler().stopChrono("distributed.node.latency", "Latency of distributed messages", sentOn,
-          "distributed.node.latency");
-
-      Orient.instance().getProfiler().stopChrono("distributed.node." + executorNode + ".latency",
-          "Latency of distributed messages per node", sentOn, "distributed.node.*.latency");
+      dManager.getMessageService().updateLatency(executorNode, sentOn);
 
       responses.put(executorNode, response);
       receivedResponses++;
@@ -196,7 +192,7 @@ public class ODistributedResponseManager {
   }
 
   public long getSentOn() {
-    return sentOn;
+    return sentOn / 1000000;
   }
 
   @SuppressWarnings("unchecked")
@@ -619,7 +615,7 @@ public class ODistributedResponseManager {
   private String composeConflictMessage() {
     final StringBuilder msg = new StringBuilder(256);
     msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Elapsed="
-        + (System.currentTimeMillis() - sentOn) + "ms");
+        + (System.currentTimeMillis() - getSentOn()) + "ms");
     final List<ODistributedResponse> res = getConflictResponses();
     if (res.isEmpty())
       msg.append(" No server in conflict. ");

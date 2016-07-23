@@ -19,10 +19,17 @@
  */
 package com.orientechnologies.common.profiler;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * Contains the profiling data abount timing.
+ * 
+ * @author Luca Garulli
+ */
 public class OProfilerEntry {
   public String      name    = null;
   public long        entries = 0;
@@ -44,6 +51,21 @@ public class OProfilerEntry {
 
   public void updateLastExecution() {
     lastExecution = System.currentTimeMillis();
+  }
+
+  public ODocument toDocument() {
+    final ODocument doc = new ODocument();
+    doc.field("entries", entries);
+    doc.field("last", last);
+    doc.field("min", min);
+    doc.field("max", max);
+    doc.field("average", average);
+    doc.field("total", total);
+    doc.field("firstExecution", firstExecution);
+    doc.field("lastExecution", lastExecution);
+    if (payLoad != null)
+      doc.field("payload", payLoad);
+    return doc;
   }
 
   public String toJSON() {

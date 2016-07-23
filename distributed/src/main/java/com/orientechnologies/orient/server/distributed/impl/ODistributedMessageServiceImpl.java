@@ -19,8 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
@@ -44,11 +47,11 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   protected final OHazelcastPlugin                                     manager;
   protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   protected final TimerTask                                            asynchMessageManager;
-  protected Map<String, ODistributedDatabaseImpl>                      databases               = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  protected Map<String, ODistributedDatabaseImpl>                      databases           = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
   protected Thread                                                     responseThread;
-  protected long[]                                                     responseTimeMetrics     = new long[10];
-  protected int                                                        responseTimeMetricIndex = 0;
-  protected volatile boolean                                           running                 = true;
+  protected long[]                                                     responseTimeMetrics = new long[10];
+  protected volatile boolean                                           running             = true;
+  protected Map<String, OProfilerEntry>                                latencies           = new HashMap<String, OProfilerEntry>();
 
   public ODistributedMessageServiceImpl(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -150,7 +153,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
       } else if (asynchMgr.collectResponse(response)) {
 
         // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
-        responsesByRequestIds.remove(msgId);
+        final ODistributedResponseManager resp = responsesByRequestIds.remove(msgId);
 
       }
     } finally {
@@ -159,6 +162,40 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
       Orient.instance().getProfiler().updateCounter("distributed.node." + response.getExecutorNodeName() + ".msgReceived",
           "Number of replication messages received in current node from a node", +1, "distributed.node.*.msgReceived");
+    }
+  }
+
+  @Override
+  public ODocument getLatencies() {
+    final ODocument doc = new ODocument();
+
+    synchronized (latencies) {
+      for (Entry<String, OProfilerEntry> entry : latencies.entrySet())
+        doc.field(entry.getKey(), entry.getValue().toDocument(), OType.EMBEDDED);
+    }
+
+    return doc;
+  }
+
+  @Override
+  public void updateLatency(final String server, final long sentOn) {
+    // MANAGE THIS ASYNCHRONOUSLY
+    synchronized (latencies) {
+      OProfilerEntry latency = latencies.get(server);
+      if (latency == null) {
+        latency = new OProfilerEntry();
+        latencies.put(server, latency);
+      } else
+        latency.updateLastExecution();
+
+      latency.entries++;
+      latency.last = System.nanoTime() - sentOn;
+      latency.total += latency.last;
+      latency.average = latency.total / latency.entries;
+      if (latency.last < latency.min)
+        latency.min = latency.last;
+      if (latency.last > latency.max)
+        latency.max = latency.last;
     }
   }
 

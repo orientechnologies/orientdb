@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -126,6 +127,76 @@ public class ODistributedOutput {
       }
     });
     table.setColumnHidden("#");
+    table.writeRecords(rows, -1);
+    buffer.append("\n");
+    return buffer.toString();
+  }
+
+  public static String formatLatency(final OHazelcastPlugin manager, final ODocument distribCfg) {
+    final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
+
+    final List<ODocument> members = distribCfg.field("members");
+
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append("\nREPLICATION LATENCY (in milliseconds)");
+    final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
+      @Override
+      public void onMessage(final String text, final Object... args) {
+        buffer.append(String.format(text, args));
+      }
+    });
+    table.setColumnHidden("#");
+
+    if (members != null) {
+      // BUILD A SORTED SERVER LIST
+      final List<String> orderedServers = new ArrayList<String>(members.size());
+      for (ODocument fromMember : members) {
+        if (fromMember != null) {
+          String serverName = fromMember.field("name");
+          orderedServers.add(serverName);
+
+          table.setColumnAlignment(serverName + (manager.getLocalNodeName().equals(serverName) ? "*" : ""),
+              OTableFormatter.ALIGNMENT.CENTER);
+        }
+      }
+      Collections.sort(orderedServers);
+
+      for (String fromServer : orderedServers) {
+        // SEARCH FOR THE MEMBER
+        ODocument fromMember = null;
+        for (ODocument m : members) {
+          if (fromServer.equals(m.field("name"))) {
+            fromMember = m;
+            break;
+          }
+        }
+
+        if (fromMember == null)
+          // SKIP IT
+          continue;
+
+        final ODocument row = new ODocument();
+        rows.add(row);
+
+        row.field("Servers", fromServer + (manager.getLocalNodeName().equals(fromServer) ? "*" : ""));
+
+        final ODocument latencies = fromMember.field("latencies");
+        if (latencies == null)
+          continue;
+
+        for (String toServer : orderedServers) {
+          String value = "";
+          if (toServer != null && !toServer.equals(fromServer)) {
+            final ODocument latency = latencies.field(toServer);
+            if (latency != null) {
+              value = String.format("%.2f (%,d msgs)", ((Float) latency.field("average") / 1000000f), latency.field("entries"));
+            }
+          }
+          row.field(toServer + (manager.getLocalNodeName().equals(toServer) ? "*" : ""), value);
+        }
+      }
+    }
+
     table.writeRecords(rows, -1);
     buffer.append("\n");
     return buffer.toString();
