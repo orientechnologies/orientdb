@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.ArrayList;
@@ -26,12 +27,13 @@ public class OSelectExecutionPlanner {
 
   private OLetClause globalLetClause    = null;
   private OLetClause perRecordLetClause = null;
-  private OFromClause  target;
-  private OWhereClause whereClause;
-  private OGroupBy     groupBy;
-  private OOrderBy     orderBy;
-  private OSkip        skip;
-  private OLimit       limit;
+  private OFromClause     target;
+  private OWhereClause    whereClause;
+  private List<OAndBlock> flattenedWhereClause;
+  private OGroupBy        groupBy;
+  private OOrderBy        orderBy;
+  private OSkip           skip;
+  private OLimit          limit;
 
   private boolean orderApplied          = false;
   private boolean projectionsCalculated = false;
@@ -100,6 +102,9 @@ public class OSelectExecutionPlanner {
     if (projection != null && this.projection.isExpand()) {
       expand = true;
       this.projection = projection.getExpandContent();
+    }
+    if (whereClause != null) {
+      flattenedWhereClause = whereClause.flatten();
     }
 
     extractAggregateProjections();
@@ -223,14 +228,55 @@ public class OSelectExecutionPlanner {
       } else if (target.getInputParam() != null) {
         //        handleInputParamAsTarget(result, target.getInputParam(), ctx);//TODO
       } else if (target.getIndex() != null) {
-        //handleIndexAsTarget(result, target.getIndex(), ctx);//TODO
+        handleIndexAsTarget(result, target.getIndex(), whereClause, orderBy, ctx);
       } else if (target.getMetadata() != null) {
-        handleMetadataAsTarget(result, target.getMetadata(), ctx);//TODO
+        handleMetadataAsTarget(result, target.getMetadata(), ctx);
       } else if (target.getRids() != null && target.getRids().size() > 0) {
         handleRidsAsTarget(result, target.getRids(), ctx);
       } else {
         throw new UnsupportedOperationException();
       }
+    }
+  }
+
+  private void handleIndexAsTarget(OSelectExecutionPlan result, OIndexIdentifier indexIdentifier, OWhereClause whereClause,
+      OOrderBy orderBy, OCommandContext ctx) {
+    //TODO
+    String indexName = indexIdentifier.getIndexName();
+    OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+    if (index == null) {
+      throw new OCommandExecutionException(
+          "Index not found: " + indexName);//TODO check if you can iterate over the index without a key
+    }
+    if (flattenedWhereClause == null) {
+      throw new OCommandExecutionException(
+          "Index queries must have a WHERE conditioni with like 'key = [val1, val2, valN]");//TODO check if you can iterate over the index without a key
+    }
+    if (flattenedWhereClause.size() != 1) {
+      throw new OCommandExecutionException(
+          "Index queries with this kind of condition are not supported yet: " + flattenedWhereClause);//TODO
+    }
+
+    OAndBlock andBlock = flattenedWhereClause.get(0);
+    if (andBlock.getSubBlocks().size() != 1) {
+      throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + andBlock);//TODO
+    }
+    this.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
+
+    OBooleanExpression condition = andBlock.getSubBlocks().get(0);
+    switch (indexIdentifier.getType()) {
+    case INDEX:
+      result.chain(new FetchFromIndexStep(index, condition, ctx));
+
+      break;
+    case VALUES:
+    case VALUESASC:
+      //      result.chain(new FetchFromIndexValuesStep(index, condition, ctx, true));
+      throw new OCommandExecutionException("indexvalues*: is not yet supported");
+
+    case VALUESDESC:
+      //      result.chain(new FetchFromIndexValuesStep(index, condition, ctx, false));
+      throw new OCommandExecutionException("indexvalues*: is not yet supported");
     }
   }
 

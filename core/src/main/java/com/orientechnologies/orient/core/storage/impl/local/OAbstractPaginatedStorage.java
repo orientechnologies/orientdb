@@ -2653,7 +2653,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       if (!foundInCache) {
         // EXECUTE THE COMMAND
-        result = executor.execute(iCommand.getParameters());
+        Map<Object, Object> params = iCommand.getParameters();
+        result = executor.execute(params);
 
         if (result != null && iCommand.isCacheableResult() && executor.isCacheable() && (iCommand.getParameters() == null
             || iCommand.getParameters().isEmpty()))

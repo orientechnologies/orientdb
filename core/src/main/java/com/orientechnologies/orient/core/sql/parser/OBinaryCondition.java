@@ -115,5 +115,17 @@ public class OBinaryCondition extends OBooleanExpression {
     }
     return false;
   }
+
+  public OExpression getLeft() {
+    return left;
+  }
+
+  public OBinaryCompareOperator getOperator() {
+    return operator;
+  }
+
+  public OExpression getRight() {
+    return right;
+  }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

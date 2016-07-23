@@ -10,8 +10,8 @@ public class OIndexIdentifier extends SimpleNode {
     INDEX, VALUES, VALUESASC, VALUESDESC
   }
 
-  protected Type   type;
-  protected String indexNameString;
+  protected Type       type;
+  protected String     indexNameString;
   protected OIndexName indexName;
 
   public OIndexIdentifier(int id) {
@@ -22,7 +22,9 @@ public class OIndexIdentifier extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -43,11 +45,23 @@ public class OIndexIdentifier extends SimpleNode {
       break;
     }
     builder.append(":");
-    if(indexNameString!=null) {
+    if (indexNameString != null) {
       builder.append(indexNameString);
-    }else{
+    } else {
       indexName.toString(params, builder);
     }
   }
+
+  public String getIndexName() {
+    if (indexName != null) {
+      return indexName.toString();
+    }
+    return indexNameString;
+  }
+
+  public Type getType() {
+    return type;
+  }
 }
 /* JavaCC - OriginalChecksum=025f134fd4b27b84210738cdb6dd027c (do not edit this line) */
+
