@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.Set;
 
 /**
@@ -36,4 +38,8 @@ public interface ODistributedMessageService {
   ODistributedDatabase unregisterDatabase(String iDatabaseName);
 
   void dispatchResponseToThread(final ODistributedResponse response);
+
+  void updateLatency(String metricName, long sentOn);
+
+  ODocument getLatencies();
 }

@@ -189,6 +189,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         lock.unlock();
       }
 
+      messageService = new ODistributedMessageServiceImpl(this);
+
       publishLocalNodeConfiguration();
 
       if (!configurationMap.containsKey(CONFIG_NODE_PREFIX + nodeUuid)) {
@@ -201,8 +203,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       for (String m : activeNodes.keySet())
         if (!m.equals(nodeName))
           getRemoteServer(m);
-
-      messageService = new ODistributedMessageServiceImpl(this);
 
       installNewDatabasesFromCluster(true);
 

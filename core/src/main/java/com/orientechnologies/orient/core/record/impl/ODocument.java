@@ -1122,9 +1122,9 @@ public class ODocument extends ORecordAbstract
    *
    * @since 2.0
    */
-  public ODocument fromMap(final Map<String, Object> iMap) {
+  public ODocument fromMap(final Map<String, ? extends Object> iMap) {
     if (iMap != null) {
-      for (Entry<String, Object> entry : iMap.entrySet())
+      for (Entry<String, ? extends Object> entry : iMap.entrySet())
         field(entry.getKey(), entry.getValue());
     }
     return this;

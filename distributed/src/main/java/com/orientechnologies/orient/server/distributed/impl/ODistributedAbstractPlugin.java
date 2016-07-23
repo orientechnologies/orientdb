@@ -536,6 +536,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     nodeCfg.field("freeMemory", freeMem);
     nodeCfg.field("maxMemory", maxMem);
 
+    nodeCfg.field("latencies", getMessageService().getLatencies(), OType.EMBEDDED);
+
     onLocalNodeConfigurationRequest(nodeCfg);
 
     return nodeCfg;
