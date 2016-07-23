@@ -537,6 +537,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     nodeCfg.field("maxMemory", maxMem);
 
     nodeCfg.field("latencies", getMessageService().getLatencies(), OType.EMBEDDED);
+    nodeCfg.field("messages", getMessageService().getMessageStats(), OType.EMBEDDED);
 
     onLocalNodeConfigurationRequest(nodeCfg);
 
@@ -592,6 +593,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       ODistributedServerLog.error(this, nodeName, null, DIRECTION.OUT, "Distributed database '%s' not found", iDatabaseName);
       throw new ODistributedException("Distributed database '" + iDatabaseName + "' not found on server '" + nodeName + "'");
     }
+
+    messageService.updateMessageStats(iTask.getName());
 
     return db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode, localResult, iAfterSentCallback);
   }
@@ -1509,7 +1512,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     if (iDatabase.isClosed())
       getServerInstance().openDatabase(iDatabase);
-    iDatabase.activateOnCurrentThread();
 
     ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Reassigning cluster ownership for database %s",
         iDatabase.getName());
@@ -1529,6 +1531,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     cfg.addNewNodeInServerList(nodeName);
     updateCachedDatabaseConfiguration(iDatabase.getName(), cfg.getDocument(), false, false);
 
+    iDatabase.activateOnCurrentThread();
     final OSchema schema = ((ODatabaseInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
     for (final OClass clazz : schema.getClasses()) {
       if (clusterAssignmentStrategy.assignClusterOwnershipOfClass(iDatabase, cfg, clazz, availableNodes,

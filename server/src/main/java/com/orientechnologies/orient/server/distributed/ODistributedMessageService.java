@@ -42,4 +42,8 @@ public interface ODistributedMessageService {
   void updateLatency(String metricName, long sentOn);
 
   ODocument getLatencies();
+
+  ODocument getMessageStats();
+
+  void updateMessageStats(String message);
 }

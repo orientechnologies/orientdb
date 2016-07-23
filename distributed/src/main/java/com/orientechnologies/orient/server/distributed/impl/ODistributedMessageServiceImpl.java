@@ -34,6 +34,7 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -44,14 +45,15 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ODistributedMessageServiceImpl implements ODistributedMessageService {
 
-  protected final OHazelcastPlugin                                     manager;
-  protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
-  protected final TimerTask                                            asynchMessageManager;
-  protected Map<String, ODistributedDatabaseImpl>                      databases           = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
-  protected Thread                                                     responseThread;
-  protected long[]                                                     responseTimeMetrics = new long[10];
-  protected volatile boolean                                           running             = true;
-  protected Map<String, OProfilerEntry>                                latencies           = new HashMap<String, OProfilerEntry>();
+  private final OHazelcastPlugin                                     manager;
+  private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
+  private final TimerTask                                            asynchMessageManager;
+  private Map<String, ODistributedDatabaseImpl>                      databases           = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  private Thread                                                     responseThread;
+  private long[]                                                     responseTimeMetrics = new long[10];
+  private volatile boolean                                           running             = true;
+  private Map<String, OProfilerEntry>                                latencies           = new HashMap<String, OProfilerEntry>();
+  private Map<String, AtomicLong>                                    messagesStats       = new HashMap<String, AtomicLong>();
 
   public ODistributedMessageServiceImpl(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -93,6 +95,9 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
     asynchMessageManager.cancel();
     responsesByRequestIds.clear();
+
+    latencies.clear();
+    messagesStats.clear();
   }
 
   public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {
@@ -189,9 +194,22 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
         latency.updateLastExecution();
 
       latency.entries++;
+
+      if (latency.lastExecution - latency.lastReset > 30000) {
+        // RESET STATS EVERY 30 SECONDS
+        latency.last = 0;
+        latency.total = 0;
+        latency.average = 0;
+        latency.min = 0;
+        latency.max = 0;
+        latency.lastResetEntries = 0;
+        latency.lastReset = latency.lastExecution;
+      }
+
+      latency.lastResetEntries++;
       latency.last = System.nanoTime() - sentOn;
       latency.total += latency.last;
-      latency.average = latency.total / latency.entries;
+      latency.average = latency.total / latency.lastResetEntries;
       if (latency.last < latency.min)
         latency.min = latency.last;
       if (latency.last > latency.max)
@@ -228,6 +246,31 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
         resp.timeout();
         it.remove();
       }
+    }
+  }
+
+  @Override
+  public ODocument getMessageStats() {
+    final ODocument doc = new ODocument();
+
+    synchronized (messagesStats) {
+      for (Map.Entry<String, AtomicLong> entry : messagesStats.entrySet())
+        doc.field(entry.getKey(), entry.getValue().longValue());
+    }
+
+    return doc;
+  }
+
+  @Override
+  public void updateMessageStats(final String message) {
+    // MANAGE THIS ASYNCHRONOUSLY
+    synchronized (messagesStats) {
+      AtomicLong counter = messagesStats.get(message);
+      if (counter == null) {
+        counter = new AtomicLong();
+        messagesStats.put(message, counter);
+      }
+      counter.incrementAndGet();
     }
   }
 }
