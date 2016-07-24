@@ -112,7 +112,7 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
         final String configurationContent = OIOUtils.readFileAsString(f);
         configuration = new ODocument().fromJSON(configurationContent);
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException("Cannot load Mail configuration file '" + configFile
+        throw OException.wrapException(new OConfigurationException("Cannot load Mail configuration file '" + configFile
             + "'. Mail Plugin will be disabled"), e);
       }
 
@@ -124,7 +124,7 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
 
         OLogManager.instance().info(this, "Mail plugin: migrated configuration to file '%s'", f);
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException("Cannot create Mail plugin configuration file '" + configFile
+        throw OException.wrapException(new OConfigurationException("Cannot create Mail plugin configuration file '" + configFile
             + "'. Mail Plugin will be disabled"), e);
       }
     }
@@ -320,10 +320,10 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
     try {
       writeConfiguration();
     } catch (IOException e) {
-      OException.wrapException(new OConfigurationException("Cannot Write Mail configuration file '" + configFile
-          + "'. Restoring old configuration."), e);
-
       configuration = oldConfig;
+
+      throw OException.wrapException(new OConfigurationException("Cannot Write Mail configuration file '" + configFile
+          + "'. Restoring old configuration."), e);
     }
     configure();
   }
