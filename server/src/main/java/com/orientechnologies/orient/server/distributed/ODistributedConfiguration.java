@@ -701,6 +701,26 @@ public class ODistributedConfiguration {
   }
 
   /**
+   * Returns true if the database is sharded across servers. False if it's completely replicated.
+   */
+  public boolean isSharded() {
+    synchronized (configuration) {
+      final ODocument allCluster = getClusterConfiguration(ALL_WILDCARD);
+      if (allCluster != null) {
+        final List<String> allServers = allCluster.field(SERVERS);
+        if (allServers != null && !allServers.isEmpty()) {
+          for (String cl : getClusterNames()) {
+            final List<String> servers = getServers(cl);
+            if (servers != null && !servers.isEmpty() && !allServers.containsAll(servers))
+              return false;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * Returns the list of servers in a data center.
    *
    * @param dataCenter

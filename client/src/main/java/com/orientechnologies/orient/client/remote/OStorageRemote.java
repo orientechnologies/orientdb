@@ -264,7 +264,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   private int handleIOException(int retry, final OChannelBinaryAsynchClient network, final Exception e) {
-    OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", e.getMessage());
+    OLogManager.instance().info(this, "Caught I/O errors, trying to reconnect (error: %s)", e.getMessage());
     OLogManager.instance().debug(this, "I/O error stack: ", e);
     connectionManager.remove(network);
     if (--retry <= 0)
