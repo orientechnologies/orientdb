@@ -1021,6 +1021,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
           ODistributedServerLog.info(this, nodeName, entry.getKey(), DIRECTION.IN, "Installed delta of database '%s'...",
               databaseName);
 
+          if (!cfg.isSharded())
+            // DB NOT SHARDED, THE 1ST BACKUP IS GOOD
+            break;
+
         } else
           throw new IllegalArgumentException("Type " + value + " not supported");
       }

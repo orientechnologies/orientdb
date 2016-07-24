@@ -24,6 +24,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
@@ -322,9 +323,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             } catch (RuntimeException e) {
               throw e;
             } catch (Exception e) {
-              OException.wrapException(new ODistributedException("Cannot execute command " + iCommand), e);
-              // UNREACHABLE
-              return null;
+              throw OException.wrapException(new ODistributedException("Cannot execute command " + iCommand), e);
             }
             nodes.remove(localNodeName);
           } else
@@ -796,9 +795,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                 } catch (RuntimeException e) {
                   throw e;
                 } catch (Exception e) {
-                  OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
-                  // UNREACHABLE
-                  return null;
+                  throw OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
                 }
                 nodes.remove(localNodeName);
               } else
@@ -937,9 +934,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                 } catch (RuntimeException e) {
                   throw e;
                 } catch (Exception e) {
-                  OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
-                  // UNREACHABLE
-                  return null;
+                  throw OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
                 }
                 nodes.remove(localNodeName);
               } else
@@ -1570,21 +1565,33 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   @Override
   public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
-    final String localNode = dManager.getLocalNodeName();
-
-    final ODistributedServerManager.DB_STATUS prevStatus = dManager.getDatabaseStatus(localNode, getName());
-    if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
-      // SET STATUS = BACKUP
-      dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.BACKUP);
-
     try {
+      return (List<String>) executeOperationInLock(new OCallable<Object, Void>() {
+        @Override
+        public Object call(Void iArgument) {
+          final String localNode = dManager.getLocalNodeName();
 
-      return wrapped.backup(out, options, callable, iListener, compressionLevel, bufferSize);
+          final ODistributedServerManager.DB_STATUS prevStatus = dManager.getDatabaseStatus(localNode, getName());
+          if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
+            // SET STATUS = BACKUP
+            dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.BACKUP);
 
-    } finally {
-      if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
-        // RESTORE PREVIOUS STATUS
-        dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+          try {
+
+            return wrapped.backup(out, options, callable, iListener, compressionLevel, bufferSize);
+
+          } catch (IOException e) {
+            throw OException.wrapException(new OIOException("Error on executing backup"), e);
+          } finally {
+            if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
+              // RESTORE PREVIOUS STATUS
+              dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+          }
+        }
+      });
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw OException.wrapException(new OIOException("Backup interrupted"), e);
     }
   }
 
