@@ -443,8 +443,6 @@ public class OProfilerData {
       if (oldValue != null)
         c = oldValue;
     }
-    // else
-    // c.
 
     c.name = iName;
     c.payLoad = iPayload;

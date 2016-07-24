@@ -71,7 +71,7 @@ public class OBackupConfig {
         final String configurationContent = OIOUtils.readFileAsString(f);
         configuration = new ODocument().fromJSON(configurationContent, "noMap");
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException(
+        throw OException.wrapException(new OConfigurationException(
             "Cannot load Backups configuration file '" + configFile + "'. Backups  Plugin will be disabled"), e);
       }
     } else {
@@ -82,7 +82,7 @@ public class OBackupConfig {
 
         OLogManager.instance().info(this, "Backups plugin: created configuration to file '%s'", f);
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException(
+        throw OException.wrapException(new OConfigurationException(
             "Backups create Events plugin configuration file '" + configFile + "'. Backups Plugin will be disabled"), e);
       }
     }
@@ -213,7 +213,7 @@ public class OBackupConfig {
       final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
       OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
     } catch (IOException e) {
-      OException.wrapException(new OConfigurationException("Cannot save Backup configuration file '" + configFile + "'. "), e);
+      throw OException.wrapException(new OConfigurationException("Cannot save Backup configuration file '" + configFile + "'. "), e);
     }
   }
 

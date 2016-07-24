@@ -71,9 +71,9 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
       try {
         writeConfiguration();
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException(
-            "Cannot Write EventConfiguration configuration file '" + configFile + "'. Restoring old configuration."), e);
         configuration = oldConfig;
+        throw OException.wrapException(new OConfigurationException(
+            "Cannot Write EventConfiguration configuration file '" + configFile + "'. Restoring old configuration."), e);
       }
 
     }
@@ -107,7 +107,7 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
         final String configurationContent = OIOUtils.readFileAsString(f);
         configuration = new ODocument().fromJSON(configurationContent);
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException(
+        throw OException.wrapException(new OConfigurationException(
             "Cannot load Events configuration file '" + configFile + "'. Events  Plugin will be disabled"), e);
       }
     } else {
@@ -118,7 +118,7 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
 
         OLogManager.instance().info(this, "Events plugin: created configuration to file '%s'", f);
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException(
+        throw OException.wrapException(new OConfigurationException(
             "Cannot create Events plugin configuration file '" + configFile + "'. Events Plugin will be disabled"), e);
       }
     }
