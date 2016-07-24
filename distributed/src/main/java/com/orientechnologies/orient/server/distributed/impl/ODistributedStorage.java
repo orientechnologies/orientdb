@@ -1565,10 +1565,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   @Override
   public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
-    try {
-      return (List<String>) executeOperationInLock(new OCallable<Object, Void>() {
-        @Override
-        public Object call(Void iArgument) {
+// THIS CAUSES DEADLOCK
+//    try {
+//      return (List<String>) executeOperationInLock(new OCallable<Object, Void>() {
+//        @Override
+//        public Object call(Void iArgument) {
           final String localNode = dManager.getLocalNodeName();
 
           final ODistributedServerManager.DB_STATUS prevStatus = dManager.getDatabaseStatus(localNode, getName());
@@ -1587,12 +1588,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
               // RESTORE PREVIOUS STATUS
               dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.ONLINE);
           }
-        }
-      });
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw OException.wrapException(new OIOException("Backup interrupted"), e);
-    }
+//        }
+//      });
+//    } catch (InterruptedException e) {
+//      Thread.currentThread().interrupt();
+//      throw OException.wrapException(new OIOException("Backup interrupted"), e);
+//    }
   }
 
   @Override
