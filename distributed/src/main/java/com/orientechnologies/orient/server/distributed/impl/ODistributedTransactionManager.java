@@ -209,7 +209,7 @@ public class ODistributedTransactionManager {
               if (e instanceof RuntimeException)
                 throw (RuntimeException) e;
               else
-                OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
+                throw OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
             }
 
           } catch (RuntimeException e) {
@@ -219,8 +219,7 @@ public class ODistributedTransactionManager {
           } catch (Exception e) {
             localDistributedDatabase.popTxContext(requestId);
             ctx.destroy();
-            OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
-            // UNREACHABLE
+            throw OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
           } finally {
             if (finalExecutionModeSynch) {
               localDistributedDatabase.popTxContext(requestId);
