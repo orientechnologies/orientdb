@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class OArrayRangeSelector extends SimpleNode {
-  protected Integer              from;
-  protected Integer              to;
-  boolean                        newRange = false;
+  protected Integer from;
+  protected Integer to;
+  boolean newRange = false;
 
   protected OArrayNumberSelector fromSelector;
   protected OArrayNumberSelector toSelector;
@@ -27,7 +27,9 @@ public class OArrayRangeSelector extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -126,13 +128,25 @@ public class OArrayRangeSelector extends SimpleNode {
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    if(fromSelector!=null && fromSelector.needsAliases(aliases)){
+    if (fromSelector != null && fromSelector.needsAliases(aliases)) {
       return true;
     }
-    if(toSelector!=null && toSelector.needsAliases(aliases)){
+    if (toSelector != null && toSelector.needsAliases(aliases)) {
       return true;
     }
     return false;
+  }
+
+  public OArrayRangeSelector copy() {
+    OArrayRangeSelector result = new OArrayRangeSelector(-1);
+    result.from = from;
+    result.to = to;
+    result.newRange = newRange;
+
+    result.fromSelector = fromSelector==null?null:fromSelector.copy();
+    result.toSelector = toSelector==null?null:toSelector.copy();
+
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=594a372e31fcbcd3ed962c2260e76468 (do not edit this line) */

@@ -5,26 +5,37 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OCreateIndexStatement extends OStatement {
 
   public static class Property {
-    protected OIdentifier name;
+    protected OIdentifier      name;
     protected ORecordAttribute recordAttribute;
-    protected OIdentifier className;
+    protected OIdentifier      className;
     protected boolean byKey   = false;
     protected boolean byValue = false;
     protected OIdentifier collate;
 
+    public Property copy() {
+      Property result = new Property();
+      result.name = name == null ? null : name.copy();
+      result.recordAttribute = recordAttribute == null ? null : recordAttribute.copy();
+      result.className = className == null ? null : className.copy();
+      result.byKey = byKey;
+      result.byValue = byValue;
+      result.collate = collate == null ? null : collate.copy();
+      return result;
+    }
   }
 
-  protected OIndexName name;
+  protected OIndexName  name;
   protected OIdentifier className;
   protected List<Property> propertyList = new ArrayList<Property>();
   protected OIdentifier type;
   protected OIdentifier engine;
   protected List<OIdentifier> keyTypes = new ArrayList<OIdentifier>();
-  protected OJson       metadata;
+  protected OJson metadata;
 
   public OCreateIndexStatement(int id) {
     super(id);
@@ -34,8 +45,7 @@ public class OCreateIndexStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE INDEX ");
     name.toString(params, builder);
     if (className != null) {
@@ -47,9 +57,9 @@ public class OCreateIndexStatement extends OStatement {
         if (!first) {
           builder.append(", ");
         }
-        if(prop.name!=null) {
+        if (prop.name != null) {
           prop.name.toString(params, builder);
-        }else{
+        } else {
           prop.recordAttribute.toString(params, builder);
         }
         if (prop.byKey) {
@@ -57,7 +67,7 @@ public class OCreateIndexStatement extends OStatement {
         } else if (prop.byValue) {
           builder.append(" BY VALUE");
         }
-        if(prop.collate!=null){
+        if (prop.collate != null) {
           builder.append(" COLLATE ");
           prop.collate.toString(params, builder);
         }
@@ -67,15 +77,15 @@ public class OCreateIndexStatement extends OStatement {
     }
     builder.append(" ");
     type.toString(params, builder);
-    if(engine!=null){
+    if (engine != null) {
       builder.append(" ENGINE ");
       engine.toString(params, builder);
     }
-    if (keyTypes != null && keyTypes.size()>0) {
+    if (keyTypes != null && keyTypes.size() > 0) {
       boolean first = true;
       builder.append(" ");
-      for(OIdentifier keyType:keyTypes){
-        if(!first){
+      for (OIdentifier keyType : keyTypes) {
+        if (!first) {
           builder.append(",");
         }
         keyType.toString(params, builder);
@@ -86,6 +96,18 @@ public class OCreateIndexStatement extends OStatement {
       builder.append(" METADATA ");
       metadata.toString(params, builder);
     }
+  }
+
+  @Override public OCreateIndexStatement copy() {
+    OCreateIndexStatement result = new OCreateIndexStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.className = className == null ? null : className.copy();
+    result.propertyList = propertyList == null ? null : propertyList.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.type = type == null ? null : type.copy();
+    result.engine = engine == null ? null : engine.copy();
+    result.keyTypes = keyTypes == null ? null : keyTypes.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.metadata = metadata == null ? null : metadata.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=bd090e02c4346ad390a6b8c77f1b9dba (do not edit this line) */

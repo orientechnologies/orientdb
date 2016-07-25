@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OInsertBody extends SimpleNode {
 
@@ -11,11 +12,11 @@ public class OInsertBody extends SimpleNode {
   protected List<List<OExpression>>    valueExpressions;
   protected List<OInsertSetExpression> setExpressions;
 
-  protected OSelectStatement           selectStatement;
-  protected boolean                    selectInParentheses;
-  protected OJson                      content;
+  protected OSelectStatement selectStatement;
+  protected boolean          selectInParentheses;
+  protected OJson            content;
 
-  protected OProjection                returnProjection;
+  protected OProjection returnProjection;
 
   public OInsertBody(int id) {
     super(id);
@@ -25,14 +26,14 @@ public class OInsertBody extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-
 
     if (identifierList != null) {
       builder.append("(");
@@ -100,6 +101,21 @@ public class OInsertBody extends SimpleNode {
       builder.append(" RETURN ");
       returnProjection.toString(params, builder);
     }
+  }
+
+  public OInsertBody copy() {
+    OInsertBody result = new OInsertBody(-1);
+    result.identifierList = identifierList == null ? null : identifierList.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.valueExpressions = valueExpressions == null ?
+        null :
+        valueExpressions.stream().map(sub -> sub.stream().map(x -> x.copy()).collect(Collectors.toList()))
+            .collect(Collectors.toList());
+    result.setExpressions = setExpressions == null ? null : setExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.selectStatement = selectStatement == null ? null : selectStatement.copy();
+    result.selectInParentheses = selectInParentheses;
+    result.content = content == null ? null : content.copy();
+    result.returnProjection = returnProjection == null ? null : returnProjection.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=7d2079a41a1fc63a812cb679e729b23a (do not edit this line) */

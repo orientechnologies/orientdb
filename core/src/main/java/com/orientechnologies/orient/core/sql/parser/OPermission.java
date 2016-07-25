@@ -18,5 +18,11 @@ public class OPermission extends SimpleNode {
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(permission);
   }
+
+  @Override public OPermission copy() {
+    OPermission result = new OPermission(-1);
+    result.permission = permission;
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=576b31633bf93fdbc597f7448fc3c3b3 (do not edit this line) */

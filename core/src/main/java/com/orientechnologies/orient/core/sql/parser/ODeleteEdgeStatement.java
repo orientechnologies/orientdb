@@ -4,34 +4,35 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ODeleteEdgeStatement extends OStatement {
-  private static final Object unset           = new Object();
+  private static final Object unset = new Object();
 
-  protected OIdentifier       className;
-  protected OIdentifier       targetClusterName;
+  protected OIdentifier className;
+  protected OIdentifier targetClusterName;
 
-  protected ORid              rid;
-  protected List<ORid>        rids;
+  protected ORid       rid;
+  protected List<ORid> rids;
 
-  protected ORid              leftRid;
-  protected List<ORid>        leftRids;
-  protected OSelectStatement  leftStatement;
-  protected OInputParameter   leftParam;
-  protected Object            leftParamValue  = unset;
-  protected OIdentifier       leftIdentifier;
+  protected ORid             leftRid;
+  protected List<ORid>       leftRids;
+  protected OSelectStatement leftStatement;
+  protected OInputParameter  leftParam;
+  protected Object leftParamValue = unset;
+  protected OIdentifier leftIdentifier;
 
-  protected ORid              rightRid;
-  protected List<ORid>        rightRids;
-  protected OSelectStatement  rightStatement;
-  protected OInputParameter   rightParam;
-  protected Object            rightParamValue = unset;
-  protected OIdentifier       rightIdentifier;
+  protected ORid             rightRid;
+  protected List<ORid>       rightRids;
+  protected OSelectStatement rightStatement;
+  protected OInputParameter  rightParam;
+  protected Object rightParamValue = unset;
+  protected OIdentifier rightIdentifier;
 
-  protected OWhereClause      whereClause;
+  protected OWhereClause whereClause;
 
-  protected OLimit            limit;
-  protected OBatch            batch        = null;
+  protected OLimit limit;
+  protected OBatch batch = null;
 
   public ODeleteEdgeStatement(int id) {
     super(id);
@@ -41,7 +42,9 @@ public class ODeleteEdgeStatement extends OStatement {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -140,5 +143,26 @@ public class ODeleteEdgeStatement extends OStatement {
     }
   }
 
+  @Override public ODeleteEdgeStatement copy() {
+    ODeleteEdgeStatement result = new ODeleteEdgeStatement(-1);
+    result.className = className == null ? null : className.copy();
+    result.targetClusterName = targetClusterName == null ? null : targetClusterName.copy();
+    result.rid = rid == null ? null : rid.copy();
+    result.rids = rids == null ? null : rids.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.leftRid = leftRid == null ? null : leftRid.copy();
+    result.leftRids = leftRids == null ? null : leftRids.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.leftStatement = leftStatement == null ? null : leftStatement.copy();
+    result.leftParam = leftParam == null ? null : leftParam.copy();
+    result.leftIdentifier = leftIdentifier == null ? null : leftIdentifier.copy();
+    result.rightRid = rightRid == null ? null : rightRid.copy();
+    result.rightRids = rightRids == null ? null : rightRids.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.rightStatement = rightStatement == null ? null : rightStatement.copy();
+    result.rightParam = rightParam == null ? null : rightParam.copy();
+    result.rightIdentifier = rightIdentifier == null ? null : rightIdentifier.copy();
+    result.whereClause = whereClause == null ? null : whereClause.copy();
+    result.limit = limit == null ? null : limit.copy();
+    result.batch = batch == null ? null : batch.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=8f4c5bafa99572d7d87a5d0a2c7d55a7 (do not edit this line) */

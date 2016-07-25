@@ -7,7 +7,7 @@ import java.util.Map;
 public class ODropClassStatement extends OStatement {
 
   public OIdentifier name;
-  public boolean     unsafe = false;
+  public boolean unsafe = false;
 
   public ODropClassStatement(int id) {
     super(id);
@@ -20,9 +20,16 @@ public class ODropClassStatement extends OStatement {
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DROP CLASS ");
     name.toString(params, builder);
-    if(unsafe){
+    if (unsafe) {
       builder.append(" UNSAFE");
     }
+  }
+
+  @Override public ODropClassStatement copy() {
+    ODropClassStatement result = new ODropClassStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.unsafe = unsafe;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=8c475e1225074f68be37fce610987d54 (do not edit this line) */

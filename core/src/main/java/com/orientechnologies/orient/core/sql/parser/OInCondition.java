@@ -19,8 +19,8 @@ public class OInCondition extends OBooleanExpression {
   protected OMathExpression        rightMathExpression;
   protected Object                 right;
 
-  private static final Object      UNSET           = new Object();
-  private Object                   inputFinalValue = UNSET;
+  private static final Object UNSET           = new Object();
+  private              Object inputFinalValue = UNSET;
 
   public OInCondition(int id) {
     super(id);
@@ -30,18 +30,18 @@ public class OInCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement IN!!!");//TODO
   }
 
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement IN!!!");//TODO
   }
 
@@ -57,7 +57,7 @@ public class OInCondition extends OBooleanExpression {
     } else if (rightParam != null) {
       rightParam.toString(params, builder);
     } else if (rightMathExpression != null) {
-      rightMathExpression.toString(params,builder);
+      rightMathExpression.toString(params, builder);
     }
   }
 
@@ -68,8 +68,7 @@ public class OInCondition extends OBooleanExpression {
     return o.toString();
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     if (!left.supportsBasicCalculation()) {
       return false;
     }
@@ -83,8 +82,7 @@ public class OInCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (operator != null && !operator.supportsBasicCalculation()) {
       total++;
@@ -98,8 +96,7 @@ public class OInCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
 
     if (operator != null) {
@@ -115,14 +112,25 @@ public class OInCondition extends OBooleanExpression {
   }
 
   @Override public boolean needsAliases(Set<String> aliases) {
-    if(left.needsAliases(aliases)){
+    if (left.needsAliases(aliases)) {
       return true;
     }
 
-    if(rightMathExpression!=null && rightMathExpression.needsAliases(aliases)){
+    if (rightMathExpression != null && rightMathExpression.needsAliases(aliases)) {
       return true;
     }
     return false;
+  }
+
+  @Override public OInCondition copy() {
+    OInCondition result = new OInCondition(-1);
+    result.operator = operator == null ? null : (OBinaryCompareOperator) operator.copy();
+    result.left = left == null ? null : left.copy();
+    result.rightMathExpression = rightMathExpression == null ? null : rightMathExpression.copy();
+    result.rightStatement = rightStatement == null ? null : rightStatement.copy();
+    result.rightParam = rightParam == null ? null : rightParam.copy();
+    result.right = right == null ? null : right;
+    return result;
   }
 
 }

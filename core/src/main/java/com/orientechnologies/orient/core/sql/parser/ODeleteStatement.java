@@ -6,11 +6,11 @@ import java.util.Map;
 
 public class ODeleteStatement extends OStatement {
 
-  public OFromClause  fromClause;
+  public    OFromClause  fromClause;
   protected OWhereClause whereClause;
-  protected boolean      returnBefore = false;
-  protected OLimit       limit        = null;
-  protected boolean      unsafe       = false;
+  protected boolean returnBefore = false;
+  protected OLimit  limit        = null;
+  protected boolean unsafe       = false;
 
   public ODeleteStatement(int id) {
     super(id);
@@ -37,7 +37,16 @@ public class ODeleteStatement extends OStatement {
     if (unsafe) {
       builder.append(" UNSAFE");
     }
-   }
+  }
 
+  @Override public ODeleteStatement copy() {
+    ODeleteStatement result = new ODeleteStatement(-1);
+    result.fromClause = fromClause == null ? null : fromClause.copy();
+    result.whereClause = whereClause == null ? null : whereClause.copy();
+    result.returnBefore = returnBefore;
+    result.limit = limit == null ? null : limit.copy();
+    result.unsafe = unsafe;
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=5fb4ca5ba648e6c9110f41d806206a6f (do not edit this line) */

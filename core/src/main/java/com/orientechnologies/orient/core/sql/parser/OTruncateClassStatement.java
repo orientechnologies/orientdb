@@ -4,12 +4,11 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class OTruncateClassStatement extends OStatement {
+public class OTruncateClassStatement extends OStatement {
 
   protected OIdentifier className;
   protected boolean polymorphic = false;
-  protected boolean unsafe = false;
+  protected boolean unsafe      = false;
 
   public OTruncateClassStatement(int id) {
     super(id);
@@ -19,20 +18,29 @@ class OTruncateClassStatement extends OStatement {
     super(p, id);
   }
 
-
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
-    builder.append("TRUNCATE CLASS "+className.toString());
-    if(polymorphic){
+    builder.append("TRUNCATE CLASS " + className.toString());
+    if (polymorphic) {
       builder.append(" POLYMORPHIC");
     }
-    if(unsafe){
+    if (unsafe) {
       builder.append(" UNSAFE");
     }
+  }
+
+  @Override public OTruncateClassStatement copy() {
+    OTruncateClassStatement result = new OTruncateClassStatement(-1);
+    result.className = className == null ? null : className.copy();
+    result.polymorphic = polymorphic;
+    result.unsafe = unsafe;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=301f993f6ba2893cb30c8f189674b974 (do not edit this line) */

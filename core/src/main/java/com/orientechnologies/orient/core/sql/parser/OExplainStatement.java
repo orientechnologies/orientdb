@@ -42,5 +42,11 @@ public class OExplainStatement extends OStatement {
   @Override public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
     return statement.createExecutionPlan(ctx);
   }
+
+  @Override public OExplainStatement copy() {
+    OExplainStatement result = new OExplainStatement(-1);
+    result.statement = statement == null ? null : statement.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=9fdd24510993cbee32e38a51c838bdb4 (do not edit this line) */

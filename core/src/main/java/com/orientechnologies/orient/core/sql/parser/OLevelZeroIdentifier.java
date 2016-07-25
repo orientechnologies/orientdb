@@ -168,5 +168,13 @@ public class OLevelZeroIdentifier extends SimpleNode {
     }
     throw new OCommandExecutionException("cannot aggregate on " + toString());
   }
+
+  public OLevelZeroIdentifier copy() {
+    OLevelZeroIdentifier result = new OLevelZeroIdentifier(-1);
+    result.functionCall=  functionCall==null?null:functionCall.copy();
+    result.self = self;
+    result.collection = collection==null?null:collection.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */

@@ -25,5 +25,12 @@ public class ORebuildIndexStatement extends OStatement {
       name.toString(params, builder);
     }
   }
+
+  @Override public ORebuildIndexStatement copy() {
+    ORebuildIndexStatement result = new ORebuildIndexStatement(-1);
+    result.all = all;
+    result.name = name == null ? null : name.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=baca3c54112f1c08700ebdb691fa85bd (do not edit this line) */

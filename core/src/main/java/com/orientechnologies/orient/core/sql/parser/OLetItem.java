@@ -18,7 +18,9 @@ public class OLetItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -33,6 +35,14 @@ public class OLetItem extends SimpleNode {
       query.toString(params, builder);
       builder.append(")");
     }
+  }
+
+  public OLetItem copy() {
+    OLetItem result = new OLetItem(-1);
+    result.varName = varName.copy();
+    result.expression = expression == null ? null : expression.copy();
+    result.query = query == null ? null : query.copy();
+    return result;
   }
 
 }

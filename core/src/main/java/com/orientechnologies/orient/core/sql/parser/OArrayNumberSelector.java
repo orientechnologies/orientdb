@@ -11,13 +11,13 @@ import java.util.Set;
 
 public class OArrayNumberSelector extends SimpleNode {
   private static final Object UNSET           = new Object();
-  private Object              inputFinalValue = UNSET;
+  private              Object inputFinalValue = UNSET;
 
-  OInputParameter             inputValue;
+  OInputParameter inputValue;
 
-  OMathExpression             expressionValue;
+  OMathExpression expressionValue;
 
-  Integer                     integer;
+  Integer integer;
 
   public OArrayNumberSelector(int id) {
     super(id);
@@ -27,7 +27,9 @@ public class OArrayNumberSelector extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -81,10 +83,18 @@ public class OArrayNumberSelector extends SimpleNode {
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    if(expressionValue!=null){
+    if (expressionValue != null) {
       return expressionValue.needsAliases(aliases);
     }
     return false;
+  }
+
+  public OArrayNumberSelector copy() {
+    OArrayNumberSelector result = new OArrayNumberSelector(-1);
+    result.inputValue = inputValue == null ? null : inputValue.copy();
+    result.expressionValue = expressionValue == null ? null : expressionValue.copy();
+    result.integer = integer;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=5b2e495391ede3ccdc6c25aa63c8e591 (do not edit this line) */

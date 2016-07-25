@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OIndexMatchCondition extends OBooleanExpression {
 
@@ -109,6 +110,19 @@ public class OIndexMatchCondition extends OBooleanExpression {
       }
     }
     return false;
+  }
+
+  @Override public OIndexMatchCondition copy() {
+    OIndexMatchCondition result = new OIndexMatchCondition(-1);
+    result.operator = operator == null ? null : (OBinaryCompareOperator) operator.copy();
+    result.between = between;
+
+    result.leftExpressions =
+        leftExpressions == null ? null : leftExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.rightExpressions =
+        rightExpressions == null ? null : rightExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
+
+    return result;
   }
 
 }

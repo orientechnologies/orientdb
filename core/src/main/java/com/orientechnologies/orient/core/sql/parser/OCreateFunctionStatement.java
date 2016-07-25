@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OCreateFunctionStatement extends OStatement {
   protected OIdentifier name;
@@ -22,8 +23,7 @@ public class OCreateFunctionStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE FUNCTION ");
     name.toString(params, builder);
     builder.append(" ");
@@ -48,6 +48,17 @@ public class OCreateFunctionStatement extends OStatement {
       builder.append(" LANGUAGE ");
       language.toString(params, builder);
     }
+  }
+
+  @Override public OCreateFunctionStatement copy() {
+    OCreateFunctionStatement result = new OCreateFunctionStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.codeQuoted = codeQuoted;
+    result.code = code;
+    result.parameters = parameters == null ? null : parameters.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.idempotent = idempotent;
+    result.language = language == null ? null : language.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=bbc914f66e96822dedc7e89e14240872 (do not edit this line) */

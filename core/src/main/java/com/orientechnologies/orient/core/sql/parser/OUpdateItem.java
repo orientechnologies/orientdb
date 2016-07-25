@@ -11,10 +11,10 @@ public class OUpdateItem extends SimpleNode {
   public static final int OPERATOR_STARASSIGN  = 3;
   public static final int OPERATOR_SLASHASSIGN = 4;
 
-  protected OIdentifier   left;
-  protected OModifier     leftModifier;
-  protected int           operator;
-  protected OExpression   right;
+  protected OIdentifier left;
+  protected OModifier   leftModifier;
+  protected int         operator;
+  protected OExpression right;
 
   public OUpdateItem(int id) {
     super(id);
@@ -24,11 +24,12 @@ public class OUpdateItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
@@ -54,6 +55,15 @@ public class OUpdateItem extends SimpleNode {
 
     }
     right.toString(params, builder);
+  }
+
+  public OUpdateItem copy() {
+    OUpdateItem result = new OUpdateItem(-1);
+    result.left = left == null ? null : left.copy();
+    result.leftModifier = leftModifier == null ? null : leftModifier.copy();
+    result.operator = operator;
+    result.right = right == null ? null : right.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=df7444be87bba741316df8df0d653600 (do not edit this line) */

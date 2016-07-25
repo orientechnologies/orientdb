@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OFunctionCall extends SimpleNode {
 
@@ -245,6 +246,13 @@ public class OFunctionCall extends SimpleNode {
     function.config(this.params.toArray());
 
     OFuncitonAggregationContext result = new OFuncitonAggregationContext(function, this.params);
+    return result;
+  }
+
+  public OFunctionCall copy() {
+    OFunctionCall result = new OFunctionCall(-1);
+    result.name = name;
+    result.params = params.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 }

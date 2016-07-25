@@ -17,5 +17,9 @@ class ODeleteEdgeWhereStatement extends ODeleteEdgeStatement {
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
+  @Override public ODeleteEdgeStatement copy() {
+    return super.copy();
+  }
 }
 /* JavaCC - OriginalChecksum=1298a0baf9921378983d0722f8ebe68b (do not edit this line) */

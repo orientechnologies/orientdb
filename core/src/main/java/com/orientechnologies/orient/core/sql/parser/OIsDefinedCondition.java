@@ -23,18 +23,18 @@ public class OIsDefinedCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement IS DEFINED!!!");//TODO
   }
 
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement IS DEFINED!!!");//TODO
   }
 
@@ -43,23 +43,26 @@ public class OIsDefinedCondition extends OBooleanExpression {
     builder.append(" is defined");
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     return 0;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     return Collections.EMPTY_LIST;
   }
 
   @Override public boolean needsAliases(Set<String> aliases) {
     return expression.needsAliases(aliases);
+  }
+
+  @Override public OIsDefinedCondition copy() {
+    OIsDefinedCondition result = new OIsDefinedCondition(-1);
+    result.expression = expression.copy();
+    return result;
   }
 
 }

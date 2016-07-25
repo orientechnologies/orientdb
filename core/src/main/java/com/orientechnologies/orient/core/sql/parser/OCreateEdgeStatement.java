@@ -61,5 +61,21 @@ public class OCreateEdgeStatement extends OStatement {
     }
   }
 
+  @Override public OCreateEdgeStatement copy() {
+    OCreateEdgeStatement result = new OCreateEdgeStatement(-1);
+
+    result.targetClass = targetClass==null?null:targetClass.copy();
+    result.targetClusterName = targetClusterName==null?null:targetClusterName.copy();
+
+    result.leftExpression = leftExpression==null?null:leftExpression.copy();
+
+    result.rightExpression = rightExpression==null?null:rightExpression.copy();
+
+    result.body = body==null?null:body.copy();
+    result.retry = retry;
+    result.wait = wait;
+    result.batch = batch==null?null:batch.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=2d3dc5693940ffa520146f8f7f505128 (do not edit this line) */

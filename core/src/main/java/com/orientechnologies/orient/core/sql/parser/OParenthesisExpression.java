@@ -101,5 +101,12 @@ public class OParenthesisExpression extends OMathExpression {
       return this;
     }
   }
+
+  @Override public OParenthesisExpression copy() {
+    OParenthesisExpression result = new OParenthesisExpression(-1);
+    result.expression = expression == null ? null : expression.copy();
+    result.statement = statement == null ? null : statement.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */

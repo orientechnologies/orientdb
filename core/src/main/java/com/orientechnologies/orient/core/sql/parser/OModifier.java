@@ -124,7 +124,6 @@ public class OModifier extends SimpleNode {
     return result;
   }
 
-
   public boolean needsAliases(Set<String> aliases) {
     if (condition != null && condition.needsAliases(aliases)) {
       return true;
@@ -149,5 +148,17 @@ public class OModifier extends SimpleNode {
     return false;
   }
 
+  public OModifier copy() {
+    OModifier result = new OModifier(-1);
+    result.squareBrackets = squareBrackets;
+    result.arrayRange = arrayRange == null ? null : arrayRange.copy();
+    result.condition = condition == null ? null : (OOrBlock) condition.copy();
+    result.arraySingleValues = arraySingleValues == null ? null : arraySingleValues.copy();
+    result.methodCall = methodCall == null ? null : methodCall.copy();
+    result.suffix = suffix == null ? null : suffix.copy();
+    result.next = next == null ? null : next.copy();
+
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

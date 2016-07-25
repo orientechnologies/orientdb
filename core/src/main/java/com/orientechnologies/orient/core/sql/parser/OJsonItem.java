@@ -51,14 +51,22 @@ public class OJsonItem {
   }
 
   public OJsonItem splitForAggregation(AggregateProjectionSplit aggregateSplit) {
-    if(isAggregate()){
+    if (isAggregate()) {
       OJsonItem item = new OJsonItem();
       item.leftIdentifier = leftIdentifier;
       item.leftString = leftString;
       item.right = right.splitForAggregation(aggregateSplit);
       return item;
-    }else {
+    } else {
       return this;
     }
+  }
+
+  public OJsonItem copy() {
+    OJsonItem result = new OJsonItem();
+    result.leftIdentifier = leftIdentifier == null ? null : leftIdentifier.copy();
+    result.leftString = leftString;
+    result.right = right.copy();
+    return result;
   }
 }

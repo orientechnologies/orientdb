@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OAlterClassStatement extends OStatement {
 
@@ -16,7 +17,7 @@ public class OAlterClassStatement extends OStatement {
   /**
    * the class property to be altered
    */
-  public OClass.ATTRIBUTES property;
+  public    OClass.ATTRIBUTES property;
 
   protected OIdentifier       identifierValue;
   protected List<OIdentifier> identifierListValue;
@@ -24,13 +25,13 @@ public class OAlterClassStatement extends OStatement {
   protected Boolean           remove;
   protected ONumber           numberValue;
   protected Boolean           booleanValue;
-  public OIdentifier       customKey;
-  public OExpression       customValue;
+  public    OIdentifier       customKey;
+  public    OExpression       customValue;
 
   // only to manage 'round-robin' as a cluster selection strategy (not a valid identifier)
-  protected String            customString;
+  protected String customString;
 
-  protected boolean           unsafe;
+  protected boolean unsafe;
 
   public OAlterClassStatement(int id) {
     super(id);
@@ -40,8 +41,7 @@ public class OAlterClassStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER CLASS ");
     name.toString(params, builder);
     builder.append(" " + property.name() + " ");
@@ -52,20 +52,20 @@ public class OAlterClassStatement extends OStatement {
     case REMOVECLUSTER:
     case DESCRIPTION:
     case ENCRYPTION:
-      if(numberValue != null){
+      if (numberValue != null) {
         numberValue.toString(params, builder);//clusters only
       } else if (identifierValue != null) {
         identifierValue.toString(params, builder);
-      } else  {
+      } else {
         builder.append("null");
       }
       break;
     case CLUSTERSELECTION:
       if (identifierValue != null) {
         identifierValue.toString(params, builder);
-      } else if (customString!=null){
+      } else if (customString != null) {
         builder.append('\'').append(customString).append('\'');
-      }else{
+      } else {
         builder.append("null");
       }
       break;
@@ -82,9 +82,9 @@ public class OAlterClassStatement extends OStatement {
       }
       break;
     case SUPERCLASSES:
-      if(identifierListValue==null){
+      if (identifierListValue == null) {
         builder.append("null");
-      }else {
+      } else {
         boolean first = true;
         for (OIdentifier ident : identifierListValue) {
           if (!first) {
@@ -115,6 +115,24 @@ public class OAlterClassStatement extends OStatement {
     if (unsafe) {
       builder.append(" UNSAFE");
     }
+  }
+
+  public OStatement copy() {
+    OAlterClassStatement result = new OAlterClassStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.property = property;
+    result.identifierValue = identifierValue == null ? null : identifierValue.copy();
+    result.identifierListValue =
+        identifierListValue == null ? null : identifierListValue.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.add = add;
+    result.remove = remove;
+    result.numberValue = numberValue == null ? null : numberValue.copy();
+    result.booleanValue = booleanValue;
+    result.customKey = customKey == null ? null : customKey.copy();
+    result.customValue = customValue == null ? null : customValue.copy();
+    result.customString = customString;
+    result.unsafe = unsafe;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=4668bb1cd336844052df941f39bdb634 (do not edit this line) */

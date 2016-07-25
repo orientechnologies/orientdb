@@ -155,12 +155,20 @@ public class OProjectionItem extends SimpleNode {
     }
   }
 
-
   public AggregationContext getAggregationContext(OCommandContext ctx) {
-    if(expression==null){
-      throw new OCommandExecutionException("Cannot aggregate on this projection: "+toString());
+    if (expression == null) {
+      throw new OCommandExecutionException("Cannot aggregate on this projection: " + toString());
     }
     return expression.getAggregationContext(ctx);
+  }
+
+  public OProjectionItem copy() {
+    OProjectionItem result = new OProjectionItem(-1);
+    result.all = all;
+    result.alias = alias == null ? null : alias.copy();
+    result.expression = expression == null ? null : expression.copy();
+    result.aggregate = aggregate;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

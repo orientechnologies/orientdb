@@ -237,5 +237,24 @@ public class OSelectStatement extends OStatement {
     return planner.createExecutionPlan(ctx);
   }
 
+  @Override public OSelectStatement copy() {
+    OSelectStatement result = new OSelectStatement(-1);
+    result.target = target == null ? null : target.copy();
+    result.projection = projection == null ? null : projection.copy();
+    result.whereClause = whereClause == null ? null : whereClause.copy();
+    result.groupBy = groupBy == null ? null : groupBy.copy();
+    result.orderBy = orderBy == null ? null : orderBy.copy();
+    result.unwind = unwind == null ? null : unwind.copy();
+    result.skip = skip == null ? null : skip.copy();
+    result.limit = limit == null ? null : limit.copy();
+    result.lockRecord = lockRecord;
+    result.fetchPlan = fetchPlan == null ? null : fetchPlan.copy();
+    result.letClause = letClause == null ? null : letClause.copy();
+    result.timeout = timeout == null ? null : timeout.copy();
+    result.parallel = parallel;
+    result.noCache = noCache;
+
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

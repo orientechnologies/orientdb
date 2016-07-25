@@ -5,13 +5,14 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OCreatePropertyStatement extends OStatement {
   public OIdentifier className;
   public OIdentifier propertyName;
   public OIdentifier propertyType;
   public OIdentifier linkedType;
-  public boolean unsafe = false;
+  public boolean                                 unsafe     = false;
   public List<OCreatePropertyAttributeStatement> attributes = new ArrayList<OCreatePropertyAttributeStatement>();
 
   public OCreatePropertyStatement(int id) {
@@ -22,8 +23,7 @@ public class OCreatePropertyStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE PROPERTY ");
     className.toString(params, builder);
     builder.append(".");
@@ -34,23 +34,34 @@ public class OCreatePropertyStatement extends OStatement {
       builder.append(" ");
       linkedType.toString(params, builder);
     }
-    
+
     if (!attributes.isEmpty()) {
       builder.append(" (");
       for (int i = 0; i < attributes.size(); i++) {
         OCreatePropertyAttributeStatement att = attributes.get(i);
         att.toString(params, builder);
-        
+
         if (i < attributes.size() - 1) {
           builder.append(", ");
         }
       }
       builder.append(")");
     }
-    
+
     if (unsafe) {
       builder.append(" UNSAFE");
     }
+  }
+
+  @Override public OCreatePropertyStatement copy() {
+    OCreatePropertyStatement result = new OCreatePropertyStatement(-1);
+    result.className = className == null ? null : className.copy();
+    result.propertyName = propertyName == null ? null : propertyName.copy();
+    result.propertyType = propertyType == null ? null : propertyType.copy();
+    result.linkedType = linkedType == null ? null : linkedType.copy();
+    result.unsafe = unsafe;
+    result.attributes = attributes == null ? null : attributes.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=ff78676483d59013ab10b13bde2678d3 (do not edit this line) */

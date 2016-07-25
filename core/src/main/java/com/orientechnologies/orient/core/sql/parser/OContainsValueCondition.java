@@ -25,21 +25,20 @@ public class OContainsValueCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement ContainsValue!!!");//TODO
   }
 
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement ContainsValue!!!");//TODO
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
 
@@ -55,21 +54,18 @@ public class OContainsValueCondition extends OBooleanExpression {
 
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     if (condition == null) {
       return 0;
     }
     return condition.getNumberOfExternalCalculations();
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     if (condition == null) {
       return Collections.EMPTY_LIST;
     }
@@ -77,18 +73,26 @@ public class OContainsValueCondition extends OBooleanExpression {
   }
 
   @Override public boolean needsAliases(Set<String> aliases) {
-    if(left!=null && left.needsAliases(aliases)){
+    if (left != null && left.needsAliases(aliases)) {
       return true;
     }
-    if(condition!=null && condition.needsAliases(aliases)){
+    if (condition != null && condition.needsAliases(aliases)) {
       return true;
     }
-    if(expression!=null && expression.needsAliases(aliases)){
+    if (expression != null && expression.needsAliases(aliases)) {
       return true;
     }
 
     return false;
   }
 
+  @Override public OContainsValueCondition copy() {
+    OContainsValueCondition result = new OContainsValueCondition(-1);
+    result.left = left.copy();
+    result.operator = operator;
+    result.condition = condition == null ? null : condition.copy();
+    result.expression = expression == null ? null : expression.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */

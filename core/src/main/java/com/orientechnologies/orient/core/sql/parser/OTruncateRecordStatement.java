@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OTruncateRecordStatement extends OStatement {
   protected ORid       record;
@@ -17,8 +18,7 @@ public class OTruncateRecordStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("TRUNCATE RECORD ");
     if (record != null) {
       record.toString(params, builder);
@@ -34,6 +34,13 @@ public class OTruncateRecordStatement extends OStatement {
       }
       builder.append("]");
     }
+  }
+
+  @Override public OTruncateRecordStatement copy() {
+    OTruncateRecordStatement result = new OTruncateRecordStatement(-1);
+    result.record = record == null ? null : record.copy();
+    result.records = records == null ? null : records.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=9da68e9fe4c4bf94a12d8a6f8864097a (do not edit this line) */

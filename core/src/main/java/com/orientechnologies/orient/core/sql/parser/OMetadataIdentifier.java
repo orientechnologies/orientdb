@@ -16,7 +16,9 @@ public class OMetadataIdentifier extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -28,6 +30,12 @@ public class OMetadataIdentifier extends SimpleNode {
 
   public String getName() {
     return name;
+  }
+
+  public OMetadataIdentifier copy() {
+    OMetadataIdentifier result = new OMetadataIdentifier(-1);
+    result.name = name;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=85e179b9505270f0596904070fdf0745 (do not edit this line) */

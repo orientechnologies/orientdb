@@ -30,6 +30,8 @@ public class ONearOperator extends SimpleNode implements OBinaryCompareOperator 
     return false;
   }
 
-
+  @Override public ONearOperator copy() {
+    return new ONearOperator(-1);
+  }
 }
 /* JavaCC - OriginalChecksum=a79af9beed70f813658f38a0162320e0 (do not edit this line) */

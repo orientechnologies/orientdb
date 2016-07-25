@@ -17,8 +17,7 @@ import java.util.Set;
 public abstract class OBooleanExpression extends SimpleNode {
 
   public static final OBooleanExpression TRUE = new OBooleanExpression(0) {
-    @Override
-    public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return true;
     }
 
@@ -42,8 +41,11 @@ public abstract class OBooleanExpression extends SimpleNode {
       return false;
     }
 
-    @Override
-    public String toString() {
+    @Override public OBooleanExpression copy() {
+      return TRUE;
+    }
+
+    @Override public String toString() {
       return "true";
     }
 
@@ -53,8 +55,7 @@ public abstract class OBooleanExpression extends SimpleNode {
   };
 
   public static final OBooleanExpression FALSE = new OBooleanExpression(0) {
-    @Override
-    public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
       return false;
     }
 
@@ -78,8 +79,11 @@ public abstract class OBooleanExpression extends SimpleNode {
       return false;
     }
 
-    @Override
-    public String toString() {
+    @Override public OBooleanExpression copy() {
+      return FALSE;
+    }
+
+    @Override public String toString() {
       return "false";
     }
 
@@ -97,7 +101,9 @@ public abstract class OBooleanExpression extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -106,23 +112,20 @@ public abstract class OBooleanExpression extends SimpleNode {
 
   public abstract boolean evaluate(OResult currentRecord, OCommandContext ctx);
 
-    /**
-     *
-     * @return true if this expression can be calculated in plain Java, false otherwise (eg. LUCENE operator)
-     */
-    protected abstract boolean supportsBasicCalculation();
+  /**
+   * @return true if this expression can be calculated in plain Java, false otherwise (eg. LUCENE operator)
+   */
+  protected abstract boolean supportsBasicCalculation();
 
-    /**
-     *
-     * @return the number of sub-expressions that have to be calculated using an external engine (eg. LUCENE)
-     */
-    protected abstract int getNumberOfExternalCalculations();
+  /**
+   * @return the number of sub-expressions that have to be calculated using an external engine (eg. LUCENE)
+   */
+  protected abstract int getNumberOfExternalCalculations();
 
-    /**
-     *
-     * @return the sub-expressions that have to be calculated using an external engine (eg. LUCENE)
-     */
-    protected abstract List<Object> getExternalCalculationConditions();
+  /**
+   * @return the sub-expressions that have to be calculated using an external engine (eg. LUCENE)
+   */
+  protected abstract List<Object> getExternalCalculationConditions();
 
   public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
     return null;
@@ -134,8 +137,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   }
 
   protected OAndBlock encapsulateInAndBlock(OBooleanExpression item) {
-    if(item instanceof OAndBlock){
-      return (OAndBlock)item;
+    if (item instanceof OAndBlock) {
+      return (OAndBlock) item;
     }
     OAndBlock result = new OAndBlock(-1);
     result.subBlocks.add(item);
@@ -143,4 +146,6 @@ public abstract class OBooleanExpression extends SimpleNode {
   }
 
   public abstract boolean needsAliases(Set<String> aliases);
+
+  public abstract OBooleanExpression copy();
 }

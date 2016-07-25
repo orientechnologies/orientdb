@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OClusterList extends SimpleNode {
 
@@ -46,6 +47,12 @@ public class OClusterList extends SimpleNode {
       cluster.clusterName = id.getStringValue();
       result.add(cluster);
     }
+    return result;
+  }
+
+  public OClusterList copy() {
+    OClusterList result = new OClusterList(-1);
+    result.clusters = clusters.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
 }

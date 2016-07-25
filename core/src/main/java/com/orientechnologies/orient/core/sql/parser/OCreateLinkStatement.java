@@ -24,8 +24,7 @@ public class OCreateLinkStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE LINK ");
     name.toString(params, builder);
     builder.append(" TYPE ");
@@ -49,6 +48,20 @@ public class OCreateLinkStatement extends OStatement {
     if (inverse) {
       builder.append(" INVERSE");
     }
+  }
+
+  @Override public OCreateLinkStatement copy() {
+    OCreateLinkStatement result = new OCreateLinkStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.type = type == null ? null : type.copy();
+    result.sourceClass = sourceClass == null ? null : sourceClass.copy();
+    result.sourceField = sourceField == null ? null : sourceField.copy();
+    result.sourceRecordAttr = sourceRecordAttr == null ? null : sourceRecordAttr.copy();
+    result.destClass = destClass == null ? null : destClass.copy();
+    result.destField = destField == null ? null : destField.copy();
+    result.destRecordAttr = destRecordAttr == null ? null : destRecordAttr.copy();
+    result.inverse = inverse;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=de46c9bdaf3b36691764a78cd89d1c2b (do not edit this line) */

@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OGroupBy extends SimpleNode {
 
@@ -37,6 +38,12 @@ public class OGroupBy extends SimpleNode {
 
   public List<OExpression> getItems() {
     return items;
+  }
+
+  public OGroupBy copy() {
+    OGroupBy result = new OGroupBy(-1);
+    result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=4739190aa6c1a3533a89b76a15bd6fdf (do not edit this line) */

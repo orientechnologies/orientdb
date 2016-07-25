@@ -36,6 +36,9 @@ public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator 
     return true;
   }
 
+  @Override public OLikeOperator copy() {
+    return new OLikeOperator(-1);
+  }
 
 }
 /* JavaCC - OriginalChecksum=16d302abf0f85b404e57b964606952ca (do not edit this line) */

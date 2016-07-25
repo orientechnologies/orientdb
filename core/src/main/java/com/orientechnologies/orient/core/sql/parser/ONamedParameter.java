@@ -6,8 +6,8 @@ import java.util.Map;
 
 public class ONamedParameter extends OInputParameter {
 
-  protected int         paramNumber;
-  protected String      paramName;
+  protected int    paramNumber;
+  protected String paramName;
 
   public ONamedParameter(int id) {
     super(id);
@@ -17,13 +17,14 @@ public class ONamedParameter extends OInputParameter {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  @Override public String toString() {
     return ":" + paramName;
   }
 
@@ -53,5 +54,11 @@ public class ONamedParameter extends OInputParameter {
     return this;
   }
 
+  @Override public ONamedParameter copy() {
+    ONamedParameter result = new ONamedParameter(-1);
+    result.paramName = paramName;
+    result.paramNumber = paramNumber;
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=8a00a9cf51a15dd75202f6372257fc1c (do not edit this line) */

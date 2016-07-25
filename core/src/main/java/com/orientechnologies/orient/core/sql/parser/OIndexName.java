@@ -21,5 +21,11 @@ public class OIndexName extends SimpleNode {
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(getValue());
   }
+
+  public OIndexName copy() {
+    OIndexName result = new OIndexName(-1);
+    result.value = value;
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=06c827926e7e9ee650b76d42e31feb46 (do not edit this line) */

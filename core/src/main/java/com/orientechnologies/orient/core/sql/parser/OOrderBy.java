@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OOrderBy extends SimpleNode {
   protected List<OOrderByItem> items;
@@ -58,6 +59,12 @@ public class OOrderBy extends SimpleNode {
       }
     }
     return 0;
+  }
+
+  public OOrderBy copy() {
+    OOrderBy result = new OOrderBy(-1);
+    result.items = items == null ? null : items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=d5529400217169f15e556e5dc6fe4f5b (do not edit this line) */

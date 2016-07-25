@@ -39,6 +39,8 @@ public class OContainsKeyOperator extends SimpleNode implements OBinaryCompareOp
     return true;
   }
 
-
+  public OContainsKeyOperator copy() {
+    return this;
+  }
 }
 /* JavaCC - OriginalChecksum=1a03daaa6712eb981b070e8e94960951 (do not edit this line) */

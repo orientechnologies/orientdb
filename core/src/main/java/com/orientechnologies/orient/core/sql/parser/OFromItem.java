@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OFromItem extends SimpleNode {
 
@@ -123,6 +124,24 @@ public class OFromItem extends SimpleNode {
 
   public OModifier getModifier() {
     return modifier;
+  }
+
+  public OFromItem copy() {
+    OFromItem result = new OFromItem(-1);
+    if (rids != null) {
+      result.rids = rids.stream().map(r -> r.copy()).collect(Collectors.toList());
+    }
+    result.cluster = cluster == null ? null : cluster.copy();
+    result.clusterList = clusterList == null ? null : clusterList.copy();
+    result.index = index == null ? null : index.copy();
+    result.metadata = metadata == null ? null : metadata.copy();
+    result.statement = statement == null ? null : statement.copy();
+    result.inputParam = inputParam == null ? null : inputParam.copy();
+    result.identifier = identifier == null ? null : identifier.copy();
+    result.functionCall = functionCall == null ? null : functionCall.copy();
+    result.modifier = modifier == null ? null : modifier.copy();
+
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

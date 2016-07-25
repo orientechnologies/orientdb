@@ -16,13 +16,14 @@ public class OPositionalParameter extends OInputParameter {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public String toString() {
+  @Override public String toString() {
     return "?";
   }
 
@@ -50,5 +51,10 @@ public class OPositionalParameter extends OInputParameter {
     return this;
   }
 
+  @Override public OPositionalParameter copy() {
+    OPositionalParameter result = new OPositionalParameter(-1);
+    result.paramNumber = paramNumber;
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=f73bea7d9b3994a9d4e79d2c330d8ba2 (do not edit this line) */

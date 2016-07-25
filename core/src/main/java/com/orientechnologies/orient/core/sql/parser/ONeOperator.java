@@ -32,6 +32,8 @@ class ONeOperator extends SimpleNode  implements OBinaryCompareOperator{
     return true;
   }
 
-
+  @Override public ONeOperator copy() {
+    return new ONeOperator(-1);
+  }
 }
 /* JavaCC - OriginalChecksum=ac0ae426fb86c930dea83013ddc202ba (do not edit this line) */

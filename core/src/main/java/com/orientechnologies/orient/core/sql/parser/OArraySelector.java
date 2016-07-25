@@ -87,5 +87,16 @@ public class OArraySelector extends SimpleNode {
     }
     return false;
   }
+
+  public OArraySelector copy(){
+    OArraySelector result = new OArraySelector(-1);
+
+    result.rid = rid==null?null:rid.copy();
+    result.inputParam = inputParam==null?null:inputParam.copy();
+    result.expression = expression==null?null:expression.copy();
+    result.integer = integer==null?null:integer.copy();
+
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=f87a5543b1dad0fb5f6828a0663a7c9e (do not edit this line) */

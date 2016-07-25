@@ -6,12 +6,12 @@ import java.util.Map;
 
 public class ODeleteVertexStatement extends OStatement {
 
-  protected boolean      from         = false;
+  protected boolean from = false;
   protected OFromClause  fromClause;
   protected OWhereClause whereClause;
-  protected boolean      returnBefore = false;
-  protected OLimit       limit        = null;
-  protected OBatch       batch        = null;
+  protected boolean returnBefore = false;
+  protected OLimit  limit        = null;
+  protected OBatch  batch        = null;
 
   public ODeleteVertexStatement(int id) {
     super(id);
@@ -23,7 +23,7 @@ public class ODeleteVertexStatement extends OStatement {
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DELETE VERTEX ");
-    if(from){
+    if (from) {
       builder.append("FROM ");
     }
     fromClause.toString(params, builder);
@@ -42,6 +42,15 @@ public class ODeleteVertexStatement extends OStatement {
     }
   }
 
-
+  @Override public ODeleteVertexStatement copy() {
+    ODeleteVertexStatement result = new ODeleteVertexStatement(-1);
+    result.from = from;
+    result.fromClause = fromClause == null ? null : fromClause.copy();
+    result.whereClause = whereClause == null ? null : whereClause.copy();
+    result.returnBefore = returnBefore;
+    result.limit = limit == null ? null : limit.copy();
+    result.batch = batch == null ? null : batch.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=b62d3046f4bd1b9c1f78ed4f125b06d3 (do not edit this line) */

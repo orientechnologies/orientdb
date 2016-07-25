@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFiltered;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OMethodCall extends SimpleNode {
 
@@ -138,6 +139,13 @@ public class OMethodCall extends SimpleNode {
       }
     }
     return false;
+  }
+
+  public OMethodCall copy() {
+    OMethodCall result = new OMethodCall(-1);
+    result.methodName = methodName.copy();
+    result.params = params.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=da95662da21ceb8dee3ad88c0d980413 (do not edit this line) */

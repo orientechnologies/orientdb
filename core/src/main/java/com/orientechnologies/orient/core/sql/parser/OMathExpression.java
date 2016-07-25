@@ -13,13 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OMathExpression extends SimpleNode {
 
   public OExpression getExpandContent() {
     throw new OCommandExecutionException("Invalid expand expression");
   }
-
 
   public enum Operator {
     PLUS {
@@ -150,7 +150,7 @@ public class OMathExpression extends SimpleNode {
   }
 
   protected List<OMathExpression> childExpressions = new ArrayList<OMathExpression>();
-  protected List<Operator>        operators        = new ArrayList<Operator>();
+  protected List<Operator>        operators        = new ArrayList<>();
 
   public OMathExpression(int id) {
     super(id);
@@ -414,11 +414,16 @@ public class OMathExpression extends SimpleNode {
     }
   }
 
-
   public AggregationContext getAggregationContext(OCommandContext ctx) {
     throw new UnsupportedOperationException("multiple math expressions do not allow plain aggregation");
   }
 
+  public OMathExpression copy() {
+    OMathExpression result = new OMathExpression(-1);
+    result.childExpressions = childExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.operators.addAll(operators);
+    return result;
+  }
 
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

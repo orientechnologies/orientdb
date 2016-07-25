@@ -13,11 +13,12 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OWhereClause extends SimpleNode {
   protected OBooleanExpression baseExpression;
 
-  protected List<OAndBlock>    flattened;
+  protected List<OAndBlock> flattened;
 
   public OWhereClause(int id) {
     super(id);
@@ -60,7 +61,7 @@ public class OWhereClause extends SimpleNode {
    *
    * @param oClass
    * @return an estimation of the number of records of this class returned applying this filter, 0 if and only if sure that no
-   *         records are returned
+   * records are returned
    */
   public long estimate(OClass oClass, long threshold, OCommandContext ctx) {
     long count = oClass.count();
@@ -120,7 +121,7 @@ public class OWhereClause extends SimpleNode {
     }
     if (key != null) {
       Object result = index.get(key);
-      if(result instanceof OIdentifiable){
+      if (result instanceof OIdentifiable) {
         return 1;
       }
       if (result instanceof Collection) {
@@ -210,8 +211,7 @@ public class OWhereClause extends SimpleNode {
       }
       if (result instanceof Iterator) {
         return new Iterable() {
-          @Override
-          public Iterator iterator() {
+          @Override public Iterator iterator() {
             return (Iterator) result;
           }
         };
@@ -266,6 +266,13 @@ public class OWhereClause extends SimpleNode {
   public boolean containsSubqueries() {
 
     return false;
+  }
+
+  public OWhereClause copy() {
+    OWhereClause result = new OWhereClause(-1);
+    result.baseExpression = baseExpression.copy();
+    result.flattened = flattened == null ? null : flattened.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

@@ -63,5 +63,9 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   @Override public OResult toResult() {
     return new OResultInternal();
   }
+
+  @Override public long getCost() {
+    return 0l;
+  }
 }
 

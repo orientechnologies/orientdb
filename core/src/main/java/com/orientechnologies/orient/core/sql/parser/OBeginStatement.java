@@ -4,9 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class OBeginStatement extends OStatement {
+public class OBeginStatement extends OStatement {
   protected OIdentifier isolation;
+
   public OBeginStatement(int id) {
     super(id);
   }
@@ -17,10 +17,16 @@ class OBeginStatement extends OStatement {
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("BEGIN");
-    if(isolation!=null){
+    if (isolation != null) {
       builder.append(" ISOLATION ");
       isolation.toString(params, builder);
     }
+  }
+
+  @Override public OBeginStatement copy() {
+    OBeginStatement result = new OBeginStatement(-1);
+    result.isolation = isolation == null ? null : isolation.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=aaa994acbe63cc4169fe33144d412fed (do not edit this line) */

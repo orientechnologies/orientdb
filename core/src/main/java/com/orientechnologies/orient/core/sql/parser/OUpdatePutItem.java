@@ -18,11 +18,12 @@ public class OUpdatePutItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
@@ -30,6 +31,14 @@ public class OUpdatePutItem extends SimpleNode {
     key.toString(params, builder);
     builder.append(", ");
     value.toString(params, builder);
+  }
+
+  public OUpdatePutItem copy() {
+    OUpdatePutItem result = new OUpdatePutItem(-1);
+    result.left = left == null ? null : left.copy();
+    result.key = key == null ? null : key.copy();
+    result.value = value == null ? null : value.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=a38339c33ebf0a8b21e76ddb278f4958 (do not edit this line) */

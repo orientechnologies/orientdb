@@ -28,5 +28,13 @@ public class OLetStatement extends OStatement {
       expression.toString(params, builder);
     }
   }
+
+  @Override public OLetStatement copy() {
+    OLetStatement result = new OLetStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.statement = statement == null ? null : statement.copy();
+    result.expression = expression == null ? null : expression.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=cc646e5449351ad9ced844f61b687928 (do not edit this line) */

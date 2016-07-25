@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class OLimit extends SimpleNode {
 
-  protected OInteger         num;
+  protected OInteger num;
 
   protected OInputParameter inputParam;
 
@@ -21,7 +21,9 @@ public class OLimit extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -51,6 +53,13 @@ public class OLimit extends SimpleNode {
       }
     }
     throw new OCommandExecutionException("No value for LIMIT");
+  }
+
+  public OLimit copy() {
+    OLimit result = new OLimit(-1);
+    result.num = num == null ? null : num.copy();
+    result.inputParam = inputParam == null ? null : inputParam.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=1063b9489290bb08de6048ba55013171 (do not edit this line) */

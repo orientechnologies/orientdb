@@ -107,4 +107,14 @@ public class OOrderByItem {
     }
     return result;
   }
+
+  public OOrderByItem copy() {
+    OOrderByItem result = new OOrderByItem();
+    result.alias = alias;
+    result.modifier = modifier == null ? null : modifier.copy();
+    result.recordAttr = recordAttr;
+    result.rid = rid == null ? null : rid.copy();
+    result.type = type;
+    return result;
+  }
 }

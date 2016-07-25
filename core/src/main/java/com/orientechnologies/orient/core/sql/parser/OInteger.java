@@ -27,5 +27,11 @@ public class OInteger extends ONumber {
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("" + value);
   }
+
+  public OInteger copy() {
+    OInteger result= new OInteger(-1);
+    result.value = value;
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=2e6eee6366ff4e864dd6c8184d2766f5 (do not edit this line) */

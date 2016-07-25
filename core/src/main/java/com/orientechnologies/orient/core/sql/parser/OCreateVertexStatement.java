@@ -45,5 +45,14 @@ public class OCreateVertexStatement extends OStatement {
     }
   }
 
+  @Override public OCreateVertexStatement copy() {
+    OCreateVertexStatement result = new OCreateVertexStatement(-1);
+    result.targetClass = targetClass == null ? null : targetClass.copy();
+    result.targetClusterName = targetClusterName == null ? null : targetClusterName.copy();
+    result.targetCluster = targetCluster == null ? null : targetCluster.copy();
+    result.returnStatement = returnStatement == null ? null : returnStatement.copy();
+    result.insertBody = insertBody == null ? null : insertBody.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=0ac3d3f09a76b9924a17fd05bc293863 (do not edit this line) */

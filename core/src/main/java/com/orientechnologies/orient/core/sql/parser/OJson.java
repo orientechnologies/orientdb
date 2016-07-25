@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OJson extends SimpleNode {
 
@@ -124,15 +125,21 @@ public class OJson extends SimpleNode {
   }
 
   public OJson splitForAggregation(AggregateProjectionSplit aggregateSplit) {
-    if(isAggregate()){
+    if (isAggregate()) {
       OJson result = new OJson(-1);
-      for(OJsonItem item:items){
+      for (OJsonItem item : items) {
         result.items.add(item.splitForAggregation(aggregateSplit));
       }
       return result;
-    }else {
+    } else {
       return this;
     }
+  }
+
+  public OJson copy() {
+    OJson result = new OJson(-1);
+    result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=3beec9f6db486de944498588b51a505d (do not edit this line) */

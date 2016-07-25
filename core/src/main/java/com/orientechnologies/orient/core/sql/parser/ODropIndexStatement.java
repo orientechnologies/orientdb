@@ -4,8 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class ODropIndexStatement extends OStatement {
+public class ODropIndexStatement extends OStatement {
 
   protected boolean all = false;
   protected OIndexName name;
@@ -25,6 +24,13 @@ class ODropIndexStatement extends OStatement {
     } else {
       name.toString(params, builder);
     }
+  }
+
+  @Override public ODropIndexStatement copy() {
+    ODropIndexStatement result = new ODropIndexStatement(-1);
+    result.all = all;
+    result.name = name == null ? null : name.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=51c8221d049e4f114378e4be03797050 (do not edit this line) */

@@ -7,11 +7,14 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Luigi Dell'Aquila
@@ -241,7 +244,6 @@ public class OSelectExecutionPlanner {
 
   private void handleIndexAsTarget(OSelectExecutionPlan result, OIndexIdentifier indexIdentifier, OWhereClause whereClause,
       OOrderBy orderBy, OCommandContext ctx) {
-    //TODO
     String indexName = indexIdentifier.getIndexName();
     OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
     if (index == null) {
@@ -272,11 +274,11 @@ public class OSelectExecutionPlanner {
     case VALUES:
     case VALUESASC:
       //      result.chain(new FetchFromIndexValuesStep(index, condition, ctx, true));
-      throw new OCommandExecutionException("indexvalues*: is not yet supported");
+      throw new OCommandExecutionException("indexvalues*: is not yet supported");//TODO
 
     case VALUESDESC:
       //      result.chain(new FetchFromIndexValuesStep(index, condition, ctx, false));
-      throw new OCommandExecutionException("indexvalues*: is not yet supported");
+      throw new OCommandExecutionException("indexvalues*: is not yet supported");//TODO
     }
   }
 
@@ -333,6 +335,10 @@ public class OSelectExecutionPlanner {
   private void handleClassAsTarget(OSelectExecutionPlan plan, OIdentifier identifier, OCommandContext ctx) {
     //TODO optimize fetch from class, eg. when you can use and index or when you can do early sort.
 
+    if (handleClassAsTargetWithIndex(plan, identifier, ctx)) {
+      return;
+    }
+
     Boolean orderByRidAsc = null;//null: no order. true: asc, false:desc
     if (isOrderByRidAsc()) {
       orderByRidAsc = true;
@@ -345,6 +351,32 @@ public class OSelectExecutionPlanner {
     }
     plan.chain(fetcher);
 
+  }
+
+  private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier identifier, OCommandContext ctx) {
+    if (true) {
+      return false;//TODO
+    }
+    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(identifier.getStringValue());
+    Set<OIndex<?>> indexes = clazz.getIndexes();
+    List<OAndBlock> copyOfFlattenedWhereClause = copy(flattenedWhereClause);
+    for (OAndBlock item : flattenedWhereClause) {
+      for (OIndex index : indexes) {
+        OIndexDefinition def = index.getDefinition();
+        if (def == null) {
+          continue;
+        }
+      }
+    }
+    return false;
+  }
+
+  private List<OAndBlock> copy(List<OAndBlock> flattenedWhereClause) {
+    List<OAndBlock> result = new ArrayList<>();
+    for (OAndBlock block : flattenedWhereClause) {
+      result.add(block.copy());
+    }
+    return result;
   }
 
   private void handleClustersAsTarget(OSelectExecutionPlan plan, List<OCluster> clusters, OCommandContext ctx) {

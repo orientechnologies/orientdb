@@ -4,8 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class OAlterDatabaseStatement extends OStatement {
+public class OAlterDatabaseStatement extends OStatement {
 
   OIdentifier customPropertyName;
   OExpression customPropertyValue;
@@ -21,8 +20,7 @@ class OAlterDatabaseStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER DATABASE ");
 
     if (customPropertyName != null) {
@@ -37,5 +35,13 @@ class OAlterDatabaseStatement extends OStatement {
     }
   }
 
+  @Override public OAlterDatabaseStatement copy() {
+    OAlterDatabaseStatement result = new OAlterDatabaseStatement(-1);
+    result.customPropertyName = customPropertyName == null ? null : customPropertyName.copy();
+    result.customPropertyValue = customPropertyValue == null ? null : customPropertyValue.copy();
+    result.settingName = settingName == null ? null : settingName.copy();
+    result.settingValue = settingValue == null ? null : settingValue.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=8fec57db8dd2a3b52aaa52dec7367cd4 (do not edit this line) */

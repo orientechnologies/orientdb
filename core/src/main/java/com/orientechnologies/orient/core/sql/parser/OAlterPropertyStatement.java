@@ -25,13 +25,11 @@ public class OAlterPropertyStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
+  @Override public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
     super.validate(stats);//TODO
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER PROPERTY ");
     className.toString(params, builder);
     builder.append(".");
@@ -47,6 +45,17 @@ public class OAlterPropertyStatement extends OStatement {
       builder.append(" ");
       settingValue.toString(params, builder);
     }
+  }
+
+  @Override public OAlterPropertyStatement copy() {
+    OAlterPropertyStatement result = new OAlterPropertyStatement(-1);
+    result.className = className == null ? null : className.copy();
+    result.propertyName = propertyName == null ? null : propertyName.copy();
+    result.customPropertyName = customPropertyName == null ? null : customPropertyName.copy();
+    result.customPropertyValue = customPropertyValue == null ? null : customPropertyValue.copy();
+    result.settingName = settingName == null ? null : settingName.copy();
+    result.settingValue = settingValue == null ? null : settingValue.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=2421f6ad3b5f1f8e18149650ff80f1e7 (do not edit this line) */

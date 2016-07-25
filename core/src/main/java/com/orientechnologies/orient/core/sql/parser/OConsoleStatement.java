@@ -22,5 +22,12 @@ public class OConsoleStatement extends OStatement {
     builder.append(" ");
     message.toString(params, builder);
   }
+
+  @Override public OConsoleStatement copy() {
+    OConsoleStatement result = new OConsoleStatement(-1);
+    result.logLevel = logLevel == null ? null : logLevel.copy();
+    result.message = message == null ? null : message.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=626c09cda52a1a8a63eeefcb37bd66a1 (do not edit this line) */

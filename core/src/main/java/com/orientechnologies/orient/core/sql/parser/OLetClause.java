@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OLetClause extends SimpleNode {
 
@@ -18,7 +19,9 @@ public class OLetClause extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -35,7 +38,11 @@ public class OLetClause extends SimpleNode {
     }
   }
 
-
+  public OLetClause copy() {
+    OLetClause result = new OLetClause(-1);
+    result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
 }
 
 /* JavaCC - OriginalChecksum=201a864b5ed7f1fbe0533843a7acd03d (do not edit this line) */

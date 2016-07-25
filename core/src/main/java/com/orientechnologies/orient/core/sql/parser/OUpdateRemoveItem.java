@@ -17,11 +17,12 @@ public class OUpdateRemoveItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
@@ -29,6 +30,13 @@ public class OUpdateRemoveItem extends SimpleNode {
       builder.append(" = ");
       right.toString(params, builder);
     }
+  }
+
+  public OUpdateRemoveItem copy() {
+    OUpdateRemoveItem result = new OUpdateRemoveItem(-1);
+    result.left = left == null ? null : left.copy();
+    result.right = right == null ? null : right.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=72e240d3dc1196fdea69e8fdc2bd69ca (do not edit this line) */

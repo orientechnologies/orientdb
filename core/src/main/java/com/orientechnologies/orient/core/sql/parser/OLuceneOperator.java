@@ -30,6 +30,8 @@ public class OLuceneOperator extends SimpleNode implements OBinaryCompareOperato
     return true;
   }
 
-
+  @Override public OLuceneOperator copy() {
+    return new OLuceneOperator(-1);
+  }
 }
 /* JavaCC - OriginalChecksum=bda1e010e6ba48c815829b22ce458b9d (do not edit this line) */

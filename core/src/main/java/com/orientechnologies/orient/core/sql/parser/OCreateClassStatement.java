@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OCreateClassStatement extends OStatement {
   /**
@@ -22,7 +23,7 @@ public class OCreateClassStatement extends OStatement {
   protected List<OInteger> clusters;
 
   /**
-   *Total number clusters for this class
+   * Total number clusters for this class
    */
   protected OInteger totalClusterNo;
 
@@ -36,8 +37,7 @@ public class OCreateClassStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE CLASS ");
     name.toString(params, builder);
     if (superclasses != null && superclasses.size() > 0) {
@@ -62,13 +62,23 @@ public class OCreateClassStatement extends OStatement {
         first = false;
       }
     }
-    if(totalClusterNo!=null){
+    if (totalClusterNo != null) {
       builder.append(" CLUSTERS ");
       totalClusterNo.toString(params, builder);
     }
-    if(abstractClass){
+    if (abstractClass) {
       builder.append(" ABSTRACT");
     }
+  }
+
+  @Override public OCreateClassStatement copy() {
+    OCreateClassStatement result = new OCreateClassStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.superclasses = superclasses == null ? null : superclasses.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.clusters = clusters == null ? null : clusters.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.totalClusterNo = totalClusterNo == null ? null : totalClusterNo.copy();
+    result.abstractClass = abstractClass;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=4043013624f55fdf0ea8fee6d4f211b0 (do not edit this line) */

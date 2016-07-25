@@ -5,14 +5,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-public
-class ORevokeStatement extends OStatement {
+public class ORevokeStatement extends OStatement {
 
   protected OPermission permission;
   protected List<OResourcePathItem> resourceChain = new ArrayList<OResourcePathItem>();
   protected OIdentifier actor;
-
 
   public ORevokeStatement(int id) {
     super(id);
@@ -22,9 +21,7 @@ class ORevokeStatement extends OStatement {
     super(p, id);
   }
 
-
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("REVOKE ");
     permission.toString(params, builder);
     builder.append(" ON ");
@@ -38,6 +35,15 @@ class ORevokeStatement extends OStatement {
     }
     builder.append(" FROM ");
     actor.toString(params, builder);
+  }
+
+  @Override public ORevokeStatement copy() {
+    ORevokeStatement result = new ORevokeStatement(-1);
+    result.permission = permission == null ? null : permission.copy();
+    result.resourceChain =
+        resourceChain == null ? null : resourceChain.stream().map(OResourcePathItem::copy).collect(Collectors.toList());
+    result.actor = actor == null ? null : actor.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=d483850d10e1562c1b942fcc249278eb (do not edit this line) */

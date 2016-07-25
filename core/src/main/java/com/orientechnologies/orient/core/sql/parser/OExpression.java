@@ -315,5 +315,19 @@ public class OExpression extends SimpleNode {
       throw new OCommandExecutionException("Cannot aggregate on " + toString());
     }
   }
+
+  public OExpression copy() {
+
+    OExpression result = new OExpression(-1);
+    result.singleQuotes = singleQuotes;
+    result.doubleQuotes = doubleQuotes;
+    result.isNull = isNull;
+    result.rid = rid == null ? null : rid.copy();
+    result.mathExpression = mathExpression == null ? null : mathExpression.copy();
+    result.json = json == null ? null : json.copy();
+    result.booleanValue = booleanValue;
+
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

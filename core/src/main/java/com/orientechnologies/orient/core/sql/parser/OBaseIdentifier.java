@@ -171,5 +171,12 @@ public class OBaseIdentifier extends SimpleNode {
       throw new OCommandExecutionException("cannot aggregate on " + toString());
     }
   }
+
+  public OBaseIdentifier copy() {
+    OBaseIdentifier result = new OBaseIdentifier(-1);
+    result.levelZero = levelZero==null?null:levelZero.copy();
+    result.suffix = suffix==null?null:suffix.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

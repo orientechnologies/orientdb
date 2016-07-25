@@ -23,19 +23,18 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement IS NOT DEFINED!!!");//TODO
   }
 
-
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement IS NOT DEFINED!!!");//TODO
   }
 
@@ -55,11 +54,16 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
     return expression.needsAliases(aliases);
   }
 
+  @Override public OIsNotDefinedCondition copy() {
+    OIsNotDefinedCondition result = new OIsNotDefinedCondition(-1);
+    result.expression = expression.copy();
+    return result;
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     expression.toString(params, builder);
     builder.append(" is not defined");
   }
-
 
 }
 /* JavaCC - OriginalChecksum=1c766d6caf5ccae19c1c291396bb56f2 (do not edit this line) */

@@ -22,13 +22,22 @@ public class OAlterClusterStatement extends OStatement {
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER CLUSTER ");
     name.toString(params, builder);
-    if(starred){
+    if (starred) {
       builder.append("*");
     }
     builder.append(" ");
     attributeName.toString(params, builder);
     builder.append(" ");
     attributeValue.toString(params, builder);
+  }
+
+  @Override public OAlterClusterStatement copy() {
+    OAlterClusterStatement result = new OAlterClusterStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.attributeName = attributeName == null ? null : attributeName.copy();
+    result.starred = starred;
+    result.attributeValue = attributeValue == null ? null : attributeValue.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=ed78ea0f1a05b0963db625ed1f338bd6 (do not edit this line) */

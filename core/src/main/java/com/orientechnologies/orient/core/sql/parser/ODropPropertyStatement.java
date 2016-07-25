@@ -23,9 +23,17 @@ public class ODropPropertyStatement extends OStatement {
     className.toString(params, builder);
     builder.append(".");
     propertyName.toString(params, builder);
-    if(force){
+    if (force) {
       builder.append(" FORCE");
     }
+  }
+
+  @Override public ODropPropertyStatement copy() {
+    ODropPropertyStatement result = new ODropPropertyStatement(-1);
+    result.className = className == null ? null : className.copy();
+    result.propertyName = propertyName == null ? null : propertyName.copy();
+    result.force = force;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=6a9b4b1694dc36caf2b801218faebe42 (do not edit this line) */

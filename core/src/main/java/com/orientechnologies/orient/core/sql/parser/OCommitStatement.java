@@ -23,5 +23,11 @@ public class OCommitStatement extends OStatement {
       retry.toString(params, builder);
     }
   }
+
+  @Override public OCommitStatement copy() {
+    OCommitStatement result = new OCommitStatement(-1);
+    result.retry = retry == null ? null : retry.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=eaa0bc8f765fdaa017789953861bc0aa (do not edit this line) */

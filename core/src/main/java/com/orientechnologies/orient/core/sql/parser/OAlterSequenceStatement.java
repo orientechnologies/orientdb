@@ -4,8 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class OAlterSequenceStatement extends OStatement {
+public class OAlterSequenceStatement extends OStatement {
   OIdentifier name;
   OExpression start;
   OExpression increment;
@@ -35,6 +34,15 @@ class OAlterSequenceStatement extends OStatement {
       builder.append(" CACHE ");
       cache.toString(params, builder);
     }
+  }
+
+  @Override public OAlterSequenceStatement copy() {
+    OAlterSequenceStatement result = new OAlterSequenceStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.start = start == null ? null : start.copy();
+    result.increment = increment == null ? null : increment.copy();
+    result.cache = cache == null ? null : cache.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=def62b1d04db5223307fe51873a9edd0 (do not edit this line) */

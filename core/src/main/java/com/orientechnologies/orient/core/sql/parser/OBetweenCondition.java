@@ -144,5 +144,13 @@ public class OBetweenCondition extends OBooleanExpression {
     return false;
   }
 
+  @Override public OBooleanExpression copy() {
+    OBetweenCondition result = new OBetweenCondition(-1);
+    result.first = first.copy();
+    result.second = second.copy();
+    result.third = third.copy();
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=f94f4779c4a6c6d09539446045ceca89 (do not edit this line) */

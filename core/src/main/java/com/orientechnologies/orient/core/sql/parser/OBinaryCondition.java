@@ -116,6 +116,14 @@ public class OBinaryCondition extends OBooleanExpression {
     return false;
   }
 
+  @Override public OBinaryCondition copy() {
+    OBinaryCondition result = new OBinaryCondition(-1);
+    result.left = left.copy();
+    result.operator = (OBinaryCompareOperator) operator.copy();
+    result.right = right.copy();
+    return result;
+  }
+
   public OExpression getLeft() {
     return left;
   }

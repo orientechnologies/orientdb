@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OTraverseStatement extends OStatement {
 
@@ -14,15 +15,15 @@ public class OTraverseStatement extends OStatement {
 
   protected List<OTraverseProjectionItem> projections = new ArrayList<OTraverseProjectionItem>();
 
-  protected OFromClause                   target;
+  protected OFromClause target;
 
-  protected OWhereClause                  whereClause;
+  protected OWhereClause whereClause;
 
-  protected OLimit                        limit;
+  protected OLimit limit;
 
-  protected Strategy                      strategy;
+  protected Strategy strategy;
 
-  protected OInteger                      maxDepth;
+  protected OInteger maxDepth;
 
   public OTraverseStatement(int id) {
     super(id);
@@ -77,5 +78,15 @@ public class OTraverseStatement extends OStatement {
 
   }
 
+  @Override public OStatement copy() {
+    OTraverseStatement result = new OTraverseStatement(-1);
+    result.projections = projections == null ? null : projections.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.target = target == null ? null : target.copy();
+    result.whereClause = whereClause == null ? null : whereClause.copy();
+    result.limit = limit == null ? null : limit.copy();
+    result.strategy = strategy;
+    result.maxDepth = maxDepth == null ? null : maxDepth.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=47399a3a3d5a423768bbdc70ee957464 (do not edit this line) */

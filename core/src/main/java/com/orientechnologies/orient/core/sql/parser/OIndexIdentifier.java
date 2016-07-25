@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class OIndexIdentifier extends SimpleNode {
 
+
   public enum Type {
     INDEX, VALUES, VALUESASC, VALUESDESC
   }
@@ -62,6 +63,15 @@ public class OIndexIdentifier extends SimpleNode {
   public Type getType() {
     return type;
   }
+
+  public OIndexIdentifier copy() {
+    OIndexIdentifier result = new OIndexIdentifier(-1);
+    result.type = type;
+    result.indexNameString = indexNameString;
+    result.indexName = indexName.copy();
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=025f134fd4b27b84210738cdb6dd027c (do not edit this line) */
 

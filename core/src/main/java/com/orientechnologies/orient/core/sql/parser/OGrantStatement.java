@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OGrantStatement extends OStatement {
   protected OPermission permission;
@@ -19,8 +20,7 @@ public class OGrantStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("GRANT ");
     permission.toString(params, builder);
     builder.append(" ON ");
@@ -34,6 +34,14 @@ public class OGrantStatement extends OStatement {
     }
     builder.append(" TO ");
     actor.toString(params, builder);
+  }
+
+  @Override public OGrantStatement copy() {
+    OGrantStatement result = new OGrantStatement(-1);
+    result.permission = permission == null ? null : permission.copy();
+    this.resourceChain = resourceChain == null ? null : resourceChain.stream().map(x -> x.copy()).collect(Collectors.toList());
+    this.actor = actor == null ? null : actor.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=c5f7b91e57070a95c6ea490373d16f7f (do not edit this line) */

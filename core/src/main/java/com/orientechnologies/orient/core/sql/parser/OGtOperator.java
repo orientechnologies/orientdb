@@ -41,6 +41,8 @@ public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
     return true;
   }
 
-
+  @Override public OGtOperator copy() {
+    return new OGtOperator(-1);
+  }
 }
 /* JavaCC - OriginalChecksum=4b96739fc6e9ae496916d542db361376 (do not edit this line) */

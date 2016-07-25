@@ -25,7 +25,7 @@ public class OCreateClusterStatement extends OStatement {
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE ");
-    if(blob){
+    if (blob) {
       builder.append("BLOB ");
     }
     builder.append("CLUSTER ");
@@ -34,6 +34,14 @@ public class OCreateClusterStatement extends OStatement {
       builder.append(" ID ");
       id.toString(params, builder);
     }
+  }
+
+  @Override public OCreateClusterStatement copy() {
+    OCreateClusterStatement result = new OCreateClusterStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.id = id == null ? null : id.copy();
+    result.blob = blob;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=6011a26678f2175aa456a0a6c094cb13 (do not edit this line) */

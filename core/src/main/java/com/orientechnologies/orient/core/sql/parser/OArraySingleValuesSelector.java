@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OArraySingleValuesSelector extends SimpleNode {
 
@@ -24,7 +25,9 @@ public class OArraySingleValuesSelector extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -42,9 +45,9 @@ public class OArraySingleValuesSelector extends SimpleNode {
 
   public Object execute(OIdentifiable iCurrentRecord, Object iResult, OCommandContext ctx) {
     List<Object> result = new ArrayList<Object>();
-    for(OArraySelector item:items){
+    for (OArraySelector item : items) {
       Integer index = item.getValue(iCurrentRecord, iResult, ctx);
-      if(this.items.size()==1){
+      if (this.items.size() == 1) {
         return OMultiValue.getValue(iResult, index);
       }
       result.add(OMultiValue.getValue(iResult, index));
@@ -54,9 +57,9 @@ public class OArraySingleValuesSelector extends SimpleNode {
 
   public Object execute(OResult iCurrentRecord, Object iResult, OCommandContext ctx) {
     List<Object> result = new ArrayList<Object>();
-    for(OArraySelector item:items){
+    for (OArraySelector item : items) {
       Integer index = item.getValue(iCurrentRecord, iResult, ctx);
-      if(this.items.size()==1){
+      if (this.items.size() == 1) {
         return OMultiValue.getValue(iResult, index);
       }
       result.add(OMultiValue.getValue(iResult, index));
@@ -65,12 +68,18 @@ public class OArraySingleValuesSelector extends SimpleNode {
   }
 
   public boolean needsAliases(Set<String> aliases) {
-    for(OArraySelector item:items){
-      if(item.needsAliases(aliases)){
+    for (OArraySelector item : items) {
+      if (item.needsAliases(aliases)) {
         return true;
       }
     }
     return false;
+  }
+
+  public OArraySingleValuesSelector copy() {
+    OArraySingleValuesSelector result = new OArraySingleValuesSelector(-1);
+    result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=991998c77a4831184b6dca572513fd8d (do not edit this line) */

@@ -54,5 +54,12 @@ public class OSkip extends SimpleNode {
     }
     throw new OCommandExecutionException("No value for SKIP");
   }
+
+  public OSkip copy() {
+    OSkip result = new OSkip(-1);
+    result.num = num == null ? null : num.copy();
+    result.inputParam = inputParam == null ? null : inputParam.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=8e13ca184705a8fc1b5939ecefe56a60 (do not edit this line) */

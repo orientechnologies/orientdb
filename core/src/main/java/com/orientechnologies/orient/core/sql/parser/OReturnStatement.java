@@ -22,5 +22,11 @@ public class OReturnStatement extends OStatement {
       expression.toString(params, builder);
     }
   }
+
+  @Override public OReturnStatement copy() {
+    OReturnStatement result = new OReturnStatement(-1);
+    result.expression = expression == null ? null : expression.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=c72ec860d1fa92cbf52e42ae1c2935c0 (do not edit this line) */

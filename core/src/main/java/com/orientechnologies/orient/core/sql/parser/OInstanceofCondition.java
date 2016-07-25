@@ -25,18 +25,18 @@ public class OInstanceofCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement IndexMatch!!!");//TODO
   }
 
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement IndexMatch!!!");//TODO
   }
 
@@ -50,22 +50,18 @@ public class OInstanceofCondition extends OBooleanExpression {
     }
   }
 
-
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     return left.supportsBasicCalculation();
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     if (!left.supportsBasicCalculation()) {
       return 1;
     }
     return 0;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     if (!left.supportsBasicCalculation()) {
       return (List) Collections.singletonList(left);
     }
@@ -73,10 +69,18 @@ public class OInstanceofCondition extends OBooleanExpression {
   }
 
   @Override public boolean needsAliases(Set<String> aliases) {
-    if(left.needsAliases(aliases)){
+    if (left.needsAliases(aliases)) {
       return true;
     }
     return false;
+  }
+
+  @Override public OInstanceofCondition copy() {
+    OInstanceofCondition result = new OInstanceofCondition(-1);
+    result.left = left.copy();
+    result.right = right == null ? null : right.copy();
+    result.rightString = rightString;
+    return result;
   }
 
 }

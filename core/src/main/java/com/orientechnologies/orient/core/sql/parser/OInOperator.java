@@ -74,6 +74,8 @@ public class OInOperator extends SimpleNode implements OBinaryCompareOperator {
     return true;
   }
 
-
+  @Override public OInOperator copy() {
+    return new OInOperator(-1);
+  }
 }
 /* JavaCC - OriginalChecksum=6650a720cb942fa3c4d588ff0f381b3a (do not edit this line) */

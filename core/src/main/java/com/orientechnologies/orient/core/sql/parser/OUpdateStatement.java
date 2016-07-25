@@ -7,24 +7,25 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OUpdateStatement extends OStatement {
-  public    OFromClause             target;
+  public OFromClause target;
 
-  protected List<OUpdateOperations> operations   = new ArrayList<OUpdateOperations>();
+  protected List<OUpdateOperations> operations = new ArrayList<OUpdateOperations>();
 
-  protected boolean                 upsert       = false;
+  protected boolean upsert = false;
 
-  protected boolean                 returnBefore = false;
-  protected boolean                 returnAfter  = false;
-  protected OProjection             returnProjection;
+  protected boolean returnBefore = false;
+  protected boolean returnAfter  = false;
+  protected OProjection returnProjection;
 
-  public OWhereClause               whereClause;
+  public OWhereClause whereClause;
 
   public OStorage.LOCKING_STRATEGY lockRecord = null;
 
-  public OLimit                     limit;
-  public OTimeout                   timeout;
+  public OLimit   limit;
+  public OTimeout timeout;
 
   public OUpdateStatement(int id) {
     super(id);
@@ -36,7 +37,7 @@ public class OUpdateStatement extends OStatement {
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(getStatementType());
-    if(target!=null){
+    if (target != null) {
       target.toString(params, builder);
     }
 
@@ -66,9 +67,9 @@ public class OUpdateStatement extends OStatement {
       whereClause.toString(params, builder);
     }
 
-    if (lockRecord!=null) {
+    if (lockRecord != null) {
       builder.append(" LOCK ");
-      switch (lockRecord){
+      switch (lockRecord) {
       case DEFAULT:
         builder.append("DEFAULT");
         break;
@@ -95,5 +96,19 @@ public class OUpdateStatement extends OStatement {
     return "UPDATE ";
   }
 
+  @Override public OUpdateStatement copy() {
+    OUpdateStatement result = new OUpdateStatement(-1);
+    result.target = target == null ? null : target.copy();
+    result.operations = operations == null ? null : operations.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.upsert = upsert;
+    result.returnBefore = returnBefore;
+    result.returnAfter = returnAfter;
+    result.returnProjection = returnProjection == null ? null : returnProjection.copy();
+    result.whereClause = whereClause == null ? null : whereClause.copy();
+    result.lockRecord = lockRecord;
+    result.limit = limit == null ? null : limit.copy();
+    result.timeout = timeout == null ? null : timeout.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=093091d7273f1073ad49f2a2bf709a53 (do not edit this line) */

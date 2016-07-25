@@ -8,8 +8,8 @@ public class OTimeout extends SimpleNode {
   public static final String RETURN    = "RETURN";
   public static final String EXCEPTION = "EXCEPTION";
 
-  protected Number           val;
-  protected String           failureStrategy;
+  protected Number val;
+  protected String failureStrategy;
 
   public OTimeout(int id) {
     super(id);
@@ -19,7 +19,9 @@ public class OTimeout extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -30,6 +32,13 @@ public class OTimeout extends SimpleNode {
       builder.append(" ");
       builder.append(failureStrategy);
     }
+  }
+
+  public OTimeout copy() {
+    OTimeout result = new OTimeout(-1);
+    result.val = val;
+    result.failureStrategy = failureStrategy;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=fef7f5d488f7fca1b6ad0b70c6841931 (do not edit this line) */

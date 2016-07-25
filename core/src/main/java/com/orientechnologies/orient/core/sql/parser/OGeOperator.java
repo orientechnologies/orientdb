@@ -62,7 +62,9 @@ public class OGeOperator extends SimpleNode implements OBinaryCompareOperator {
     return true;
   }
 
-
+  @Override public OGeOperator copy() {
+    return new OGeOperator(-1);
+  }
 
 }
 /* JavaCC - OriginalChecksum=960da239569d393eb155f7d8a871e6d5 (do not edit this line) */

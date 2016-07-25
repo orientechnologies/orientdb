@@ -35,11 +35,9 @@ public class OMatchesCondition extends OBooleanExpression {
     throw new UnsupportedOperationException("TODO Implement MATCHES!!!");//TODO
   }
 
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement MATCHES!!!");//TODO
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     expression.toString(params, builder);
@@ -74,6 +72,14 @@ public class OMatchesCondition extends OBooleanExpression {
       return true;
     }
     return false;
+  }
+
+  @Override public OMatchesCondition copy() {
+    OMatchesCondition result = new OMatchesCondition(-1);
+    result.expression = expression == null ? null : expression.copy();
+    result.right = right;
+    result.rightParam = rightParam == null ? null : rightParam.copy();
+    return result;
   }
 
 }

@@ -125,5 +125,12 @@ public class OProjection extends SimpleNode {
     return items.stream().map(i -> i.getProjectionAliasAsString()).collect(Collectors.toSet());
   }
 
+  public OProjection copy() {
+    OProjection result = new OProjection(-1);
+    if (items != null) {
+      result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    }
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

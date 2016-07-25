@@ -24,18 +24,18 @@ public class OContainsTextCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement ContainsText!!!");//TODO
   }
 
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement ContainsText!!!");//TODO
   }
 
@@ -45,13 +45,11 @@ public class OContainsTextCondition extends OBooleanExpression {
     right.toString(params, builder);
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (!left.supportsBasicCalculation()) {
       total++;
@@ -62,8 +60,7 @@ public class OContainsTextCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     if (!left.supportsBasicCalculation()) {
       result.add(left);
@@ -82,6 +79,13 @@ public class OContainsTextCondition extends OBooleanExpression {
       return true;
     }
     return false;
+  }
+
+  @Override public OContainsTextCondition copy() {
+    OContainsTextCondition result = new OContainsTextCondition(-1);
+    result.left = left.copy();
+    result.right = right.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=b588492ba2cbd0f932055f1f64bbbecd (do not edit this line) */

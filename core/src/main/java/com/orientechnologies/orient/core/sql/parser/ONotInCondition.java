@@ -126,5 +126,16 @@ public class ONotInCondition extends OBooleanExpression {
     return false;
   }
 
+  @Override public ONotInCondition copy() {
+    ONotInCondition result = new ONotInCondition(-1);
+    result.operator = operator == null ? null : (OBinaryCompareOperator) operator.copy();
+    result.left = left == null ? null : left.copy();
+    result.rightMathExpression = rightMathExpression == null ? null : rightMathExpression.copy();
+    result.rightStatement = rightStatement == null ? null : rightStatement.copy();
+    result.rightParam = rightParam == null ? null : rightParam.copy();
+    result.right = right == null ? null : right;
+    return result;
+  }
+
 }
 /* JavaCC - OriginalChecksum=8fb82bf72cc7d9cbdf2f9e2323ca8ee1 (do not edit this line) */

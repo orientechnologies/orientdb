@@ -25,7 +25,14 @@ public class OResourcePathItem extends SimpleNode {
     } else {
       builder.append(name);
     }
+  }
 
+  @Override public OResourcePathItem copy() {
+    OResourcePathItem result = new OResourcePathItem(-1);
+    result.star = star;
+    result.identifier = identifier == null ? null : identifier.copy();
+    result.name = name;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=b90ccdd61b6adcd40cde2adee353e89f (do not edit this line) */

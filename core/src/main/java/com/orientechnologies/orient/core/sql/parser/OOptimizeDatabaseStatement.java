@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OOptimizeDatabaseStatement extends OStatement {
 
@@ -24,6 +25,12 @@ public class OOptimizeDatabaseStatement extends OStatement {
       builder.append(" ");
       option.toString(params, builder);
     }
+  }
+
+  @Override public OOptimizeDatabaseStatement copy() {
+    OOptimizeDatabaseStatement result = new OOptimizeDatabaseStatement(-1);
+    result.options = options == null ? null : options.stream().map(OCommandLineOption::copy).collect(Collectors.toList());
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=b85d66f84bbae92224565361df9d0c91 (do not edit this line) */

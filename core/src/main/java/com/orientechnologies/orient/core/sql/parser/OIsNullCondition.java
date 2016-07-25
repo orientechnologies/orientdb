@@ -23,19 +23,19 @@ public class OIsNullCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement IS NULL!!!");//TODO
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    return expression.execute(currentRecord, ctx) == null;
   }
 
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement IS NULL!!!");//TODO
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    return expression.execute(currentRecord, ctx) == null;
   }
 
   public OExpression getExpression() {
@@ -51,22 +51,18 @@ public class OIsNullCondition extends OBooleanExpression {
     builder.append(" is null");
   }
 
-
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     return expression.supportsBasicCalculation();
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     if (expression.supportsBasicCalculation()) {
       return 0;
     }
     return 1;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     if (expression.supportsBasicCalculation()) {
       return Collections.EMPTY_LIST;
     }
@@ -75,6 +71,12 @@ public class OIsNullCondition extends OBooleanExpression {
 
   @Override public boolean needsAliases(Set<String> aliases) {
     return expression.needsAliases(aliases);
+  }
+
+  @Override public OIsNullCondition copy() {
+    OIsNullCondition result = new OIsNullCondition(-1);
+    result.expression = expression.copy();
+    return result;
   }
 
 }

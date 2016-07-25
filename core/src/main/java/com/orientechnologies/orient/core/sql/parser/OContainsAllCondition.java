@@ -17,7 +17,7 @@ public class OContainsAllCondition extends OBooleanExpression {
 
   protected OExpression right;
 
-  protected OOrBlock    rightBlock;
+  protected OOrBlock rightBlock;
 
   public OContainsAllCondition(int id) {
     super(id);
@@ -27,21 +27,20 @@ public class OContainsAllCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement ContainsAll!!!");//TODO
   }
 
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     throw new UnsupportedOperationException("TODO Implement ContainsAll!!!");//TODO
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
@@ -71,8 +70,7 @@ public class OContainsAllCondition extends OBooleanExpression {
     this.right = right;
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     if (left != null && !left.supportsBasicCalculation()) {
       return false;
     }
@@ -85,8 +83,7 @@ public class OContainsAllCondition extends OBooleanExpression {
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (left != null && !left.supportsBasicCalculation()) {
       total++;
@@ -100,8 +97,7 @@ public class OContainsAllCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     if (left != null && !left.supportsBasicCalculation()) {
       result.add(left);
@@ -116,17 +112,25 @@ public class OContainsAllCondition extends OBooleanExpression {
   }
 
   @Override public boolean needsAliases(Set<String> aliases) {
-    if(left.needsAliases(aliases)){
+    if (left.needsAliases(aliases)) {
       return true;
     }
 
-    if(right!=null && right.needsAliases(aliases)){
+    if (right != null && right.needsAliases(aliases)) {
       return true;
     }
-    if(rightBlock!=null && rightBlock.needsAliases(aliases)){
+    if (rightBlock != null && rightBlock.needsAliases(aliases)) {
       return true;
     }
     return false;
+  }
+
+  @Override public OContainsAllCondition copy() {
+    OContainsAllCondition result = new OContainsAllCondition(-1);
+    result.left = left.copy();
+    result.right = right == null ? null : right.copy();
+    result.rightBlock = rightBlock == null ? null : rightBlock.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=ab7b4e192a01cda09a82d5b80ef4ec60 (do not edit this line) */

@@ -22,7 +22,9 @@ public class OContainsCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -50,7 +52,7 @@ public class OContainsCondition extends OBooleanExpression {
       left = ((Iterable) left).iterator();
     }
     if (left instanceof Iterator) {
-      if(!(right instanceof Iterable)){
+      if (!(right instanceof Iterable)) {
         right = Collections.singleton(right);
       }
       right = ((Iterable) right).iterator();
@@ -76,15 +78,13 @@ public class OContainsCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     Object leftValue = left.execute(currentRecord, ctx);
     Object rightValue = right.execute(currentRecord, ctx);
     return execute(leftValue, rightValue);
   }
 
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     Object leftValue = left.execute(currentRecord, ctx);
     Object rightValue = right.execute(currentRecord, ctx);
     return execute(leftValue, rightValue);
@@ -102,23 +102,21 @@ public class OContainsCondition extends OBooleanExpression {
     }
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
-    if(!left.supportsBasicCalculation()){
+  @Override public boolean supportsBasicCalculation() {
+    if (!left.supportsBasicCalculation()) {
       return false;
     }
-    if(!right.supportsBasicCalculation()){
+    if (!right.supportsBasicCalculation()) {
       return false;
     }
-    if(!condition.supportsBasicCalculation()){
+    if (!condition.supportsBasicCalculation()) {
       return false;
     }
 
     return true;
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (condition != null) {
       total += condition.getNumberOfExternalCalculations();
@@ -126,39 +124,47 @@ public class OContainsCondition extends OBooleanExpression {
     if (!left.supportsBasicCalculation()) {
       total++;
     }
-    if (right!=null && !right.supportsBasicCalculation()) {
+    if (right != null && !right.supportsBasicCalculation()) {
       total++;
     }
     return total;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
 
-    if(condition!=null) {
+    if (condition != null) {
       result.addAll(condition.getExternalCalculationConditions());
     }
     if (!left.supportsBasicCalculation()) {
       result.add(left);
     }
-    if (right!=null && !right.supportsBasicCalculation()) {
+    if (right != null && !right.supportsBasicCalculation()) {
       result.add(right);
     }
     return result;
   }
 
   @Override public boolean needsAliases(Set<String> aliases) {
-    if(left!=null && left.needsAliases(aliases)){
+    if (left != null && left.needsAliases(aliases)) {
       return true;
     }
-    if(right!=null && right.needsAliases(aliases)){
+    if (right != null && right.needsAliases(aliases)) {
       return true;
     }
-    if(condition!=null && condition.needsAliases(aliases)){
+    if (condition != null && condition.needsAliases(aliases)) {
       return true;
     }
     return false;
+  }
+
+  @Override public OContainsCondition copy() {
+    OContainsCondition result = new OContainsCondition(-1);
+    result.left = left == null ? null : left.copy();
+    result.right = right == null ? null : right.copy();
+    result.condition = condition == null ? null : condition.copy();
+    return result;
+
   }
 
 }

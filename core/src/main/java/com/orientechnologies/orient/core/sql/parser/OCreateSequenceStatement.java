@@ -50,5 +50,15 @@ public class OCreateSequenceStatement extends OStatement {
       cache.toString(params, builder);
     }
   }
+
+  @Override public OCreateSequenceStatement copy() {
+    OCreateSequenceStatement result = new OCreateSequenceStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.type = type;
+    result.start = start == null ? null : start.copy();
+    result.increment = increment == null ? null : increment.copy();
+    result.cache = cache == null ? null : cache.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=b0436d11e05c3435f22dafea6b5106c0 (do not edit this line) */

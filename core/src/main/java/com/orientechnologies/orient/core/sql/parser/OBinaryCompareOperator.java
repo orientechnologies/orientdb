@@ -7,4 +7,6 @@ public interface OBinaryCompareOperator {
   public boolean execute(Object left, Object right);
 
   boolean supportsBasicCalculation();
+
+  SimpleNode copy();
 }

@@ -41,5 +41,12 @@ public class OCluster extends SimpleNode {
   public Integer getClusterNumber() {
     return clusterNumber;
   }
+
+  public OCluster copy() {
+    OCluster result = new OCluster(-1);
+    result.clusterName = clusterName;
+    result.clusterNumber = clusterNumber;
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=d27abf009fe7db482fbcaac9d52ba192 (do not edit this line) */

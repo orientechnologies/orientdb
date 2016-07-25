@@ -15,23 +15,29 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean execute(Object iLeft, Object iRight) {
+  @Override public boolean execute(Object iLeft, Object iRight) {
     return OQueryOperatorEquals.equals(iLeft, iRight);
   }
-  
+
   @Override public boolean supportsBasicCalculation() {
     return true;
   }
 
-  @Override
-  public String toString() {
+  @Override public String toString() {
     return doubleEquals ? "==" : "=";
+  }
+
+  @Override public OEqualsCompareOperator copy() {
+    OEqualsCompareOperator result = new OEqualsCompareOperator(-1);
+    result.doubleEquals = doubleEquals;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=bd2ec5d13a1d171779c2bdbc9d3a56bc (do not edit this line) */

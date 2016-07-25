@@ -154,11 +154,19 @@ public class OSuffixIdentifier extends SimpleNode {
   }
 
   public void aggregate(Object value, OCommandContext ctx) {
-    throw new UnsupportedOperationException("this operation does not support plain aggregation: "+toString());
+    throw new UnsupportedOperationException("this operation does not support plain aggregation: " + toString());
   }
 
   public AggregationContext getAggregationContext(OCommandContext ctx) {
-    throw new UnsupportedOperationException("this operation does not support plain aggregation: "+toString());
+    throw new UnsupportedOperationException("this operation does not support plain aggregation: " + toString());
+  }
+
+  public OSuffixIdentifier copy() {
+    OSuffixIdentifier result = new OSuffixIdentifier(-1);
+    result.identifier = identifier == null ? null : identifier.copy();
+    result.recordAttribute = recordAttribute == null ? null : recordAttribute.copy();
+    result.star = star;
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

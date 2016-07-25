@@ -13,9 +13,9 @@ public class OInsertStatement extends OStatement {
   OInsertBody      insertBody;
   OProjection      returnStatement;
   OSelectStatement selectStatement;
-  boolean          selectInParentheses = false;
-  boolean          selectWithFrom      = false;
-  boolean          unsafe              = false;
+  boolean selectInParentheses = false;
+  boolean selectWithFrom      = false;
+  boolean unsafe              = false;
 
   public OInsertStatement(int id) {
     super(id);
@@ -67,6 +67,19 @@ public class OInsertStatement extends OStatement {
     }
   }
 
-
+  @Override public OInsertStatement copy() {
+    OInsertStatement result = new OInsertStatement(-1);
+    result.targetClass = targetClass == null ? null : targetClass.copy();
+    result.targetClusterName = targetClusterName == null ? null : targetClusterName.copy();
+    result.targetCluster = targetCluster == null ? null : targetCluster.copy();
+    result.targetIndex = targetIndex == null ? null : targetIndex.copy();
+    result.insertBody = insertBody == null ? null : insertBody.copy();
+    result.returnStatement = returnStatement == null ? null : returnStatement.copy();
+    result.selectStatement = selectStatement == null ? null : selectStatement.copy();
+    result.selectInParentheses = selectInParentheses;
+    result.selectWithFrom = selectWithFrom;
+    result.unsafe = unsafe;
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=ccfabcf022d213caed873e6256cb26ad (do not edit this line) */

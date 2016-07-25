@@ -5,7 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.Map;
 
 public class OTraverseProjectionItem extends SimpleNode {
-  protected boolean         star = false;
+  protected boolean star = false;
   protected OBaseIdentifier base;
   protected OModifier       modifier;
 
@@ -17,7 +17,9 @@ public class OTraverseProjectionItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -35,5 +37,12 @@ public class OTraverseProjectionItem extends SimpleNode {
     }
   }
 
+  public OTraverseProjectionItem copy() {
+    OTraverseProjectionItem result = new OTraverseProjectionItem(-1);
+    result.star = star;
+    result.base = base == null ? null : base.copy();
+    result.modifier = modifier == null ? null : modifier.copy();
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=0c562254fd4d11266edc0504fd36fc99 (do not edit this line) */

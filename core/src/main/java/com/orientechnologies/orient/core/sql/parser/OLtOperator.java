@@ -45,5 +45,9 @@ public class OLtOperator extends SimpleNode implements OBinaryCompareOperator {
     return true;
   }
 
+  @Override public OLtOperator copy() {
+    return new OLtOperator(-1);
+  }
+
 }
 /* JavaCC - OriginalChecksum=d8e97d52128198b373bb0c272c72de2c (do not edit this line) */

@@ -36,5 +36,12 @@ public class ORid extends SimpleNode {
   public ORecordId toRecordId() {
     return new ORecordId(cluster.value.intValue(), position.value.longValue());
   }
+
+  public ORid copy() {
+    ORid result = new ORid(-1);
+    result.cluster = cluster;
+    result.position = position;
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=c2c6d67d7722e29212e438574698d7cd (do not edit this line) */

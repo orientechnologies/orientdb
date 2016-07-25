@@ -90,5 +90,12 @@ public class OIdentifier extends SimpleNode {
   public void setQuoted(boolean quoted) {
     this.quoted = quoted;
   }
+
+  public OIdentifier copy(){
+    OIdentifier result = new OIdentifier(-1);
+    result.value = value;
+    result.quoted = quoted;
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=691a2eb5096f7b5e634b2ca8ac2ded3a (do not edit this line) */

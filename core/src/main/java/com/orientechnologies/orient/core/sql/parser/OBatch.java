@@ -4,13 +4,11 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class OBatch extends SimpleNode {
+public class OBatch extends SimpleNode {
 
-  protected OInteger         num;
+  protected OInteger num;
 
   protected OInputParameter inputParam;
-
 
   public OBatch(int id) {
     super(id);
@@ -20,12 +18,12 @@ class OBatch extends SimpleNode {
     super(p, id);
   }
 
-
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (num == null && inputParam == null) {
@@ -38,6 +36,13 @@ class OBatch extends SimpleNode {
     } else {
       inputParam.toString(params, builder);
     }
+  }
+
+  public OBatch copy() {
+    OBatch result = new OBatch(-1);
+    result.inputParam = inputParam == null ? null : inputParam.copy();
+    result.num = num == null ? null : num.copy();
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=b1587460e08cbf21086d8c8fcca192e0 (do not edit this line) */
