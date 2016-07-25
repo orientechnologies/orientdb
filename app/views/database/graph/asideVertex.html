@@ -46,10 +46,9 @@
 
           <div class="col-md-8">
             <select fontpicker id="inputIcon" class="form-control" ng-change="setDirty()"
-
                     ng-model="config.iconCss">
-
-              <option  ng-repeat="icon in icons" ng-selected="icon.css == config.iconCss">{{icon.css}}</option>
+              <option value=""></option>
+              <option ng-repeat="icon in icons" >{{icon.css}}</option>
             </select>
           </div>
         </div>

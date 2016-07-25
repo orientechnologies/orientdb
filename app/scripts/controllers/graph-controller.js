@@ -316,13 +316,9 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
 
 }]);
 
-GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', 'History', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope, History) {
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', 'History', '$timeout', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope, History, $timeout) {
 
   var data = [];
-
-
-  ;
-
   $scope.currentIndex = -1;
 
   $scope.history = History.histories();
@@ -368,6 +364,8 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     absolute: false,
     fullscreen: $scope.fullscreen
   });
+
+
   $scope.$watch("fullscreen", function (val) {
     if (val) {
       $scope.additionalClass = 'panel-graph-fullscreen';
@@ -401,7 +399,6 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
       "Cmd-Up": function (instance) {
 
 
-
         if ($scope.currentIndex < $scope.history.length - 1) {
 
           var tmp = $scope.queryText;
@@ -433,11 +430,8 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     },
     onLoad: function (_cm) {
       $scope.cm = _cm;
-
-      if ($routeParams.query) {
-        $scope.queryText = $routeParams.query;
-
-
+      if ($routeParams.q) {
+        $scope.queryText = $routeParams.q;
         $scope.query();
       }
       $scope.cm.on("change", function () { /* script */
@@ -497,6 +491,20 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
   $scope.resetZoom = function () {
     $scope.graph.resetZoom();
   }
+
+  $scope.download = function () {
+
+    var html = d3.select(".graph-container svg")
+      .attr("version", 1.1)
+      .attr("xmlns", "http://www.w3.org/2000/svg")
+      .node().parentNode.innerHTML;
+
+
+    var blob = new Blob([html], {type: "image/svg+xml"});
+    saveAs(blob, "myProfile.svg");
+
+
+  }
   $scope.clear = function () {
     $scope.graph.clear();
     Graph.data = [];
@@ -522,17 +530,17 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
           v.relationships = data.result[0];
         })
         if (Aside.isOpen()) {
-          $scope.doc = v.source;
-
-
-          var title = $scope.doc['@class'] + "-" + $scope.doc['@rid'] + "- Version " + $scope.doc['@version'];
-          Aside.show({
-            scope: $scope,
-            title: title,
-            template: 'views/database/graph/asideVertex.html',
-            show: true,
-            fullscreen: $scope.fullscreen
-          });
+          $timeout(function () {
+            $scope.doc = v.source;
+            var title = $scope.doc['@class'] + "-" + $scope.doc['@rid'];
+            Aside.show({
+              scope: $scope,
+              title: title,
+              template: 'views/database/graph/asideVertex.html',
+              show: true,
+              fullscreen: $scope.fullscreen
+            });
+          }, 200);
         }
       });
       $scope.graph.on('edge/create', function (v1, v2) {
@@ -1020,10 +1028,6 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
   }
 
-  if ($routeParams.q) {
-    $scope.queryText = $routeParams.q;
-    $scope.query();
-  }
 
 }])
 ;
@@ -1052,7 +1056,6 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
     }
     $scope.$watch('config.display', function (val) {
       if (val) {
-        $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', null);
         $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
       }
     })
@@ -1069,7 +1072,7 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
         $scope.graph.changeClazzConfig($scope.doc['@class'], 'iconVPadding', val);
       }
     })
-    $scope.$watch('config.iconCss', function (val) {
+    $scope.$watch('config.iconCss', function (val, oldVal) {
 
 
       if (val) {
@@ -1125,7 +1128,7 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
 
 
 }]);
-GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside) {
+GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside','$rootScope', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside,$rootScope) {
 
 
   $scope.database = $routeParams.database;
@@ -1166,5 +1169,9 @@ GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$l
         $scope.graph.changeClazzConfig($scope.doc['@class'], 'strokeWidth', val);
       }
     })
+
+    $scope.save = function () {
+      $rootScope.$broadcast("graphConfig:onSave");
+    }
   }
 }]);
