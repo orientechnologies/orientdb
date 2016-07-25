@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 
 import java.util.Collection;
-import java.util.Comparator;
 
 /**
  * Interface to handle index.
@@ -191,12 +190,27 @@ public interface OIndexInternal<T> extends OIndex<T> {
   void setType(OType type);
 
   /**
-   * <p>Acquires exclusive lock in the active atomic operation running on the current thread for this index.
+   * <p>
+   * Returns the index name for a key. The name is always the current index name, but in cases where the index supports key-based
+   * sharding.
+   * 
+   * @param key
+   *          the index key.
    *
-   * <p>If this index supports a more narrow locking, for example key-based sharding, it may use the provided {@code key} to infer
-   * a more narrow lock scope, but that is not a requirement.
+   * @return The index name involved
+   */
+  String getIndexNameByKey(Object key);
+
+  /**
+   * <p>
+   * Acquires exclusive lock in the active atomic operation running on the current thread for this index.
    *
-   * @param key the index key to lock.
+   * <p>
+   * If this index supports a more narrow locking, for example key-based sharding, it may use the provided {@code key} to infer a
+   * more narrow lock scope, but that is not a requirement.
+   *
+   * @param key
+   *          the index key to lock.
    *
    * @return {@code true} if this index was locked entirely, {@code false} if this index locking is sensitive to the provided {@code
    * key} and only some subset of this index was locked.

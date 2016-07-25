@@ -100,6 +100,8 @@ public interface OIndexEngine {
    */
   boolean acquireAtomicExclusiveLock(Object key);
 
+  String getIndexNameByKey(Object key);
+
   interface ValuesTransformer {
     Collection<OIdentifiable> transformFromValue(Object value);
   }

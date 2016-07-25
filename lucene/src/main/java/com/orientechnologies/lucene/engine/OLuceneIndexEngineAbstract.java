@@ -252,7 +252,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       }
 
       if (directory instanceof FSDirectory) {
-        Path path = ((FSDirectory) this.directory).getDirectory();
+        final Path path = ((FSDirectory) this.directory).getDirectory();
         OFileUtils.deleteRecursively(path.toFile());
       }
 
@@ -367,6 +367,11 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   @Override
   public String getName() {
+    return name;
+  }
+
+  @Override
+  public String getIndexNameByKey(final Object key) {
     return name;
   }
 

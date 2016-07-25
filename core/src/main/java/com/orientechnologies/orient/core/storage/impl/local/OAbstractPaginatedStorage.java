@@ -4221,14 +4221,25 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void lockIndexes(TreeMap<String, OTransactionIndexChanges> indexes) {
+  private void lockIndexes(final TreeMap<String, OTransactionIndexChanges> indexes) {
     for (OTransactionIndexChanges changes : indexes.values()) {
       assert changes.changesPerKey instanceof TreeMap;
 
       final OIndexInternal<?> index = changes.getAssociatedIndex();
 
+      final List<Object> orderedIndexNames = new ArrayList<Object>(changes.changesPerKey.keySet());
+      if (orderedIndexNames.size() > 1)
+        Collections.sort(orderedIndexNames, new Comparator<Object>() {
+          @Override
+          public int compare(Object o1, Object o2) {
+            String i1 = index.getIndexNameByKey(o1);
+            String i2 = index.getIndexNameByKey(o2);
+            return i1.compareTo(i2);
+          }
+        });
+
       boolean fullyLocked = false;
-      for (Object key : changes.changesPerKey.keySet())
+      for (Object key : orderedIndexNames)
         if (index.acquireAtomicExclusiveLock(key)) {
           fullyLocked = true;
           break;
@@ -4238,7 +4249,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  private void lockClusters(TreeMap<Integer, OCluster> clustersToLock) {
+  private void lockClusters(final TreeMap<Integer, OCluster> clustersToLock) {
     for (OCluster cluster : clustersToLock.values())
       cluster.acquireAtomicExclusiveLock();
   }

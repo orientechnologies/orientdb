@@ -400,4 +400,9 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   public boolean acquireAtomicExclusiveLock(Object key) {
     throw new UnsupportedOperationException("atomic locking is not supported by index recorder");
   }
+
+  @Override
+  public String getIndexNameByKey(final Object key) {
+    return delegate.getName();
+  }
 }
