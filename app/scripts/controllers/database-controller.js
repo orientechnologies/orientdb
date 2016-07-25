@@ -1,5 +1,5 @@
 var dbModule = angular.module('database.controller', ['database.services', 'bookmarks.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', 'BatchApi', 'DocumentApi','History', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig, BatchApi, DocumentApi,History) {
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', 'GraphConfig', 'BatchApi', 'DocumentApi', 'History', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout, GraphConfig, BatchApi, DocumentApi, History) {
 
   $scope.database = Database;
   $scope.limit = 20;
@@ -485,9 +485,10 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     }
   }
   $scope.sendToGraph = function () {
-    Graph.add($scope.item.resultTotal);
-    Graph.query = $scope.item.query;
-    $location.path("/database/" + $scope.database.getName() + "/graph");
+
+    var params = {q: $scope.item.query, limit: $scope.item.limit};
+
+    $location.path("/database/" + $scope.database.getName() + "/graph/" + encodeURI($scope.item.query));
   }
   $scope.changeIcon = function () {
     $scope.bookIcon = 'icon-star';

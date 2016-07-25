@@ -1,8 +1,7 @@
 
 path.edge {
   cursor: default;
-  stroke: #D4D6D7;
-  stroke-width: 3px;
+
   fill: none;
 }
 
@@ -68,7 +67,7 @@ text.elabel:hover {
 text.elabel {
   text-anchor: middle;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .selected-vertex {

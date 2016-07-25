@@ -24,9 +24,15 @@ text.id {
 
 }
 
+
+@media (min-height: 500px) {
+  .graph-container {
+    height: 320px;
+  }
+}
 @media (min-height: 600px) {
   .graph-container {
-    height: 480px;
+    height: 450px;
   }
 }
 
