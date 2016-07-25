@@ -28,9 +28,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.TimerTask;
 
 /**
@@ -79,18 +76,9 @@ public class OStopServerTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public void writeExternal(ObjectOutput out) throws IOException {
-  }
-
-  @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-  }
-
-  @Override
   public int getFactoryId() {
     return FACTORYID;
   }
-
 
   @Override
   public boolean isUsingDatabase() {

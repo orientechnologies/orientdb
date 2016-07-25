@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
@@ -44,6 +51,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -68,13 +76,6 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OClusterHealthChecker;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -578,7 +579,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODatabaseDocument currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (currentDatabase != null && currentDatabase.getUser() != null)
       // SET CURRENT DATABASE NAME
-      req.setUserRID(currentDatabase.getUser().getIdentity().getIdentity());
+      req.setUserRID((ORecordId) currentDatabase.getUser().getIdentity().getIdentity());
 
     final ODistributedDatabaseImpl db = messageService.getDatabase(iDatabaseName);
 
@@ -603,7 +604,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
    * Executes the request on local node. In case of error returns the Exception itself
    */
   @Override
-  public Serializable executeOnLocalNode(final ODistributedRequestId reqId, final ORemoteTask task,
+  public Object executeOnLocalNode(final ODistributedRequestId reqId, final ORemoteTask task,
       final ODatabaseDocumentInternal database) {
     if (database != null && !(database.getStorage() instanceof ODistributedStorage))
       throw new ODistributedException("Distributed storage was not installed for database '" + database.getName()
@@ -611,11 +612,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     final ODistributedAbstractPlugin manager = this;
 
-    return (Serializable) OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
+    return OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
         try {
-          final Serializable result = (Serializable) task.execute(reqId, serverInstance, manager, database);
+          final Object result = task.execute(reqId, serverInstance, manager, database);
 
           if (result instanceof Throwable && !(result instanceof OException))
             // EXCEPTION

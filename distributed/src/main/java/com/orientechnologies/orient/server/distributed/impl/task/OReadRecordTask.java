@@ -19,21 +19,20 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Execute a read of a record from a distributed node.
@@ -42,9 +41,9 @@ import java.io.ObjectOutput;
  */
 public class OReadRecordTask extends OAbstractRemoteTask {
   private static final long serialVersionUID = 1L;
-  public static final  int  FACTORYID        = 1;
+  public static final int   FACTORYID        = 1;
 
-  protected ORecordId rid;
+  protected ORecordId       rid;
 
   public OReadRecordTask() {
   }
@@ -55,8 +54,7 @@ public class OReadRecordTask extends OAbstractRemoteTask {
 
   @Override
   public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database)
-      throws Exception {
+      final ODatabaseDocumentInternal database) throws Exception {
     final ORecord record = database.load(rid);
     if (record == null)
       return null;
@@ -65,12 +63,12 @@ public class OReadRecordTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  public void toStream(final DataOutput out) throws IOException {
     out.writeUTF(rid.toString());
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     rid = new ORecordId(in.readUTF());
   }
 

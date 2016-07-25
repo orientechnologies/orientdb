@@ -22,9 +22,9 @@ package com.orientechnologies.orient.core.serialization.serializer.stream;
 import java.io.IOException;
 
 public interface OStreamSerializer {
-  public byte[] toStream(Object iObject) throws IOException;
+  byte[] toStream(Object iObject) throws IOException;
 
-  public Object fromStream(byte[] iStream) throws IOException;
+  Object fromStream(byte[] iStream) throws IOException;
 
-  public String getName();
+  String getName();
 }

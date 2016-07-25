@@ -41,7 +41,6 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -268,7 +267,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
       if (localResult != null)
         // COLLECT LOCAL RESULT
-        currentResponseMgr.setLocalResult(localNodeName, (Serializable) localResult);
+        currentResponseMgr.setLocalResult(localNodeName, localResult);
 
       // SORT THE NODE TO GUARANTEE THE SAME ORDER OF DELIVERY
       if (!(iNodes instanceof List))

@@ -29,7 +29,6 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedOperatio
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -753,7 +752,7 @@ public class ODistributedResponseManager {
     return false;
   }
 
-  public void setLocalResult(final String localNodeName, final Serializable localResult) {
+  public void setLocalResult(final String localNodeName, final Object localResult) {
     localResponse = new ODistributedResponse(request.getId(), localNodeName, localNodeName, localResult);
     collectResponse(localResponse);
   }

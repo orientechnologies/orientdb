@@ -29,9 +29,9 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -136,24 +136,30 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeObject(requestId);
+  public void toStream(final DataOutput out) throws IOException {
+    requestId.toStream(out);
     out.writeBoolean(success);
     out.writeInt(fixTasks.size());
-    for (ORemoteTask task : fixTasks)
-      out.writeObject(task);
+    for (ORemoteTask task : fixTasks) {
+      out.writeByte(task.getFactoryId());
+      task.toStream(out);
+    }
     out.writeInt(partitionKey.length);
     for (int pk : partitionKey)
       out.writeInt(pk);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    requestId = (ODistributedRequestId) in.readObject();
+  public void fromStream(final DataInput in, ORemoteTaskFactory taskFactory) throws IOException {
+    requestId = new ODistributedRequestId();
+    requestId.fromStream(in);
     success = in.readBoolean();
     final int tasksSize = in.readInt();
-    for (int i = 0; i < tasksSize; ++i)
-      fixTasks.add((ORemoteTask) in.readObject());
+    for (int i = 0; i < tasksSize; ++i) {
+      final ORemoteTask task = taskFactory.createTask(in.readByte());
+      task.fromStream(in, taskFactory);
+      fixTasks.add(task);
+    }
     final int pkSize = in.readInt();
     partitionKey = new int[pkSize];
     for (int i = 0; i < pkSize; ++i)

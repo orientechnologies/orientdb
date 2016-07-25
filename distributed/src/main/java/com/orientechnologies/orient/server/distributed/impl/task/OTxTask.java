@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -45,6 +39,12 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRecordRepli
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Distributed transaction task.
@@ -230,22 +230,27 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  public void toStream(final DataOutput out) throws IOException {
     out.writeInt(tasks.size());
-    for (OAbstractRecordReplicatedTask task : tasks)
-      out.writeObject(task);
+    for (OAbstractRecordReplicatedTask task : tasks) {
+      out.writeByte(task.getFactoryId());
+      task.toStream(out);
+    }
     if (lastLSN != null) {
       out.writeBoolean(true);
-      lastLSN.writeExternal(out);
+      lastLSN.toStream(out);
     } else
       out.writeBoolean(false);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     final int size = in.readInt();
-    for (int i = 0; i < size; ++i)
-      tasks.add((OAbstractRecordReplicatedTask) in.readObject());
+    for (int i = 0; i < size; ++i) {
+      final ORemoteTask task = factory.createTask(in.readByte());
+      task.fromStream(in, factory);
+      tasks.add((OAbstractRecordReplicatedTask) task);
+    }
     final boolean hasLastLSN = in.readBoolean();
     if (hasLastLSN)
       lastLSN = new OLogSequenceNumber(in);

@@ -26,11 +26,12 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.TimerTask;
 
 /**
@@ -81,18 +82,17 @@ public class ORestartServerTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public void writeExternal(ObjectOutput out) throws IOException {
+  public void toStream(DataOutput out) throws IOException {
   }
 
   @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+  public void fromStream(DataInput in, final ORemoteTaskFactory factory) throws IOException {
   }
 
   @Override
   public int getFactoryId() {
     return FACTORYID;
   }
-
 
   @Override
   public boolean isUsingDatabase() {

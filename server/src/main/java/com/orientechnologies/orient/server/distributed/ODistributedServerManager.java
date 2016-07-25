@@ -29,7 +29,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 
@@ -68,7 +67,7 @@ public interface ODistributedServerManager {
 
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
 
-  Serializable executeOnLocalNode(ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
+  Object executeOnLocalNode(ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
 
   ORemoteServerController getRemoteServer(final String nodeName) throws IOException;
 

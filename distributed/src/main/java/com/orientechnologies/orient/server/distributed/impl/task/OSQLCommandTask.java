@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ORetryQueryException;
+import com.orientechnologies.orient.core.serialization.OStreamableHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -32,12 +33,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractCommandTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -144,19 +146,18 @@ public class OSQLCommandTask extends OAbstractCommandTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  public void toStream(final DataOutput out) throws IOException {
     out.writeUTF(text);
-    out.writeObject(params);
-
+    OStreamableHelper.toStream(out, params);
     out.writeInt(clusters.size());
     for (String c : clusters)
       out.writeUTF(c);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     text = in.readUTF();
-    params = (Map<Object, Object>) in.readObject();
+    params = (Map<Object, Object>) OStreamableHelper.fromStream(in);
 
     final int cSize = in.readInt();
     clusters = new HashSet<String>(cSize);

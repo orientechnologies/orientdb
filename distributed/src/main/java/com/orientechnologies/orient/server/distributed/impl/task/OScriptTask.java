@@ -19,9 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -30,12 +30,13 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.serialization.OStreamableHelper;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractCommandTask;
 
 /**
@@ -61,8 +62,7 @@ public class OScriptTask extends OAbstractCommandTask {
   }
 
   public Object execute(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database)
-      throws Exception {
+      final ODatabaseDocumentInternal database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
         text.toString(), database.getName());
 
@@ -98,15 +98,15 @@ public class OScriptTask extends OAbstractCommandTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  public void toStream(final DataOutput out) throws IOException {
     out.writeUTF(text);
-    out.writeObject(params);
+    OStreamableHelper.toStream(out, params);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     text = in.readUTF();
-    params = (Map<Object, Object>) in.readObject();
+    params = (Map<Object, Object>) OStreamableHelper.fromStream(in);
   }
 
   @Override

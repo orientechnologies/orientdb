@@ -38,9 +38,9 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
 
@@ -296,8 +296,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
+  public void toStream(final DataOutput out) throws IOException {
+    super.toStream(out);
     if (content == null)
       out.writeInt(0);
     else {
@@ -309,8 +309,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
+    super.fromStream(in, factory);
     final int contentSize = in.readInt();
     if (contentSize == 0)
       content = null;
