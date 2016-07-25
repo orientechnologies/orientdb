@@ -2,7 +2,6 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -169,7 +168,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     if (pool != null)
       return pool.acquire();
 
-    final ODatabaseDocument db = new ODatabaseDocumentTx(url);
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
 
     final String connMode = settings.getConnectionStrategy();
     db.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connMode);
@@ -186,7 +185,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     } else if (iOpen)
       db.open(user, password);
 
-    return (ODatabaseDocumentTx) db;
+    return db;
   }
 
   /**
