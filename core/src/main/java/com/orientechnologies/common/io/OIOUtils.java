@@ -39,15 +39,6 @@ public class OIOUtils {
   public static final long   WEEK     = DAY * 7;
   public static final String UTF8_BOM = "\uFEFF";
 
-  public static byte[] toStream(Externalizable iSource) throws IOException {
-    final ByteArrayOutputStream stream = new ByteArrayOutputStream();
-    final ObjectOutputStream oos = new ObjectOutputStream(stream);
-    iSource.writeExternal(oos);
-    oos.flush();
-    stream.flush();
-    return stream.toByteArray();
-  }
-
   public static long getTimeAsMillisecs(final Object iSize) {
     if (iSize == null)
       throw new IllegalArgumentException("Time is null");

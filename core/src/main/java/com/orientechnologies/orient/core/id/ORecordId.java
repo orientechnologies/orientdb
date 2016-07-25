@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.id;
 
+import java.io.*;
+import java.util.List;
+
 import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -29,11 +32,6 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
 
 public class ORecordId implements ORID {
   public static final ORecordId EMPTY_RECORD_ID        = new ORecordId();
@@ -64,7 +62,7 @@ public class ORecordId implements ORID {
 
   /**
    * Copy constructor.
-   * 
+   *
    * @param parentRid
    *          Source object
    */
@@ -191,6 +189,16 @@ public class ORecordId implements ORID {
 
   public ORecordId copy() {
     return new ORecordId(clusterId, clusterPosition);
+  }
+
+  public void toStream(final DataOutput out) throws IOException {
+    out.writeShort(clusterId);
+    out.writeLong(clusterPosition);
+  }
+
+  public void fromStream(final DataInput in) throws IOException {
+    clusterId = in.readShort();
+    clusterPosition = in.readLong();
   }
 
   public ORecordId fromStream(final InputStream iStream) throws IOException {

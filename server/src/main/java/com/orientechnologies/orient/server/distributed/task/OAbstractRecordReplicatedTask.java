@@ -32,14 +32,11 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.*;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 /**
@@ -154,19 +151,19 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  public void toStream(final DataOutput out) throws IOException {
     out.writeUTF(rid.toString());
     out.writeInt(version);
     out.writeInt(partitionKey);
     if (lastLSN != null) {
       out.writeBoolean(true);
-      lastLSN.writeExternal(out);
+      lastLSN.toStream(out);
     } else
       out.writeBoolean(false);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     rid = new ORecordId(in.readUTF());
     version = in.readInt();
     partitionKey = in.readInt();

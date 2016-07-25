@@ -19,21 +19,16 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import java.util.TimerTask;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.TimerTask;
 
 /**
  * Distributed task to stop a server.
@@ -81,16 +76,12 @@ public class OStopServerTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public void writeExternal(ObjectOutput out) throws IOException {
-  }
-
-  @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-  }
-
-  @Override
   public int getFactoryId() {
     return FACTORYID;
   }
 
+  @Override
+  public boolean isUsingDatabase() {
+    return false;
+  }
 }

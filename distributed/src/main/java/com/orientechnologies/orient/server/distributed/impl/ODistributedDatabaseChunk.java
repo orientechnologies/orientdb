@@ -19,12 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.serialization.OStreamable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.io.*;
 import java.util.zip.GZIPInputStream;
 
-public class ODistributedDatabaseChunk implements Externalizable {
+public class ODistributedDatabaseChunk implements OStreamable {
   public String             filePath;
   public long               offset;
   public byte[]             buffer;
@@ -93,20 +94,20 @@ public class ODistributedDatabaseChunk implements Externalizable {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  public void toStream(final DataOutput out) throws IOException {
     out.writeUTF(filePath);
     out.writeLong(offset);
     out.writeInt(buffer.length);
     out.write(buffer);
     out.writeBoolean(lsn != null);
     if (lsn != null)
-      lsn.writeExternal(out);
+      lsn.toStream(out);
     out.writeBoolean(gzipCompressed);
     out.writeBoolean(last);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void fromStream(final DataInput in) throws IOException {
     filePath = in.readUTF();
     offset = in.readLong();
     int size = in.readInt();

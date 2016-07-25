@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CountDownLatch;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -65,14 +62,6 @@ public class OWaitForTask extends OAbstractRemoteTask {
   @Override
   public int getFactoryId() {
     return 0;
-  }
-
-  @Override
-  public void writeExternal(ObjectOutput out) throws IOException {
-  }
-
-  @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
   }
 
   @Override

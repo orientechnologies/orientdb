@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.util.concurrent.ArrayBlockingQueue;
+
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -31,9 +33,6 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.io.Serializable;
-import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -212,7 +211,7 @@ public class ODistributedWorker extends Thread {
       ODistributedServerLog.debug(this, localNodeName, senderNodeName, DIRECTION.IN, "Received request: %s", iRequest);
 
     // EXECUTE IT LOCALLY
-    Serializable responsePayload;
+    Object responsePayload;
     OSecurityUser origin = null;
     try {
       task.setNodeSource(senderNodeName);
@@ -285,7 +284,7 @@ public class ODistributedWorker extends Thread {
     return localNodeName;
   }
 
-  private void sendResponseBack(final ODistributedRequest iRequest, Serializable responsePayload) {
+  private void sendResponseBack(final ODistributedRequest iRequest, Object responsePayload) {
     if (iRequest.getId().getMessageId() < 0)
       // INTERNAL MSG
       return;

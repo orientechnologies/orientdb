@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -29,20 +35,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
-
-import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Ask for synchronization of delta of chanegs on database from a remote node.
@@ -143,8 +140,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
       if (endLSN.get() == null) {
         // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
         exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
-      }
-      else
+      } else
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
             "Delta backup of database '%s' completed. range=%s-%s", databaseName, startLSN, endLSN);
 
@@ -215,8 +211,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    startLSN.writeExternal(out);
+  public void toStream(final DataOutput out) throws IOException {
+    startLSN.toStream(out);
     out.writeLong(random);
     out.writeInt(excludedClusterNames.size());
     for (String clName : excludedClusterNames) {
@@ -225,7 +221,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     startLSN = new OLogSequenceNumber(in);
     random = in.readLong();
     excludedClusterNames.clear();
