@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -226,6 +225,11 @@ public class OSBTreeIndexEngine implements OIndexEngine {
   public boolean acquireAtomicExclusiveLock(Object key) {
     sbTree.acquireAtomicExclusiveLock();
     return true;
+  }
+
+  @Override
+  public String getIndexNameByKey(Object key) {
+    return name;
   }
 
   private static final class OSBTreeIndexCursor extends OIndexAbstractCursor {
