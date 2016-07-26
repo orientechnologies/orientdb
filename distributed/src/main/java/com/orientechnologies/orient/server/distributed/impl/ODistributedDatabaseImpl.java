@@ -381,30 +381,25 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     ODistributedLock currentLock = lockManager.putIfAbsent(rid, lock);
     if (currentLock != null && timeout > 0) {
-      do {
-        if (iRequestId.equals(currentLock.reqId)) {
-          // SAME ID, ALREADY LOCKED
-          ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
-              "Distributed transaction: %s locked record %s in database '%s' owned by %s (thread=%d)", iRequestId, iRecord,
-              databaseName, currentLock.reqId, Thread.currentThread().getId());
-          currentLock = null;
-          break;
-        }
-
+      if (iRequestId.equals(currentLock.reqId)) {
+        // SAME ID, ALREADY LOCKED
+        ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+            "Distributed transaction: %s locked record %s in database '%s' owned by %s (thread=%d)", iRequestId, iRecord,
+            databaseName, currentLock.reqId, Thread.currentThread().getId());
+        currentLock = null;
+      } else {
         try {
-
           if (timeout > 0)
             currentLock.lock.await(timeout, TimeUnit.MILLISECONDS);
           else
             currentLock.lock.await();
 
+          currentLock = lockManager.putIfAbsent(rid, lock);
+
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          break;
         }
-        currentLock = lockManager.putIfAbsent(rid, lock);
-
-      } while (currentLock != null);
+      }
     }
 
     if (currentLock != null) {
