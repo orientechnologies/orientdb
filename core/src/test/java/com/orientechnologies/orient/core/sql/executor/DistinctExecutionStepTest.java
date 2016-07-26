@@ -9,7 +9,7 @@ import org.junit.Test;
 /**
  * Created by luigidellaquila on 26/07/16.
  */
-public class ODistinctExecutionStepTest {
+public class DistinctExecutionStepTest {
 
   @Test public void test() {
     OCommandContext ctx = new OBasicCommandContext();
