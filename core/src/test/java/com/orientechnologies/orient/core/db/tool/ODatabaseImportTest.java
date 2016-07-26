@@ -74,7 +74,7 @@ public class ODatabaseImportTest {
     });
     importer.importDatabase();
 
-    assertTrue(dbImp.getMetadata().getSchema().existsClass("SimpleClass"));
+    Assert.assertTrue(dbImp.getMetadata().getSchema().existsClass("SimpleClass"));
     dbImp.drop();
   }
 
