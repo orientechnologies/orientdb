@@ -55,13 +55,38 @@ public class OResultInternal implements OResult {
   }
 
   @Override public String toString() {
-
     if (element != null) {
       return element.toString();
     }
     return "{\n" +
         content.entrySet().stream().map(x -> x.getKey() + ": \n" + x.getValue()).reduce("", (a, b) -> a + b + "\n\n") + "}\n";
-
   }
 
+  @Override public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (!(obj instanceof OResultInternal)) {
+      return false;
+    }
+    OResultInternal resultObj = (OResultInternal) obj;
+    if (element != null) {
+      if (resultObj.element == null) {
+        return false;
+      }
+      return element.equals(resultObj.element);
+    } else {
+      if (resultObj.element != null) {
+        return false;
+      }
+      return this.content.equals(resultObj.content);
+    }
+  }
+
+  @Override public int hashCode() {
+    if (element != null) {
+      return element.hashCode();
+    }
+    return content.hashCode();
+  }
 }
