@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -194,8 +195,13 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       tempEntries.clear();
 
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
-      for (ORecord record : createdRecords.values())
+      for (ORecord record : createdRecords.values()){
         unmarshallRecord(record);
+        if (record instanceof ODocument) {
+          // Force conversion of value to class for trigger default values. 
+          ODocumentInternal.autoConvertValueToClass(connection.getDatabase(), (ODocument) record);
+        }
+      }
       for (ORecord record : updatedRecords.values())
         unmarshallRecord(record);
 

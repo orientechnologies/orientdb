@@ -78,7 +78,10 @@ public class ODocumentInternal {
 
   public static void checkClass(ODocument doc, ODatabaseDocumentInternal database) {
     doc.checkClass(database);
-
   }
 
+  public static void autoConvertValueToClass(ODatabaseDocumentInternal database, ODocument doc) {
+    doc.autoConvertFieldsToClass(database);
+  }
+  
 }
