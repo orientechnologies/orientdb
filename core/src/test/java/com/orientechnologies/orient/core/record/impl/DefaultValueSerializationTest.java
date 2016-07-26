@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.core.record.impl;
 
 
-import static org.junit.Assert.*;
-
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,7 +43,7 @@ public class DefaultValueSerializationTest {
     ODocument doc1 = new ODocument();
     doc1.fromStream(val);
     doc1.deserializeFields();
-    assertEquals(doc.field("name"), doc1.field("name"));
+    Assert.assertEquals(doc.field("name").toString(), doc1.field("name").toString());
 
   }
 
