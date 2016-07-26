@@ -22,6 +22,8 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.orient.console.OTableFormatter;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -412,9 +414,14 @@ public class ODistributedOutput {
       }
     });
 
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if( db != null && db.isClosed())
+      db = null;
+
     table.setColumnSorting("CLUSTER", true);
     table.setColumnHidden("#");
-
+    if (db != null)
+      table.setColumnAlignment("id", OTableFormatter.ALIGNMENT.RIGHT);
     table.setColumnAlignment("writeQuorum", OTableFormatter.ALIGNMENT.CENTER);
     table.setColumnAlignment("readQuorum", OTableFormatter.ALIGNMENT.CENTER);
 
@@ -444,7 +451,10 @@ public class ODistributedOutput {
       rows.add(row);
 
       row.field("CLUSTER", cluster);
-
+      if (db != null) {
+        final int clId = db.getClusterIdByName(cluster);
+        row.field("id", clId > -1 ? clId : "");
+      }
       row.field("writeQuorum", wQ);
       row.field("readQuorum", rQ);
 

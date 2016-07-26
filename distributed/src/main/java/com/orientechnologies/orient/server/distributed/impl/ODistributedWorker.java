@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.util.concurrent.ArrayBlockingQueue;
-
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -33,6 +31,9 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -53,6 +54,8 @@ public class ODistributedWorker extends Thread {
   protected volatile ODatabaseDocumentTx                  database;
   protected volatile OUser                                lastUser;
   protected volatile boolean                              running              = true;
+
+  private AtomicLong                                      processedRequests    = new AtomicLong(0);
 
   private static final long                               MAX_SHUTDOWN_TIMEOUT = 5000l;
 
@@ -184,7 +187,9 @@ public class ODistributedWorker extends Thread {
   }
 
   protected ODistributedRequest nextMessage() throws InterruptedException {
-    return localQueue.take();
+    final ODistributedRequest req = localQueue.take();
+    processedRequests.incrementAndGet();
+    return req;
   }
 
   /**
@@ -335,5 +340,9 @@ public class ODistributedWorker extends Thread {
           return;
       }
     }
+  }
+
+  public long getProcessedRequests() {
+    return processedRequests.get();
   }
 }

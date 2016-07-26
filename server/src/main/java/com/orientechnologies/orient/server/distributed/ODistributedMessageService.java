@@ -46,4 +46,8 @@ public interface ODistributedMessageService {
   ODocument getMessageStats();
 
   void updateMessageStats(String message);
+
+  long getReceivedRequests();
+
+  long getProcessedRequests();
 }
