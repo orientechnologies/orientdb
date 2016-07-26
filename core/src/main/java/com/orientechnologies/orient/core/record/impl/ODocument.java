@@ -2387,8 +2387,12 @@ public class ODocument extends ORecordAbstract
   }
 
   protected void fillClassIfNeed(final String iClassName) {
-    if (this._className == null)
-      setClassNameIfExists(iClassName);
+    if (this._className == null) {
+      _immutableClazz = null;
+      _immutableSchemaVersion = -1;
+      _className = iClassName;
+    }
+
   }
 
   protected OImmutableClass getImmutableSchemaClass() {
@@ -2805,6 +2809,12 @@ public class ODocument extends ORecordAbstract
     }
   }
 
+  protected void autoConvertFieldsToClass(final ODatabaseDocumentInternal database) {
+    if (_className != null) {
+      OClass klazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(_className);
+      convertFieldsToClass(klazz);
+    }
+  }
   /**
    * Checks and convert the field of the document matching the types specified by the class.
    **/
