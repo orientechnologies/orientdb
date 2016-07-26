@@ -739,7 +739,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
    * @see OGlobalConfiguration#STORAGE_TRACK_CHANGED_RECORDS_IN_WAL
    */
   public OLogSequenceNumber recordsChangedAfterLSN(final OLogSequenceNumber lsn, final OutputStream stream,
-      final Set<String> excludedClusterIds) {
+      final Set<String> excludedClusterIds, final OCommandOutputListener outputListener) {
     if (!OGlobalConfiguration.STORAGE_TRACK_CHANGED_RECORDS_IN_WAL.getValueAsBoolean())
       throw new IllegalStateException(
           "Cannot find records which were changed starting from provided LSN because tracking of rids of changed records in WAL is switched off, "
@@ -783,6 +783,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         OLogSequenceNumber currentLsn = startLsn;
 
         // all information about changed records is contained in atomic operation metadata
+        long read = 0;
         while (currentLsn != null && endLsn.compareTo(currentLsn) >= 0) {
           walRecord = writeAheadLog.read(currentLsn);
 
@@ -809,6 +810,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           }
 
           currentLsn = writeAheadLog.next(currentLsn);
+
+          read++;
+
+          if (outputListener != null)
+            outputListener.onMessage("read " + read + " records from WAL and collected " + sortedRids.size() + " records");
         }
       } finally {
         writeAheadLog.preventCutTill(null);
@@ -825,6 +831,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           dataOutputStream.writeLong(sortedRids.size());
 
+          long exportedRecord = 1;
           Iterator<ORID> ridIterator = sortedRids.iterator();
           while (ridIterator.hasNext()) {
             final ORID rid = ridIterator.next();
@@ -838,9 +845,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
               OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
 
+              if (outputListener != null)
+                outputListener.onMessage("exporting record " + exportedRecord + "/" + sortedRids.size());
+
               // delete to avoid duplication
               ridIterator.remove();
             }
+
+            exportedRecord++;
           }
 
           ridIterator = sortedRids.iterator();
@@ -867,6 +879,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               OLogManager.instance().debug(this, "Exporting modified record rid=%s type=%d size=%d v=%d - buffer size=%d", rid,
                   rawBuffer.recordType, rawBuffer.buffer.length, rawBuffer.version, dataOutputStream.size());
             }
+
+            if (outputListener != null)
+              outputListener.onMessage("exporting record " + exportedRecord + "/" + sortedRids.size());
+
+            exportedRecord++;
           }
         } finally {
           dataOutputStream.close();

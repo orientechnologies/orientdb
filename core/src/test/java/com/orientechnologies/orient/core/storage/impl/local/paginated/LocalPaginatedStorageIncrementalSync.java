@@ -100,7 +100,7 @@ public class LocalPaginatedStorageIncrementalSync {
       final OutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
 
       ((OAbstractPaginatedStorage) originalDB.getStorage()).recordsChangedAfterLSN(startLSN, bufferedOutputStream,
-          new HashSet<String>());
+          new HashSet<String>(),null);
       bufferedOutputStream.close();
 
       dataFile.close();

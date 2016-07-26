@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -88,11 +89,16 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
       final ODistributedServerManager iManager, final ODatabaseDocumentInternal database) throws Exception {
 
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
+
+    ORecordId rid2Lock = rid;
+    if (!rid.isPersistent())
+      // CREATE A COPY TO MAINTAIN THE LOCK ON THE CLUSTER AVOIDING THE RID IS TRANSFORMED IN PERSISTENT. THIS ALLOWS TO HAVE
+      // PARALLEL TX BECAUSE NEW RID LOCKS THE ENTIRE CLUSTER.
+      rid2Lock = new ORecordId(rid.getClusterId(), -1l);
+
     if (lockRecords) {
       // TRY LOCKING RECORD
-      final ODistributedRequestId lockHolder = ddb.lockRecord(rid, requestId);
-      if (lockHolder != null)
-        throw new ODistributedRecordLockedException(rid, lockHolder);
+      ddb.lockRecord(rid2Lock, requestId, OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong() / 2);
     }
 
     try {
@@ -102,7 +108,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     } finally {
       if (lockRecords)
         // UNLOCK THE SINGLE OPERATION. IN TX WAIT FOR THE 2-PHASE COMMIT/ROLLBACK/FIX MESSAGE
-        ddb.unlockRecord(rid, requestId);
+        ddb.unlockRecord(rid2Lock, requestId);
     }
   }
 

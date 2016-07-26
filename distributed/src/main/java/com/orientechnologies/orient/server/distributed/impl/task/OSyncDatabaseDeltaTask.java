@@ -19,16 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -40,6 +35,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIR
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
+
+import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Ask for synchronization of delta of chanegs on database from a remote node.
@@ -135,7 +137,20 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
     final AtomicReference<ODistributedDatabaseDeltaSyncException> exception = new AtomicReference<ODistributedDatabaseDeltaSyncException>();
 
     try {
-      endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream, excludedClusterNames));
+      final AtomicLong counter = new AtomicLong(0);
+      endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream, excludedClusterNames,
+          new OCommandOutputListener() {
+            @Override
+            public void onMessage(final String iText) {
+              if (iText.startsWith("read")) {
+                if (counter.incrementAndGet() % 100000 == 0) {
+                  ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "- %s", iText);
+                }
+              } else if (counter.incrementAndGet() % 1000 == 0) {
+                ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "- %s", iText);
+              }
+            }
+          }));
 
       if (endLSN.get() == null) {
         // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP

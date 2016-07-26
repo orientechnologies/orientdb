@@ -36,6 +36,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.DataInput;
@@ -201,24 +202,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // SAME CONTENT
       return loadedRecordInstance;
 
-    throw new ODistributedException("Cannot create the record " + rid + " in an already existent position");
-    //
-    // ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-    // "Overwriting content of record %s/%s v.%d reqId=%s previous content: %s (stored) vs %s (network)", database.getName(),
-    // rid.toString(), version, requestId, loadedRecord.getResult(), getRecord());
-    //
-    // if (loadedRecord.getResult().recordType == ODocument.RECORD_TYPE) {
-    // // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
-    // final ODocument newDocument = (ODocument) getRecord();
-    //
-    // ODocument loadedDocument = (ODocument) loadedRecordInstance;
-    // loadedDocument.merge(newDocument, false, false).getVersion();
-    // loadedDocument.setDirty();
-    // ORecordInternal.setVersion(loadedDocument, ORecordVersionHelper.setRollbackMode(version));
-    // } else
-    // ORecordInternal.fill(loadedRecordInstance, rid, ORecordVersionHelper.setRollbackMode(version), content, true);
-    //
-    // return loadedRecordInstance.save();
+    throw new ODistributedOperationException("Cannot create the record " + rid + " in an already existent position");
   }
 
   @Override

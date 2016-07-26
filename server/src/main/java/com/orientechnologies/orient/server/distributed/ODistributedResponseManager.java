@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
@@ -492,7 +493,7 @@ public class ODistributedResponseManager {
       return true;
 
     if (groupResponsesByResult) {
-      for (List<ODistributedResponse> group : responseGroups)
+      for (List<ODistributedResponse> group : responseGroups) {
         if (group.size() >= quorum) {
           int responsesForQuorum = 0;
           for (ODistributedResponse r : group) {
@@ -511,6 +512,24 @@ public class ODistributedResponseManager {
 
           return responsesForQuorum >= quorum;
         }
+      }
+
+      if (responseGroups.size() == 1 && OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.getValueAsLong() == 0) {
+        // CHECK FOR OFFLINE SERVERS
+        final List<String> missingNodes = getMissingNodes();
+
+        final int expectingNodes = missingNodes.size();
+        dManager.getAvailableNodes(missingNodes, getDatabaseName());
+        final int unreacheableServersDuringRequest = expectingNodes - missingNodes.size();
+
+        if (responseGroups.get(0).size() + unreacheableServersDuringRequest >= quorum) {
+          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+              "%d server(s) became unreachable during the request, decreasing the quorum (%d) and accept the request: %s",
+              unreacheableServersDuringRequest, quorum, request);
+          return true;
+        }
+      }
+
     } else {
       if (receivedResponses >= quorum) {
         int responsesForQuorum = 0;

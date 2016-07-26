@@ -273,4 +273,24 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
       counter.incrementAndGet();
     }
   }
+
+  @Override
+  public long getReceivedRequests() {
+    long total = 0;
+    for (ODistributedDatabaseImpl db : databases.values()) {
+      total += db.getReceivedRequests();
+    }
+
+    return total;
+  }
+
+  @Override
+  public long getProcessedRequests() {
+    long total = 0;
+    for (ODistributedDatabaseImpl db : databases.values()) {
+      total += db.getProcessedRequests();
+    }
+
+    return total;
+  }
 }

@@ -237,7 +237,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         Orient.instance().scheduleTask(healthCheckerTask, healthChecker, healthChecker);
       }
 
-      serverStarted.countDown();
+      // WAIT ALL THE MESSAGES IN QUEUE ARE PROCESSED OR MAX 10 SECONDS
+      waitStartupIsCompleted();
 
     } catch (Exception e) {
       ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE, "Error on starting distributed plugin", e);
@@ -245,6 +246,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     dumpServersStatus();
+  }
+
+  protected void waitStartupIsCompleted() throws InterruptedException {
+    final long totalReceivedRequests = getMessageService().getReceivedRequests();
+    long totalProcessedRequests = getMessageService().getProcessedRequests();
+
+    final long start = System.currentTimeMillis();
+    while (totalProcessedRequests < totalReceivedRequests && (System.currentTimeMillis() - start < 10000)) {
+      Thread.sleep(300);
+      totalProcessedRequests = getMessageService().getProcessedRequests();
+    }
+
+    serverStarted.countDown();
   }
 
   protected void publishLocalNodeConfiguration() {
