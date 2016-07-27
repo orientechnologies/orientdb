@@ -31,9 +31,9 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import java.util.Collection;
 import java.util.Set;
 
-public class OIndexManagerProxy extends OProxedResource<OIndexManager> implements OIndexManager {
+public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> implements OIndexManager {
 
-  public OIndexManagerProxy(final OIndexManager iDelegate, final ODatabaseDocumentInternal iDatabase) {
+  public OIndexManagerProxy(final OIndexManagerAbstract iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 
@@ -45,11 +45,11 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
    * Force reloading of indexes.
    */
   public OIndexManager reload() {
-    return delegate.load();
+    return delegate.load(database);
   }
 
   public void create() {
-    delegate.create();
+    delegate.create(database);
   }
 
   public Collection<? extends OIndex<?>> getIndexes() {

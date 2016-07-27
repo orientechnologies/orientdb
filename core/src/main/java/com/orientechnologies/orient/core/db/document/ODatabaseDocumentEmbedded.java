@@ -187,6 +187,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
   public ODatabaseDocumentTx copy() {
     ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage);
     database.internalOpen(getUser().getName(), null, false);
+    this.activateOnCurrentThread();
     return database;
   }
 

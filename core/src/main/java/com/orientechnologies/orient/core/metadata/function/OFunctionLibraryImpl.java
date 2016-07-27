@@ -24,7 +24,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction;
 import com.orientechnologies.orient.core.command.script.OCommandFunction;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -52,11 +52,20 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
   public OFunctionLibraryImpl() {
   }
 
+  @Deprecated
   public void create() {
-    init();
+    
+  }
+
+  public void create(ODatabaseDocumentInternal db) {
+    init(db);
   }
 
   public void load() {
+    throw new UnsupportedOperationException();
+  }
+  
+  public void load(ODatabaseDocumentInternal db) {
     // COPY CALLBACK IN RAM
     final Map<String, OCallable<Object, Map<Object, Object>>> callbacks = new HashMap<String, OCallable<Object, Map<Object, Object>>>();
     for (Map.Entry<String, OFunction> entry : functions.entrySet()) {
@@ -67,7 +76,6 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     functions.clear();
 
     // LOAD ALL THE FUNCTIONS IN MEMORY
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().existsClass("OFunction")) {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction order by name"));
       for (ODocument d : result) {
@@ -89,9 +97,13 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
   public OFunction getFunction(final String iName) {
     return functions.get(iName.toUpperCase());
   }
-
-  public synchronized OFunction createFunction(final String iName) {
-    init();
+  
+  public OFunction createFunction(final String iName) {
+    throw new UnsupportedOperationException("Use Create function with database on internal api");
+  }
+  
+  public synchronized OFunction createFunction(ODatabaseDocumentInternal database, final String iName) {
+    init(database);
 
     final OFunction f = new OFunction().setName(iName);
     try {
@@ -108,8 +120,7 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     functions.clear();
   }
 
-  protected void init() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+  protected void init(final ODatabaseDocument db) {
     if (db.getMetadata().getSchema().existsClass("OFunction")) {
       final OClass f = db.getMetadata().getSchema().getClass("OFunction");
       OProperty prop = f.getProperty("name");

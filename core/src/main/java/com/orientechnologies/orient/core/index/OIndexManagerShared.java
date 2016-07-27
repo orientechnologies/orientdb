@@ -25,8 +25,6 @@ import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -40,7 +38,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
@@ -125,7 +122,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     if (c != null)
       throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
 
-    ODatabaseInternal database = getDatabase();
+    ODatabaseDocumentInternal database = getDatabase();
     OStorage storage = database.getStorage();
 
     final Locale locale = getServerLocale();
@@ -196,7 +193,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
       storage.synch();
 
-    return preProcessBeforeReturn(index);
+    return preProcessBeforeReturn(database, index);
   }
 
   protected void notifyInvolvedClasses(int[] clusterIdsToIndex) {
@@ -315,7 +312,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         return;
 
       final ODatabaseDocument db = getDatabase();
-      document = db.load(new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
+      document = db.load(new ORecordId(getStorage().getConfiguration().indexMgrRecordId));
       final ODocument doc = new ODocument();
       document.copyTo(doc);
 
@@ -358,8 +355,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
     if (rebuildCompleted)
       return false;
 
-    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    final OStorage storage = database.getStorage().getUnderlying();
+    final OStorage storage = getStorage().getUnderlying();
     if (storage instanceof OAbstractPaginatedStorage) {
       OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
       return paginatedStorage.wereDataRestoredAfterOpen() && paginatedStorage.wereNonTxOperationsPerformedInPreviousOpen();
@@ -570,7 +566,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           for (Iterator<OIndexFactory> it = OIndexes.getAllFactories(); it.hasNext();) {
             try {
               final OIndexFactory indexFactory = it.next();
-              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, getDatabase().getStorage(),
+              final OIndexEngine engine = indexFactory.createIndexEngine(null, index.getName(), false, getStorage(),
                   0, null);
 
               engine.deleteWithoutLoad(index.getName());
@@ -660,17 +656,17 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityNull.class);
       newDb.open("admin", "nopass");
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(newDb);
+      newDb.activateOnCurrentThread();
     }
   }
 
-  protected OIndex<?> preProcessBeforeReturn(final OIndex<?> index) {
+  protected OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index) {
     if (index instanceof OIndexMultiValues)
-      return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
+      return new OIndexTxAwareMultiValue(database, (OIndex<Set<OIdentifiable>>) index);
     else if (index instanceof OIndexDictionary)
-      return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) index);
+      return new OIndexTxAwareDictionary(database, (OIndex<OIdentifiable>) index);
     else if (index instanceof OIndexOneValue)
-      return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
+      return new OIndexTxAwareOneValue(database, (OIndex<OIdentifiable>) index);
 
     return index;
   }

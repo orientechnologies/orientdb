@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.schedule.OScheduler;
 import com.orientechnologies.orient.core.schedule.OSchedulerProxy;
 
 import java.io.IOException;
-import java.util.concurrent.Callable;
 
 public class OMetadataDefault implements OMetadataInternal {
   public static final String CLUSTER_INTERNAL_NAME     = "internal";
@@ -159,7 +158,7 @@ public class OMetadataDefault implements OMetadataInternal {
    */
   public void reload() {
     //RELOAD ALL THE SHARED CONTEXT
-    database.getSharedContext().reload();
+    database.getSharedContext().reload(database);
     //ADD HERE THE RELOAD OF A PROXY OBJECT IF NEEDED
   }
 

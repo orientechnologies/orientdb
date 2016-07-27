@@ -415,7 +415,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       }
     });
     metadata.init(shared);
-    shared.load(getStorage());
+    shared.load(this);
   }
 
   @Override
@@ -468,7 +468,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         }
       });
       metadata.init(shared);
-      shared.create();
+      shared.create(this);
 
       if (!(getStorage() instanceof OStorageProxy))
         registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);

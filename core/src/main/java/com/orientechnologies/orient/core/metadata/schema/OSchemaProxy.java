@@ -50,7 +50,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
   }
 
   public void create() {
-    delegate.create();
+    delegate.create(database);
   }
 
   public int countClasses() {
@@ -174,7 +174,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared>implements OSche
   @Deprecated
   public void load() {
 
-    delegate.load();
+    delegate.load(database);
 
   }
 

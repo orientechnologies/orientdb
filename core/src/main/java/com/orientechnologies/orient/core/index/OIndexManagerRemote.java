@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -62,7 +63,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
       ORecordInternal.setIdentity(document,
-          new ORecordId(ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().indexMgrRecordId));
+          new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
 
       if (progressListener != null)
         progressListener.onCompletition(this, true);
@@ -70,7 +71,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       reload();
 
       final Locale locale = getServerLocale();
-      return preProcessBeforeReturn(indexes.get(iName.toLowerCase(locale)));
+      return preProcessBeforeReturn(getDatabase(), indexes.get(iName.toLowerCase(locale)));
     } finally {
       releaseExclusiveLock();
     }
@@ -160,11 +161,11 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     }
   }
 
-  protected OIndex<?> preProcessBeforeReturn(final OIndex<?> index) {
+  protected OIndex<?> preProcessBeforeReturn(ODatabaseDocumentInternal database, final OIndex<?> index) {
     if (index instanceof OIndexRemoteMultiValue)
-      return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
+      return new OIndexTxAwareMultiValue(database, (OIndex<Set<OIdentifiable>>) index);
     else if (index instanceof OIndexRemoteOneValue)
-      return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
+      return new OIndexTxAwareOneValue(database, (OIndex<OIdentifiable>) index);
     return index;
   }
 

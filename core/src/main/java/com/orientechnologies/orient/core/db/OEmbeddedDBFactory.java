@@ -107,8 +107,9 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
       storage.getConfiguration().update();
 
-      final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-      embedded.internalCreate();
+      try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
+        embedded.internalCreate();
+      }
     } else
       throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
   }

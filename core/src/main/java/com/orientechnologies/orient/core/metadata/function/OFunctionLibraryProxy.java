@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.metadata.function;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 
 /**
@@ -29,8 +30,8 @@ import com.orientechnologies.orient.core.db.record.OProxedResource;
  *
  * @author Luca Garulli
  */
-public class OFunctionLibraryProxy extends OProxedResource<OFunctionLibrary> implements OFunctionLibrary {
-  public OFunctionLibraryProxy(final OFunctionLibrary iDelegate, final ODatabaseDocumentInternal iDatabase) {
+public class OFunctionLibraryProxy extends OProxedResource<OFunctionLibraryImpl> implements OFunctionLibrary {
+  public OFunctionLibraryProxy(final OFunctionLibraryImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 
@@ -46,17 +47,17 @@ public class OFunctionLibraryProxy extends OProxedResource<OFunctionLibrary> imp
 
   @Override
   public OFunction createFunction(final String iName) {
-    return delegate.createFunction(iName);
+    return delegate.createFunction(database, iName);
   }
 
   @Override
   public void create() {
-    delegate.create();
+    delegate.create(database);
   }
 
   @Override
   public void load() {
-    delegate.load();
+    delegate.load(database);
   }
 
   @Override

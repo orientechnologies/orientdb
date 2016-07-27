@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OSequenceException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -23,17 +22,24 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
   @Override
   public void create() {
-    init();
+    
+  }
+  
+  public void create(ODatabaseDocumentInternal database) {
+    init(database);
   }
 
   @Override
   public void load() {
+     throw new UnsupportedOperationException("use api with database for internal");
+  }
+
+  public void load(ODatabaseDocumentInternal database) {
     sequences.clear();
 
     //
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().existsClass(OSequence.CLASS_NAME)) {
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + OSequence.CLASS_NAME));
+    if (((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().existsClass(OSequence.CLASS_NAME)) {
+      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("SELECT FROM " + OSequence.CLASS_NAME));
       for (ODocument document : result) {
         document.reload();
 
@@ -42,7 +48,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
       }
     }
   }
-
+  
   @Override
   public void close() {
     sequences.clear();
@@ -58,18 +64,27 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     return sequences.size();
   }
 
-  @Override
-  public OSequence getSequence(String iName) {
+
+  public OSequence getSequence(ODatabaseDocumentInternal database, String iName) {
     final OSequence seq = sequences.get(iName.toUpperCase());
     if (seq == null)
-      load();
+      load(database);
 
     return sequences.get(iName.toUpperCase());
+  }
+  
+  @Override
+  public OSequence getSequence(String iName) {
+      throw new UnsupportedOperationException();
   }
 
   @Override
   public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params) {
-    init();
+    throw new UnsupportedOperationException("use api with database for internal");
+  }
+  
+  public OSequence createSequence(ODatabaseDocumentInternal database, String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params) {
+    init(database);
 
     final String key = iName.toUpperCase();
     validateSequenceNoExists(key);
@@ -83,7 +98,13 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
   @Override
   public void dropSequence(String iName) {
-    OSequence seq = getSequence(iName);
+    throw new UnsupportedOperationException();
+  }
+  
+  public void dropSequence(ODatabaseDocumentInternal database, String iName) {
+    // TODO Auto-generated method stub
+ 
+    OSequence seq = getSequence(database,iName);
 
     if (seq != null) {
       seq.getDocument().delete();
@@ -91,9 +112,8 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     }
   }
 
-  @Override
-  public OSequence onSequenceCreated(ODocument iDocument) {
-    init();
+  public OSequence onSequenceCreated(ODatabaseDocumentInternal database, ODocument iDocument) {
+    init(database);
 
     OSequence sequence = OSequenceHelper.createSequence(iDocument);
 
@@ -105,8 +125,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     return sequence;
   }
 
-  @Override
-  public OSequence onSequenceUpdated(ODocument iDocument) {
+  public OSequence onSequenceUpdated(ODatabaseDocumentInternal database,ODocument iDocument) {
     String name = OSequence.getSequenceName(iDocument);
     if (name == null) {
       return null;
@@ -121,21 +140,19 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
     return sequence;
   }
 
-  @Override
-  public void onSequenceDropped(ODocument iDocument) {
+  public void onSequenceDropped(ODatabaseDocumentInternal database,ODocument iDocument) {
     String name = OSequence.getSequenceName(iDocument);
     validateSequenceExists(name);
 
     sequences.remove(name);
   }
 
-  private void init() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (db.getMetadata().getSchema().existsClass(OSequence.CLASS_NAME)) {
+  private void init(ODatabaseDocumentInternal database) {
+    if (database.getMetadata().getSchema().existsClass(OSequence.CLASS_NAME)) {
       return;
     }
 
-    final OClassImpl sequenceClass = (OClassImpl) db.getMetadata().getSchema().createClass(OSequence.CLASS_NAME);
+    final OClassImpl sequenceClass = (OClassImpl) database.getMetadata().getSchema().createClass(OSequence.CLASS_NAME);
     OSequence.initClass(sequenceClass);
   }
 
@@ -150,4 +167,5 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
       throw new OSequenceException("Sequence '" + iName + "' does not exists");
     }
   }
+
 }
