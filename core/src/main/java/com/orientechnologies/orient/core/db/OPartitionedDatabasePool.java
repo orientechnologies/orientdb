@@ -333,10 +333,12 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract implements
 
       while (!queue.isEmpty()) {
         DatabaseDocumentTxPooled db = queue.poll();
-        db.activateOnCurrentThread();
-        OStorage storage = db.getStorage();
-        storage.close();
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
+        if (!db.isClosed()) {
+          db.activateOnCurrentThread();
+          OStorage storage = db.getStorage();
+          storage.close();
+          ODatabaseRecordThreadLocal.INSTANCE.remove();
+        }
       }
     }
 
