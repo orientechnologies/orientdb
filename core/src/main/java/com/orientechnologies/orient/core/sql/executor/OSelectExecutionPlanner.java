@@ -7,14 +7,11 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.parser.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Luigi Dell'Aquila
@@ -339,6 +336,8 @@ public class OSelectExecutionPlanner {
       return;
     }
 
+    //TODO subclass indexes
+
     Boolean orderByRidAsc = null;//null: no order. true: asc, false:desc
     if (isOrderByRidAsc()) {
       orderByRidAsc = true;
@@ -354,27 +353,149 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier identifier, OCommandContext ctx) {
-    if (true) {
-      return false;//TODO
+    if (flattenedWhereClause == null || flattenedWhereClause.size()==0) {
+      return false;
     }
     OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(identifier.getStringValue());
     Set<OIndex<?>> indexes = clazz.getIndexes();
-    List<OAndBlock> copyOfFlattenedWhereClause = copy(flattenedWhereClause);
-    for (OAndBlock item : flattenedWhereClause) {
-      for (OIndex index : indexes) {
-        OIndexDefinition def = index.getDefinition();
-        if (def == null) {
-          continue;
-        }
-      }
+
+    List<IndexSearchDescriptor> indexSearchDescriptors = flattenedWhereClause.stream().map(x -> findBestIndexFor(ctx, indexes, x))
+        .filter(Objects::nonNull).collect(Collectors.toList());
+    if (indexSearchDescriptors.size() != flattenedWhereClause.size()) {
+      return false; //some blocks could not be managed with an index
     }
-    return false;
+
+    List<IndexSearchDescriptor> optimumIndexSearchDescriptors = commonFactor(indexSearchDescriptors);
+
+    if (indexSearchDescriptors.size() == 1) {
+      IndexSearchDescriptor desc = indexSearchDescriptors.get(0);
+      plan.chain(new FetchFromIndexStep(desc.idx, desc.keyCondition, ctx));
+      plan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx));
+      this.whereClause = null;
+      this.flattenedWhereClause = null;
+    } else {
+      createParallelIndexFetch(plan, optimumIndexSearchDescriptors, ctx);
+      this.whereClause = null;
+      this.flattenedWhereClause = null;
+    }
+    return true;
   }
 
-  private List<OAndBlock> copy(List<OAndBlock> flattenedWhereClause) {
-    List<OAndBlock> result = new ArrayList<>();
-    for (OAndBlock block : flattenedWhereClause) {
-      result.add(block.copy());
+  private void createParallelIndexFetch(OSelectExecutionPlan plan, List<IndexSearchDescriptor> indexSearchDescriptors,
+      OCommandContext ctx) {
+    List<OInternalExecutionPlan> subPlans = new ArrayList<>();
+    for (IndexSearchDescriptor desc : indexSearchDescriptors) {
+      OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+      subPlan.chain(new FetchFromIndexStep(desc.idx, desc.keyCondition, ctx));
+      subPlan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx));
+      subPlans.add(subPlan);
+    }
+    plan.chain(new ParallelExecStep(subPlans, ctx));
+  }
+
+  private OWhereClause createWhereFrom(OBooleanExpression remainingCondition) {
+    OWhereClause result = new OWhereClause(-1);
+    result.setBaseExpression(remainingCondition);
+    return result;
+  }
+
+  private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex<?>> indexes, OAndBlock block) {
+    return indexes.stream().map(index -> buildIndexSearchDescriptor(ctx, index, block)).filter(Objects::nonNull)
+        .min(Comparator.comparing(x -> x.cost(ctx))).orElse(null);
+  }
+
+  private IndexSearchDescriptor buildIndexSearchDescriptor(OCommandContext ctx, OIndex<?> index, OAndBlock block) {
+    List<String> indexFields = index.getDefinition().getFields();
+    OBinaryCondition keyCondition = new OBinaryCondition(-1);
+    OIdentifier key = new OIdentifier(-1);
+    key.setStringValue("key");
+    keyCondition.setLeft(new OExpression(key));
+    boolean allowsRange = allowsRangeQueries(index);
+    boolean found = false;
+
+    OAndBlock blockCopy = block.copy();
+    Iterator<OBooleanExpression> blockIterator = blockCopy.getSubBlocks().iterator();
+
+    OAndBlock indexKeyValue = new OAndBlock(-1);
+    IndexSearchDescriptor result = new IndexSearchDescriptor();
+    result.idx = index;
+    result.keyCondition = indexKeyValue;
+    for (String indexField : indexFields) {
+      boolean breakHere = false;
+      while (blockIterator.hasNext()) {
+        OBooleanExpression singleExp = blockIterator.next();
+        if (singleExp instanceof OBinaryCondition) {
+          OExpression left = ((OBinaryCondition) singleExp).getLeft();
+          if (left.isBaseIdentifier()) {
+            String fieldName = left.getDefaultAlias().getStringValue();
+            if (indexField.equals(fieldName)) {
+              OBinaryCompareOperator operator = ((OBinaryCondition) singleExp).getOperator();
+              if (operator instanceof OEqualsCompareOperator) {
+                found = true;
+                OBinaryCondition condition = new OBinaryCondition(-1);
+                condition.setLeft(left);
+                condition.setOperator(operator);
+                condition.setRight(((OBinaryCondition) singleExp).getRight().copy());
+                indexKeyValue.getSubBlocks().add(condition);
+                blockIterator.remove();
+                break;
+              } else if (allowsRange && operator.isRangeOperator()) {
+                found = true;
+                breakHere = true;//this is last element, no other fields can be added to the key because this is a range condition
+                OBinaryCondition condition = new OBinaryCondition(-1);
+                condition.setLeft(left);
+                condition.setOperator(operator);
+                condition.setRight(((OBinaryCondition) singleExp).getRight().copy());
+                indexKeyValue.getSubBlocks().add(condition);
+                blockIterator.remove();
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (breakHere) {
+        break;
+      }
+    }
+    if (found) {
+      result.remainingCondition = blockCopy;
+      return result;
+    }
+    return null;
+  }
+
+  private boolean allowsRangeQueries(OIndex<?> index) {
+    return index.supportsOrderedIterations();
+  }
+
+  /**
+   * aggregates multiple index conditions that refer to the same key search
+   *
+   * @param indexSearchDescriptors
+   * @return
+   */
+  private List<IndexSearchDescriptor> commonFactor(List<IndexSearchDescriptor> indexSearchDescriptors) {
+    //index, key condition, additional filter (to aggregate in OR)
+    Map<OIndex, Map<OAndBlock, OOrBlock>> aggregation = new HashMap<>();
+    for (IndexSearchDescriptor item : indexSearchDescriptors) {
+      Map<OAndBlock, OOrBlock> filtersForIndex = aggregation.get(item.idx);
+      if (filtersForIndex == null) {
+        filtersForIndex = new HashMap<>();
+        aggregation.put(item.idx, filtersForIndex);
+      }
+      OOrBlock existingAdditionalConditions = filtersForIndex.get(item.keyCondition);
+      if (existingAdditionalConditions == null) {
+        existingAdditionalConditions = new OOrBlock(-1);
+        filtersForIndex.put(item.keyCondition, existingAdditionalConditions);
+      }
+      existingAdditionalConditions.getSubBlocks().add(item.remainingCondition);
+    }
+    List<IndexSearchDescriptor> result = new ArrayList<>();
+    for (Map.Entry<OIndex, Map<OAndBlock, OOrBlock>> item : aggregation.entrySet()) {
+      for (Map.Entry<OAndBlock, OOrBlock> filters : item.getValue().entrySet()) {
+        result.add(new IndexSearchDescriptor(item.getKey(), filters.getKey(), filters.getValue()));
+      }
     }
     return result;
   }

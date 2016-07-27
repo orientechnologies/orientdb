@@ -9,4 +9,8 @@ public interface OBinaryCompareOperator {
   boolean supportsBasicCalculation();
 
   SimpleNode copy();
+
+  default boolean isRangeOperator(){
+    return false;
+  }
 }

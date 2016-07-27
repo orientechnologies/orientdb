@@ -49,5 +49,8 @@ public class OLtOperator extends SimpleNode implements OBinaryCompareOperator {
     return new OLtOperator(-1);
   }
 
+  @Override public boolean isRangeOperator() {
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=d8e97d52128198b373bb0c272c72de2c (do not edit this line) */

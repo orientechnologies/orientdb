@@ -274,5 +274,9 @@ public class OWhereClause extends SimpleNode {
     result.flattened = flattened == null ? null : flattened.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
+
+  public void setBaseExpression(OBooleanExpression baseExpression) {
+    this.baseExpression = baseExpression;
+  }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

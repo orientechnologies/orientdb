@@ -135,5 +135,17 @@ public class OBinaryCondition extends OBooleanExpression {
   public OExpression getRight() {
     return right;
   }
+
+  public void setLeft(OExpression left) {
+    this.left = left;
+  }
+
+  public void setOperator(OBinaryCompareOperator operator) {
+    this.operator = operator;
+  }
+
+  public void setRight(OExpression right) {
+    this.right = right;
+  }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */
