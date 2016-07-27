@@ -302,9 +302,15 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
 
         atomicUnit.clear();
       } else {
-        Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
+        if (walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
             || walRecord instanceof ONonTxOperationPerformedWALRecord || walRecord instanceof OFullCheckpointStartRecord
-            || walRecord instanceof OCheckpointEndRecord);
+            || walRecord instanceof OCheckpointEndRecord) {
+          Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
+              || walRecord instanceof ONonTxOperationPerformedWALRecord || walRecord instanceof OFullCheckpointStartRecord
+              || walRecord instanceof OCheckpointEndRecord);
+        } else {
+          System.out.println(walRecord.getClass().getName());
+        }
       }
 
     }
