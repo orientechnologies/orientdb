@@ -55,6 +55,13 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by tglman on 20/07/16.
@@ -64,7 +71,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private static ConcurrentMap<String, OrientDBFactory> embedded = new ConcurrentHashMap<>();
   private static ConcurrentMap<String, OrientDBFactory> remote   = new ConcurrentHashMap<>();
 
-  private ODatabaseDocumentInternal                     internal;
+  protected ODatabaseDocumentInternal                   internal;
   private final String                                  url;
   private OrientDBFactory                               factory;
   private final String                                  type;
