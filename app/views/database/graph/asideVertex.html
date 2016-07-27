@@ -42,6 +42,24 @@
           </div>
         </div>
         <div class="form-group">
+          <label class="col-md-4 control-label">Display Color</label>
+
+          <div class="col-md-8">
+            <spectrum-colorpicker ng-change="setDirty()"
+                                  ng-model="config.displayColor"
+                                  options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-md-4 control-label">Display Background</label>
+
+          <div class="col-md-8">
+            <spectrum-colorpicker ng-change="setDirty()"
+                                  ng-model="config.displayBackground"
+                                  options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
+          </div>
+        </div>
+        <div class="form-group">
           <label for="inputIcon" class="col-md-4 control-label">Icon</label>
 
           <div class="col-md-8">

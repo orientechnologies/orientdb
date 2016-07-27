@@ -10,7 +10,7 @@ path.lightweight {
 }
 
 path.end-arrow {
-  fill: #D4D6D7;
+  fill: #303030;
 }
 
 path.start-arrow {
@@ -20,7 +20,9 @@ path.start-arrow {
 path.end-arrow-hover {
   fill: red !important;
 }
-
+.path-overlay {
+  opacity: 0;
+}
 path.start-arrow-hover {
   fill: red !important;
 }
@@ -56,13 +58,13 @@ text.vlabel-outside {
 }
 
 
-path.edge-hover {
-  stroke: red;
-}
+/*path.edge-hover {*/
+  /*stroke: red;*/
+/*}*/
 
-text.elabel:hover {
-  fill: red;
-}
+/*text.elabel:hover {*/
+  /*fill: red;*/
+/*}*/
 
 text.elabel {
   text-anchor: middle;

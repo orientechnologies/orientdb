@@ -99,6 +99,29 @@ var OrientGraph = (function () {
           });
 
       }
+      change['displayColor'] = function (clazz, prop, val) {
+        if (!self.config.classes[clazz]) {
+          self.config.classes[clazz] = {}
+        }
+        self.config.classes[clazz].displayColor = val;
+        d3.selectAll('g.vertex-' + clazz.toLowerCase())
+          .selectAll('.vlabel-outside')
+          .style("fill", function (d) {
+            return bindColor(d, "displayColor");
+          })
+
+      }
+      change['displayBackground'] = function (clazz, prop, val) {
+        if (!self.config.classes[clazz]) {
+          self.config.classes[clazz] = {}
+        }
+        self.config.classes[clazz].displayBackground = val;
+        d3.selectAll('g.vertex-' + clazz.toLowerCase())
+          .selectAll('rect.vlabel-outside-bbox')
+          .style("fill", bindRectColor)
+          .style("stroke", bindRectColor)
+      }
+
       change['icon'] = function (clazz, prop, val) {
         if (!self.config.classes[clazz]) {
           self.config.classes[clazz] = {}
@@ -195,6 +218,13 @@ var OrientGraph = (function () {
           .attr('r', bindRadius);
 
         self.setSelected(self.selected);
+
+        d3.selectAll('g.vertex-' + clazz.toLowerCase())
+          .selectAll('g.vlabel-outside-group')
+          .attr('y', function (d) {
+            return parseInt(bindRadius(d)) + 15;
+          })
+
 
       }
       return change;
@@ -681,26 +711,44 @@ var OrientGraph = (function () {
         .style("stroke-width", function (d) {
           return bindStrokeWidth(d.edge);
         })
-        .on("mouseover", function (d) {
-          var eclass = d.edge ? "edge" : "edge lightweight"
-          eclass = eclass + " edge-hover edge-" + d.label.toLowerCase();
-          d3.select(this).attr("class", eclass)
-            .style('marker-start', function (d) {
-              return d.left ? 'url(#start-arrow-hover)' : '';
-            }).style('marker-end', function (d) {
-            return d.right ? 'url(#end-arrow-hover)' : '';
-          });
+
+
+      this.pathG.append('svg:path')
+        .attr("class", function (d) {
+          return "path-overlay pointer";
         })
+        .style('fill', "none")
+        .style('stroke', function (d) {
+          return bindStroke(d.edge);
+        })
+        .style("stroke-width", function (d) {
+          return parseInt(bindStrokeWidth(d.edge)) + 15;
+        })
+        .on("mouseover", function (d) {
+
+          d3.select(this).style("opacity", "0.3");
+          //var eclass = d.edge ? "edge" : "edge lightweight"
+          //eclass = eclass + " edge-hover edge-" + d.label.toLowerCase();
+          //d3.select(this).attr("class", eclass)
+          //  .style('marker-start', function (d) {
+          //    return d.left ? 'url(#start-arrow-hover)' : '';
+          //  }).style('marker-end', function (d) {
+          //  return d.right ? 'url(#end-arrow-hover)' : '';
+          //});
+        })
+
+
         .on("mouseout", function (d) {
-          var eclass = d.edge ? "edge" : "edge lightweight"
-          eclass += " edge-" + d.label.toLowerCase();
-          ;
-          d3.select(this).attr("class", eclass)
-            .style('marker-start', function (d) {
-              return d.left ? 'url(#start-arrow)' : '';
-            }).style('marker-end', function (d) {
-            return d.right ? 'url(#end-arrow)' : '';
-          });
+
+          d3.select(this).style("opacity", "0");
+          //var eclass = d.edge ? "edge" : "edge lightweight"
+          //eclass += " edge-" + d.label.toLowerCase();
+          //d3.select(this).attr("class", eclass)
+          //  .style('marker-start', function (d) {
+          //    return d.left ? 'url(#start-arrow)' : '';
+          //  }).style('marker-end', function (d) {
+          //  return d.right ? 'url(#end-arrow)' : '';
+          //});
         })
         .on("click", function (e) {
           d3.event.stopPropagation();
@@ -743,8 +791,6 @@ var OrientGraph = (function () {
 
       g.on('mouseover', function (v) {
 
-//                d3.select(this).classed("fixed", v.fixed = true);
-
 
         if (self.dragNode) {
           var r = bindRadius(v);
@@ -771,7 +817,6 @@ var OrientGraph = (function () {
 
 
       g.on('mouseout', function (v) {
-//                d3.select(this).classed("fixed", v.fixed = false);
         if (self.dragNode) {
           d3.select(v.elem).selectAll('circle').attr('r', bindRadius);
         }
@@ -819,6 +864,7 @@ var OrientGraph = (function () {
           self.topics['edge/create'](self.dragNode, v);
           d3.event.stopPropagation();
           self.dragNode = null;
+          d3.select(v.elem).selectAll('circle').attr('r', bindRadius);
         }
       })
       cc.on('click', function (e, v) {
@@ -871,7 +917,8 @@ var OrientGraph = (function () {
         })
         .attr('class', function (d) {
           var name = self.getClazzConfigVal(getClazzName(d), "icon");
-          return 'vlabel-icon vicon' + (!name ? ' elem-invisible' : '');
+          return 'vlabel-icon vicon' + (!name ? ' elem-invisible' : '')
+          bind;
         })
         .style("font-size", function (d) {
           var size = self.getClazzConfigVal(getClazzName(d), "iconSize");
@@ -879,15 +926,45 @@ var OrientGraph = (function () {
         })
         .text(bindIcon);
 
-      g.append('svg:text')
+
+      var group = g.append("g");
+      group.attr('class', "vlabel-outside-group");
+
+      function bindBboxPos(prop) {
+        return function (elem) {
+          var node = d3.select(this.parentNode)
+            .selectAll('text.vlabel-outside')
+            .node();
+          var bbox = node.getBBox();
+          return bbox[prop];
+        }
+      }
+
+
+      group.append('svg:text')
         .attr('x', 0)
         .attr('y', function (d) {
-          return bindRadius(d) + 15;
+          return parseInt(bindRadius(d)) + 15;
         })
         .attr('class', function (d) {
           return 'vlabel-outside';
         })
+        .style("fill", function (d) {
+          return bindColor(d, "displayColor");
+        })
         .text(bindRealName);
+
+      group.append('rect')
+        .attr('x', bindBboxPos("x"))
+        .attr('y', bindBboxPos("y"))
+
+        .attr('class', "vlabel-outside-bbox")
+        .attr('height', bindBboxPos("height"))
+        .attr('width', bindBboxPos("width"))
+        .style("fill-opacity", 0.5)
+        .style("stroke-width", 1)
+        .style("stroke", bindRectColor)
+        .style("fill", bindRectColor)
 
       this.circle.exit().remove();
       this.zoomComponent = d3.behavior.zoom()
@@ -971,6 +1048,18 @@ var OrientGraph = (function () {
 
     }
 
+    function bindColor(d, prop, def) {
+
+      var clsName = getClazzName(d);
+      var stroke = self.getClazzConfigVal(clsName, prop);
+      if (!stroke) {
+        var ret = def || "rgb(0, 0, 0)";
+        return ret;
+      }
+      return stroke;
+
+    }
+
     function bindStrokeWidth(d) {
       var clsName = getClazzName(d);
       var stroke = self.getClazzConfigVal(clsName, "strokeWidth");
@@ -1013,6 +1102,125 @@ var OrientGraph = (function () {
 
       var name = self.getClazzConfigVal(getClazzName(d), "icon");
       return name;
+    }
+
+
+    function calculateEdgePath(padding) {
+
+      var d = d3.select(this.parentNode).datum();
+
+
+      var radiusSource = self.getClazzConfigVal(getClazzName(d.source), "r");
+      var radiusTarget = self.getClazzConfigVal(getClazzName(d.target), "r");
+
+      radiusSource = radiusSource ? radiusSource : self.getConfigVal("node").r;
+      radiusTarget = radiusTarget ? radiusTarget : self.getConfigVal("node").r;
+
+
+      var padd = 5;
+
+      //if (typeof padding == 'number') {
+      //  padd = padding;
+      //}
+
+
+      radiusTarget = parseInt(radiusTarget);
+      radiusSource = parseInt(radiusSource);
+      var deltaX = d.target.x - d.source.x,
+        deltaY = d.target.y - d.source.y,
+        dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY),
+
+
+        normX = deltaX / (dist != 0 ? dist : 1),
+        normY = deltaY / (dist != 0 ? dist : 1),
+        sourcePadding = d.left ? (radiusSource + padd) : radiusSource,
+        targetPadding = d.right ? (radiusTarget + padd) : radiusTarget,
+        sourceX = d.source.x + (sourcePadding * normX),
+        sourceY = d.source.y + (sourcePadding * normY),
+        targetX = d.target.x - (targetPadding * normX),
+        targetY = d.target.y - (targetPadding * normY);
+      // Config Node - > Label
+
+
+      var rel = countRelInOut(d);
+
+
+      if (rel == 1) {
+        return 'M' + sourceX + ',' + sourceY + ' L' + targetX + ',' + targetY;
+      } else {
+
+        var realPos = calculateRelPos(d);
+
+        if (realPos == 0) {
+          var paddingSource = 5;
+          var paddingTarget = 5;
+          if (deltaX > 0) {
+            paddingSource = -1 * 5;
+            paddingTarget = -1 * 5;
+          }
+
+          return 'M' + (sourceX + paddingSource) + ',' + (sourceY + paddingSource) + ' L' + (targetX + paddingTarget) + ',' + (targetY + paddingTarget);
+        }
+        var pos = realPos + 1;
+        var m = (d.target.y - d.source.y) / (d.target.x - d.source.x);
+        var val = (Math.atan(m) * 180) / Math.PI;
+        var trans = val * (Math.PI / 180) * -1;
+        var radiansConfig = angleRadiants(pos);
+        var angleSource;
+        var angleTarget;
+        var signSourceX;
+        var signSourceY;
+        var signTargetX;
+        var signTargetY;
+
+        if (deltaX < 0) {
+          signSourceX = 1;
+          signSourceY = 1;
+          signTargetX = 1;
+          signTargetY = 1;
+          angleSource = radiansConfig.target - trans;
+          angleTarget = radiansConfig.source - trans;
+        } else {
+          signSourceX = 1;
+          signSourceY = -1;
+          signTargetX = 1;
+          signTargetY = -1;
+          angleSource = radiansConfig.source + trans;
+          angleTarget = radiansConfig.target + trans;
+        }
+
+
+        sourceX = d.source.x + ( signSourceX * (sourcePadding * Math.cos(angleSource)));
+        sourceY = d.source.y + ( signSourceY * (sourcePadding * Math.sin(angleSource)));
+        targetX = d.target.x + ( signTargetX * (targetPadding * Math.cos(angleTarget)));
+        targetY = d.target.y + ( signTargetY * (targetPadding * Math.sin(angleTarget)));
+        var dr = 75 * rel;
+        return "M" + sourceX + "," + sourceY + "A" + dr + "," + dr + " 0 0,1 " + targetX + "," + targetY;
+      }
+
+    }
+
+    function angleRadiants(pos) {
+      switch (pos) {
+        case 2:
+          return {source: Math.PI / 6, target: (5 * Math.PI) / 6}
+          break;
+        case 3:
+          return {source: Math.PI / 3, target: (2 * Math.PI) / 3}
+          break;
+        case 4:
+          return {source: Math.PI / 2, target: Math.PI / 2}
+          break;
+      }
+    }
+
+    function bindRectColor(d) {
+      var def = "rgba(0, 0, 0, 0)";
+      var c = bindColor(d, "displayBackground", def);
+      if (c == "#ffffff") {
+        c = def;
+      }
+      return c;
     }
 
     function bindName(d) {
@@ -1106,108 +1314,14 @@ var OrientGraph = (function () {
 
       var path = self.path.selectAll("path.edge");
 
-      path.attr('d', function () {
+      path.attr('d', calculateEdgePath);
 
-        var d = d3.select(this.parentNode).datum();
+      var overlay = self.path.selectAll("path.path-overlay");
 
-
-        var radiusSource = self.getClazzConfigVal(getClazzName(d.source), "r");
-        var radiusTarget = self.getClazzConfigVal(getClazzName(d.target), "r");
-
-        radiusSource = radiusSource ? radiusSource : self.getConfigVal("node").r;
-        radiusTarget = radiusTarget ? radiusTarget : self.getConfigVal("node").r;
-
-
-        radiusTarget = parseInt(radiusTarget);
-        radiusSource = parseInt(radiusSource);
-        var deltaX = d.target.x - d.source.x,
-          deltaY = d.target.y - d.source.y,
-          dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY),
-
-
-          normX = deltaX / (dist != 0 ? dist : 1),
-          normY = deltaY / (dist != 0 ? dist : 1),
-          sourcePadding = d.left ? (radiusSource + 5) : radiusSource,
-          targetPadding = d.right ? (radiusTarget + 5) : radiusTarget,
-          sourceX = d.source.x + (sourcePadding * normX),
-          sourceY = d.source.y + (sourcePadding * normY),
-          targetX = d.target.x - (targetPadding * normX),
-          targetY = d.target.y - (targetPadding * normY);
-        // Config Node - > Label
-
-
-        var rel = countRelInOut(d);
-
-
-        if (rel == 1) {
-          return 'M' + sourceX + ',' + sourceY + ' L' + targetX + ',' + targetY;
-        } else {
-
-          var realPos = calculateRelPos(d);
-
-          if (realPos == 0) {
-            var paddingSource = 5;
-            var paddingTarget = 5;
-            if (deltaX > 0) {
-              paddingSource = -5;
-              paddingTarget = -5;
-            }
-
-            return 'M' + (sourceX + paddingSource) + ',' + (sourceY + paddingSource) + ' L' + (targetX + paddingTarget) + ',' + (targetY + paddingTarget);
-          }
-          var pos = realPos + 1;
-          var m = (d.target.y - d.source.y) / (d.target.x - d.source.x);
-          var val = (Math.atan(m) * 180) / Math.PI;
-          var trans = val * (Math.PI / 180) * -1;
-          var radiansConfig = angleRadiants(pos);
-          var angleSource;
-          var angleTarget;
-          var signSourceX;
-          var signSourceY;
-          var signTargetX;
-          var signTargetY;
-
-          if (deltaX < 0) {
-            signSourceX = 1;
-            signSourceY = 1;
-            signTargetX = 1;
-            signTargetY = 1;
-            angleSource = radiansConfig.target - trans;
-            angleTarget = radiansConfig.source - trans;
-          } else {
-            signSourceX = 1;
-            signSourceY = -1;
-            signTargetX = 1;
-            signTargetY = -1;
-            angleSource = radiansConfig.source + trans;
-            angleTarget = radiansConfig.target + trans;
-          }
-
-
-          sourceX = d.source.x + ( signSourceX * (sourcePadding * Math.cos(angleSource)));
-          sourceY = d.source.y + ( signSourceY * (sourcePadding * Math.sin(angleSource)));
-          targetX = d.target.x + ( signTargetX * (targetPadding * Math.cos(angleTarget)));
-          targetY = d.target.y + ( signTargetY * (targetPadding * Math.sin(angleTarget)));
-
-          var dr = 70;
-          return "M" + sourceX + "," + sourceY + "A" + dr + "," + dr + " 0 0,1 " + targetX + "," + targetY;
-        }
-
+      overlay.attr('d', function () {
+        return calculateEdgePath.bind(this)(0);
       });
 
-      function angleRadiants(pos) {
-        switch (pos) {
-          case 2:
-            return {source: Math.PI / 6, target: (5 * Math.PI) / 6}
-            break;
-          case 3:
-            return {source: Math.PI / 3, target: (2 * Math.PI) / 3}
-            break;
-          case 4:
-            return {source: Math.PI / 2, target: Math.PI / 2}
-            break;
-        }
-      }
 
       if (self.edgeMenu) {
         self.edgeMenu.refreshPosition();

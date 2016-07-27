@@ -316,7 +316,7 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
 
 }]);
 
-GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', 'History', '$timeout', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope, History, $timeout) {
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', 'History', '$timeout','scroller', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope, History, $timeout,scroller) {
 
   var data = [];
   $scope.currentIndex = -1;
@@ -443,6 +443,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         }
       });
       $scope.cm.focus();
+      scroller.scrollTo(0, 0, 0);
     }
   };
   if (Database.hasClass(GraphConfig.CLAZZ)) {
@@ -1118,6 +1119,17 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
     $scope.$watch('config.r', function (val) {
       if (val) {
         $scope.graph.changeClazzConfig($scope.doc['@class'], 'r', val);
+      }
+    })
+
+    $scope.$watch('config.displayColor', function (val) {
+      if (val) {
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'displayColor', val);
+      }
+    })
+    $scope.$watch('config.displayBackground', function (val) {
+      if (val) {
+        $scope.graph.changeClazzConfig($scope.doc['@class'], 'displayBackground', val);
       }
     })
 
