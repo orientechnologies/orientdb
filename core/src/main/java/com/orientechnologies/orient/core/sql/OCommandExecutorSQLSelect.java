@@ -1558,6 +1558,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private boolean canRunParallel(int[] clusterIds, Iterator<? extends OIdentifiable> iTarget) {
+    if( getDatabase().getTransaction().isActive() )
+      return false;
+
     if (iTarget instanceof ORecordIteratorClusters) {
       if (clusterIds.length > 1) {
         final long totalRecords = getDatabase().getStorage().count(clusterIds);
