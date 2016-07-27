@@ -644,6 +644,16 @@ public enum OGlobalConfiguration {
       Long.class, 15000l),
 
   /**
+   * @Since 2.2.6
+   */
+  DISTRIBUTED_REQUEST_CHANNELS("distributed.requestChannels", "Number of network channels used to send requests", Integer.class, 1),
+
+  /**
+   * @Since 2.2.6
+   */
+  DISTRIBUTED_RESPONSE_CHANNELS("distributed.responseChannels", "Number of network channels used to send responses", Integer.class, 1),
+
+  /**
    * @Since 2.2.5
    */
   DISTRIBUTED_HEARTBEAT_TIMEOUT("distributed.heartbeatTimeout", "Maximum time in ms to wait for the heartbeat. If the server does not respond in time, it is put offline", Long.class, 10000l),
