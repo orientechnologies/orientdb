@@ -56,7 +56,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
     throw new UnsupportedOperationException("Use OrientDBFactory");
   }
 
-  public <DB extends ODatabase> DB internalOpen(final String iUserName, final String iUserPassword) {
+  public void internalOpen(final String iUserName, final String iUserPassword){
+    internalOpen(iUserName, iUserPassword,true);
+  }
+  
+  private void internalOpen(final String iUserName, final String iUserPassword,boolean checkPassword) {
     boolean failure = true;
     setupThreadOwner();
     activateOnCurrentThread();
@@ -70,8 +74,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
       initAtFirstOpen();
 
       final OSecurity security = metadata.getSecurity();
+      
       if (user == null || user.getVersion() != security.getVersion() || !user.getName().equalsIgnoreCase(iUserName)) {
-        final OUser usr = metadata.getSecurity().authenticate(iUserName, iUserPassword);
+        final OUser usr;
+        if (checkPassword) {
+          usr = metadata.getSecurity().authenticate(iUserName, iUserPassword);
+        } else {
+            usr = metadata.getSecurity().getUser(iUserName);
+        }
         if (usr != null)
           user = new OImmutableUser(security.getVersion(), usr);
         else
@@ -94,7 +104,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
       if (failure)
         owner.set(null);
     }
-    return (DB) this;
   }
 
   /**
@@ -131,7 +140,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
       }
     });
     metadata.init(shared);
-    shared.create();
+    shared.create(this);
 
     registerHook(new OCommandCacheHook(this), ORecordHook.HOOK_POSITION.REGULAR);
     registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
@@ -176,7 +185,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
    * instance. The database copy is not set in thread local.
    */
   public ODatabaseDocumentTx copy() {
-    return null;
+    ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage);
+    database.internalOpen(getUser().getName(), null, false);
+    return database;
   }
 
   @Override
