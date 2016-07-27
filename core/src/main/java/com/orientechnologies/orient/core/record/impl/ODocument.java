@@ -1301,6 +1301,9 @@ public class ODocument extends ORecordAbstract
         if (OType.EMBEDDED.equals(fieldType)) {
           final ODocument embeddedDocument = (ODocument) iPropertyValue;
           ODocumentInternal.addOwner(embeddedDocument, this);
+        } else if (OType.LINK.equals(fieldType)) {
+          final ODocument embeddedDocument = (ODocument) iPropertyValue;
+          ODocumentInternal.removeOwner(embeddedDocument, this);
         }
       }
       if (iPropertyValue instanceof OIdentifiable) {
