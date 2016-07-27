@@ -70,6 +70,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -2670,6 +2671,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected ORecord createRecord(OClientConnection connection, final ORecordId rid, final byte[] buffer, final byte recordType) {
     final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     fillRecord(connection, rid, buffer, 0, record);
+    if (record instanceof ODocument) {
+      // Force conversion of value to class for trigger default values.
+      ODocumentInternal.autoConvertValueToClass(connection.getDatabase(), (ODocument) record);
+    }
     connection.getDatabase().save(record);
     return record;
   }
