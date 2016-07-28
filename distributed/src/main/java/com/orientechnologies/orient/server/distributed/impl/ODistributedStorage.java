@@ -1754,7 +1754,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     }
   }
 
-  protected String checkForCluster(final ORecordId iRecordId, final String localNodeName, final ODistributedConfiguration dbCfg) {
+  protected String checkForCluster(final ORecordId iRecordId, final String localNodeName, ODistributedConfiguration dbCfg) {
 
     if (iRecordId.getClusterId() < 0)
       throw new IllegalArgumentException("RID " + iRecordId + " is not valid");
@@ -1783,7 +1783,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       OLogManager.instance().info(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
           + "' (it is '" + ownerNode + "'). Reloading distributed configuration for database '" + getName() + "'");
 
-      ((OLocalClusterStrategy) clSel).readConfiguration();
+      dbCfg = ((OLocalClusterStrategy) clSel).readConfiguration();
 
       newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
       ownerNode = dbCfg.getClusterOwner(newClusterName);

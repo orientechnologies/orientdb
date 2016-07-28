@@ -106,7 +106,7 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
     return NAME;
   }
 
-  protected void readConfiguration() {
+  protected ODistributedConfiguration readConfiguration() {
     if (cls.isAbstract())
       throw new IllegalArgumentException("Cannot create a new instance of abstract class");
 
@@ -158,5 +158,7 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
 
     final ODistributedStorage storage = (ODistributedStorage) manager.getStorage(databaseName);
     lastVersion = storage.getConfigurationUpdated();
+
+    return cfg;
   }
 }
