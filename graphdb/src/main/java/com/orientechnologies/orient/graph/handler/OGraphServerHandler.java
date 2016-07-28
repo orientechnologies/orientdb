@@ -73,16 +73,16 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
 
   @Override
   public void startup() {
-    if (!enabled)
-      return;
-
-    OGremlinHelper.global().setMaxGraphPool(graphPoolMax).create();
-
     final OServerNetworkListener listener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
     if (listener == null)
       throw new OConfigurationException("HTTP listener not found");
 
     listener.registerStatelessCommand(new OServerCommandPostCommandGraph());
+
+    if (!enabled)
+      return;
+
+    OGremlinHelper.global().setMaxGraphPool(graphPoolMax).create();
   }
 
   @Override
