@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -74,6 +75,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
   protected OHazelcastDistributedMap   configurationMap;
+  protected ODistributedDatabaseRepair repair;
 
   public OHazelcastPlugin() {
   }
@@ -204,6 +206,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         if (!m.equals(nodeName))
           getRemoteServer(m);
 
+      repair = new ODistributedDatabaseRepair(this);
+      repair.start();
+
       installNewDatabasesFromCluster(true);
 
       loadLocalDatabases();
@@ -249,14 +254,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected void waitStartupIsCompleted() throws InterruptedException {
-    final long totalReceivedRequests = getMessageService().getReceivedRequests();
+    long totalReceivedRequests = getMessageService().getReceivedRequests();
     long totalProcessedRequests = getMessageService().getProcessedRequests();
 
     final long start = System.currentTimeMillis();
-    while (totalProcessedRequests < totalReceivedRequests && (System.currentTimeMillis() - start < 10000)) {
+    while (totalProcessedRequests < totalReceivedRequests - 2 && (System.currentTimeMillis() - start < 10000)) {
       Thread.sleep(300);
       totalProcessedRequests = getMessageService().getProcessedRequests();
+      totalReceivedRequests = getMessageService().getReceivedRequests();
     }
+
+    // WAIT FOR THE COMPLETION OF ALL THE REQUESTS
+    Thread.sleep(OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsInteger());
 
     serverStarted.countDown();
   }
@@ -284,6 +293,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       return new IOException("Illegal monitor state: " + original.getMessage(), original.getCause());
 
     return original;
+  }
+
+  @Override
+  public void repairRecord(final String databaseName, final ORecordId rid) {
+    try {
+      repair.repair(databaseName, rid);
+    } catch (IllegalStateException e) {
+      ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+          "Error on adding record %s to the check queue because it is full");
+    }
   }
 
   @Override
@@ -315,6 +334,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     super.shutdown();
+
+    if (repair != null)
+      repair.sendShutdown();
 
     if (membershipListenerRegistration != null) {
       try {

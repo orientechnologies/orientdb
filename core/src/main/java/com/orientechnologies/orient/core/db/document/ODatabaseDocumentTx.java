@@ -431,11 +431,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         storage = Orient.instance().loadStorage(url);
 
       final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
-      if (iInitialSettings != null) {
+      if (iInitialSettings != null && !iInitialSettings.isEmpty()) {
         // SETUP INITIAL SETTINGS
         for (Map.Entry<OGlobalConfiguration, Object> e : iInitialSettings.entrySet()) {
           ctxCfg.setValue(e.getKey(), e.getValue());
         }
+        storage.getConfiguration().update();
       }
 
       storage.create(properties);
