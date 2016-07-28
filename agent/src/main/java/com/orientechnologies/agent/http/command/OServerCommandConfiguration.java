@@ -18,6 +18,7 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.agent.proxy.HttpProxyListener;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -57,10 +58,12 @@ public class OServerCommandConfiguration extends OServerCommandDistributedScope 
         String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
         if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
           config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
-        FileInputStream input;
+
+        config = OSystemVariableResolver.resolveSystemVariables(config);
 
         File file2 = new File(config);
-        input = new FileInputStream(file2);
+
+        FileInputStream input = new FileInputStream(file2);
         iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, "text/xml", input, file2.length());
       } catch (Exception e) {
         iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
