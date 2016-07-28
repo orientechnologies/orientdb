@@ -17,6 +17,7 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -69,10 +70,6 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
 
     String selectedFile = iRequest.getParameter("file");
 
-
-
-
-
     if (isLocalNode(iRequest)) {
       Date dFrom = null;
       if (dateFrom != null) {
@@ -91,9 +88,18 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
         }
       };
 
-      String env = System.getenv("ORIENTDB_HOME");
+      String env = Orient.getHomePath();
       prop.load(new FileInputStream(env + "/config/orientdb-server-log.properties"));
       String logDir = (String) prop.get("java.util.logging.FileHandler.pattern");
+
+      if (!logDir.startsWith("/")) {
+        // RELATIVE PATH
+        if (logDir.startsWith("../"))
+          logDir = logDir.substring("../".length());
+
+        logDir = env + "/" + logDir;
+      }
+
       File directory = new File(logDir).getParentFile();
       File[] files = directory.listFiles(filter);
       if (files != null) {
@@ -147,7 +153,7 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
       iResponse.writeRecord(result, null, "");
 
     } else {
-      proxyRequest(iRequest,iResponse);
+      proxyRequest(iRequest, iResponse);
 
     }
     return false;
@@ -238,8 +244,8 @@ public class OServerCommandGetLog extends OServerCommandDistributedScope {
     return result;
   }
 
-  private void checkInsert(String value, String logType, List<ODocument> subdocuments, String typeToDoc, String info,
-      ODocument doc, Date dFrom, Date day, String hour, Date dTo) {
+  private void checkInsert(String value, String logType, List<ODocument> subdocuments, String typeToDoc, String info, ODocument doc,
+      Date dFrom, Date day, String hour, Date dTo) {
     Time tHour = setTime(hour);
 
     Calendar cal = Calendar.getInstance();
