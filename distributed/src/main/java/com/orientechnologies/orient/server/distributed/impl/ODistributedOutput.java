@@ -415,7 +415,7 @@ public class ODistributedOutput {
     });
 
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if( db != null && db.isClosed())
+    if (db != null && db.isClosed())
       db = null;
 
     table.setColumnSorting("CLUSTER", true);
@@ -473,6 +473,8 @@ public class ODistributedOutput {
     for (String server : allServers) {
       table.setColumnMetadata(server, "ROLE", cfg.getServerRole(server).toString());
       table.setColumnMetadata(server, "STATUS", manager.getDatabaseStatus(server, databaseName).toString());
+      if (cfg.hasDataCenterConfiguration())
+        table.setColumnMetadata(server, "DC", "DC(" + cfg.getDataCenterOfServer(server) + ")");
     }
 
     table.writeRecords(rows, -1);
