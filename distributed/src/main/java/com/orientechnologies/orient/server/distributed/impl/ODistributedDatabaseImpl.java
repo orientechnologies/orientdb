@@ -288,7 +288,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       // SORT THE NODE TO GUARANTEE THE SAME ORDER OF DELIVERY
       if (!(iNodes instanceof List))
         iNodes = new ArrayList<String>(iNodes);
-      Collections.sort((List<String>) iNodes);
+      if (iNodes.size() > 1)
+        Collections.sort((List<String>) iNodes);
 
       msgService.registerRequest(iRequest.getId().getMessageId(), currentResponseMgr);
 
@@ -380,25 +381,30 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     final ODistributedLock lock = new ODistributedLock(iRequestId);
 
     ODistributedLock currentLock = lockManager.putIfAbsent(rid, lock);
-    if (currentLock != null && timeout > 0) {
+    if (currentLock != null) {
       if (iRequestId.equals(currentLock.reqId)) {
         // SAME ID, ALREADY LOCKED
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
             "Distributed transaction: %s locked record %s in database '%s' owned by %s (thread=%d)", iRequestId, iRecord,
             databaseName, currentLock.reqId, Thread.currentThread().getId());
         currentLock = null;
-      } else {
-        try {
-          if (timeout > 0)
-            currentLock.lock.await(timeout, TimeUnit.MILLISECONDS);
-          else
-            currentLock.lock.await();
+      } else if (timeout > 0) {
+        // TRY TO RE-LOCK IT UNTIL TIMEOUT IS EXPIRED
+        final long startTime = System.currentTimeMillis();
+        do {
+          try {
+            if (timeout > 0)
+              currentLock.lock.await(timeout, TimeUnit.MILLISECONDS);
+            else
+              currentLock.lock.await();
 
-          currentLock = lockManager.putIfAbsent(rid, lock);
+            currentLock = lockManager.putIfAbsent(rid, lock);
 
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break;
+          }
+        } while (currentLock != null && System.currentTimeMillis() - startTime < timeout);
       }
     }
 
