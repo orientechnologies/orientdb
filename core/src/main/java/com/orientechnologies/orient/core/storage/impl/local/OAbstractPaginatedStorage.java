@@ -827,7 +827,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         writeAheadLog.preventCutTill(null);
       }
 
-      OLogManager.instance().info(this, "Exporting records after LSN=%s. Found %d records", lsn, sortedRids.size());
+      final int totalRecords = sortedRids.size();
+      OLogManager.instance().info(this, "Exporting records after LSN=%s. Found %d records", lsn, totalRecords);
 
       // records may be deleted after we flag them as existing and as result rule of sorting of records
       // (deleted records go first will be broken), so we prohibit any modifications till we do not complete method execution
@@ -853,7 +854,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               OLogManager.instance().debug(this, "Exporting deleted record %s", rid);
 
               if (outputListener != null)
-                outputListener.onMessage("exporting record " + exportedRecord + "/" + sortedRids.size());
+                outputListener.onMessage("exporting record " + exportedRecord + "/" + totalRecords);
 
               // delete to avoid duplication
               ridIterator.remove();
@@ -889,7 +890,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
             }
 
             if (outputListener != null)
-              outputListener.onMessage("exporting record " + exportedRecord + "/" + sortedRids.size());
+              outputListener.onMessage("exporting record " + exportedRecord + "/" + totalRecords);
 
             exportedRecord++;
           }

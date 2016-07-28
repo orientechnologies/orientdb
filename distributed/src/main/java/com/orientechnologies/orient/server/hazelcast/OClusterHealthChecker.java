@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -56,6 +57,8 @@ public class OClusterHealthChecker extends TimerTask {
       checkDatabaseStatuses();
       checkServerInStall();
 
+    } catch (HazelcastInstanceNotActiveException e) {
+      // IGNORE IT
     } catch (Throwable t) {
       OLogManager.instance().error(this, "Error on checking cluster health", t);
     } finally {

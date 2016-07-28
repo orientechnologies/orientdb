@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -26,21 +27,31 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
- * Execute a read of a record from a distributed node.
+ * Abstract class for distributed reads.
  *
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class OReadRecordTask extends OAbstractReadRecordTask {
+public abstract class OAbstractReadRecordTask extends OAbstractRecordReplicatedTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 1;
 
-  public OReadRecordTask() {
+  public OAbstractReadRecordTask() {
   }
 
-  public OReadRecordTask(final ORecordId iRid) {
-    super(iRid);
+  public OAbstractReadRecordTask(final ORecordId iRid) {
+    rid = iRid;
+  }
+
+  @Override
+  public ORecord getRecord() {
+    return rid.getRecord();
   }
 
   @Override
@@ -54,12 +65,27 @@ public class OReadRecordTask extends OAbstractReadRecordTask {
   }
 
   @Override
-  public String getName() {
-    return "record_read";
+  public void toStream(final DataOutput out) throws IOException {
+    rid.toStream(out);
   }
 
   @Override
-  public int getFactoryId() {
-    return FACTORYID;
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
+    rid = new ORecordId();
+    rid.fromStream(in);
+  }
+
+  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.READ;
+  }
+
+  @Override
+  public String toString() {
+    return getName() + "(" + rid + ")";
+  }
+
+  @Override
+  public boolean isIdempotent() {
+    return true;
   }
 }

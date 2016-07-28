@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.security;
 
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 
 /**
  * Provides a basic interface for a modular security system.
@@ -29,67 +28,68 @@ import com.orientechnologies.orient.core.security.OInvalidPasswordException;
  * @author S. Colin Leister
  * 
  */
-public interface OSecuritySystem
-{
-	// Some external security implementations may permit falling back to a 
-	// default authentication mode if external authentication fails.
-	boolean isDefaultAllowed();
-	
-	// Returns the actual username if successful, null otherwise.
-	// Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the service ticket).
-	String authenticate(final String username, final String password);
-	
-	// Used for generating the appropriate HTTP authentication mechanism.  The chain of authenticators is used for this.
-	String getAuthenticationHeader(final String databaseName);
+public interface OSecuritySystem {
+  void shutdown();
 
-	ODocument getConfig();
+  // Some external security implementations may permit falling back to a
+  // default authentication mode if external authentication fails.
+  boolean isDefaultAllowed();
 
-	ODocument getComponentConfig(final String name);
+  // Returns the actual username if successful, null otherwise.
+  // Some token-based authentication (e.g., SPNEGO tokens have the user's name embedded in the service ticket).
+  String authenticate(final String username, final String password);
 
-	/**
-	 * Returns the "System User" associated with 'username' from the system database.
-	 * If not found, returns null.
-	 * dbName is used to filter the assigned roles.  It may be null.
-	 */
-	OUser getSystemUser(final String username, final String dbName);
+  // Used for generating the appropriate HTTP authentication mechanism. The chain of authenticators is used for this.
+  String getAuthenticationHeader(final String databaseName);
 
+  ODocument getConfig();
 
-	// Walks through the list of Authenticators.
-	boolean isAuthorized(final String username, final String resource);
-	
-	boolean isEnabled();
-	
-	// Indicates if passwords should be stored when creating new users.
-	boolean arePasswordsStored();
-	
-	// Indicates if the primary security mechanism supports single sign-on.
-	boolean isSingleSignOnSupported();
-	
-	/**
-	 * Logs to the auditing service, if installed.
-	 * 
-	 * @param dbName   May be null or empty.
-	 * @param username May be null or empty.
-	 */
-	void log(final OAuditingOperation operation, final String dbName, final String username, final String message);
+  ODocument getComponentConfig(final String name);
 
-	void registerSecurityClass(final Class<?> cls);
+  /**
+   * Returns the "System User" associated with 'username' from the system database. If not found, returns null. dbName is used to
+   * filter the assigned roles. It may be null.
+   */
+  OUser getSystemUser(final String username, final String dbName);
 
-	void reload(final String cfgPath);
+  // Walks through the list of Authenticators.
+  boolean isAuthorized(final String username, final String resource);
 
-	void reload(final ODocument jsonConfig);
-	
-	void reloadComponent(final String name, final ODocument jsonConfig);
-	
-	/**
-	 * Called each time one of the security classes (OUser, ORole, OServerRole) is modified.
-	 */
-	void securityRecordChange(final String dbURL, final ODocument record);
+  boolean isEnabled();
 
-	void unregisterSecurityClass(final Class<?> cls);
+  // Indicates if passwords should be stored when creating new users.
+  boolean arePasswordsStored();
 
-	// If a password validator is registered with the security system, it will be called to validate
-	// the specified password.  An OInvalidPasswordException is thrown if the password does not meet
-	// the password validator's requirements.
-	void validatePassword(final String password) throws OInvalidPasswordException;
+  // Indicates if the primary security mechanism supports single sign-on.
+  boolean isSingleSignOnSupported();
+
+  /**
+   * Logs to the auditing service, if installed.
+   * 
+   * @param dbName
+   *          May be null or empty.
+   * @param username
+   *          May be null or empty.
+   */
+  void log(final OAuditingOperation operation, final String dbName, final String username, final String message);
+
+  void registerSecurityClass(final Class<?> cls);
+
+  void reload(final String cfgPath);
+
+  void reload(final ODocument jsonConfig);
+
+  void reloadComponent(final String name, final ODocument jsonConfig);
+
+  /**
+   * Called each time one of the security classes (OUser, ORole, OServerRole) is modified.
+   */
+  void securityRecordChange(final String dbURL, final ODocument record);
+
+  void unregisterSecurityClass(final Class<?> cls);
+
+  // If a password validator is registered with the security system, it will be called to validate
+  // the specified password. An OInvalidPasswordException is thrown if the password does not meet
+  // the password validator's requirements.
+  void validatePassword(final String password) throws OInvalidPasswordException;
 }
