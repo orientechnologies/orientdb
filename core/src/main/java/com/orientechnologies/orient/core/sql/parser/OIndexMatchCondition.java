@@ -125,5 +125,32 @@ public class OIndexMatchCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIndexMatchCondition that = (OIndexMatchCondition) o;
+
+    if (operator != null ? !operator.equals(that.operator) : that.operator != null)
+      return false;
+    if (between != null ? !between.equals(that.between) : that.between != null)
+      return false;
+    if (leftExpressions != null ? !leftExpressions.equals(that.leftExpressions) : that.leftExpressions != null)
+      return false;
+    if (rightExpressions != null ? !rightExpressions.equals(that.rightExpressions) : that.rightExpressions != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = operator != null ? operator.hashCode() : 0;
+    result = 31 * result + (between != null ? between.hashCode() : 0);
+    result = 31 * result + (leftExpressions != null ? leftExpressions.hashCode() : 0);
+    result = 31 * result + (rightExpressions != null ? rightExpressions.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=702e9ab959e87b043b519844a7d31224 (do not edit this line) */

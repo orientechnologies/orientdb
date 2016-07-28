@@ -329,5 +329,42 @@ public class OExpression extends SimpleNode {
 
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OExpression that = (OExpression) o;
+
+    if (isNull != that.isNull)
+      return false;
+    if (singleQuotes != null ? !singleQuotes.equals(that.singleQuotes) : that.singleQuotes != null)
+      return false;
+    if (doubleQuotes != null ? !doubleQuotes.equals(that.doubleQuotes) : that.doubleQuotes != null)
+      return false;
+    if (rid != null ? !rid.equals(that.rid) : that.rid != null)
+      return false;
+    if (mathExpression != null ? !mathExpression.equals(that.mathExpression) : that.mathExpression != null)
+      return false;
+    if (json != null ? !json.equals(that.json) : that.json != null)
+      return false;
+    if (booleanValue != null ? !booleanValue.equals(that.booleanValue) : that.booleanValue != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = singleQuotes != null ? singleQuotes.hashCode() : 0;
+    result = 31 * result + (doubleQuotes != null ? doubleQuotes.hashCode() : 0);
+    result = 31 * result + (isNull ? 1 : 0);
+    result = 31 * result + (rid != null ? rid.hashCode() : 0);
+    result = 31 * result + (mathExpression != null ? mathExpression.hashCode() : 0);
+    result = 31 * result + (json != null ? json.hashCode() : 0);
+    result = 31 * result + (booleanValue != null ? booleanValue.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

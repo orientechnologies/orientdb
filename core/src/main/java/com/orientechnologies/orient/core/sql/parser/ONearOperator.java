@@ -33,5 +33,13 @@ public class ONearOperator extends SimpleNode implements OBinaryCompareOperator 
   @Override public ONearOperator copy() {
     return new ONearOperator(-1);
   }
+
+  @Override public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass());
+  }
+
+  @Override public int hashCode() {
+    return getClass().hashCode();
+  }
 }
 /* JavaCC - OriginalChecksum=a79af9beed70f813658f38a0162320e0 (do not edit this line) */

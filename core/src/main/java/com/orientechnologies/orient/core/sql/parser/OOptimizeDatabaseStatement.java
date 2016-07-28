@@ -32,5 +32,23 @@ public class OOptimizeDatabaseStatement extends OStatement {
     result.options = options == null ? null : options.stream().map(OCommandLineOption::copy).collect(Collectors.toList());
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OOptimizeDatabaseStatement that = (OOptimizeDatabaseStatement) o;
+
+    if (options != null ? !options.equals(that.options) : that.options != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return options != null ? options.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=b85d66f84bbae92224565361df9d0c91 (do not edit this line) */

@@ -48,5 +48,23 @@ public class OExplainStatement extends OStatement {
     result.statement = statement == null ? null : statement.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OExplainStatement that = (OExplainStatement) o;
+
+    if (statement != null ? !statement.equals(that.statement) : that.statement != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return statement != null ? statement.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=9fdd24510993cbee32e38a51c838bdb4 (do not edit this line) */

@@ -108,5 +108,30 @@ public class OParenthesisExpression extends OMathExpression {
     result.statement = statement == null ? null : statement.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    if (!super.equals(o))
+      return false;
+
+    OParenthesisExpression that = (OParenthesisExpression) o;
+
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
+      return false;
+    if (statement != null ? !statement.equals(that.statement) : that.statement != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (expression != null ? expression.hashCode() : 0);
+    result = 31 * result + (statement != null ? statement.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */

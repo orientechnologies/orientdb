@@ -41,5 +41,12 @@ public class OContainsValueOperator extends SimpleNode implements OBinaryCompare
     return "CONTAINSVALUE";
   }
 
+  @Override public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass());
+  }
+
+  @Override public int hashCode() {
+    return getClass().hashCode();
+  }
 }
 /* JavaCC - OriginalChecksum=5d6492dbb028b8bac69e60d4916cf341 (do not edit this line) */

@@ -419,11 +419,37 @@ public class OMathExpression extends SimpleNode {
   }
 
   public OMathExpression copy() {
-    OMathExpression result = new OMathExpression(-1);
+    OMathExpression result = null;
+    try {
+      result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     result.childExpressions = childExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.operators.addAll(operators);
     return result;
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OMathExpression that = (OMathExpression) o;
+
+    if (childExpressions != null ? !childExpressions.equals(that.childExpressions) : that.childExpressions != null)
+      return false;
+    if (operators != null ? !operators.equals(that.operators) : that.operators != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = childExpressions != null ? childExpressions.hashCode() : 0;
+    result = 31 * result + (operators != null ? operators.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

@@ -38,5 +38,7 @@ public class OUpdateEdgeStatement extends OUpdateStatement {
     result.timeout = timeout == null ? null : timeout.copy();
     return result;
   }
+
+
 }
 /* JavaCC - OriginalChecksum=496f32976ee84e3a3a89d1410dc134c5 (do not edit this line) */

@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OMultiMatchPathItem extends OMatchPathItem {
   protected List<OMatchPathItem> items = new ArrayList<OMatchPathItem>();
@@ -18,7 +19,9 @@ public class OMultiMatchPathItem extends OMatchPathItem {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -56,6 +59,34 @@ public class OMultiMatchPathItem extends OMatchPathItem {
         }
       }
     }
+    return result;
+  }
+
+  @Override public OMultiMatchPathItem copy() {
+    OMultiMatchPathItem result = (OMultiMatchPathItem) super.copy();
+    result.items = items == null ? null : items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    if (!super.equals(o))
+      return false;
+
+    OMultiMatchPathItem that = (OMultiMatchPathItem) o;
+
+    if (items != null ? !items.equals(that.items) : that.items != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (items != null ? items.hashCode() : 0);
     return result;
   }
 }

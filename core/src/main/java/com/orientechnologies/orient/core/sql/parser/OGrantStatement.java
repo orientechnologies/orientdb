@@ -43,5 +43,30 @@ public class OGrantStatement extends OStatement {
     this.actor = actor == null ? null : actor.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OGrantStatement that = (OGrantStatement) o;
+
+    if (permission != null ? !permission.equals(that.permission) : that.permission != null)
+      return false;
+    if (resourceChain != null ? !resourceChain.equals(that.resourceChain) : that.resourceChain != null)
+      return false;
+    if (actor != null ? !actor.equals(that.actor) : that.actor != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = permission != null ? permission.hashCode() : 0;
+    result = 31 * result + (resourceChain != null ? resourceChain.hashCode() : 0);
+    result = 31 * result + (actor != null ? actor.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=c5f7b91e57070a95c6ea490373d16f7f (do not edit this line) */

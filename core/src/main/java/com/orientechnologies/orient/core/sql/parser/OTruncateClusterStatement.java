@@ -44,5 +44,30 @@ public class OTruncateClusterStatement extends OStatement {
     result.unsafe = unsafe;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OTruncateClusterStatement that = (OTruncateClusterStatement) o;
+
+    if (unsafe != that.unsafe)
+      return false;
+    if (clusterName != null ? !clusterName.equals(that.clusterName) : that.clusterName != null)
+      return false;
+    if (clusterNumber != null ? !clusterNumber.equals(that.clusterNumber) : that.clusterNumber != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = clusterName != null ? clusterName.hashCode() : 0;
+    result = 31 * result + (clusterNumber != null ? clusterNumber.hashCode() : 0);
+    result = 31 * result + (unsafe ? 1 : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=301f993f6ba2893cb30c8f189674b974 (do not edit this line) */

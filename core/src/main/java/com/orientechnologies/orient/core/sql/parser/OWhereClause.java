@@ -268,6 +268,10 @@ public class OWhereClause extends SimpleNode {
     return false;
   }
 
+  public void setBaseExpression(OBooleanExpression baseExpression) {
+    this.baseExpression = baseExpression;
+  }
+
   public OWhereClause copy() {
     OWhereClause result = new OWhereClause(-1);
     result.baseExpression = baseExpression.copy();
@@ -275,8 +279,26 @@ public class OWhereClause extends SimpleNode {
     return result;
   }
 
-  public void setBaseExpression(OBooleanExpression baseExpression) {
-    this.baseExpression = baseExpression;
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OWhereClause that = (OWhereClause) o;
+
+    if (baseExpression != null ? !baseExpression.equals(that.baseExpression) : that.baseExpression != null)
+      return false;
+    if (flattened != null ? !flattened.equals(that.flattened) : that.flattened != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = baseExpression != null ? baseExpression.hashCode() : 0;
+    result = 31 * result + (flattened != null ? flattened.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

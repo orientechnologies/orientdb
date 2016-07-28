@@ -124,5 +124,41 @@ public class OMatchPathItem extends SimpleNode {
     Object qR = this.method.execute(startingPoint, possibleResults, iCommandContext);
     return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OMatchPathItem that = (OMatchPathItem) o;
+
+    if (method != null ? !method.equals(that.method) : that.method != null)
+      return false;
+    if (filter != null ? !filter.equals(that.filter) : that.filter != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = method != null ? method.hashCode() : 0;
+    result = 31 * result + (filter != null ? filter.hashCode() : 0);
+    return result;
+  }
+
+  @Override public OMatchPathItem copy() {
+    OMatchPathItem result = null;
+    try {
+      result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    result.method = method == null ? null : method.copy();
+    result.filter = filter == null ? null : filter.copy();
+    return result;
+  }
+
+
 }
 /* JavaCC - OriginalChecksum=ffe8e0ffde583d7b21c9084eff6a8944 (do not edit this line) */

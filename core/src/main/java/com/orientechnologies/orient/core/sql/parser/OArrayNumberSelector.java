@@ -96,5 +96,33 @@ public class OArrayNumberSelector extends SimpleNode {
     result.integer = integer;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OArrayNumberSelector that = (OArrayNumberSelector) o;
+
+    if (inputFinalValue != null ? !inputFinalValue.equals(that.inputFinalValue) : that.inputFinalValue != null)
+      return false;
+    if (inputValue != null ? !inputValue.equals(that.inputValue) : that.inputValue != null)
+      return false;
+    if (expressionValue != null ? !expressionValue.equals(that.expressionValue) : that.expressionValue != null)
+      return false;
+    if (integer != null ? !integer.equals(that.integer) : that.integer != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = inputFinalValue != null ? inputFinalValue.hashCode() : 0;
+    result = 31 * result + (inputValue != null ? inputValue.hashCode() : 0);
+    result = 31 * result + (expressionValue != null ? expressionValue.hashCode() : 0);
+    result = 31 * result + (integer != null ? integer.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=5b2e495391ede3ccdc6c25aa63c8e591 (do not edit this line) */

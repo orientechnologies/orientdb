@@ -97,5 +97,30 @@ public class OIdentifier extends SimpleNode {
     result.quoted = quoted;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIdentifier that = (OIdentifier) o;
+
+    if (quoted != that.quoted)
+      return false;
+    if (internalAlias != that.internalAlias)
+      return false;
+    if (value != null ? !value.equals(that.value) : that.value != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = value != null ? value.hashCode() : 0;
+    result = 31 * result + (quoted ? 1 : 0);
+    result = 31 * result + (internalAlias ? 1 : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=691a2eb5096f7b5e634b2ca8ac2ded3a (do not edit this line) */

@@ -77,5 +77,13 @@ public class OInOperator extends SimpleNode implements OBinaryCompareOperator {
   @Override public OInOperator copy() {
     return new OInOperator(-1);
   }
+
+  @Override public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass());
+  }
+
+  @Override public int hashCode() {
+    return getClass().hashCode();
+  }
 }
 /* JavaCC - OriginalChecksum=6650a720cb942fa3c4d588ff0f381b3a (do not edit this line) */

@@ -56,5 +56,23 @@ public class OPositionalParameter extends OInputParameter {
     result.paramNumber = paramNumber;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OPositionalParameter that = (OPositionalParameter) o;
+
+    if (paramNumber != that.paramNumber)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return paramNumber;
+  }
 }
 /* JavaCC - OriginalChecksum=f73bea7d9b3994a9d4e79d2c330d8ba2 (do not edit this line) */

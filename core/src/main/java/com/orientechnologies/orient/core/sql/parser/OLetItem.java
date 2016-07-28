@@ -45,5 +45,29 @@ public class OLetItem extends SimpleNode {
     return result;
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OLetItem oLetItem = (OLetItem) o;
+
+    if (varName != null ? !varName.equals(oLetItem.varName) : oLetItem.varName != null)
+      return false;
+    if (expression != null ? !expression.equals(oLetItem.expression) : oLetItem.expression != null)
+      return false;
+    if (query != null ? !query.equals(oLetItem.query) : oLetItem.query != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = varName != null ? varName.hashCode() : 0;
+    result = 31 * result + (expression != null ? expression.hashCode() : 0);
+    result = 31 * result + (query != null ? query.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=bb3cd298d79f50d72f6842e6d6ea4fb2 (do not edit this line) */

@@ -68,5 +68,23 @@ public class OParenthesisBlock extends OBooleanExpression {
     result.subElement = subElement.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OParenthesisBlock that = (OParenthesisBlock) o;
+
+    if (subElement != null ? !subElement.equals(that.subElement) : that.subElement != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return subElement != null ? subElement.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=9a16b6cf7d051382acb94c45067631a9 (do not edit this line) */

@@ -97,7 +97,13 @@ public class OUpdateStatement extends OStatement {
   }
 
   @Override public OUpdateStatement copy() {
-    OUpdateStatement result = new OUpdateStatement(-1);
+    OUpdateStatement result = null;
+    try {
+      result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
     result.target = target == null ? null : target.copy();
     result.operations = operations == null ? null : operations.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.upsert = upsert;
@@ -108,6 +114,52 @@ public class OUpdateStatement extends OStatement {
     result.lockRecord = lockRecord;
     result.limit = limit == null ? null : limit.copy();
     result.timeout = timeout == null ? null : timeout.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OUpdateStatement that = (OUpdateStatement) o;
+
+    if (upsert != that.upsert)
+      return false;
+    if (returnBefore != that.returnBefore)
+      return false;
+    if (returnAfter != that.returnAfter)
+      return false;
+    if (target != null ? !target.equals(that.target) : that.target != null)
+      return false;
+    if (operations != null ? !operations.equals(that.operations) : that.operations != null)
+      return false;
+    if (returnProjection != null ? !returnProjection.equals(that.returnProjection) : that.returnProjection != null)
+      return false;
+    if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
+      return false;
+    if (lockRecord != that.lockRecord)
+      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
+      return false;
+    if (timeout != null ? !timeout.equals(that.timeout) : that.timeout != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = target != null ? target.hashCode() : 0;
+    result = 31 * result + (operations != null ? operations.hashCode() : 0);
+    result = 31 * result + (upsert ? 1 : 0);
+    result = 31 * result + (returnBefore ? 1 : 0);
+    result = 31 * result + (returnAfter ? 1 : 0);
+    result = 31 * result + (returnProjection != null ? returnProjection.hashCode() : 0);
+    result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
+    result = 31 * result + (lockRecord != null ? lockRecord.hashCode() : 0);
+    result = 31 * result + (limit != null ? limit.hashCode() : 0);
+    result = 31 * result + (timeout != null ? timeout.hashCode() : 0);
     return result;
   }
 }

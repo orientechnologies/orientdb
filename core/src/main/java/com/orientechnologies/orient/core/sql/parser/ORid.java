@@ -43,5 +43,27 @@ public class ORid extends SimpleNode {
     result.position = position;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ORid oRid = (ORid) o;
+
+    if (cluster != null ? !cluster.equals(oRid.cluster) : oRid.cluster != null)
+      return false;
+    if (position != null ? !position.equals(oRid.position) : oRid.position != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = cluster != null ? cluster.hashCode() : 0;
+    result = 31 * result + (position != null ? position.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=c2c6d67d7722e29212e438574698d7cd (do not edit this line) */

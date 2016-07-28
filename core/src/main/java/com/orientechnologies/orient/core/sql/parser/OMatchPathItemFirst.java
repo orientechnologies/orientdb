@@ -37,4 +37,28 @@ public class OMatchPathItemFirst extends OMatchPathItem {
     Object qR = this.function.execute(startingPoint, iCommandContext);
     return (qR instanceof Iterable) ? (Iterable) qR : Collections.singleton((OIdentifiable) qR);
   }
+
+  @Override public OMatchPathItem copy() {
+    OMatchPathItemFirst result = (OMatchPathItemFirst) super.copy();
+    result.function = function == null ? null : function.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (!super.equals(o)) {
+      return false;
+    }
+    OMatchPathItemFirst that = (OMatchPathItemFirst) o;
+
+    if (function != null ? !function.equals(that.function) : that.function != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (function != null ? function.hashCode() : 0);
+    return result;
+  }
 }

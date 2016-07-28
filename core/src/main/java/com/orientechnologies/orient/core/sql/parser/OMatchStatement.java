@@ -25,10 +25,11 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OMatchStatement extends OStatement implements OCommandExecutor, OIterableRecordSource {
 
-  String DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
+  static final String DEFAULT_ALIAS_PREFIX = "$ORIENT_DEFAULT_ALIAS_";
 
   private OSQLAsynchQuery<ODocument> request;
 
@@ -87,6 +88,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   protected           List<OIdentifier>      returnAliases    = new ArrayList<OIdentifier>();
   protected OLimit limit;
 
+  // post-parsing generated data
   protected Pattern pattern;
 
   private Map<String, OWhereClause> aliasFilters;
@@ -155,6 +157,12 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       OErrorCode.QUERY_PARSE_ERROR.throwException(ex.getMessage(), ex);
     }
 
+    buildPatterns();
+    pattern.validate();
+    return (RET) this;
+  }
+
+  private void buildPatterns() {
     assignDefaultAliases(this.matchExpressions);
     pattern = new Pattern();
     for (OMatchExpression expr : this.matchExpressions) {
@@ -171,10 +179,6 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     this.aliasClasses = aliasClasses;
 
     rebindFilters(aliasFilters);
-
-    pattern.validate();
-
-    return (RET) this;
   }
 
   /**
@@ -344,7 +348,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
         Set<OIdentifiable> ids = new HashSet<OIdentifiable>();
         if (!matches.iterator().hasNext()) {
-          if(pattern.get(nextAlias).isOptionalNode()){
+          if (pattern.get(nextAlias).isOptionalNode()) {
             continue;
           }
           return true;
@@ -445,7 +449,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
         Object rightValues = outEdge.executeTraversal(matchContext, iCommandContext, startingPoint, 0);
 
-        if (outEdge.in.isOptionalNode() && (isEmptyResult(rightValues) || !contains(rightValues, matchContext.matched.get(outEdge.in.alias)))) {
+        if (outEdge.in.isOptionalNode() && (isEmptyResult(rightValues) || !contains(rightValues,
+            matchContext.matched.get(outEdge.in.alias)))) {
           MatchContext childContext = matchContext.copy(outEdge.in.alias, null);
           childContext.matched.put(outEdge.in.alias, null);
           childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1; //TODO testOptional 3 match passa con +1
@@ -505,7 +510,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
         if (!matchContext.matchedEdges.containsKey(inEdge)) {
           Object leftValues = inEdge.item.method.executeReverse(matchContext.matched.get(inEdge.in.alias), iCommandContext);
-          if (inEdge.out.isOptionalNode()   && (isEmptyResult(leftValues) || !contains(leftValues, matchContext.matched.get(inEdge.out.alias)))) {
+          if (inEdge.out.isOptionalNode() && (isEmptyResult(leftValues) || !contains(leftValues,
+              matchContext.matched.get(inEdge.out.alias)))) {
             MatchContext childContext = matchContext.copy(inEdge.out.alias, null);
             childContext.matched.put(inEdge.out.alias, null);
             childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
@@ -566,27 +572,27 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   private boolean contains(Object rightValues, OIdentifiable oIdentifiable) {
-    if(oIdentifiable==null){
+    if (oIdentifiable == null) {
       return true;
     }
-    if(rightValues==null){
+    if (rightValues == null) {
       return false;
     }
-    if(rightValues instanceof OIdentifiable){
+    if (rightValues instanceof OIdentifiable) {
       return ((OIdentifiable) rightValues).getIdentity().equals(oIdentifiable.getIdentity());
     }
     Iterator iterator = null;
-    if(rightValues instanceof Iterable){
+    if (rightValues instanceof Iterable) {
       iterator = ((Iterable) rightValues).iterator();
     }
-    if(rightValues instanceof Iterator){
+    if (rightValues instanceof Iterator) {
       iterator = (Iterator) rightValues;
     }
-    if(iterator!=null){
-      while(iterator.hasNext()){
+    if (iterator != null) {
+      while (iterator.hasNext()) {
         Object next = iterator.next();
-        if(next instanceof OIdentifiable){
-          if(((OIdentifiable) next).getIdentity().equals(oIdentifiable.getIdentity())) {
+        if (next instanceof OIdentifiable) {
+          if (((OIdentifiable) next).getIdentity().equals(oIdentifiable.getIdentity())) {
             return true;
           }
         }
@@ -1048,6 +1054,45 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
     Object result = execute(iArgs);
     return ((Iterable) result).iterator();
+  }
+
+  @Override public OMatchStatement copy() {
+    OMatchStatement result = new OMatchStatement(-1);
+    result.matchExpressions =
+        matchExpressions == null ? null : matchExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.returnItems = returnItems == null ? null : returnItems.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.returnAliases = returnAliases == null ? null : returnAliases.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.limit = limit == null ? null : limit.copy();
+    result.buildPatterns();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OMatchStatement that = (OMatchStatement) o;
+
+    if (matchExpressions != null ? !matchExpressions.equals(that.matchExpressions) : that.matchExpressions != null)
+      return false;
+    if (returnItems != null ? !returnItems.equals(that.returnItems) : that.returnItems != null)
+      return false;
+    if (returnAliases != null ? !returnAliases.equals(that.returnAliases) : that.returnAliases != null)
+      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = matchExpressions != null ? matchExpressions.hashCode() : 0;
+    result = 31 * result + (returnItems != null ? returnItems.hashCode() : 0);
+    result = 31 * result + (returnAliases != null ? returnAliases.hashCode() : 0);
+    result = 31 * result + (limit != null ? limit.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=6ff0afbe9d31f08b72159fcf24070c9f (do not edit this line) */

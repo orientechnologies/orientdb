@@ -52,5 +52,30 @@ public class OFindReferencesStatement extends OStatement {
     result.targets = targets == null ? null : targets.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OFindReferencesStatement that = (OFindReferencesStatement) o;
+
+    if (rid != null ? !rid.equals(that.rid) : that.rid != null)
+      return false;
+    if (subQuery != null ? !subQuery.equals(that.subQuery) : that.subQuery != null)
+      return false;
+    if (targets != null ? !targets.equals(that.targets) : that.targets != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = rid != null ? rid.hashCode() : 0;
+    result = 31 * result + (subQuery != null ? subQuery.hashCode() : 0);
+    result = 31 * result + (targets != null ? targets.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=be781e05acef94aa5edd7438b4ead6d5 (do not edit this line) */

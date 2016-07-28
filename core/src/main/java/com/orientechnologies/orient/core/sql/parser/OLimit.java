@@ -61,5 +61,27 @@ public class OLimit extends SimpleNode {
     result.inputParam = inputParam == null ? null : inputParam.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OLimit oLimit = (OLimit) o;
+
+    if (num != null ? !num.equals(oLimit.num) : oLimit.num != null)
+      return false;
+    if (inputParam != null ? !inputParam.equals(oLimit.inputParam) : oLimit.inputParam != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = num != null ? num.hashCode() : 0;
+    result = 31 * result + (inputParam != null ? inputParam.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=1063b9489290bb08de6048ba55013171 (do not edit this line) */

@@ -65,5 +65,22 @@ public class OIsDefinedCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIsDefinedCondition that = (OIsDefinedCondition) o;
+
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return expression != null ? expression.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=075954b212c8cb44c8538bf5dea047d3 (do not edit this line) */

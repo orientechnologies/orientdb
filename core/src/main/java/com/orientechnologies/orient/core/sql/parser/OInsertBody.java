@@ -117,5 +117,42 @@ public class OInsertBody extends SimpleNode {
     result.returnProjection = returnProjection == null ? null : returnProjection.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OInsertBody that = (OInsertBody) o;
+
+    if (selectInParentheses != that.selectInParentheses)
+      return false;
+    if (identifierList != null ? !identifierList.equals(that.identifierList) : that.identifierList != null)
+      return false;
+    if (valueExpressions != null ? !valueExpressions.equals(that.valueExpressions) : that.valueExpressions != null)
+      return false;
+    if (setExpressions != null ? !setExpressions.equals(that.setExpressions) : that.setExpressions != null)
+      return false;
+    if (selectStatement != null ? !selectStatement.equals(that.selectStatement) : that.selectStatement != null)
+      return false;
+    if (content != null ? !content.equals(that.content) : that.content != null)
+      return false;
+    if (returnProjection != null ? !returnProjection.equals(that.returnProjection) : that.returnProjection != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = identifierList != null ? identifierList.hashCode() : 0;
+    result = 31 * result + (valueExpressions != null ? valueExpressions.hashCode() : 0);
+    result = 31 * result + (setExpressions != null ? setExpressions.hashCode() : 0);
+    result = 31 * result + (selectStatement != null ? selectStatement.hashCode() : 0);
+    result = 31 * result + (selectInParentheses ? 1 : 0);
+    result = 31 * result + (content != null ? content.hashCode() : 0);
+    result = 31 * result + (returnProjection != null ? returnProjection.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=7d2079a41a1fc63a812cb679e729b23a (do not edit this line) */

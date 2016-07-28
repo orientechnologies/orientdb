@@ -5,9 +5,10 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OMatchExpression extends SimpleNode {
-  protected OMatchFilter         origin;
+  protected OMatchFilter origin;
   protected List<OMatchPathItem> items = new ArrayList<OMatchPathItem>();
 
   public OMatchExpression(int id) {
@@ -18,7 +19,9 @@ public class OMatchExpression extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -28,6 +31,35 @@ public class OMatchExpression extends SimpleNode {
     for (OMatchPathItem item : items) {
       item.toString(params, builder);
     }
+  }
+
+  @Override public OMatchExpression copy() {
+    OMatchExpression result = new OMatchExpression(-1);
+    result.origin = origin == null ? null : origin.copy();
+    result.items = items == null ? null : items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OMatchExpression that = (OMatchExpression) o;
+
+    if (origin != null ? !origin.equals(that.origin) : that.origin != null)
+      return false;
+    if (items != null ? !items.equals(that.items) : that.items != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = origin != null ? origin.hashCode() : 0;
+    result = 31 * result + (items != null ? items.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=73491fb653c32baf66997290db29f370 (do not edit this line) */

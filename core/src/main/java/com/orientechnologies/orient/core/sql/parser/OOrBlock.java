@@ -156,5 +156,23 @@ public class OOrBlock extends OBooleanExpression {
     result.subBlocks = subBlocks.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OOrBlock oOrBlock = (OOrBlock) o;
+
+    if (subBlocks != null ? !subBlocks.equals(oOrBlock.subBlocks) : oOrBlock.subBlocks != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return subBlocks != null ? subBlocks.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

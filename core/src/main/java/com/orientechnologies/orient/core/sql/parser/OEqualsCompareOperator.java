@@ -39,5 +39,13 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
     result.doubleEquals = doubleEquals;
     return result;
   }
+
+  @Override public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass()) && ((OEqualsCompareOperator)obj).doubleEquals == doubleEquals;
+  }
+
+  @Override public int hashCode() {
+    return getClass().hashCode();
+  }
 }
 /* JavaCC - OriginalChecksum=bd2ec5d13a1d171779c2bdbc9d3a56bc (do not edit this line) */

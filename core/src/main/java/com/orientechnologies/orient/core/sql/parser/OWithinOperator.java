@@ -33,5 +33,13 @@ public class OWithinOperator extends SimpleNode implements OBinaryCompareOperato
   @Override public OWithinOperator copy() {
     return new OWithinOperator(-1);
   }
+
+  @Override public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass());
+  }
+
+  @Override public int hashCode() {
+    return getClass().hashCode();
+  }
 }
 /* JavaCC - OriginalChecksum=e627b2d87bdac6de681d462e4b764288 (do not edit this line) */

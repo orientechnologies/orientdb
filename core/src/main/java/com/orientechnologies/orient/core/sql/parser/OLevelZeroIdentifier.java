@@ -176,5 +176,30 @@ public class OLevelZeroIdentifier extends SimpleNode {
     result.collection = collection==null?null:collection.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OLevelZeroIdentifier that = (OLevelZeroIdentifier) o;
+
+    if (functionCall != null ? !functionCall.equals(that.functionCall) : that.functionCall != null)
+      return false;
+    if (self != null ? !self.equals(that.self) : that.self != null)
+      return false;
+    if (collection != null ? !collection.equals(that.collection) : that.collection != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = functionCall != null ? functionCall.hashCode() : 0;
+    result = 31 * result + (self != null ? self.hashCode() : 0);
+    result = 31 * result + (collection != null ? collection.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */

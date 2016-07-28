@@ -168,5 +168,30 @@ public class OSuffixIdentifier extends SimpleNode {
     result.star = star;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OSuffixIdentifier that = (OSuffixIdentifier) o;
+
+    if (star != that.star)
+      return false;
+    if (identifier != null ? !identifier.equals(that.identifier) : that.identifier != null)
+      return false;
+    if (recordAttribute != null ? !recordAttribute.equals(that.recordAttribute) : that.recordAttribute != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = identifier != null ? identifier.hashCode() : 0;
+    result = 31 * result + (recordAttribute != null ? recordAttribute.hashCode() : 0);
+    result = 31 * result + (star ? 1 : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

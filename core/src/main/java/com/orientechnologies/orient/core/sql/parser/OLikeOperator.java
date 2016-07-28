@@ -40,5 +40,12 @@ public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator 
     return new OLikeOperator(-1);
   }
 
+  @Override public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass());
+  }
+
+  @Override public int hashCode() {
+    return getClass().hashCode();
+  }
 }
 /* JavaCC - OriginalChecksum=16d302abf0f85b404e57b964606952ca (do not edit this line) */

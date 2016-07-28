@@ -238,7 +238,12 @@ public class OSelectStatement extends OStatement {
   }
 
   @Override public OSelectStatement copy() {
-    OSelectStatement result = new OSelectStatement(-1);
+    OSelectStatement result = null;
+    try {
+      result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     result.target = target == null ? null : target.copy();
     result.projection = projection == null ? null : projection.copy();
     result.whereClause = whereClause == null ? null : whereClause.copy();
@@ -254,6 +259,64 @@ public class OSelectStatement extends OStatement {
     result.parallel = parallel;
     result.noCache = noCache;
 
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OSelectStatement that = (OSelectStatement) o;
+
+    if (target != null ? !target.equals(that.target) : that.target != null)
+      return false;
+    if (projection != null ? !projection.equals(that.projection) : that.projection != null)
+      return false;
+    if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
+      return false;
+    if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null)
+      return false;
+    if (orderBy != null ? !orderBy.equals(that.orderBy) : that.orderBy != null)
+      return false;
+    if (unwind != null ? !unwind.equals(that.unwind) : that.unwind != null)
+      return false;
+    if (skip != null ? !skip.equals(that.skip) : that.skip != null)
+      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
+      return false;
+    if (lockRecord != that.lockRecord)
+      return false;
+    if (fetchPlan != null ? !fetchPlan.equals(that.fetchPlan) : that.fetchPlan != null)
+      return false;
+    if (letClause != null ? !letClause.equals(that.letClause) : that.letClause != null)
+      return false;
+    if (timeout != null ? !timeout.equals(that.timeout) : that.timeout != null)
+      return false;
+    if (parallel != null ? !parallel.equals(that.parallel) : that.parallel != null)
+      return false;
+    if (noCache != null ? !noCache.equals(that.noCache) : that.noCache != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = target != null ? target.hashCode() : 0;
+    result = 31 * result + (projection != null ? projection.hashCode() : 0);
+    result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
+    result = 31 * result + (groupBy != null ? groupBy.hashCode() : 0);
+    result = 31 * result + (orderBy != null ? orderBy.hashCode() : 0);
+    result = 31 * result + (unwind != null ? unwind.hashCode() : 0);
+    result = 31 * result + (skip != null ? skip.hashCode() : 0);
+    result = 31 * result + (limit != null ? limit.hashCode() : 0);
+    result = 31 * result + (lockRecord != null ? lockRecord.hashCode() : 0);
+    result = 31 * result + (fetchPlan != null ? fetchPlan.hashCode() : 0);
+    result = 31 * result + (letClause != null ? letClause.hashCode() : 0);
+    result = 31 * result + (timeout != null ? timeout.hashCode() : 0);
+    result = 31 * result + (parallel != null ? parallel.hashCode() : 0);
+    result = 31 * result + (noCache != null ? noCache.hashCode() : 0);
     return result;
   }
 }

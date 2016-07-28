@@ -72,6 +72,30 @@ public class OIndexIdentifier extends SimpleNode {
     return result;
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIndexIdentifier that = (OIndexIdentifier) o;
+
+    if (type != that.type)
+      return false;
+    if (indexNameString != null ? !indexNameString.equals(that.indexNameString) : that.indexNameString != null)
+      return false;
+    if (indexName != null ? !indexName.equals(that.indexName) : that.indexName != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = type != null ? type.hashCode() : 0;
+    result = 31 * result + (indexNameString != null ? indexNameString.hashCode() : 0);
+    result = 31 * result + (indexName != null ? indexName.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=025f134fd4b27b84210738cdb6dd027c (do not edit this line) */
 

@@ -170,5 +170,33 @@ public class OProjectionItem extends SimpleNode {
     result.aggregate = aggregate;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OProjectionItem that = (OProjectionItem) o;
+
+    if (all != that.all)
+      return false;
+    if (alias != null ? !alias.equals(that.alias) : that.alias != null)
+      return false;
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
+      return false;
+    if (aggregate != null ? !aggregate.equals(that.aggregate) : that.aggregate != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = (all ? 1 : 0);
+    result = 31 * result + (alias != null ? alias.hashCode() : 0);
+    result = 31 * result + (expression != null ? expression.hashCode() : 0);
+    result = 31 * result + (aggregate != null ? aggregate.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

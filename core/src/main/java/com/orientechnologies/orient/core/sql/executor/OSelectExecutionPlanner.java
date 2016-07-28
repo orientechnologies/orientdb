@@ -244,21 +244,19 @@ public class OSelectExecutionPlanner {
     String indexName = indexIdentifier.getIndexName();
     OIndex<?> index = ctx.getDatabase().getMetadata().getIndexManager().getIndex(indexName);
     if (index == null) {
-      throw new OCommandExecutionException(
-          "Index not found: " + indexName);//TODO check if you can iterate over the index without a key
+      throw new OCommandExecutionException("Index not found: " + indexName);
     }
     if (flattenedWhereClause == null) {
       throw new OCommandExecutionException(
           "Index queries must have a WHERE conditioni with like 'key = [val1, val2, valN]");//TODO check if you can iterate over the index without a key
     }
     if (flattenedWhereClause.size() != 1) {
-      throw new OCommandExecutionException(
-          "Index queries with this kind of condition are not supported yet: " + flattenedWhereClause);//TODO
+      throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);//TODO
     }
 
     OAndBlock andBlock = flattenedWhereClause.get(0);
     if (andBlock.getSubBlocks().size() != 1) {
-      throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + andBlock);//TODO
+      throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);//TODO
     }
     this.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
 
@@ -286,7 +284,7 @@ public class OSelectExecutionPlanner {
       ORecordId schemaRid = new ORecordId(schemaRecordIdAsString);
       plan.chain(new FetchFromRidsStep(Collections.singleton(schemaRid), ctx));
     } else {
-      throw new UnsupportedOperationException();//TODO
+      throw new UnsupportedOperationException();//TODO other metadata types
     }
 
   }
@@ -330,8 +328,6 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleClassAsTarget(OSelectExecutionPlan plan, OIdentifier identifier, OCommandContext ctx) {
-    //TODO optimize fetch from class, eg. when you can use and index or when you can do early sort.
-
     if (handleClassAsTargetWithIndex(plan, identifier, ctx)) {
       return;
     }
@@ -353,7 +349,7 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier identifier, OCommandContext ctx) {
-    if (flattenedWhereClause == null || flattenedWhereClause.size()==0) {
+    if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
       return false;
     }
     OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(identifier.getStringValue());
@@ -399,11 +395,28 @@ public class OSelectExecutionPlanner {
     return result;
   }
 
+  /**
+   * given a flat AND block and a set of indexes, returns the best index to be used to process it, with the complete descripton on how to use it
+   *
+   * @param ctx
+   * @param indexes
+   * @param block
+   * @return
+   */
   private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex<?>> indexes, OAndBlock block) {
     return indexes.stream().map(index -> buildIndexSearchDescriptor(ctx, index, block)).filter(Objects::nonNull)
         .min(Comparator.comparing(x -> x.cost(ctx))).orElse(null);
   }
 
+  /**
+   * given an index and a flat AND block, returns a descriptor on how to process it with an index (index, index key and additional filters
+   * to apply after index fetch
+   *
+   * @param ctx
+   * @param index
+   * @param block
+   * @return
+   */
   private IndexSearchDescriptor buildIndexSearchDescriptor(OCommandContext ctx, OIndex<?> index, OAndBlock block) {
     List<String> indexFields = index.getDefinition().getFields();
     OBinaryCondition keyCondition = new OBinaryCondition(-1);

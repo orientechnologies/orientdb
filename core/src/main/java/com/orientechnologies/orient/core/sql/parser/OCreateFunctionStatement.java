@@ -60,5 +60,39 @@ public class OCreateFunctionStatement extends OStatement {
     result.language = language == null ? null : language.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OCreateFunctionStatement that = (OCreateFunctionStatement) o;
+
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+    if (codeQuoted != null ? !codeQuoted.equals(that.codeQuoted) : that.codeQuoted != null)
+      return false;
+    if (code != null ? !code.equals(that.code) : that.code != null)
+      return false;
+    if (parameters != null ? !parameters.equals(that.parameters) : that.parameters != null)
+      return false;
+    if (idempotent != null ? !idempotent.equals(that.idempotent) : that.idempotent != null)
+      return false;
+    if (language != null ? !language.equals(that.language) : that.language != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (codeQuoted != null ? codeQuoted.hashCode() : 0);
+    result = 31 * result + (code != null ? code.hashCode() : 0);
+    result = 31 * result + (parameters != null ? parameters.hashCode() : 0);
+    result = 31 * result + (idempotent != null ? idempotent.hashCode() : 0);
+    result = 31 * result + (language != null ? language.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=bbc914f66e96822dedc7e89e14240872 (do not edit this line) */

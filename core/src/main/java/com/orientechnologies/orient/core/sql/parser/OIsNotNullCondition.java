@@ -71,5 +71,22 @@ public class OIsNotNullCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIsNotNullCondition that = (OIsNotNullCondition) o;
+
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return expression != null ? expression.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=a292fa8a629abb7f6fe72a627fc91361 (do not edit this line) */

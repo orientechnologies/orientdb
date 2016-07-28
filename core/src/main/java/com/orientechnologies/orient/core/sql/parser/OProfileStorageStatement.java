@@ -78,6 +78,24 @@ public class OProfileStorageStatement extends OStatement {
     result.on = on;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OProfileStorageStatement that = (OProfileStorageStatement) o;
+
+    if (on != that.on)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return (on ? 1 : 0);
+  }
 }
 
 /* JavaCC - OriginalChecksum=645887712797ae14a17820bfa944f78e (do not edit this line) */

@@ -167,5 +167,29 @@ public class OContainsCondition extends OBooleanExpression {
 
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OContainsCondition that = (OContainsCondition) o;
+
+    if (left != null ? !left.equals(that.left) : that.left != null)
+      return false;
+    if (right != null ? !right.equals(that.right) : that.right != null)
+      return false;
+    if (condition != null ? !condition.equals(that.condition) : that.condition != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = left != null ? left.hashCode() : 0;
+    result = 31 * result + (right != null ? right.hashCode() : 0);
+    result = 31 * result + (condition != null ? condition.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=bad1118296ea74860e88d66bfe9fa222 (do not edit this line) */

@@ -109,5 +109,27 @@ public class ONotBlock extends OBooleanExpression {
     result.negate = negate;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ONotBlock oNotBlock = (ONotBlock) o;
+
+    if (negate != oNotBlock.negate)
+      return false;
+    if (sub != null ? !sub.equals(oNotBlock.sub) : oNotBlock.sub != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = sub != null ? sub.hashCode() : 0;
+    result = 31 * result + (negate ? 1 : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

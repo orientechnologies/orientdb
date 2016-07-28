@@ -42,5 +42,30 @@ public class OTruncateClassStatement extends OStatement {
     result.unsafe = unsafe;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OTruncateClassStatement that = (OTruncateClassStatement) o;
+
+    if (polymorphic != that.polymorphic)
+      return false;
+    if (unsafe != that.unsafe)
+      return false;
+    if (className != null ? !className.equals(that.className) : that.className != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = className != null ? className.hashCode() : 0;
+    result = 31 * result + (polymorphic ? 1 : 0);
+    result = 31 * result + (unsafe ? 1 : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=301f993f6ba2893cb30c8f189674b974 (do not edit this line) */

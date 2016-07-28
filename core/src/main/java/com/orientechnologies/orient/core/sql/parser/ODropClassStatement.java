@@ -31,5 +31,27 @@ public class ODropClassStatement extends OStatement {
     result.unsafe = unsafe;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ODropClassStatement that = (ODropClassStatement) o;
+
+    if (unsafe != that.unsafe)
+      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (unsafe ? 1 : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=8c475e1225074f68be37fce610987d54 (do not edit this line) */

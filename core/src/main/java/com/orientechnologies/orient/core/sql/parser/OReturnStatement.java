@@ -28,5 +28,23 @@ public class OReturnStatement extends OStatement {
     result.expression = expression == null ? null : expression.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OReturnStatement that = (OReturnStatement) o;
+
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return expression != null ? expression.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=c72ec860d1fa92cbf52e42ae1c2935c0 (do not edit this line) */

@@ -27,6 +27,40 @@ public class OCreateIndexStatement extends OStatement {
       result.collate = collate == null ? null : collate.copy();
       return result;
     }
+
+    @Override public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      Property property = (Property) o;
+
+      if (byKey != property.byKey)
+        return false;
+      if (byValue != property.byValue)
+        return false;
+      if (name != null ? !name.equals(property.name) : property.name != null)
+        return false;
+      if (recordAttribute != null ? !recordAttribute.equals(property.recordAttribute) : property.recordAttribute != null)
+        return false;
+      if (className != null ? !className.equals(property.className) : property.className != null)
+        return false;
+      if (collate != null ? !collate.equals(property.collate) : property.collate != null)
+        return false;
+
+      return true;
+    }
+
+    @Override public int hashCode() {
+      int result = name != null ? name.hashCode() : 0;
+      result = 31 * result + (recordAttribute != null ? recordAttribute.hashCode() : 0);
+      result = 31 * result + (className != null ? className.hashCode() : 0);
+      result = 31 * result + (byKey ? 1 : 0);
+      result = 31 * result + (byValue ? 1 : 0);
+      result = 31 * result + (collate != null ? collate.hashCode() : 0);
+      return result;
+    }
   }
 
   protected OIndexName  name;
@@ -107,6 +141,43 @@ public class OCreateIndexStatement extends OStatement {
     result.engine = engine == null ? null : engine.copy();
     result.keyTypes = keyTypes == null ? null : keyTypes.stream().map(x -> x.copy()).collect(Collectors.toList());
     result.metadata = metadata == null ? null : metadata.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OCreateIndexStatement that = (OCreateIndexStatement) o;
+
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+    if (className != null ? !className.equals(that.className) : that.className != null)
+      return false;
+    if (propertyList != null ? !propertyList.equals(that.propertyList) : that.propertyList != null)
+      return false;
+    if (type != null ? !type.equals(that.type) : that.type != null)
+      return false;
+    if (engine != null ? !engine.equals(that.engine) : that.engine != null)
+      return false;
+    if (keyTypes != null ? !keyTypes.equals(that.keyTypes) : that.keyTypes != null)
+      return false;
+    if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (className != null ? className.hashCode() : 0);
+    result = 31 * result + (propertyList != null ? propertyList.hashCode() : 0);
+    result = 31 * result + (type != null ? type.hashCode() : 0);
+    result = 31 * result + (engine != null ? engine.hashCode() : 0);
+    result = 31 * result + (keyTypes != null ? keyTypes.hashCode() : 0);
+    result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
     return result;
   }
 }

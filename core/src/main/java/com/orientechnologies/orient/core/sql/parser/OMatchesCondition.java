@@ -82,5 +82,29 @@ public class OMatchesCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OMatchesCondition that = (OMatchesCondition) o;
+
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
+      return false;
+    if (right != null ? !right.equals(that.right) : that.right != null)
+      return false;
+    if (rightParam != null ? !rightParam.equals(that.rightParam) : that.rightParam != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = expression != null ? expression.hashCode() : 0;
+    result = 31 * result + (right != null ? right.hashCode() : 0);
+    result = 31 * result + (rightParam != null ? rightParam.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=68712f476e2e633c2bbfc34cb6c39356 (do not edit this line) */

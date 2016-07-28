@@ -32,5 +32,27 @@ public class ODropIndexStatement extends OStatement {
     result.name = name == null ? null : name.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ODropIndexStatement that = (ODropIndexStatement) o;
+
+    if (all != that.all)
+      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = (all ? 1 : 0);
+    result = 31 * result + (name != null ? name.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=51c8221d049e4f114378e4be03797050 (do not edit this line) */

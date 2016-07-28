@@ -52,5 +52,39 @@ public class ODeleteVertexStatement extends OStatement {
     result.batch = batch == null ? null : batch.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ODeleteVertexStatement that = (ODeleteVertexStatement) o;
+
+    if (from != that.from)
+      return false;
+    if (returnBefore != that.returnBefore)
+      return false;
+    if (fromClause != null ? !fromClause.equals(that.fromClause) : that.fromClause != null)
+      return false;
+    if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
+      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
+      return false;
+    if (batch != null ? !batch.equals(that.batch) : that.batch != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = (from ? 1 : 0);
+    result = 31 * result + (fromClause != null ? fromClause.hashCode() : 0);
+    result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
+    result = 31 * result + (returnBefore ? 1 : 0);
+    result = 31 * result + (limit != null ? limit.hashCode() : 0);
+    result = 31 * result + (batch != null ? batch.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=b62d3046f4bd1b9c1f78ed4f125b06d3 (do not edit this line) */

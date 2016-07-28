@@ -143,5 +143,51 @@ public class OFromItem extends SimpleNode {
 
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OFromItem oFromItem = (OFromItem) o;
+
+    if (rids != null ? !rids.equals(oFromItem.rids) : oFromItem.rids != null)
+      return false;
+    if (cluster != null ? !cluster.equals(oFromItem.cluster) : oFromItem.cluster != null)
+      return false;
+    if (clusterList != null ? !clusterList.equals(oFromItem.clusterList) : oFromItem.clusterList != null)
+      return false;
+    if (index != null ? !index.equals(oFromItem.index) : oFromItem.index != null)
+      return false;
+    if (metadata != null ? !metadata.equals(oFromItem.metadata) : oFromItem.metadata != null)
+      return false;
+    if (statement != null ? !statement.equals(oFromItem.statement) : oFromItem.statement != null)
+      return false;
+    if (inputParam != null ? !inputParam.equals(oFromItem.inputParam) : oFromItem.inputParam != null)
+      return false;
+    if (identifier != null ? !identifier.equals(oFromItem.identifier) : oFromItem.identifier != null)
+      return false;
+    if (functionCall != null ? !functionCall.equals(oFromItem.functionCall) : oFromItem.functionCall != null)
+      return false;
+    if (modifier != null ? !modifier.equals(oFromItem.modifier) : oFromItem.modifier != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = rids != null ? rids.hashCode() : 0;
+    result = 31 * result + (cluster != null ? cluster.hashCode() : 0);
+    result = 31 * result + (clusterList != null ? clusterList.hashCode() : 0);
+    result = 31 * result + (index != null ? index.hashCode() : 0);
+    result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
+    result = 31 * result + (statement != null ? statement.hashCode() : 0);
+    result = 31 * result + (inputParam != null ? inputParam.hashCode() : 0);
+    result = 31 * result + (identifier != null ? identifier.hashCode() : 0);
+    result = 31 * result + (functionCall != null ? functionCall.hashCode() : 0);
+    result = 31 * result + (modifier != null ? modifier.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

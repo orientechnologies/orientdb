@@ -121,5 +121,39 @@ public class OUpdateOperations extends SimpleNode {
         updateRemoveItems == null ? null : updateRemoveItems.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OUpdateOperations that = (OUpdateOperations) o;
+
+    if (type != that.type)
+      return false;
+    if (updateItems != null ? !updateItems.equals(that.updateItems) : that.updateItems != null)
+      return false;
+    if (updatePutItems != null ? !updatePutItems.equals(that.updatePutItems) : that.updatePutItems != null)
+      return false;
+    if (json != null ? !json.equals(that.json) : that.json != null)
+      return false;
+    if (updateIncrementItems != null ? !updateIncrementItems.equals(that.updateIncrementItems) : that.updateIncrementItems != null)
+      return false;
+    if (updateRemoveItems != null ? !updateRemoveItems.equals(that.updateRemoveItems) : that.updateRemoveItems != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = type;
+    result = 31 * result + (updateItems != null ? updateItems.hashCode() : 0);
+    result = 31 * result + (updatePutItems != null ? updatePutItems.hashCode() : 0);
+    result = 31 * result + (json != null ? json.hashCode() : 0);
+    result = 31 * result + (updateIncrementItems != null ? updateIncrementItems.hashCode() : 0);
+    result = 31 * result + (updateRemoveItems != null ? updateRemoveItems.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=0eca3b3e4e3d96c42db57b7cd89cf755 (do not edit this line) */

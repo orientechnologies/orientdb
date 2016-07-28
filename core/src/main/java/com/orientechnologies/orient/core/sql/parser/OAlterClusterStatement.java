@@ -39,5 +39,33 @@ public class OAlterClusterStatement extends OStatement {
     result.attributeValue = attributeValue == null ? null : attributeValue.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OAlterClusterStatement that = (OAlterClusterStatement) o;
+
+    if (starred != that.starred)
+      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+    if (attributeName != null ? !attributeName.equals(that.attributeName) : that.attributeName != null)
+      return false;
+    if (attributeValue != null ? !attributeValue.equals(that.attributeValue) : that.attributeValue != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (attributeName != null ? attributeName.hashCode() : 0);
+    result = 31 * result + (starred ? 1 : 0);
+    result = 31 * result + (attributeValue != null ? attributeValue.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=ed78ea0f1a05b0963db625ed1f338bd6 (do not edit this line) */

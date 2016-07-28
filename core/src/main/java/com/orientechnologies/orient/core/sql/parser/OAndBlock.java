@@ -171,5 +171,23 @@ public class OAndBlock extends OBooleanExpression {
     }
     return null;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OAndBlock andBlock = (OAndBlock) o;
+
+    if (subBlocks != null ? !subBlocks.equals(andBlock.subBlocks) : andBlock.subBlocks != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return subBlocks != null ? subBlocks.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

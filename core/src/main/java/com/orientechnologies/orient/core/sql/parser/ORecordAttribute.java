@@ -32,5 +32,23 @@ public class ORecordAttribute extends SimpleNode {
     result.name = name;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ORecordAttribute that = (ORecordAttribute) o;
+
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return name != null ? name.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=45ce3cd16399dec7d7ef89f8920d02ae (do not edit this line) */

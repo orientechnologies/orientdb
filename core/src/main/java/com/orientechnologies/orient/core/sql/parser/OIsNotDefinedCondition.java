@@ -65,5 +65,22 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
     builder.append(" is not defined");
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIsNotDefinedCondition that = (OIsNotDefinedCondition) o;
+
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return expression != null ? expression.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=1c766d6caf5ccae19c1c291396bb56f2 (do not edit this line) */

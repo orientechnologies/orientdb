@@ -192,6 +192,36 @@ public class OBaseExpression extends OMathExpression {
     }
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OBaseExpression that = (OBaseExpression) o;
+
+    if (number != null ? !number.equals(that.number) : that.number != null)
+      return false;
+    if (identifier != null ? !identifier.equals(that.identifier) : that.identifier != null)
+      return false;
+    if (inputParam != null ? !inputParam.equals(that.inputParam) : that.inputParam != null)
+      return false;
+    if (string != null ? !string.equals(that.string) : that.string != null)
+      return false;
+    if (modifier != null ? !modifier.equals(that.modifier) : that.modifier != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = number != null ? number.hashCode() : 0;
+    result = 31 * result + (identifier != null ? identifier.hashCode() : 0);
+    result = 31 * result + (inputParam != null ? inputParam.hashCode() : 0);
+    result = 31 * result + (string != null ? string.hashCode() : 0);
+    result = 31 * result + (modifier != null ? modifier.hashCode() : 0);
+    return result;
+  }
 }
 
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

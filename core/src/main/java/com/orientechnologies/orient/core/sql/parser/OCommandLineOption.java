@@ -26,5 +26,23 @@ public class OCommandLineOption extends SimpleNode {
     result.name = name == null ? null : name.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OCommandLineOption that = (OCommandLineOption) o;
+
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return name != null ? name.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=7fcb8de8a1f99a2737aac85933d074d9 (do not edit this line) */

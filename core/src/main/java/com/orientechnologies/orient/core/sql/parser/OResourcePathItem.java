@@ -34,5 +34,30 @@ public class OResourcePathItem extends SimpleNode {
     result.name = name;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OResourcePathItem that = (OResourcePathItem) o;
+
+    if (star != that.star)
+      return false;
+    if (identifier != null ? !identifier.equals(that.identifier) : that.identifier != null)
+      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = (star ? 1 : 0);
+    result = 31 * result + (identifier != null ? identifier.hashCode() : 0);
+    result = 31 * result + (name != null ? name.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=b90ccdd61b6adcd40cde2adee353e89f (do not edit this line) */

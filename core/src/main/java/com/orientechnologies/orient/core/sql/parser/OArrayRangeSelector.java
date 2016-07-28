@@ -148,5 +148,36 @@ public class OArrayRangeSelector extends SimpleNode {
 
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OArrayRangeSelector that = (OArrayRangeSelector) o;
+
+    if (newRange != that.newRange)
+      return false;
+    if (from != null ? !from.equals(that.from) : that.from != null)
+      return false;
+    if (to != null ? !to.equals(that.to) : that.to != null)
+      return false;
+    if (fromSelector != null ? !fromSelector.equals(that.fromSelector) : that.fromSelector != null)
+      return false;
+    if (toSelector != null ? !toSelector.equals(that.toSelector) : that.toSelector != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = from != null ? from.hashCode() : 0;
+    result = 31 * result + (to != null ? to.hashCode() : 0);
+    result = 31 * result + (newRange ? 1 : 0);
+    result = 31 * result + (fromSelector != null ? fromSelector.hashCode() : 0);
+    result = 31 * result + (toSelector != null ? toSelector.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=594a372e31fcbcd3ed962c2260e76468 (do not edit this line) */

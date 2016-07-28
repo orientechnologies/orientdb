@@ -36,5 +36,27 @@ public class OIfStatement extends OStatement {
     result.statements = statements == null ? null : statements.stream().map(OStatement::copy).collect(Collectors.toList());
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIfStatement that = (OIfStatement) o;
+
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
+      return false;
+    if (statements != null ? !statements.equals(that.statements) : that.statements != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = expression != null ? expression.hashCode() : 0;
+    result = 31 * result + (statements != null ? statements.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=a8cd4fb832a4f3b6e71bb1a12f8d8819 (do not edit this line) */

@@ -63,5 +63,48 @@ public class OCreateLinkStatement extends OStatement {
     result.inverse = inverse;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OCreateLinkStatement that = (OCreateLinkStatement) o;
+
+    if (inverse != that.inverse)
+      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+    if (type != null ? !type.equals(that.type) : that.type != null)
+      return false;
+    if (sourceClass != null ? !sourceClass.equals(that.sourceClass) : that.sourceClass != null)
+      return false;
+    if (sourceField != null ? !sourceField.equals(that.sourceField) : that.sourceField != null)
+      return false;
+    if (sourceRecordAttr != null ? !sourceRecordAttr.equals(that.sourceRecordAttr) : that.sourceRecordAttr != null)
+      return false;
+    if (destClass != null ? !destClass.equals(that.destClass) : that.destClass != null)
+      return false;
+    if (destField != null ? !destField.equals(that.destField) : that.destField != null)
+      return false;
+    if (destRecordAttr != null ? !destRecordAttr.equals(that.destRecordAttr) : that.destRecordAttr != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (type != null ? type.hashCode() : 0);
+    result = 31 * result + (sourceClass != null ? sourceClass.hashCode() : 0);
+    result = 31 * result + (sourceField != null ? sourceField.hashCode() : 0);
+    result = 31 * result + (sourceRecordAttr != null ? sourceRecordAttr.hashCode() : 0);
+    result = 31 * result + (destClass != null ? destClass.hashCode() : 0);
+    result = 31 * result + (destField != null ? destField.hashCode() : 0);
+    result = 31 * result + (destRecordAttr != null ? destRecordAttr.hashCode() : 0);
+    result = 31 * result + (inverse ? 1 : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=de46c9bdaf3b36691764a78cd89d1c2b (do not edit this line) */

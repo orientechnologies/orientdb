@@ -35,5 +35,13 @@ public class ONeqOperator extends SimpleNode implements OBinaryCompareOperator {
   @Override public ONeqOperator copy() {
     return new ONeqOperator(-1);
   }
+
+  @Override public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass());
+  }
+
+  @Override public int hashCode() {
+    return getClass().hashCode();
+  }
 }
 /* JavaCC - OriginalChecksum=588c4112ae7d2c83239f97ab0d2d5989 (do not edit this line) */

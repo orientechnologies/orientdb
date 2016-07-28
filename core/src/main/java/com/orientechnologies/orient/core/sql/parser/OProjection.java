@@ -132,5 +132,23 @@ public class OProjection extends SimpleNode {
     }
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OProjection that = (OProjection) o;
+
+    if (items != null ? !items.equals(that.items) : that.items != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return items != null ? items.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

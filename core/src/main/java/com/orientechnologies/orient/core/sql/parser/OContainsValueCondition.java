@@ -94,5 +94,33 @@ public class OContainsValueCondition extends OBooleanExpression {
     result.expression = expression == null ? null : expression.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OContainsValueCondition that = (OContainsValueCondition) o;
+
+    if (left != null ? !left.equals(that.left) : that.left != null)
+      return false;
+    if (operator != null ? !operator.equals(that.operator) : that.operator != null)
+      return false;
+    if (condition != null ? !condition.equals(that.condition) : that.condition != null)
+      return false;
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = left != null ? left.hashCode() : 0;
+    result = 31 * result + (operator != null ? operator.hashCode() : 0);
+    result = 31 * result + (condition != null ? condition.hashCode() : 0);
+    result = 31 * result + (expression != null ? expression.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */

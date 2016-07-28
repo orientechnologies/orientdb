@@ -42,5 +42,27 @@ public class OTruncateRecordStatement extends OStatement {
     result.records = records == null ? null : records.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OTruncateRecordStatement that = (OTruncateRecordStatement) o;
+
+    if (record != null ? !record.equals(that.record) : that.record != null)
+      return false;
+    if (records != null ? !records.equals(that.records) : that.records != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = record != null ? record.hashCode() : 0;
+    result = 31 * result + (records != null ? records.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=9da68e9fe4c4bf94a12d8a6f8864097a (do not edit this line) */

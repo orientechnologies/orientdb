@@ -137,5 +137,41 @@ public class ONotInCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ONotInCondition that = (ONotInCondition) o;
+
+    if (left != null ? !left.equals(that.left) : that.left != null)
+      return false;
+    if (operator != null ? !operator.equals(that.operator) : that.operator != null)
+      return false;
+    if (rightStatement != null ? !rightStatement.equals(that.rightStatement) : that.rightStatement != null)
+      return false;
+    if (right != null ? !right.equals(that.right) : that.right != null)
+      return false;
+    if (rightParam != null ? !rightParam.equals(that.rightParam) : that.rightParam != null)
+      return false;
+    if (rightMathExpression != null ? !rightMathExpression.equals(that.rightMathExpression) : that.rightMathExpression != null)
+      return false;
+    if (inputFinalValue != null ? !inputFinalValue.equals(that.inputFinalValue) : that.inputFinalValue != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = left != null ? left.hashCode() : 0;
+    result = 31 * result + (operator != null ? operator.hashCode() : 0);
+    result = 31 * result + (rightStatement != null ? rightStatement.hashCode() : 0);
+    result = 31 * result + (right != null ? right.hashCode() : 0);
+    result = 31 * result + (rightParam != null ? rightParam.hashCode() : 0);
+    result = 31 * result + (rightMathExpression != null ? rightMathExpression.hashCode() : 0);
+    result = 31 * result + (inputFinalValue != null ? inputFinalValue.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=8fb82bf72cc7d9cbdf2f9e2323ca8ee1 (do not edit this line) */

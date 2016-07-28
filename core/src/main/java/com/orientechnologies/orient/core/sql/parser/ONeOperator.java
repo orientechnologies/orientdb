@@ -35,5 +35,13 @@ class ONeOperator extends SimpleNode  implements OBinaryCompareOperator{
   @Override public ONeOperator copy() {
     return new ONeOperator(-1);
   }
+
+  @Override public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass());
+  }
+
+  @Override public int hashCode() {
+    return getClass().hashCode();
+  }
 }
 /* JavaCC - OriginalChecksum=ac0ae426fb86c930dea83013ddc202ba (do not edit this line) */

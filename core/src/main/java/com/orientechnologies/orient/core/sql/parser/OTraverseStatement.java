@@ -88,5 +88,39 @@ public class OTraverseStatement extends OStatement {
     result.maxDepth = maxDepth == null ? null : maxDepth.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OTraverseStatement that = (OTraverseStatement) o;
+
+    if (projections != null ? !projections.equals(that.projections) : that.projections != null)
+      return false;
+    if (target != null ? !target.equals(that.target) : that.target != null)
+      return false;
+    if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
+      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
+      return false;
+    if (strategy != that.strategy)
+      return false;
+    if (maxDepth != null ? !maxDepth.equals(that.maxDepth) : that.maxDepth != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = projections != null ? projections.hashCode() : 0;
+    result = 31 * result + (target != null ? target.hashCode() : 0);
+    result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
+    result = 31 * result + (limit != null ? limit.hashCode() : 0);
+    result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
+    result = 31 * result + (maxDepth != null ? maxDepth.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=47399a3a3d5a423768bbdc70ee957464 (do not edit this line) */

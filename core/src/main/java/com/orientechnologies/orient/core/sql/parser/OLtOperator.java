@@ -52,5 +52,13 @@ public class OLtOperator extends SimpleNode implements OBinaryCompareOperator {
   @Override public boolean isRangeOperator() {
     return true;
   }
+
+  @Override public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass());
+  }
+
+  @Override public int hashCode() {
+    return getClass().hashCode();
+  }
 }
 /* JavaCC - OriginalChecksum=d8e97d52128198b373bb0c272c72de2c (do not edit this line) */

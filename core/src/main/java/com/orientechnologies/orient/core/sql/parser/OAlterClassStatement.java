@@ -134,5 +134,57 @@ public class OAlterClassStatement extends OStatement {
     result.unsafe = unsafe;
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OAlterClassStatement that = (OAlterClassStatement) o;
+
+    if (unsafe != that.unsafe)
+      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+    if (property != that.property)
+      return false;
+    if (identifierValue != null ? !identifierValue.equals(that.identifierValue) : that.identifierValue != null)
+      return false;
+    if (identifierListValue != null ? !identifierListValue.equals(that.identifierListValue) : that.identifierListValue != null)
+      return false;
+    if (add != null ? !add.equals(that.add) : that.add != null)
+      return false;
+    if (remove != null ? !remove.equals(that.remove) : that.remove != null)
+      return false;
+    if (numberValue != null ? !numberValue.equals(that.numberValue) : that.numberValue != null)
+      return false;
+    if (booleanValue != null ? !booleanValue.equals(that.booleanValue) : that.booleanValue != null)
+      return false;
+    if (customKey != null ? !customKey.equals(that.customKey) : that.customKey != null)
+      return false;
+    if (customValue != null ? !customValue.equals(that.customValue) : that.customValue != null)
+      return false;
+    if (customString != null ? !customString.equals(that.customString) : that.customString != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (property != null ? property.hashCode() : 0);
+    result = 31 * result + (identifierValue != null ? identifierValue.hashCode() : 0);
+    result = 31 * result + (identifierListValue != null ? identifierListValue.hashCode() : 0);
+    result = 31 * result + (add != null ? add.hashCode() : 0);
+    result = 31 * result + (remove != null ? remove.hashCode() : 0);
+    result = 31 * result + (numberValue != null ? numberValue.hashCode() : 0);
+    result = 31 * result + (booleanValue != null ? booleanValue.hashCode() : 0);
+    result = 31 * result + (customKey != null ? customKey.hashCode() : 0);
+    result = 31 * result + (customValue != null ? customValue.hashCode() : 0);
+    result = 31 * result + (customString != null ? customString.hashCode() : 0);
+    result = 31 * result + (unsafe ? 1 : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=4668bb1cd336844052df941f39bdb634 (do not edit this line) */

@@ -108,5 +108,23 @@ public class OCollection extends SimpleNode {
     result.expressions = expressions == null ? null : expressions.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OCollection that = (OCollection) o;
+
+    if (expressions != null ? !expressions.equals(that.expressions) : that.expressions != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return expressions != null ? expressions.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=c93b20138b2ae58c5f76e458c34b5946 (do not edit this line) */

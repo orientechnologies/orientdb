@@ -178,5 +178,27 @@ public class OBaseIdentifier extends SimpleNode {
     result.suffix = suffix==null?null:suffix.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OBaseIdentifier that = (OBaseIdentifier) o;
+
+    if (levelZero != null ? !levelZero.equals(that.levelZero) : that.levelZero != null)
+      return false;
+    if (suffix != null ? !suffix.equals(that.suffix) : that.suffix != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = levelZero != null ? levelZero.hashCode() : 0;
+    result = 31 * result + (suffix != null ? suffix.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

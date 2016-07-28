@@ -65,5 +65,33 @@ public class OUpdateItem extends SimpleNode {
     result.right = right == null ? null : right.copy();
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OUpdateItem that = (OUpdateItem) o;
+
+    if (operator != that.operator)
+      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null)
+      return false;
+    if (leftModifier != null ? !leftModifier.equals(that.leftModifier) : that.leftModifier != null)
+      return false;
+    if (right != null ? !right.equals(that.right) : that.right != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = left != null ? left.hashCode() : 0;
+    result = 31 * result + (leftModifier != null ? leftModifier.hashCode() : 0);
+    result = 31 * result + operator;
+    result = 31 * result + (right != null ? right.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=df7444be87bba741316df8df0d653600 (do not edit this line) */

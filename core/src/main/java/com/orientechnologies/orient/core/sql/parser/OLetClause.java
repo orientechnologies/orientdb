@@ -43,6 +43,24 @@ public class OLetClause extends SimpleNode {
     result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OLetClause that = (OLetClause) o;
+
+    if (items != null ? !items.equals(that.items) : that.items != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return items != null ? items.hashCode() : 0;
+  }
 }
 
 /* JavaCC - OriginalChecksum=201a864b5ed7f1fbe0533843a7acd03d (do not edit this line) */

@@ -152,12 +152,49 @@ public class OModifier extends SimpleNode {
     OModifier result = new OModifier(-1);
     result.squareBrackets = squareBrackets;
     result.arrayRange = arrayRange == null ? null : arrayRange.copy();
-    result.condition = condition == null ? null : (OOrBlock) condition.copy();
+    result.condition = condition == null ? null : condition.copy();
     result.arraySingleValues = arraySingleValues == null ? null : arraySingleValues.copy();
     result.methodCall = methodCall == null ? null : methodCall.copy();
     result.suffix = suffix == null ? null : suffix.copy();
     result.next = next == null ? null : next.copy();
 
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OModifier oModifier = (OModifier) o;
+
+    if (squareBrackets != oModifier.squareBrackets)
+      return false;
+    if (arrayRange != null ? !arrayRange.equals(oModifier.arrayRange) : oModifier.arrayRange != null)
+      return false;
+    if (condition != null ? !condition.equals(oModifier.condition) : oModifier.condition != null)
+      return false;
+    if (arraySingleValues != null ? !arraySingleValues.equals(oModifier.arraySingleValues) : oModifier.arraySingleValues != null)
+      return false;
+    if (methodCall != null ? !methodCall.equals(oModifier.methodCall) : oModifier.methodCall != null)
+      return false;
+    if (suffix != null ? !suffix.equals(oModifier.suffix) : oModifier.suffix != null)
+      return false;
+    if (next != null ? !next.equals(oModifier.next) : oModifier.next != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = (squareBrackets ? 1 : 0);
+    result = 31 * result + (arrayRange != null ? arrayRange.hashCode() : 0);
+    result = 31 * result + (condition != null ? condition.hashCode() : 0);
+    result = 31 * result + (arraySingleValues != null ? arraySingleValues.hashCode() : 0);
+    result = 31 * result + (methodCall != null ? methodCall.hashCode() : 0);
+    result = 31 * result + (suffix != null ? suffix.hashCode() : 0);
+    result = 31 * result + (next != null ? next.hashCode() : 0);
     return result;
   }
 }

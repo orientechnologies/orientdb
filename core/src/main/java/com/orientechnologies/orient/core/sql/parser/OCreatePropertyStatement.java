@@ -63,5 +63,39 @@ public class OCreatePropertyStatement extends OStatement {
     result.attributes = attributes == null ? null : attributes.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
   }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OCreatePropertyStatement that = (OCreatePropertyStatement) o;
+
+    if (unsafe != that.unsafe)
+      return false;
+    if (className != null ? !className.equals(that.className) : that.className != null)
+      return false;
+    if (propertyName != null ? !propertyName.equals(that.propertyName) : that.propertyName != null)
+      return false;
+    if (propertyType != null ? !propertyType.equals(that.propertyType) : that.propertyType != null)
+      return false;
+    if (linkedType != null ? !linkedType.equals(that.linkedType) : that.linkedType != null)
+      return false;
+    if (attributes != null ? !attributes.equals(that.attributes) : that.attributes != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = className != null ? className.hashCode() : 0;
+    result = 31 * result + (propertyName != null ? propertyName.hashCode() : 0);
+    result = 31 * result + (propertyType != null ? propertyType.hashCode() : 0);
+    result = 31 * result + (linkedType != null ? linkedType.hashCode() : 0);
+    result = 31 * result + (unsafe ? 1 : 0);
+    result = 31 * result + (attributes != null ? attributes.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=ff78676483d59013ab10b13bde2678d3 (do not edit this line) */
