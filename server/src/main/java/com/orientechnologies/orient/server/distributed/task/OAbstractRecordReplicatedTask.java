@@ -158,7 +158,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
   @Override
   public void toStream(final DataOutput out) throws IOException {
-    out.writeUTF(rid.toString());
+    rid.toStream(out);
     out.writeInt(version);
     out.writeInt(partitionKey);
     if (lastLSN != null) {
@@ -170,7 +170,8 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
 
   @Override
   public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
-    rid = new ORecordId(in.readUTF());
+    rid = new ORecordId();
+    rid.fromStream(in);
     version = in.readInt();
     partitionKey = in.readInt();
     final boolean hasLastLSN = in.readBoolean();

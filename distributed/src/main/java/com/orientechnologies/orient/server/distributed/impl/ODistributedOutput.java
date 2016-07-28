@@ -405,7 +405,36 @@ public class ODistributedOutput {
       final ODistributedConfiguration cfg, final int availableNodes) {
     final StringBuilder buffer = new StringBuilder();
 
-    buffer.append("\n\nLEGEND: X = Owner, o = Copy");
+    if (cfg.hasDataCenterConfiguration()) {
+      buffer.append("\n\nDATA CENTER CONFIGURATION");
+      final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
+        @Override
+        public void onMessage(final String text, final Object... args) {
+          buffer.append(String.format(text, args));
+        }
+      });
+      table.setColumnSorting("NAME", true);
+      table.setColumnHidden("#");
+      table.setColumnAlignment("SERVERS", OTableFormatter.ALIGNMENT.LEFT);
+      table.setColumnAlignment("writeQuorum", OTableFormatter.ALIGNMENT.CENTER);
+
+      final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
+
+      for (String dcName : cfg.getDataCenters()) {
+        final ODocument row = new ODocument();
+        rows.add(row);
+
+        final String dcServers = cfg.getDataCenterServers(dcName).toString();
+
+        row.field("NAME", dcName);
+        row.field("SERVERS", dcServers.substring(1, dcServers.length() - 1));
+        row.field("writeQuorum", cfg.getDataCenterWriteQuorum(dcName));
+      }
+
+      table.writeRecords(rows, -1);
+    }
+
+    buffer.append("\n\nCLUSTER CONFIGURATION (LEGEND: X = Owner, o = Copy)");
 
     final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
       @Override
@@ -415,7 +444,7 @@ public class ODistributedOutput {
     });
 
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if( db != null && db.isClosed())
+    if (db != null && db.isClosed())
       db = null;
 
     table.setColumnSorting("CLUSTER", true);
@@ -428,7 +457,8 @@ public class ODistributedOutput {
     final String localNodeName = manager.getLocalNodeName();
 
     // READ DEFAULT CFG (CLUSTER=*)
-    final int defaultWQ = cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes, localNodeName);
+    final String defaultWQ = cfg.isLocalDataCenterWriteQuorum() ? ODistributedConfiguration.QUORUM_LOCAL_DC
+        : "" + cfg.getWriteQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes, localNodeName);
     final int defaultRQ = cfg.getReadQuorum(ODistributedConfiguration.ALL_WILDCARD, availableNodes, localNodeName);
     final String defaultOwner = "" + cfg.getClusterOwner(ODistributedConfiguration.ALL_WILDCARD);
     final List<String> defaultServers = cfg.getServers(ODistributedConfiguration.ALL_WILDCARD);
@@ -437,12 +467,13 @@ public class ODistributedOutput {
     final Set<String> allServers = new HashSet<String>();
 
     for (String cluster : cfg.getClusterNames()) {
-      final int wQ = cfg.getWriteQuorum(cluster, availableNodes, localNodeName);
+      final String wQ = cfg.isLocalDataCenterWriteQuorum() ? ODistributedConfiguration.QUORUM_LOCAL_DC
+          : "" + cfg.getWriteQuorum(cluster, availableNodes, localNodeName);
       final int rQ = cfg.getReadQuorum(cluster, availableNodes, localNodeName);
       final String owner = cfg.getClusterOwner(cluster);
       final List<String> servers = cfg.getServers(cluster);
 
-      if (!cluster.equals(ODistributedConfiguration.ALL_WILDCARD) && defaultWQ == wQ && defaultRQ == rQ
+      if (!cluster.equals(ODistributedConfiguration.ALL_WILDCARD) && defaultWQ.equals(wQ) && defaultRQ == rQ
           && defaultOwner.equals(owner) && defaultServers.size() == servers.size() && defaultServers.containsAll(servers))
         // SAME CFG AS THE DEFAULT: DON'T DISPLAY IT
         continue;
@@ -473,6 +504,8 @@ public class ODistributedOutput {
     for (String server : allServers) {
       table.setColumnMetadata(server, "ROLE", cfg.getServerRole(server).toString());
       table.setColumnMetadata(server, "STATUS", manager.getDatabaseStatus(server, databaseName).toString());
+      if (cfg.hasDataCenterConfiguration())
+        table.setColumnMetadata(server, "DC", "DC(" + cfg.getDataCenterOfServer(server) + ")");
     }
 
     table.writeRecords(rows, -1);

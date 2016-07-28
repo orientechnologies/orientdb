@@ -19,47 +19,42 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
- * Execute a read of a record from a distributed node.
+ * Execute a read of a record from a distributed node. This is used in the database repair.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OReadRecordTask extends OAbstractReadRecordTask {
+public class ORepairReadRecordTask extends OAbstractReadRecordTask {
   private static final long serialVersionUID = 1L;
-  public static final int   FACTORYID        = 1;
+  public static final int   FACTORYID        = 17;
 
-  public OReadRecordTask() {
+  public ORepairReadRecordTask() {
   }
 
-  public OReadRecordTask(final ORecordId iRid) {
+  public ORepairReadRecordTask(final ORecordId iRid) {
     super(iRid);
   }
 
-  @Override
-  public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database) throws Exception {
-    final ORecord record = database.load(rid);
-    if (record == null)
-      return null;
+  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
+  }
 
-    return new ORawBuffer(record);
+  @Override
+  public RESULT_STRATEGY getResultStrategy() {
+    return RESULT_STRATEGY.UNION;
   }
 
   @Override
   public String getName() {
-    return "record_read";
+    return "repair_record_read";
   }
 
   @Override
   public int getFactoryId() {
     return FACTORYID;
   }
+
 }

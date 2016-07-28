@@ -90,12 +90,12 @@ public class OProfilerEntry {
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%.2f,", "average", average));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "total", total));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "firstExecution", firstExecution));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "lastExecution", lastExecution));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "lastReset", lastReset));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "lastResetEntries", lastResetEntries));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastExecution", lastExecution));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastReset", lastReset));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastResetEntries,", lastResetEntries));
     if (payLoad != null)
-      buffer.append(String.format(Locale.ENGLISH, ",\"%s\":\"%s\"", "payload", payLoad));
-    buffer.append(String.format(Locale.ENGLISH, ",\"%s\": [", "users"));
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\":\"%s\"", "payload,", payLoad));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\": [", "users"));
 
     String usersList = "";
     int i = 0;

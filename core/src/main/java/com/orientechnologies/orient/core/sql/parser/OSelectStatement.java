@@ -228,7 +228,7 @@ public class OSelectStatement extends OStatement {
     }
   }
 
-  public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
+  public void validate() throws OCommandSQLParsingException {
 
   }
 

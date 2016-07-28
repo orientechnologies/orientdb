@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
@@ -68,6 +61,8 @@ import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolver;
+import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
@@ -76,6 +71,13 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OClusterHealthChecker;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -118,6 +120,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
   protected String                                               nodeUuid;
   protected ODistributedStrategy                                 responseManagerFactory            = new ODefaultDistributedStrategy();
+  protected ODistributedConflictResolverFactory                  conflictResolverFactory           = new ODistributedConflictResolverFactory();
+  protected ODistributedConflictResolver                         conflictResolver                  = conflictResolverFactory
+      .getDefaultImplementation();
 
   private volatile String                                        lastServerDump                    = "";
   protected CountDownLatch                                       serverStarted                     = new CountDownLatch(1);
@@ -1885,4 +1890,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
     return storage;
   }
+
+  @Override
+  public ODistributedConflictResolver getConflictResolver() {
+    return conflictResolver;
+  }
+
+  public void setConflictResolver(final ODistributedConflictResolver conflictResolver) {
+    this.conflictResolver = conflictResolver;
+  }
+
 }

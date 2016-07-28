@@ -25,15 +25,18 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.impl.task.ODeleteRecordTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OUpdateRecordTask;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import org.junit.Assert;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -224,13 +227,11 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void banner(final String iMessage) {
-    OLogManager.instance().flush();
-    System.out
-        .println("\n**********************************************************************************************************");
-    System.out.println(iMessage);
-    System.out
-        .println("**********************************************************************************************************\n");
-    System.out.flush();
+    OLogManager.instance().error(this,
+        "\n**********************************************************************************************************");
+    OLogManager.instance().error(this, iMessage);
+    OLogManager.instance().error(this,
+        "**********************************************************************************************************\n");
   }
 
   protected void log(final String iMessage) {
@@ -458,4 +459,25 @@ public abstract class AbstractServerClusterTest {
     return null;
   }
 
+  protected Object updateRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
+    final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
+
+    final Collection<String> clusterNames = new ArrayList<String>(1);
+    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
+
+    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
+        new OUpdateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
+            ORecordInternal.getRecordType(record)),
+        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+  }
+
+  protected Object deleteRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
+    final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
+
+    final Collection<String> clusterNames = new ArrayList<String>(1);
+    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
+
+    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers), new ODeleteRecordTask(rid, -1),
+        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+  }
 }

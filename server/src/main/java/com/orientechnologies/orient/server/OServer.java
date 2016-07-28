@@ -57,6 +57,7 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.OServerSocketFactory;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
@@ -393,6 +394,13 @@ public class OServer {
 
       running = true;
 
+      String httpAddress = "localhost:2480";
+      for (OServerNetworkListener listener : getNetworkListeners()) {
+        if (listener.getProtocolType().getName().equals(ONetworkProtocolHttpDb.class.getName()))
+          httpAddress = listener.getListeningAddress(true);
+      }
+
+      OLogManager.instance().info(this, "OrientDB Studio available at $ANSI{blue http://%s/studio/index.html}", httpAddress);
       OLogManager.instance().info(this, "$ANSI{green:italic OrientDB Server is active} v" + OConstants.getVersion() + ".");
     } catch (ClassNotFoundException e) {
       running = false;
@@ -470,6 +478,9 @@ public class OServer {
 
         if (pluginManager != null)
           pluginManager.shutdown();
+
+        if( serverSecurity != null  )
+          serverSecurity.shutdown();
 
       } finally {
         lock.unlock();
