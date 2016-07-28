@@ -29,7 +29,6 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   final static int SERVERS       = 3;
   volatile boolean inserting     = true;
   volatile int     serverStarted = 0;
-  volatile boolean lastServerOn  = false;
 
   // @Ignore
   @Test
@@ -49,8 +48,6 @@ public class HACrashTest extends AbstractServerClusterTxTest {
     super.onServerStarted(server);
 
     if (serverStarted++ == (SERVERS - 1)) {
-      lastServerOn = true;
-
       // RUN ASYNCHRONOUSLY
       new Thread(new Runnable() {
         @Override
@@ -72,7 +69,6 @@ public class HACrashTest extends AbstractServerClusterTxTest {
 
                 delayWriter = 50;
                 serverInstance.get(SERVERS - 1).crashServer();
-                lastServerOn = false;
 
                 executeWhen(db, new OCallable<Boolean, ODatabaseDocumentTx>() {
                   @Override
@@ -88,7 +84,6 @@ public class HACrashTest extends AbstractServerClusterTxTest {
                     try {
                       serverInstance.get(SERVERS - 1)
                           .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-                      lastServerOn = true;
                       delayWriter = 0;
 
                     } catch (Exception e) {
@@ -128,7 +123,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
-    Assert.assertTrue(lastServerOn);
+    Assert.assertTrue(serverInstance.get(2).getServerInstance().isActive());
   }
 
   protected String getDatabaseURL(final ServerRun server) {

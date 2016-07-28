@@ -479,6 +479,9 @@ public class OServer {
         if (pluginManager != null)
           pluginManager.shutdown();
 
+        if( serverSecurity != null  )
+          serverSecurity.shutdown();
+
       } finally {
         lock.unlock();
       }
