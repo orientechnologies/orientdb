@@ -132,8 +132,8 @@ public class OHttpGraphResponse extends OHttpResponse {
       json.writeAttribute("@rid", edge.getIdentity());
       json.writeAttribute("@class", edge.getRecord().getClassName());
 
-      json.writeAttribute("from", edge.getVertex(Direction.OUT).getId());
-      json.writeAttribute("to", edge.getVertex(Direction.IN).getId());
+      json.writeAttribute("out", edge.getVertex(Direction.OUT).getId());
+      json.writeAttribute("in", edge.getVertex(Direction.IN).getId());
 
       for (String field : edge.getPropertyKeys()) {
         final Object v = edge.getProperty(field);
