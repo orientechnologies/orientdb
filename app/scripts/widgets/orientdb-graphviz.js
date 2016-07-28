@@ -752,7 +752,9 @@ var OrientGraph = (function () {
         })
         .on("click", function (e) {
           d3.event.stopPropagation();
-          self.edgeMenu.select({elem: this, d: e})
+
+          var node = d3.select(this.parentNode).select("text.elabel").node();
+          self.edgeMenu.select({elem: node, d: e})
           if (self.topics['edge/click']) {
             self.topics['edge/click'](e);
           }
@@ -1546,14 +1548,6 @@ var OrientGraph = (function () {
       .attr("class", "enode-link")
       .attr("d", link);
 
-
-    /*
-     Nodes as
-     <g class="node">
-     <circle class="node-dot" />
-     <text />
-     </g>
-     */
 
     var nodeGroup = this.edgeContainer.selectAll("g.enode")
       .data(nodes)

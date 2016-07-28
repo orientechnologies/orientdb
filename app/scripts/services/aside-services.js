@@ -51,6 +51,7 @@ aside.factory('Aside', function ($rootScope) {
     },
     toggle: function () {
       this.params.cls = (this.params.cls == "" ? "show" : "");
+
       if (this.params.cls == "") {
         $rootScope.$broadcast("aside:close");
       } else {

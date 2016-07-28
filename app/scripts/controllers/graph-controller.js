@@ -339,6 +339,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     $scope.listClass = 'fa-mail-forward';
   })
   $rootScope.$on("aside:open", function () {
+
     $scope.listClass = 'fa-mail-reply';
   })
 
@@ -346,6 +347,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
   $scope.toggleProperties = function () {
 
     Aside.toggle();
+
 
     if (Aside.isOpen()) {
       $scope.graphClass = "svg-container-collapsed";
@@ -568,6 +570,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
           title: title,
           template: 'views/database/graph/asideEdge.html',
           show: true,
+          absolute:false,
           fullscreen: scope.fullscreen
         });
       }
@@ -640,6 +643,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             title: title,
             template: 'views/database/graph/asideEdge.html',
             show: true,
+            absolute: false,
             fullscreen: $scope.fullscreen
           });
         }
@@ -979,6 +983,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
           title: title,
           template: 'views/database/graph/asideVertex.html',
           show: true,
+          absolute: false,
           fullscreen: $scope.fullscreen
         });
       }
