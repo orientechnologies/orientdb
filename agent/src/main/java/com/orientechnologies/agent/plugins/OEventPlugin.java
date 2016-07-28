@@ -96,10 +96,17 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
     super.config(oServer, iParams);
 
     this.server = oServer;
+
     configuration = new ODocument();
     configuration.field("events", new ArrayList<ODocument>());
 
-    final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
+    String path = configFile;
+    String homePath = Orient.getHomePath();
+
+    if (homePath != null) {
+      path = homePath + File.separator + path;
+    }
+    final File f = new File(path);
 
     if (f.exists()) {
       // READ THE FILEw

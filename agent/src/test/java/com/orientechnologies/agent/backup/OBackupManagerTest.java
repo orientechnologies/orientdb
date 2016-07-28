@@ -23,8 +23,10 @@ import com.orientechnologies.agent.backup.log.OBackupLog;
 import com.orientechnologies.agent.backup.log.OBackupLogType;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import org.junit.After;
@@ -64,14 +66,15 @@ public class OBackupManagerTest {
       server = OServerMain.create(false);
       server.startup(stream);
       server.activate();
-      server.getSystemDatabase(
 
-      ).execute(new OCallable<Object, Object>() {
+      server.getSystemDatabase().executeInDBScope(new OCallable<Void, ODatabase>() {
         @Override
-        public Object call(Object iArgument) {
+        public Void call(ODatabase iArgument) {
+
+          iArgument.command(new OCommandSQL("delete from OBackupLog")).execute();
           return null;
         }
-      }, "delete from OBackupLog");
+      });
 
       db = new ODatabaseDocumentTx("plocal:" + server.getDatabaseDirectory() + File.separator + DB_NAME);
 
@@ -122,28 +125,32 @@ public class OBackupManagerTest {
 
     String uuid = cfg.field("uuid");
 
-    final OBackupTask task = manager.getTask(uuid);
+    try {
+      final OBackupTask task = manager.getTask(uuid);
 
-    final CountDownLatch latch = new CountDownLatch(17);
-    task.registerListener(new OBackupListener() {
-      @Override
-      public Boolean onEvent(ODocument cfg, OBackupLog log) {
-        latch.countDown();
-        return latch.getCount() > 0;
+      final CountDownLatch latch = new CountDownLatch(17);
+      task.registerListener(new OBackupListener() {
+        @Override
+        public Boolean onEvent(ODocument cfg, OBackupLog log) {
+          latch.countDown();
+          return latch.getCount() > 0;
 
-      }
-    });
-    latch.await();
-    ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
-    assertNotNull(logs);
-    assertNotNull(logs.field("logs"));
+        }
+      });
+      latch.await();
+      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
+      assertNotNull(logs);
+      assertNotNull(logs.field("logs"));
 
-    List<ODocument> list = logs.field("logs");
-    assertEquals(18, list.size());
+      List<ODocument> list = logs.field("logs");
+      assertEquals(18, list.size());
 
-    checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
+      checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
 
-    deleteAndCheck(uuid, list, 17, 18 - calculateToDelete(list, 17));
+      deleteAndCheck(uuid, list, 17, 18 - calculateToDelete(list, 17));
+    } finally {
+      manager.removeBackup(uuid);
+    }
 
   }
 
@@ -186,39 +193,43 @@ public class OBackupManagerTest {
 
     String uuid = cfg.field("uuid");
 
-    final OBackupTask task = manager.getTask(uuid);
+    try {
+      final OBackupTask task = manager.getTask(uuid);
 
-    final CountDownLatch latch = new CountDownLatch(5);
-    task.registerListener(new OBackupListener() {
-      @Override
-      public Boolean onEvent(ODocument cfg, OBackupLog log) {
-        latch.countDown();
-        return latch.getCount() > 0;
+      final CountDownLatch latch = new CountDownLatch(5);
+      task.registerListener(new OBackupListener() {
+        @Override
+        public Boolean onEvent(ODocument cfg, OBackupLog log) {
+          latch.countDown();
+          return latch.getCount() > 0;
 
-      }
-    });
-    latch.await();
-    ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
-    assertNotNull(logs);
-    assertNotNull(logs.field("logs"));
+        }
+      });
+      latch.await();
+      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
+      assertNotNull(logs);
+      assertNotNull(logs.field("logs"));
 
-    List<ODocument> list = logs.field("logs");
-    assertEquals(6, list.size());
+      List<ODocument> list = logs.field("logs");
+      assertEquals(6, list.size());
 
-    checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
+      checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
 
-    deleteAndCheck(uuid, list, 5, 3);
+      deleteAndCheck(uuid, list, 5, 3);
 
-    task.getStrategy().retainLogs(-1);
+      task.getStrategy().retainLogs(-1);
 
-    list = getLogs(uuid);
+      list = getLogs(uuid);
 
-    assertEquals(0, list.size());
+      assertEquals(0, list.size());
 
-    list = logs.field("logs");
+      list = logs.field("logs");
 
-    checkEmptyPaths(list);
+      checkEmptyPaths(list);
 
+    } finally {
+      manager.removeBackup(uuid);
+    }
   }
 
   private void checkEmptyPaths(List<ODocument> list) {
@@ -248,6 +259,7 @@ public class OBackupManagerTest {
   @Test
   public void backupIncrementalTest() throws InterruptedException {
 
+    checkExpected(0);
     ODocument modes = new ODocument();
 
     ODocument mode = new ODocument();
@@ -265,33 +277,37 @@ public class OBackupManagerTest {
 
     String uuid = cfg.field("uuid");
 
-    OBackupTask task = manager.getTask(uuid);
+    try {
+      OBackupTask task = manager.getTask(uuid);
 
-    final CountDownLatch latch = new CountDownLatch(5);
-    task.registerListener(new OBackupListener() {
-      @Override
-      public Boolean onEvent(ODocument cfg, OBackupLog log) {
-        latch.countDown();
-        return latch.getCount() > 0;
+      final CountDownLatch latch = new CountDownLatch(5);
+      task.registerListener(new OBackupListener() {
+        @Override
+        public Boolean onEvent(ODocument cfg, OBackupLog log) {
+          latch.countDown();
+          return latch.getCount() > 0;
 
-      }
-    });
-    latch.await();
+        }
+      });
+      latch.await();
 
-    ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
-    assertNotNull(logs);
-    assertNotNull(logs.field("logs"));
+      ODocument logs = manager.logs(uuid, 1, 50, new HashMap<String, String>());
+      assertNotNull(logs);
+      assertNotNull(logs.field("logs"));
 
-    List<ODocument> list = logs.field("logs");
-    assertEquals(6, list.size());
+      List<ODocument> list = logs.field("logs");
+      assertEquals(6, list.size());
 
-    checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
+      checkNoOp(list, OBackupLogType.BACKUP_ERROR.toString());
 
-    checkSameUnitUids(list);
+      checkSameUnitUids(list);
 
-    deleteAndCheck(uuid, list, 5, 0);
+      deleteAndCheck(uuid, list, 5, 0);
 
-    checkEmptyPaths(list);
+      checkEmptyPaths(list);
+    } finally {
+      manager.removeBackup(uuid);
+    }
   }
 
   private void deleteAndCheck(String uuid, List<ODocument> list, int index, long expected) {
@@ -299,7 +315,10 @@ public class OBackupManagerTest {
     long unitId = doc.field("unitId");
     long txId = doc.field("txId");
     manager.deleteBackup(uuid, unitId, txId);
+    checkExpected(expected);
+  }
 
+  private void checkExpected(long expected) {
     List<ODocument> execute = (List<ODocument>) server.getSystemDatabase().execute(new OCallable<Object, Object>() {
       @Override
       public Object call(Object iArgument) {

@@ -27,6 +27,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
@@ -42,19 +43,19 @@ import java.util.*;
  */
 public class OBackupConfig {
 
-  public static final String     BACKUPS    = "backups";
+  public static final String     BACKUPS        = "backups";
   private ODocument              configuration;
-  private Map<String, ODocument> configs    = new HashMap<String, ODocument>();
+  private Map<String, ODocument> configs        = new HashMap<String, ODocument>();
 
-  public static final String     DBNAME     = "dbName";
-  public static final String     RETENTION_DAYS     = "retentionDays";
-  public static final String     ENABLED     = "enabled";
-  public static final String     WHEN       = "when";
-  public static final String     DIRECTORY  = "directory";
-  public static final String     MODES      = "modes";
-  public static final String     ID         = "uuid";
+  public static final String     DBNAME         = "dbName";
+  public static final String     RETENTION_DAYS = "retentionDays";
+  public static final String     ENABLED        = "enabled";
+  public static final String     WHEN           = "when";
+  public static final String     DIRECTORY      = "directory";
+  public static final String     MODES          = "modes";
+  public static final String     ID             = "uuid";
 
-  private String                 configFile = "${ORIENTDB_HOME}/config/backups.json";
+  private String                 configFile     = "config/backups.json";
 
   public OBackupConfig() {
     this.configuration = new ODocument();
@@ -63,7 +64,13 @@ public class OBackupConfig {
 
   public OBackupConfig load() {
 
-    final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
+    String path = configFile;
+    String homePath = Orient.getHomePath();
+
+    if (homePath != null) {
+      path = homePath + File.separator + path;
+    }
+    final File f = new File(path);
 
     if (f.exists()) {
       // READ THE FILE
@@ -213,7 +220,8 @@ public class OBackupConfig {
       final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
       OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
     } catch (IOException e) {
-      throw OException.wrapException(new OConfigurationException("Cannot save Backup configuration file '" + configFile + "'. "), e);
+      throw OException.wrapException(new OConfigurationException("Cannot save Backup configuration file '" + configFile + "'. "),
+          e);
     }
   }
 
