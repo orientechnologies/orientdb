@@ -36,17 +36,20 @@ import java.util.concurrent.CountDownLatch;
  * 
  */
 public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
+  private boolean        usesDatabase;
   private CountDownLatch latch;
   private ORemoteTask    task;
 
   public OSynchronizedTaskWrapper(final CountDownLatch iLatch, final String iNodeName, final ORemoteTask iTask) {
-    latch = iLatch;
-    task = iTask;
-    task.setNodeSource(iNodeName);
+    this.latch = iLatch;
+    this.task = iTask;
+    this.task.setNodeSource(iNodeName);
+    this.usesDatabase = true;
   }
 
   public OSynchronizedTaskWrapper(final CountDownLatch iLatch) {
     latch = iLatch;
+    usesDatabase = false;
   }
 
   @Override
@@ -82,9 +85,8 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
     return "(" + (task != null ? task.toString() : "-") + ")";
   }
 
-
   @Override
   public boolean isUsingDatabase() {
-    return task != null ? task.isUsingDatabase() : true;
+    return usesDatabase;
   }
 }

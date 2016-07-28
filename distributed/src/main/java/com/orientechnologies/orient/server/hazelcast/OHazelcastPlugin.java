@@ -547,11 +547,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         }
 
       } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
-        // SYNCHRONIZE ADDING OF CLUSTERS TO AVOID DEADLOCKS
-        final String databaseName = key.substring(CONFIG_DATABASE_PREFIX.length());
+        if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
+          // SYNCHRONIZE ADDING OF CLUSTERS TO AVOID DEADLOCKS
+          final String databaseName = key.substring(CONFIG_DATABASE_PREFIX.length());
 
-        onDatabaseEvent((ODocument) iEvent.getValue(), databaseName);
-
+          onDatabaseEvent((ODocument) iEvent.getValue(), databaseName);
+        }
       } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
         ODistributedServerLog.info(this, nodeName, getNodeName(iEvent.getMember()), DIRECTION.IN, "Received new status %s=%s",
             key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());

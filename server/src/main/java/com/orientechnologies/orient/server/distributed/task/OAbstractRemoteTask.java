@@ -71,11 +71,17 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
 
   @Override
   public long getSynchronousTimeout(final int iSynchNodes) {
+    if (iSynchNodes <= 0)
+      return getDistributedTimeout();
+
     return getDistributedTimeout() * iSynchNodes;
   }
 
   @Override
   public long getTotalTimeout(final int iTotalNodes) {
+    if (iTotalNodes <= 0)
+      return getDistributedTimeout();
+
     return getDistributedTimeout() * iTotalNodes;
   }
 
