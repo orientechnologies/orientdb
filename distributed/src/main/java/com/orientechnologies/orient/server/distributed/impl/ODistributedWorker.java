@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -26,14 +29,12 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -118,9 +119,36 @@ public class ODistributedWorker extends Thread {
     ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE, "end of reading requests for database %s", databaseName);
   }
 
+  /**
+   * Opens the database. If true, it will wait until the database is open
+   */
   public void initDatabaseInstance() {
     if (database == null) {
-      database = distributed.getDatabaseInstance();
+      for (int retry = 0; retry < 100; ++retry) {
+        try {
+          database = distributed.getDatabaseInstance();
+          // OK
+          break;
+
+        } catch (OConfigurationException e) {
+          // WAIT FOR A WHILE, THEN RETRY
+          try {
+            ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+                "Database '%s' not present, waiting for it (retry=%d/%d)...", databaseName, retry, 100);
+            Thread.sleep(300);
+          } catch (InterruptedException e1) {
+            Thread.currentThread().interrupt();
+            return;
+          }
+        }
+      }
+
+      if (database == null) {
+        ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+            "Database '%s' not present, shutting down database manager", databaseName);
+        distributed.shutdown();
+        throw new ODistributedException("Cannot open database '" + databaseName + "'");
+      }
 
     } else if (database.isClosed()) {
       // DATABASE CLOSED, REOPEN IT
@@ -221,7 +249,8 @@ public class ODistributedWorker extends Thread {
     try {
       task.setNodeSource(senderNodeName);
       waitNodeIsOnline();
-      initDatabaseInstance();
+      if (task.isUsingDatabase())
+        initDatabaseInstance();
 
       // keep original user in database, check the username passed in request and set new user in DB, after document saved,
       // reset to original user
@@ -290,9 +319,16 @@ public class ODistributedWorker extends Thread {
   }
 
   private void sendResponseBack(final ODistributedRequest iRequest, Object responsePayload) {
+    sendResponseBack(manager, iRequest, responsePayload);
+  }
+
+  static void sendResponseBack(final ODistributedServerManager manager, final ODistributedRequest iRequest,
+      Object responsePayload) {
     if (iRequest.getId().getMessageId() < 0)
       // INTERNAL MSG
       return;
+
+    final String localNodeName = manager.getLocalNodeName();
 
     final String senderNodeName = manager.getNodeNameById(iRequest.getId().getNodeId());
 
@@ -303,13 +339,13 @@ public class ODistributedWorker extends Thread {
       // GET THE SENDER'S RESPONSE QUEUE
       final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
 
-      ODistributedServerLog.debug(this, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+      ODistributedServerLog.debug(manager, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Sending response %s back", response);
 
       remoteSenderServer.sendResponse(response);
 
     } catch (Exception e) {
-      ODistributedServerLog.debug(this, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+      ODistributedServerLog.debug(manager, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Error on sending response %s back", response);
     }
   }

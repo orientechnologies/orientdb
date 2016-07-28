@@ -59,6 +59,7 @@ import com.orientechnologies.orient.server.OSystemDatabase;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolver;
@@ -529,7 +530,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     }
 
     // STORE THE TEMP USER/PASSWD USED FOR REPLICATION
-    nodeCfg.field("user_replicator", serverInstance.getUser(REPLICATOR_USER).password);
+    final OServerUserConfiguration user = serverInstance.getUser(REPLICATOR_USER);
+    if (user != null)
+      nodeCfg.field("user_replicator", serverInstance.getUser(REPLICATOR_USER).password);
 
     nodeCfg.field("databases", getManagedDatabases());
 
@@ -886,8 +889,16 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   @Override
   public synchronized boolean installDatabase(final boolean iStartup, final String databaseName, final ODocument config) {
-
     final ODistributedConfiguration cfg = new ODistributedConfiguration(config);
+
+    // GET ALL THE OTHER SERVERS
+    final Collection<String> nodes = cfg.getServers(null, nodeName);
+    getAvailableNodes(nodes, databaseName);
+    if (nodes.size() == 0) {
+      ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+          "Cannot install database '%s' on local node, because no servers are ONLINE", databaseName);
+      return false;
+    }
 
     ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
         cfg.getServerRole(nodeName), databaseName);
@@ -951,8 +962,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
     // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers(null, nodeName);
-
     getAvailableNodes(nodes, databaseName);
+    if (nodes.size() == 0)
+      return false;
 
     ODistributedServerLog.warn(this, nodeName, nodes.toString(), DIRECTION.OUT,
         "requesting delta database sync for '%s' on local server...", databaseName);

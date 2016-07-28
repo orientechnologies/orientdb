@@ -34,10 +34,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.File;
@@ -160,17 +157,50 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
             "Request %s on database '%s' waiting for all the previous requests to be completed", request, databaseName);
 
-        // WAIT ALL THE INVOLVED QUEUES ARE FREE AND SYNCHORIZED
+        // WAIT ALL THE INVOLVED QUEUES ARE FREE AND SYNCHRONIZED
         final CountDownLatch syncLatch = new CountDownLatch(involvedWorkerQueues.size());
         final ODistributedRequest syncRequest = new ODistributedRequest(manager.getTaskFactory(), request.getId().getNodeId(), -1,
             databaseName, new OSynchronizedTaskWrapper(syncLatch));
         for (int queue : involvedWorkerQueues)
           workerThreads.get(queue).processRequest(syncRequest);
 
+        long taskTimeout = request.getTask().getDistributedTimeout();
         try {
-          syncLatch.await();
+          if (taskTimeout <= 0)
+            syncLatch.await();
+          else {
+            // WAIT FOR COMPLETION. THE TIMEOUT IS MANAGED IN SMALLER CYCLES TO PROPERLY RECOGNIZE WHEN THE DB IS REMOVED
+            final long start = System.currentTimeMillis();
+            final long cycleTimeout = Math.min(taskTimeout, 2000);
+
+            boolean locked = false;
+            do {
+              if (syncLatch.await(cycleTimeout, TimeUnit.MILLISECONDS)) {
+                // DONE
+                locked = true;
+                break;
+              }
+
+              if (this.workerThreads.size() == 0)
+                // DATABASE WAS SHUTDOWN
+                break;
+
+            } while (System.currentTimeMillis() - start < taskTimeout);
+
+            if (!locked) {
+              final String msg = String.format("Cannot execute distributed request (%s) because all worker threads (%d) are busy",
+                  request, workerThreads.size());
+              ODistributedWorker.sendResponseBack(manager, request, new ODistributedOperationException(msg));
+              return;
+            }
+          }
         } catch (InterruptedException e) {
           // IGNORE
+          Thread.currentThread().interrupt();
+          final String msg = String.format("Cannot execute distributed request (%s) because all worker threads (%d) are busy",
+              request, workerThreads.size());
+          ODistributedWorker.sendResponseBack(manager, request, new ODistributedOperationException(msg));
+          return;
         }
 
         // PUT THE TASK TO EXECUTE ONLY IN THE FIRST QUEUE AND PUT WAIT-FOR TASKS IN THE OTHERS. WHEN THE REAL TASK IS EXECUTED,
