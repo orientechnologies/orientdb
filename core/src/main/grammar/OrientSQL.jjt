@@ -43,12 +43,8 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 /** Orient Database Sql grammar. */
 public class OrientSql {
 
-  class ValidationStats{
-    int luceneCount = 0;
-  }
   private int inputParamCount = 0;
 
-  private List<ValidationStats> validationStats = new ArrayList<ValidationStats>();
 
     public OrientSql(InputStream stream) {
       this(new JavaCharStream(stream));
@@ -1030,7 +1026,7 @@ OStatement QueryStatement():
 }
 
 OSelectWithoutTargetStatement SelectWithoutTargetStatement():
-{validationStats.add(0, new ValidationStats());}
+{}
 {
     (
     	<SELECT>
@@ -1061,13 +1057,13 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
     {
-        jjtThis.validate(validationStats.remove(0));
+        jjtThis.validate();
         return jjtThis;
     }
 }
 
 OSelectStatement SelectStatement():
-{validationStats.add(0, new ValidationStats());}
+{}
 {
     (
    	    <SELECT>
@@ -1103,7 +1099,6 @@ OSelectStatement SelectStatement():
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
     {
-        jjtThis.validate(validationStats.remove(0));
         return jjtThis;
     }
 }
@@ -2633,11 +2628,6 @@ OLuceneOperator LuceneOperator():
 (
 	<LUCENE>
 ){
-    ValidationStats stats = validationStats.get(0);
-    stats.luceneCount++;
-//    if(stats.luceneCount > 1){
-//        throw new OQueryParsingException("Two or more LUCENE operators are not allowed in the same query");
-//    }
     return jjtThis;
 }
 }
