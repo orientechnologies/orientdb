@@ -178,7 +178,7 @@ public abstract class AbstractServerClusterTest {
       OLogManager.instance().flush();
       banner("Shutting down nodes...");
       for (ServerRun server : serverInstance) {
-        System.out.println("Shutting down node " + server.getServerId() + "...");
+        log("Shutting down node " + server.getServerId() + "...");
         if (terminateAtShutdown)
           server.terminateServer();
         else

@@ -123,6 +123,7 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
+    banner("CHECKING IF NODE 2 IS STILL ACTIVE");
     Assert.assertTrue(serverInstance.get(2).getServerInstance().isActive());
   }
 
