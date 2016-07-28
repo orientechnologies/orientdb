@@ -195,10 +195,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       tempEntries.clear();
 
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
-      for (ORecord record : createdRecords.values()){
+      for (ORecord record : createdRecords.values()) {
         unmarshallRecord(record);
         if (record instanceof ODocument) {
-          // Force conversion of value to class for trigger default values. 
+          // Force conversion of value to class for trigger default values.
           ODocumentInternal.autoConvertValueToClass(connection.getDatabase(), (ODocument) record);
         }
       }

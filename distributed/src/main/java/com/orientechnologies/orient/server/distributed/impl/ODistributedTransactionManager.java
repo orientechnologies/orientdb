@@ -232,13 +232,17 @@ public class ODistributedTransactionManager {
     return null;
   }
 
-  protected void checkForClusterIds(OTransaction iTx, String localNodeName, ODistributedConfiguration dbCfg) {
+  protected void checkForClusterIds(final OTransaction iTx, final String localNodeName, final ODistributedConfiguration dbCfg) {
     for (ORecordOperation op : iTx.getAllRecordEntries()) {
       final ORecordId rid = (ORecordId) op.getRecord().getIdentity();
       switch (op.type) {
       case ORecordOperation.CREATED:
-        if (rid.clusterId > 0)
-          storage.checkForCluster(rid, localNodeName, dbCfg);
+        if (rid.clusterId < 1) {
+          final String clusterName = ((OTransactionAbstract) iTx).getClusterName(op.getRecord());
+          if (clusterName != null)
+            rid.clusterId = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(clusterName);
+        }
+        storage.checkForCluster(rid, localNodeName, dbCfg);
         break;
       }
     }
