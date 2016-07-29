@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -35,6 +32,9 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -76,7 +76,7 @@ public class ODistributedWorker extends Thread {
       localQueue.put(request);
     } catch (InterruptedException e) {
       ODistributedServerLog.warn(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-          "Received interruption signal, closing distributed worker thread");
+          "Received interruption signal, closing distributed worker thread (worker=%d)", id);
 
       shutdown();
     }
@@ -111,8 +111,8 @@ public class ODistributedWorker extends Thread {
           Thread.currentThread().interrupt();
         else
           ODistributedServerLog.error(this, localNodeName, reqId != null ? manager.getNodeNameById(reqId.getNodeId()) : "?",
-              ODistributedServerLog.DIRECTION.IN, "Error on executing distributed request %s: %s", e,
-              message != null ? message.getId() : -1, message != null ? message.getTask() : "-");
+              ODistributedServerLog.DIRECTION.IN, "Error on executing distributed request %s: (%s) worker=%d", e,
+              message != null ? message.getId() : -1, message != null ? message.getTask() : "-", id);
       }
     }
 
@@ -120,7 +120,7 @@ public class ODistributedWorker extends Thread {
   }
 
   /**
-   * Opens the database. If true, it will wait until the database is open
+   * Opens the database.
    */
   public void initDatabaseInstance() {
     if (database == null) {
@@ -207,8 +207,8 @@ public class ODistributedWorker extends Thread {
 
     if (ODistributedServerLog.isDebugEnabled()) {
       final String senderNodeName = manager.getNodeNameById(req.getId().getNodeId());
-      ODistributedServerLog.debug(this, localNodeName, senderNodeName, DIRECTION.IN, "Processing request=(%s) sourceNode=%s", req,
-          senderNodeName);
+      ODistributedServerLog.debug(this, localNodeName, senderNodeName, DIRECTION.IN,
+          "Processing request=(%s) sourceNode=%s worker=%d", req, senderNodeName, id);
     }
 
     return req;
@@ -241,7 +241,8 @@ public class ODistributedWorker extends Thread {
     final ORemoteTask task = iRequest.getTask();
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, localNodeName, senderNodeName, DIRECTION.IN, "Received request: %s", iRequest);
+      ODistributedServerLog.debug(this, localNodeName, senderNodeName, DIRECTION.IN, "Received request: (%s) worker=%d", iRequest,
+          id);
 
     // EXECUTE IT LOCALLY
     Object responsePayload;
@@ -358,13 +359,14 @@ public class ODistributedWorker extends Thread {
         if (mgr != null && mgr.isOffline()) {
           // NODE NOT ONLINE YET, REFUSE THE CONNECTION
           OLogManager.instance().info(this,
-              "Node is not online yet (status=%s), blocking the command until it is online (retry=%d, queue=%d)",
-              mgr.getNodeStatus(), retry + 1, localQueue.size());
+              "Node is not online yet (status=%s), blocking the command until it is online (retry=%d, queue=%d worker=%d)",
+              mgr.getNodeStatus(), retry + 1, localQueue.size(), id);
 
           if (localQueue.size() >= OGlobalConfiguration.DISTRIBUTED_LOCAL_QUEUESIZE.getValueAsInteger()) {
             // QUEUE FULL, EMPTY THE QUEUE, IGNORE ALL THE NEXT MESSAGES UNTIL A DELTA SYNC IS EXECUTED
             ODistributedServerLog.warn(this, localNodeName, null, DIRECTION.NONE,
-                "Replication queue is full (retry=%d, queue=%d), replication could be delayed", retry + 1, localQueue.size());
+                "Replication queue is full (retry=%d, queue=%d worker=%d), replication could be delayed", retry + 1,
+                localQueue.size(), id);
           }
 
           try {
