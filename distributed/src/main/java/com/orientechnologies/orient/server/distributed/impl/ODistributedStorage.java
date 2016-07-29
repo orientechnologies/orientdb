@@ -522,7 +522,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       checkNodeIsMaster(localNodeName, dbCfg);
 
-      final String clusterName = checkForCluster(iRecordId, localNodeName, dbCfg);
+      final String clusterName = getClusterNameByRID(iRecordId);
+
+      checkForCluster(iRecordId, localNodeName, dbCfg);
 
       final List<String> servers = dbCfg.getServers(clusterName, null);
 
@@ -1764,7 +1766,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     String ownerNode = dbCfg.getClusterOwner(clusterName);
 
     if (ownerNode.equals(localNodeName))
-      return clusterName;
+      // NO CHANGES
+      return null;
 
     final OCluster cl = getClusterByName(clusterName);
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
