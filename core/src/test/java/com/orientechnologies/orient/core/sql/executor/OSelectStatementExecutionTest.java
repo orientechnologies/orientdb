@@ -1169,7 +1169,6 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
-
   @Test public void testFetchFromClassWithIndexes10() {
     String className = "testFetchFromClassWithIndexes10";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
@@ -1313,7 +1312,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select from " + className + " where name > 'name6' and name = 'name3' and surname > 'surname2' and surname < 'surname5' ");
+    OTodoResultSet result = db.query(
+        "select from " + className + " where name > 'name6' and name = 'name3' and surname > 'surname2' and surname < 'surname5' ");
     printExecutionPlan(result);
     Assert.assertFalse(result.hasNext());
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
@@ -1321,6 +1321,64 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testFetchFromClassWithHashIndexes1() {
+    String className = "testFetchFromClassWithHashIndexes1";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name6' and surname = 'surname6' ");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
+    OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
+    Assert.assertEquals(1, plan.getSteps().size());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithHashIndexes2() {
+    String className = "testFetchFromClassWithHashIndexes2";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name6' and surname >= 'surname6' ");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
+    OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
+    Assert.assertEquals(2, plan.getSteps().size());
+    Assert.assertEquals(FetchFromClassExecutionStep.class, plan.getSteps().get(0).getClass());//index not used
+    result.close();
+  }
 
   public void stressTestNew() {
     String className = "stressTestNew";

@@ -398,6 +398,8 @@ public class OSelectExecutionPlanner {
       return false;
     }
 
+    //TODO indexable functions!
+
     OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(identifier.getStringValue());
     Set<OIndex<?>> indexes = clazz.getIndexes();
 
@@ -546,6 +548,13 @@ public class OSelectExecutionPlanner {
         break;
       }
     }
+
+    if (result.keyCondition.getSubBlocks().size() < index.getDefinition().getFields().size() && !index
+        .supportsOrderedIterations()) {
+      //hash indexes do not support partial key match
+      return null;
+    }
+
     if (found) {
       result.remainingCondition = blockCopy;
       return result;

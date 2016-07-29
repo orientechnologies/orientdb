@@ -9,10 +9,7 @@ import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.sql.parser.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 23/07/16.
@@ -115,7 +112,31 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     Object secondValue = fromKey.execute((OResult) null, ctx);
     Object thirdValue = toKey.execute((OResult) null, ctx);
     OIndexDefinition indexDef = index.getDefinition();
-    cursor = index.iterateEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded, toBetweenIndexKey(indexDef, thirdValue), toKeyIncluded, isOrderAsc());
+    if (index.supportsOrderedIterations()) {
+      cursor = index
+          .iterateEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded, toBetweenIndexKey(indexDef, thirdValue),
+              toKeyIncluded, isOrderAsc());
+    } else if (additional == null && allEqualities((OAndBlock) condition)) {
+      cursor = index.iterateEntries(toIndexKey(indexDef, secondValue), isOrderAsc());
+    } else {
+      throw new UnsupportedOperationException("Cannot evaluate " + this.condition + " on index " + index);
+    }
+  }
+
+  private boolean allEqualities(OAndBlock condition) {
+    if (condition == null) {
+      return false;
+    }
+    for (OBooleanExpression exp : condition.getSubBlocks()) {
+      if (exp instanceof OBinaryCondition) {
+        if (((OBinaryCondition) exp).getOperator() instanceof OEqualsCompareOperator) {
+          return true;
+        }
+      } else {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void processBetweenCondition() {
@@ -129,7 +150,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
     Object secondValue = second.execute((OResult) null, ctx);
     Object thirdValue = third.execute((OResult) null, ctx);
-    cursor = index.iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true, isOrderAsc());
+    cursor = index
+        .iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true,
+            isOrderAsc());
   }
 
   private void processBinaryCondition() {
@@ -147,7 +170,11 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     if (definition.getFields().size() == 1 && rightValue instanceof Collection) {
       rightValue = ((Collection) rightValue).iterator().next();
     }
-    rightValue = definition.createValue(rightValue);
+    if(rightValue instanceof List) {
+      rightValue = definition.createValue((List<?>) rightValue);
+    }else{
+      rightValue = definition.createValue(rightValue);
+    }
     if (!(rightValue instanceof Collection)) {
       rightValue = Collections.singleton(rightValue);
     }
@@ -160,7 +187,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
     rightValue = definition.createValue(rightValue);
 
-    if (definition.getFields().size()>1 && !(rightValue instanceof Collection)) {
+    if (definition.getFields().size() > 1 && !(rightValue instanceof Collection)) {
       rightValue = Collections.singleton(rightValue);
     }
     return rightValue;
@@ -241,12 +268,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       OBinaryCompareOperator operator = ((OBinaryCondition) exp).getOperator();
       OBinaryCompareOperator additionalOperator = additional == null ? null : ((OBinaryCondition) additional).getOperator();
       if (isGreaterOperator(operator)) {
-        if(isIncludeOperator(operator)) {
+        if (isIncludeOperator(operator)) {
           return true;
-        }else {
+        } else {
           return false;
         }
-      } else if (additionalOperator==null || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator))) {
+      } else if (additionalOperator == null || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator))) {
         return true;
       } else {
         return false;
@@ -283,9 +310,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       OBinaryCompareOperator operator = ((OBinaryCondition) exp).getOperator();
       OBinaryCompareOperator additionalOperator = additional == null ? null : ((OBinaryCondition) additional).getOperator();
       if (isLessOperator(operator)) {
-        if(isIncludeOperator(operator)) {
+        if (isIncludeOperator(operator)) {
           return true;
-        }else{
+        } else {
           return false;
         }
       } else if (additionalOperator == null || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator))) {
