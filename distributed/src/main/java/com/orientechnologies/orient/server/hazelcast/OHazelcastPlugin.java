@@ -28,6 +28,8 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.common.util.OCallableNoParamNoReturn;
+import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -355,8 +357,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         hazelcastInstance = null;
       }
 
-    configurationMap.destroy();
-    configurationMap.getHazelcastMap().removeEntryListener(membershipListenerMapRegistration);
+    OCallableUtils.executeIgnoringAnyExceptions(new OCallableNoParamNoReturn() {
+      @Override
+      public void call() {
+        configurationMap.destroy();
+      }
+    });
+
+    OCallableUtils.executeIgnoringAnyExceptions(new OCallableNoParamNoReturn() {
+      @Override
+      public void call() {
+        configurationMap.getHazelcastMap().removeEntryListener(membershipListenerMapRegistration);
+      }
+    });
 
     setNodeStatus(NODE_STATUS.OFFLINE);
   }
