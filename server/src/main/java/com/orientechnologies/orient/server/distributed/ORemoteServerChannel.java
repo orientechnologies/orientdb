@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.IOException;
+import java.util.Date;
+import java.util.concurrent.Executors;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
@@ -26,10 +30,6 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-
-import java.io.IOException;
-import java.util.Date;
-import java.util.concurrent.Executors;
 
 /**
  * Remote server channel.
@@ -56,8 +56,6 @@ public class ORemoteServerChannel {
 
   private volatile int                    totalConsecutiveErrors = 0;
   private final static int                MAX_CONSECUTIVE_ERRORS = 10;
-
-  private final static int                BUFFER_SIZE            = 1024;
 
   public ORemoteServerChannel(final ODistributedServerManager manager, final String iServer, final String iURL, final String user,
       final String passwd) throws IOException {
