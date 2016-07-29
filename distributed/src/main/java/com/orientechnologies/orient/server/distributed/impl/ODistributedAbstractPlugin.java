@@ -24,6 +24,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
@@ -338,7 +339,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     if (name != null)
       return name;
 
-    final ODocument cfg = getNodeConfigurationByUuid(iMember.getUuid());
+    final ODocument cfg = getNodeConfigurationByUuid(iMember.getUuid(), true);
     if (cfg != null)
       return cfg.field("name");
 
@@ -501,7 +502,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     cluster.field("members", members, OType.EMBEDDEDLIST);
     // members.add(getLocalNodeConfiguration());
     for (Member member : activeNodes.values()) {
-      members.add(getNodeConfigurationByUuid(member.getUuid()));
+      members.add(getNodeConfigurationByUuid(member.getUuid(), true));
     }
 
     return cluster;
@@ -669,41 +670,56 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       if (member == null)
         throw new ODistributedException("Cannot find node '" + rNodeName + "'");
 
-      ODocument cfg = getNodeConfigurationByUuid(member.getUuid());
-      while (cfg == null || cfg.field("listeners") == null) {
-        try {
-          Thread.sleep(100);
-          cfg = getNodeConfigurationByUuid(member.getUuid());
+      for (int retry = 0; retry < 100; ++retry) {
+        ODocument cfg = getNodeConfigurationByUuid(member.getUuid(), false);
+        while (cfg == null || cfg.field("listeners") == null) {
+          try {
+            Thread.sleep(100);
+            cfg = getNodeConfigurationByUuid(member.getUuid(), false);
 
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw new ODistributedException("Cannot find node '" + rNodeName + "'");
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ODistributedException("Cannot find node '" + rNodeName + "'");
+          }
         }
-      }
 
-      final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
-      if (listeners == null)
-        throw new ODatabaseException(
-            "Cannot connect to a remote node because bad distributed configuration: missing 'listeners' array field");
+        final Collection<Map<String, Object>> listeners = (Collection<Map<String, Object>>) cfg.field("listeners");
+        if (listeners == null)
+          throw new ODatabaseException(
+              "Cannot connect to a remote node because bad distributed configuration: missing 'listeners' array field");
 
-      String url = null;
-      for (Map<String, Object> listener : listeners) {
-        if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-          url = (String) listener.get("listen");
+        String url = null;
+        for (Map<String, Object> listener : listeners) {
+          if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+            url = (String) listener.get("listen");
+            break;
+          }
+        }
+
+        if (url == null)
+          throw new ODatabaseException("Cannot connect to a remote node because the url was not found");
+
+        final String userPassword = cfg.field("user_replicator");
+
+        if (userPassword != null) {
+          // OK
+          remoteServer = new ORemoteServerController(this, rNodeName, url, REPLICATOR_USER, userPassword);
+          final ORemoteServerController old = remoteServers.putIfAbsent(rNodeName, remoteServer);
+          if (old != null) {
+            remoteServer.close();
+            remoteServer = old;
+          }
           break;
         }
-      }
 
-      if (url == null)
-        throw new ODatabaseException("Cannot connect to a remote node because the url was not found");
+        // RETRY TO GET USR+PASSWORD IN A WHILE
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new OInterruptedException("Cannot connect to remote sevrer " + rNodeName);
+        }
 
-      final String userPassword = cfg.field("user_replicator");
-
-      remoteServer = new ORemoteServerController(this, rNodeName, url, REPLICATOR_USER, userPassword);
-      final ORemoteServerController old = remoteServers.putIfAbsent(rNodeName, remoteServer);
-      if (old != null) {
-        remoteServer.close();
-        remoteServer = old;
       }
     }
     return remoteServer;

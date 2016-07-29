@@ -133,7 +133,7 @@ public interface ODistributedServerManager {
 
   int getNodeIdByName(String node);
 
-  ODocument getNodeConfigurationByUuid(String iNode);
+  ODocument getNodeConfigurationByUuid(String iNode, boolean useCache);
 
   ODocument getLocalNodeConfiguration();
 
