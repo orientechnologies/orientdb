@@ -858,9 +858,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
               // delete to avoid duplication
               ridIterator.remove();
+              exportedRecord++;
             }
-
-            exportedRecord++;
           }
 
           ridIterator = sortedRids.iterator();
@@ -3200,12 +3199,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OCluster cluster, final byte recordType) {
 
     try {
-      final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
-      if (!checkForRecordValidity(ppos)) {
-        final int recordVersion = -1;
-        return new OStorageOperationResult<Integer>(recordVersion);
-      }
-
       makeStorageDirty();
       atomicOperationsManager.startAtomicOperation((String) null, true);
       try {
