@@ -60,7 +60,9 @@
                 <configuration>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
+                        <ORIENTDB_HOME>target</ORIENTDB_HOME>
                     </systemPropertyVariables>
+
                 </configuration>
             </plugin>
             <plugin>
