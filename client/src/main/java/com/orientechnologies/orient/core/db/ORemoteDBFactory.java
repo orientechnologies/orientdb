@@ -1,3 +1,23 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
+
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
@@ -21,15 +41,15 @@ public class ORemoteDBFactory implements OrientDBFactory {
   private final Set<OPool<?>>         pools    = new HashSet<>();
   private final String[]         hosts;
   private final OEngine          remote;
-  private final OrientDBSettings configurations;
+  private final OrientDBConfig configurations;
   private final Thread           shutdownThread;
 
-  public ORemoteDBFactory(String[] hosts, OrientDBSettings configurations) {
+  public ORemoteDBFactory(String[] hosts, OrientDBConfig configurations) {
     super();
     this.hosts = hosts;
     remote = Orient.instance().getEngine("remote");
 
-    this.configurations = configurations != null ? configurations : OrientDBSettings.defaultSettings();
+    this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
 
     shutdownThread = new Thread(() -> ORemoteDBFactory.this.internalClose());
     
@@ -40,19 +60,28 @@ public class ORemoteDBFactory implements OrientDBFactory {
     return hosts[0] + "/" + name;
   }
 
+  public ODatabaseDocument open(String name, String user, String password) {
+    return open(name, user, password, null);
+  }
+  
   @Override
-  public synchronized ODatabaseDocument open(String name, String user, String password) {
+  public synchronized ODatabaseDocument open(String name, String user, String password, OrientDBConfig config) {
     OStorage storage = storages.get(name);
     if (storage == null) {
       storage = remote.createStorage(buildUrl(name), new HashMap<>());
     }
     ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
-    db.internalOpen(user, password);
+    db.internalOpen(user, password, solveConfig(config));
     return db;
   }
 
   @Override
-  public synchronized void create(String name, String user, String password, DatabaseType databaseType) {
+  public void create(String name, String user, String password, DatabaseType databaseType){
+    create(name, user, password, databaseType, null);
+  }
+  
+  @Override
+  public synchronized void create(String name, String user, String password, DatabaseType databaseType, OrientDBConfig config) {
     connectEndExecute(name, user, password, admin -> {
       String sendType = null;
       if (databaseType == DatabaseType.MEMORY) {
@@ -65,13 +94,13 @@ public class ORemoteDBFactory implements OrientDBFactory {
     });
   }
 
-  public ORemoteDatabasePool poolOpen(String name, String user, String password, ORemotePoolByFactory pool) {
+  public synchronized ORemoteDatabasePool poolOpen(String name, String user, String password, ORemotePoolByFactory pool) {
     OStorage storage = storages.get(name);
     if (storage == null) {
       storage = remote.createStorage(buildUrl(name), new HashMap<>());
     }
     ORemoteDatabasePool db = new ORemoteDatabasePool(pool, storage);
-    db.internalOpen(user, password);
+    db.internalOpen(user, password, pool.getConfig());
     return db;
   }
 
@@ -117,9 +146,13 @@ public class ORemoteDBFactory implements OrientDBFactory {
     });
   }
 
-  @Override
   public OPool<ODatabaseDocument> openPool(String name, String user, String password) {
-    ORemotePoolByFactory pool = new ORemotePoolByFactory(this, name, user, password);
+    return openPool(name, user, password, null);
+  }
+  
+  @Override
+  public OPool<ODatabaseDocument> openPool(String name, String user, String password, OrientDBConfig config) {
+    ORemotePoolByFactory pool = new ORemotePoolByFactory(this, name, user, password, solveConfig(config));
     pools.add(pool);
     return pool;
   }
@@ -149,8 +182,16 @@ public class ORemoteDBFactory implements OrientDBFactory {
     // SHUTDOWN ENGINES
     remote.shutdown();
   }
+  
+  private OrientDBConfig solveConfig(OrientDBConfig config) {
+    if (config != null) {
+      config.setParent(this.configurations);
+      return config;
+    } else
+      return this.configurations;
+  }
 
-  public OrientDBSettings getConfigurations() {
+  public OrientDBConfig getConfigurations() {
     return configurations;
   }
 }

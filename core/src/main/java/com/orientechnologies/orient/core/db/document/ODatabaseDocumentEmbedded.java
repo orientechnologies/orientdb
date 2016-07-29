@@ -1,3 +1,23 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
+
 package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
@@ -56,11 +76,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
     throw new UnsupportedOperationException("Use OrientDBFactory");
   }
 
-  public void internalOpen(final String iUserName, final String iUserPassword){
-    internalOpen(iUserName, iUserPassword,true);
+  public void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config) {
+    internalOpen(iUserName, iUserPassword, config, true);
   }
   
-  private void internalOpen(final String iUserName, final String iUserPassword,boolean checkPassword) {
+  private void internalOpen(final String iUserName, final String iUserPassword, OrientDBConfig config, boolean checkPassword) {
     boolean failure = true;
     setupThreadOwner();
     activateOnCurrentThread();
@@ -124,8 +144,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
 
   /**
    * {@inheritDoc}
+   * @param settings 
    */
-  public <DB extends ODatabase> DB internalCreate() {
+  public void internalCreate(OrientDBConfig settings) {
     this.status = STATUS.OPEN;
     // THIS IF SHOULDN'T BE NEEDED, CREATE HAPPEN ONLY IN EMBEDDED
 
@@ -156,7 +177,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
       } catch (Throwable ignore) {
       }
 
-    return null;
   }
 
   /**
@@ -186,7 +206,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
    */
   public ODatabaseDocumentTx copy() {
     ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage);
-    database.internalOpen(getUser().getName(), null, false);
+    database.internalOpen(getUser().getName(), null, null, false);
     this.activateOnCurrentThread();
     return database;
   }

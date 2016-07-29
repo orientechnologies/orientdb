@@ -1,3 +1,22 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
@@ -25,13 +44,13 @@ import java.util.*;
 public class OEmbeddedDBFactory implements OrientDBFactory {
   private final Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
   private final Set<OPool<?>>                          pools    = new HashSet<>();
-  private final OrientDBSettings configurations;
-  private final String           basePath;
-  private final OEngine          memory;
-  private final OEngine          disk;
-  private final Thread           shutdownThread;
+  private final OrientDBConfig                       configurations;
+  private final String                                 basePath;
+  private final OEngine                                memory;
+  private final OEngine                                disk;
+  private final Thread                                 shutdownThread;
 
-  public OEmbeddedDBFactory(String directoryPath, OrientDBSettings configurations) {
+  public OEmbeddedDBFactory(String directoryPath, OrientDBConfig configurations) {
     super();
 
     memory = Orient.instance().getEngine("memory");
@@ -40,7 +59,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     disk.startup();
 
     this.basePath = new java.io.File(directoryPath).getAbsolutePath();
-    this.configurations = configurations != null ? configurations : OrientDBSettings.defaultSettings();
+    this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
@@ -50,27 +69,40 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     } catch (Exception e) {
       OLogManager.instance().error(this, "MBean for byte buffer pool cannot be registered", e);
     }
-    
+
     shutdownThread = new Thread(() -> OEmbeddedDBFactory.this.internalClose());
-    
+
     Runtime.getRuntime().addShutdownHook(shutdownThread);
 
   }
 
   @Override
   public synchronized ODatabaseDocument open(String name, String user, String password) {
+    return open(name, user, password, null);
+  }
+
+  @Override
+  public ODatabaseDocument open(String name, String user, String password, OrientDBConfig config) {
     OAbstractPaginatedStorage storage = getStorage(name);
     storage.open(new HashMap<>());
     final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-    embedded.internalOpen(user, password);
+    embedded.internalOpen(user, password, solveConfig(config));
     return embedded;
+  }
+
+  private OrientDBConfig solveConfig(OrientDBConfig config) {
+    if (config != null) {
+      config.setParent(this.configurations);
+      return config;
+    } else
+      return this.configurations;
   }
 
   public synchronized OEmbeddedDatabasePool poolOpen(String name, String user, String password, OEmbeddedPoolByFactory pool) {
     OAbstractPaginatedStorage storage = getStorage(name);
     storage.open(new HashMap<>());
     final OEmbeddedDatabasePool embedded = new OEmbeddedDatabasePool(pool, storage);
-    embedded.internalOpen(user, password);
+    embedded.internalOpen(user, password, pool.getConfig());
     return embedded;
   }
 
@@ -87,8 +119,12 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     return basePath + "/" + name;
   }
 
+  public void create(String name, String user, String password, DatabaseType type){
+    create(name, user, password, type, null);
+  }
+  
   @Override
-  public synchronized void create(String name, String user, String password, DatabaseType type) {
+  public synchronized void create(String name, String user, String password, DatabaseType type, OrientDBConfig config) {
     if (!exists(name, user, password)) {
       OAbstractPaginatedStorage storage;
       if (type == DatabaseType.MEMORY) {
@@ -96,7 +132,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       } else {
         storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
       }
-      //CHECK Configurations
+      // CHECK Configurations
       storage.create(new HashMap<>());
       storages.put(name, storage);
       ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
@@ -108,7 +144,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       storage.getConfiguration().update();
 
       try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
-        embedded.internalCreate();
+        embedded.internalCreate(solveConfig(config));
       }
     } else
       throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
@@ -139,13 +175,17 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     scanDatabaseDirectory(new File(rootDirectory), databases);
     databases.addAll(this.storages.keySet());
 
-    //TODO remove  OSystemDatabase.SYSTEM_DB_NAME from the list
+    // TODO remove OSystemDatabase.SYSTEM_DB_NAME from the list
     return databases;
   }
 
-  @Override
   public OPool<ODatabaseDocument> openPool(String name, String user, String password) {
-    OEmbeddedPoolByFactory pool = new OEmbeddedPoolByFactory(this, name, user, password);
+    return openPool(name, user, password, null);
+  }
+  
+  @Override
+  public OPool<ODatabaseDocument> openPool(String name, String user, String password,OrientDBConfig config) {
+    OEmbeddedPoolByFactory pool = new OEmbeddedPoolByFactory(this, name, user, password, solveConfig(config));
     pools.add(pool);
     return pool;
   }
@@ -172,12 +212,12 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     memory.shutdown();
     disk.shutdown();
   }
-  
-  public OrientDBSettings getConfigurations() {
+
+  public OrientDBConfig getConfigurations() {
     return configurations;
   }
 
-  public /*OServer*/ Object spawnServer(/*OServerConfiguration*/Object serverConfiguration) {
+  public /* OServer */ Object spawnServer(/* OServerConfiguration */Object serverConfiguration) {
     return null;
   }
 

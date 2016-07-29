@@ -1,3 +1,22 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
@@ -11,10 +30,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 public class OEmbeddedPoolByFactory implements OPool<ODatabaseDocument> {
   private final OResourcePool<Void, OEmbeddedDatabasePool> pool;
   private final OEmbeddedDBFactory                         factory;
+  private final OrientDBConfig                             config;
 
-  public OEmbeddedPoolByFactory(OEmbeddedDBFactory factory, String database, String user, String password) {
+  public OEmbeddedPoolByFactory(OEmbeddedDBFactory factory, String database, String user, String password, OrientDBConfig config) {
     int max = factory.getConfigurations().getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
-    //TODO use configured max
+    // TODO use configured max
     pool = new OResourcePool(max, new OResourcePoolListener<Void, OEmbeddedDatabasePool>() {
       @Override
       public OEmbeddedDatabasePool createNewResource(Void iKey, Object... iAdditionalArgs) {
@@ -28,11 +48,12 @@ public class OEmbeddedPoolByFactory implements OPool<ODatabaseDocument> {
       }
     });
     this.factory = factory;
+    this.config = config;
   }
 
   @Override
   public synchronized ODatabaseDocument acquire() {
-    //TODO:use configured timeout no property exist yet
+    // TODO:use configured timeout no property exist yet
     return pool.getResource(null, 1000);
   }
 
@@ -47,5 +68,9 @@ public class OEmbeddedPoolByFactory implements OPool<ODatabaseDocument> {
 
   public synchronized void release(OEmbeddedDatabasePool oPoolDatabaseDocument) {
     pool.returnResource(oPoolDatabaseDocument);
+  }
+  
+  public OrientDBConfig getConfig() {
+    return config;
   }
 }

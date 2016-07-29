@@ -1,3 +1,4 @@
+
 /*
  *
  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
@@ -19,34 +20,24 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
-import com.orientechnologies.orient.core.storage.OStorage;
+import static org.junit.Assert.assertEquals;
 
-/**
- * Created by tglman on 07/07/16.
- */
-public class OEmbeddedDatabasePool extends ODatabaseDocumentEmbedded {
+import org.junit.Test;
 
-  private OEmbeddedPoolByFactory pool;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 
-  public OEmbeddedDatabasePool(OEmbeddedPoolByFactory pool, OStorage storage) {
-    super(storage);
-    this.pool = pool;
-  }
+public class OrientDBConfigTest {
 
-  @Override
-  public void close() {
-    super.setStatus(STATUS.CLOSED);
-    pool.release(this);
-  }
+  @Test
+  public void testBuildSettings() {
+    OrientDBConfig settings = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 20)
+        .addAttribute(ATTRIBUTES.VALIDATION, true).addProperty("some", "value").build();
 
-  public void reuse() {
-    setStatus(STATUS.OPEN);
-  }
+    assertEquals(settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), 20);
+    assertEquals(settings.getAttributes().get(ATTRIBUTES.VALIDATION), true);
+    assertEquals(settings.getProperties().get("some"), "value");
 
-  public void realClose() {
-    activateOnCurrentThread();
-    super.close();
   }
 
 }
