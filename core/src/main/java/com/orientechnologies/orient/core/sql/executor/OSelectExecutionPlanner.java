@@ -467,6 +467,7 @@ public class OSelectExecutionPlanner {
    */
   private IndexSearchDescriptor findBestIndexFor(OCommandContext ctx, Set<OIndex<?>> indexes, OAndBlock block) {
     return indexes.stream().map(index -> buildIndexSearchDescriptor(ctx, index, block)).filter(Objects::nonNull)
+        .filter(x -> x.keyCondition != null).filter(x -> x.keyCondition.getSubBlocks().size() > 0)
         .min(Comparator.comparing(x -> x.cost(ctx))).orElse(null);
   }
 
@@ -505,7 +506,9 @@ public class OSelectExecutionPlanner {
             String fieldName = left.getDefaultAlias().getStringValue();
             if (indexField.equals(fieldName)) {
               OBinaryCompareOperator operator = ((OBinaryCondition) singleExp).getOperator();
-              //TODO check right to see if it's early calculated!!!
+              if (!((OBinaryCondition) singleExp).getRight().isEarlyCalculated()) {
+                continue; //this cannot be used because the value depends on single record
+              }
               if (operator instanceof OEqualsCompareOperator) {
                 found = true;
                 OBinaryCondition condition = new OBinaryCondition(-1);
