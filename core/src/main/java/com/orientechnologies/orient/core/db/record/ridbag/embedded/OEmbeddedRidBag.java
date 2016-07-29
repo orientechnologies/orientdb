@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db.record.ridbag.embedded;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OResettable;
@@ -28,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -210,7 +212,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public void add(OIdentifiable identifiable) {
+  public void add(final OIdentifiable identifiable) {
+    if (identifiable == null)
+      throw new NullPointerException("Impossible to add a null identifiable in a ridbag");
+
     addEntry(identifiable);
 
     size++;
@@ -438,8 +443,12 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       final Object entry = entries[i];
       if (entry instanceof OIdentifiable) {
         OIdentifiable link = (OIdentifiable) entry;
+        final ORID rid = link.getIdentity();
         if (link.getIdentity().isTemporary())
           link = link.getRecord();
+
+        if( link == null )
+          throw new OSerializationException("Found null entry in ridbag with rid="+rid);
 
         OLinkSerializer.INSTANCE.serialize(link, stream, offset);
         offset += OLinkSerializer.RID_SIZE;
@@ -488,8 +497,6 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   private void addEntry(final OIdentifiable identifiable) {
-    if (identifiable == null)
-      throw new NullPointerException("Impossible to add a null identifiable in a ridbag");
     if (entries.length == entriesLength) {
       if (entriesLength == 0) {
         final int cfgValue = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
@@ -538,7 +545,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       else
         identifiable = rid;
 
-      addEntry(identifiable);
+      if( identifiable == null )
+        OLogManager.instance().warn(this, "Found null reference during ridbag deserialization (rid=%s)", rid);
+      else
+        addEntry(identifiable);
     }
 
     deserialized = true;
