@@ -1581,14 +1581,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     // UPDATE IT
     synchronized (serverURLs) {
-      Set<String> old = new HashSet<String>(serverURLs);
       if (members != null) {
-        // serverURLs.clear();
-
         // ADD CURRENT SERVER AS FIRST
         if (iConnectedURL != null) {
           addHost(iConnectedURL);
-          old.remove(iConnectedURL);
         }
 
         for (ODocument m : members) {
@@ -1605,19 +1601,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                   String url = (String) listener.get("listen");
                   if (!serverURLs.contains(url))
                     addHost(url);
-                  old.remove(url);
                 }
               }
           }
         }
-        for (String oldUrl : old) {
-          serverURLs.remove(oldUrl);
-          for (OStorageRemoteSession session : sessions) {
-            session.removeServerSession(oldUrl + "/" + getName());
-          }
-        }
-
       }
+    }
+  }
+
+  public void removeSessions(final String url){
+    synchronized (serverURLs) {
+      serverURLs.remove(url);
+    }
+
+    for (OStorageRemoteSession session : sessions) {
+      session.removeServerSession(url + "/" + getName());
     }
   }
 
