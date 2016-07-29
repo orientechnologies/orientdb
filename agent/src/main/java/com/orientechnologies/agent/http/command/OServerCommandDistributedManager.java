@@ -184,15 +184,15 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         ODocument dStat = new ODocument().fromMap(profilerStats);
 
         Map<String, Object> eval = (Map) dStat.eval("realtime.hookValues");
-
-        ODocument configuration = new ODocument();
-        document.field("configuration", configuration);
-        for (String key : eval.keySet()) {
-          if (key.startsWith("system.config.")) {
-            configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
+        if( eval != null ) {
+          ODocument configuration = new ODocument();
+          document.field("configuration", configuration);
+          for (String key : eval.keySet()) {
+            if (key.startsWith("system.config.")) {
+              configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
+            }
           }
         }
-
       }
     }
   }

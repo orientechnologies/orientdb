@@ -175,7 +175,7 @@ public abstract class AbstractServerClusterTest {
       OLogManager.instance().flush();
       banner("Shutting down nodes...");
       for (ServerRun server : serverInstance) {
-        System.out.println("Shutting down node " + server.getServerId() + "...");
+        log("Shutting down node " + server.getServerId() + "...");
         if (terminateAtShutdown)
           server.terminateServer();
         else
@@ -224,13 +224,11 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void banner(final String iMessage) {
-    OLogManager.instance().flush();
-    System.out
-        .println("\n**********************************************************************************************************");
-    System.out.println(iMessage);
-    System.out
-        .println("**********************************************************************************************************\n");
-    System.out.flush();
+    OLogManager.instance().error(this,
+        "\n**********************************************************************************************************");
+    OLogManager.instance().error(this, iMessage);
+    OLogManager.instance().error(this,
+        "**********************************************************************************************************\n");
   }
 
   protected void log(final String iMessage) {

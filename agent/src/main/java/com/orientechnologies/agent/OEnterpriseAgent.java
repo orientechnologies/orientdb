@@ -22,6 +22,7 @@ import com.orientechnologies.agent.ha.OEnterpriseDistributedStrategy;
 import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -40,13 +41,15 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.plugin.OPluginLifecycleListener;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 
 import java.util.Map;
 import java.util.UUID;
 
-public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener {
+public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener, OPluginLifecycleListener {
   public static final String  EE                         = "ee.";
   private static final String ORIENDB_ENTERPRISE_VERSION = "2.2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
   public OServer              server;
@@ -78,7 +81,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
         license = p.value;
     }
 
-    installComponents();
+    if (oServer.getPluginManager() != null)
+      oServer.getPluginManager().registerLifecycleListener(this);
   }
 
   @Override
@@ -92,9 +96,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       enabled = true;
       installProfiler();
       installBackupManager();
-
       installCommands();
-
       installPlugins();
 
       Thread installer = new Thread(new Runnable() {
@@ -163,8 +165,13 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
   @Override
   public void shutdown() {
     if (enabled) {
+      uninstallBackupManager();
       uninstallCommands();
       uninstallProfiler();
+
+      if (server.getPluginManager() != null)
+        server.getPluginManager().unregisterLifecycleListener(this);
+
       Orient.instance().removeDbLifecycleListener(this);
     }
   }
@@ -290,10 +297,15 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
 
   private boolean checkLicense() {
 
-    System.out.printf("\n\n********************************************************************");
-    System.out.printf("\n*                 ORIENTDB  -  ENTERPRISE EDITION                  *");
-    System.out.printf("\n*                                                                  *");
-    System.out.printf("\n********************************************************************");
+    OLogManager.instance().info(this, "");
+    OLogManager.instance().info(this, "*****************************************************************************");
+    OLogManager.instance().info(this, "*                     ORIENTDB  -  ENTERPRISE EDITION                       *");
+    OLogManager.instance().info(this, "*****************************************************************************");
+    OLogManager.instance().info(this, "* If you are in Production or Test, you must purchase a commercial license. *");
+    OLogManager.instance().info(this, "* For more information look at: http://orientdb.com/orientdb-enterprise/    *");
+    OLogManager.instance().info(this, "*****************************************************************************");
+    OLogManager.instance().info(this, "");
+
     Orient.instance().getProfiler().registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.agentVersion"),
         "Enterprise License", OProfiler.METRIC_TYPE.TEXT, new OProfilerHookValue() {
 
@@ -304,5 +316,53 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
         });
 
     return true;
+  }
+
+  private void installBackupManager() {
+    backupManager = new OBackupManager(server);
+  }
+
+  private void uninstallBackupManager() {
+    if (backupManager != null) {
+      backupManager.shutdown();
+      backupManager = null;
+    }
+  }
+
+  private void installPlugins() {
+    final OEventPlugin eventPlugin = new OEventPlugin();
+    eventPlugin.config(server, null);
+    eventPlugin.startup();
+    server.getPluginManager()
+        .registerPlugin(new OServerPluginInfo(eventPlugin.getName(), null, null, null, eventPlugin, null, 0, null));
+  }
+
+  private void installComponents() {
+    if (server.getDistributedManager() != null) {
+      server.getDistributedManager().setDistributedStrategy(new OEnterpriseDistributedStrategy());
+    }
+  }
+
+  // OPluginLifecycleListener  
+  public void onBeforeConfig(final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {    
+  }
+
+  public void onAfterConfig(final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {
+  }
+
+  public void onBeforeStartup(final OServerPlugin plugin) {
+    if (plugin instanceof ODistributedServerManager) {
+      installComponents();
+    }
+  }
+
+  public void onAfterStartup(final OServerPlugin plugin) {
+  }
+
+  public void onBeforeShutdown(final OServerPlugin plugin) {
+  }
+
+  public void onAfterShutdown(final OServerPlugin plugin) {
+
   }
 }

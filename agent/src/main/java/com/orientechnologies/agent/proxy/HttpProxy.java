@@ -2,6 +2,7 @@ package com.orientechnologies.agent.proxy;
 
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.OL;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
@@ -150,6 +151,9 @@ public class HttpProxy {
     Map<String, Object> map = manager.getConfigurationMap();
 
     String pwd = (String) map.get(OEnterpriseAgent.EE + member.field("name"));
+    if (pwd == null)
+      throw new OConfigurationException("Cannot authenticate remote server");
+
     Collection<Map> listeners = member.field("listeners");
 
     String decrypt = "root:" + OL.decrypt(pwd);
