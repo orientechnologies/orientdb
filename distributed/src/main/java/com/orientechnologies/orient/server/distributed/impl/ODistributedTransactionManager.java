@@ -237,12 +237,18 @@ public class ODistributedTransactionManager {
       final ORecordId rid = (ORecordId) op.getRecord().getIdentity();
       switch (op.type) {
       case ORecordOperation.CREATED:
+        final ORecordId newRid = rid.copy();
         if (rid.clusterId < 1) {
           final String clusterName = ((OTransactionAbstract) iTx).getClusterName(op.getRecord());
-          if (clusterName != null)
-            rid.clusterId = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(clusterName);
+          if (clusterName != null) {
+            newRid.clusterId = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(clusterName);
+            iTx.updateIdentityAfterCommit(rid, newRid);
+          }
         }
-        storage.checkForCluster(rid, localNodeName, dbCfg);
+
+        if (storage.checkForCluster(newRid, localNodeName, dbCfg) != null)
+          iTx.updateIdentityAfterCommit(rid, newRid);
+
         break;
       }
     }
