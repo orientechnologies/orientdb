@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OImmutableRecordId;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -40,6 +39,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
 
 /**
  * Versions:
@@ -268,38 +268,30 @@ public class OStorageConfiguration implements OSerializableStream {
     final String[] values = new String(stream, offset, length).split("\\|");
     int index = 0;
     version = Integer.parseInt(read(values[index++]));
-
+    
+    if(version < 14)
+      throw new OStorageException("cannot open database created with a version before 2.0 ");
+    
     name = read(values[index++]);
 
     schemaRecordId = read(values[index++]);
     dictionaryRecordId = read(values[index++]);
 
-    if (version > 0)
-      indexMgrRecordId = read(values[index++]);
-    else
-      // @COMPATIBILITY
-      indexMgrRecordId = null;
+    indexMgrRecordId = read(values[index++]);
 
     localeLanguage = read(values[index++]);
     localeCountry = read(values[index++]);
     dateFormat = read(values[index++]);
     dateTimeFormat = read(values[index++]);
 
-    // @COMPATIBILITY 1.2.0
-    if (version >= 4) {
-      timeZone = TimeZone.getTimeZone(read(values[index++]));
-      charset = read(values[index++]);
-    }
+    timeZone = TimeZone.getTimeZone(read(values[index++]));
+    charset = read(values[index++]);
 
     final ORecordConflictStrategyFactory conflictStrategyFactory = Orient.instance().getRecordConflictStrategy();
-    if (version >= 12)
-      conflictStrategy = conflictStrategyFactory.getStrategy(read(values[index++])).getName();
-    else
-      conflictStrategy = conflictStrategyFactory.getDefaultStrategy();
+    conflictStrategy = conflictStrategyFactory.getStrategy(read(values[index++])).getName();
 
     // @COMPATIBILITY
-    if (version > 1)
-      index = phySegmentFromStream(values, index, fileTemplate);
+    index = phySegmentFromStream(values, index, fileTemplate);
 
     int size = Integer.parseInt(read(values[index++]));
 
@@ -315,7 +307,7 @@ public class OStorageConfiguration implements OSerializableStream {
         continue;
 
       final String clusterName = read(values[index++]);
-      final int targetDataSegmentId = version >= 3 ? Integer.parseInt(read(values[index++])) : 0;
+      final int targetDataSegmentId = Integer.parseInt(read(values[index++]));
 
       final String clusterType = read(values[index++]);
 
@@ -336,16 +328,10 @@ public class OStorageConfiguration implements OSerializableStream {
         if (version >= 15)
           clusterEncryption = read(values[index++]);
 
-        final String clusterConflictStrategy;
-        if (version >= 12)
-          clusterConflictStrategy = read(values[index++]);
-        else
-          // INHERIT THE STRATEGY IN STORAGE
-          clusterConflictStrategy = null;
+        final String clusterConflictStrategy = read(values[index++]);
 
         OStorageClusterConfiguration.STATUS status = OStorageClusterConfiguration.STATUS.ONLINE;
-        if (version >= 13)
-          status = OStorageClusterConfiguration.STATUS.valueOf(read(values[index++]));
+        status = OStorageClusterConfiguration.STATUS.valueOf(read(values[index++]));
 
         currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
             clusterCompression, clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
@@ -364,78 +350,39 @@ public class OStorageConfiguration implements OSerializableStream {
       clusters.set(clusterId, currentCluster);
     }
 
-    if (version < 13) {
-      // OLD: READ DATA-SEGMENTS
-      size = Integer.parseInt(read(values[index++]));
-
-      for (int i = 0; i < size; ++i) {
-        int dataId = Integer.parseInt(read(values[index++]));
-        if (dataId == -1)
-          continue;
-        read(values[index++]);
-        read(values[index++]);
-        read(values[index++]);
-        read(values[index++]);
-      }
-
-      // READ TX_SEGMENT STUFF
-      read(values[index++]);
-      read(values[index++]);
-      read(values[index++]);
-      read(values[index++]);
-      read(values[index++]);
-    }
-
     size = Integer.parseInt(read(values[index++]));
     clearProperties();
     for (int i = 0; i < size; ++i)
       setProperty(read(values[index++]), read(values[index++]));
 
-    if (version >= 7)
-      binaryFormatVersion = Integer.parseInt(read(values[index++]));
-    else if (version == 6)
-      binaryFormatVersion = 9;
-    else
-      binaryFormatVersion = 8;
+    binaryFormatVersion = Integer.parseInt(read(values[index++]));
 
-    if (version >= 8)
-      clusterSelection = read(values[index++]);
-    else
-      // DEFAULT = ROUND-ROBIN
-      clusterSelection = ORoundRobinClusterSelectionStrategy.NAME;
-
-    if (version >= 9)
-      setMinimumClusters(Integer.parseInt(read(values[index++])));
-    else
-      // DEFAULT = 1
-      setMinimumClusters(1);
-
+    clusterSelection = read(values[index++]);
+    
+    setMinimumClusters(Integer.parseInt(read(values[index++])));
+    
     autoInitClusters();
 
-    if (version >= 10) {
-      recordSerializer = read(values[index++]);
-      recordSerializerVersion = Integer.parseInt(read(values[index++]));
+
+    recordSerializer = read(values[index++]);
+    recordSerializerVersion = Integer.parseInt(read(values[index++]));
+
+
+    // READ THE CONFIGURATION
+    final int cfgSize = Integer.parseInt(read(values[index++]));
+    for (int i = 0; i < cfgSize; ++i) {
+      final String key = read(values[index++]);
+      final Object value = read(values[index++]);
+
+      final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
+      if (cfg != null) {
+        if (value != null)
+          configuration.setValue(key, OType.convert(value, cfg.getType()));
+      } else
+        OLogManager.instance().warn(this, "Ignored storage configuration because not supported: %s=%s", key, value);
     }
 
-    if (version >= 11) {
-      // READ THE CONFIGURATION
-      final int cfgSize = Integer.parseInt(read(values[index++]));
-      for (int i = 0; i < cfgSize; ++i) {
-        final String key = read(values[index++]);
-        final Object value = read(values[index++]);
-
-        final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
-        if (cfg != null) {
-          if (value != null)
-            configuration.setValue(key, OType.convert(value, cfg.getType()));
-        } else
-          OLogManager.instance().warn(this, "Ignored storage configuration because not supported: %s=%s", key, value);
-      }
-    } else
-      // SAVE STORAGE COMPRESSION METHOD AS PROPERTY
-      configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, determineStorageCompression);
-
-    if (version > 15) {
+    if (version > 15) { 
       final int enginesSize = Integer.parseInt(read(values[index++]));
 
       for (int i = 0; i < enginesSize; i++) {
