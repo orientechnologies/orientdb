@@ -836,8 +836,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
   }
 
-  public ODocument getNodeConfigurationByUuid(final String iNodeId) {
-    final ODocument doc = (ODocument) configurationMap.getLocalCachedValue(CONFIG_NODE_PREFIX + iNodeId);
+  public ODocument getNodeConfigurationByUuid(final String iNodeId, final boolean useCache) {
+    final ODocument doc = (ODocument) (useCache ? configurationMap.getLocalCachedValue(CONFIG_NODE_PREFIX + iNodeId)
+        : configurationMap.get(CONFIG_NODE_PREFIX + iNodeId));
+
     if (doc == null)
       ODistributedServerLog.debug(this, nodeName, null, DIRECTION.OUT, "Cannot find node with id '%s'", iNodeId);
 
