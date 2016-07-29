@@ -48,11 +48,13 @@ import java.util.ArrayList;
  */
 public class OEventPlugin extends OServerPluginAbstract implements OServerPluginConfigurable {
 
-  private String             configFile = "${ORIENTDB_HOME}/config/events.json";
+  private static final String configFile = "${ORIENTDB_HOME}/config/events.json";
 
-  private ODocument          configuration;
-  private OServer            server;
-  protected OEventController eventController;
+  private String              filePath   = null;
+
+  private ODocument           configuration;
+  private OServer             server;
+  protected OEventController  eventController;
 
   @Override
   public ODocument getConfig() {
@@ -73,7 +75,7 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
       } catch (IOException e) {
         configuration = oldConfig;
         throw OException.wrapException(new OConfigurationException(
-            "Cannot Write EventConfiguration configuration file '" + configFile + "'. Restoring old configuration."), e);
+            "Cannot Write EventConfiguration configuration file '" + filePath + "'. Restoring old configuration."), e);
       }
 
     }
@@ -81,7 +83,7 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
 
   public void writeConfiguration() throws IOException {
 
-    final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
+    final File f = new File(filePath);
 
     OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
   }
@@ -100,16 +102,12 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
     configuration = new ODocument();
     configuration.field("events", new ArrayList<ODocument>());
 
-    String path = configFile;
-    String homePath = Orient.getHomePath();
+    filePath = OSystemVariableResolver.resolveSystemVariables(configFile, "..");
 
-    if (homePath != null) {
-      path = homePath + File.separator + path;
-    }
-    final File f = new File(path);
+    final File f = new File(filePath);
 
     if (f.exists()) {
-      // READ THE FILEw
+      // READ THE FILE
       try {
         final String configurationContent = OIOUtils.readFileAsString(f);
         configuration = new ODocument().fromJSON(configurationContent);
@@ -126,7 +124,7 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
         OLogManager.instance().info(this, "Events plugin: created configuration to file '%s'", f);
       } catch (IOException e) {
         throw OException.wrapException(new OConfigurationException(
-            "Cannot create Events plugin configuration file '" + configFile + "'. Events Plugin will be disabled"), e);
+            "Cannot create Events plugin configuration file '" + filePath + "'. Events Plugin will be disabled"), e);
       }
     }
     eventController = new OEventController(this);

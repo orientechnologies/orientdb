@@ -27,7 +27,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OCronExpression;
@@ -55,7 +54,8 @@ public class OBackupConfig {
   public static final String     MODES          = "modes";
   public static final String     ID             = "uuid";
 
-  private String                 configFile     = "config/backups.json";
+  private static final String    configFile     = "${ORIENTDB_HOME}/config/backups.json";
+  private String                 filePath       = null;
 
   public OBackupConfig() {
     this.configuration = new ODocument();
@@ -64,13 +64,8 @@ public class OBackupConfig {
 
   public OBackupConfig load() {
 
-    String path = configFile;
-    String homePath = Orient.getHomePath();
-
-    if (homePath != null) {
-      path = homePath + File.separator + path;
-    }
-    final File f = new File(path);
+    filePath = OSystemVariableResolver.resolveSystemVariables(configFile,"..");
+    final File f = new File(filePath);
 
     if (f.exists()) {
       // READ THE FILE
@@ -79,7 +74,7 @@ public class OBackupConfig {
         configuration = new ODocument().fromJSON(configurationContent, "noMap");
       } catch (IOException e) {
         throw OException.wrapException(new OConfigurationException(
-            "Cannot load Backups configuration file '" + configFile + "'. Backups  Plugin will be disabled"), e);
+            "Cannot load Backups configuration file '" + filePath + "'. Backups  Plugin will be disabled"), e);
       }
     } else {
       try {
@@ -90,7 +85,7 @@ public class OBackupConfig {
         OLogManager.instance().info(this, "Backups plugin: created configuration to file '%s'", f);
       } catch (IOException e) {
         throw OException.wrapException(new OConfigurationException(
-            "Backups create Events plugin configuration file '" + configFile + "'. Backups Plugin will be disabled"), e);
+            "Backups create Events plugin configuration file '" + filePath + "'. Backups Plugin will be disabled"), e);
       }
     }
 
@@ -217,7 +212,7 @@ public class OBackupConfig {
 
   public void writeConfiguration() {
     try {
-      final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
+      final File f = new File(filePath);
       OIOUtils.writeFile(f, configuration.toJSON("prettyPrint"));
     } catch (IOException e) {
       throw OException.wrapException(new OConfigurationException("Cannot save Backup configuration file '" + configFile + "'. "),
