@@ -29,7 +29,6 @@ import com.orientechnologies.backup.uploader.OLocalBackupUploader;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import org.junit.Test;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -60,7 +59,6 @@ public class S3UploaderTest extends AbstractUploaderTest {
   private       OLocalBackupUploader uploader          = new OLocalBackupUploader("s3");
 
 
-  @Test
   public void testIncrementalBackup() {
 
     try {
