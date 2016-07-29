@@ -11,14 +11,14 @@ import java.util.Optional;
  * @author Luigi Dell'Aquila
  */
 public class ParallelExecStep extends AbstractExecutionStep {
-  private final List<OInternalExecutionPlan> subExecuitonPlans;
+  private final List<OInternalExecutionPlan> subExecutionPlans;
 
   int current = 0;
   private OTodoResultSet currentResultSet = null;
 
   public ParallelExecStep(List<OInternalExecutionPlan> subExecuitonPlans, OCommandContext ctx) {
     super(ctx);
-    this.subExecuitonPlans = subExecuitonPlans;
+    this.subExecutionPlans = subExecuitonPlans;
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
@@ -68,11 +68,11 @@ public class ParallelExecStep extends AbstractExecutionStep {
 
   void fetchNext(OCommandContext ctx, int nRecords) {
     do {
-      if (current > subExecuitonPlans.size()) {
+      if (current >= subExecutionPlans.size()) {
         currentResultSet = null;
         return;
       }
-      currentResultSet = subExecuitonPlans.get(current).fetchNext(nRecords);
+      currentResultSet = subExecutionPlans.get(current).fetchNext(nRecords);
       if (!currentResultSet.hasNext()) {
         current++;
       }
@@ -91,14 +91,14 @@ public class ParallelExecStep extends AbstractExecutionStep {
     String result = "";
     String ind = OExecutionStepInternal.getIndent(depth, indent);
 
-    int[] blockSizes = new int[subExecuitonPlans.size()];
+    int[] blockSizes = new int[subExecutionPlans.size()];
 
-    for (int i = 0; i < subExecuitonPlans.size(); i++) {
-      OInternalExecutionPlan currentPlan = subExecuitonPlans.get(subExecuitonPlans.size() - 1 - i);
+    for (int i = 0; i < subExecutionPlans.size(); i++) {
+      OInternalExecutionPlan currentPlan = subExecutionPlans.get(subExecutionPlans.size() - 1 - i);
       String partial = currentPlan.prettyPrint(0, indent);
 
       String[] partials = partial.split("\n");
-      blockSizes[subExecuitonPlans.size() - 1 - i] = partials.length + 2;
+      blockSizes[subExecutionPlans.size() - 1 - i] = partials.length + 2;
       result = "+-------------------------\n" + result;
       for (int j = 0; j < partials.length; j++) {
         String p = partials[partials.length - 1 - j];
@@ -114,7 +114,7 @@ public class ParallelExecStep extends AbstractExecutionStep {
     result += foot(blockSizes);
     result = ind + result;
     result = result.replaceAll("\n", "\n" + ind);
-    result = head(depth, indent, subExecuitonPlans.size()) + "\n" + result;
+    result = head(depth, indent, subExecutionPlans.size()) + "\n" + result;
     return result;
   }
 
@@ -198,5 +198,9 @@ public class ParallelExecStep extends AbstractExecutionStep {
 
   private String appendPipe(String p) {
     return "| " + p;
+  }
+
+  public List<OExecutionPlan> getSubExecutionPlans() {
+    return (List) subExecutionPlans;
   }
 }

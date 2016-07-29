@@ -92,6 +92,6 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ SORT";
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ "+orderBy;
   }
 }

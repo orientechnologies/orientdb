@@ -8,7 +8,7 @@ public interface OBinaryCompareOperator {
 
   boolean supportsBasicCalculation();
 
-  SimpleNode copy();
+  OBinaryCompareOperator copy();
 
   default boolean isRangeOperator(){
     return false;

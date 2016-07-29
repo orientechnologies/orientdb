@@ -201,5 +201,9 @@ public class OLevelZeroIdentifier extends SimpleNode {
     result = 31 * result + (collection != null ? collection.hashCode() : 0);
     return result;
   }
+
+  public void setCollection(OCollection collection) {
+    this.collection = collection;
+  }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */

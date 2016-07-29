@@ -44,6 +44,10 @@ public class OCollection extends SimpleNode {
     builder.append("]");
   }
 
+  public void add(OExpression exp){
+    this.expressions.add(exp);
+  }
+
   public Object execute(OIdentifiable iCurrentRecord, OCommandContext ctx) {
     List<Object> result = new ArrayList<Object>();
     for (OExpression exp : expressions) {

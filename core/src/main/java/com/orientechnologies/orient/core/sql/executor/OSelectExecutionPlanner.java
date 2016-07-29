@@ -105,10 +105,57 @@ public class OSelectExecutionPlanner {
     }
     if (whereClause != null) {
       flattenedWhereClause = whereClause.flatten();
+      //this helps index optimization
+      flattenedWhereClause = moveFlattededEqualitiesLeft(flattenedWhereClause);
     }
 
     extractAggregateProjections();
+    addOrderByProjections();
     extractSubQueries();
+  }
+
+  /**
+   * re-writes a list of flat AND conditions, moving left all the equality operations
+   *
+   * @param flattenedWhereClause
+   * @return
+   */
+  private List<OAndBlock> moveFlattededEqualitiesLeft(List<OAndBlock> flattenedWhereClause) {
+    if (flattenedWhereClause == null) {
+      return null;
+    }
+
+    List<OAndBlock> result = new ArrayList<>();
+    for (OAndBlock block : flattenedWhereClause) {
+      List<OBooleanExpression> equalityExpressions = new ArrayList<>();
+      List<OBooleanExpression> nonEqualityExpressions = new ArrayList<>();
+      OAndBlock newBlock = block.copy();
+      for (OBooleanExpression exp : newBlock.getSubBlocks()) {
+        if (exp instanceof OBinaryCondition) {
+          if (((OBinaryCondition) exp).getOperator() instanceof OEqualsCompareOperator) {
+            equalityExpressions.add(exp);
+          } else {
+            nonEqualityExpressions.add(exp);
+          }
+        } else {
+          nonEqualityExpressions.add(exp);
+        }
+      }
+      OAndBlock newAnd = new OAndBlock(-1);
+      newAnd.getSubBlocks().addAll(equalityExpressions);
+      newAnd.getSubBlocks().addAll(nonEqualityExpressions);
+      result.add(newAnd);
+    }
+
+    return result;
+  }
+
+  private void addOrderByProjections() {
+    if (orderApplied || orderBy == null || orderBy.getItems().size() == 0 || projection == null || projection.getItems() == null
+        || (projection.getItems().size() == 1 && projection.getItems().get(0).isAll())) {
+      return;
+    }
+    //TODO
   }
 
   private void extractAggregateProjections() {
@@ -193,8 +240,6 @@ public class OSelectExecutionPlanner {
       }
 
       groupBy = newGroupBy;
-
-      //TODO check ORDER BY and see if that projection has to be also propagated
     }
 
   }
@@ -263,7 +308,7 @@ public class OSelectExecutionPlanner {
     OBooleanExpression condition = andBlock.getSubBlocks().get(0);
     switch (indexIdentifier.getType()) {
     case INDEX:
-      result.chain(new FetchFromIndexStep(index, condition, ctx));
+      result.chain(new FetchFromIndexStep(index, condition, null, ctx));
 
       break;
     case VALUES:
@@ -273,7 +318,7 @@ public class OSelectExecutionPlanner {
 
     case VALUESDESC:
       //      result.chain(new FetchFromIndexValuesStep(index, condition, ctx, false));
-      throw new OCommandExecutionException("indexvalues*: is not yet supported");//TODO
+      throw new OCommandExecutionException("indexvaluesdesc: is not yet supported");//TODO
     }
   }
 
@@ -352,6 +397,7 @@ public class OSelectExecutionPlanner {
     if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
       return false;
     }
+
     OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(identifier.getStringValue());
     Set<OIndex<?>> indexes = clazz.getIndexes();
 
@@ -365,8 +411,10 @@ public class OSelectExecutionPlanner {
 
     if (indexSearchDescriptors.size() == 1) {
       IndexSearchDescriptor desc = indexSearchDescriptors.get(0);
-      plan.chain(new FetchFromIndexStep(desc.idx, desc.keyCondition, ctx));
-      plan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx));
+      plan.chain(new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, ctx));
+      if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
+        plan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx));
+      }
       this.whereClause = null;
       this.flattenedWhereClause = null;
     } else {
@@ -377,13 +425,27 @@ public class OSelectExecutionPlanner {
     return true;
   }
 
+  private OExpression toExpression(OCollection right) {
+    OLevelZeroIdentifier id0 = new OLevelZeroIdentifier(-1);
+    id0.setCollection(right);
+    OBaseIdentifier id1 = new OBaseIdentifier(-1);
+    id1.setLevelZero(id0);
+    OBaseExpression id2 = new OBaseExpression(-1);
+    id2.setIdentifier(id1);
+    OExpression result = new OExpression(-1);
+    result.setMathExpression(id2);
+    return result;
+  }
+
   private void createParallelIndexFetch(OSelectExecutionPlan plan, List<IndexSearchDescriptor> indexSearchDescriptors,
       OCommandContext ctx) {
     List<OInternalExecutionPlan> subPlans = new ArrayList<>();
     for (IndexSearchDescriptor desc : indexSearchDescriptors) {
       OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
-      subPlan.chain(new FetchFromIndexStep(desc.idx, desc.keyCondition, ctx));
-      subPlan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx));
+      subPlan.chain(new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, ctx));
+      if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
+        subPlan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx));
+      }
       subPlans.add(subPlan);
     }
     plan.chain(new ParallelExecStep(subPlans, ctx));
@@ -443,6 +505,7 @@ public class OSelectExecutionPlanner {
             String fieldName = left.getDefaultAlias().getStringValue();
             if (indexField.equals(fieldName)) {
               OBinaryCompareOperator operator = ((OBinaryCondition) singleExp).getOperator();
+              //TODO check right to see if it's early calculated!!!
               if (operator instanceof OEqualsCompareOperator) {
                 found = true;
                 OBinaryCondition condition = new OBinaryCondition(-1);
@@ -461,6 +524,15 @@ public class OSelectExecutionPlanner {
                 condition.setRight(((OBinaryCondition) singleExp).getRight().copy());
                 indexKeyValue.getSubBlocks().add(condition);
                 blockIterator.remove();
+                //look for the opposite condition, on the same field, for range queries (the other side of the range)
+                while (blockIterator.hasNext()) {
+                  OBooleanExpression next = blockIterator.next();
+                  if (createsRangeWith((OBinaryCondition) singleExp, next)) {
+                    result.additionalRangeCondition = (OBinaryCondition) next;
+                    blockIterator.remove();
+                    break;
+                  }
+                }
                 break;
               }
             }
@@ -478,6 +550,25 @@ public class OSelectExecutionPlanner {
     return null;
   }
 
+  private boolean createsRangeWith(OBinaryCondition left, OBooleanExpression next) {
+    if (!(next instanceof OBinaryCondition)) {
+      return false;
+    }
+    OBinaryCondition right = (OBinaryCondition) next;
+    if (!left.getLeft().equals(right.getLeft())) {
+      return false;
+    }
+    OBinaryCompareOperator leftOperator = left.getOperator();
+    OBinaryCompareOperator rightOperator = right.getOperator();
+    if (leftOperator instanceof OGeOperator || leftOperator instanceof OGtOperator) {
+      return rightOperator instanceof OLeOperator || rightOperator instanceof OLtOperator;
+    }
+    if (leftOperator instanceof OLeOperator || leftOperator instanceof OLtOperator) {
+      return rightOperator instanceof OGeOperator || rightOperator instanceof OGtOperator;
+    }
+    return false;
+  }
+
   private boolean allowsRangeQueries(OIndex<?> index) {
     return index.supportsOrderedIterations();
   }
@@ -490,24 +581,27 @@ public class OSelectExecutionPlanner {
    */
   private List<IndexSearchDescriptor> commonFactor(List<IndexSearchDescriptor> indexSearchDescriptors) {
     //index, key condition, additional filter (to aggregate in OR)
-    Map<OIndex, Map<OAndBlock, OOrBlock>> aggregation = new HashMap<>();
+    Map<OIndex, Map<IndexCondPair, OOrBlock>> aggregation = new HashMap<>();
     for (IndexSearchDescriptor item : indexSearchDescriptors) {
-      Map<OAndBlock, OOrBlock> filtersForIndex = aggregation.get(item.idx);
+      Map<IndexCondPair, OOrBlock> filtersForIndex = aggregation.get(item.idx);
       if (filtersForIndex == null) {
         filtersForIndex = new HashMap<>();
         aggregation.put(item.idx, filtersForIndex);
       }
-      OOrBlock existingAdditionalConditions = filtersForIndex.get(item.keyCondition);
+      IndexCondPair extendedCond = new IndexCondPair(item.keyCondition, item.additionalRangeCondition);
+
+      OOrBlock existingAdditionalConditions = filtersForIndex.get(extendedCond);
       if (existingAdditionalConditions == null) {
         existingAdditionalConditions = new OOrBlock(-1);
-        filtersForIndex.put(item.keyCondition, existingAdditionalConditions);
+        filtersForIndex.put(extendedCond, existingAdditionalConditions);
       }
       existingAdditionalConditions.getSubBlocks().add(item.remainingCondition);
     }
     List<IndexSearchDescriptor> result = new ArrayList<>();
-    for (Map.Entry<OIndex, Map<OAndBlock, OOrBlock>> item : aggregation.entrySet()) {
-      for (Map.Entry<OAndBlock, OOrBlock> filters : item.getValue().entrySet()) {
-        result.add(new IndexSearchDescriptor(item.getKey(), filters.getKey(), filters.getValue()));
+    for (Map.Entry<OIndex, Map<IndexCondPair, OOrBlock>> item : aggregation.entrySet()) {
+      for (Map.Entry<IndexCondPair, OOrBlock> filters : item.getValue().entrySet()) {
+        result.add(new IndexSearchDescriptor(item.getKey(), filters.getKey().mainCondition, filters.getKey().additionalRange,
+            filters.getValue()));
       }
     }
     return result;

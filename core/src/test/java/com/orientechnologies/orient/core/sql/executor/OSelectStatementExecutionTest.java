@@ -14,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by luigidellaquila on 07/07/16.
@@ -887,6 +888,439 @@ public class OSelectStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     result.close();
   }
+
+  @Test public void testFetchFromClassWithIndex() {
+    String className = "testFetchFromClassWithIndex";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name2'");
+    printExecutionPlan(result);
+
+    Assert.assertTrue(result.hasNext());
+    OResult next = result.next();
+    Assert.assertNotNull(next);
+    Assert.assertEquals("name2", next.getProperty("name"));
+
+    Assert.assertFalse(result.hasNext());
+
+    Optional<OExecutionPlan> p = result.getExecutionPlan();
+    Assert.assertTrue(p.isPresent());
+    OExecutionPlan p2 = p.get();
+    Assert.assertTrue(p2 instanceof OSelectExecutionPlan);
+    OSelectExecutionPlan plan = (OSelectExecutionPlan) p2;
+    Assert.assertEquals(1, plan.getSteps().size());
+    Assert.assertEquals(FetchFromIndexStep.class, plan.getSteps().get(0).getClass());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes() {
+    String className = "testFetchFromClassWithIndexes";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+    clazz.createIndex(className + ".surname", OClass.INDEX_TYPE.NOTUNIQUE, "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name2' or surname = 'surname3'");
+    printExecutionPlan(result);
+
+    Assert.assertTrue(result.hasNext());
+    for (int i = 0; i < 2; i++) {
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      Assert.assertTrue("name2".equals(next.getProperty("name")) || ("surname3".equals(next.getProperty("surname"))));
+    }
+
+    Assert.assertFalse(result.hasNext());
+
+    Optional<OExecutionPlan> p = result.getExecutionPlan();
+    Assert.assertTrue(p.isPresent());
+    OExecutionPlan p2 = p.get();
+    Assert.assertTrue(p2 instanceof OSelectExecutionPlan);
+    OSelectExecutionPlan plan = (OSelectExecutionPlan) p2;
+    Assert.assertEquals(1, plan.getSteps().size());
+    Assert.assertEquals(ParallelExecStep.class, plan.getSteps().get(0).getClass());
+    ParallelExecStep parallel = (ParallelExecStep) plan.getSteps().get(0);
+    Assert.assertEquals(2, parallel.getSubExecutionPlans().size());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes2() {
+    String className = "testFetchFromClassWithIndexes2";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+    clazz.createIndex(className + ".surname", OClass.INDEX_TYPE.NOTUNIQUE, "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db
+        .query("select from " + className + " where foo is not null and (name = 'name2' or surname = 'surname3')");
+    printExecutionPlan(result);
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes3() {
+    String className = "testFetchFromClassWithIndexes3";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+    clazz.createIndex(className + ".surname", OClass.INDEX_TYPE.NOTUNIQUE, "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where foo < 100 and (name = 'name2' or surname = 'surname3')");
+    printExecutionPlan(result);
+
+    Assert.assertTrue(result.hasNext());
+    for (int i = 0; i < 2; i++) {
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      Assert.assertTrue("name2".equals(next.getProperty("name")) || ("surname3".equals(next.getProperty("surname"))));
+    }
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes4() {
+    String className = "testFetchFromClassWithIndexes4";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+    clazz.createIndex(className + ".surname", OClass.INDEX_TYPE.NOTUNIQUE, "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className
+        + " where foo < 100 and ((name = 'name2' and foo < 20) or surname = 'surname3') and ( 4<5 and foo < 50)");
+    printExecutionPlan(result);
+
+    Assert.assertTrue(result.hasNext());
+    for (int i = 0; i < 2; i++) {
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      Assert.assertTrue("name2".equals(next.getProperty("name")) || ("surname3".equals(next.getProperty("surname"))));
+    }
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes5() {
+    String className = "testFetchFromClassWithIndexes5";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name3' and surname >= 'surname1'");
+    printExecutionPlan(result);
+
+    Assert.assertTrue(result.hasNext());
+    for (int i = 0; i < 1; i++) {
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      Assert.assertEquals("name3", next.getProperty("name"));
+    }
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes6() {
+    String className = "testFetchFromClassWithIndexes6";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name3' and surname > 'surname3'");
+    printExecutionPlan(result);
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes7() {
+    String className = "testFetchFromClassWithIndexes7";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name3' and surname >= 'surname3'");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      Assert.assertEquals("name3", next.getProperty("name"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes8() {
+    String className = "testFetchFromClassWithIndexes8";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name3' and surname < 'surname3'");
+    printExecutionPlan(result);
+
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes9() {
+    String className = "testFetchFromClassWithIndexes9";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name3' and surname <= 'surname3'");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      Assert.assertEquals("name3", next.getProperty("name"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+
+  @Test public void testFetchFromClassWithIndexes10() {
+    String className = "testFetchFromClassWithIndexes10";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name > 'name3' ");
+    printExecutionPlan(result);
+    for (int i = 0; i < 6; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes11() {
+    String className = "testFetchFromClassWithIndexes11";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name >= 'name3' ");
+    printExecutionPlan(result);
+    for (int i = 0; i < 7; i++) {
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes12() {
+    String className = "testFetchFromClassWithIndexes12";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name < 'name3' ");
+    printExecutionPlan(result);
+    for (int i = 0; i < 3; i++) {
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes13() {
+    String className = "testFetchFromClassWithIndexes13";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name <= 'name3' ");
+    printExecutionPlan(result);
+    for (int i = 0; i < 4; i++) {
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes14() {
+    String className = "testFetchFromClassWithIndexes14";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name > 'name3' and name < 'name5'");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
+    OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
+    Assert.assertEquals(1, plan.getSteps().size());
+    result.close();
+  }
+
+  @Test public void testFetchFromClassWithIndexes15() {
+    String className = "testFetchFromClassWithIndexes15";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createIndex(className + ".name_surname", OClass.INDEX_TYPE.NOTUNIQUE, "name", "surname");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name > 'name6' and name = 'name3' and surname > 'surname2' and surname < 'surname5' ");
+    printExecutionPlan(result);
+    Assert.assertFalse(result.hasNext());
+    OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
+    Assert.assertEquals(2, plan.getSteps().size());
+    result.close();
+  }
+
 
   public void stressTestNew() {
     String className = "stressTestNew";

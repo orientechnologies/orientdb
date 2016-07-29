@@ -18,15 +18,20 @@ import java.util.Optional;
  * Created by luigidellaquila on 23/07/16.
  */
 public class FetchFromIndexStep extends AbstractExecutionStep {
-  private final OIndex             index;
-  private final OBooleanExpression condition;
+  private final OIndex           index;
+  private final OBinaryCondition additional;
+
+  OBooleanExpression condition;
+
   private boolean inited = false;
   private OIndexCursor cursor;
 
-  public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OCommandContext ctx) {
+  public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
+      OCommandContext ctx) {
     super(ctx);
     this.index = index;
     this.condition = condition;
+    this.additional = additionalRangeCondition;
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
@@ -72,18 +77,45 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       }
       inited = true;
 
-      if (index.getDefinition() == null) {
-        return;
-      }
-
-      if (condition instanceof OBinaryCondition) {
-        processBinaryCondition();
-      } else if (condition instanceof OBetweenCondition) {
-        processBetweenCondition();
-      } else {
-        throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
+      if (condition != null) {
+        init(condition);
       }
     }
+  }
+
+  private void init(OBooleanExpression condition) {
+    if (index.getDefinition() == null) {
+      return;
+    }
+    if (condition == null) {
+      throw new OCommandExecutionException("Implement search from index without condition!");
+    } else if (condition instanceof OBinaryCondition) {
+      processBinaryCondition();
+    } else if (condition instanceof OBetweenCondition) {
+      processBetweenCondition();
+    } else if (condition instanceof OAndBlock) {
+      processAndBlock();
+    } else {
+      throw new OCommandExecutionException("search for index for " + condition + " is not supported yet");
+    }
+  }
+
+  /**
+   * it's not key = [...] but a real condition on field names, already ordered (field names will be ignored)
+   */
+  private void processAndBlock() {
+    OCollection fromKey = indexKeyFrom((OAndBlock) condition, additional);
+    OCollection toKey = indexKeyTo((OAndBlock) condition, additional);
+    boolean fromKeyIncluded = indexKeyFromIncluded((OAndBlock) condition, additional);
+    boolean toKeyIncluded = indexKeyToIncluded((OAndBlock) condition, additional);
+    init(fromKey, fromKeyIncluded, toKey, toKeyIncluded);
+  }
+
+  private void init(OCollection fromKey, boolean fromKeyIncluded, OCollection toKey, boolean toKeyIncluded) {
+    Object secondValue = fromKey.execute((OResult) null, ctx);
+    Object thirdValue = toKey.execute((OResult) null, ctx);
+    OIndexDefinition indexDef = index.getDefinition();
+    cursor = index.iterateEntriesBetween(toBetweenIndexKey(indexDef, secondValue), fromKeyIncluded, toBetweenIndexKey(indexDef, thirdValue), toKeyIncluded, isOrderAsc());
   }
 
   private void processBetweenCondition() {
@@ -97,7 +129,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
     Object secondValue = second.execute((OResult) null, ctx);
     Object thirdValue = third.execute((OResult) null, ctx);
-    cursor = index.iterateEntriesBetween(secondValue, true, thirdValue, true, true);
+    cursor = index.iterateEntriesBetween(toBetweenIndexKey(definition, secondValue), true, toBetweenIndexKey(definition, thirdValue), true, isOrderAsc());
   }
 
   private void processBinaryCondition() {
@@ -112,11 +144,26 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private Collection toIndexKey(OIndexDefinition definition, Object rightValue) {
+    if (definition.getFields().size() == 1 && rightValue instanceof Collection) {
+      rightValue = ((Collection) rightValue).iterator().next();
+    }
     rightValue = definition.createValue(rightValue);
     if (!(rightValue instanceof Collection)) {
       rightValue = Collections.singleton(rightValue);
     }
     return (Collection) rightValue;
+  }
+
+  private Object toBetweenIndexKey(OIndexDefinition definition, Object rightValue) {
+    if (definition.getFields().size() == 1 && rightValue instanceof Collection) {
+      rightValue = ((Collection) rightValue).iterator().next();
+    }
+    rightValue = definition.createValue(rightValue);
+
+    if (definition.getFields().size()>1 && !(rightValue instanceof Collection)) {
+      rightValue = Collections.singleton(rightValue);
+    }
+    return rightValue;
   }
 
   private OIndexCursor createCursor(OBinaryCompareOperator operator, OIndexDefinition definition, Object value,
@@ -139,7 +186,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private boolean isOrderAsc() {
-    return true;
+    return true;//TODO
   }
 
   @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
@@ -150,8 +197,110 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   }
 
+  private OCollection indexKeyFrom(OAndBlock keyCondition, OBinaryCondition additional) {
+    OCollection result = new OCollection(-1);
+    for (OBooleanExpression exp : keyCondition.getSubBlocks()) {
+      if (exp instanceof OBinaryCondition) {
+        OBinaryCondition binaryCond = ((OBinaryCondition) exp);
+        OBinaryCompareOperator operator = binaryCond.getOperator();
+        if ((operator instanceof OEqualsCompareOperator) || (operator instanceof OGtOperator)
+            || (operator instanceof OGeOperator)) {
+          result.add(binaryCond.getRight());
+        } else if (additional != null) {
+          result.add(additional.getRight());
+        }
+      } else {
+        throw new UnsupportedOperationException("Cannot execute index query with " + exp);
+      }
+    }
+    return result;
+  }
+
+  private OCollection indexKeyTo(OAndBlock keyCondition, OBinaryCondition additional) {
+    OCollection result = new OCollection(-1);
+    for (OBooleanExpression exp : keyCondition.getSubBlocks()) {
+      if (exp instanceof OBinaryCondition) {
+        OBinaryCondition binaryCond = ((OBinaryCondition) exp);
+        OBinaryCompareOperator operator = binaryCond.getOperator();
+        if ((operator instanceof OEqualsCompareOperator) || (operator instanceof OLtOperator)
+            || (operator instanceof OLeOperator)) {
+          result.add(binaryCond.getRight());
+        } else if (additional != null) {
+          result.add(additional.getRight());
+        }
+      } else {
+        throw new UnsupportedOperationException("Cannot execute index query with " + exp);
+      }
+    }
+    return result;
+  }
+
+  private boolean indexKeyFromIncluded(OAndBlock keyCondition, OBinaryCondition additional) {
+    OBooleanExpression exp = keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
+    if (exp instanceof OBinaryCondition) {
+      OBinaryCompareOperator operator = ((OBinaryCondition) exp).getOperator();
+      OBinaryCompareOperator additionalOperator = additional == null ? null : ((OBinaryCondition) additional).getOperator();
+      if (isGreaterOperator(operator)) {
+        if(isIncludeOperator(operator)) {
+          return true;
+        }else {
+          return false;
+        }
+      } else if (additionalOperator==null || (isIncludeOperator(additionalOperator) && isGreaterOperator(additionalOperator))) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      throw new UnsupportedOperationException("Cannot execute index query with " + exp);
+    }
+  }
+
+  private boolean isGreaterOperator(OBinaryCompareOperator operator) {
+    if (operator == null) {
+      return false;
+    }
+    return operator instanceof OGeOperator || operator instanceof OGtOperator;
+  }
+
+  private boolean isLessOperator(OBinaryCompareOperator operator) {
+    if (operator == null) {
+      return false;
+    }
+    return operator instanceof OLeOperator || operator instanceof OLtOperator;
+  }
+
+  private boolean isIncludeOperator(OBinaryCompareOperator operator) {
+    if (operator == null) {
+      return false;
+    }
+    return operator instanceof OGeOperator || operator instanceof OLeOperator;
+  }
+
+  private boolean indexKeyToIncluded(OAndBlock keyCondition, OBinaryCondition additional) {
+    OBooleanExpression exp = keyCondition.getSubBlocks().get(keyCondition.getSubBlocks().size() - 1);
+    if (exp instanceof OBinaryCondition) {
+      OBinaryCompareOperator operator = ((OBinaryCondition) exp).getOperator();
+      OBinaryCompareOperator additionalOperator = additional == null ? null : ((OBinaryCondition) additional).getOperator();
+      if (isLessOperator(operator)) {
+        if(isIncludeOperator(operator)) {
+          return true;
+        }else{
+          return false;
+        }
+      } else if (additionalOperator == null || (isIncludeOperator(additionalOperator) && isLessOperator(additionalOperator))) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      throw new UnsupportedOperationException("Cannot execute index query with " + exp);
+    }
+  }
+
   @Override public String prettyPrint(int depth, int indent) {
     return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX " + index.getName() + "\n" +
-        OExecutionStepInternal.getIndent(depth, indent) + "  " + condition;
+        OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ? "" : " and " + additional);
   }
+
 }

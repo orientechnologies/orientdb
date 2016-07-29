@@ -172,6 +172,10 @@ public class OBaseIdentifier extends SimpleNode {
     }
   }
 
+  public void setLevelZero(OLevelZeroIdentifier levelZero) {
+    this.levelZero = levelZero;
+  }
+
   public OBaseIdentifier copy() {
     OBaseIdentifier result = new OBaseIdentifier(-1);
     result.levelZero = levelZero==null?null:levelZero.copy();

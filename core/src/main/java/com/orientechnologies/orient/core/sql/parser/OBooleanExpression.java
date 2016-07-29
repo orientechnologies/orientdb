@@ -52,6 +52,10 @@ public abstract class OBooleanExpression extends SimpleNode {
     public void toString(Map<Object, Object> params, StringBuilder builder) {
       builder.append("true");
     }
+
+    @Override public boolean isEmpty() {
+      return false;
+    }
   };
 
   public static final OBooleanExpression FALSE = new OBooleanExpression(0) {
@@ -91,6 +95,9 @@ public abstract class OBooleanExpression extends SimpleNode {
       builder.append("false");
     }
 
+    @Override public boolean isEmpty() {
+      return false;
+    }
   };
 
   public OBooleanExpression(int id) {
@@ -148,4 +155,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   public abstract boolean needsAliases(Set<String> aliases);
 
   public abstract OBooleanExpression copy();
+
+  public boolean isEmpty() {
+    return false;
+  }
 }

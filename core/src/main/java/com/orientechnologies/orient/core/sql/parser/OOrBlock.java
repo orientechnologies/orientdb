@@ -174,5 +174,17 @@ public class OOrBlock extends OBooleanExpression {
   @Override public int hashCode() {
     return subBlocks != null ? subBlocks.hashCode() : 0;
   }
+
+  @Override public boolean isEmpty() {
+    if (subBlocks.isEmpty()) {
+      return true;
+    }
+    for (OBooleanExpression block : subBlocks) {
+      if (!block.isEmpty()) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

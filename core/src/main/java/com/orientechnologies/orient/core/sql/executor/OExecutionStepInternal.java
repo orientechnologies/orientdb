@@ -57,4 +57,9 @@ public interface OExecutionStepInternal extends OExecutionStep, OExecutionCallba
   default List<OExecutionStep> getSubSteps() {
     return Collections.EMPTY_LIST;
   }
+
+  default List<OExecutionPlan> getSubExecutionPlans() {
+    return Collections.EMPTY_LIST;
+  }
+
 }

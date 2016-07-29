@@ -118,7 +118,10 @@ public class OExpression extends SimpleNode {
   }
 
   public boolean isBaseIdentifier() {
-    if (value instanceof OMathExpression) {
+    if (mathExpression != null) {
+      return mathExpression.isBaseIdentifier();
+    }
+    if (value instanceof OMathExpression) {//only backward stuff, remote it
       return ((OMathExpression) value).isBaseIdentifier();
     }
 
@@ -365,6 +368,10 @@ public class OExpression extends SimpleNode {
     result = 31 * result + (json != null ? json.hashCode() : 0);
     result = 31 * result + (booleanValue != null ? booleanValue.hashCode() : 0);
     return result;
+  }
+
+  public void setMathExpression(OMathExpression mathExpression) {
+    this.mathExpression = mathExpression;
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

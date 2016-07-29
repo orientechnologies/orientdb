@@ -192,6 +192,16 @@ public class OBaseExpression extends OMathExpression {
     }
   }
 
+  @Override public OBaseExpression copy() {
+    OBaseExpression result = new OBaseExpression(-1);
+    result.number = number == null ? null : number.copy();
+    result.identifier = identifier == null ? null : identifier.copy();
+    result.inputParam = inputParam == null ? null : inputParam.copy();
+    result.string = string;
+    result.modifier = modifier == null ? null : modifier.copy();
+    return result;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;
@@ -221,6 +231,10 @@ public class OBaseExpression extends OMathExpression {
     result = 31 * result + (string != null ? string.hashCode() : 0);
     result = 31 * result + (modifier != null ? modifier.hashCode() : 0);
     return result;
+  }
+
+  public void setIdentifier(OBaseIdentifier identifier) {
+    this.identifier = identifier;
   }
 }
 

@@ -169,7 +169,7 @@ public class OAndBlock extends OBooleanExpression {
     for (OBooleanExpression exp : subBlocks) {
       result.subBlocks.add(exp.copy());
     }
-    return null;
+    return result;
   }
 
   @Override public boolean equals(Object o) {
@@ -189,5 +189,18 @@ public class OAndBlock extends OBooleanExpression {
   @Override public int hashCode() {
     return subBlocks != null ? subBlocks.hashCode() : 0;
   }
+
+  @Override public boolean isEmpty() {
+    if (subBlocks.isEmpty()) {
+      return true;
+    }
+    for (OBooleanExpression block : subBlocks) {
+      if (!block.isEmpty()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */
