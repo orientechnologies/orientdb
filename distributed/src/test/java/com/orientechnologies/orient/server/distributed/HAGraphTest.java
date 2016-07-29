@@ -44,7 +44,7 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
 
   List<Future<?>>             ths                     = new ArrayList<Future<?>>();
   private TimerTask           task;
-  private long                sleep                   = 0;
+  private volatile long       sleep                   = 0;
 
   @Test
   public void test() throws Exception {
@@ -76,6 +76,8 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
 
               serverRestarted.set(true);
 
+              sleep = 0;
+
             } catch (Exception e) {
               e.printStackTrace();
             }
@@ -83,7 +85,7 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
           } else if (!serverDown.get() && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL / 3) {
 
             // SLOW DOWN A LITTLE BIT
-            sleep = 10;
+            sleep = 30;
 
             // SHUTDOWN LASt SERVER AT 1/3 OF PROGRESS
             banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));

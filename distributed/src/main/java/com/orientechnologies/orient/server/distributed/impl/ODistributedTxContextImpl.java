@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -55,7 +56,7 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
       // PARALLEL TX BECAUSE NEW RID LOCKS THE ENTIRE CLUSTER.
       rid = new ORecordId(rid.getClusterId(), -1l);
 
-    db.lockRecord(rid, reqId, 300);
+    db.lockRecord(rid, reqId, OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger());
 
     acquiredLocks.add(rid);
   }
