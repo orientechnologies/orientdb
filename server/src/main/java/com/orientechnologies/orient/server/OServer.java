@@ -1191,13 +1191,20 @@ public class OServer {
 
         pluginManager.registerPlugin(new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
 
+        pluginManager.callListenerBeforeConfig(plugin, h.parameters);
         plugin.config(this, h.parameters);
+        pluginManager.callListenerAfterConfig(plugin, h.parameters);
+
         plugins.add(plugin);
       }
 
       // START ALL THE CONFIGURED PLUGINS
       for (OServerPlugin plugin : plugins)
+      {
+        pluginManager.callListenerBeforeStartup(plugin);
         plugin.startup();
+        pluginManager.callListenerAfterStartup(plugin);
+      }
     }
   }
 
