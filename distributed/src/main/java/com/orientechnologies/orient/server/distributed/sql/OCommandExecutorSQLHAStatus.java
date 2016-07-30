@@ -83,7 +83,7 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
       else if (option.equalsIgnoreCase("-latency"))
         latency = true;
       else if (option.equalsIgnoreCase("-messages"))
-        latency = true;
+        messages = true;
       else if (option.equalsIgnoreCase("-all"))
         servers = db = latency = messages = true;
       else if (option.equalsIgnoreCase("-output=text"))

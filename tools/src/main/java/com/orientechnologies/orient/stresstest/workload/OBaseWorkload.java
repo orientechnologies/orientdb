@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.stresstest.workload;
 
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 
@@ -34,12 +35,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Luca Garulli
  */
 public abstract class OBaseWorkload implements OWorkload {
+  protected OStorageRemote.CONNECTION_STRATEGY connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.STICKY;
+
   public abstract class OBaseWorkLoadContext {
     public int threadId;
     public int currentIdx;
     public int totalPerThread;
 
-    public abstract void init(ODatabaseIdentifier dbIdentifier);
+    public abstract void init(ODatabaseIdentifier dbIdentifier, OStorageRemote.CONNECTION_STRATEGY connectionStrategy);
 
     public abstract void close();
   }
@@ -117,7 +120,7 @@ public abstract class OBaseWorkload implements OWorkload {
           context.threadId = currentThread;
           context.totalPerThread = context.threadId < concurrencyLevel - 1 ? totalPerThread : totalPerLastThread;
 
-          context.init(dbIdentifier);
+          context.init(dbIdentifier, connectionStrategy);
           try {
             final int startIdx = totalPerThread * context.threadId;
 

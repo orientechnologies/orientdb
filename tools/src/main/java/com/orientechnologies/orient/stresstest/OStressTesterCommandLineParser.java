@@ -48,6 +48,7 @@ public class OStressTesterCommandLineParser {
   public static final String ERROR_OPENING_CONSOLE                               = "An error has occurred opening the console. Please supply the root password as the -"
       + OPTION_ROOT_PASSWORD + " parameter.";
   public final static String OPTION_REMOTE_IP                                    = "remote-ip";
+  public final static String OPTION_HA_METRICS                                   = "ha-metrics";
   public static final String COMMAND_LINE_PARSER_MISSING_REMOTE_IP               = "The mode is [" + OStressTester.OMode.REMOTE
       + "] but the param --" + OPTION_REMOTE_IP + " wasn't passed.";
   public final static String OPTION_REMOTE_PORT                                  = "remote-port";
@@ -96,6 +97,7 @@ public class OStressTesterCommandLineParser {
     settings.operationsPerTransaction = getNumber(options.get(OPTION_TRANSACTIONS), "transactions");
     settings.concurrencyLevel = getNumber(options.get(OPTION_CONCURRENCY), "concurrency");
     settings.remoteIp = options.get(OPTION_REMOTE_IP);
+    settings.haMetrics = options.get(OPTION_HA_METRICS) != null ? Boolean.parseBoolean(options.get(OPTION_HA_METRICS)) : false;
     settings.workloadCfg = options.get(OPTION_WORKLOAD);
     settings.keepDatabaseAfterTest = options.get(OPTION_KEEP_DATABASE_AFTER_TEST) != null
         ? Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST)) : false;

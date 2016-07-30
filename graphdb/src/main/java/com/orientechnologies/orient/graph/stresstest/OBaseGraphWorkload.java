@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.graph.stresstest;
 
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -46,7 +47,7 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
     int             lastVertexEdges;
 
     @Override
-    public void init(ODatabaseIdentifier dbIdentifier) {
+    public void init(ODatabaseIdentifier dbIdentifier, OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
       graph = tx ? getGraph(dbIdentifier) : getGraphNoTx(dbIdentifier);
     }
 
@@ -63,7 +64,7 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
   }
 
   protected OrientGraphNoTx getGraphNoTx(final ODatabaseIdentifier databaseIdentifier) {
-    final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
+    final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier, connectionStrategy);
     if (database == null)
       throw new IllegalArgumentException("Error on opening database " + databaseIdentifier.getName());
 
@@ -71,9 +72,11 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
   }
 
   protected OrientGraph getGraph(final ODatabaseIdentifier databaseIdentifier) {
-    final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
+    final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier, connectionStrategy);
     if (database == null)
       throw new IllegalArgumentException("Error on opening database " + databaseIdentifier.getName());
+
+    database.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connectionStrategy.toString());
 
     return new OrientGraph((ODatabaseDocumentTx) database);
   }
