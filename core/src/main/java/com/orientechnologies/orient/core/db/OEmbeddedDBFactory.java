@@ -84,7 +84,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   @Override
   public ODatabaseDocument open(String name, String user, String password, OrientDBConfig config) {
     OAbstractPaginatedStorage storage = getStorage(name);
-    storage.open(new HashMap<>());
+    storage.open(config.getConfigurations());
     final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
     embedded.internalOpen(user, password, solveConfig(config));
     return embedded;
@@ -100,7 +100,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
   public synchronized OEmbeddedDatabasePool poolOpen(String name, String user, String password, OEmbeddedPoolByFactory pool) {
     OAbstractPaginatedStorage storage = getStorage(name);
-    storage.open(new HashMap<>());
+    storage.open(pool.getConfig().getConfigurations());
     final OEmbeddedDatabasePool embedded = new OEmbeddedDatabasePool(pool, storage);
     embedded.internalOpen(user, password, pool.getConfig());
     return embedded;

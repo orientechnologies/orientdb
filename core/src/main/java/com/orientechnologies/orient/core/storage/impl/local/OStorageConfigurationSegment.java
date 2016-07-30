@@ -19,7 +19,10 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.IOException;
+
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
@@ -28,15 +31,12 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.IOException;
-import java.util.Map;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 /**
  * Handles the database configuration in one big record.
  */
-@SuppressWarnings("serial")
 @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED")
 public class OStorageConfigurationSegment extends OStorageConfiguration {
   private static final long                  serialVersionUID = 638874446554389034L;
@@ -70,11 +70,9 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   }
 
   @Override
-  public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
+  public OStorageConfiguration load(final OContextConfiguration configuration) throws OSerializationException {
     try {
-      initConfiguration();
-
-      bindPropertiesToContext(iProperties);
+      initConfiguration(configuration);
 
       if (segment.getFile().exists())
         segment.open();

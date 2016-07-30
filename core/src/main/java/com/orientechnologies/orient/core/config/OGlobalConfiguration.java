@@ -747,6 +747,9 @@ public enum OGlobalConfiguration {
   @OApi(maturity = OApi.MATURITY.NEW)CLIENT_KRB5_KTNAME("client.krb5.ktname", "Location of the Kerberos client keytab",
       String.class, null),
 
+  @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CONNECTION_STRATEGY("client.connection.strategy", "Strategy used for open connections from a client in case of multiple servers, possible options:STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST",
+      String.class, null),
+  
   /**
    * @Since 2.2
    */

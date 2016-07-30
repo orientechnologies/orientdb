@@ -56,7 +56,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.query.OLiveQuery;
@@ -111,7 +110,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private OCluster[]                           clusters                = OCommonConst.EMPTY_CLUSTER_ARRAY;
   private int                                  defaultClusterId;
   private OStorageRemoteAsynchEventListener    asynchEventListener;
-  private Map<String, Object>                  connectionOptions;
   private String                               recordFormat;
   protected ORemoteConnectionManager           connectionManager;
   private final Set<OStorageRemoteSession>     sessions                = Collections
@@ -296,7 +294,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return session != null ? session.getServerUrl() : null;
   }
 
-  public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
+  public void open(final String iUserName, final String iUserPassword, final OContextConfiguration conf) {
 
     stateLock.acquireWriteLock();
     addUser();
@@ -317,12 +315,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           session.connectionUserPassword = iUserPassword;
         }
 
-        parseOptions(iOptions);
+        String strategy = conf.getValueAsString(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY);
+        if (strategy != null)
+          connectionStrategy = CONNECTION_STRATEGY.valueOf(strategy.toUpperCase());
 
         openRemoteDatabase();
 
         final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this, recordFormat);
-        storageConfiguration.load(iOptions);
+        storageConfiguration.load(conf);
 
         configuration = storageConfiguration;
 
@@ -342,18 +342,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } finally {
       stateLock.releaseWriteLock();
     }
-  }
-
-  private void parseOptions(final Map<String, Object> iOptions) {
-    if (iOptions == null || iOptions.size() == 0)
-      return;
-
-    final Object connType = iOptions.get(PARAM_CONNECTION_STRATEGY.toLowerCase());
-    if (connType != null)
-      connectionStrategy = CONNECTION_STRATEGY.valueOf(connType.toString().toUpperCase());
-
-    // CREATE A COPY TO AVOID POST OPEN MANIPULATION BY USER
-    connectionOptions = new HashMap<String, Object>(iOptions);
   }
 
   @Override
@@ -2093,7 +2081,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     OChannelBinaryAsynchClient network;
     do {
       try {
-        network = connectionManager.acquire(iCurrentURL, clientConfiguration, connectionOptions, asynchEventListener);
+        network = connectionManager.acquire(iCurrentURL, clientConfiguration, asynchEventListener);
       } catch (OIOException cause) {
         throw cause;
       } catch (Exception cause) {

@@ -29,6 +29,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
@@ -209,7 +210,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         OLogManager.instance().error(this, "Error on calling callback on database restore");
       }
 
-    open(null, null, null);
+    open(null, null, new OContextConfiguration());
   }
 
   @Override

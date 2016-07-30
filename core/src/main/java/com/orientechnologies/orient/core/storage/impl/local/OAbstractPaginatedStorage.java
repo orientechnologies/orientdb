@@ -169,11 +169,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
   }
 
-  public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
-    open(iProperties);
+  public void open(final String iUserName, final String iUserPassword, final OContextConfiguration contextConfiguration) {
+    open(contextConfiguration);
   }
 
-  public void open(final Map<String, Object> iProperties) {
+  public void open(final OContextConfiguration contextConfiguration) {
     stateLock.acquireReadLock();
     try {
       if (status == STATUS.OPEN)
@@ -196,8 +196,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
       transaction = new ThreadLocal<OStorageTransaction>();
-
-      configuration.load(iProperties);
+      configuration.load(contextConfiguration);
 
       final String cs = configuration.getConflictStrategy();
       if (cs != null) {
@@ -325,8 +324,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     }
   }
 
-  public void open(final OToken iToken, final Map<String, Object> iProperties) {
-    open(iToken.getUserName(), "", iProperties);
+  public void open(final OToken iToken, final OContextConfiguration configuration) {
+    open(iToken.getUserName(), "", configuration);
   }
 
   public void create(final Map<String, Object> iProperties) {

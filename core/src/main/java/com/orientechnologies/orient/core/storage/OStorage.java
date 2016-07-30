@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -65,7 +66,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
     @Deprecated KEEP_EXCLUSIVE_LOCK
   }
 
-  void open(String iUserName, String iUserPassword, final Map<String, Object> iProperties);
+  void open(String iUserName, String iUserPassword, final OContextConfiguration contextConfiguration);
 
   void create(Map<String, Object> iProperties);
 

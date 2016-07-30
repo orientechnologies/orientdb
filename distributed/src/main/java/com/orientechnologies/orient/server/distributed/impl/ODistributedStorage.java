@@ -31,6 +31,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -1117,8 +1118,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
-    wrapped.open(iUserName, iUserPassword, iProperties);
+  public void open(final String iUserName, final String iUserPassword, final OContextConfiguration contextConfiguration) {
+    wrapped.open(iUserName, iUserPassword, contextConfiguration);
   }
 
   @Override

@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -230,7 +231,7 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public void open(String iUserName, String iUserPassword, Map<String, Object> iProperties) {
+        public void open(String iUserName, String iUserPassword, OContextConfiguration contextConfiguration) {
 
         }
 

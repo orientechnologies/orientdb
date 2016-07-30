@@ -94,7 +94,6 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile String                                 recordSerializer;
   private volatile int                                    recordSerializerVersion;
   private volatile boolean                                strictSQL;
-  private volatile Map<String, Object>                    loadProperties;
   private volatile ConcurrentMap<String, IndexEngineData> indexEngines;
   private volatile transient boolean                      validation                    = true;
   private volatile boolean                                txRequiredForSQLGraphOperations;
@@ -102,12 +101,12 @@ public class OStorageConfiguration implements OSerializableStream {
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
 
-    initConfiguration();
+    initConfiguration(new OContextConfiguration());
     clear();
   }
 
-  public void initConfiguration() {
-    configuration = new OContextConfiguration();
+  public void initConfiguration(OContextConfiguration conf) {
+    this.configuration = conf;
   }
 
   public void clear() {
@@ -180,24 +179,8 @@ public class OStorageConfiguration implements OSerializableStream {
    * @throws OSerializationException
    * @compatibility 0.9.25
    */
-  public OStorageConfiguration load(final Map<String, Object> iProperties) throws OSerializationException {
-    initConfiguration();
-
-    final String compressionMethod = (String) iProperties
-        .get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase());
-    if (compressionMethod != null)
-      // SAVE COMPRESSION METHOD IN CONFIGURATION
-      configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
-
-    final String encryptionMethod = (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase());
-    if (encryptionMethod != null)
-      // SAVE ENCRYPTION METHOD IN CONFIGURATION
-      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
-
-    final String encryptionKey = (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase());
-    if (encryptionKey != null)
-      // SAVE ENCRYPTION KEY IN CONFIGURATION
-      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
+  public OStorageConfiguration load(final OContextConfiguration configuration) throws OSerializationException {
+    initConfiguration(configuration);
 
     final byte[] record = storage.readRecord(CONFIG_RID, null, false, null).getResult().buffer;
 
@@ -206,16 +189,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
     fromStream(record);
 
-    this.loadProperties = new HashMap<String, Object>(iProperties);
-
     return this;
-  }
-
-  public Map<String, Object> getLoadProperties() {
-    if (loadProperties == null)
-      return Collections.emptyMap();
-
-    return Collections.unmodifiableMap(loadProperties);
   }
 
   public void update() throws OSerializationException {
@@ -605,7 +579,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void close() throws IOException {
     clear();
-    initConfiguration();
+    initConfiguration(new OContextConfiguration());
   }
 
   public void setCluster(final OStorageClusterConfiguration config) {

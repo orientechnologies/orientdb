@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -110,7 +111,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
     setupThreadOwner();
     try {
 
-      storage.open(user, password, properties);
+      storage.open(user, password, config.getConfigurations());
 
       status = STATUS.OPEN;
 

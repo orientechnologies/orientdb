@@ -256,14 +256,20 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         }
       }
 
+      
+      
       if (storage.isClosed()) {
-        storage.open(iUserName, iUserPassword, properties);
+        OContextConfiguration conf = new OContextConfiguration();
+        bindPropertiesToContext(conf, properties);
+        storage.open(iUserName, iUserPassword, conf);
         initialized = false;
       } else if (storage instanceof OStorageProxy) {
         final String name = ((OStorageProxy) storage).getUserName();
         if (name == null || !name.equals(iUserName)) {
           storage.close();
-          storage.open(iUserName, iUserPassword, properties);
+          OContextConfiguration conf = new OContextConfiguration();
+          bindPropertiesToContext(conf, properties);
+          storage.open(iUserName, iUserPassword, conf);
         }
       }
 
@@ -326,7 +332,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       }
       if (storage.isClosed()) {
         // i don't have username and password at this level, anyway the storage embedded don't really need it
-        storage.open("", "", properties);
+        OContextConfiguration conf = new OContextConfiguration();
+        bindPropertiesToContext(conf, properties);
+        storage.open("", "", conf);
       }
 
       status = STATUS.OPEN;
@@ -3450,4 +3458,29 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
     throw lastException;
   }
+  
+  private void bindPropertiesToContext(OContextConfiguration configuration, final Map<String, Object> iProperties) {
+    final String connectionStrategy = (String) iProperties.get("connectionStrategy");
+    if (connectionStrategy != null)
+      configuration.setValue(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
+    
+    final String compressionMethod = iProperties != null
+        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase()) : null;
+    if (compressionMethod != null)
+      // SAVE COMPRESSION METHOD IN CONFIGURATION
+      configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
+
+    final String encryptionMethod = iProperties != null
+        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase()) : null;
+    if (encryptionMethod != null)
+      // SAVE ENCRYPTION METHOD IN CONFIGURATION
+      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
+
+    final String encryptionKey = iProperties != null
+        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase()) : null;
+    if (encryptionKey != null)
+      // SAVE ENCRYPTION KEY IN CONFIGURATION
+      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
+  }
+  
 }
