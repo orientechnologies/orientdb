@@ -16,7 +16,7 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.4" % Test,
   "com.orientechnologies" % "orientdb-graphdb" % orientDBVersion,
   "com.orientechnologies" % "orientdb-client" % orientDBVersion,
-  "com.michaelpollmeier" %% "gremlin-scala" % "3.2.0.1",
+  "com.michaelpollmeier" %% "gremlin-scala" % "3.2.0-incubating.0",
   "com.michaelpollmeier" % "orientdb-gremlin" % "3.2.1-0-SNAPSHOT"
 )
 
