@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.michaelpollmeier</groupId>
     <artifactId>orientdb-gremlin</artifactId>
-    <version>3.2.0-incubating.1-SNAPSHOT</version>
+    <version>3.2.1-0-SNAPSHOT</version>
     <name>Apache TinkerPop :: OrientDB Gremlin</name>
     <description>TinkerPop3 Graph Structure Implementation for OrientDB</description>
     <url>https://github.com/mpollmeier/orientdb-gremlin/</url>
@@ -11,8 +11,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <gremlin.version>3.2.0-incubating</gremlin.version>
-        <orientdb.version>2.1.15</orientdb.version>
+        <gremlin.version>3.2.1</gremlin.version>
+        <orientdb.version>2.1.20</orientdb.version>
     </properties>
 
     <developers>
