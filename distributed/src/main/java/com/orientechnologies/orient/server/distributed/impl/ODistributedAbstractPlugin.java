@@ -931,16 +931,17 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     final ODistributedDatabaseImpl distrDatabase = messageService.registerDatabase(databaseName);
 
     final Boolean autoDeploy = config.field("autoDeploy");
-    if (autoDeploy == null || !autoDeploy) {
-      // NO AUTO DEPLOY
-      setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
-      return false;
-    }
 
     boolean databaseInstalled;
 
     // CREATE THE DISTRIBUTED QUEUE
     if (!distrDatabase.exists() || distrDatabase.getSyncConfiguration().isEmpty()) {
+
+      if (autoDeploy == null || !autoDeploy) {
+        // NO AUTO DEPLOY
+        setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
+        return false;
+      }
 
       // FIRST TIME, ASK FOR FULL REPLICA
       databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup);
@@ -954,6 +955,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       } catch (ODistributedDatabaseDeltaSyncException e) {
         // FALL BACK TO FULL BACKUP
         removeStorage(databaseName);
+
+        if (autoDeploy == null || !autoDeploy) {
+          // NO AUTO DEPLOY
+          setDatabaseStatus(nodeName, databaseName, DB_STATUS.ONLINE);
+          return false;
+        }
+
         databaseInstalled = requestFullDatabase(distrDatabase, databaseName, iStartup);
       }
     }

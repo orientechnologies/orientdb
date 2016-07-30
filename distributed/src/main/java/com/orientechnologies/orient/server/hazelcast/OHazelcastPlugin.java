@@ -831,7 +831,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
         configurationMap.remove(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + dbName);
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "Dropped last copy of database %s, removing it from the cluster", dbName);
+            "Dropped last copy of database '%s', removing it from the cluster", dbName);
       }
     }
   }
