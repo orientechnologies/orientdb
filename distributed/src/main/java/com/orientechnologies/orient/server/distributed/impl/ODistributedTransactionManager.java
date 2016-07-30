@@ -456,6 +456,8 @@ public class ODistributedTransactionManager {
     ORecordId lastRecordCannotLock = null;
     ODistributedRequestId lastLockHolder = null;
 
+    final long begin = System.currentTimeMillis();
+
     // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED
     for (int retry = 1; retry <= maxAutoRetry; ++retry) {
       lastRecordCannotLock = null;
@@ -498,7 +500,7 @@ public class ODistributedTransactionManager {
     }
 
     if (lastRecordCannotLock != null)
-      throw new ODistributedRecordLockedException(lastRecordCannotLock, lastLockHolder);
+      throw new ODistributedRecordLockedException(lastRecordCannotLock, lastLockHolder, System.currentTimeMillis() - begin);
   }
 
   /**

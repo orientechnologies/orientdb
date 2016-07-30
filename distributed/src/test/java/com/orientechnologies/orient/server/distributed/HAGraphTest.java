@@ -1,10 +1,12 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.tinkerpop.blueprints.Vertex;
@@ -31,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class HAGraphTest extends AbstractServerClusterTxTest {
 
   final static int            SERVERS                 = 3;
-  private static final int    CONCURRENCY_LEVEL       = 8;
+  private static final int    CONCURRENCY_LEVEL       = 4;
   private static final int    TOTAL_CYCLES_PER_THREAD = 10000;
 
   private OrientGraphFactory  graphReadFactory;
@@ -40,6 +42,7 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
   private AtomicLong          operations              = new AtomicLong();
 
   private final AtomicBoolean serverDown              = new AtomicBoolean(false);
+  private final AtomicBoolean serverRestarting        = new AtomicBoolean(false);
   private final AtomicBoolean serverRestarted         = new AtomicBoolean(false);
 
   List<Future<?>>             ths                     = new ArrayList<Future<?>>();
@@ -64,35 +67,42 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
       task = new TimerTask() {
         @Override
         public void run() {
-          if (serverDown.get() && !serverRestarted.get()
-              && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 2 / 3) {
 
-            // RESTART LAST SERVER AT 2/3 OF PROGRESS
-            banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
-            try {
-              serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-              if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
-                serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
+          final OServer server2 = serverInstance.get(SERVERS - 1).getServerInstance();
 
-              serverRestarted.set(true);
+          if (server2 != null)
+            if (serverDown.get() && !serverRestarting.get() && !serverRestarted.get() && !server2.isActive()
+                && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 2 / 4) {
+              serverRestarting.set(true);
 
-              sleep = 0;
+              // RESTART LAST SERVER AT 2/3 OF PROGRESS
+              banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
+              try {
+                serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
 
-            } catch (Exception e) {
-              e.printStackTrace();
+                if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
+                  serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
+
+                sleep = 0;
+
+                serverRestarted.set(true);
+
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+
+            } else if (!serverDown.get() && server2.isActive()
+                && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL * 1 / 4) {
+
+              // SLOW DOWN A LITTLE BIT
+              sleep = 30;
+
+              // SHUTDOWN LASt SERVER AT 1/3 OF PROGRESS
+              banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
+              serverInstance.get(SERVERS - 1).shutdownServer();
+
+              serverDown.set(true);
             }
-
-          } else if (!serverDown.get() && operations.get() >= TOTAL_CYCLES_PER_THREAD * CONCURRENCY_LEVEL / 3) {
-
-            // SLOW DOWN A LITTLE BIT
-            sleep = 30;
-
-            // SHUTDOWN LASt SERVER AT 1/3 OF PROGRESS
-            banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
-            serverInstance.get(SERVERS - 1).shutdownServer();
-
-            serverDown.set(true);
-          }
         }
       };
       Orient.instance().scheduleTask(task, 2000, 200);
@@ -116,6 +126,16 @@ public class HAGraphTest extends AbstractServerClusterTxTest {
       task.cancel();
 
     Assert.assertEquals(serverDown.get(), true);
+
+    Assert.assertEquals(serverRestarting.get(), true);
+
+    waitFor(20000, new OCallable<Boolean, Void>() {
+      @Override
+      public Boolean call(Void iArgument) {
+        return serverRestarted.get();
+      }
+    }, "Server 2 is not active yet");
+
     Assert.assertEquals(serverRestarted.get(), true);
   }
 

@@ -464,7 +464,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       }
 
     if (currentLock != null)
-      throw new ODistributedRecordLockedException(rid, currentLock.reqId);
+      throw new ODistributedRecordLockedException(rid, currentLock.reqId, timeout);
   }
 
   @Override
@@ -738,8 +738,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         // GET LAST VERSION IN LOCK
         final List<String> foundPartition = cfg.addNewNodeInServerList(localNodeName);
         if (foundPartition != null) {
-          manager.setDatabaseStatus(localNodeName, databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
-
           ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Adding node '%s' in partition: %s db=%s v=%d",
               localNodeName, databaseName, foundPartition, cfg.getVersion());
         }
