@@ -146,7 +146,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
                 if (counter.incrementAndGet() % 100000 == 0) {
                   ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "- %s", iText);
                 }
-              } else if (counter.incrementAndGet() % 1000 == 0) {
+              } else if (counter.incrementAndGet() % 10000 == 0) {
                 ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "- %s", iText);
               }
             }
