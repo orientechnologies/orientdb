@@ -133,7 +133,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       nodeUuid = hazelcastInstance.getCluster().getLocalMember().getUuid();
 
-      OLogManager.instance().info(this, "Starting distributed server '%s' (hzID=%s)...", localNodeName, nodeId);
+      OLogManager.instance().info(this, "Starting distributed server '%s' (hzID=%s)...", localNodeName, nodeUuid);
 
       activeNodes.put(localNodeName, hazelcastInstance.getCluster().getLocalMember());
       activeNodesNamesByMemberId.put(nodeUuid, localNodeName);
@@ -144,9 +144,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       // REGISTER CURRENT NODES
       for (Member m : hazelcastInstance.getCluster().getMembers()) {
-        if (!m.getUuid().equals(getLocalNodeId())) {
+        if (!m.getUuid().equals(nodeUuid)) {
           final String memberName = getNodeName(m);
-          if (memberName != null) {
+          if (memberName != null && !memberName.startsWith("ext:")) {
             activeNodes.put(memberName, m);
             activeNodesNamesByMemberId.put(m.getUuid(), memberName);
           } else if (!m.equals(hazelcastInstance.getCluster().getLocalMember()))

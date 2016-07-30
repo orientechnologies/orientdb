@@ -95,6 +95,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   protected OServer                                              serverInstance;
   protected boolean                                              enabled                           = true;
+  protected String                                               nodeUuid;
   protected String                                               nodeName                          = null;
   protected int                                                  nodeId                            = -1;
   protected File                                                 defaultDatabaseConfigFile;
@@ -120,7 +121,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected volatile ODistributedMessageServiceImpl              messageService;
   protected Date                                                 startedOn                         = new Date();
   protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
-  protected String                                               nodeUuid;
   protected ODistributedStrategy                                 responseManagerFactory            = new ODefaultDistributedStrategy();
   protected ODistributedConflictResolverFactory                  conflictResolverFactory           = new ODistributedConflictResolverFactory();
   protected ODistributedConflictResolver                         conflictResolver                  = conflictResolverFactory
