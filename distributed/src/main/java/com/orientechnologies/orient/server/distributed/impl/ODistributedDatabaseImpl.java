@@ -741,6 +741,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE, "Adding node '%s' in partition: %s db=%s v=%d",
               localNodeName, databaseName, foundPartition, cfg.getVersion());
         }
+        manager.setDatabaseStatus(localNodeName, databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
         return null;
       }
     });
