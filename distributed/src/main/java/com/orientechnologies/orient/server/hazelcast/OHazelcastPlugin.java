@@ -431,9 +431,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Current node started as %s for database '%s'",
                 cfg.getServerRole(nodeName), databaseName);
 
-            if (!configurationMap.containsKey(CONFIG_DATABASE_PREFIX + databaseName))
+            if (!configurationMap.containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
               // PUBLISH CFG THE FIRST TIME
               updateCachedDatabaseConfiguration(databaseName, cfg.getDocument(), false, true);
+              setDatabaseStatus(nodeName, databaseName, DB_STATUS.SYNCHRONIZING);
+            }
 
             final ODistributedDatabaseImpl ddb = messageService.registerDatabase(databaseName);
 
