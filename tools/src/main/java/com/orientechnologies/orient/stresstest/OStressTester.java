@@ -142,6 +142,7 @@ public class OStressTester {
       final ODatabase db = ODatabaseUtils.openDatabase(databaseIdentifier, OStorageRemote.CONNECTION_STRATEGY.STICKY);
       try {
         final String output = db.command(new OCommandSQL("ha status -latency -messages -output=text")).execute();
+        System.out.println("HA METRICS");
         System.out.println(output);
 
       } finally {
