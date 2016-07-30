@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.stresstest.workload;
 
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.ODatabaseUtils;
@@ -33,8 +34,8 @@ public abstract class OBaseDocumentWorkload extends OBaseWorkload {
     private ODatabase db;
 
     @Override
-    public void init(ODatabaseIdentifier dbIdentifier) {
-      db = getDocumentDatabase(dbIdentifier);
+    public void init(final ODatabaseIdentifier dbIdentifier, final OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
+      db = getDocumentDatabase(dbIdentifier, connectionStrategy);
     }
 
     @Override
@@ -53,9 +54,11 @@ public abstract class OBaseDocumentWorkload extends OBaseWorkload {
     return new OWorkLoadContext();
   }
 
-  protected ODatabase getDocumentDatabase(final ODatabaseIdentifier databaseIdentifier) {
+  protected ODatabase getDocumentDatabase(final ODatabaseIdentifier databaseIdentifier,
+      final OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
     // opens the newly created db and creates an index on the class we're going to use
-    final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
+    final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier, connectionStrategy);
+
     if (database == null)
       throw new IllegalArgumentException("Error on opening database " + databaseIdentifier.getName());
 

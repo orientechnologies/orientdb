@@ -157,8 +157,7 @@ public class ODistributedOutput {
           String serverName = fromMember.field("name");
           orderedServers.add(serverName);
 
-          table.setColumnAlignment(serverName + (manager.getLocalNodeName().equals(serverName) ? "*" : ""),
-              OTableFormatter.ALIGNMENT.RIGHT);
+          table.setColumnAlignment(formatServerName(manager, serverName), OTableFormatter.ALIGNMENT.RIGHT);
         }
       }
       Collections.sort(orderedServers);
@@ -180,7 +179,7 @@ public class ODistributedOutput {
         final ODocument row = new ODocument();
         rows.add(row);
 
-        row.field("Servers", fromServer + (manager.getLocalNodeName().equals(fromServer) ? "*" : ""));
+        row.field("Servers", formatServerName(manager, fromServer));
 
         final ODocument latencies = fromMember.field("latencies");
         if (latencies == null)
@@ -194,7 +193,7 @@ public class ODistributedOutput {
               value = String.format("%.2f", ((Float) latency.field("average") / 1000000f));
             }
           }
-          row.field(toServer + (manager.getLocalNodeName().equals(toServer) ? "*" : ""), value);
+          row.field(formatServerName(manager, toServer), value);
         }
       }
     }
@@ -214,7 +213,7 @@ public class ODistributedOutput {
     final List<ODocument> members = distribCfg.field("members");
 
     final StringBuilder buffer = new StringBuilder();
-    buffer.append("\nREPLICATION MESSAGE COUNTERS");
+    buffer.append("\nREPLICATION MESSAGE COUNTERS (servers: source on the row and destination on the column)");
     final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
       @Override
       public void onMessage(final String text, final Object... args) {
@@ -231,11 +230,12 @@ public class ODistributedOutput {
           String serverName = fromMember.field("name");
           orderedServers.add(serverName);
 
-          table.setColumnAlignment(serverName + (manager.getLocalNodeName().equals(serverName) ? "*" : ""),
-              OTableFormatter.ALIGNMENT.RIGHT);
+          table.setColumnAlignment(formatServerName(manager, serverName), OTableFormatter.ALIGNMENT.RIGHT);
         }
       }
       Collections.sort(orderedServers);
+
+      final ODocument rowTotals = new ODocument();
 
       for (String fromServer : orderedServers) {
         // SEARCH FOR THE MEMBER
@@ -254,23 +254,44 @@ public class ODistributedOutput {
         final ODocument row = new ODocument();
         rows.add(row);
 
-        row.field("Servers", fromServer + (manager.getLocalNodeName().equals(fromServer) ? "*" : ""));
+        row.field("Servers", formatServerName(manager, fromServer));
 
         final ODocument latencies = fromMember.field("latencies");
         if (latencies == null)
           continue;
 
+        long total = 0;
         for (String toServer : orderedServers) {
           String value = "";
           if (toServer != null && !toServer.equals(fromServer)) {
             final ODocument latency = latencies.field(toServer);
             if (latency != null) {
-              value = String.format("%,d", ((Long) latency.field("entries")));
+              final Long entries = (Long) latency.field("entries");
+              total += entries;
             }
           }
-          row.field(toServer + (manager.getLocalNodeName().equals(toServer) ? "*" : ""), value);
+
+          final String serverLabel = formatServerName(manager, toServer);
+          row.field(serverLabel, String.format("%,d", total));
+
+          // AGGREGATE IN TOTALS
+          sumTotal(rowTotals, serverLabel, total);
         }
+        row.field("TOTAL", String.format("%,d", total));
+        sumTotal(rowTotals, "TOTAL", total);
       }
+
+      // FOOTER WITH THE TOTAL OF ALL THE ROWS
+      table.setFooter(rowTotals);
+
+      rowTotals.field("Servers", "TOTAL");
+      for (String fromServer : orderedServers) {
+        fromServer = formatServerName(manager, fromServer);
+        rowTotals.field(fromServer, String.format("%,d", rowTotals.field(fromServer)));
+      }
+      rowTotals.field("TOTAL", String.format("%,d", rowTotals.field("TOTAL")));
+
+      table.setColumnAlignment("TOTAL", OTableFormatter.ALIGNMENT.RIGHT);
     }
 
     table.writeRecords(rows, -1);
@@ -294,18 +315,27 @@ public class ODistributedOutput {
     table.setColumnHidden("#");
 
     if (members != null) {
-      // BUILD A SORTED SERVER LIST
+      // BUILD A SORTED SERVER LIST AND OPERATION NAMES
       final List<String> orderedServers = new ArrayList<String>(members.size());
+      final Set<String> operations = new LinkedHashSet<String>();
       for (ODocument fromMember : members) {
         if (fromMember != null) {
           String serverName = fromMember.field("name");
           orderedServers.add(serverName);
 
-          table.setColumnAlignment(serverName + (manager.getLocalNodeName().equals(serverName) ? "*" : ""),
-              OTableFormatter.ALIGNMENT.RIGHT);
+          // INSERT ALL THE FOUND OPERATIONS
+          final ODocument messages = fromMember.field("messages");
+          if (messages != null) {
+            for (String opName : messages.fieldNames()) {
+              operations.add(opName);
+            }
+          }
         }
       }
+
       Collections.sort(orderedServers);
+
+      final ODocument rowTotals = new ODocument();
 
       for (String server : orderedServers) {
         // SEARCH FOR THE MEMBER
@@ -324,19 +354,45 @@ public class ODistributedOutput {
         final ODocument row = new ODocument();
         rows.add(row);
 
-        row.field("Servers", server + (manager.getLocalNodeName().equals(server) ? "*" : ""));
+        row.field("Servers", formatServerName(manager, server));
 
         final ODocument messages = member.field("messages");
         if (messages == null)
           continue;
 
-        for (String opName : messages.fieldNames()) {
+        long total = 0;
+        for (String opName : operations) {
           final Long counter = messages.field(opName);
+          if (counter == null) {
+            row.field(opName, "");
+            continue;
+          }
+
+          total += counter;
           final String value = String.format("%,d", counter);
           row.field(opName, value);
+
+          // AGGREGATE IN TOTALS
+          sumTotal(rowTotals, opName, counter);
+
+          table.setColumnAlignment(opName, OTableFormatter.ALIGNMENT.RIGHT);
         }
+        row.field("TOTAL", String.format("%,d", total));
+
+        sumTotal(rowTotals, "TOTAL", total);
       }
+
+      // FOOTER WITH THE TOTAL OF ALL THE ROWS
+      table.setFooter(rowTotals);
+
+      rowTotals.field("Servers", "TOTAL");
+      for (String opName : operations) {
+        rowTotals.field(opName, String.format("%,d", rowTotals.field(opName)));
+      }
+      rowTotals.field("TOTAL", String.format("%,d", rowTotals.field("TOTAL")));
     }
+
+    table.setColumnAlignment("TOTAL", OTableFormatter.ALIGNMENT.RIGHT);
 
     table.writeRecords(rows, -1);
     buffer.append("\n");
@@ -344,9 +400,16 @@ public class ODistributedOutput {
 
   }
 
+  protected static void sumTotal(final ODocument rowTotals, final String column, long total) {
+    Long totValue = rowTotals.field(column);
+    if (totValue == null)
+      totValue = 0l;
+    rowTotals.field(column, total + totValue);
+  }
+
   /**
    * Create a compact string with all the relevant information.
-   * 
+   *
    * @param manager
    * @param distribCfg
    * @return
@@ -437,6 +500,7 @@ public class ODistributedOutput {
     buffer.append("\n\nCLUSTER CONFIGURATION (LEGEND: X = Owner, o = Copy)");
 
     final OTableFormatter table = new OTableFormatter(new OTableFormatter.OTableOutput() {
+
       @Override
       public void onMessage(final String text, final Object... args) {
         buffer.append(String.format(text, args));
@@ -555,5 +619,9 @@ public class ODistributedOutput {
     table.writeRecords(rows, -1);
 
     return buffer.toString();
+  }
+
+  protected static String formatServerName(final OHazelcastPlugin manager, final String fromServer) {
+    return fromServer + (manager.getLocalNodeName().equals(fromServer) ? "*" : "");
   }
 }

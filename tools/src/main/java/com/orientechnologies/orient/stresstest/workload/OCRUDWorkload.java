@@ -22,6 +22,7 @@ package com.orientechnologies.orient.stresstest.workload;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -61,6 +62,10 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   private int                reads;
   private int                updates;
   private int                deletes;
+
+  public OCRUDWorkload() {
+    connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST;
+  }
 
   @Override
   public String getName() {
@@ -153,7 +158,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   }
 
   protected void createSchema(ODatabaseIdentifier databaseIdentifier) {
-    final ODatabase database = getDocumentDatabase(databaseIdentifier);
+    final ODatabase database = getDocumentDatabase(databaseIdentifier, OStorageRemote.CONNECTION_STRATEGY.STICKY);
     try {
       final OSchema schema = database.getMetadata().getSchema();
       if (!schema.existsClass(OCRUDWorkload.CLASS_NAME)) {
@@ -243,7 +248,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
         final ODocument doc = rec.getRecord();
         doc.field("updated", true);
         doc.save();
-        break;
+        return;
       } catch (ONeedRetryException e) {
         // RETRY
         lastException = e;
@@ -256,7 +261,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
     for (int retry = 0; retry < 10; ++retry)
       try {
         database.delete(rec.getIdentity());
-        break;
+        return;
       } catch (ONeedRetryException e) {
         // RETRY
         lastException = e;
@@ -299,7 +304,8 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
 
   @Override
   public void check(final ODatabaseIdentifier databaseIdentifier) {
-    final ODatabaseDocument db = (ODatabaseDocument) getDocumentDatabase(databaseIdentifier);
+    final ODatabaseDocument db = (ODatabaseDocument) getDocumentDatabase(databaseIdentifier,
+        OStorageRemote.CONNECTION_STRATEGY.STICKY);
     final ODatabaseTool repair = new ODatabaseRepair().setDatabase(db);
     repair.run();
   }

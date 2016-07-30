@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.graph.stresstest;
 
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -54,6 +55,7 @@ public class OGraphShortestPathWorkload extends OBaseGraphWorkload {
 
   public OGraphShortestPathWorkload() {
     super(false);
+    connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST;
   }
 
   @Override
