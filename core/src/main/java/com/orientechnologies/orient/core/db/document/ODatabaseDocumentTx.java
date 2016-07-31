@@ -3395,7 +3395,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
-<<<<<<< HEAD
   private void compileHooks() {
     final List<ORecordHook>[] intermediateHooksByScope = new List[ORecordHook.SCOPE.values().length];
     for (ORecordHook.SCOPE scope : ORecordHook.SCOPE.values())
