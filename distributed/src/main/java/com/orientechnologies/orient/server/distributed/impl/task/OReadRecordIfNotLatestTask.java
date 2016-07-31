@@ -39,11 +39,13 @@ public class OReadRecordIfNotLatestTask extends OAbstractReadRecordTask {
   protected int             recordVersion;
 
   public OReadRecordIfNotLatestTask() {
+    this.lockRecords = false;
   }
 
   public OReadRecordIfNotLatestTask(final ORecordId iRid, final int recordVersion) {
     super(iRid);
     this.recordVersion = recordVersion;
+    this.lockRecords = false;
   }
 
   @Override

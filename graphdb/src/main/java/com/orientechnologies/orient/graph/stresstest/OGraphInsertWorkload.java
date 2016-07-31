@@ -44,7 +44,6 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   private OWorkLoadResult resultEdges          = new OWorkLoadResult();
 
   public OGraphInsertWorkload() {
-    super(false);
     connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_CONNECT;
   }
 
@@ -101,6 +100,11 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
               graphContext.lastVertexToConnect = v;
 
             resultVertices.current.incrementAndGet();
+
+            if( settings.operationsPerTransaction > 0 && context.currentIdx % settings.operationsPerTransaction == 0 ){
+              graph.commit();
+              graph.begin();
+            }
 
             return null;
           }

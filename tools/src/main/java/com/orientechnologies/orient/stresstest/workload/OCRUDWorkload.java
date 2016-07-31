@@ -19,12 +19,12 @@
  */
 package com.orientechnologies.orient.stresstest.workload;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.ODatabaseRepair;
 import com.orientechnologies.orient.core.db.tool.ODatabaseTool;
@@ -219,18 +219,15 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   }
 
   public ODocument createOperation(final long n) {
-    ONeedRetryException lastException = null;
-    for (int retry = 0; retry < 10; ++retry)
-      try {
+    return (ODocument) ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+      @Override
+      public Object call(Integer iArgument) {
         ODocument doc = new ODocument(CLASS_NAME);
         doc.field("name", "value" + n);
         doc.save();
         return doc;
-      } catch (ONeedRetryException e) {
-        // RETRY
-        lastException = e;
       }
-    throw lastException;
+    }, 10);
   }
 
   public void readOperation(final ODatabase database, final long n) {
@@ -242,31 +239,25 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   }
 
   public void updateOperation(final ODatabase database, final OIdentifiable rec) {
-    ONeedRetryException lastException = null;
-    for (int retry = 0; retry < 10; ++retry)
-      try {
+    ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+      @Override
+      public Object call(Integer iArgument) {
         final ODocument doc = rec.getRecord();
         doc.field("updated", true);
         doc.save();
-        return;
-      } catch (ONeedRetryException e) {
-        // RETRY
-        lastException = e;
+        return doc;
       }
-    throw lastException;
+    }, 10);
   }
 
   public void deleteOperation(final ODatabase database, final OIdentifiable rec) {
-    ONeedRetryException lastException = null;
-    for (int retry = 0; retry < 10; ++retry)
-      try {
+    ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+      @Override
+      public Object call(Integer iArgument) {
         database.delete(rec.getIdentity());
-        return;
-      } catch (ONeedRetryException e) {
-        // RETRY
-        lastException = e;
+        return null;
       }
-    throw lastException;
+    }, 10);
   }
 
   private char assignState(final char state, final StringBuilder number, final char c) {

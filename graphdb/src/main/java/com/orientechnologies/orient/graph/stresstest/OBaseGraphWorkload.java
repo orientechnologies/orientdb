@@ -35,20 +35,15 @@ import com.tinkerpop.blueprints.impls.orient.*;
  * @author Luca Garulli
  */
 public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheckWorkload {
-  protected boolean tx = false;
-
-  protected OBaseGraphWorkload(final boolean tx) {
-    this.tx = tx;
-  }
-
   public class OWorkLoadContext extends OBaseWorkload.OBaseWorkLoadContext {
     OrientBaseGraph graph;
     OrientVertex    lastVertexToConnect;
     int             lastVertexEdges;
 
     @Override
-    public void init(ODatabaseIdentifier dbIdentifier, OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
-      graph = tx ? getGraph(dbIdentifier) : getGraphNoTx(dbIdentifier);
+    public void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction,
+        OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
+      graph = operationsPerTransaction > 0 ? getGraph(dbIdentifier) : getGraphNoTx(dbIdentifier);
     }
 
     @Override
@@ -78,7 +73,9 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
 
     database.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connectionStrategy.toString());
 
-    return new OrientGraph((ODatabaseDocumentTx) database);
+    final OrientGraph g = new OrientGraph((ODatabaseDocumentTx) database);
+    g.setAutoStartTx(false);
+    return g;
   }
 
   @Override

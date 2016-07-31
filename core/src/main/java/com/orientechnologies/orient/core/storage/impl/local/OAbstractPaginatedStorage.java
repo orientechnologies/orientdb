@@ -1366,8 +1366,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               rid.clusterId = cluster.getId();
 
               if (rid.clusterPosition > -1 && rid.clusterPosition != ppos.clusterPosition) {
-                throw new OTransactionException(
-                    "New record allocated #" + rid.clusterId + ":" + ppos.clusterPosition + " but the expected was " + rid);
+                throw new OConcurrentCreateException( rid, new ORecordId(rid.clusterId, ppos.clusterPosition));
               }
 
               rid.clusterPosition = ppos.clusterPosition;

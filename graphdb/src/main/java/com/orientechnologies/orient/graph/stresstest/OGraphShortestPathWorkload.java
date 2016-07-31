@@ -54,7 +54,6 @@ public class OGraphShortestPathWorkload extends OBaseGraphWorkload {
   private final List<ORID> startingVertices     = new ArrayList<ORID>(limit > -1 ? limit : 1000);
 
   public OGraphShortestPathWorkload() {
-    super(false);
     connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST;
   }
 

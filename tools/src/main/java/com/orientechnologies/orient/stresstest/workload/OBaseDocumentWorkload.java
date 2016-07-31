@@ -34,7 +34,7 @@ public abstract class OBaseDocumentWorkload extends OBaseWorkload {
     private ODatabase db;
 
     @Override
-    public void init(final ODatabaseIdentifier dbIdentifier, final OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
+    public void init(final ODatabaseIdentifier dbIdentifier, int operationsPerTransaction, final OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
       db = getDocumentDatabase(dbIdentifier, connectionStrategy);
     }
 
