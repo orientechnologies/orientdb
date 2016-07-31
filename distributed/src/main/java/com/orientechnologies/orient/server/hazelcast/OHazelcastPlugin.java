@@ -766,7 +766,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       final ODistributedDatabaseImpl distribDatabase = messageService.registerDatabase(dbName);
       distribDatabase.setOnline();
 
-      // TODO: TEMPORARY PATCH TO WAIT FOR DB PROPAGATION
+      // TODO: TEMPORARY PATCH TO WAIT FOR DB PROPAGATION IN CFG TO ALL THE OTHER SERVERS
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
@@ -774,7 +774,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         throw new ODistributedException("Error on creating database '" + dbName + "' on distributed nodes");
       }
 
-      // WAIT UNTIL THE DATABASE HAS BEEN PROPAGATED IN ALL THE NODES
+      // WAIT UNTIL THE DATABASE HAS BEEN PROPAGATED TO ALL THE SERVERS
       final ODistributedConfiguration cfg = getDatabaseConfiguration(dbName);
 
       final Set<String> servers = cfg.getAllConfiguredServers();

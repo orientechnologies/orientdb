@@ -47,10 +47,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
+import com.orientechnologies.orient.server.distributed.task.*;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -204,6 +201,8 @@ public class ODistributedTransactionManager {
 
           if (e instanceof RuntimeException)
             throw (RuntimeException) e;
+          else if (e instanceof InterruptedException)
+            throw OException.wrapException(new ODistributedOperationException("Cannot commit transaction"), e);
           else
             throw OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
         }
@@ -211,6 +210,9 @@ public class ODistributedTransactionManager {
       } catch (RuntimeException e) {
         executionModeSynch = true;
         throw e;
+      } catch (InterruptedException e) {
+        executionModeSynch = true;
+        throw OException.wrapException(new ODistributedOperationException("Cannot commit transaction"), e);
       } catch (Exception e) {
         executionModeSynch = true;
         throw OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
@@ -476,8 +478,8 @@ public class ODistributedTransactionManager {
             Thread.sleep(autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay));
 
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "Distributed transaction: cannot lock records %s because owned by %s (retry %d/%d, thread=%d)", recordsToLock,
-              lastLockHolder, retry, maxAutoRetry, Thread.currentThread().getId());
+              "Distributed transaction: %s cannot lock records %s because owned by %s (retry %d/%d, thread=%d)",
+              reqContext.getReqId(), recordsToLock, lastLockHolder, retry, maxAutoRetry, Thread.currentThread().getId());
 
           break;
         }

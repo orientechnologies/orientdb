@@ -101,28 +101,37 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
               // CONDITION
               @Override
               public Boolean call(ODatabaseDocumentTx database) {
-                return database.countClass("Person") > (count * writerCount * (SERVERS-1) * 1 / 3);
+                return database.countClass("Person") > (count * writerCount * (SERVERS - 1) * 1 / 3);
               }
             }, // ACTION
                 new OCallable<Boolean, ODatabaseDocumentTx>() {
-              @Override
-              public Boolean call(final ODatabaseDocumentTx database) {
-                Assert.assertTrue("Insert was too fast", inserting);
+                  @Override
+                  public Boolean call(final ODatabaseDocumentTx database) {
+                    Assert.assertTrue("Insert was too fast", inserting);
 
-                banner("RESTARTING SERVER " + (SERVERS - 1));
+                    banner("RESTARTING SERVER " + (SERVERS - 1) + " - Person records: " + database.countClass("Person"));
 
-                delayWriter = 100;
+                    delayWriter = 100;
 
-                try {
-                  final String nodeName = server.server.getDistributedManager().getLocalNodeName();
-                  ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager()).restartNode(nodeName);
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
+                    try {
+                      final String nodeName = server.server.getDistributedManager().getLocalNodeName();
+                      ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager()).restartNode(nodeName);
+                    } catch (Exception e) {
+                      e.printStackTrace();
+                    }
 
-                return null;
-              }
-            });
+                    try {
+                      serverInstance.get(2).getServerInstance().getDistributedManager().waitUntilNodeOnline();
+                    } catch (InterruptedException e) {
+                      Thread.currentThread().interrupt();
+                    }
+
+                    banner("SERVER " + (SERVERS - 1) + " RESTARTED - Person records: " + database.countClass("Person"));
+
+
+                    return null;
+                  }
+                });
 
           } catch (Exception e) {
             e.printStackTrace();

@@ -21,6 +21,7 @@ package com.orientechnologies.orient.stresstest.workload;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 
@@ -42,7 +43,8 @@ public abstract class OBaseWorkload implements OWorkload {
     public int currentIdx;
     public int totalPerThread;
 
-    public abstract void init(ODatabaseIdentifier dbIdentifier, OStorageRemote.CONNECTION_STRATEGY connectionStrategy);
+    public abstract void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction,
+        OStorageRemote.CONNECTION_STRATEGY connectionStrategy);
 
     public abstract void close();
   }
@@ -120,33 +122,51 @@ public abstract class OBaseWorkload implements OWorkload {
           context.threadId = currentThread;
           context.totalPerThread = context.threadId < concurrencyLevel - 1 ? totalPerThread : totalPerLastThread;
 
-          context.init(dbIdentifier, connectionStrategy);
+          context.init(dbIdentifier, operationsPerTransaction, connectionStrategy);
           try {
             final int startIdx = totalPerThread * context.threadId;
 
             if (operationsPerTransaction > 0)
               beginTransaction(context);
 
-            for (int i = 0; i < context.totalPerThread; ++i) {
-              context.currentIdx = startIdx + i;
+            final AtomicInteger operationsExecutedInTx = new AtomicInteger();
 
-              if (operationsPerTransaction > 0 && (i + 1) % operationsPerTransaction == 0) {
-                commitTransaction(context);
-                beginTransaction(context);
-              }
+            for (final AtomicInteger i = new AtomicInteger(); i.get() < context.totalPerThread; i.incrementAndGet()) {
+              ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+                @Override
+                public Object call(final Integer retry) {
+                  if (retry > 0) {
+                    i.addAndGet(operationsExecutedInTx.get() * -1);
+                    operationsExecutedInTx.set(0);
+                  }
 
-              final long startOp = System.nanoTime();
-              try {
-                callback.call(context);
-              } catch (Exception e) {
-                errors.add(e.toString());
-                if (errors.size() > MAX_ERRORS) {
-                  e.printStackTrace();
-                  break;
+                  context.currentIdx = startIdx + i.get();
+
+                  if (operationsPerTransaction > 0 && (i.get() + 1) % operationsPerTransaction == 0) {
+                    commitTransaction(context);
+                    operationsExecutedInTx.set(0);
+                    beginTransaction(context);
+                  }
+
+                  final long startOp = System.nanoTime();
+                  try {
+
+                    return callback.call(context);
+
+                  } catch (Exception e) {
+                    errors.add(e.toString());
+                    if (errors.size() > MAX_ERRORS) {
+                      e.printStackTrace();
+                      return null;
+                    }
+                  } finally {
+                    operationTiming[context.currentIdx] = System.nanoTime() - startOp;
+                    operationsExecutedInTx.incrementAndGet();
+                  }
+
+                  return null;
                 }
-              } finally {
-                operationTiming[context.currentIdx] = System.nanoTime() - startOp;
-              }
+              }, 10);
             }
 
             if (operationsPerTransaction > 0)

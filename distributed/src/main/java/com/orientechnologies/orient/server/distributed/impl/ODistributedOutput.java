@@ -262,20 +262,23 @@ public class ODistributedOutput {
 
         long total = 0;
         for (String toServer : orderedServers) {
-          String value = "";
+          final String serverLabel = formatServerName(manager, toServer);
+
           if (toServer != null && !toServer.equals(fromServer)) {
             final ODocument latency = latencies.field(toServer);
             if (latency != null) {
               final Long entries = (Long) latency.field("entries");
               total += entries;
+
+              row.field(serverLabel, String.format("%,d", entries));
+
+              // AGGREGATE IN TOTALS
+              sumTotal(rowTotals, serverLabel, total);
+              continue;
             }
           }
 
-          final String serverLabel = formatServerName(manager, toServer);
-          row.field(serverLabel, String.format("%,d", total));
-
-          // AGGREGATE IN TOTALS
-          sumTotal(rowTotals, serverLabel, total);
+          row.field(serverLabel, "");
         }
         row.field("TOTAL", String.format("%,d", total));
         sumTotal(rowTotals, "TOTAL", total);

@@ -55,7 +55,7 @@ public interface ODistributedDatabase {
    * @throws com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException
    *           if the record wasn't locked
    */
-  void lockRecord(OIdentifiable iRecord, final ODistributedRequestId iRequestId, long timeout);
+  boolean lockRecord(OIdentifiable iRecord, final ODistributedRequestId iRequestId, long timeout);
 
   /**
    * Unlocks the record previously locked through #lockRecord method.

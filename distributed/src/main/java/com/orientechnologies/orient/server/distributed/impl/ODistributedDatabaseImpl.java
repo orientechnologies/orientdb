@@ -405,10 +405,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public void lockRecord(final OIdentifiable iRecord, final ODistributedRequestId iRequestId, final long timeout) {
+  public boolean lockRecord(final OIdentifiable iRecord, final ODistributedRequestId iRequestId, final long timeout) {
     final ORID rid = iRecord.getIdentity();
 
     final ODistributedLock lock = new ODistributedLock(iRequestId);
+
+    boolean newLock = true;
 
     ODistributedLock currentLock = lockManager.putIfAbsent(rid, lock);
     if (currentLock != null) {
@@ -418,6 +420,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             "Distributed transaction: %s locked record %s in database '%s' owned by %s (thread=%d)", iRequestId, iRecord,
             databaseName, currentLock.reqId, Thread.currentThread().getId());
         currentLock = null;
+        newLock = false;
       } else if (timeout > 0) {
         // TRY TO RE-LOCK IT UNTIL TIMEOUT IS EXPIRED
         final long startTime = System.currentTimeMillis();
@@ -465,6 +468,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     if (currentLock != null)
       throw new ODistributedRecordLockedException(rid, currentLock.reqId, timeout);
+
+    // DUMP STACK TRACE
+    // OException.dumpStackTrace(String.format("Distributed transaction: %s locked record %s in database '%s' (thread=%d)",
+    // iRequestId,
+    // iRecord, databaseName, Thread.currentThread().getId()));
+
+    return newLock;
   }
 
   @Override
@@ -476,10 +486,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     if (owner != null) {
       if (!owner.reqId.equals(requestId)) {
         ODistributedServerLog.error(this, localNodeName, null, DIRECTION.NONE,
-            "Distributed transaction: cannot unlocked record %s in database '%s' because owner %s <> current %s (thread=%d)",
-            iRecord, databaseName, owner.reqId, requestId, Thread.currentThread().getId());
+            "Distributed transaction: cannot unlock record %s in database '%s' because owner %s <> current %s (thread=%d)", iRecord,
+            databaseName, owner.reqId, requestId, Thread.currentThread().getId());
         return;
       }
+
+      // DUMP STACK TRACE
+      // OException
+      // .dumpStackTrace(String.format("Distributed transaction: %s unlocked record %s in database '%s' (owner=%s, thread=%d)",
+      // requestId, iRecord, databaseName, owner != null ? owner.reqId : "null", Thread.currentThread().getId()));
 
       // NOTIFY ANY WAITERS
       owner.lock.countDown();
@@ -576,7 +591,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       database.close();
     }
 
-    ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+    ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
         "Distributed transaction: rolled back %d transactions (%d total operations) in database '%s' owned by server '%s'",
         rollbacks, tasks, databaseName, manager.getNodeNameById(iNodeId));
   }

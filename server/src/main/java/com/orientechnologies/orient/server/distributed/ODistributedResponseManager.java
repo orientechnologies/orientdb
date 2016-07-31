@@ -24,6 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
@@ -504,6 +505,9 @@ public class ODistributedResponseManager {
                 if (payload instanceof ODistributedRecordLockedException)
                   // JUST ONE ODistributedRecordLockedException IS ENOUGH TO FAIL THE OPERATION BECAUSE RESOURCES CANNOT BE LOCKED
                   return false;
+                if (payload instanceof OConcurrentCreateException)
+                  // JUST ONE OConcurrentCreateException IS ENOUGH TO FAIL THE OPERATION BECAUSE RID ARE DIFFERENT
+                  return false;
               } else if (++responsesForQuorum >= quorum)
                 // QUORUM REACHED
                 break;
@@ -594,18 +598,20 @@ public class ODistributedResponseManager {
         "Detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request (%s)",
         conflicts, quorum, request);
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
+    // if (ODistributedServerLog.isDebugEnabled())
+    ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
 
     if (!undoRequest()) {
       // SKIP UNDO
       return null;
     }
 
-    // CHECK IF THERE IS AT LEAST ONE ODistributedRecordLockedException
+    // CHECK IF THERE IS AT LEAST ONE ODistributedRecordLockedException or OConcurrentCreateException
     for (Object r : responses.values()) {
       if (r instanceof ODistributedRecordLockedException)
         throw (ODistributedRecordLockedException) r;
+      else if (r instanceof OConcurrentCreateException)
+        throw (OConcurrentCreateException) r;
     }
 
     final Object goodResponsePayload = bestResponsesGroup.isEmpty() ? null : bestResponsesGroup.get(0).getPayload();
