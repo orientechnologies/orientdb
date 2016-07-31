@@ -447,7 +447,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (lockingNodeName == null || !manager.isNodeAvailable(lockingNodeName)) {
         ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
             "Distributed transaction: forcing unlock of record %s in database '%s' because the owner server '%s' is offline (reqId=%s ownerReqId=%s, thread=%d)",
-            iRecord.getIdentity(), databaseName, iRequestId, currentLock.reqId, Thread.currentThread().getId());
+            iRecord.getIdentity(), databaseName, lockingNodeName, iRequestId, currentLock.reqId, Thread.currentThread().getId());
 
         // FORCE THE UNLOCK AND LOCK OF CURRENT REQ-ID
         lockManager.put(rid, lock);
