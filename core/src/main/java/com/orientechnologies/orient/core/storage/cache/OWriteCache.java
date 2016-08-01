@@ -72,9 +72,6 @@ public interface OWriteCache {
 
   void makeFuzzyCheckpoint();
 
-  void lock() throws IOException;
-
-  void unlock() throws IOException;
 
   boolean exists(String fileName);
 

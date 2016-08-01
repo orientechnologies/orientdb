@@ -453,14 +453,6 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     }
   }
 
-  @Override
-  public void lock() {
-  }
-
-  @Override
-  public void unlock() {
-  }
-
   private static final class MemoryFile {
     private final int id;
     private final int storageId;

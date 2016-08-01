@@ -80,14 +80,6 @@ public interface OFile {
 
   long write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
-  void lock() throws IOException;
-
-  FileLock lock(final long iRangeFrom, final long iRangeSize, final boolean iShared) throws IOException;
-
-  OFile unlock(final FileLock iLock) throws IOException;
-
-  void unlock() throws IOException;
-
   /**
    * Shrink the file content (filledUpTo attribute only)
    *
