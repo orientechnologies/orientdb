@@ -699,22 +699,23 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
       doc = getDatabase().newInstance();
       doc.setTrackingChanges(false);
       int i = 0;
+
+      ODocument mapDoc = new ODocument();
+      mapDoc.setTrackingChanges(false);
+      mapDoc.fromMap((Map) matchContext.matched);
+
       for (OExpression item : returnItems) {
         OIdentifier returnAliasIdentifier = returnAliases.get(i);
         OIdentifier returnAlias;
-
         if (returnAliasIdentifier == null) {
           returnAlias = item.getDefaultAlias();
         } else {
           returnAlias = returnAliasIdentifier;
         }
-        ODocument mapDoc = new ODocument();
-        mapDoc.setTrackingChanges(false);
-        mapDoc.fromMap((Map) matchContext.matched);
         doc.field(returnAlias.getStringValue(), item.execute(mapDoc, ctx));
-
         i++;
       }
+      doc.setTrackingChanges(true);
     }
 
     if (request.getResultListener() != null && doc != null) {
