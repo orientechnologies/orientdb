@@ -60,20 +60,34 @@ public class OSelectExecutionPlanner {
     handleLet(result, perRecordLetClause, ctx);
 
     handleWhere(result, whereClause, ctx);
-    handleExpand(result, ctx);
+
 
     handleProjectionsBeforeOrderBy(result, projection, orderBy, ctx);
-    handleOrderBy(result, orderBy, ctx);
+    if (!expand) {
+      handleOrderBy(result, orderBy, ctx);
+      if (skip != null) {
+        result.chain(new SkipExecutionStep(skip, ctx));
+      }
 
-    if (skip != null) {
-      result.chain(new SkipExecutionStep(skip, ctx));
+      if (limit != null) {
+        result.chain(new LimitExecutionStep(limit, ctx));
+      }
     }
 
-    if (limit != null) {
-      result.chain(new LimitExecutionStep(limit, ctx));
-    }
     handleProjections(result, ctx);
 
+    handleExpand(result, ctx);
+
+    if (expand) {
+      handleOrderBy(result, orderBy, ctx);
+      if (skip != null) {
+        result.chain(new SkipExecutionStep(skip, ctx));
+      }
+
+      if (limit != null) {
+        result.chain(new LimitExecutionStep(limit, ctx));
+      }
+    }
     return result;
   }
 
@@ -344,7 +358,7 @@ public class OSelectExecutionPlanner {
 
   private void handleExpand(OSelectExecutionPlan result, OCommandContext ctx) {
     if (expand) {
-      //TODO
+      result.chain(new ExpandStep(ctx));
     }
   }
 

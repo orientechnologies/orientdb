@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -15,6 +14,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -1379,6 +1379,110 @@ public class OSelectStatementExecutionTest {
     OSelectExecutionPlan plan = (OSelectExecutionPlan) result.getExecutionPlan().get();
     Assert.assertEquals(2, plan.getSteps().size());
     Assert.assertEquals(FetchFromClassExecutionStep.class, plan.getSteps().get(0).getClass());//index not used
+    result.close();
+  }
+
+  @Test public void testExpand1() {
+    String childClassName = "testExpand1_child";
+    String parentClassName = "testExpand1_parent";
+    OClass childClass = db.getMetadata().getSchema().createClass(childClassName);
+    OClass parentClass = db.getMetadata().getSchema().createClass(parentClassName);
+
+    int count = 10;
+    for (int i = 0; i < count; i++) {
+      ODocument doc = db.newInstance(childClassName);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.setProperty("foo", i);
+      doc.save();
+
+      ODocument parent = new ODocument(parentClassName);
+      parent.setProperty("linked", doc);
+      parent.save();
+    }
+
+    OTodoResultSet result = db.query("select expand(linked) from " + parentClassName);
+    printExecutionPlan(result);
+
+    for (int i = 0; i < count; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testExpand2() {
+    String childClassName = "testExpand2_child";
+    String parentClassName = "testExpand2_parent";
+    OClass childClass = db.getMetadata().getSchema().createClass(childClassName);
+    OClass parentClass = db.getMetadata().getSchema().createClass(parentClassName);
+
+    int count = 10;
+    int collSize = 11;
+    for (int i = 0; i < count; i++) {
+      List coll = new ArrayList<>();
+      for (int j = 0; j < collSize; j++) {
+        ODocument doc = db.newInstance(childClassName);
+        doc.setProperty("name", "name" + i);
+        doc.save();
+        coll.add(doc);
+      }
+
+      ODocument parent = new ODocument(parentClassName);
+      parent.setProperty("linked", coll);
+      parent.save();
+    }
+
+    OTodoResultSet result = db.query("select expand(linked) from " + parentClassName);
+    printExecutionPlan(result);
+
+    for (int i = 0; i < count * collSize; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testExpand3() {
+    String childClassName = "testExpand3_child";
+    String parentClassName = "testExpand3_parent";
+    OClass childClass = db.getMetadata().getSchema().createClass(childClassName);
+    OClass parentClass = db.getMetadata().getSchema().createClass(parentClassName);
+
+    int count = 30;
+    int collSize = 7;
+    for (int i = 0; i < count; i++) {
+      List coll = new ArrayList<>();
+      for (int j = 0; j < collSize; j++) {
+        ODocument doc = db.newInstance(childClassName);
+        doc.setProperty("name", "name" + j);
+        doc.save();
+        coll.add(doc);
+      }
+
+      ODocument parent = new ODocument(parentClassName);
+      parent.setProperty("linked", coll);
+      parent.save();
+    }
+
+    OTodoResultSet result = db.query("select expand(linked) from " + parentClassName + " order by name");
+    printExecutionPlan(result);
+
+    String last = null;
+    for (int i = 0; i < count * collSize; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      if (i > 0) {
+        Assert.assertTrue(last.compareTo(next.getProperty("name")) <= 0);
+      }
+      last = next.getProperty("name");
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
     result.close();
   }
 
