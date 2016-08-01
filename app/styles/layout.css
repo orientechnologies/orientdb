@@ -197,6 +197,13 @@ body div.container-studio {
   padding-top: 5px;
 }
 
+.aside-form-block {
+
+  background-color: #30333a;
+  color: #c5c5c5;
+  padding-top: 5px;
+}
+
 .vertex-aside {
   height: 100%;
 }

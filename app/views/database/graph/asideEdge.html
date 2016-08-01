@@ -1,4 +1,4 @@
-<div class="container-fluid vertex-aside" ng-controller="EdgeAsideController">
+<div class="container-fluid vertex-aside " ng-controller="EdgeAsideController">
   <div class="row">
     <ul class="nav nav-pills nav-justified nav-pills-aside">
       <li ng-class="{active : 'properties' == active }"><a href="javascript:void(0)"
@@ -18,11 +18,8 @@
       No properties (lightweight edge)
     </h5>
   </div>
-  <div class="row aside-form">
-
-    <div class="col-md-12" ng-show="active == 'properties'">
-
-
+  <div class="row aside-form" ng-show="active == 'properties'">
+    <div class="col-md-12">
       <form class="form-horizontal">
         <div class="form-group" ng-repeat="header in headers">
           <label for="inputDisplay" class="col-md-4 control-label">{{header}}</label>
@@ -33,13 +30,15 @@
         </div>
       </form>
     </div>
-    <div class="col-md-12" ng-show="active == 'settings'">
+  </div>
+  <div class="row aside-form-block" ng-show="active == 'settings'">
+    <div class="col-md-12">
 
       <form class="form-horizontal">
         <div class="form-group">
-          <label for="inputDisplay" class="col-md-4 control-label">Display</label>
+          <label for="inputDisplay" class="col-md-6 control-label">Display</label>
 
-          <div class="col-md-8">
+          <div class="col-md-6">
             <select ng-model="config.display" id="inputDisplay"
                     ng-options="h for h in headers">
 
@@ -47,16 +46,16 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="inputRadius" class="col-md-4 control-label">Stroke Width</label>
+          <label for="inputRadius" class="col-md-6 control-label">Stroke Width</label>
 
-          <div class="col-md-8">
+          <div class="col-md-6">
             <input id="inputRadius" ng-model="config.strokeWidth" class="form-control">
           </div>
         </div>
         <div class="form-group">
-          <label class="col-md-4 control-label">Stroke</label>
+          <label class="col-md-6 control-label">Stroke</label>
 
-          <div class="col-md-8">
+          <div class="col-md-6">
             <spectrum-colorpicker
               ng-model="config.stroke"
               options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
@@ -64,11 +63,12 @@
         </div>
 
         <div class="form-group">
-          <label class="col-md-4 control-label"></label>
-          <div class="col-md-8 btn-group">
+          <label class="col-md-6 control-label"></label>
+          <div class="col-md-6 btn-group">
             <button href="javascript:void(0)" class="btn btn-primary btn-sm"
                     ng-click="save()"><i
-              class="fa fa-save"> Save configuration</i>
+              class="fa fa-save"> </i>
+              Save
             </button>
           </div>
         </div>

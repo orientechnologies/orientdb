@@ -239,13 +239,21 @@ var OrientGraph = (function () {
     }
 
     this.toggleLegend = function () {
-      var parent = d3.select(this.classesContainer.node().parentNode);
-      var cls = parent.attr("class");
-      if (cls.indexOf("hide") != -1) {
-        parent.attr("class", "legend-container");
-      } else {
-        parent.attr("class", "legend-container hide");
-      }
+
+
+      this.svgContainer.selectAll("g.legend-container").attr("class", function () {
+        var cls = d3.select(this).attr("class");
+        return cls.indexOf("hide") != -1 ? "legend-container" : "legend-container hide";
+      })
+      //var parent = d3.select(this.classesContainer.node().parentNode());
+      //
+      //console.log(parent);
+      //var cls = parent.attr("class");
+      //if (cls.indexOf("hide") != -1) {
+      //  parent.attr("class", "legend-container");
+      //} else {
+      //  parent.attr("class", "legend-container hide");
+      //}
 
     }
     this.fullScreen = function (full) {

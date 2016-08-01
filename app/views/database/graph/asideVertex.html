@@ -15,9 +15,9 @@
       {{ active | capitalize}}
     </h5>
   </div>
-  <div class="row aside-form">
+  <div class="row  aside-form" ng-show="active == 'properties'">
 
-    <div class="col-md-12" ng-show="active == 'properties'">
+    <div class="col-md-12 ">
       <form class="form-horizontal">
         <div class="form-group vertex-fields" ng-repeat="header in headers">
           <label for="inputDisplay" class="col-md-4 control-label">{{header}}</label>
@@ -28,13 +28,16 @@
         </div>
       </form>
     </div>
-    <div class="col-md-12" ng-show="active == 'settings'">
+  </div>
+
+  <div class="row  aside-form-block" ng-show="active == 'settings'">
+    <div class="col-md-12 ">
 
       <form class="form-horizontal">
         <div class="form-group">
-          <label for="inputDisplay" class="col-md-4 control-label">Display</label>
+          <label for="inputDisplay" class="col-md-6 control-label">Display</label>
 
-          <div class="col-md-8">
+          <div class="col-md-6">
             <select ng-model="config.display" ng-change="setDirty()" id="inputDisplay"
                     ng-options="h for h in headers">
 
@@ -42,79 +45,80 @@
           </div>
         </div>
         <div class="form-group">
-          <label class="col-md-4 control-label">Display Color</label>
+          <label class="col-md-6 control-label">Display Color</label>
 
-          <div class="col-md-8">
+          <div class="col-md-6">
             <spectrum-colorpicker ng-change="setDirty()"
                                   ng-model="config.displayColor"
                                   options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
           </div>
         </div>
         <div class="form-group">
-          <label class="col-md-4 control-label">Display Background</label>
+          <label class="col-md-6 control-label">Display Background</label>
 
-          <div class="col-md-8">
+          <div class="col-md-6">
             <spectrum-colorpicker ng-change="setDirty()"
                                   ng-model="config.displayBackground"
                                   options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
           </div>
         </div>
         <div class="form-group">
-          <label for="inputIcon" class="col-md-4 control-label">Icon</label>
+          <label for="inputIcon" class="col-md-6 control-label">Icon</label>
 
-          <div class="col-md-8">
+          <div class="col-md-6">
             <select fontpicker id="inputIcon" class="form-control" ng-change="setDirty()"
                     ng-model="config.iconCss">
               <option value=""></option>
-              <option ng-repeat="icon in icons" >{{icon.css}}</option>
+              <option ng-repeat="icon in icons">{{icon.css}}</option>
             </select>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="col-md-4 control-label">Icon Size</label>
-          <div class="col-md-8">
+          <label class="col-md-6 control-label">Icon Size</label>
+          <div class="col-md-6">
             <input type="number" ng-model="config.iconSize" ng-change="setDirty()" class="form-control">
           </div>
         </div>
         <div class="form-group">
-          <label class="col-md-4 control-label">Icon Vertical Padding</label>
-          <div class="col-md-8">
+          <label class="col-md-6 control-label">Icon Vertical Padding</label>
+          <div class="col-md-6">
             <input type="number" ng-model="config.iconVPadding" ng-change="setDirty()" class="form-control">
           </div>
         </div>
 
         <div class="form-group">
-          <label for="inputRadius" class="col-md-4 control-label">Radius</label>
+          <label for="inputRadius" class="col-md-6 control-label">Radius</label>
 
-          <div class="col-md-8">
+          <div class="col-md-6">
             <input id="inputRadius" ng-model="config.r" ng-change="setDirty()" class="form-control">
           </div>
         </div>
         <div class="form-group">
-          <label class="col-md-4 control-label">Fill</label>
+          <label class="col-md-6 control-label">Fill</label>
 
-          <div class="col-md-8">
+          <div class="col-md-6">
             <spectrum-colorpicker
               ng-model="config.fill" ng-change="setDirty()"
               options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
           </div>
         </div>
         <div class="form-group">
-          <label class="col-md-4 control-label">Stroke</label>
+          <label class="col-md-6 control-label">Stroke</label>
 
-          <div class="col-md-8">
+          <div class="col-md-6">
             <spectrum-colorpicker ng-change="setDirty()"
                                   ng-model="config.stroke"
                                   options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
           </div>
         </div>
         <div class="form-group">
-          <label class="col-md-4 control-label"></label>
-          <div class="col-md-8 btn-group">
+
+          <div class="col-md-6 col-md-offset-6">
             <button href="javascript:void(0)" class="btn btn-primary btn-sm"
                     ng-click="save()"><i
-              class="fa fa-save"> Save configuration</i>
+              class="fa fa-save"> </i>
+              Save
             </button>
           </div>
         </div>

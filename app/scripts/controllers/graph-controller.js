@@ -541,6 +541,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
               title: title,
               template: 'views/database/graph/asideVertex.html',
               show: true,
+              absolute:false,
               fullscreen: $scope.fullscreen
             });
           }, 200);
@@ -602,7 +603,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
         } else {
 
-          var q = "traverse both() from " + v['@rid'] + " while $depth <2"
+          var q = "traverse both() from " + v['@rid'] + " while $depth < 2"
           CommandApi.graphQuery(q, {
             database: $routeParams.database,
             language: 'sql',
@@ -735,7 +736,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                         }
 
                         var props = {rid: v['@rid'], label: label};
-                        var query = "traverse out({{label}})  from {{rid}} while $depth <2 "
+                        var query = "traverse out({{label}})  from {{rid}} while $depth < 2 "
                         var queryText = S(query).template(props).s;
 
 
@@ -855,7 +856,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                       }
 
                       var props = {rid: v['@rid'], label: label};
-                      var query = "traverse in({{label}})  from {{rid}} while $depth <2 "
+                      var query = "traverse in({{label}})  from {{rid}} while $depth < 2 "
                       var queryText = S(query).template(props).s;
 
 

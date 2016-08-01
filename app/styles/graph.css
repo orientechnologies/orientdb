@@ -25,18 +25,49 @@ text.id {
 }
 
 
+@media (min-height: 450px) {
+  .graph-container {
+    height: 200px;
+  }
+}
 @media (min-height: 500px) {
   .graph-container {
-    height: 320px;
+    height: 250px;
+  }
+}
+@media (min-height: 550px) {
+  .graph-container {
+    height: 300px;
   }
 }
 @media (min-height: 600px) {
   .graph-container {
-    height: 450px;
+    height: 350px;
+  }
+}
+@media (min-height: 650px) {
+  .graph-container {
+    height: 400px;
   }
 }
 
+@media (min-height: 700px) {
+  .graph-container {
+    height: 450px;
+  }
+}
+@media (min-height: 750px) {
+  .graph-container {
+    height: 500px;
+  }
+}
 @media (min-height: 800px) {
+  .graph-container {
+    height: 550px;
+  }
+}
+
+@media (min-height: 900px) {
   .graph-container {
     height: 720px;
   }
