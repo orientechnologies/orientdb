@@ -22,10 +22,7 @@ package com.orientechnologies.orient.server.hazelcast;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.impl.task.OHeartbeatTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
@@ -150,7 +147,7 @@ public class OClusterHealthChecker extends TimerTask {
       return;
 
     if (OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER.getValueAsBoolean()) {
-      ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.IN,
+      ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
           "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms). Setting the database as OFFLINE", server,
           dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
 
@@ -158,10 +155,9 @@ public class OClusterHealthChecker extends TimerTask {
 
     } else {
 
-      ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.IN,
+      ODistributedServerLog.warn(this, manager.getLocalNodeName(), server, ODistributedServerLog.DIRECTION.OUT,
           "Server '%s' did not respond to the heartbeat message (db=%s, timeout=%dms), but cannot be set OFFLINE by configuration",
           server, dbName, OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
-
     }
   }
 
@@ -170,7 +166,11 @@ public class OClusterHealthChecker extends TimerTask {
       final ODistributedServerManager.DB_STATUS status = (ODistributedServerManager.DB_STATUS) manager.getConfigurationMap()
           .get(CONFIG_DBSTATUS_PREFIX + manager.getLocalNodeName() + "." + dbName);
       if (status == null) {
-        OLogManager.instance().warn(this, "Status of database '%s' on server '%s' is missing", dbName, manager.getLocalNodeName());
+        OLogManager.instance().warn(this, "Status of database '%s' on server '%s' is missing, republishing it...", dbName,
+            manager.getLocalNodeName());
+        final ODistributedDatabase ddb = manager.getMessageService().getDatabase(dbName);
+        if (ddb != null)
+          ddb.setOnline();
       }
     }
   }

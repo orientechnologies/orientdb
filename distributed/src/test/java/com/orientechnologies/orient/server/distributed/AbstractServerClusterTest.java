@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.impl.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODeleteRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateRecordTask;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -178,7 +179,7 @@ public abstract class AbstractServerClusterTest {
       OLogManager.instance().flush();
       banner("Shutting down nodes...");
       for (ServerRun server : serverInstance) {
-        System.out.println("Shutting down node " + server.getServerId() + "...");
+        log("Shutting down node " + server.getServerId() + "...");
         if (terminateAtShutdown)
           server.terminateServer();
         else
@@ -228,10 +229,10 @@ public abstract class AbstractServerClusterTest {
 
   protected void banner(final String iMessage) {
     OLogManager.instance().error(this,
-        "\n**********************************************************************************************************");
+        "**********************************************************************************************************");
     OLogManager.instance().error(this, iMessage);
     OLogManager.instance().error(this,
-        "**********************************************************************************************************\n");
+        "**********************************************************************************************************");
   }
 
   protected void log(final String iMessage) {
@@ -457,6 +458,18 @@ public abstract class AbstractServerClusterTest {
 
   protected String getDatabaseURL(ServerRun server) {
     return null;
+  }
+
+  protected Object createRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
+    final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
+
+    final Collection<String> clusterNames = new ArrayList<String>(1);
+    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(record.getIdentity().getClusterId()));
+
+    return dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
+        new OCreateRecordTask((ORecordId) record.getIdentity(), record.toStream(), record.getVersion(),
+            ORecordInternal.getRecordType(record)),
+        dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
   }
 
   protected Object updateRemoteRecord(final int serverId, final ORecord record, final String[] servers) {

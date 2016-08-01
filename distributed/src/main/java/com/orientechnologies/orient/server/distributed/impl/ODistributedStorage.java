@@ -64,10 +64,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
-import com.orientechnologies.orient.server.distributed.task.OAbstractCommandTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
 
 import java.io.File;
@@ -522,7 +519,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       checkNodeIsMaster(localNodeName, dbCfg);
 
-      final String clusterName = checkForCluster(iRecordId, localNodeName, dbCfg);
+      final String clusterName = getClusterNameByRID(iRecordId);
+
+      checkForCluster(iRecordId, localNodeName, dbCfg);
 
       final List<String> servers = dbCfg.getServers(clusterName, null);
 
@@ -1049,7 +1048,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       configurationSemaphore.await();
     } catch (InterruptedException e) {
-      throw new ODistributedException("Cannot assign cluster id because the operation has been interrupted");
+      throw new ODistributedOperationException("Cannot assign cluster id because the operation has been interrupted");
     }
   }
 
@@ -1239,7 +1238,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     final ODistributedRequestId localReqId = new ODistributedRequestId(dManager.getLocalNodeId(),
         dManager.getNextMessageIdCounter());
 
-    localDistributedDatabase.lockRecord(rid, localReqId, OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong() / 2);
+    localDistributedDatabase.lockRecord(rid, localReqId,
+        OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong() / 2);
 
     if (eventListener != null) {
       try {
@@ -1754,7 +1754,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     }
   }
 
-  protected String checkForCluster(final ORecordId iRecordId, final String localNodeName, final ODistributedConfiguration dbCfg) {
+  protected String checkForCluster(final ORecordId iRecordId, final String localNodeName, ODistributedConfiguration dbCfg) {
 
     if (iRecordId.getClusterId() < 0)
       throw new IllegalArgumentException("RID " + iRecordId + " is not valid");
@@ -1764,7 +1764,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     String ownerNode = dbCfg.getClusterOwner(clusterName);
 
     if (ownerNode.equals(localNodeName))
-      return clusterName;
+      // NO CHANGES
+      return null;
 
     final OCluster cl = getClusterByName(clusterName);
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
@@ -1783,10 +1784,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       OLogManager.instance().info(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
           + "' (it is '" + ownerNode + "'). Reloading distributed configuration for database '" + getName() + "'");
 
-      ((OLocalClusterStrategy) clSel).readConfiguration();
+      dbCfg = ((OLocalClusterStrategy) clSel).readConfiguration();
+      //
+      // newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
+      // ownerNode = dbCfg.getClusterOwner(newClusterName);
 
-      newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
-      ownerNode = dbCfg.getClusterOwner(newClusterName);
+      // FORCE THE RETRY OF THE OPERATION
+      throw new ODistributedConfigurationChangedException(
+          "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName + "' (it is '" + ownerNode + "')");
     }
 
     if (!ownerNode.equals(localNodeName))

@@ -37,6 +37,11 @@ public class ORemoteServerController {
 
   public ORemoteServerController(final ODistributedServerManager manager, final String iServer, final String iURL,
       final String user, final String passwd) throws IOException {
+    if( user == null )
+      throw new IllegalArgumentException("User is null");
+    if( passwd == null )
+      throw new IllegalArgumentException("Password is null");
+
     ODistributedServerLog.debug(this, manager.getLocalNodeName(), iServer, ODistributedServerLog.DIRECTION.OUT,
         "Creating remote channel(s) to distributed server...");
 

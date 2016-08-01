@@ -46,12 +46,58 @@ import java.util.concurrent.locks.Lock;
 public interface ODistributedServerManager {
   String FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
 
+  /**
+   * Server status.
+   */
   enum NODE_STATUS {
-    OFFLINE, STARTING, ONLINE, SHUTTINGDOWN
+    /**
+     * The server was never started or the shutdown is complete.
+     */
+    OFFLINE,
+
+    /**
+     * The server is STARTING.
+     */
+    STARTING,
+
+    /**
+     * The server is ONLINE.
+     */
+    ONLINE,
+
+    /**
+     * The server is shutting down.
+     */
+    SHUTTINGDOWN
   };
 
+  /**
+   * Database status.
+   */
   enum DB_STATUS {
-    OFFLINE, SYNCHRONIZING, ONLINE, BACKUP
+    /**
+     * The database is not started or has been put in OFFLINE status by another node. In this status the server does not receive any
+     * request.
+     */
+    OFFLINE,
+
+    /**
+     * The database is in synchronization status. This status is set when a synchronization (full or delta) is requested. The node
+     * tha accepts the synchronization, is in SYNCHRONIZING mode too. During this status the server receive requests that will be
+     * enqueue until the database is ready. Server in SYNCHRONIZING status do not concur in the quorum.
+     */
+    SYNCHRONIZING,
+
+    /**
+     * The database is ONLINE as fully operative. During this status the server is considered in the quorum (if the server's role is
+     * MASTER)
+     */
+    ONLINE,
+
+    /**
+     * The database is ONLINE, but is not involved in the quorum.
+     */
+    BACKUP
   };
 
   boolean isNodeAvailable(final String iNodeName);
@@ -133,7 +179,7 @@ public interface ODistributedServerManager {
 
   int getNodeIdByName(String node);
 
-  ODocument getNodeConfigurationByUuid(String iNode);
+  ODocument getNodeConfigurationByUuid(String iNode, boolean useCache);
 
   ODocument getLocalNodeConfiguration();
 

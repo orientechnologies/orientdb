@@ -26,9 +26,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
  * checks all the clients can auto-reconnect to the next available server.
  */
 public class HACrashTest extends AbstractServerClusterTxTest {
-  final static int SERVERS       = 3;
-  volatile boolean inserting     = true;
-  volatile int     serverStarted = 0;
+  final static int         SERVERS         = 3;
+  volatile private boolean inserting       = true;
+  volatile private int     serverStarted   = 0;
+  volatile private boolean serverRestarted = false;
 
   // @Ignore
   @Test
@@ -62,39 +63,40 @@ public class HACrashTest extends AbstractServerClusterTxTest {
               }
             }, // ACTION
                 new OCallable<Boolean, ODatabaseDocumentTx>() {
-              @Override
-              public Boolean call(ODatabaseDocumentTx db) {
-                Assert.assertTrue("Insert was too fast", inserting);
-                banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
-
-                delayWriter = 50;
-                serverInstance.get(SERVERS - 1).crashServer();
-
-                executeWhen(db, new OCallable<Boolean, ODatabaseDocumentTx>() {
-                  @Override
-                  public Boolean call(ODatabaseDocumentTx db) {
-                    return db.countClass("Person") > (count * writerCount * SERVERS) * 2 / 4;
-                  }
-                }, new OCallable<Boolean, ODatabaseDocumentTx>() {
                   @Override
                   public Boolean call(ODatabaseDocumentTx db) {
                     Assert.assertTrue("Insert was too fast", inserting);
+                    banner("SIMULATE FAILURE ON SERVER " + (SERVERS - 1));
 
-                    banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
-                    try {
-                      serverInstance.get(SERVERS - 1)
-                          .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-                      delayWriter = 0;
+                    delayWriter = 50;
+                    serverInstance.get(SERVERS - 1).crashServer();
 
-                    } catch (Exception e) {
-                      e.printStackTrace();
-                    }
+                    executeWhen(db, new OCallable<Boolean, ODatabaseDocumentTx>() {
+                      @Override
+                      public Boolean call(ODatabaseDocumentTx db) {
+                        return db.countClass("Person") > (count * writerCount * SERVERS) * 2 / 4;
+                      }
+                    }, new OCallable<Boolean, ODatabaseDocumentTx>() {
+                      @Override
+                      public Boolean call(ODatabaseDocumentTx db) {
+                        Assert.assertTrue("Insert was too fast", inserting);
+
+                        banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
+                        try {
+                          serverInstance.get(SERVERS - 1)
+                              .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
+                          serverRestarted = true;
+                          delayWriter = 0;
+
+                        } catch (Exception e) {
+                          e.printStackTrace();
+                        }
+                        return null;
+                      }
+                    });
                     return null;
                   }
                 });
-                return null;
-              }
-            });
 
           } catch (Exception e) {
             e.printStackTrace();
@@ -123,7 +125,16 @@ public class HACrashTest extends AbstractServerClusterTxTest {
   @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
-    Assert.assertTrue(serverInstance.get(2).getServerInstance().isActive());
+
+    waitFor(5000, new OCallable<Boolean, Void>() {
+      @Override
+      public Boolean call(Void iArgument) {
+        return serverRestarted;
+      }
+    }, "Server 2 is not active yet");
+
+    banner("CHECKING IF NODE 2 IS STILL ACTIVE");
+    Assert.assertTrue(serverRestarted);
   }
 
   protected String getDatabaseURL(final ServerRun server) {

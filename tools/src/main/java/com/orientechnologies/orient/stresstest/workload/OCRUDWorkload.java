@@ -21,8 +21,10 @@ package com.orientechnologies.orient.stresstest.workload;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.tool.ODatabaseRepair;
 import com.orientechnologies.orient.core.db.tool.ODatabaseTool;
@@ -60,6 +62,10 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   private int                reads;
   private int                updates;
   private int                deletes;
+
+  public OCRUDWorkload() {
+    connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST;
+  }
 
   @Override
   public String getName() {
@@ -152,7 +158,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   }
 
   protected void createSchema(ODatabaseIdentifier databaseIdentifier) {
-    final ODatabase database = getDocumentDatabase(databaseIdentifier);
+    final ODatabase database = getDocumentDatabase(databaseIdentifier, OStorageRemote.CONNECTION_STRATEGY.STICKY);
     try {
       final OSchema schema = database.getMetadata().getSchema();
       if (!schema.existsClass(OCRUDWorkload.CLASS_NAME)) {
@@ -213,10 +219,15 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   }
 
   public ODocument createOperation(final long n) {
-    ODocument doc = new ODocument(CLASS_NAME);
-    doc.field("name", "value" + n);
-    doc.save();
-    return doc;
+    return (ODocument) ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+      @Override
+      public Object call(Integer iArgument) {
+        ODocument doc = new ODocument(CLASS_NAME);
+        doc.field("name", "value" + n);
+        doc.save();
+        return doc;
+      }
+    }, 10);
   }
 
   public void readOperation(final ODatabase database, final long n) {
@@ -228,13 +239,25 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   }
 
   public void updateOperation(final ODatabase database, final OIdentifiable rec) {
-    final ODocument doc = rec.getRecord();
-    doc.field("updated", true);
-    doc.save();
+    ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+      @Override
+      public Object call(Integer iArgument) {
+        final ODocument doc = rec.getRecord();
+        doc.field("updated", true);
+        doc.save();
+        return doc;
+      }
+    }, 10);
   }
 
   public void deleteOperation(final ODatabase database, final OIdentifiable rec) {
-    database.delete(rec.getIdentity());
+    ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+      @Override
+      public Object call(Integer iArgument) {
+        database.delete(rec.getIdentity());
+        return null;
+      }
+    }, 10);
   }
 
   private char assignState(final char state, final StringBuilder number, final char c) {
@@ -272,7 +295,8 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
 
   @Override
   public void check(final ODatabaseIdentifier databaseIdentifier) {
-    final ODatabaseDocument db = (ODatabaseDocument) getDocumentDatabase(databaseIdentifier);
+    final ODatabaseDocument db = (ODatabaseDocument) getDocumentDatabase(databaseIdentifier,
+        OStorageRemote.CONNECTION_STRATEGY.STICKY);
     final ODatabaseTool repair = new ODatabaseRepair().setDatabase(db);
     repair.run();
   }

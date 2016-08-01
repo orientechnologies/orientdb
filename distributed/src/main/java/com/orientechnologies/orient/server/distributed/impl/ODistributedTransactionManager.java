@@ -47,10 +47,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
+import com.orientechnologies.orient.server.distributed.task.*;
 
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -204,6 +201,8 @@ public class ODistributedTransactionManager {
 
           if (e instanceof RuntimeException)
             throw (RuntimeException) e;
+          else if (e instanceof InterruptedException)
+            throw OException.wrapException(new ODistributedOperationException("Cannot commit transaction"), e);
           else
             throw OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
         }
@@ -211,6 +210,9 @@ public class ODistributedTransactionManager {
       } catch (RuntimeException e) {
         executionModeSynch = true;
         throw e;
+      } catch (InterruptedException e) {
+        executionModeSynch = true;
+        throw OException.wrapException(new ODistributedOperationException("Cannot commit transaction"), e);
       } catch (Exception e) {
         executionModeSynch = true;
         throw OException.wrapException(new ODistributedException("Cannot commit transaction"), e);
@@ -232,13 +234,23 @@ public class ODistributedTransactionManager {
     return null;
   }
 
-  protected void checkForClusterIds(OTransaction iTx, String localNodeName, ODistributedConfiguration dbCfg) {
+  protected void checkForClusterIds(final OTransaction iTx, final String localNodeName, final ODistributedConfiguration dbCfg) {
     for (ORecordOperation op : iTx.getAllRecordEntries()) {
       final ORecordId rid = (ORecordId) op.getRecord().getIdentity();
       switch (op.type) {
       case ORecordOperation.CREATED:
-        if (rid.clusterId > 0)
-          storage.checkForCluster(rid, localNodeName, dbCfg);
+        final ORecordId newRid = rid.copy();
+        if (rid.clusterId < 1) {
+          final String clusterName = ((OTransactionAbstract) iTx).getClusterName(op.getRecord());
+          if (clusterName != null) {
+            newRid.clusterId = ODatabaseRecordThreadLocal.INSTANCE.get().getClusterIdByName(clusterName);
+            iTx.updateIdentityAfterCommit(rid, newRid);
+          }
+        }
+
+        if (storage.checkForCluster(newRid, localNodeName, dbCfg) != null)
+          iTx.updateIdentityAfterCommit(rid, newRid);
+
         break;
       }
     }
@@ -446,6 +458,8 @@ public class ODistributedTransactionManager {
     ORecordId lastRecordCannotLock = null;
     ODistributedRequestId lastLockHolder = null;
 
+    final long begin = System.currentTimeMillis();
+
     // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED
     for (int retry = 1; retry <= maxAutoRetry; ++retry) {
       lastRecordCannotLock = null;
@@ -464,8 +478,8 @@ public class ODistributedTransactionManager {
             Thread.sleep(autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay));
 
           ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "Distributed transaction: cannot lock records %s because owned by %s (retry %d/%d, thread=%d)", recordsToLock,
-              lastLockHolder, retry, maxAutoRetry, Thread.currentThread().getId());
+              "Distributed transaction: %s cannot lock records %s because owned by %s (retry %d/%d, thread=%d)",
+              reqContext.getReqId(), recordsToLock, lastLockHolder, retry, maxAutoRetry, Thread.currentThread().getId());
 
           break;
         }
@@ -488,7 +502,7 @@ public class ODistributedTransactionManager {
     }
 
     if (lastRecordCannotLock != null)
-      throw new ODistributedRecordLockedException(lastRecordCannotLock, lastLockHolder);
+      throw new ODistributedRecordLockedException(lastRecordCannotLock, lastLockHolder, System.currentTimeMillis() - begin);
   }
 
   /**

@@ -855,9 +855,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
               // delete to avoid duplication
               ridIterator.remove();
+              exportedRecord++;
             }
-
-            exportedRecord++;
           }
 
           ridIterator = sortedRids.iterator();
@@ -943,25 +942,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     final OCluster cluster = getClusterById(rid.clusterId);
 
     if (transaction.get() != null) {
-      final long timer = Orient.instance().getProfiler().startChrono();
-      try {
-        return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, null);
-      } finally {
-        Orient.instance().getProfiler()
-            .stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer, "db.*.createRecord");
-      }
+      return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, null);
     }
 
-    final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
     try {
       checkOpeness();
-
       return doCreateRecord(rid, content, recordVersion, recordType, callback, cluster, ppos, null);
     } finally {
       stateLock.releaseReadLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer, "db.*.createRecord");
-
     }
   }
 
@@ -1084,17 +1073,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
     final OCluster cluster = getClusterById(rid.clusterId);
+
     if (transaction.get() != null) {
       final long timer = Orient.instance().getProfiler().startChrono();
       try {
         return doUpdateRecord(rid, updateContent, content, version, recordType, callback, cluster);
       } finally {
-        Orient.instance().getProfiler()
-            .stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
+        Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer,
+            "db.*.updateRecord");
       }
     }
 
-    final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
     try {
       // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
@@ -1109,7 +1098,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     } finally {
       stateLock.releaseReadLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
     }
   }
 
@@ -1175,21 +1163,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         return doDeleteRecord(rid, version, cluster);
       } finally {
-        Orient.instance().getProfiler()
-            .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
+        Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer,
+            "db.*.deleteRecord");
       }
     }
 
-    final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
-
     try {
       checkOpeness();
       return doDeleteRecord(rid, version, cluster);
     } finally {
       stateLock.releaseReadLock();
-      Orient.instance().getProfiler()
-          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
+      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer,
+          "db.*.deleteRecord");
 
     }
   }
@@ -1401,8 +1387,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               rid.clusterId = cluster.getId();
 
               if (rid.clusterPosition > -1 && rid.clusterPosition != ppos.clusterPosition) {
-                throw new OTransactionException(
-                    "New record allocated #" + rid.clusterId + ":" + ppos.clusterPosition + " but the expected was " + rid);
+                throw new OConcurrentCreateException( rid, new ORecordId(rid.clusterId, ppos.clusterPosition));
               }
 
               rid.clusterPosition = ppos.clusterPosition;
@@ -2953,27 +2938,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           "Cannot read record " + rid + " since the position is invalid in database '" + name + '\'');
 
     if (transaction.get() != null) {
-      final long timer = Orient.instance().getProfiler().startChrono();
-      try {
-        // Disabled this assert have no meaning anymore
-        // assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
-        return doReadRecord(clusterSegment, rid);
-      } finally {
-        Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
-      }
+      // Disabled this assert have no meaning anymore
+      // assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
+      return doReadRecord(clusterSegment, rid);
     }
 
-    final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
     try {
-      ORawBuffer buff;
       checkOpeness();
-
-      buff = doReadRecord(clusterSegment, rid);
-      return buff;
+      return doReadRecord(clusterSegment, rid);
     } finally {
       stateLock.releaseReadLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
     }
   }
 
@@ -3077,7 +3052,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     if (content == null)
       throw new IllegalArgumentException("Record is null");
 
+    final long timer = Orient.instance().getProfiler().startChrono();
     try {
+
       if (recordVersion > -1)
         recordVersion++;
       else
@@ -3131,13 +3108,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, ioe);
 
       throw OException.wrapException(new OStorageException("Error during record deletion"), ioe);
+    } finally {
+      Orient.instance().getProfiler().stopChrono(PROFILER_CREATE_RECORD, "Create a record in database", timer, "db.*.createRecord");
     }
   }
 
   private OStorageOperationResult<Integer> doUpdateRecord(final ORecordId rid, final boolean updateContent, byte[] content,
       final int version, final byte recordType, final ORecordCallback<Integer> callback, final OCluster cluster) {
 
+    final long timer = Orient.instance().getProfiler().startChrono();
     try {
+
       final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
       if (!checkForRecordValidity(ppos)) {
         final int recordVersion = -1;
@@ -3206,19 +3187,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         callback.call(rid, recordVersion);
 
       return new OStorageOperationResult<Integer>(recordVersion);
+
+    } finally {
+      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
     }
+
   }
 
   private OStorageOperationResult<Integer> doRecycleRecord(final ORecordId rid, byte[] content, final int version,
       final OCluster cluster, final byte recordType) {
 
     try {
-      final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
-      if (!checkForRecordValidity(ppos)) {
-        final int recordVersion = -1;
-        return new OStorageOperationResult<Integer>(recordVersion);
-      }
-
       makeStorageDirty();
       atomicOperationsManager.startAtomicOperation((String) null, true);
       try {
@@ -3253,7 +3232,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private OStorageOperationResult<Boolean> doDeleteRecord(ORecordId rid, final int version, OCluster cluster) {
+    final long timer = Orient.instance().getProfiler().startChrono();
     try {
+
       final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
 
       if (ppos == null)
@@ -3289,6 +3270,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
       throw OException.wrapException(new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")"), ioe);
+
+    } finally {
+      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer,
+          "db.*.deleteRecord");
     }
   }
 
@@ -3325,7 +3310,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   private ORawBuffer doReadRecord(final OCluster clusterSegment, final ORecordId rid) {
+    final long timer = Orient.instance().getProfiler().startChrono();
     try {
+
       final ORawBuffer buff = clusterSegment.readRecord(rid.clusterPosition);
 
       if (buff != null && OLogManager.instance().isDebugEnabled())
@@ -3335,6 +3322,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return buff;
     } catch (IOException e) {
       throw OException.wrapException(new OStorageException("Error during read of record with rid = " + rid), e);
+    } finally {
+      Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
     }
   }
 

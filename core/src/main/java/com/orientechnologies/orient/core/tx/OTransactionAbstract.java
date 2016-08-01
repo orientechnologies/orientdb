@@ -224,7 +224,7 @@ public abstract class OTransactionAbstract implements OTransaction {
     return lockedRecords;
   }
 
-  protected String getClusterName(final ORecord record) {
+  public String getClusterName(final ORecord record) {
     if (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().isRemote())
       // DON'T ASSIGN CLUSTER WITH REMOTE: SERVER KNOWS THE RIGHT CLUSTER BASED ON LOCALITY
       return null;

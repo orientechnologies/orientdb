@@ -17,25 +17,22 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.stresstest;
+package com.orientechnologies.orient;
+
+import com.orientechnologies.orient.graph.stresstest.OGraphShortestPathWorkload;
+import org.junit.Test;
 
 /**
- * StressTester settings.
+ * Test for Graph shortest path workload.
  *
  * @author Luca Garulli
  */
-public class OStressTesterSettings {
-  public String              dbName;
-  public OStressTester.OMode mode;
-  public String              rootPassword;
-  public String              resultOutputFile;
-  public String              plocalPath;
-  public int                 operationsPerTransaction;
-  public int                 concurrencyLevel;
-  public String              remoteIp;
-  public boolean             haMetrics;
-  public String              workloadCfg;
-  public boolean             keepDatabaseAfterTest;
-  public int                 remotePort    = 2424;
-  public boolean             checkDatabase = false;
+public class TestShortestPathWorkload {
+
+  @Test
+  public void testParsing() throws Exception {
+
+    new OGraphShortestPathWorkload().parseParameters("L100");
+    new OGraphShortestPathWorkload().parseParameters("");
+  }
 }

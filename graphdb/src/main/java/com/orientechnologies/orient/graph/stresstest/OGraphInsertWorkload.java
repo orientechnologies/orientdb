@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.graph.stresstest;
 
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
@@ -43,7 +44,7 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   private OWorkLoadResult resultEdges          = new OWorkLoadResult();
 
   public OGraphInsertWorkload() {
-    super(false);
+    connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_CONNECT;
   }
 
   @Override
@@ -99,6 +100,11 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
               graphContext.lastVertexToConnect = v;
 
             resultVertices.current.incrementAndGet();
+
+            if( settings.operationsPerTransaction > 0 && context.currentIdx % settings.operationsPerTransaction == 0 ){
+              graph.commit();
+              graph.begin();
+            }
 
             return null;
           }

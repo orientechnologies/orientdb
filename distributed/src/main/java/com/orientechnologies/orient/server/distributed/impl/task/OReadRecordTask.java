@@ -37,10 +37,12 @@ public class OReadRecordTask extends OAbstractReadRecordTask {
   public static final int   FACTORYID        = 1;
 
   public OReadRecordTask() {
+    this.lockRecords = false;
   }
 
   public OReadRecordTask(final ORecordId iRid) {
     super(iRid);
+    this.lockRecords = false;
   }
 
   @Override

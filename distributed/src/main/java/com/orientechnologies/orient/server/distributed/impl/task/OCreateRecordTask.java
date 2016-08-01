@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -124,7 +125,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
       if (loadedRecord.getResult() != null) {
         // ALREADY PRESENT
-        record = forceUpdate(requestId, iManager, database, loadedRecord);
+        record = forceUpdate(loadedRecord);
         return new OPlaceholder(record);
       }
 
@@ -190,8 +191,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     return new OPlaceholder(record);
   }
 
-  protected ORecord forceUpdate(final ODistributedRequestId requestId, final ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database, final OStorageOperationResult<ORawBuffer> loadedRecord) {
+  protected ORecord forceUpdate(final OStorageOperationResult<ORawBuffer> loadedRecord) {
     // LOAD IT AS RECORD
     final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager()
         .newInstance(loadedRecord.getResult().recordType);
@@ -201,6 +201,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     if (Arrays.equals(loadedRecord.getResult().getBuffer(), content))
       // SAME CONTENT
       return loadedRecordInstance;
+
+    OLogManager.instance().info(this, "Error on creating record in an existent position. toStore=%s stored=%s", getRecord(),
+        loadedRecordInstance);
 
     throw new ODistributedOperationException("Cannot create the record " + rid + " in an already existent position");
   }
