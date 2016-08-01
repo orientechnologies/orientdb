@@ -1,4 +1,3 @@
-
 /*
  *
  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
@@ -18,25 +17,22 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.core.db;
+package com.orientechnologies.orient;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
+import com.orientechnologies.orient.graph.stresstest.OGraphShortestPathWorkload;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
-public class OrientDBConfigTest {
+/**
+ * Test for Graph shortest path workload.
+ *
+ * @author Luca Garulli
+ */
+public class TestShortestPathWorkload {
 
   @Test
-  public void testBuildSettings() {
-    OrientDBConfig settings = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 20)
-        .addAttribute(ATTRIBUTES.VALIDATION, true).addProperty("some", "value").build();
+  public void testParsing() throws Exception {
 
-    assertEquals(settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), 20);
-    assertEquals(settings.getAttributes().get(ATTRIBUTES.VALIDATION), true);
-    assertEquals(settings.getProperties().get("some"), "value");
-
+    new OGraphShortestPathWorkload().parseParameters("L100");
+    new OGraphShortestPathWorkload().parseParameters("");
   }
-
 }
