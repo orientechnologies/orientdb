@@ -227,8 +227,9 @@ public class ODocument extends ORecordAbstract
         unTrack((ORID) value);
         track((OIdentifiable) newValue);
         value = newValue;
-        ORecordInternal.setDirtyManager((ORecord) value, this.getDirtyManager());
-
+        if(isTrackingChanges()) {
+          ORecordInternal.setDirtyManager((ORecord) value, this.getDirtyManager());
+        }
         ODocumentEntry entry = _fields.get(iFieldName);
         removeCollectionChangeListener(entry, entry.value);
         entry.value = value;
