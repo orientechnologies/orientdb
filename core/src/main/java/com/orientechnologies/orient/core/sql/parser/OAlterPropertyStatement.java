@@ -26,8 +26,8 @@ public class OAlterPropertyStatement extends OStatement {
   }
 
   @Override
-  public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
-    super.validate(stats);//TODO
+  public void validate() throws OCommandSQLParsingException {
+    super.validate();//TODO
   }
 
   @Override

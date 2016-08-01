@@ -22,15 +22,19 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.io.IOException;
-import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -42,12 +46,58 @@ import java.util.concurrent.locks.Lock;
 public interface ODistributedServerManager {
   String FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
 
+  /**
+   * Server status.
+   */
   enum NODE_STATUS {
-    OFFLINE, STARTING, ONLINE, SHUTTINGDOWN
+    /**
+     * The server was never started or the shutdown is complete.
+     */
+    OFFLINE,
+
+    /**
+     * The server is STARTING.
+     */
+    STARTING,
+
+    /**
+     * The server is ONLINE.
+     */
+    ONLINE,
+
+    /**
+     * The server is shutting down.
+     */
+    SHUTTINGDOWN
   };
 
+  /**
+   * Database status.
+   */
   enum DB_STATUS {
-    OFFLINE, SYNCHRONIZING, ONLINE, BACKUP
+    /**
+     * The database is not started or has been put in OFFLINE status by another node. In this status the server does not receive any
+     * request.
+     */
+    OFFLINE,
+
+    /**
+     * The database is in synchronization status. This status is set when a synchronization (full or delta) is requested. The node
+     * tha accepts the synchronization, is in SYNCHRONIZING mode too. During this status the server receive requests that will be
+     * enqueue until the database is ready. Server in SYNCHRONIZING status do not concur in the quorum.
+     */
+    SYNCHRONIZING,
+
+    /**
+     * The database is ONLINE as fully operative. During this status the server is considered in the quorum (if the server's role is
+     * MASTER)
+     */
+    ONLINE,
+
+    /**
+     * The database is ONLINE, but is not involved in the quorum.
+     */
+    BACKUP
   };
 
   boolean isNodeAvailable(final String iNodeName);
@@ -68,7 +118,7 @@ public interface ODistributedServerManager {
 
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
 
-  Serializable executeOnLocalNode(ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
+  Object executeOnLocalNode(ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
 
   ORemoteServerController getRemoteServer(final String nodeName) throws IOException;
 
@@ -129,7 +179,7 @@ public interface ODistributedServerManager {
 
   int getNodeIdByName(String node);
 
-  ODocument getNodeConfigurationByUuid(String iNode);
+  ODocument getNodeConfigurationByUuid(String iNode, boolean useCache);
 
   ODocument getLocalNodeConfiguration();
 
@@ -177,4 +227,14 @@ public interface ODistributedServerManager {
   boolean installDatabase(boolean iStartup, String databaseName, ODocument config);
 
   ORemoteTaskFactory getTaskFactory();
+
+  /**
+   * Checks the integrity of a record across the cluster.
+   *
+   * @param databaseName
+   * @param rid
+   */
+  void repairRecord(String databaseName, ORecordId rid);
+
+  ODistributedConflictResolver getConflictResolver();
 }

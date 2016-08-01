@@ -27,9 +27,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -39,17 +36,20 @@ import java.util.concurrent.CountDownLatch;
  * 
  */
 public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
+  private boolean        usesDatabase;
   private CountDownLatch latch;
   private ORemoteTask    task;
 
   public OSynchronizedTaskWrapper(final CountDownLatch iLatch, final String iNodeName, final ORemoteTask iTask) {
-    latch = iLatch;
-    task = iTask;
-    task.setNodeSource(iNodeName);
+    this.latch = iLatch;
+    this.task = iTask;
+    this.task.setNodeSource(iNodeName);
+    this.usesDatabase = true;
   }
 
   public OSynchronizedTaskWrapper(final CountDownLatch iLatch) {
     latch = iLatch;
+    usesDatabase = false;
   }
 
   @Override
@@ -81,21 +81,12 @@ public class OSynchronizedTaskWrapper extends OAbstractRemoteTask {
   }
 
   @Override
-  public void writeExternal(ObjectOutput out) throws IOException {
-  }
-
-  @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-  }
-  
-  @Override
   public String toString() {
     return "(" + (task != null ? task.toString() : "-") + ")";
   }
 
-
   @Override
   public boolean isUsingDatabase() {
-    return task != null ? task.isUsingDatabase() : true;
+    return usesDatabase;
   }
 }

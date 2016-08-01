@@ -294,13 +294,13 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+  public OIndexCursor iterateEntriesBetween(final Object rangeFrom, final boolean fromInclusive,final  Object rangeTo,final  boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
   }
 
   @Override
-  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+  public OIndexCursor iterateEntriesMajor(final Object fromKey, final boolean isInclusive, final boolean ascSortOrder,
       ValuesTransformer transformer) {
     throw new UnsupportedOperationException("iterateEntriesMajor");
   }
@@ -321,9 +321,14 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public boolean acquireAtomicExclusiveLock(Object key) {
+  public boolean acquireAtomicExclusiveLock(final Object key) {
     getPartition(key).acquireAtomicExclusiveLock();
     return false;
+  }
+
+  @Override
+  public String getIndexNameByKey(final Object key ){
+    return getPartition(key).getName();
   }
 
   private ODatabaseDocumentInternal getDatabase() {

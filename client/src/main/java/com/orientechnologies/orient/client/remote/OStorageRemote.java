@@ -84,37 +84,37 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This object is bound to each remote ODatabase instances.
  */
 public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
-  public static final  String        PARAM_CONNECTION_STRATEGY = "connectionStrategy";
-  private static final String        DEFAULT_HOST              = "localhost";
-  private static final int           DEFAULT_PORT              = 2424;
-  private static final int           DEFAULT_SSL_PORT          = 2434;
-  private static final String        ADDRESS_SEPARATOR         = ";";
-  public static final  String        DRIVER_NAME               = "OrientDB Java";
-  private static       AtomicInteger sessionSerialId           = new AtomicInteger(-1);
+  public static final String   PARAM_CONNECTION_STRATEGY = "connectionStrategy";
+  private static final String  DEFAULT_HOST              = "localhost";
+  private static final int     DEFAULT_PORT              = 2424;
+  private static final int     DEFAULT_SSL_PORT          = 2434;
+  private static final String  ADDRESS_SEPARATOR         = ";";
+  public static final String   DRIVER_NAME               = "OrientDB Java";
+  private static AtomicInteger sessionSerialId           = new AtomicInteger(-1);
 
   public enum CONNECTION_STRATEGY {
     STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST
   }
 
-  private CONNECTION_STRATEGY connectionStrategy = CONNECTION_STRATEGY.STICKY;
+  private CONNECTION_STRATEGY                  connectionStrategy      = CONNECTION_STRATEGY.STICKY;
 
-  private final   OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote();
-  protected final List<String>                   serverURLs              = new ArrayList<String>();
-  protected final Map<String, OCluster>          clusterMap              = new ConcurrentHashMap<String, OCluster>();
-  private final ExecutorService asynchExecutor;
-  private final ODocument clusterConfiguration = new ODocument();
-  private final String clientId;
-  private final AtomicInteger users = new AtomicInteger(0);
-  private OContextConfiguration clientConfiguration;
-  private int                   connectionRetry;
-  private int                   connectionRetryDelay;
-  private OCluster[] clusters = OCommonConst.EMPTY_CLUSTER_ARRAY;
-  private   int                               defaultClusterId;
-  private   OStorageRemoteAsynchEventListener asynchEventListener;
-  private   Map<String, Object>               connectionOptions;
-  private   String                            recordFormat;
-  protected ORemoteConnectionManager          connectionManager;
-  private final Set<OStorageRemoteSession> sessions = Collections
+  private final OSBTreeCollectionManagerRemote sbTreeCollectionManager = new OSBTreeCollectionManagerRemote();
+  protected final List<String>                 serverURLs              = new ArrayList<String>();
+  protected final Map<String, OCluster>        clusterMap              = new ConcurrentHashMap<String, OCluster>();
+  private final ExecutorService                asynchExecutor;
+  private final ODocument                      clusterConfiguration    = new ODocument();
+  private final String                         clientId;
+  private final AtomicInteger                  users                   = new AtomicInteger(0);
+  private OContextConfiguration                clientConfiguration;
+  private int                                  connectionRetry;
+  private int                                  connectionRetryDelay;
+  private OCluster[]                           clusters                = OCommonConst.EMPTY_CLUSTER_ARRAY;
+  private int                                  defaultClusterId;
+  private OStorageRemoteAsynchEventListener    asynchEventListener;
+  private Map<String, Object>                  connectionOptions;
+  private String                               recordFormat;
+  protected ORemoteConnectionManager           connectionManager;
+  private final Set<OStorageRemoteSession>     sessions                = Collections
       .newSetFromMap(new ConcurrentHashMap<OStorageRemoteSession, Boolean>());
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
@@ -154,15 +154,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return baseNetworkOperation(new OStorageRemoteOperation<T>() {
       @Override
       public T execute(final OChannelBinaryAsynchClient network, final OStorageRemoteSession session) throws IOException {
-        //Send The request
+        // Send The request
         write.execute(network, session, pMode);
         final T res;
         if (pMode == 0) {
-          //SYNC
+          // SYNC
           res = read.execute(network, session);
           connectionManager.release(network);
         } else if (pMode == 1) {
-          //ASYNC
+          // ASYNC
           res = null;
           OStorageRemote.this.asynchExecutor.submit(new Runnable() {
             @Override
@@ -178,7 +178,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             }
           });
         } else {
-          //NO RESPONSE
+          // NO RESPONSE
           connectionManager.release(network);
           res = null;
         }
@@ -244,13 +244,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           serverURLs.remove(serverUrl);
         }
         for (OStorageRemoteSession activeSession : sessions) {
-          //Not thread Safe ...
+          // Not thread Safe ...
           activeSession.removeServerSession(serverUrl);
         }
 
       } catch (IOException e) {
+        connectionManager.release(network);
         retry = handleIOException(retry, network, e);
       } catch (OIOException e) {
+        connectionManager.release(network);
         retry = handleIOException(retry, network, e);
       } catch (OException e) {
         connectionManager.release(network);
@@ -264,7 +266,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   private int handleIOException(int retry, final OChannelBinaryAsynchClient network, final Exception e) {
-    OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", e.getMessage());
+    OLogManager.instance().info(this, "Caught Network I/O errors, trying an automatic reconnection... (error: %s)", e.getMessage());
     OLogManager.instance().debug(this, "I/O error stack: ", e);
     connectionManager.remove(network);
     if (--retry <= 0)
@@ -300,8 +302,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     addUser();
     try {
       OStorageRemoteSession session = getCurrentSession();
-      if (status == STATUS.CLOSED || !iUserName.equals(session.connectionUserName) || !iUserPassword
-          .equals(session.connectionUserPassword) || session.sessions.isEmpty()) {
+      if (status == STATUS.CLOSED || !iUserName.equals(session.connectionUserName)
+          || !iUserPassword.equals(session.connectionUserPassword) || session.sessions.isEmpty()) {
 
         OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
 
@@ -538,7 +540,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
           ppos.clusterPosition = network.readLong();
           ppos.recordVersion = network.readVersion();
-          //THIS IS A COMPATIBILITY FIX TO AVOID TO FILL THE CLUSTER ID IN CASE OF ASYNC
+          // THIS IS A COMPATIBILITY FIX TO AVOID TO FILL THE CLUSTER ID IN CASE OF ASYNC
           if (iMode == 0) {
             iRid.clusterId = clusterId;
             iRid.clusterPosition = ppos.clusterPosition;
@@ -753,7 +755,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }, iMode, iRid, iCallback, "Error on update record " + iRid);
 
     if (resVersion == null)
-      //Returning given version in case of no answer from server
+      // Returning given version in case of no answer from server
       resVersion = iVersion;
     return new OStorageOperationResult<Integer>(resVersion);
   }
@@ -1584,14 +1586,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     // UPDATE IT
     synchronized (serverURLs) {
-      Set<String> old = new HashSet<String>(serverURLs);
       if (members != null) {
-        // serverURLs.clear();
-
         // ADD CURRENT SERVER AS FIRST
         if (iConnectedURL != null) {
           addHost(iConnectedURL);
-          old.remove(iConnectedURL);
         }
 
         for (ODocument m : members) {
@@ -1608,19 +1606,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                   String url = (String) listener.get("listen");
                   if (!serverURLs.contains(url))
                     addHost(url);
-                  old.remove(url);
                 }
               }
           }
         }
-        for (String oldUrl : old) {
-          serverURLs.remove(oldUrl);
-          for (OStorageRemoteSession session : sessions) {
-            session.removeServerSession(oldUrl + "/" + getName());
-          }
-        }
-
       }
+    }
+  }
+
+  public void removeSessions(final String url) {
+    synchronized (serverURLs) {
+      serverURLs.remove(url);
+    }
+
+    for (OStorageRemoteSession session : sessions) {
+      session.removeServerSession(url + "/" + getName());
     }
   }
 
@@ -1881,7 +1881,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       // REMOVE INVALID URL
       serverURLs.remove(url);
       for (OStorageRemoteSession activeSession : sessions) {
-        //Not thread Safe ...
+        // Not thread Safe ...
         activeSession.removeServerSession(url + "/" + getName());
       }
 
@@ -1947,9 +1947,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           env.put("com.sun.jndi.ldap.connect.timeout",
               OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsString());
           final DirContext ictx = new InitialDirContext(env);
-          final String hostName = !primaryServer.contains(":") ?
-              primaryServer :
-              primaryServer.substring(0, primaryServer.indexOf(":"));
+          final String hostName = !primaryServer.contains(":") ? primaryServer
+              : primaryServer.substring(0, primaryServer.indexOf(":"));
           final Attributes attrs = ictx.getAttributes(hostName, new String[] { "TXT" });
           final Attribute attr = attrs.get("TXT");
           if (attr != null) {
@@ -1986,9 +1985,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     // REGISTER THE REMOTE SERVER+PORT
     if (!host.contains(":"))
-      host += ":" + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ?
-          getDefaultSSLPort() :
-          getDefaultPort());
+      host += ":"
+          + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
     else if (host.split(":").length < 2 || host.split(":")[1].trim().length() == 0)
       host += (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
 
@@ -2013,7 +2011,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   /**
    * Acquire a network channel from the pool. Don't lock the write stream since the connection usage is exclusive.
    *
-   * @param iCommand id. Ids described at {@link OChannelBinaryProtocol}
+   * @param iCommand
+   *          id. Ids described at {@link OChannelBinaryProtocol}
    * @param session
    * @return connection to server
    * @throws IOException
@@ -2039,10 +2038,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       if (url == null)
         url = getServerURFromList(iIsConnectOperation, session);
+      OLogManager.instance().debug(this,
+          "ROUND_ROBIN_CONNECT: Next remote operation will be executed on server: %s (isConnectOperation=%s)", url,
+          iIsConnectOperation);
       break;
 
     case ROUND_ROBIN_REQUEST:
       url = getServerURFromList(true, session);
+      OLogManager.instance().debug(this,
+          "ROUND_ROBIN_REQUEST: Next remote operation will be executed on server: %s (isConnectOperation=%s)", url,
+          iIsConnectOperation);
       break;
 
     default:
@@ -2098,8 +2103,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         throw OException.wrapException(new OStorageException("Cannot open a connection to remote server: " + iCurrentURL), cause);
       }
       if (!network.tryLock()) {
-        // CANNOT LOCK IT, MAYBE HASN'T BE CORRECTLY UNLOCKED BY PREVIOUS USER
-        OLogManager.instance().error(this, "Removing locked network channel '%s'...", iCurrentURL);
+        // CANNOT LOCK IT, MAYBE HASN'T BE CORRECTLY UNLOCKED BY PREVIOUS USER?
+        OLogManager.instance().error(this, "Removing locked network channel '%s' (connected=%s)...", iCurrentURL,
+            network.isConnected());
         connectionManager.remove(network);
         network = null;
       }
@@ -2235,8 +2241,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network.getSrvProtocolVersion() < 24)
             network.readString();
 
-          final int dataSegmentId =
-              network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24 ? (int) network.readShort() : 0;
+          final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24
+              ? (int) network.readShort() : 0;
 
           cluster.configure(this, clusterId, clusterName);
 
@@ -2349,7 +2355,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return this;
   }
 
-  public void importDatabase(final String options, final InputStream inputStream, final String name, final OCommandOutputListener listener) {
+  public void importDatabase(final String options, final InputStream inputStream, final String name,
+      final OCommandOutputListener listener) {
     networkOperation(new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {

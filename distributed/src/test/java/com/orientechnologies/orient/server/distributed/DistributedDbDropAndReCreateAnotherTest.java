@@ -60,6 +60,8 @@ public class DistributedDbDropAndReCreateAnotherTest extends AbstractServerClust
       onAfterDatabaseCreation(db);
       db.shutdown();
 
+      Thread.sleep(2000);
+
     } while (lastServerNum < serverInstance.size());
 
     executeMultipleTest(0);

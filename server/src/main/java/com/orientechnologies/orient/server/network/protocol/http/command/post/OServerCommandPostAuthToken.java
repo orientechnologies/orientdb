@@ -7,7 +7,6 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -50,6 +49,11 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
 
     // Parameter names consistent with 4.3.2 (Access Token Request) of RFC 6749
     Map<String, String> content = iRequest.getUrlEncodedContent();
+    if(content == null){
+      ODocument result = new ODocument().field("error", "missing_auth_data");
+      sendError(iRequest, iResponse, result);
+      return false;
+    }
     String signedToken = "";// signedJWT.serialize();
 
     String grantType = content.get("grant_type").toLowerCase();
@@ -62,7 +66,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
       authenticatedRid = authenticate(username, password, iRequest.databaseName);
       if (authenticatedRid == null) {
         sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
-      } else {
+      } else if (tokenHandler != null) {
         // Generate and return a JWT access token
 
         ODatabaseDocument db = null;
@@ -93,6 +97,9 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
         result = new ODocument().field("access_token", signedToken).field("expires_in", 3600);
 
         iResponse.writeRecord(result, RESPONSE_FORMAT, null);
+      } else {
+        result = new ODocument().field("error", "unsupported_grant_type");
+        sendError(iRequest, iResponse, result);
       }
     } else {
       result = new ODocument().field("error", "unsupported_grant_type");

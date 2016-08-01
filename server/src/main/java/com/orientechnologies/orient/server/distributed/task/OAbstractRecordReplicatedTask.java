@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -32,14 +33,11 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.*;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Set;
 
 /**
@@ -91,11 +89,16 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
       final ODistributedServerManager iManager, final ODatabaseDocumentInternal database) throws Exception {
 
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
+
+    ORecordId rid2Lock = rid;
+    if (!rid.isPersistent())
+      // CREATE A COPY TO MAINTAIN THE LOCK ON THE CLUSTER AVOIDING THE RID IS TRANSFORMED IN PERSISTENT. THIS ALLOWS TO HAVE
+      // PARALLEL TX BECAUSE NEW RID LOCKS THE ENTIRE CLUSTER.
+      rid2Lock = new ORecordId(rid.getClusterId(), -1l);
+
     if (lockRecords) {
       // TRY LOCKING RECORD
-      final ODistributedRequestId lockHolder = ddb.lockRecord(rid, requestId);
-      if (lockHolder != null)
-        throw new ODistributedRecordLockedException(rid, lockHolder);
+      ddb.lockRecord(rid2Lock, requestId, OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong() / 2);
     }
 
     try {
@@ -105,7 +108,7 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     } finally {
       if (lockRecords)
         // UNLOCK THE SINGLE OPERATION. IN TX WAIT FOR THE 2-PHASE COMMIT/ROLLBACK/FIX MESSAGE
-        ddb.unlockRecord(rid, requestId);
+        ddb.unlockRecord(rid2Lock, requestId);
     }
   }
 
@@ -154,20 +157,21 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeUTF(rid.toString());
+  public void toStream(final DataOutput out) throws IOException {
+    rid.toStream(out);
     out.writeInt(version);
     out.writeInt(partitionKey);
     if (lastLSN != null) {
       out.writeBoolean(true);
-      lastLSN.writeExternal(out);
+      lastLSN.toStream(out);
     } else
       out.writeBoolean(false);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    rid = new ORecordId(in.readUTF());
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
+    rid = new ORecordId();
+    rid.fromStream(in);
     version = in.readInt();
     partitionKey = in.readInt();
     final boolean hasLastLSN = in.readBoolean();

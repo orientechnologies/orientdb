@@ -19,20 +19,19 @@
       */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.io.Externalizable;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public class ODistributedRequest implements Externalizable {
+public class ODistributedRequest {
   public enum EXECUTION_MODE {
     RESPONSE, NO_RESPONSE
   }
@@ -42,7 +41,7 @@ public class ODistributedRequest implements Externalizable {
   private String                   databaseName;
   private long                     senderThreadId;
   private ORemoteTask              task;
-  private ORID                     userRID;       // KEEP ALSO THE RID TO AVOID SECURITY PROBLEM ON DELETE & RECREATE USERS
+  private ORecordId                userRID;       // KEEP ALSO THE RID TO AVOID SECURITY PROBLEM ON DELETE & RECREATE USERS
 
   public ODistributedRequest(final ORemoteTaskFactory taskFactory) {
     this.taskFactory = taskFactory;
@@ -83,34 +82,44 @@ public class ODistributedRequest implements Externalizable {
     return this;
   }
 
-  public ORID getUserRID() {
+  public ORecordId getUserRID() {
     return userRID;
   }
 
-  public void setUserRID(final ORID iUserRID) {
+  public void setUserRID(final ORecordId iUserRID) {
     this.userRID = iUserRID;
   }
 
-  @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeObject(id);
+  public void toStream(final DataOutput out) throws IOException {
+    id.toStream(out);
     out.writeLong(senderThreadId);
     out.writeUTF(databaseName != null ? databaseName : "");
+
     out.writeByte(task.getFactoryId());
-    task.writeExternal(out);
-    out.writeObject(userRID);
+    task.toStream(out);
+
+    if (userRID != null) {
+      out.writeBoolean(true);
+      userRID.toStream(out);
+    } else
+      out.writeBoolean(false);
   }
 
-  @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    id = (ODistributedRequestId) in.readObject();
+  public void fromStream(final DataInput in) throws IOException {
+    id = new ODistributedRequestId();
+    id.fromStream(in);
     senderThreadId = in.readLong();
     databaseName = in.readUTF();
     if (databaseName.isEmpty())
       databaseName = null;
+
     task = (ORemoteTask) taskFactory.createTask(in.readByte());
-    task.readExternal(in);
-    userRID = (ORID) in.readObject();
+    task.fromStream(in, taskFactory);
+
+    if (in.readBoolean()) {
+      userRID = new ORecordId();
+      userRID.fromStream(in);
+    }
   }
 
   @Override

@@ -70,6 +70,6 @@ public class ORecordDuplicatedException extends OCoreException implements OHighL
 
   @Override
   public String toString() {
-    return super.toString() + "INDEX=" + indexName + " RID=" + rid;
+    return super.toString() + " INDEX=" + indexName + " RID=" + rid;
   }
 }

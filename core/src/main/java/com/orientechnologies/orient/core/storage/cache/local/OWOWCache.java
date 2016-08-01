@@ -522,27 +522,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     }
   }
 
-  public void lock() throws IOException {
-    for (Integer intId : nameIdMap.values()) {
-      if (intId < 0)
-        continue;
-
-      final long externalId = composeFileId(id, intId);
-      final OFileClassic file = files.get(externalId);
-      file.lock();
-    }
-  }
-
-  public void unlock() throws IOException {
-    for (Integer intId : nameIdMap.values()) {
-      if (intId < 0)
-        continue;
-
-      final long externalId = composeFileId(id, intId);
-      final OFileClassic file = files.get(externalId);
-      file.unlock();
-    }
-  }
 
   public boolean exists(String fileName) {
     filesLock.acquireReadLock();

@@ -20,6 +20,8 @@
 
 package com.orientechnologies.common.exception;
 
+import com.orientechnologies.common.log.OLogManager;
+
 public abstract class OException extends RuntimeException {
 
   private static final long serialVersionUID = 3882447822497861424L;
@@ -63,5 +65,12 @@ public abstract class OException extends RuntimeException {
       iRootException = iRootException.getCause();
 
     return iRootException;
+  }
+
+  public static void dumpStackTrace(final String message) {
+    // DUMP CONTEXT
+    OLogManager.instance().flush();
+    new Exception(message).printStackTrace();
+    System.err.flush();
   }
 }

@@ -23,13 +23,14 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -493,7 +494,7 @@ public class ODistributedResponseManager {
       return true;
 
     if (groupResponsesByResult) {
-      for (List<ODistributedResponse> group : responseGroups)
+      for (List<ODistributedResponse> group : responseGroups) {
         if (group.size() >= quorum) {
           int responsesForQuorum = 0;
           for (ODistributedResponse r : group) {
@@ -504,6 +505,9 @@ public class ODistributedResponseManager {
                 if (payload instanceof ODistributedRecordLockedException)
                   // JUST ONE ODistributedRecordLockedException IS ENOUGH TO FAIL THE OPERATION BECAUSE RESOURCES CANNOT BE LOCKED
                   return false;
+                if (payload instanceof OConcurrentCreateException)
+                  // JUST ONE OConcurrentCreateException IS ENOUGH TO FAIL THE OPERATION BECAUSE RID ARE DIFFERENT
+                  return false;
               } else if (++responsesForQuorum >= quorum)
                 // QUORUM REACHED
                 break;
@@ -512,6 +516,24 @@ public class ODistributedResponseManager {
 
           return responsesForQuorum >= quorum;
         }
+      }
+
+      if (responseGroups.size() == 1 && OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.getValueAsLong() == 0) {
+        // CHECK FOR OFFLINE SERVERS
+        final List<String> missingNodes = getMissingNodes();
+
+        final int expectingNodes = missingNodes.size();
+        dManager.getAvailableNodes(missingNodes, getDatabaseName());
+        final int unreacheableServersDuringRequest = expectingNodes - missingNodes.size();
+
+        if (responseGroups.get(0).size() + unreacheableServersDuringRequest >= quorum) {
+          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+              "%d server(s) became unreachable during the request, decreasing the quorum (%d) and accept the request: %s",
+              unreacheableServersDuringRequest, quorum, request);
+          return true;
+        }
+      }
+
     } else {
       if (receivedResponses >= quorum) {
         int responsesForQuorum = 0;
@@ -576,18 +598,20 @@ public class ODistributedResponseManager {
         "Detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request (%s)",
         conflicts, quorum, request);
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
+    // if (ODistributedServerLog.isDebugEnabled())
+    ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
 
     if (!undoRequest()) {
       // SKIP UNDO
       return null;
     }
 
-    // CHECK IF THERE IS AT LEAST ONE ODistributedRecordLockedException
+    // CHECK IF THERE IS AT LEAST ONE ODistributedRecordLockedException or OConcurrentCreateException
     for (Object r : responses.values()) {
       if (r instanceof ODistributedRecordLockedException)
         throw (ODistributedRecordLockedException) r;
+      else if (r instanceof OConcurrentCreateException)
+        throw (OConcurrentCreateException) r;
     }
 
     final Object goodResponsePayload = bestResponsesGroup.isEmpty() ? null : bestResponsesGroup.get(0).getPayload();
@@ -753,7 +777,7 @@ public class ODistributedResponseManager {
     return false;
   }
 
-  public void setLocalResult(final String localNodeName, final Serializable localResult) {
+  public void setLocalResult(final String localNodeName, final Object localResult) {
     localResponse = new ODistributedResponse(request.getId(), localNodeName, localNodeName, localResult);
     collectResponse(localResponse);
   }

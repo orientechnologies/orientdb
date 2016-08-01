@@ -19,10 +19,9 @@
       */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
+
+import com.orientechnologies.orient.core.serialization.OStreamable;
 
 /**
  * Immutable object representing the distributed request id.
@@ -30,7 +29,7 @@ import java.io.ObjectOutput;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  *
  */
-public class ODistributedRequestId implements Externalizable, Comparable {
+public class ODistributedRequestId implements Comparable, OStreamable, Externalizable {
 
   private int  nodeId;
   private long messageId;
@@ -72,6 +71,16 @@ public class ODistributedRequestId implements Externalizable, Comparable {
   @Override
   public int hashCode() {
     return 31 * nodeId + 103 * (int) messageId;
+  }
+
+  public void toStream(final DataOutput out) throws IOException {
+    out.writeInt(nodeId);
+    out.writeLong(messageId);
+  }
+
+  public void fromStream(final DataInput in) throws IOException {
+    nodeId = in.readInt();
+    messageId = in.readLong();
   }
 
   @Override

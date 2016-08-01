@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -36,11 +37,12 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
 import java.util.List;
 
@@ -123,7 +125,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
       if (loadedRecord.getResult() != null) {
         // ALREADY PRESENT
-        record = forceUpdate(requestId, iManager, database, loadedRecord);
+        record = forceUpdate(loadedRecord);
         return new OPlaceholder(record);
       }
 
@@ -189,8 +191,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     return new OPlaceholder(record);
   }
 
-  protected ORecord forceUpdate(final ODistributedRequestId requestId, final ODistributedServerManager iManager,
-      final ODatabaseDocumentInternal database, final OStorageOperationResult<ORawBuffer> loadedRecord) {
+  protected ORecord forceUpdate(final OStorageOperationResult<ORawBuffer> loadedRecord) {
     // LOAD IT AS RECORD
     final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager()
         .newInstance(loadedRecord.getResult().recordType);
@@ -201,24 +202,10 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // SAME CONTENT
       return loadedRecordInstance;
 
-    throw new ODistributedException("Cannot create the record " + rid + " in an already existent position");
-    //
-    // ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-    // "Overwriting content of record %s/%s v.%d reqId=%s previous content: %s (stored) vs %s (network)", database.getName(),
-    // rid.toString(), version, requestId, loadedRecord.getResult(), getRecord());
-    //
-    // if (loadedRecord.getResult().recordType == ODocument.RECORD_TYPE) {
-    // // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
-    // final ODocument newDocument = (ODocument) getRecord();
-    //
-    // ODocument loadedDocument = (ODocument) loadedRecordInstance;
-    // loadedDocument.merge(newDocument, false, false).getVersion();
-    // loadedDocument.setDirty();
-    // ORecordInternal.setVersion(loadedDocument, ORecordVersionHelper.setRollbackMode(version));
-    // } else
-    // ORecordInternal.fill(loadedRecordInstance, rid, ORecordVersionHelper.setRollbackMode(version), content, true);
-    //
-    // return loadedRecordInstance.save();
+    OLogManager.instance().info(this, "Error on creating record in an existent position. toStore=%s stored=%s", getRecord(),
+        loadedRecordInstance);
+
+    throw new ODistributedOperationException("Cannot create the record " + rid + " in an already existent position");
   }
 
   @Override
@@ -296,8 +283,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
+  public void toStream(final DataOutput out) throws IOException {
+    super.toStream(out);
     if (content == null)
       out.writeInt(0);
     else {
@@ -309,8 +296,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
+    super.fromStream(in, factory);
     final int contentSize = in.readInt();
     if (contentSize == 0)
       content = null;

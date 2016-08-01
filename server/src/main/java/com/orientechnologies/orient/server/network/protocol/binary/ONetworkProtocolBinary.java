@@ -70,6 +70,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -98,7 +99,10 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
@@ -834,23 +838,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     checkServerAccess("server.replication", connection);
 
-    final byte[] serializedReq = channel.readBytes();
-
     final ODistributedServerManager manager = server.getDistributedManager();
     final ODistributedRequest req = new ODistributedRequest(manager.getTaskFactory());
 
-    final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(serializedReq));
-    try {
-      req.readExternal(in);
-    } catch (ClassNotFoundException e) {
-      throw new IOException("Error on unmarshalling of remote task", e);
-    } finally {
-      in.close();
-    }
-
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), manager.getNodeNameById(req.getId().getNodeId()),
-          ODistributedServerLog.DIRECTION.IN, "Received request %s (%d bytes)", req, serializedReq.length);
+    req.fromStream(channel.getDataInput());
 
     final String dbName = req.getDatabaseName();
     if (dbName != null) {
@@ -868,17 +859,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     checkServerAccess("server.replication", connection);
 
-    final byte[] serializedResponse = channel.readBytes();
-
     final ODistributedServerManager manager = server.getDistributedManager();
     final ODistributedResponse response = new ODistributedResponse();
 
-    final ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(serializedResponse));
-    try {
-      response.readExternal(in);
-    } catch (ClassNotFoundException e) {
-      throw new IOException("Error on unmarshalling of remote task", e);
-    }
+    response.fromStream(channel.getDataInput());
 
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(),
@@ -2687,6 +2671,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected ORecord createRecord(OClientConnection connection, final ORecordId rid, final byte[] buffer, final byte recordType) {
     final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     fillRecord(connection, rid, buffer, 0, record);
+    if (record instanceof ODocument) {
+      // Force conversion of value to class for trigger default values.
+      ODocumentInternal.autoConvertValueToClass(connection.getDatabase(), (ODocument) record);
+    }
     connection.getDatabase().save(record);
     return record;
   }

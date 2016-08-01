@@ -20,13 +20,14 @@
 
 package com.orientechnologies.orient.core;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
 import java.util.Hashtable;
 import java.util.Map.Entry;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 @SuppressWarnings("restriction")
 public class OSignalHandler implements SignalHandler {
@@ -58,6 +59,7 @@ public class OSignalHandler implements SignalHandler {
       System.out.println();
       Orient.instance().getProfiler().dump(System.out);
       System.out.println();
+      System.out.println(Orient.instance().getProfiler().threadDump());
     } else {
       SignalHandler redefinedHandler = redefinedHandlers.get(signal);
       if (redefinedHandler != null) {

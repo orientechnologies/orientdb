@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.Assert;
 import org.junit.Test;
@@ -121,6 +122,14 @@ public class HATxCrashTest extends AbstractHARemoveNode {
   @Override
   protected void onAfterExecution() throws Exception {
     inserting = false;
+
+    waitFor(5000, new OCallable<Boolean, Void>() {
+      @Override
+      public Boolean call(Void iArgument) {
+        return lastServerOn;
+      }
+    }, "Server 2 is not active yet");
+
     Assert.assertTrue(lastServerOn);
   }
 

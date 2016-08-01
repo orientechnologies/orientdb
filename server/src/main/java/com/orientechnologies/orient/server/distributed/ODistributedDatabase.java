@@ -19,11 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.Collection;
-
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+import java.util.Collection;
 
 /**
  * Generic Distributed Database interface.
@@ -50,14 +50,17 @@ public interface ODistributedDatabase {
    *          Record to lock
    * @param iRequestId
    *          Request id
-   * @return true if the lock succeed, otherwise false
+   * @param timeout
+   *          Timeout in ms to wait for the lock
+   * @throws com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException
+   *           if the record wasn't locked
    */
-  ODistributedRequestId lockRecord(OIdentifiable iRecord, final ODistributedRequestId iRequestId);
+  boolean lockRecord(OIdentifiable iRecord, final ODistributedRequestId iRequestId, long timeout);
 
   /**
    * Unlocks the record previously locked through #lockRecord method.
    *
-   * @see #lockRecord(OIdentifiable, ODistributedRequestId)
+   * @see #lockRecord(OIdentifiable, ODistributedRequestId, long)
    * @param iRecord
    * @param requestId
    */
@@ -82,4 +85,8 @@ public interface ODistributedDatabase {
   ODistributedServerManager getManager();
 
   ODatabaseDocumentTx getDatabaseInstance();
+
+  long getReceivedRequests();
+
+  long getProcessedRequests();
 }

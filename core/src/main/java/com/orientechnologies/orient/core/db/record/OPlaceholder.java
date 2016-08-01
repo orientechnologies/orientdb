@@ -19,16 +19,16 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.OStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 /**
  * Base interface for identifiable objects. This abstraction is required to use ORID and ORecord in many points.
@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OPlaceholder implements OIdentifiable, Externalizable {
+public class OPlaceholder implements OIdentifiable, OStreamable {
   private ORecordId rid;
   private int       recordVersion;
 
@@ -101,14 +101,15 @@ public class OPlaceholder implements OIdentifiable, Externalizable {
   }
 
   @Override
-  public void writeExternal(ObjectOutput out) throws IOException {
-    out.writeObject(rid);
+  public void toStream(final DataOutput out) throws IOException {
+    rid.toStream(out);
     out.writeInt(recordVersion);
   }
 
   @Override
-  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-    rid = (ORecordId) in.readObject();
+  public void fromStream(final DataInput in) throws IOException {
+    rid = new ORecordId();
+    rid.fromStream(in);
     recordVersion = in.readInt();
   }
 

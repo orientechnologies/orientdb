@@ -24,6 +24,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
@@ -71,10 +72,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -93,9 +96,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   private ODistributedServerManager.DB_STATUS        prevStatus;
   private ODistributedDatabase                       localDistributedDatabase;
   private ODistributedTransactionManager             txManager;
-  private final ReentrantReadWriteLock               messageManagementLock  = new ReentrantReadWriteLock();
-  // ARRAY OF LOCKS FOR CONCURRENT OPERATIONS ON CLUSTERS
-  private Semaphore[]                                clusterLocks;
   private ODistributedStorageEventListener           eventListener;
 
   private volatile ODistributedConfiguration         distributedConfiguration;
@@ -181,10 +181,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     };
     asynchWorker.setName("OrientDB Distributed asynch ops node=" + getNodeId() + " db=" + getName());
     asynchWorker.start();
-
-    clusterLocks = new Semaphore[32];
-    for (int i = 0; i < clusterLocks.length; ++i)
-      clusterLocks[i] = new Semaphore(1);
   }
 
   @Override
@@ -322,9 +318,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
             } catch (RuntimeException e) {
               throw e;
             } catch (Exception e) {
-              OException.wrapException(new ODistributedException("Cannot execute command " + iCommand), e);
-              // UNREACHABLE
-              return null;
+              throw OException.wrapException(new ODistributedException("Cannot execute command " + iCommand), e);
             }
             nodes.remove(localNodeName);
           } else
@@ -525,7 +519,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       checkNodeIsMaster(localNodeName, dbCfg);
 
-      final String clusterName = checkForCluster(iRecordId, localNodeName, dbCfg);
+      final String clusterName = getClusterNameByRID(iRecordId);
+
+      checkForCluster(iRecordId, localNodeName, dbCfg);
 
       final List<String> servers = dbCfg.getServers(clusterName, null);
 
@@ -796,9 +792,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                 } catch (RuntimeException e) {
                   throw e;
                 } catch (Exception e) {
-                  OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
-                  // UNREACHABLE
-                  return null;
+                  throw OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
                 }
                 nodes.remove(localNodeName);
               } else
@@ -937,9 +931,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
                 } catch (RuntimeException e) {
                   throw e;
                 } catch (Exception e) {
-                  OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
-                  // UNREACHABLE
-                  return null;
+                  throw OException.wrapException(new ODistributedException("Cannot delete record " + iRecordId), e);
                 }
                 nodes.remove(localNodeName);
               } else
@@ -1006,28 +998,28 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
   private Object executeRecordOperationInLock(final boolean iUnlockAtTheEnd, final ORecordId rid,
       final OCallable<Object, OCallable<Void, ODistributedRequestId>> callback) throws Exception {
+    final ORecordId rid2Lock;
+    if (!rid.isPersistent())
+      // CREATE A COPY TO MAINTAIN THE LOCK ON THE CLUSTER AVOIDING THE RID IS TRANSFORMED IN PERSISTENT. THIS ALLOWS TO HAVE
+      // PARALLEL TX BECAUSE NEW RID LOCKS THE ENTIRE CLUSTER.
+      rid2Lock = new ORecordId(rid.getClusterId(), -1l);
+    else
+      rid2Lock = rid;
 
-    final AtomicBoolean acquiredClusterLock = new AtomicBoolean(false);
-    final AtomicBoolean acquiredRecordLock = new AtomicBoolean(false);
     ODistributedRequestId requestId = null;
 
-    final int partition = rid.clusterId % clusterLocks.length;
-
-    messageManagementLock.readLock().lock();
+    final AtomicBoolean lockReleased = new AtomicBoolean(false);
     try {
-      clusterLocks[partition].acquire();
 
-      acquiredClusterLock.set(true);
+      requestId = acquireRecordLock(rid2Lock);
 
-      requestId = acquireRecordLock(rid);
-      acquiredRecordLock.set(true);
-
+      final ODistributedRequestId finalReqId = requestId;
       final OCallable<Void, ODistributedRequestId> unlockCallback = new OCallable<Void, ODistributedRequestId>() {
         @Override
-        public Void call(final ODistributedRequestId req) {
+        public Void call(final ODistributedRequestId requestId) {
           // UNLOCK AS SOON AS THE REQUEST IS SENT
-          if (acquiredClusterLock.compareAndSet(true, false))
-            clusterLocks[partition].release();
+          releaseRecordLock(rid2Lock, finalReqId);
+          lockReleased.set(true);
           return null;
         }
       };
@@ -1041,36 +1033,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     } finally {
       if (iUnlockAtTheEnd) {
-        if (acquiredClusterLock.compareAndSet(true, false))
-          clusterLocks[partition].release();
-
-        if (acquiredRecordLock.compareAndSet(true, false)) {
-          localDistributedDatabase.unlockRecord(rid, requestId);
-          if (eventListener != null) {
-            try {
-              eventListener.onAfterRecordUnlock(rid);
-            } catch (Throwable t) {
-              // IGNORE IT
-              ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                  "Caught exception during ODistributedStorageEventListener.onAfterRecordUnlock", t);
-            }
-          }
-        }
+        if (lockReleased.compareAndSet(false, true))
+          releaseRecordLock(rid2Lock, requestId);
       }
-
-      messageManagementLock.readLock().unlock();
-    }
-  }
-
-  Object executeOperationInLock(final OCallable<Object, Void> callback) throws InterruptedException {
-    // TEMPORARY EXCLUSIVE LOCK (Test LocalConcurrentTxNoAutoRetryTest ignored)
-    messageManagementLock.writeLock().lock();
-    try {
-
-      return callback.call(null);
-
-    } finally {
-      messageManagementLock.writeLock().unlock();
     }
   }
 
@@ -1083,7 +1048,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       configurationSemaphore.await();
     } catch (InterruptedException e) {
-      throw new ODistributedException("Cannot assign cluster id because the operation has been interrupted");
+      throw new ODistributedOperationException("Cannot assign cluster id because the operation has been interrupted");
     }
   }
 
@@ -1222,10 +1187,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   public List<ORecordOperation> commit(final OTransaction iTx, final Runnable callback) {
     resetLastValidBackup();
 
-    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()) {
+    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed())
       // ALREADY DISTRIBUTED
       return wrapped.commit(iTx, callback);
-    }
 
     final ODistributedConfiguration dbCfg = distributedConfiguration;
 
@@ -1270,16 +1234,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   protected ODistributedRequestId acquireRecordLock(final ORecordId rid) {
-    if (!rid.isPersistent())
-      return null;
-
     // ACQUIRE ALL THE LOCKS ON RECORDS ON LOCAL NODE BEFORE TO PROCEED
     final ODistributedRequestId localReqId = new ODistributedRequestId(dManager.getLocalNodeId(),
         dManager.getNextMessageIdCounter());
 
-    final ODistributedRequestId lockHolder = localDistributedDatabase.lockRecord(rid, localReqId);
-    if (lockHolder != null)
-      throw new ODistributedRecordLockedException(rid, lockHolder);
+    localDistributedDatabase.lockRecord(rid, localReqId,
+        OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong() / 2);
 
     if (eventListener != null) {
       try {
@@ -1292,6 +1252,19 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     }
 
     return localReqId;
+  }
+
+  protected void releaseRecordLock(final ORecordId rid, final ODistributedRequestId requestId) {
+    localDistributedDatabase.unlockRecord(rid, requestId);
+    if (eventListener != null) {
+      try {
+        eventListener.onAfterRecordUnlock(rid);
+      } catch (Throwable t) {
+        // IGNORE IT
+        ODistributedServerLog.error(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Caught exception during ODistributedStorageEventListener.onAfterRecordUnlock", t);
+      }
+    }
   }
 
   @Override
@@ -1570,6 +1543,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   @Override
   public List<String> backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, final int compressionLevel, final int bufferSize) throws IOException {
+    // THIS CAUSES DEADLOCK
+    // try {
+    // return (List<String>) executeOperationInLock(new OCallable<Object, Void>() {
+    // @Override
+    // public Object call(Void iArgument) {
     final String localNode = dManager.getLocalNodeName();
 
     final ODistributedServerManager.DB_STATUS prevStatus = dManager.getDatabaseStatus(localNode, getName());
@@ -1581,11 +1559,19 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       return wrapped.backup(out, options, callable, iListener, compressionLevel, bufferSize);
 
+    } catch (IOException e) {
+      throw OException.wrapException(new OIOException("Error on executing backup"), e);
     } finally {
       if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
         // RESTORE PREVIOUS STATUS
         dManager.setDatabaseStatus(localNode, getName(), ODistributedServerManager.DB_STATUS.ONLINE);
     }
+    // }
+    // });
+    // } catch (InterruptedException e) {
+    // Thread.currentThread().interrupt();
+    // throw OException.wrapException(new OIOException("Backup interrupted"), e);
+    // }
   }
 
   @Override
@@ -1768,7 +1754,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     }
   }
 
-  protected String checkForCluster(final ORecordId iRecordId, final String localNodeName, final ODistributedConfiguration dbCfg) {
+  protected String checkForCluster(final ORecordId iRecordId, final String localNodeName, ODistributedConfiguration dbCfg) {
 
     if (iRecordId.getClusterId() < 0)
       throw new IllegalArgumentException("RID " + iRecordId + " is not valid");
@@ -1778,7 +1764,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
     String ownerNode = dbCfg.getClusterOwner(clusterName);
 
     if (ownerNode.equals(localNodeName))
-      return clusterName;
+      // NO CHANGES
+      return null;
 
     final OCluster cl = getClusterByName(clusterName);
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
@@ -1797,10 +1784,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       OLogManager.instance().info(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
           + "' (it is '" + ownerNode + "'). Reloading distributed configuration for database '" + getName() + "'");
 
-      ((OLocalClusterStrategy) clSel).readConfiguration();
+      dbCfg = ((OLocalClusterStrategy) clSel).readConfiguration();
+      //
+      // newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
+      // ownerNode = dbCfg.getClusterOwner(newClusterName);
 
-      newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
-      ownerNode = dbCfg.getClusterOwner(newClusterName);
+      // FORCE THE RETRY OF THE OPERATION
+      throw new ODistributedConfigurationChangedException(
+          "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName + "' (it is '" + ownerNode + "')");
     }
 
     if (!ownerNode.equals(localNodeName))

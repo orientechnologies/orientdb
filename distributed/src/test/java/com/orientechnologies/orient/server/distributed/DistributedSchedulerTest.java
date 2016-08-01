@@ -80,7 +80,7 @@ public class DistributedSchedulerTest extends AbstractServerClusterTest {
       db.command(new OCommandSQL("insert into oschedule set name = 'test', function = ?, rule = \"0/1 * * * * ?\""))
           .execute(func.getId());
 
-      Thread.sleep(4000);
+      Thread.sleep(5000);
 
       long count = getLogCounter(db);
 

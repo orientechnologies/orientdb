@@ -20,9 +20,17 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -31,13 +39,16 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 5/6/14
  */
 public class OPaginatedStorageDirtyFlag {
-  private final String     dirtyFilePath;
+  private final String dirtyFilePath;
 
   private File             dirtyFile;
   private RandomAccessFile dirtyFileData;
+  private FileChannel      channel;
+  private FileLock         fileLock;
+
   private volatile boolean dirtyFlag;
 
-  private final Lock       lock = new ReentrantLock();
+  private final Lock lock = new ReentrantLock();
 
   public OPaginatedStorageDirtyFlag(String dirtyFilePath) {
     this.dirtyFilePath = dirtyFilePath;
@@ -60,14 +71,36 @@ public class OPaginatedStorageDirtyFlag {
         throw new IllegalStateException("Cannot create file : " + dirtyFilePath);
 
       dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
+      channel = dirtyFileData.getChannel();
 
-      dirtyFileData.seek(0);
-      dirtyFileData.writeBoolean(true);
+      if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
+        lockFile();
+      }
+
+      channel.position(0);
+
+      ByteBuffer buffer = ByteBuffer.allocate(1);
+      buffer.position(0);
+      buffer.put((byte) 1);
+
+      buffer.position(0);
+      channel.write(buffer);
+
       dirtyFlag = true;
-
     } finally {
       lock.unlock();
     }
+  }
+
+  private void lockFile() throws IOException {
+    try {
+      fileLock = channel.tryLock();
+    } catch (OverlappingFileLockException e) {
+      OLogManager.instance().warn(this, "Database is open by another process");
+    }
+
+    if (fileLock == null)
+      throw new OStorageException("Can not open storage it is acquired by other process");
   }
 
   public boolean exists() {
@@ -87,9 +120,20 @@ public class OPaginatedStorageDirtyFlag {
         throw new IllegalStateException("File '" + dirtyFilePath + "' does not exist.");
 
       dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
+      channel = dirtyFileData.getChannel();
 
-      dirtyFileData.seek(0);
-      dirtyFlag = dirtyFileData.readBoolean();
+      if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
+        lockFile();
+      }
+
+      channel.position(0);
+      ByteBuffer buffer = ByteBuffer.allocate(1);
+      buffer.position(0);
+
+      channel.read(buffer);
+      buffer.position(0);
+
+      dirtyFlag = buffer.get() > 0;
     } finally {
       lock.unlock();
     }
@@ -101,8 +145,14 @@ public class OPaginatedStorageDirtyFlag {
       if (dirtyFile == null)
         return;
 
-      if (dirtyFile.exists())
+      if (dirtyFile.exists()) {
+        if (fileLock != null) {
+          fileLock.release();
+          fileLock = null;
+        }
+
         dirtyFileData.close();
+      }
 
     } finally {
       lock.unlock();
@@ -117,6 +167,12 @@ public class OPaginatedStorageDirtyFlag {
 
       if (dirtyFile.exists()) {
 
+        if (fileLock != null) {
+          fileLock.release();
+          fileLock = null;
+        }
+
+        channel.close();
         dirtyFileData.close();
 
         boolean deleted = dirtyFile.delete();
@@ -138,8 +194,13 @@ public class OPaginatedStorageDirtyFlag {
       if (dirtyFlag)
         return;
 
-      dirtyFileData.seek(0);
-      dirtyFileData.writeBoolean(true);
+      channel.position(0);
+
+      ByteBuffer buffer = ByteBuffer.allocate(1);
+      buffer.put((byte) 1);
+      buffer.position(0);
+      channel.write(buffer);
+
       dirtyFlag = true;
     } finally {
       lock.unlock();
@@ -155,8 +216,12 @@ public class OPaginatedStorageDirtyFlag {
       if (!dirtyFlag)
         return;
 
-      dirtyFileData.seek(0);
-      dirtyFileData.writeBoolean(false);
+      channel.position(0);
+      ByteBuffer buffer = ByteBuffer.allocate(1);
+      buffer.put((byte) 0);
+      buffer.position(0);
+      channel.write(buffer);
+
       dirtyFlag = false;
     } finally {
       lock.unlock();

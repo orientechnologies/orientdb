@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.graph.stresstest;
 
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -34,20 +35,15 @@ import com.tinkerpop.blueprints.impls.orient.*;
  * @author Luca Garulli
  */
 public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheckWorkload {
-  protected boolean tx = false;
-
-  protected OBaseGraphWorkload(final boolean tx) {
-    this.tx = tx;
-  }
-
   public class OWorkLoadContext extends OBaseWorkload.OBaseWorkLoadContext {
     OrientBaseGraph graph;
     OrientVertex    lastVertexToConnect;
     int             lastVertexEdges;
 
     @Override
-    public void init(ODatabaseIdentifier dbIdentifier) {
-      graph = tx ? getGraph(dbIdentifier) : getGraphNoTx(dbIdentifier);
+    public void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction,
+        OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
+      graph = operationsPerTransaction > 0 ? getGraph(dbIdentifier) : getGraphNoTx(dbIdentifier);
     }
 
     @Override
@@ -63,7 +59,7 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
   }
 
   protected OrientGraphNoTx getGraphNoTx(final ODatabaseIdentifier databaseIdentifier) {
-    final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
+    final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier, connectionStrategy);
     if (database == null)
       throw new IllegalArgumentException("Error on opening database " + databaseIdentifier.getName());
 
@@ -71,11 +67,15 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
   }
 
   protected OrientGraph getGraph(final ODatabaseIdentifier databaseIdentifier) {
-    final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier);
+    final ODatabase database = ODatabaseUtils.openDatabase(databaseIdentifier, connectionStrategy);
     if (database == null)
       throw new IllegalArgumentException("Error on opening database " + databaseIdentifier.getName());
 
-    return new OrientGraph((ODatabaseDocumentTx) database);
+    database.setProperty(OStorageRemote.PARAM_CONNECTION_STRATEGY, connectionStrategy.toString());
+
+    final OrientGraph g = new OrientGraph((ODatabaseDocumentTx) database);
+    g.setAutoStartTx(false);
+    return g;
   }
 
   @Override

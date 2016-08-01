@@ -257,7 +257,8 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
     final OWriteCache expectedWriteCache = ((OAbstractPaginatedStorage) expectedDatabaseDocumentTx.getStorage()).getWriteCache();
 
     for (OWALRecord walRecord : records) {
-      atomicUnit.add(walRecord);
+      if (walRecord instanceof OOperationUnitBodyRecord)
+        atomicUnit.add(walRecord);
 
       if (!atomicChangeIsProcessed && walRecord instanceof OAtomicUnitStartRecord) {
         atomicChangeIsProcessed = true;
@@ -304,7 +305,8 @@ public class OLocalHashTableWALTest extends OLocalHashTableTest {
       } else {
         Assert.assertTrue(walRecord instanceof OUpdatePageRecord || walRecord instanceof OFileCreatedWALRecord
             || walRecord instanceof ONonTxOperationPerformedWALRecord || walRecord instanceof OFullCheckpointStartRecord
-            || walRecord instanceof OCheckpointEndRecord);
+            || walRecord instanceof OCheckpointEndRecord || walRecord instanceof OFuzzyCheckpointStartRecord
+            || walRecord instanceof OFuzzyCheckpointEndRecord);
       }
 
     }

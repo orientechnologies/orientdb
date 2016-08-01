@@ -949,6 +949,12 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   @Override
+  public String getIndexNameByKey(final Object key) {
+    final OIndexEngine engine = storage.getIndexEngine(indexId);
+    return engine.getIndexNameByKey(key);
+  }
+
+  @Override
   public boolean acquireAtomicExclusiveLock(Object key) {
     return storage.getIndexEngine(indexId).acquireAtomicExclusiveLock(key);
   }
