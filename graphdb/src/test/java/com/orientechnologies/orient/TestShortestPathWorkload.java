@@ -19,11 +19,8 @@
  */
 package com.orientechnologies.orient;
 
-import org.junit.Test;
-
 import com.orientechnologies.orient.graph.stresstest.OGraphShortestPathWorkload;
-import com.orientechnologies.orient.stresstest.OStressTester;
-import com.orientechnologies.orient.stresstest.OStressTesterCommandLineParser;
+import org.junit.Test;
 
 /**
  * Test for Graph shortest path workload.
@@ -37,12 +34,5 @@ public class TestShortestPathWorkload {
 
     new OGraphShortestPathWorkload().parseParameters("L100");
     new OGraphShortestPathWorkload().parseParameters("");
-  }
-
-  @Test
-  public void testExecution() throws Exception {
-    final OStressTester stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "GINSERT:V1000F10,GSP:L10" });
-    stressTester.execute();
   }
 }

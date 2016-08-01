@@ -19,10 +19,9 @@
  */
 package com.orientechnologies.orient;
 
-import com.orientechnologies.orient.graph.stresstest.OGraphInsertWorkload;
-import com.orientechnologies.orient.stresstest.OStressTester;
-import com.orientechnologies.orient.stresstest.OStressTesterCommandLineParser;
 import org.junit.Test;
+
+import com.orientechnologies.orient.graph.stresstest.OGraphInsertWorkload;
 
 /**
  * Test for Graph insert workload.
@@ -36,12 +35,5 @@ public class TestGraphInsertWorkload {
 
     new OGraphInsertWorkload().parseParameters("V10000");
     new OGraphInsertWorkload().parseParameters("V10000F10");
-  }
-
-  @Test
-  public void testExecution() throws Exception {
-    final OStressTester stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "GINSERT:V1000F10" });
-    stressTester.execute();
   }
 }

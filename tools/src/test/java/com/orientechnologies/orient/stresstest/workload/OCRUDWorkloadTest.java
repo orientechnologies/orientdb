@@ -1,10 +1,8 @@
 package com.orientechnologies.orient.stresstest.workload;
 
-import com.orientechnologies.orient.stresstest.OStressTester;
-import com.orientechnologies.orient.stresstest.OStressTesterCommandLineParser;
-import org.junit.Test;
-
 import static org.junit.Assert.*;
+
+import org.junit.Test;
 
 public class OCRUDWorkloadTest {
 
@@ -66,12 +64,5 @@ public class OCRUDWorkloadTest {
     assertEquals(99, workload.getReads());
     assertEquals(1, workload.getUpdates());
     assertEquals(99, workload.getDeletes());
-  }
-
-  @Test
-  public void testExecution() throws Exception {
-    final OStressTester stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "crud:C10000R10000U10000D10000" });
-    stressTester.execute();
   }
 }
