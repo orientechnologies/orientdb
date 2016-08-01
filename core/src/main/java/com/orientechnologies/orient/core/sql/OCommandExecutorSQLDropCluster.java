@@ -108,7 +108,7 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
 
   @Override
   public long getDistributedTimeout() {
-    if (clusterName != null)
+    if (clusterName != null && getDatabase().existsCluster(clusterName))
       return 10 * getDatabase().countClusterElements(clusterName);
 
     return OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT.getValueAsLong();

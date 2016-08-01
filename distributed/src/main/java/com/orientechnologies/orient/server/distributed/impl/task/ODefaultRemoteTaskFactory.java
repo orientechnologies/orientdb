@@ -77,6 +77,12 @@ public class ODefaultRemoteTaskFactory implements ORemoteTaskFactory {
 
     case OCopyDatabaseChunkTask.FACTORYID: // 15
       return new OCopyDatabaseChunkTask();
+
+    case OHeartbeatTask.FACTORYID: // 16
+      return new OHeartbeatTask();
+
+    case ORepairReadRecordTask.FACTORYID: // 17
+      return new ORepairReadRecordTask();
     }
 
     throw new IllegalArgumentException("Task with code " + code + " is not supported");

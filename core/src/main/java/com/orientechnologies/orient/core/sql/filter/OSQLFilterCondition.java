@@ -76,7 +76,7 @@ public class OSQLFilterCondition {
   }
 
   public Object evaluate(final OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
-    boolean binaryEvaluation = operator != null && operator.isSupportingBinaryEvaluate();
+    boolean binaryEvaluation = operator != null && operator.isSupportingBinaryEvaluate() && iCurrentRecord!= null && iCurrentRecord.getIdentity().isPersistent();
 
     if (left instanceof OSQLQuery<?>)
       // EXECUTE SUB QUERIES ONLY ONCE

@@ -21,7 +21,10 @@ package com.orientechnologies.orient.stresstest;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.stresstest.workload.OCheckWorkload;
 import com.orientechnologies.orient.stresstest.workload.OWorkload;
 import com.orientechnologies.orient.stresstest.workload.OWorkloadFactory;
@@ -73,7 +76,7 @@ public class OStressTester {
   }
 
   @SuppressWarnings("unchecked")
-  private int execute() throws Exception {
+  public int execute() throws Exception {
 
     int returnCode = 0;
 
@@ -105,6 +108,8 @@ public class OStressTester {
 
         System.out.println(workload.getFinalResult());
 
+        dumpHaMetrics();
+
         if (settings.checkDatabase && workload instanceof OCheckWorkload) {
           System.out.println(String.format("- Checking database..."));
           ((OCheckWorkload) workload).check(databaseIdentifier);
@@ -130,6 +135,20 @@ public class OStressTester {
     }
 
     return returnCode;
+  }
+
+  private void dumpHaMetrics() {
+    if (settings.haMetrics) {
+      final ODatabase db = ODatabaseUtils.openDatabase(databaseIdentifier, OStorageRemote.CONNECTION_STRATEGY.STICKY);
+      try {
+        final String output = db.command(new OCommandSQL("ha status -latency -messages -output=text")).execute();
+        System.out.println("HA METRICS");
+        System.out.println(output);
+
+      } finally {
+        db.close();
+      }
+    }
   }
 
   private void writeFile() {

@@ -52,7 +52,7 @@
             -Dstorage.configuration.syncOnUpdate=false
             -Ddb.makeFullCheckpointOnIndexChange=false
             -Ddb.makeFullCheckpointOnSchemaChange=false
-            -Dhazelcast.wait.seconds.before.join=1
+            -Dhazelcast.wait.seconds.before.join=3
         </argLine>
         <exclude.test.distributed>NONE</exclude.test.distributed>
     </properties>

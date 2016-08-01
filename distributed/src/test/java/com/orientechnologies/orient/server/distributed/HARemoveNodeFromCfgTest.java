@@ -34,12 +34,18 @@ public class HARemoveNodeFromCfgTest extends AbstractServerClusterTxTest {
   @Test
   public void test() throws Exception {
     OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(100);
+    try {
 
-    useTransactions = false;
-    count = 10;
-    init(SERVERS);
-    prepare(false);
-    execute();
+      useTransactions = false;
+      count = 10;
+      init(SERVERS);
+      prepare(false);
+      execute();
+
+    } finally {
+      OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(100);
+    }
+
   }
 
   @Override

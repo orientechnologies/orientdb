@@ -47,4 +47,35 @@ public class ODatabaseImportTest {
     dbImp.drop();
   }
 
+  @Test
+  public void exportImportExcludeClusters() throws IOException {
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + ODatabaseImportTest.class.getSimpleName()+"_excludeclusters");
+    db.create();
+    db.getMetadata().getSchema().createClass("SimpleClass");
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    ODatabaseExport export = new ODatabaseExport((ODatabaseDocumentInternal) db, output, new OCommandOutputListener() {
+      @Override
+      public void onMessage(String iText) {
+      }
+    });
+
+    export.setOptions(" -includeClusterDefinitions=false");
+    export.exportDatabase();
+    db.drop();
+
+    ODatabaseDocument dbImp = new ODatabaseDocumentTx("memory:import_" + ODatabaseImportTest.class.getSimpleName());
+    dbImp.create();
+    ODatabaseImport importer = new ODatabaseImport((ODatabaseDocumentInternal) dbImp,
+        new ByteArrayInputStream(output.toByteArray()), new OCommandOutputListener() {
+      @Override
+      public void onMessage(String iText) {
+
+      }
+    });
+    importer.importDatabase();
+
+    Assert.assertTrue(dbImp.getMetadata().getSchema().existsClass("SimpleClass"));
+    dbImp.drop();
+  }
+
 }

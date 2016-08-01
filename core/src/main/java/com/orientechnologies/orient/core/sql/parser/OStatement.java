@@ -36,7 +36,7 @@ public class OStatement extends SimpleNode {
     throw new UnsupportedOperationException("missing implementation in " + getClass().getSimpleName());
   }
 
-  public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
+  public void validate() throws OCommandSQLParsingException {
 
   }
 

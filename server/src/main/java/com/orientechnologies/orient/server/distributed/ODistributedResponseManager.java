@@ -23,13 +23,14 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -52,7 +53,7 @@ public class ODistributedResponseManager {
   private final HashMap<String, Object>          responses                        = new HashMap<String, Object>();
   private final boolean                          groupResponsesByResult;
   private final List<List<ODistributedResponse>> responseGroups                   = new ArrayList<List<ODistributedResponse>>();
-  private final int                              totalExpectedResponses;
+  private int                                    totalExpectedResponses;
   private final long                             synchTimeout;
   private final long                             totalTimeout;
   private final Lock                             synchronousResponsesLock         = new ReentrantLock();
@@ -69,7 +70,7 @@ public class ODistributedResponseManager {
       final boolean iGroupResponsesByResult) {
     this.dManager = iManager;
     this.request = iRequest;
-    this.sentOn = System.currentTimeMillis();
+    this.sentOn = System.nanoTime();
     this.totalExpectedResponses = iTotalExpectedResponses;
     this.quorum = iQuorum;
     this.waitForLocalNode = iWaitForLocalNode;
@@ -108,11 +109,7 @@ public class ODistributedResponseManager {
         return false;
       }
 
-      Orient.instance().getProfiler().stopChrono("distributed.node.latency", "Latency of distributed messages", sentOn,
-          "distributed.node.latency");
-
-      Orient.instance().getProfiler().stopChrono("distributed.node." + executorNode + ".latency",
-          "Latency of distributed messages per node", sentOn, "distributed.node.*.latency");
+      dManager.getMessageService().updateLatency(executorNode, sentOn);
 
       responses.put(executorNode, response);
       receivedResponses++;
@@ -196,7 +193,7 @@ public class ODistributedResponseManager {
   }
 
   public long getSentOn() {
-    return sentOn;
+    return sentOn / 1000000;
   }
 
   @SuppressWarnings("unchecked")
@@ -341,7 +338,7 @@ public class ODistributedResponseManager {
         return new ODistributedResponse(request.getId(), dManager.getLocalNodeName(), dManager.getLocalNodeName(), failure);
 
       if (receivedResponses == 0) {
-        if (quorum > 0)
+        if (quorum > 0 && !request.getTask().isIdempotent())
           throw new ODistributedOperationException(
               "No response received from any of nodes " + getExpectedNodes() + " for request " + request);
 
@@ -497,7 +494,7 @@ public class ODistributedResponseManager {
       return true;
 
     if (groupResponsesByResult) {
-      for (List<ODistributedResponse> group : responseGroups)
+      for (List<ODistributedResponse> group : responseGroups) {
         if (group.size() >= quorum) {
           int responsesForQuorum = 0;
           for (ODistributedResponse r : group) {
@@ -508,6 +505,9 @@ public class ODistributedResponseManager {
                 if (payload instanceof ODistributedRecordLockedException)
                   // JUST ONE ODistributedRecordLockedException IS ENOUGH TO FAIL THE OPERATION BECAUSE RESOURCES CANNOT BE LOCKED
                   return false;
+                if (payload instanceof OConcurrentCreateException)
+                  // JUST ONE OConcurrentCreateException IS ENOUGH TO FAIL THE OPERATION BECAUSE RID ARE DIFFERENT
+                  return false;
               } else if (++responsesForQuorum >= quorum)
                 // QUORUM REACHED
                 break;
@@ -516,6 +516,24 @@ public class ODistributedResponseManager {
 
           return responsesForQuorum >= quorum;
         }
+      }
+
+      if (responseGroups.size() == 1 && OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.getValueAsLong() == 0) {
+        // CHECK FOR OFFLINE SERVERS
+        final List<String> missingNodes = getMissingNodes();
+
+        final int expectingNodes = missingNodes.size();
+        dManager.getAvailableNodes(missingNodes, getDatabaseName());
+        final int unreacheableServersDuringRequest = expectingNodes - missingNodes.size();
+
+        if (responseGroups.get(0).size() + unreacheableServersDuringRequest >= quorum) {
+          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+              "%d server(s) became unreachable during the request, decreasing the quorum (%d) and accept the request: %s",
+              unreacheableServersDuringRequest, quorum, request);
+          return true;
+        }
+      }
+
     } else {
       if (receivedResponses >= quorum) {
         int responsesForQuorum = 0;
@@ -580,15 +598,20 @@ public class ODistributedResponseManager {
         "Detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request (%s)",
         conflicts, quorum, request);
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
+    // if (ODistributedServerLog.isDebugEnabled())
+    ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
 
-    undoRequest();
+    if (!undoRequest()) {
+      // SKIP UNDO
+      return null;
+    }
 
-    // CHECK IF THERE IS AT LEAST ONE ODistributedRecordLockedException
+    // CHECK IF THERE IS AT LEAST ONE ODistributedRecordLockedException or OConcurrentCreateException
     for (Object r : responses.values()) {
       if (r instanceof ODistributedRecordLockedException)
         throw (ODistributedRecordLockedException) r;
+      else if (r instanceof OConcurrentCreateException)
+        throw (OConcurrentCreateException) r;
     }
 
     final Object goodResponsePayload = bestResponsesGroup.isEmpty() ? null : bestResponsesGroup.get(0).getPayload();
@@ -616,7 +639,7 @@ public class ODistributedResponseManager {
   private String composeConflictMessage() {
     final StringBuilder msg = new StringBuilder(256);
     msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Elapsed="
-        + (System.currentTimeMillis() - sentOn) + "ms");
+        + (System.currentTimeMillis() - getSentOn()) + "ms");
     final List<ODistributedResponse> res = getConflictResponses();
     if (res.isEmpty())
       msg.append(" No server in conflict. ");
@@ -642,7 +665,16 @@ public class ODistributedResponseManager {
     return msg.toString();
   }
 
-  protected void undoRequest() {
+  protected boolean undoRequest() {
+    final ORemoteTask task = request.getTask();
+
+    if (task.isIdempotent()) {
+      // NO UNDO IS NECESSARY
+      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+          "No undo because the task (%s) is idempotent", task);
+      return false;
+    }
+
     // DETERMINE IF ANY CREATE FAILED TO RESTORE RIDS
     for (ODistributedResponse r : getReceivedResponses()) {
       if (r.getPayload() instanceof Throwable)
@@ -659,7 +691,6 @@ public class ODistributedResponseManager {
         // AVOID TO UNDO LOCAL NODE BECAUSE THE OPERATION IS MANAGED APART
         continue;
 
-      final ORemoteTask task = request.getTask();
       if (task instanceof OAbstractReplicatedTask) {
         final ORemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request.getId());
 
@@ -672,6 +703,7 @@ public class ODistributedResponseManager {
         }
       }
     }
+    return true;
   }
 
   protected boolean fixNodesInConflict(final List<ODistributedResponse> bestResponsesGroup, final int conflicts) {
@@ -745,8 +777,15 @@ public class ODistributedResponseManager {
     return false;
   }
 
-  public void setLocalResult(final String localNodeName, final Serializable localResult) {
+  public void setLocalResult(final String localNodeName, final Object localResult) {
     localResponse = new ODistributedResponse(request.getId(), localNodeName, localNodeName, localResult);
     collectResponse(localResponse);
+  }
+
+  public void removeServerBecauseUnreachable(final String node) {
+    if (responses.remove(node) != null) {
+      totalExpectedResponses--;
+      nodesConcurInQuorum.remove(node);
+    }
   }
 }

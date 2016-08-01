@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.util.*;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OBaseParser;
@@ -29,9 +27,11 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+
+import java.util.*;
 
 /**
  * Abstract implementation of Executor Command interface.
@@ -127,7 +127,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
 
   public static boolean checkInterruption(final OCommandContext iContext) {
     if (OExecutionThreadLocal.isInterruptCurrentOperation())
-      throw new OCommandExecutionException("Operation has been interrupted");
+      throw new OCommandInterruptedException("The command has been interrupted");
 
     if (iContext != null && !iContext.checkTimeout())
       return false;

@@ -403,15 +403,17 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
       String tag;
+      boolean clustersImported = false;
       while (jsonReader.hasNext() && jsonReader.lastChar() != '}') {
         tag = jsonReader.readString(OJSONReader.FIELD_ASSIGNMENT);
 
         if (tag.equals("info"))
           importInfo();
-        else if (tag.equals("clusters"))
+        else if (tag.equals("clusters")) {
           importClusters();
-        else if (tag.equals("schema"))
-          importSchema();
+          clustersImported = true;
+        }else if (tag.equals("schema"))
+          importSchema(clustersImported);
         else if (tag.equals("records"))
           importRecords();
         else if (tag.equals("indexes"))
@@ -741,7 +743,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
   }
 
-  private void importSchema() throws IOException, ParseException {
+  private void importSchema(boolean clustersImported) throws IOException, ParseException {
+    if (!clustersImported) {
+      removeDefaultClusters();
+    }
+
     listener.onMessage("\nImporting database schema...");
 
     jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
@@ -833,10 +839,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         if (cls != null) {
           if (cls.getDefaultClusterId() != classDefClusterId)
             cls.setDefaultClusterId(classDefClusterId);
-        } else
+        } else if(clustersImported) {
           cls = (OClassImpl) database.getMetadata().getSchema().createClass(className, new int[] { classDefClusterId });
+        } else if (className.equalsIgnoreCase("ORestricted")) {
+          cls = (OClassImpl) database.getMetadata().getSchema().createAbstractClass(className);
+        } else {
+          cls = (OClassImpl) database.getMetadata().getSchema().createClass(className);
+        }
 
-        if (classClusterIds != null) {
+        if (classClusterIds != null && clustersImported) {
           // REMOVE BRACES
           classClusterIds = classClusterIds.substring(1, classClusterIds.length() - 1);
 
@@ -1015,7 +1026,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     OPropertyImpl prop = (OPropertyImpl) iClass.getProperty(propName);
     if (prop == null) {
       // CREATE IT
-      prop = (OPropertyImpl) iClass.createProperty(propName, type);
+      prop = (OPropertyImpl) iClass.createProperty(propName, type, (OType) null, true);
     }
     prop.setMandatory(mandatory);
     prop.setReadonly(readonly);
@@ -1409,7 +1420,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     int n = 0;
     while (jsonReader.lastChar() != ']') {
-      jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+      jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
+      if(jsonReader.lastChar() == ']'){
+        break;
+      }
 
       String blueprintsIndexClass = null;
       String indexName = null;

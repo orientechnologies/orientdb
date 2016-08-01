@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -46,13 +45,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
 
 /**
  * Automatically creates a backup at configured time. Starting from v2.2, this component is able also to create incremental backup
@@ -233,7 +227,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
         final String configurationContent = OIOUtils.readFileAsString(f);
         configuration = new ODocument().fromJSON(configurationContent);
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException("Cannot load Automatic Backup configuration file '" + configFile
+        throw OException.wrapException(new OConfigurationException("Cannot load Automatic Backup configuration file '" + configFile
             + "'. Automatic Backup will be disabled"), e);
       }
 
@@ -246,7 +240,7 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
 
         OLogManager.instance().info(this, "Automatic Backup: migrated configuration to file '%s'", f);
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException("Cannot create Automatic Backup configuration file '" + configFile
+        throw OException.wrapException(new OConfigurationException("Cannot create Automatic Backup configuration file '" + configFile
             + "'. Automatic Backup will be disabled"), e);
       }
     }

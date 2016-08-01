@@ -19,10 +19,12 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import java.io.Externalizable;
+import com.orientechnologies.orient.core.serialization.OStreamable;
+import com.orientechnologies.orient.core.serialization.OStreamableHelper;
+
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +33,7 @@ import java.util.List;
  * 
  * @author Luca Garulli
  */
-public class OTxTaskResult implements Externalizable {
+public class OTxTaskResult implements OStreamable {
   public final List<Object> results = new ArrayList<Object>();
 
   public OTxTaskResult() {
@@ -65,17 +67,17 @@ public class OTxTaskResult implements Externalizable {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  public void toStream(final DataOutput out) throws IOException {
     out.writeInt(results.size());
     for (Object o : results)
-      out.writeObject(o);
+      OStreamableHelper.toStream(out, o);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void fromStream(final DataInput in) throws IOException {
     final int resultSize = in.readInt();
     for (int i = 0; i < resultSize; ++i)
-      results.add(in.readObject());
+      results.add(OStreamableHelper.fromStream(in));
   }
 
   /**

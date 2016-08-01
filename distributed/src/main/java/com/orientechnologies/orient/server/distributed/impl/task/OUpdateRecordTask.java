@@ -22,23 +22,21 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Distributed updated record task used for synchronization.
@@ -96,11 +94,19 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     if (previousRecord == null) {
       // RESURRECT/CREATE IT
 
-      new OCreateRecordTask(rid, content, version, recordType).executeRecordTask(requestId, iServer, iManager, database);
+      final OPlaceholder ph = (OPlaceholder) new OCreateRecordTask(rid, content, version, recordType).executeRecordTask(requestId,
+          iServer, iManager, database);
+      record = ph.getRecord();
+
+      if (record == null)
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+            "+-> Error on updating record %s", rid);
 
     } else {
       // UPDATE IT
       final ORecord loadedRecord = previousRecord.copy();
+
+      final int loadedVersion = loadedRecord.getVersion();
 
       if (loadedRecord instanceof ODocument) {
         // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
@@ -115,6 +121,14 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       loadedRecord.setDirty();
 
       record = database.save(loadedRecord);
+
+      if (record == null)
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+            "+-> Error on updating record %s", rid);
+
+      if (version < 0 && ODistributedServerLog.isDebugEnabled())
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+            "+-> Reverted %s from version %d to %d", rid, loadedVersion, record.getVersion());
     }
 
     if (ODistributedServerLog.isDebugEnabled())
@@ -160,16 +174,16 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    super.writeExternal(out);
+  public void toStream(final DataOutput out) throws IOException {
+    super.toStream(out);
     out.writeInt(content.length);
     out.write(content);
-    out.write(recordType);
+    out.writeByte(recordType);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    super.readExternal(in);
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
+    super.fromStream(in, factory);
     final int contentSize = in.readInt();
     content = new byte[contentSize];
     in.readFully(content);

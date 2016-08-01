@@ -23,17 +23,15 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
@@ -42,6 +40,7 @@ import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -138,12 +137,25 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
     final AtomicReference<ODistributedDatabaseDeltaSyncException> exception = new AtomicReference<ODistributedDatabaseDeltaSyncException>();
 
     try {
-      endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream, excludedClusterNames));
+      final AtomicLong counter = new AtomicLong(0);
+      endLSN.set(((OAbstractPaginatedStorage) storage).recordsChangedAfterLSN(startLSN, fileOutputStream, excludedClusterNames,
+          new OCommandOutputListener() {
+            @Override
+            public void onMessage(final String iText) {
+              if (iText.startsWith("read")) {
+                if (counter.incrementAndGet() % 100000 == 0) {
+                  ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "- %s", iText);
+                }
+              } else if (counter.incrementAndGet() % 10000 == 0) {
+                ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "- %s", iText);
+              }
+            }
+          }));
 
-      if (endLSN.get() == null)
+      if (endLSN.get() == null) {
         // DELTA NOT AVAILABLE, TRY WITH FULL BACKUP
         exception.set(new ODistributedDatabaseDeltaSyncException(startLSN));
-      else
+      } else
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
             "Delta backup of database '%s' completed. range=%s-%s", databaseName, startLSN, endLSN);
 
@@ -214,8 +226,8 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    startLSN.writeExternal(out);
+  public void toStream(final DataOutput out) throws IOException {
+    startLSN.toStream(out);
     out.writeLong(random);
     out.writeInt(excludedClusterNames.size());
     for (String clName : excludedClusterNames) {
@@ -224,7 +236,7 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     startLSN = new OLogSequenceNumber(in);
     random = in.readLong();
     excludedClusterNames.clear();

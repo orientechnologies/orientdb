@@ -19,8 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
@@ -31,6 +34,7 @@ import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -41,14 +45,15 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ODistributedMessageServiceImpl implements ODistributedMessageService {
 
-  protected final OHazelcastPlugin                                     manager;
-  protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
-  protected final TimerTask                                            asynchMessageManager;
-  protected Map<String, ODistributedDatabaseImpl>                      databases               = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
-  protected Thread                                                     responseThread;
-  protected long[]                                                     responseTimeMetrics     = new long[10];
-  protected int                                                        responseTimeMetricIndex = 0;
-  protected volatile boolean                                           running                 = true;
+  private final OHazelcastPlugin                                     manager;
+  private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
+  private final TimerTask                                            asynchMessageManager;
+  private Map<String, ODistributedDatabaseImpl>                      databases           = new ConcurrentHashMap<String, ODistributedDatabaseImpl>();
+  private Thread                                                     responseThread;
+  private long[]                                                     responseTimeMetrics = new long[10];
+  private volatile boolean                                           running             = true;
+  private Map<String, OProfilerEntry>                                latencies           = new HashMap<String, OProfilerEntry>();
+  private Map<String, AtomicLong>                                    messagesStats       = new HashMap<String, AtomicLong>();
 
   public ODistributedMessageServiceImpl(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -68,7 +73,11 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   public ODistributedDatabaseImpl getDatabase(final String iDatabaseName) {
-    return databases.get(iDatabaseName);
+    if (databases != null)
+      return databases.get(iDatabaseName);
+
+    // NOT INITIALIZED YET
+    return null;
   }
 
   public void shutdown() {
@@ -86,6 +95,9 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
     asynchMessageManager.cancel();
     responsesByRequestIds.clear();
+
+    latencies.clear();
+    messagesStats.clear();
   }
 
   public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {
@@ -124,18 +136,15 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     return db;
   }
 
+  @Override
   public Set<String> getDatabases() {
     return databases.keySet();
   }
 
   /**
    * Not synchronized, it's called when a message arrives
-   * 
-   * @param response
    */
-  public long dispatchResponseToThread(final ODistributedResponse response) {
-    final long chrono = Orient.instance().getProfiler().startChrono();
-
+  public void dispatchResponseToThread(final ODistributedResponse response) {
     try {
       final long msgId = response.getRequestId().getMessageId();
 
@@ -147,24 +156,65 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
               "received response for message %d after the timeout (%dms)", msgId,
               OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
       } else if (asynchMgr.collectResponse(response)) {
-        // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
-        responsesByRequestIds.remove(msgId);
 
-        // RETURN THE ASYNCH RESPONSE TIME
-        return System.currentTimeMillis() - asynchMgr.getSentOn();
+        // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
+        final ODistributedResponseManager resp = responsesByRequestIds.remove(msgId);
+
       }
     } finally {
-      Orient.instance().getProfiler().stopChrono("distributed.node." + response.getExecutorNodeName() + ".latency",
-          "Latency in ms from current node", chrono);
-
       Orient.instance().getProfiler().updateCounter("distributed.node.msgReceived",
           "Number of replication messages received in current node", +1, "distributed.node.msgReceived");
 
       Orient.instance().getProfiler().updateCounter("distributed.node." + response.getExecutorNodeName() + ".msgReceived",
           "Number of replication messages received in current node from a node", +1, "distributed.node.*.msgReceived");
     }
+  }
 
-    return -1;
+  @Override
+  public ODocument getLatencies() {
+    final ODocument doc = new ODocument();
+
+    synchronized (latencies) {
+      for (Entry<String, OProfilerEntry> entry : latencies.entrySet())
+        doc.field(entry.getKey(), entry.getValue().toDocument(), OType.EMBEDDED);
+    }
+
+    return doc;
+  }
+
+  @Override
+  public void updateLatency(final String server, final long sentOn) {
+    // MANAGE THIS ASYNCHRONOUSLY
+    synchronized (latencies) {
+      OProfilerEntry latency = latencies.get(server);
+      if (latency == null) {
+        latency = new OProfilerEntry();
+        latencies.put(server, latency);
+      } else
+        latency.updateLastExecution();
+
+      latency.entries++;
+
+      if (latency.lastExecution - latency.lastReset > 30000) {
+        // RESET STATS EVERY 30 SECONDS
+        latency.last = 0;
+        latency.total = 0;
+        latency.average = 0;
+        latency.min = 0;
+        latency.max = 0;
+        latency.lastResetEntries = 0;
+        latency.lastReset = latency.lastExecution;
+      }
+
+      latency.lastResetEntries++;
+      latency.last = System.nanoTime() - sentOn;
+      latency.total += latency.last;
+      latency.average = latency.total / latency.lastResetEntries;
+      if (latency.last < latency.min)
+        latency.min = latency.last;
+      if (latency.last > latency.max)
+        latency.max = latency.last;
+    }
   }
 
   protected void purgePendingMessages() {
@@ -197,5 +247,50 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
         it.remove();
       }
     }
+  }
+
+  @Override
+  public ODocument getMessageStats() {
+    final ODocument doc = new ODocument();
+
+    synchronized (messagesStats) {
+      for (Map.Entry<String, AtomicLong> entry : messagesStats.entrySet())
+        doc.field(entry.getKey(), entry.getValue().longValue());
+    }
+
+    return doc;
+  }
+
+  @Override
+  public void updateMessageStats(final String message) {
+    // MANAGE THIS ASYNCHRONOUSLY
+    synchronized (messagesStats) {
+      AtomicLong counter = messagesStats.get(message);
+      if (counter == null) {
+        counter = new AtomicLong();
+        messagesStats.put(message, counter);
+      }
+      counter.incrementAndGet();
+    }
+  }
+
+  @Override
+  public long getReceivedRequests() {
+    long total = 0;
+    for (ODistributedDatabaseImpl db : databases.values()) {
+      total += db.getReceivedRequests();
+    }
+
+    return total;
+  }
+
+  @Override
+  public long getProcessedRequests() {
+    long total = 0;
+    for (ODistributedDatabaseImpl db : databases.values()) {
+      total += db.getProcessedRequests();
+    }
+
+    return total;
   }
 }

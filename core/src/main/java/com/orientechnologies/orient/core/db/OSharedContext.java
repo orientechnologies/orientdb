@@ -53,25 +53,25 @@ public class OSharedContext implements OCloseable {
     statementCache = new OStatementCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
   }
 
-  public synchronized void load(OStorage storage) {
+  public synchronized void load(ODatabaseDocumentInternal database) {
     final long timer = PROFILER.startChrono();
 
     try {
       if (!loaded) {
-        schema.load();
+        schema.load(database);
         security.load();
-        indexManager.load();
-        if (!(storage instanceof OStorageProxy)) {
-          functionLibrary.load();
-          scheduler.load();
+        indexManager.load(database);
+        if (!(database.getStorage() instanceof OStorageProxy)) {
+          functionLibrary.load(database);
+          scheduler.load(database);
         }
-        sequenceLibrary.load();
+        sequenceLibrary.load(database);
         schema.onPostIndexManagement();
         loaded = true;
       }
     } finally {
       PROFILER
-          .stopChrono(PROFILER.getDatabaseMetric(storage.getName(), "metadata.load"), "Loading of database metadata", timer,
+          .stopChrono(PROFILER.getDatabaseMetric(database.getStorage().getName(), "metadata.load"), "Loading of database metadata", timer,
               "db.*.metadata.load");
     }
   }
@@ -92,24 +92,24 @@ public class OSharedContext implements OCloseable {
       liveQueryOps.close();
   }
 
-  public synchronized void reload() {
+  public synchronized void reload(ODatabaseDocumentInternal database) {
     schema.reload();
     indexManager.reload();
     security.load();
-    functionLibrary.load();
-    sequenceLibrary.load();
+    functionLibrary.load(database);
+    sequenceLibrary.load(database);
     commandCache.clear();
-    scheduler.load();
+    scheduler.load(database);
   }
 
-  public synchronized void create() {
-    schema.create();
-    indexManager.create();
+  public synchronized void create(ODatabaseDocumentInternal database) {
+    schema.create(database);
+    indexManager.create(database);
     security.create();
-    functionLibrary.create();
-    sequenceLibrary.create();
+    functionLibrary.create(database);
+    sequenceLibrary.create(database);
     security.createClassTrigger();
-    scheduler.create();
+    scheduler.create(database);
 
     // CREATE BASE VERTEX AND EDGE CLASSES
     schema.createClass("V");

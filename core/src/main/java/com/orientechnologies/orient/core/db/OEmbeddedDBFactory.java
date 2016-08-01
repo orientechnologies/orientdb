@@ -29,6 +29,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   private final String           basePath;
   private final OEngine          memory;
   private final OEngine          disk;
+  private final Thread           shutdownThread;
 
   public OEmbeddedDBFactory(String directoryPath, OrientDBSettings configurations) {
     super();
@@ -49,11 +50,10 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     } catch (Exception e) {
       OLogManager.instance().error(this, "MBean for byte buffer pool cannot be registered", e);
     }
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      OEmbeddedDBFactory.this.close();
-      Runtime.getRuntime().removeShutdownHook(Thread.currentThread());
-    }));
+    
+    shutdownThread = new Thread(() -> OEmbeddedDBFactory.this.internalClose());
+    
+    Runtime.getRuntime().addShutdownHook(shutdownThread);
 
   }
 
@@ -107,8 +107,9 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
       storage.getConfiguration().update();
 
-      final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-      embedded.internalCreate();
+      try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
+        embedded.internalCreate();
+      }
     } else
       throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
   }
@@ -151,7 +152,11 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
   @Override
   public synchronized void close() {
+    internalClose();
+    Runtime.getRuntime().removeShutdownHook(shutdownThread);
+  }
 
+  private synchronized void internalClose() {
     final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
     for (OStorage stg : storagesCopy) {
       try {
@@ -166,9 +171,8 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     // SHUTDOWN ENGINES
     memory.shutdown();
     disk.shutdown();
-
   }
-
+  
   public OrientDBSettings getConfigurations() {
     return configurations;
   }

@@ -29,11 +29,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
@@ -98,10 +95,6 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
             final int compressionRate = OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger();
 
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "Creating backup of database '%s' (compressionRate=%d) in directory: %s...", databaseName, compressionRate,
-                backupFile.getAbsolutePath());
-
             if (backupFile.exists())
               backupFile.delete();
             else
@@ -116,12 +109,18 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
 
             endLSN = ((OAbstractPaginatedStorage) database.getStorage().getUnderlying()).getLSN();
 
+            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                "Creating backup of database '%s' (compressionRate=%d) in directory: %s. LSN=%s...", databaseName, compressionRate,
+                backupFile.getAbsolutePath(), endLSN);
+
             new Thread(new Runnable() {
               @Override
               public void run() {
                 Thread.currentThread().setName("OrientDB SyncDatabase node=" + iManager.getLocalNodeName() + " db=" + databaseName);
 
                 try {
+
+                  database.activateOnCurrentThread();
                   database.backup(fileOutputStream, null, null,
                       ODistributedServerLog.isDebugEnabled() ? new OCommandOutputListener() {
                         @Override
@@ -215,12 +214,12 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   }
 
   @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  public void toStream(final DataOutput out) throws IOException {
     out.writeLong(random);
   }
 
   @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
     random = in.readLong();
   }
 

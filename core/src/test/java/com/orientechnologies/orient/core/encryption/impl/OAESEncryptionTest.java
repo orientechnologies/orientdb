@@ -24,6 +24,7 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
   private static final String DBNAME_DATABASETEST = "testCreatedAESEncryptedDatabase";
   private static final String DBNAME_CLUSTERTEST  = "testCreatedAESEncryptedCluster";
 
+  @Test
   public void testOAESEncryptedCompressionNoKey() {
     try {
       testEncryption(OAESEncryption.NAME);
@@ -32,6 +33,7 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
     }
   }
 
+  @Test
   public void testOAESEncryptedInvalidKey() {
     try {
       testEncryption(OAESEncryption.NAME, "ee");
@@ -40,10 +42,12 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
     }
   }
 
+  @Test
   public void testOAESEncrypted() {
     testEncryption(OAESEncryption.NAME, "T1JJRU5UREJfSVNfQ09PTA==");
   }
 
+  @Test
   public void testCreatedAESEncryptedDatabase() {
     String buildDirectory = System.getProperty("buildDirectory", ".");
 
@@ -120,6 +124,7 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
     }
   }
 
+  @Test
   public void testCreatedAESEncryptedCluster() {
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     final String dbPath = buildDirectory + File.separator + DBNAME_CLUSTERTEST;
@@ -181,6 +186,7 @@ public class OAESEncryptionTest extends AbstractEncryptionTest {
       } catch (OSecurityException e) {
         Assert.assertTrue(true);
       } finally {
+        db.activateOnCurrentThread();
         db.close();
         storage.close(true, false);
       }

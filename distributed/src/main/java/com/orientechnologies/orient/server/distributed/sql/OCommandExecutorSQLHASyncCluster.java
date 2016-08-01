@@ -227,15 +227,25 @@ public class OCommandExecutorSQLHASyncCluster extends OCommandExecutorSQLAbstrac
         db = serverInstance.openDatabase("plocal:" + dbPath, "", "", null, true);
 
       try {
+
         final OAbstractPaginatedStorage stg = (OAbstractPaginatedStorage) db.getStorage().getUnderlying();
 
-        final OPaginatedCluster cluster = (OPaginatedCluster) stg.getClusterByName(clusterName);
+        // TODO: FREEZE COULD IT NOT NEEDED
+        stg.freeze(false);
+        try {
 
-        final File tempClusterFile = new File(tempDirectoryPath + "/" + clusterName + OPaginatedCluster.DEF_EXTENSION);
+          final OPaginatedCluster cluster = (OPaginatedCluster) stg.getClusterByName(clusterName);
 
-        cluster.replaceFile(tempClusterFile);
+          final File tempClusterFile = new File(tempDirectoryPath + "/" + clusterName + OPaginatedCluster.DEF_EXTENSION);
+
+          cluster.replaceFile(tempClusterFile);
+
+        } finally {
+          stg.release();
+        }
 
         db.getLocalCache().invalidate();
+
       } finally {
         if (openDatabaseHere)
           db.close();

@@ -34,7 +34,7 @@ public abstract class AbstractHARemoveNode extends AbstractServerClusterTxTest {
       public Boolean call(ODatabaseDocumentTx db) {
         final boolean ok = db.countClass("Person") >= expected;
         if (!ok)
-          System.out.println("FOUND " + db.countClass("Person") + " people instead of expected " + expected);
+          System.out.println("Server 0: FOUND " + db.countClass("Person") + " people instead of expected " + expected);
         return ok;
       }
     }, 10000);
@@ -46,7 +46,7 @@ public abstract class AbstractHARemoveNode extends AbstractServerClusterTxTest {
 
         final boolean ok = db.countClass("Person") >= node2Expected;
         if (!ok)
-          System.out.println("FOUND " + db.countClass("Person") + " people instead of expected " + node2Expected);
+          System.out.println("Server 2: FOUND " + db.countClass("Person") + " people instead of expected " + node2Expected);
         return ok;
       }
     }, 10000);

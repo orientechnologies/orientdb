@@ -29,12 +29,15 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.util.Arrays;
 
+/**
+ * Abstract representation of a channel.
+ * 
+ * @author Luca Garulli
+ */
 public abstract class OChannelBinary extends OChannel {
   private static final int MAX_LENGTH_DEBUG = 150;
   protected final boolean  debug;
@@ -311,24 +314,27 @@ public abstract class OChannelBinary extends OChannel {
   @Override
   public void flush() throws IOException {
     if (debug)
-      OLogManager.instance().info(this, "%s - Flush", socket != null ? " null possible previous close" :socket.getRemoteSocketAddress());
+      OLogManager.instance().info(this, "%s - Flush",
+          socket != null ? " null possible previous close" : socket.getRemoteSocketAddress());
 
     updateMetricFlushes();
 
-    super.flush();
     if (out != null)
+      // IT ALREADY CALL THE UNDERLYING FLUSH
       out.flush();
+    else
+      super.flush();
   }
 
   @Override
   public void close() {
     if (debug)
-      OLogManager.instance().info(this, "%s - Closing socket...", socket != null ? " null possible previous close" : socket.getRemoteSocketAddress());
+      OLogManager.instance().info(this, "%s - Closing socket...",
+          socket != null ? " null possible previous close" : socket.getRemoteSocketAddress());
 
     try {
       if (in != null) {
         in.close();
-        // in = null;
       }
     } catch (IOException e) {
       OLogManager.instance().debug(this, "Error during closing of input stream", e);
@@ -337,7 +343,6 @@ public abstract class OChannelBinary extends OChannel {
     try {
       if (out != null) {
         out.close();
-        // out = null;
       }
     } catch (IOException e) {
       OLogManager.instance().debug(this, "Error during closing of output stream", e);
@@ -346,5 +351,11 @@ public abstract class OChannelBinary extends OChannel {
     super.close();
   }
 
+  public DataOutputStream getDataOutput() {
+    return out;
+  }
 
+  public DataInputStream getDataInput() {
+    return in;
+  }
 }

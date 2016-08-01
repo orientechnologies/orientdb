@@ -1,9 +1,11 @@
 package com.orientechnologies.common.collection.closabledictionary;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
 import javax.annotation.concurrent.GuardedBy;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicLong;
@@ -686,6 +688,11 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   private void evict() {
+    final long start =  Orient.instance().getProfiler().startChrono();
+
+    final int initialSize = lruList.size();
+    int closedFiles = 0;
+
     while (lruList.size() > openLimit) {
       //we may only close items in open state so we "peek" them first
       Iterator<OClosableEntry<K, V>> iterator = lruList.iterator();
@@ -695,16 +702,25 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
       while (iterator.hasNext()) {
         OClosableEntry<K, V> entry = iterator.next();
         if (entry.makeClosed()) {
+          closedFiles++;
           iterator.remove();
           entryClosed = true;
           break;
         }
       }
 
-      //there are no items in open state stop evictaion
+      //there are no items in open state stop eviction
       if (!entryClosed)
         break;
     }
+
+    if( closedFiles > 0) {
+      OLogManager.instance().debug(this,
+          "Reached maximum of opened files %d (max=%d), closed %d files. Consider to raise this limit by increasing the global setting '%s' and the OS limit on opened files per processor",
+          initialSize, openLimit, closedFiles, OGlobalConfiguration.OPEN_FILES_LIMIT.getKey());
+    }
+
+    Orient.instance().getProfiler().stopChrono("disk.closeFiles", "Close the opened files because reached the configured limit", start);
   }
 
   private class LogAdd implements Runnable {

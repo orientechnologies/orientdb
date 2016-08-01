@@ -44,8 +44,8 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
   @Test
   public void test() throws Exception {
     startupNodesInSequence = true;
-    useTransactions = false;
-    count = 300;
+    useTransactions = true;
+    count = 500;
     maxRetries = 10;
     delayWriter = 0;
     init(SERVERS);
@@ -91,39 +91,47 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
 
     if (serverStarted++ == (SERVERS - 1)) {
 
-      // BACKUP LAST SERVER, RUN ASYNCHRONOUSLY
       new Thread(new Runnable() {
 
         @Override
         public void run() {
           try {
-            // CRASH LAST SERVER try {
+            // RESTART LAST SERVER
             executeWhen(0, new OCallable<Boolean, ODatabaseDocumentTx>() {
               // CONDITION
               @Override
               public Boolean call(ODatabaseDocumentTx database) {
-                return database.countClass("Person") > (count * writerCount * (SERVERS-1) * 1 / 3);
+                return database.countClass("Person") > (count * writerCount * (SERVERS - 1) * 1 / 3);
               }
             }, // ACTION
                 new OCallable<Boolean, ODatabaseDocumentTx>() {
-              @Override
-              public Boolean call(final ODatabaseDocumentTx database) {
-                Assert.assertTrue("Insert was too fast", inserting);
+                  @Override
+                  public Boolean call(final ODatabaseDocumentTx database) {
+                    Assert.assertTrue("Insert was too fast", inserting);
 
-                banner("RESTARTING SERVER " + (SERVERS - 1));
+                    banner("RESTARTING SERVER " + (SERVERS - 1) + " - Person records: " + database.countClass("Person"));
 
-                delayWriter = 10;
+                    delayWriter = 100;
 
-                try {
-                  final String nodeName = server.server.getDistributedManager().getLocalNodeName();
-                  ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager()).restartNode(nodeName);
-                } catch (Exception e) {
-                  e.printStackTrace();
-                }
+                    try {
+                      final String nodeName = server.server.getDistributedManager().getLocalNodeName();
+                      ((OHazelcastPlugin) serverInstance.get(0).getServerInstance().getDistributedManager()).restartNode(nodeName);
+                    } catch (Exception e) {
+                      e.printStackTrace();
+                    }
 
-                return null;
-              }
-            });
+                    try {
+                      serverInstance.get(2).getServerInstance().getDistributedManager().waitUntilNodeOnline();
+                    } catch (InterruptedException e) {
+                      Thread.currentThread().interrupt();
+                    }
+
+                    banner("SERVER " + (SERVERS - 1) + " RESTARTED - Person records: " + database.countClass("Person"));
+
+
+                    return null;
+                  }
+                });
 
           } catch (Exception e) {
             e.printStackTrace();

@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Set;
+
 /**
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -27,9 +31,23 @@ package com.orientechnologies.orient.server.distributed;
 public interface ODistributedMessageService {
   ODistributedDatabase registerDatabase(String iDatabaseName);
 
+  Set<String> getDatabases();
+
   ODistributedDatabase getDatabase(String iDatabaseName);
 
   ODistributedDatabase unregisterDatabase(String iDatabaseName);
 
-  long dispatchResponseToThread(final ODistributedResponse response);
+  void dispatchResponseToThread(final ODistributedResponse response);
+
+  void updateLatency(String metricName, long sentOn);
+
+  ODocument getLatencies();
+
+  ODocument getMessageStats();
+
+  void updateMessageStats(String message);
+
+  long getReceivedRequests();
+
+  long getProcessedRequests();
 }

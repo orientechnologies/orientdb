@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,30 +30,29 @@ public class OSequenceTrigger extends ODocumentHookAbstract {
   @Override
   public void onRecordAfterCreate(final ODocument iDocument) {
     if (getDatabase().getStorage().isDistributed()) {
-      getSequenceLibrary().onSequenceCreated(iDocument);
+      getSequenceLibrary().onSequenceCreated(getDatabase(), iDocument);
     }
   }
 
-  private static ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  private ODatabaseDocumentInternal getDatabase() {
+    return (ODatabaseDocumentInternal) database;
   }
 
   @Override
   public void onRecordAfterUpdate(final ODocument iDocument) {
     if (getDatabase().getStorage().isDistributed()) {
-      getSequenceLibrary().onSequenceUpdated(iDocument);
+      getSequenceLibrary().onSequenceUpdated(getDatabase(), iDocument);
     }
   }
 
   @Override
   public void onRecordAfterDelete(final ODocument iDocument) {
     if (getDatabase().getStorage().isDistributed()) {
-      getSequenceLibrary().onSequenceDropped(iDocument);
+      getSequenceLibrary().onSequenceDropped(getDatabase(), iDocument);
     }
   }
 
-  private OSequenceLibrary getSequenceLibrary() {
-    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    return db.getMetadata().getSequenceLibrary();
+  private OSequenceLibraryImpl getSequenceLibrary() {
+    return ((OSequenceLibraryProxy) getDatabase().getMetadata().getSequenceLibrary()).getDelegate();
   }
 }

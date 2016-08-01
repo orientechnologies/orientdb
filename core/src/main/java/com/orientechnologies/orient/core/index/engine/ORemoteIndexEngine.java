@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
@@ -44,6 +43,12 @@ public class ORemoteIndexEngine implements OIndexEngine {
   public String getName() {
     return name;
   }
+
+  @Override
+  public String getIndexNameByKey(Object key) {
+    return name;
+  }
+
 
   @Override
   public void init(String indexName, String indexType, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {

@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.remote.OStorageRemoteNodeSession;
@@ -449,15 +450,19 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
               + (throwable != null ? throwable.getClass().getName() : "null"));
   }
 
-  public void beginRequest(byte iCommand, OStorageRemoteSession session)
+  public void beginRequest(final byte iCommand, final OStorageRemoteSession session)
       throws IOException {
-    OStorageRemoteNodeSession nodeSession = session.get(getServerURL());
+    final OStorageRemoteNodeSession nodeSession = session.getServerSession(getServerURL());
+
+    if( nodeSession == null )
+      throw new OIOException("Invalid session for URL '"+getServerURL()+"'");
+
     writeByte(iCommand);
     writeInt(nodeSession.getSessionId());
     if (nodeSession.getToken() != null) {
-      if (!session.has(this)) {
+      if (!session.hasConnection(this)) {
         writeBytes(nodeSession.getToken());
-        session.add(this);
+        session.addConnection(this);
       } else
         writeBytes(new byte[] {});
     }

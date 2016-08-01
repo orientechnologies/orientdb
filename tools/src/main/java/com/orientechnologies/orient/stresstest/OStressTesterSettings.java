@@ -33,6 +33,7 @@ public class OStressTesterSettings {
   public int                 operationsPerTransaction;
   public int                 concurrencyLevel;
   public String              remoteIp;
+  public boolean             haMetrics;
   public String              workloadCfg;
   public boolean             keepDatabaseAfterTest;
   public int                 remotePort    = 2424;

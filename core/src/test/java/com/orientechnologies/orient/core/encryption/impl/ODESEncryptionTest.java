@@ -9,7 +9,8 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.junit.Assert; import org.junit.Test;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
@@ -23,6 +24,7 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
   private static final String DBNAME_CLUSTERTEST  = "testCreatedDESEncryptedCluster";
   private static final String DBNAME_DATABASETEST = "testCreatedDESEncryptedDatabase";
 
+  @Test
   public void testODESEncryptedCompressionNoKey() {
     try {
       testEncryption(ODESEncryption.NAME);
@@ -31,6 +33,7 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
     }
   }
 
+  @Test
   public void testODESEncryptedCompressionInvalidKey() {
     try {
       testEncryption(ODESEncryption.NAME, "no");
@@ -39,10 +42,12 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
     }
   }
 
+  @Test
   public void testODESEncryptedCompression() {
     testEncryption(ODESEncryption.NAME, "T1JJRU5UREI=");
   }
 
+  @Test
   public void testCreatedDESEncryptedDatabase() {
     OFileUtils.deleteRecursively(new File("target/" + DBNAME_DATABASETEST));
 
@@ -109,6 +114,7 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
     }
   }
 
+  @Test
   public void testCreatedDESEncryptedCluster() {
     OFileUtils.deleteRecursively(new File("target/" + DBNAME_CLUSTERTEST));
 
@@ -152,6 +158,7 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       } catch (OSecurityException e) {
         Assert.assertTrue(true);
       } finally {
+        db.activateOnCurrentThread();
         db.close();
         Orient.instance().getStorage(DBNAME_CLUSTERTEST).close(true, false);
       }
@@ -164,6 +171,7 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
       } catch (OSecurityException e) {
         Assert.assertTrue(true);
       } finally {
+        db.activateOnCurrentThread();
         db.close();
         Orient.instance().getStorage(DBNAME_CLUSTERTEST).close(true, false);
       }
@@ -175,7 +183,8 @@ public class ODESEncryptionTest extends AbstractEncryptionTest {
 
     } finally {
       db.activateOnCurrentThread();
-      db.drop();
+      if (db.exists())
+        db.drop();
     }
   }
 }

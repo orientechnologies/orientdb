@@ -107,7 +107,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
         updateCfgOnDisk();
       }
     } catch (Exception e) {
-      OException.wrapException(new OConfigurationException(
+      throw OException.wrapException(new OConfigurationException(
           "Cannot change Command Cache Cache configuration file '" + CONFIG_FILE + "'. Command Cache will use default settings"),
           e);
     }
@@ -123,11 +123,11 @@ public class OCommandCacheSoftRefs implements OCommandCache {
       try {
         updateCfgOnDisk();
       } catch (IOException e) {
-        OException.wrapException(new OConfigurationException(
-            "Cannot change Command Cache Cache configuration file '" + CONFIG_FILE + "'. Command Cache will use default settings"),
-            e);
         configuration = oldConfig;
         configure();
+        throw OException.wrapException(new OConfigurationException(
+            "Cannot change Command Cache Cache configuration file '" + CONFIG_FILE + "'. Command Cache will use default settings"),
+            e);
       }
     }
   }
@@ -159,7 +159,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
         return new ODocument().fromJSON(configurationContent);
       }
     } catch (Exception e) {
-      OException.wrapException(
+      throw OException.wrapException(
           new OConfigurationException(
               "Cannot load Command Cache Cache configuration file '" + CONFIG_FILE + "'. Command Cache will use default settings"),
           e);
@@ -208,7 +208,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     try {
       updateCfgOnDisk();
     } catch (IOException e) {
-      OException.wrapException(
+      throw OException.wrapException(
           new OConfigurationException("Cannot write Command Cache Cache configuration to file '" + CONFIG_FILE + "'"), e);
     }
     return this;
@@ -226,7 +226,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
     try {
       updateCfgOnDisk();
     } catch (IOException e) {
-      OException.wrapException(
+      throw OException.wrapException(
           new OConfigurationException("Cannot write Command Cache Cache configuration to file '" + CONFIG_FILE + "'"), e);
     }
     return this;

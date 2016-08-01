@@ -198,6 +198,9 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   public void onRecordFinalizeCreation(final ODocument document) {
   }
 
+  public void onRecordFinalizeDeletion(final ODocument document) {
+  }
+
   public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
     if (database.getStatus() != STATUS.OPEN)
       return RESULT.RECORD_NOT_CHANGED;
@@ -277,6 +280,10 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
 
     case FINALIZE_UPDATE:
       onRecordFinalizeUpdate(document);
+      break;
+
+    case FINALIZE_DELETION:
+      onRecordFinalizeDeletion(document);
       break;
 
     default:

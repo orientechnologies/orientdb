@@ -1156,9 +1156,9 @@ public class ODocument extends ORecordAbstract
    *
    * @since 2.0
    */
-  public ODocument fromMap(final Map<String, Object> iMap) {
+  public ODocument fromMap(final Map<String, ? extends Object> iMap) {
     if (iMap != null) {
-      for (Entry<String, Object> entry : iMap.entrySet())
+      for (Entry<String, ? extends Object> entry : iMap.entrySet())
         field(entry.getKey(), entry.getValue());
     }
     return this;
@@ -1335,6 +1335,9 @@ public class ODocument extends ORecordAbstract
         if (OType.EMBEDDED.equals(fieldType)) {
           final ODocument embeddedDocument = (ODocument) iPropertyValue;
           ODocumentInternal.addOwner(embeddedDocument, this);
+        } else if (OType.LINK.equals(fieldType)) {
+          final ODocument embeddedDocument = (ODocument) iPropertyValue;
+          ODocumentInternal.removeOwner(embeddedDocument, this);
         }
       }
       if (iPropertyValue instanceof OIdentifiable) {
@@ -2421,8 +2424,12 @@ public class ODocument extends ORecordAbstract
   }
 
   protected void fillClassIfNeed(final String iClassName) {
-    if (this._className == null)
-      setClassNameIfExists(iClassName);
+    if (this._className == null) {
+      _immutableClazz = null;
+      _immutableSchemaVersion = -1;
+      _className = iClassName;
+    }
+
   }
 
   protected OImmutableClass getImmutableSchemaClass() {
@@ -2839,6 +2846,12 @@ public class ODocument extends ORecordAbstract
     }
   }
 
+  protected void autoConvertFieldsToClass(final ODatabaseDocumentInternal database) {
+    if (_className != null) {
+      OClass klazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(_className);
+      convertFieldsToClass(klazz);
+    }
+  }
   /**
    * Checks and convert the field of the document matching the types specified by the class.
    **/

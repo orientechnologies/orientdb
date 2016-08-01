@@ -18,7 +18,6 @@
   *
   */
 
-
 options {
 	TRACK_TOKENS = true;
   	JDK_VERSION = "1.6";
@@ -43,12 +42,8 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 /** Orient Database Sql grammar. */
 public class OrientSql {
 
-  class ValidationStats{
-    int luceneCount = 0;
-  }
   private int inputParamCount = 0;
 
-  private List<ValidationStats> validationStats = new ArrayList<ValidationStats>();
 
     public OrientSql(InputStream stream) {
       this(new JavaCharStream(stream));
@@ -347,6 +342,8 @@ TOKEN:
 	< START: ( "S" | "s") ( "T" | "t") ( "A" | "a") ( "R" | "r") ( "T" | "t") >
 	|
 	< OPTIONAL: ( "O" | "o") ( "P" | "p") ( "T" | "t") ( "I" | "i") ( "O" | "o") ( "N" | "n") ( "A" | "a") ( "L" | "l") >
+	|
+	< COUNT: ( "C" | "c") ( "O" | "o") ( "U" | "u") ( "N" | "n") ( "T" | "t") >
 	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
@@ -793,6 +790,8 @@ OIdentifier Identifier():
     |
     token = <OPTIONAL>
     |
+    token = <COUNT>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -1026,7 +1025,7 @@ OStatement QueryStatement():
 }
 
 OSelectWithoutTargetStatement SelectWithoutTargetStatement():
-{validationStats.add(0, new ValidationStats());}
+{}
 {
     (
     	<SELECT>
@@ -1057,13 +1056,13 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
     {
-        jjtThis.validate(validationStats.remove(0));
+        jjtThis.validate();
         return jjtThis;
     }
 }
 
 OSelectStatement SelectStatement():
-{validationStats.add(0, new ValidationStats());}
+{}
 {
     (
    	    <SELECT>
@@ -1099,7 +1098,7 @@ OSelectStatement SelectStatement():
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
     {
-        jjtThis.validate(validationStats.remove(0));
+        jjtThis.validate();
         return jjtThis;
     }
 }
@@ -1512,7 +1511,7 @@ OUpdateStatement UpdateStatement():
     	[ <UPSERT> { jjtThis.upsert = true; } ]
     	[
     	    <RETURN>
-    	    ( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } )
+    	    ( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } | <COUNT> { jjtThis.returnCount = true; })
     	    [
     	        jjtThis.returnProjection = Projection()
     	    ]
@@ -2646,11 +2645,6 @@ OLuceneOperator LuceneOperator():
 (
 	<LUCENE>
 ){
-    ValidationStats stats = validationStats.get(0);
-    stats.luceneCount++;
-//    if(stats.luceneCount > 1){
-//        throw new OQueryParsingException("Two or more LUCENE operators are not allowed in the same query");
-//    }
     return jjtThis;
 }
 }

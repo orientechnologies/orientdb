@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -1558,6 +1557,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private boolean canRunParallel(int[] clusterIds, Iterator<? extends OIdentifiable> iTarget) {
+    if( getDatabase().getTransaction().isActive() )
+      return false;
+
     if (iTarget instanceof ORecordIteratorClusters) {
       if (clusterIds.length > 1) {
         final long totalRecords = getDatabase().getStorage().count(clusterIds);

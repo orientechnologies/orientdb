@@ -1,0 +1,320 @@
+package com.orientechnologies.orient.server.distributed;
+
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.*;
+
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+public final class StandAloneDatabaseJavaThreadPoolTest {
+
+  private String             dbName;
+  private OrientGraphFactory graphReadFactory;
+  private ExecutorService    executorService;
+
+  public StandAloneDatabaseJavaThreadPoolTest(String dbName) {
+    this.dbName = dbName;
+    checkAndCreateDatabase(dbName);
+  }
+
+  /**
+   * @return
+   */
+  private ExecutorService getExecutorService() {
+    if (executorService == null) {
+      executorService = Executors.newFixedThreadPool(10);
+    }
+    return executorService;
+  }
+
+  public void runTest() {
+    OrientBaseGraph orientGraph = new OrientGraphNoTx(getDBURL());
+    createVertexType(orientGraph, "Test");
+    createVertexType(orientGraph, "Test1");
+    orientGraph.shutdown();
+
+    OrientBaseGraph graph = getGraphFactory().getTx();
+
+    for (int i = 1; i <= 1; i++) {
+      Vertex vertex = graph.addVertex("class:Test");
+      vertex.setProperty("prop1", "v1-" + i);
+      vertex.setProperty("prop2", "v2-1");
+      vertex.setProperty("prop3", "v3-1");
+      graph.commit();
+      if ((i % 100) == 0) {
+        log("Created " + i + " nodes");
+      }
+    }
+    for (int i = 1; i <= 200; i++) {
+      Vertex vertex = graph.addVertex("class:Test1");
+      vertex.setProperty("prop1", "v1-" + i);
+      vertex.setProperty("prop2", "v2-1");
+      vertex.setProperty("prop3", "v3-1");
+      graph.commit();
+      if ((i % 10) == 0) {
+        System.out.print("." + i + ".");
+      }
+      if ((i % 100) == 0) {
+        System.out.println();
+      }
+    }
+    graph.shutdown();
+    // startPoolInfoThread();
+    List<Future<?>> ths = new ArrayList<Future<?>>();
+    for (int i = 0; i < 10; i++) {
+      Future<?> future = getExecutorService().submit(startThread(i, getGraphFactory()));
+      ths.add(future);
+    }
+
+    for (Future<?> th : ths) {
+      try {
+        th.get();
+      } catch (Exception ex) {
+        System.out.println("********** Future Exception " + ex);
+        ex.printStackTrace();
+      }
+    }
+  }
+
+  private Runnable startThread(final int id, final OrientGraphFactory graphFactory) {
+
+    Runnable th = new Runnable() {
+      @Override
+      public void run() {
+        // OrientBaseGraph graph = new OrientGraph(getDBURL());
+        // OrientGraph graph = graphFactory.getTx();
+        boolean useSQL = false;
+        StringBuilder sb = new StringBuilder(".");
+        for (int m = 0; m < id; m++) {
+          sb.append(".");
+        }
+        long st = System.currentTimeMillis();
+        try {
+          String query = "select from Test where prop2='v2-1'";
+          boolean isRunning = true;
+          for (int i = 1; i < 10000000 && isRunning; i++) {
+            if ((i % 2500) == 0) {
+              long et = System.currentTimeMillis();
+              log(sb.toString() + " [" + id + "] Total Records Processed: [" + i + "] Current: [2500] Time taken: ["
+                  + (et - st) / 1000 + "] seconds");
+              st = System.currentTimeMillis();
+            }
+            OrientGraph graph = graphFactory.getTx();
+            try {
+              if (useSQL) {
+                boolean update = true;
+                boolean isException = false;
+                String sql = "Update Test set prop5='" + String.valueOf(System.currentTimeMillis()) + "', updateTime='"
+                    + new Date().toString() + "' where prop2='v2-1'";
+                for (int k = 0; k < 10 && update; k++) {
+                  try {
+                    graph.command(new OCommandSQL(sql)).execute();
+                    if (isException) {
+                      log("********** [" + id + "][" + k + "] Update success after distributed lock Exception");
+                    }
+                    update = false;
+                    break;
+                  } catch (ONeedRetryException ex) {
+                    if (ex instanceof OConcurrentModificationException
+                        || ex.getCause() instanceof OConcurrentModificationException) {
+                    } else {
+                      isException = true;
+                      log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
+                          + (ex.getCause() != null ? ex.getCause() : "--") + "] ");
+                    }
+
+                  } catch (ODistributedException ex) {
+                    if (ex.getCause() instanceof OConcurrentModificationException) {
+                    } else {
+                      isException = true;
+                      log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
+                          + (ex.getCause() != null ? ex.getCause() : "--") + "] ");
+                    }
+
+                  } catch (Exception ex) {
+                    log("[" + id + "][" + k + "] Exception " + ex);
+                  }
+
+                }
+              } else {
+                boolean retry = true;
+
+                Iterable<Vertex> vtxs = null;
+                for (int k = 0; k < 100 && retry; k++)
+                  try {
+                    vtxs = graph.command(new OCommandSQL(query)).execute();
+                    break;
+                  } catch (ONeedRetryException e) {
+                    // RETRY
+                  }
+
+                for (Vertex vtx : vtxs) {
+                  if (retry) {
+                    retry = true;
+                    boolean isException = false;
+
+                    for (int k = 0; k < 100 && retry; k++) {
+                      OrientVertex vtx1 = (OrientVertex) vtx;
+                      try {
+                        vtx1.setProperty("prop5", "prop55");
+                        vtx1.setProperty("updateTime", new Date().toString());
+                        graph.commit();
+                        if (isException) {
+                          // log("********** [" + id + "][" + k + "] Update success after distributed lock Exception for vertex " +
+                          // vtx1);
+                        }
+                        retry = false;
+                        break;
+                      } catch (OConcurrentModificationException ex) {
+                        vtx1.reload();
+                      } catch (ONeedRetryException ex) {
+                        if (ex instanceof ONeedRetryException || ex.getCause() instanceof ONeedRetryException) {
+                          vtx1.reload();
+                        } else {
+                          if (ex.getCause() instanceof ConcurrentModificationException) {
+                            ex.printStackTrace();
+                          }
+                          log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
+                              + (ex.getCause() != null ? ex.getCause() : "--") + "] for vertex " + vtx1);
+                        }
+                        // log("*** [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (ex.getCause() != null ?
+                        // ex.getCause() : "--") + "] for vertex " + vtx1);
+
+                        isException = true;
+                      } catch (ODistributedException ex) {
+                        if (ex.getCause() instanceof ONeedRetryException) {
+                          vtx1.reload();
+                        } else {
+                          if (ex.getCause() instanceof ConcurrentModificationException) {
+                            ex.printStackTrace();
+                          }
+                          log("*$$$$$$$$$$$$$$ [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: ["
+                              + (ex.getCause() != null ? ex.getCause() : "--") + "] for vertex " + vtx1);
+                        }
+                        // log("*** [" + id + "][" + k + "] Distributed Exception: [" + ex + "] Cause: [" + (ex.getCause() != null ?
+                        // ex.getCause() : "--") + "] for vertex " + vtx1);
+
+                        isException = true;
+                      } catch (Exception ex) {
+                        log("[" + id + "][" + k + "] Exception " + ex + " for vertex " + vtx1);
+                      }
+                    }
+                    if (retry) {
+                      log("*******#################******* [" + id + "] Failed to update after Exception for vertex " + vtx);
+                    }
+                  }
+                }
+              }
+            } finally {
+              graph.shutdown();
+            }
+          }
+        } catch (Exception ex) {
+          System.out.println("ID: [" + id + "]********** Exception " + ex + " \n\n");
+          ex.printStackTrace();
+        } finally {
+          log("[" + id + "] Done................>>>>>>>>>>>>>>>>>>");
+        }
+      }
+    };
+    return th;
+  }
+
+  private void startPoolInfoThread() {
+    Thread th = new Thread() {
+      @Override
+      public void run() {
+        for (int i = 0; i < 10000; i++) {
+          log("[" + i + "] Available insances pool " + getGraphFactory().getAvailableInstancesInPool() + " Created instances: "
+              + getGraphFactory().getCreatedInstancesInPool());
+          try {
+            Thread.sleep(20000);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+
+        }
+      }
+    };
+    th.start();
+  }
+
+  public void printVertex(String info, OrientVertex vtx) {
+    System.out.println("--------" + info + " ----------");
+    System.out.println(vtx);
+    Set<String> keys = vtx.getPropertyKeys();
+    for (String key : keys) {
+      System.out.println("Key = " + key + " Value = " + vtx.getProperty(key));
+    }
+  }
+
+  /**
+   * @return
+   */
+  public String getDBURL() {
+    return "remote:" + "localhost:2424;localhost:2425;localhost:2426" + "/" + dbName;
+  }
+
+  private OrientGraphFactory getGraphFactory() {
+    if (graphReadFactory == null) {
+      log("Datastore pool created with size : 10, db location: " + getDBURL());
+      graphReadFactory = new OrientGraphFactory(getDBURL());
+      graphReadFactory.setupPool(10, 10);
+    }
+    return graphReadFactory;
+  }
+
+  /**
+   *
+   */
+  public void checkAndCreateDatabase(String dbName) {
+    try {
+      OServerAdmin serverAdmin = new OServerAdmin(getDBURL()).connect("root", "root");
+      if (!serverAdmin.existsDatabase("plocal")) {
+        log("Database does not exists. New database is created");
+        serverAdmin.createDatabase(dbName, "graph", "plocal");
+      } else {
+        log(dbName + " database already exists");
+      }
+      serverAdmin.close();
+    } catch (Exception ex) {
+      log("Failed to create database", ex);
+    }
+  }
+
+  private void createVertexType(OrientBaseGraph orientGraph, String className) {
+    OClass clazz = orientGraph.getVertexType(className);
+    if (clazz == null) {
+      log("Creating vertex type - " + className);
+      orientGraph.createVertexType(className);
+    }
+  }
+
+  private void log(String message) {
+    System.out.println(message);
+  }
+
+  private void log(String message, Throwable th) {
+    System.out.println(th.getMessage());
+    th.printStackTrace();
+  }
+
+  public static void main(String args[]) {
+    StandAloneDatabaseJavaThreadPoolTest test = new StandAloneDatabaseJavaThreadPoolTest("dbquerytest1");
+    test.runTest();
+    try {
+      Thread.sleep(30000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    Runtime.getRuntime().halt(0);
+  }
+
+}

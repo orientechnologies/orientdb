@@ -37,8 +37,8 @@ public class ODistributedRecordLockedException extends ONeedRetryException {
     super(exception);
   }
 
-  public ODistributedRecordLockedException(final ORID iRid, final ODistributedRequestId iLockingRequestId) {
-    super("Record with rid " + iRid + " is locked by request " + iLockingRequestId);
+  public ODistributedRecordLockedException(final ORID iRid, final ODistributedRequestId iLockingRequestId, long timeout) {
+    super("Timeout (" + timeout + "ms) on acquiring lock on record " + iRid + ". It is locked by request " + iLockingRequestId);
     rid = iRid;
     lockHolder = iLockingRequestId;
   }

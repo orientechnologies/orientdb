@@ -212,10 +212,9 @@ public class OSelectStatement extends OStatement {
     }
   }
 
-  public void validate(OrientSql.ValidationStats stats) throws OCommandSQLParsingException {
+  public void validate() throws OCommandSQLParsingException {
     if (projection != null) {
       projection.validate();
-
       if (projection.isExpand() && groupBy != null) {
         throw new OCommandSQLParsingException("expand() cannot be used together with GROUP BY");
       }

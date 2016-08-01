@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.IOException;
 import java.util.Comparator;
 
 /**
@@ -81,6 +80,8 @@ public interface OHashTable<K, V> {
    * Acquires exclusive lock in the active atomic operation running on the current thread for this hash table.
    */
   void acquireAtomicExclusiveLock();
+
+  String getName();
 
   public static final class BucketPath {
     public final BucketPath parent;

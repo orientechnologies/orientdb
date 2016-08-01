@@ -22,6 +22,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
   private final String[]         hosts;
   private final OEngine          remote;
   private final OrientDBSettings configurations;
+  private final Thread           shutdownThread;
 
   public ORemoteDBFactory(String[] hosts, OrientDBSettings configurations) {
     super();
@@ -30,10 +31,9 @@ public class ORemoteDBFactory implements OrientDBFactory {
 
     this.configurations = configurations != null ? configurations : OrientDBSettings.defaultSettings();
 
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      ORemoteDBFactory.this.close();
-      Runtime.getRuntime().removeShutdownHook(Thread.currentThread());
-    }));
+    shutdownThread = new Thread(() -> ORemoteDBFactory.this.internalClose());
+    
+    Runtime.getRuntime().addShutdownHook(shutdownThread);
   }
 
   private String buildUrl(String name) {
@@ -129,7 +129,12 @@ public class ORemoteDBFactory implements OrientDBFactory {
   }
 
   @Override
-  public void close() {
+  public synchronized void close() {
+    internalClose();
+    Runtime.getRuntime().removeShutdownHook(shutdownThread);
+  }
+  
+  public synchronized void internalClose() {
     final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
     for (OStorage stg : storagesCopy) {
       try {

@@ -19,12 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 import java.util.ArrayList;
@@ -47,12 +50,16 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     reqId = iRequestId;
   }
 
-  public synchronized void lock(final ORID rid) {
-    final ODistributedRequestId lockHolder = db.lockRecord(rid, reqId);
-    if (lockHolder != null)
-      throw new ODistributedRecordLockedException(rid, lockHolder);
+  public synchronized void lock(ORID rid) {
+    if (!rid.isPersistent())
+      // CREATE A COPY TO MAINTAIN THE LOCK ON THE CLUSTER AVOIDING THE RID IS TRANSFORMED IN PERSISTENT. THIS ALLOWS TO HAVE
+      // PARALLEL TX BECAUSE NEW RID LOCKS THE ENTIRE CLUSTER.
+      rid = new ORecordId(rid.getClusterId(), -1l);
 
-    acquiredLocks.add(rid);
+    if (db.lockRecord(rid, reqId, OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger()))
+      // NEW LOCK (FALSE=LOCK WAS ALREADY TAKEN. THIS CAN HAPPEN WITH CREATE, BECAUSE THE RID IS ON CLUSTER ID ONLY (LIKE #25:-1),
+      // SO 2 CREATE OPERATIONS AGAIN THE SAME CLUSTER RESULT IN 2 LOCKS AGAINST THE SAME RESOURCE
+      acquiredLocks.add(rid);
   }
 
   public ODistributedRequestId getReqId() {

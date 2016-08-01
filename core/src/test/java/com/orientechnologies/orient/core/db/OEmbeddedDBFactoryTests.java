@@ -19,7 +19,7 @@ public class OEmbeddedDBFactoryTests {
   @Test
   public void createAndUseEmbeddedDatabase() {
     OrientDBFactory factory = OrientDBFactory.embedded(".", null);
-    //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
+    // OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
 
     if (!factory.exists("test", "", ""))
       factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
@@ -45,7 +45,7 @@ public class OEmbeddedDBFactoryTests {
   @Test
   public void createDropEmbeddedDatabase() {
     OrientDBFactory factory = OrientDBFactory.embedded(".", null);
-    //    OrientDBFactory factory = OrientDBFactory.fromUrl("remote:localhost", null);
+    // OrientDBFactory factory = OrientDBFactory.fromUrl("remote:localhost", null);
     try {
       factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
       assertTrue(factory.exists("test", "", ""));
@@ -59,7 +59,7 @@ public class OEmbeddedDBFactoryTests {
   @Test
   public void testPool() {
     OrientDBFactory factory = OrientDBFactory.embedded(".", null);
-    //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
+    // OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
 
     if (!factory.exists("test", "", ""))
       factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
@@ -75,12 +75,27 @@ public class OEmbeddedDBFactoryTests {
   @Test
   public void testListDatabases() {
     OrientDBFactory factory = OrientDBFactory.embedded(".", null);
-    //    OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
+    // OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
     assertEquals(factory.listDatabases("", "").size(), 0);
     factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
     Set<String> databases = factory.listDatabases("", "");
     assertEquals(databases.size(), 1);
     assertTrue(databases.contains("test"));
+  }
+
+  @Test
+  public void testCopyOpenedDatabase() {
+    OrientDBFactory factory = OrientDBFactory.embedded(".", null);
+    // OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
+
+    factory.create("test", "", "", OrientDBFactory.DatabaseType.MEMORY);
+    ODatabaseDocument db1;
+    try(ODatabaseDocumentInternal db = (ODatabaseDocumentInternal)factory.open("test", "admin", "admin")){
+      db1 =db.copy();
+    }
+    db1.activateOnCurrentThread();
+    assertFalse(db1.isClosed());
+    db1.close();
   }
 
 }

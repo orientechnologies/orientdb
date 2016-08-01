@@ -23,7 +23,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -69,8 +68,8 @@ public class OIncrementalServerSync {
    * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
    */
-  public void importDelta(final OServer serverInstance, final ODatabaseDocumentInternal db, final FileInputStream in, final String iNode)
-      throws IOException {
+  public void importDelta(final OServer serverInstance, final ODatabaseDocumentInternal db, final FileInputStream in,
+      final String iNode) throws IOException {
     final String nodeName = serverInstance.getDistributedManager().getLocalNodeName();
 
     try {
@@ -154,13 +153,15 @@ public class OIncrementalServerSync {
                   case PRESENT:
                     // UPDATE IT
                     newRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) recordType);
-                    ORecordInternal.fill(newRecord, rid, ORecordVersionHelper.setRollbackMode(recordVersion), recordContent, true);
+                    ORecordInternal.fill(newRecord, rid, ORecordVersionHelper.setRollbackMode(recordVersion), recordContent,
+                        true);
 
                     final ORecord loadedRecord = rid.getRecord();
                     if (loadedRecord instanceof ODocument) {
                       // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
                       ODocument loadedDocument = (ODocument) loadedRecord;
-                      loadedDocument.merge((ODocument) newRecord, false, false).getVersion();
+                      loadedDocument.merge((ODocument) newRecord, false, false);
+                      ORecordInternal.setVersion(loadedRecord, ORecordVersionHelper.setRollbackMode(recordVersion));
                       loadedDocument.setDirty();
                       newRecord = loadedDocument;
                     }

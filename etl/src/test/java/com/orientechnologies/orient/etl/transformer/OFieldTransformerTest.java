@@ -73,5 +73,7 @@ public class OFieldTransformerTest extends OETLBaseTest {
     process(
         "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { csv: {} }, transformers: [{field:{fieldName:'@class', value:'Test'}}, {field:{ fieldName:'test', value: 33, save: true}}], loader: { orientdb: { dbURL: 'memory:OETLBaseTest' } } }");
     assertEquals(1, graph.countVertices("Test"));
+
+
   }
 }

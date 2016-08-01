@@ -49,9 +49,11 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
   public static final String KEYWORD_HA     = "HA";
   public static final String KEYWORD_STATUS = "STATUS";
 
-  private boolean servers    = false;
-  private boolean db         = false;
-  private boolean textOutput = false;
+  private boolean            servers        = false;
+  private boolean            db             = false;
+  private boolean            latency        = false;
+  private boolean            messages = false;
+  private boolean            textOutput     = false;
 
   public OCommandExecutorSQLHAStatus parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
@@ -78,8 +80,12 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
         servers = true;
       else if (option.equalsIgnoreCase("-db"))
         db = true;
+      else if (option.equalsIgnoreCase("-latency"))
+        latency = true;
+      else if (option.equalsIgnoreCase("-messages"))
+        messages = true;
       else if (option.equalsIgnoreCase("-all"))
-        servers = db = true;
+        servers = db = latency = messages = true;
       else if (option.equalsIgnoreCase("-output=text"))
         textOutput = true;
 
@@ -115,6 +121,10 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
         output.append(ODistributedOutput.formatServerStatus(dManager, dManager.getClusterConfiguration()));
       if (db)
         output.append(ODistributedOutput.formatClusterTable(dManager, databaseName, cfg, dManager.getAvailableNodes(databaseName)));
+      if (latency)
+        output.append(ODistributedOutput.formatLatency(dManager, dManager.getClusterConfiguration()));
+      if (messages)
+        output.append(ODistributedOutput.formatMessages(dManager, dManager.getClusterConfiguration()));
       return output.toString();
     }
 
@@ -123,6 +133,7 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
       output.field("servers", dManager.getClusterConfiguration(), OType.EMBEDDED);
     if (db)
       output.field("database", cfg.getDocument(), OType.EMBEDDED);
+
     return output;
   }
 
@@ -138,6 +149,6 @@ public class OCommandExecutorSQLHAStatus extends OCommandExecutorSQLAbstract imp
 
   @Override
   public String getSyntax() {
-    return "HA STATUS [-servers] [-db] [-output=text]";
+    return "HA STATUS [-servers] [-db] [-latency] [-messages] [-all] [-output=text]";
   }
 }

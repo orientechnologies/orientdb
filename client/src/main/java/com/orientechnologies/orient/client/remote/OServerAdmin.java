@@ -90,7 +90,7 @@ public class OServerAdmin {
     networkAdminOperation(new OStorageRemoteOperation<Void>() {
       @Override
       public Void execute(OChannelBinaryAsynchClient network, OStorageRemoteSession session) throws IOException {
-        OStorageRemoteNodeSession nodeSession = storage.getCurrentSession().getOrCreate(network.getServerURL());
+        OStorageRemoteNodeSession nodeSession = storage.getCurrentSession().getOrCreateServerSession(network.getServerURL());
         try {
           storage.beginRequest(network, OChannelBinaryProtocol.REQUEST_CONNECT, session);
 
@@ -691,7 +691,18 @@ public class OServerAdmin {
     OChannelBinaryAsynchClient network = null;
     try {
       //TODO:replace this api with one that get connection for only the specified url.
-      network = storage.getNetwork(storage.getCurrentServerURL());
+      String serverUrl = storage.getNextAvailableServerURL(false, session);
+      do {
+        try {
+          network = storage.getNetwork(serverUrl);
+        } catch (OException e) {
+          serverUrl = storage.useNewServerURL(serverUrl);
+          if (serverUrl == null)
+            throw e;
+        }
+      } while (network == null);
+
+
       T res = operation.execute(network, storage.getCurrentSession());
       storage.connectionManager.release(network);
       return res;
@@ -702,5 +713,4 @@ public class OServerAdmin {
       throw OException.wrapException(new OStorageException(errorMessage), e);
     }
   }
-
 }

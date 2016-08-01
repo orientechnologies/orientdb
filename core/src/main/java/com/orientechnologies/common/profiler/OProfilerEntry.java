@@ -19,10 +19,17 @@
  */
 package com.orientechnologies.common.profiler;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * Contains the profiling data abount timing.
+ * 
+ * @author Luca Garulli
+ */
 public class OProfilerEntry {
   public String      name    = null;
   public long        entries = 0;
@@ -33,8 +40,13 @@ public class OProfilerEntry {
   public long        total   = 0;
   public final long  firstExecution;
   public long        lastExecution;
+
   public String      payLoad;
   public String      description;
+
+  public long        lastResetEntries = 0;
+  public long        lastReset;
+
   public Set<String> users   = new HashSet<String>();
 
   public OProfilerEntry() {
@@ -44,6 +56,23 @@ public class OProfilerEntry {
 
   public void updateLastExecution() {
     lastExecution = System.currentTimeMillis();
+  }
+
+  public ODocument toDocument() {
+    final ODocument doc = new ODocument();
+    doc.field("entries", entries);
+    doc.field("last", last);
+    doc.field("min", min);
+    doc.field("max", max);
+    doc.field("average", average);
+    doc.field("total", total);
+    doc.field("firstExecution", firstExecution);
+    doc.field("lastExecution", lastExecution);
+    doc.field("lastReset", lastReset);
+    doc.field("lastResetEntries", lastResetEntries);
+    if (payLoad != null)
+      doc.field("payload", payLoad);
+    return doc;
   }
 
   public String toJSON() {
@@ -61,10 +90,12 @@ public class OProfilerEntry {
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%.2f,", "average", average));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "total", total));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "firstExecution", firstExecution));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "lastExecution", lastExecution));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastExecution", lastExecution));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastReset", lastReset));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastResetEntries,", lastResetEntries));
     if (payLoad != null)
-      buffer.append(String.format(Locale.ENGLISH, ",\"%s\":\"%s\"", "payload", payLoad));
-    buffer.append(String.format(Locale.ENGLISH, ",\"%s\": [", "users"));
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\":\"%s\"", "payload,", payLoad));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\": [", "users"));
 
     String usersList = "";
     int i = 0;

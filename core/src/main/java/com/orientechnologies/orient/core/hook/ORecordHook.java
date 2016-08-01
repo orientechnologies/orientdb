@@ -44,7 +44,7 @@ public interface ORecordHook {
 
     CREATE_FAILED, READ_FAILED, UPDATE_FAILED, DELETE_FAILED, CREATE_REPLICATED, READ_REPLICATED, UPDATE_REPLICATED,
 
-    DELETE_REPLICATED, FINALIZE_UPDATE, FINALIZE_CREATION
+    DELETE_REPLICATED, FINALIZE_UPDATE, FINALIZE_CREATION, FINALIZE_DELETION
   }
 
   enum RESULT {
@@ -80,7 +80,7 @@ public interface ORecordHook {
 
     /**
      * The delete scope, includes: {@link ORecordHook.TYPE#BEFORE_DELETE}, {@link ORecordHook.TYPE#AFTER_DELETE}, {@link
-     * ORecordHook.TYPE#DELETE_REPLICATED} and {@link ORecordHook.TYPE#DELETE_FAILED}.
+     * ORecordHook.TYPE#DELETE_REPLICATED}, {@link ORecordHook.TYPE#DELETE_FAILED} and {@link ORecordHook.TYPE#FINALIZE_DELETION}.
      */
     DELETE;
 
@@ -117,6 +117,7 @@ public interface ORecordHook {
       case AFTER_DELETE:
       case DELETE_FAILED:
       case DELETE_REPLICATED:
+      case FINALIZE_DELETION:
         return SCOPE.DELETE;
 
       default:
