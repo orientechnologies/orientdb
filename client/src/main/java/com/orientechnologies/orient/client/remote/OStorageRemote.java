@@ -380,7 +380,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }, "Error on reloading database information");
   }
 
-  public void create(final Map<String, Object> iOptions) {
+  public void create(OContextConfiguration contextConfiguration) {
     throw new UnsupportedOperationException(
         "Cannot create a database in a remote server. Please use the console or the OServerAdmin class.");
   }

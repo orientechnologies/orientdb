@@ -83,10 +83,11 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
   @Override
   public ODatabaseDocument open(String name, String user, String password, OrientDBConfig config) {
+    config = solveConfig(config);
     OAbstractPaginatedStorage storage = getStorage(name);
     storage.open(config.getConfigurations());
     final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-    embedded.internalOpen(user, password, solveConfig(config));
+    embedded.internalOpen(user, password, config);
     return embedded;
   }
 
@@ -126,6 +127,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   @Override
   public synchronized void create(String name, String user, String password, DatabaseType type, OrientDBConfig config) {
     if (!exists(name, user, password)) {
+      config = solveConfig(config);
       OAbstractPaginatedStorage storage;
       if (type == DatabaseType.MEMORY) {
         storage = (OAbstractPaginatedStorage) memory.createStorage(buildName(name), new HashMap<>());
@@ -133,7 +135,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
         storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
       }
       // CHECK Configurations
-      storage.create(new HashMap<>());
+      storage.create(config.getConfigurations());
       storages.put(name, storage);
       ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
       storage.getConfiguration().setRecordSerializer(serializer.toString());
@@ -144,7 +146,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       storage.getConfiguration().update();
 
       try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
-        embedded.internalCreate(solveConfig(config));
+        embedded.internalCreate(config);
       }
     } else
       throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");

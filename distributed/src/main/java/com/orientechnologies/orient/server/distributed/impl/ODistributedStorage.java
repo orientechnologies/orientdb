@@ -1123,8 +1123,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public void create(final Map<String, Object> iProperties) {
-    wrapped.create(iProperties);
+  public void create(OContextConfiguration contextConfiguration) {
+    wrapped.create(contextConfiguration);
   }
 
   @Override

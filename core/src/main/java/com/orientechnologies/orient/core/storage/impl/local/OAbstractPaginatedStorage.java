@@ -330,7 +330,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     open(iToken.getUserName(), "", configuration);
   }
 
-  public void create(final Map<String, Object> iProperties) {
+  public void create(OContextConfiguration contextConfiguration) {
     stateLock.acquireWriteLock();
     try {
 
@@ -339,42 +339,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       if (exists())
         throw new OStorageExistsException("Cannot create new storage '" + getURL() + "' because it already exists");
-
-      OContextConfiguration contextConfiguration = configuration.getContextConfiguration();
-      if (!contextConfiguration.getContextKeys().contains(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey())) {
-        final String compression = iProperties != null
-            ? (String) iProperties
-                .get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase(configuration.getLocaleInstance()))
-            : null;
-
-        if (compression != null)
-          contextConfiguration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compression);
-        else
-          contextConfiguration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD,
-              OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
-      }
-
-      if (!contextConfiguration.getContextKeys().contains(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey())) {
-        final String encryption = iProperties != null ? (String) iProperties
-            .get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase(configuration.getLocaleInstance())) : null;
-
-        if (encryption != null)
-          contextConfiguration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryption);
-        else
-          contextConfiguration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD,
-              OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getValue());
-      }
-
-      // SAVE COMPRESSION OPTIONS IF ANY. THIS IS USED FOR ENCRYPTION AT REST WHERE IN THE 'STORAGE_ENCRYPTION_KEY' IS STORED
-      // THE KEY
-      final String encryptionKey = iProperties != null ? (String) iProperties
-          .get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase(configuration.getLocaleInstance())) : null;
-      if (encryptionKey != null)
-        contextConfiguration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
-      else
-        contextConfiguration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY,
-            OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getValue());
-
+      configuration.initConfiguration(contextConfiguration);
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
       try {
         performanceStatisticManager.registerMBean(name, id);
@@ -397,7 +362,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       // ADD THE METADATA CLUSTER TO STORE INTERNAL STUFF
       doAddCluster(OMetadataDefault.CLUSTER_INTERNAL_NAME, null);
-
       configuration.create();
 
       // ADD THE INDEX CLUSTER TO STORE, BY DEFAULT, ALL THE RECORDS OF

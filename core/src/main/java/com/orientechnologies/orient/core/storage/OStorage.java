@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.util.OBackupable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -74,7 +73,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   void open(String iUserName, String iUserPassword, final OContextConfiguration contextConfiguration);
 
-  void create(Map<String, Object> iProperties);
+  void create(OContextConfiguration contextConfiguration);
 
   boolean exists();
 

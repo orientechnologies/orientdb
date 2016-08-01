@@ -114,7 +114,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
-  public void create(final Map<String, Object> iProperties) {
+  public void create(OContextConfiguration contextConfiguration) {
     stateLock.acquireWriteLock();
     try {
       final File storageFolder = new File(storagePath);
@@ -122,7 +122,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         if (!storageFolder.mkdirs())
           throw new OStorageException("Cannot create folders in storage with path " + storagePath);
 
-      super.create(iProperties);
+      super.create(contextConfiguration);
     } finally {
       stateLock.releaseWriteLock();
     }

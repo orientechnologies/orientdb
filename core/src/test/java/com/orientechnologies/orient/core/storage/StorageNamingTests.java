@@ -84,7 +84,7 @@ public class StorageNamingTests {
     }
 
     @Override
-    public void create(Map<String, Object> iProperties) {
+    public void create(OContextConfiguration contextConfiguration) {
 
     }
 

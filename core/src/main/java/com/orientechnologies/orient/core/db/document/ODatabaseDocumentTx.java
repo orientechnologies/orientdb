@@ -254,9 +254,7 @@ import java.util.concurrent.atomic.AtomicReference;
             storage.close(true, false); // force it closed
           }
         }
-      }
-
-      
+      }      
       
       if (storage.isClosed()) {
         OContextConfiguration conf = new OContextConfiguration();
@@ -439,17 +437,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
       if (storage == null)
         storage = Orient.instance().loadStorage(url);
-
-      final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
-      if (iInitialSettings != null && !iInitialSettings.isEmpty()) {
-        // SETUP INITIAL SETTINGS
-        for (Map.Entry<OGlobalConfiguration, Object> e : iInitialSettings.entrySet()) {
-          ctxCfg.setValue(e.getKey(), e.getValue());
-        }
-        storage.getConfiguration().update();
-      }
-
-      storage.create(properties);
+      OContextConfiguration config = new OContextConfiguration();
+      bindPropertiesToContextGlobal(config, iInitialSettings);
+      bindPropertiesToContext(config, properties);
+      storage.create(config);
+      
 
       status = STATUS.OPEN;
 
@@ -3351,7 +3343,7 @@ import java.util.concurrent.atomic.AtomicReference;
   }
   
   private void bindPropertiesToContext(OContextConfiguration configuration, final Map<String, Object> iProperties) {
-    final String connectionStrategy = (String) iProperties.get("connectionStrategy");
+    final String connectionStrategy = iProperties != null ? (String) iProperties.get("connectionStrategy") : null;
     if (connectionStrategy != null)
       configuration.setValue(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
     
@@ -3373,5 +3365,30 @@ import java.util.concurrent.atomic.AtomicReference;
       // SAVE ENCRYPTION KEY IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
   }
+ 
+  
+  private void bindPropertiesToContextGlobal(OContextConfiguration configuration, final Map<OGlobalConfiguration, Object> iProperties) {
+    final String connectionStrategy = iProperties != null ? (String) iProperties.get("connectionStrategy") : null;
+    if (connectionStrategy != null)
+      configuration.setValue(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
+
+    final String compressionMethod = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD)
+        : null;
+    if (compressionMethod != null)
+      // SAVE COMPRESSION METHOD IN CONFIGURATION
+      configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
+
+    final String encryptionMethod = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD)
+        : null;
+    if (encryptionMethod != null)
+      // SAVE ENCRYPTION METHOD IN CONFIGURATION
+      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
+
+    final String encryptionKey = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY) : null;
+    if (encryptionKey != null)
+      // SAVE ENCRYPTION KEY IN CONFIGURATION
+      configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
+  }
+
   
 }

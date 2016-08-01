@@ -236,7 +236,7 @@ public class PostponedEngineStartTest {
         }
 
         @Override
-        public void create(Map<String, Object> iProperties) {
+        public void create(OContextConfiguration contextConfiguration) {
 
         }
 
