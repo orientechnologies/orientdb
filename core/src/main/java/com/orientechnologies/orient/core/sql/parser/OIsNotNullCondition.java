@@ -4,10 +4,12 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OIsNotNullCondition extends OBooleanExpression {
 
@@ -21,14 +23,19 @@ public class OIsNotNullCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
-    return false;
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    return expression.execute(currentRecord, ctx) != null;
+  }
+
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+    return expression.execute(currentRecord, ctx) != null;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -36,26 +43,50 @@ public class OIsNotNullCondition extends OBooleanExpression {
     builder.append(" IS NOT NULL");
   }
 
-  @Override
-  public boolean supportsBasicCalculation() {
+  @Override public boolean supportsBasicCalculation() {
     return expression.supportsBasicCalculation();
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     if (!expression.supportsBasicCalculation()) {
       return 1;
     }
     return 0;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     if (!expression.supportsBasicCalculation()) {
       return (List) Collections.singletonList(expression);
     }
     return Collections.EMPTY_LIST;
   }
 
+  @Override public boolean needsAliases(Set<String> aliases) {
+    return expression.needsAliases(aliases);
+  }
+
+  @Override public OBooleanExpression copy() {
+    OIsNotNullCondition result = new OIsNotNullCondition(-1);
+    result.expression = expression.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIsNotNullCondition that = (OIsNotNullCondition) o;
+
+    if (expression != null ? !expression.equals(that.expression) : that.expression != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return expression != null ? expression.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=a292fa8a629abb7f6fe72a627fc91361 (do not edit this line) */

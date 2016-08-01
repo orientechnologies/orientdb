@@ -4,18 +4,26 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.AggregationContext;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OMathExpression extends SimpleNode {
 
+  public OExpression getExpandContent() {
+    throw new OCommandExecutionException("Invalid expand expression");
+  }
+
   public enum Operator {
     PLUS {
-      @Override
-      public Number apply(Integer left, Integer right) {
+      @Override public Number apply(Integer left, Integer right) {
         final Integer sum = left + right;
         if (sum < 0 && left.intValue() > 0 && right.intValue() > 0)
           // SPECIAL CASE: UPGRADE TO LONG
@@ -23,29 +31,24 @@ public class OMathExpression extends SimpleNode {
         return sum;
       }
 
-      @Override
-      public Number apply(Long left, Long right) {
+      @Override public Number apply(Long left, Long right) {
         return left + right;
       }
 
-      @Override
-      public Number apply(Float left, Float right) {
+      @Override public Number apply(Float left, Float right) {
         return left + right;
       }
 
-      @Override
-      public Number apply(Double left, Double right) {
+      @Override public Number apply(Double left, Double right) {
         return left + right;
       }
 
-      @Override
-      public Number apply(BigDecimal left, BigDecimal right) {
+      @Override public Number apply(BigDecimal left, BigDecimal right) {
         return left.add(right);
       }
     },
     MINUS {
-      @Override
-      public Number apply(Integer left, Integer right) {
+      @Override public Number apply(Integer left, Integer right) {
         int result = left - right;
         if (result > 0 && left.intValue() < 0 && right.intValue() > 0)
           // SPECIAL CASE: UPGRADE TO LONG
@@ -54,101 +57,82 @@ public class OMathExpression extends SimpleNode {
         return result;
       }
 
-      @Override
-      public Number apply(Long left, Long right) {
+      @Override public Number apply(Long left, Long right) {
         return left - right;
       }
 
-      @Override
-      public Number apply(Float left, Float right) {
+      @Override public Number apply(Float left, Float right) {
         return left - right;
       }
 
-      @Override
-      public Number apply(Double left, Double right) {
+      @Override public Number apply(Double left, Double right) {
         return left - right;
       }
 
-      @Override
-      public Number apply(BigDecimal left, BigDecimal right) {
+      @Override public Number apply(BigDecimal left, BigDecimal right) {
         return left.subtract(right);
       }
     },
     STAR {
-      @Override
-      public Number apply(Integer left, Integer right) {
+      @Override public Number apply(Integer left, Integer right) {
         return left * right;
       }
 
-      @Override
-      public Number apply(Long left, Long right) {
+      @Override public Number apply(Long left, Long right) {
         return left * right;
       }
 
-      @Override
-      public Number apply(Float left, Float right) {
+      @Override public Number apply(Float left, Float right) {
         return left * right;
       }
 
-      @Override
-      public Number apply(Double left, Double right) {
+      @Override public Number apply(Double left, Double right) {
         return left * right;
       }
 
-      @Override
-      public Number apply(BigDecimal left, BigDecimal right) {
+      @Override public Number apply(BigDecimal left, BigDecimal right) {
         return left.multiply(right);
       }
     },
     SLASH {
-      @Override
-      public Number apply(Integer left, Integer right) {
+      @Override public Number apply(Integer left, Integer right) {
         return left / right;
       }
 
-      @Override
-      public Number apply(Long left, Long right) {
+      @Override public Number apply(Long left, Long right) {
         return left / right;
       }
 
-      @Override
-      public Number apply(Float left, Float right) {
+      @Override public Number apply(Float left, Float right) {
         return left / right;
       }
 
-      @Override
-      public Number apply(Double left, Double right) {
+      @Override public Number apply(Double left, Double right) {
         return left / right;
       }
 
-      @Override
-      public Number apply(BigDecimal left, BigDecimal right) {
+      @Override public Number apply(BigDecimal left, BigDecimal right) {
         return left.divide(right, BigDecimal.ROUND_HALF_UP);
       }
     },
     REM {
-      @Override
-      public Number apply(Integer left, Integer right) {
+      @Override public Number apply(Integer left, Integer right) {
         return left % right;
       }
 
-      @Override
-      public Number apply(Long left, Long right) {
+      @Override public Number apply(Long left, Long right) {
         return left % right;
       }
 
-      @Override
-      public Number apply(Float left, Float right) {
+      @Override public Number apply(Float left, Float right) {
         return left % right;
       }
 
-      @Override
-      public Number apply(Double left, Double right) {
+      @Override public Number apply(Double left, Double right) {
         return left % right;
       }
 
-      @Override
-      public Number apply(BigDecimal left, BigDecimal right) {
+      @Override public Number apply(BigDecimal left, BigDecimal right) {
         return left.remainder(right);
       }
     };
@@ -166,7 +150,7 @@ public class OMathExpression extends SimpleNode {
   }
 
   protected List<OMathExpression> childExpressions = new ArrayList<OMathExpression>();
-  protected List<Operator>        operators        = new ArrayList<Operator>();
+  protected List<Operator>        operators        = new ArrayList<>();
 
   public OMathExpression(int id) {
     super(id);
@@ -191,7 +175,24 @@ public class OMathExpression extends SimpleNode {
     return nextValue;
   }
 
-  /** Accept the visitor. **/
+  public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
+    if (childExpressions.size() == 0) {
+      return null;
+    }
+
+    OMathExpression nextExpression = childExpressions.get(0);
+    Object nextValue = nextExpression.execute(iCurrentRecord, ctx);
+    for (int i = 0; i < operators.size() && i + 1 < childExpressions.size(); i++) {
+      Operator nextOperator = operators.get(i);
+      Object rightValue = childExpressions.get(i + 1).execute(iCurrentRecord, ctx);
+      nextValue = apply(nextValue, nextOperator, rightValue);
+    }
+    return nextValue;
+  }
+
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -244,8 +245,9 @@ public class OMathExpression extends SimpleNode {
     if (a instanceof String || b instanceof String) {
       return "" + a + b;
     }
-    throw new IllegalArgumentException("Cannot apply operaton " + operation + " to value '" + a + "' (" + a.getClass() + ") with '"
-        + b + "' (" + b.getClass() + ")");
+    throw new IllegalArgumentException(
+        "Cannot apply operaton " + operation + " to value '" + a + "' (" + a.getClass() + ") with '" + b + "' (" + b.getClass()
+            + ")");
 
   }
 
@@ -302,8 +304,8 @@ public class OMathExpression extends SimpleNode {
         return operation.apply((BigDecimal) a, (BigDecimal) b);
     }
 
-    throw new IllegalArgumentException("Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' ("
-        + b.getClass() + ")");
+    throw new IllegalArgumentException(
+        "Cannot increment value '" + a + "' (" + a.getClass() + ") with '" + b + "' (" + b.getClass() + ")");
 
   }
 
@@ -353,6 +355,101 @@ public class OMathExpression extends SimpleNode {
       }
     }
     return true;
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    for (OMathExpression expr : childExpressions) {
+      if (expr.needsAliases(aliases)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean isExpand() {
+    for (OMathExpression expr : this.childExpressions) {
+      if (expr.isExpand()) {
+        if (this.childExpressions.size() > 1) {
+          throw new OCommandExecutionException("Cannot calculate expand() with other expressions");
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean isAggregate() {
+    for (OMathExpression expr : this.childExpressions) {
+      if (expr.isAggregate()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public SimpleNode splitForAggregation(AggregateProjectionSplit aggregateProj) {
+    if (isAggregate()) {
+      OMathExpression result = new OMathExpression(-1);
+      int i = 0;
+      for (OMathExpression expr : this.childExpressions) {
+        if (i > 0) {
+          result.operators.add(operators.get(i - 1));
+        }
+        SimpleNode splitResult = expr.splitForAggregation(aggregateProj);
+        if (splitResult instanceof OMathExpression) {
+          OMathExpression res = (OMathExpression) splitResult;
+          if (res.isEarlyCalculated() || res.isAggregate()) {
+            result.childExpressions.add(res);
+          } else {
+            throw new OCommandExecutionException("Cannot mix aggregate and single record attribute values in the same projection");
+          }
+        } else if (splitResult instanceof OExpression) {
+          result.childExpressions.add(((OExpression) splitResult).mathExpression);//this comes from a splitted aggregate function
+        }
+        i++;
+      }
+      return result;
+    } else {
+      return this;
+    }
+  }
+
+  public AggregationContext getAggregationContext(OCommandContext ctx) {
+    throw new UnsupportedOperationException("multiple math expressions do not allow plain aggregation");
+  }
+
+  public OMathExpression copy() {
+    OMathExpression result = null;
+    try {
+      result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    result.childExpressions = childExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.operators.addAll(operators);
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OMathExpression that = (OMathExpression) o;
+
+    if (childExpressions != null ? !childExpressions.equals(that.childExpressions) : that.childExpressions != null)
+      return false;
+    if (operators != null ? !operators.equals(that.operators) : that.operators != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = childExpressions != null ? childExpressions.hashCode() : 0;
+    result = 31 * result + (operators != null ? operators.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

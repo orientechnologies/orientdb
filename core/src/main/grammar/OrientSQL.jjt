@@ -18,7 +18,6 @@
   *
   */
 
-
 options {
 	TRACK_TOKENS = true;
   	JDK_VERSION = "1.6";
@@ -1099,6 +1098,7 @@ OSelectStatement SelectStatement():
         [ <NOCACHE> { jjtThis.noCache = true; } ]
     )
     {
+        jjtThis.validate();
         return jjtThis;
     }
 }
@@ -2116,23 +2116,24 @@ OModifier Modifier():
     { return jjtThis; }
 }
 
+
 OExpression Expression():
 {Token token; }
 {
     (
-        <NULL> {jjtThis.value = null;}
+        <NULL> {jjtThis.isNull = true; jjtThis.value = null;}
         |
         LOOKAHEAD( Rid() )
-        jjtThis.value = Rid()
+        jjtThis.rid = Rid() { jjtThis.value = jjtThis.rid; }
         |
         LOOKAHEAD( MathExpression() )
-        jjtThis.value = MathExpression()
+        jjtThis.mathExpression = MathExpression() { jjtThis.value = jjtThis.mathExpression; }
         |
-        jjtThis.value = Json()
+        jjtThis.json = Json() {jjtThis.value = jjtThis.json; }
         |
-        <TRUE> {jjtThis.value = true;}
+        <TRUE> { jjtThis.booleanValue = true; jjtThis.value = true; }
         |
-        <FALSE> {jjtThis.value = false;}
+        <FALSE> { jjtThis.booleanValue = false; jjtThis.value = false; }
 	)
 	{ return jjtThis; }
 }
@@ -2309,13 +2310,13 @@ OFromItem FromItem():
     (
     	lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	|
-    	/*(
+    	(
     	    <LBRACKET> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    (
     	        <COMMA> lastRid = Rid() { jjtThis.rids.add(lastRid); }
     	    )* <RBRACKET>
     	)
-    	|*/
+    	|
     	jjtThis.cluster = Cluster()
     	|
     	jjtThis.clusterList = ClusterList()
@@ -2325,17 +2326,33 @@ OFromItem FromItem():
     	|
         jjtThis.metadata = MetadataIdentifier()
     	|
-    	<LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
+    	(
+    	    <LPAREN> jjtThis.statement = QueryStatement() <RPAREN>
+    	    [
+                LOOKAHEAD( Modifier() )
+                jjtThis.modifier = Modifier()
+            ]
+    	)
     	|
     	jjtThis.inputParam = InputParameter()
     	|
-    	(
-            jjtThis.identifier = BaseIdentifier()
+        LOOKAHEAD(2)
+        (
+            jjtThis.functionCall = FunctionCall()
             [
                 LOOKAHEAD( Modifier() )
                 jjtThis.modifier = Modifier()
             ]
         )
+    	|
+    	(
+            jjtThis.identifier = Identifier()
+            [
+                LOOKAHEAD( Modifier() )
+                jjtThis.modifier = Modifier()
+            ]
+        )
+
     )
     { return jjtThis; }
 }

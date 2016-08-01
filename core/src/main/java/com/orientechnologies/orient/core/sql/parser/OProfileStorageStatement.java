@@ -28,8 +28,7 @@ public class OProfileStorageStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context, OProgressListener progressListener) {
+  @Override public Object execute(OSQLAsynchQuery<ODocument> request, OCommandContext context, OProgressListener progressListener) {
     try {
       ODatabaseDocumentInternal db = getDatabase();
 
@@ -72,6 +71,30 @@ public class OProfileStorageStatement extends OStatement {
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("PROFILE STORAGE ");
     builder.append(on ? "ON" : "OFF");
+  }
+
+  @Override public OProfileStorageStatement copy() {
+    OProfileStorageStatement result = new OProfileStorageStatement(-1);
+    result.on = on;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OProfileStorageStatement that = (OProfileStorageStatement) o;
+
+    if (on != that.on)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return (on ? 1 : 0);
   }
 }
 

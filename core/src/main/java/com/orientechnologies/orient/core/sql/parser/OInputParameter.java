@@ -35,10 +35,14 @@ public class OInputParameter extends SimpleNode {
 
   protected Object toParsedTree(Object value) {
     if (value == null) {
-      return null;
+      OExpression result = new OExpression(-1);
+      result.isNull = true;
+      return result;
     }
     if(value instanceof Boolean){
-      return value;
+      OExpression result = new OExpression(-1);
+      result.booleanValue = (Boolean) value;
+      return result;
     }
     if (value instanceof Integer) {
       OInteger result = new OInteger(-1);
@@ -102,5 +106,8 @@ public class OInputParameter extends SimpleNode {
     return this;
   }
 
+  public OInputParameter copy() {
+    throw new UnsupportedOperationException();
+  }
 }
 /* JavaCC - OriginalChecksum=bb2f3732f5e3be4d954527ee0baa9020 (do not edit this line) */

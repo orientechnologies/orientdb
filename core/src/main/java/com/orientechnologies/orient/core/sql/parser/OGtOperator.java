@@ -41,6 +41,20 @@ public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
     return true;
   }
 
+  @Override public OGtOperator copy() {
+    return new OGtOperator(-1);
+  }
 
+  @Override public boolean isRangeOperator() {
+    return true;
+  }
+
+  @Override public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(this.getClass());
+  }
+
+  @Override public int hashCode() {
+    return getClass().hashCode();
+  }
 }
 /* JavaCC - OriginalChecksum=4b96739fc6e9ae496916d542db361376 (do not edit this line) */

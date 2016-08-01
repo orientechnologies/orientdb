@@ -5,6 +5,9 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.Map;
 
 public class OIndexName extends SimpleNode {
+
+  protected Object value;
+
   public OIndexName(int id) {
     super(id);
   }
@@ -20,6 +23,30 @@ public class OIndexName extends SimpleNode {
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(getValue());
+  }
+
+  public OIndexName copy() {
+    OIndexName result = new OIndexName(-1);
+    result.value = value;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIndexName that = (OIndexName) o;
+
+    if (value != null ? !value.equals(that.value) : that.value != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return value != null ? value.hashCode() : 0;
   }
 }
 /* JavaCC - OriginalChecksum=06c827926e7e9ee650b76d42e31feb46 (do not edit this line) */

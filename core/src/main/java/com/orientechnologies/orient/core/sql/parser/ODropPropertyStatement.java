@@ -23,9 +23,42 @@ public class ODropPropertyStatement extends OStatement {
     className.toString(params, builder);
     builder.append(".");
     propertyName.toString(params, builder);
-    if(force){
+    if (force) {
       builder.append(" FORCE");
     }
+  }
+
+  @Override public ODropPropertyStatement copy() {
+    ODropPropertyStatement result = new ODropPropertyStatement(-1);
+    result.className = className == null ? null : className.copy();
+    result.propertyName = propertyName == null ? null : propertyName.copy();
+    result.force = force;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ODropPropertyStatement that = (ODropPropertyStatement) o;
+
+    if (force != that.force)
+      return false;
+    if (className != null ? !className.equals(that.className) : that.className != null)
+      return false;
+    if (propertyName != null ? !propertyName.equals(that.propertyName) : that.propertyName != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = className != null ? className.hashCode() : 0;
+    result = 31 * result + (propertyName != null ? propertyName.hashCode() : 0);
+    result = 31 * result + (force ? 1 : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=6a9b4b1694dc36caf2b801218faebe42 (do not edit this line) */

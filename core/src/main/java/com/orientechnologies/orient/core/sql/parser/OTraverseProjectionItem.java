@@ -5,7 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.Map;
 
 public class OTraverseProjectionItem extends SimpleNode {
-  protected boolean         star = false;
+  protected boolean star = false;
   protected OBaseIdentifier base;
   protected OModifier       modifier;
 
@@ -17,7 +17,9 @@ public class OTraverseProjectionItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -35,5 +37,37 @@ public class OTraverseProjectionItem extends SimpleNode {
     }
   }
 
+  public OTraverseProjectionItem copy() {
+    OTraverseProjectionItem result = new OTraverseProjectionItem(-1);
+    result.star = star;
+    result.base = base == null ? null : base.copy();
+    result.modifier = modifier == null ? null : modifier.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OTraverseProjectionItem that = (OTraverseProjectionItem) o;
+
+    if (star != that.star)
+      return false;
+    if (base != null ? !base.equals(that.base) : that.base != null)
+      return false;
+    if (modifier != null ? !modifier.equals(that.modifier) : that.modifier != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = (star ? 1 : 0);
+    result = 31 * result + (base != null ? base.hashCode() : 0);
+    result = 31 * result + (modifier != null ? modifier.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=0c562254fd4d11266edc0504fd36fc99 (do not edit this line) */

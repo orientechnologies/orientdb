@@ -4,8 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class OAlterDatabaseStatement extends OStatement {
+public class OAlterDatabaseStatement extends OStatement {
 
   OIdentifier customPropertyName;
   OExpression customPropertyValue;
@@ -21,8 +20,7 @@ class OAlterDatabaseStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER DATABASE ");
 
     if (customPropertyName != null) {
@@ -37,5 +35,41 @@ class OAlterDatabaseStatement extends OStatement {
     }
   }
 
+  @Override public OAlterDatabaseStatement copy() {
+    OAlterDatabaseStatement result = new OAlterDatabaseStatement(-1);
+    result.customPropertyName = customPropertyName == null ? null : customPropertyName.copy();
+    result.customPropertyValue = customPropertyValue == null ? null : customPropertyValue.copy();
+    result.settingName = settingName == null ? null : settingName.copy();
+    result.settingValue = settingValue == null ? null : settingValue.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OAlterDatabaseStatement that = (OAlterDatabaseStatement) o;
+
+    if (customPropertyName != null ? !customPropertyName.equals(that.customPropertyName) : that.customPropertyName != null)
+      return false;
+    if (customPropertyValue != null ? !customPropertyValue.equals(that.customPropertyValue) : that.customPropertyValue != null)
+      return false;
+    if (settingName != null ? !settingName.equals(that.settingName) : that.settingName != null)
+      return false;
+    if (settingValue != null ? !settingValue.equals(that.settingValue) : that.settingValue != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = customPropertyName != null ? customPropertyName.hashCode() : 0;
+    result = 31 * result + (customPropertyValue != null ? customPropertyValue.hashCode() : 0);
+    result = 31 * result + (settingName != null ? settingName.hashCode() : 0);
+    result = 31 * result + (settingValue != null ? settingValue.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=8fec57db8dd2a3b52aaa52dec7367cd4 (do not edit this line) */

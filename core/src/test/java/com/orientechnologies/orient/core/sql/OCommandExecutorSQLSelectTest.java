@@ -1350,6 +1350,19 @@ public class OCommandExecutorSQLSelectTest {
   }
 
   @Test
+  public void testFoo() {
+    //dispose it!
+    db.command(new OCommandSQL("create class testFoo")).execute();
+    db.command(new OCommandSQL("insert into testFoo set val = 1, name = 'foo'")).execute();
+    db.command(new OCommandSQL("insert into testFoo set val = 3, name = 'foo'")).execute();
+    db.command(new OCommandSQL("insert into testFoo set val = 5, name = 'bar'")).execute();
+
+    List<ODocument> results = db.query(new OSQLSynchQuery<ODocument>("select sum(val), name from testFoo group by name"));
+    assertEquals(results.size(), 2);
+
+  }
+
+  @Test
   public void testDateComparison(){
     //issue #6389
 

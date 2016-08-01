@@ -17,8 +17,7 @@ public class OFloatingPoint extends ONumber {
     super(p, id);
   }
 
-  @Override
-  public Number getValue() {
+  @Override public Number getValue() {
     return Double.parseDouble((sign == -1 ? "-" : "") + stringValue);
   }
 
@@ -43,6 +42,35 @@ public class OFloatingPoint extends ONumber {
       builder.append("-");
     }
     builder.append(stringValue);
+  }
+
+  @Override public OFloatingPoint copy() {
+    OFloatingPoint result = new OFloatingPoint(-1);
+    result.sign = sign;
+    result.stringValue = stringValue;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OFloatingPoint that = (OFloatingPoint) o;
+
+    if (sign != that.sign)
+      return false;
+    if (stringValue != null ? !stringValue.equals(that.stringValue) : that.stringValue != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = sign;
+    result = 31 * result + (stringValue != null ? stringValue.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=46acfb589f666717595e28f1b19611ae (do not edit this line) */

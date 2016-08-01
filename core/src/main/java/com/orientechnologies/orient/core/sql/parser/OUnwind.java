@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OUnwind extends SimpleNode {
 
@@ -18,7 +19,9 @@ public class OUnwind extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -31,6 +34,30 @@ public class OUnwind extends SimpleNode {
       }
       items.get(i).toString(params, builder);
     }
+  }
+
+  public OUnwind copy() {
+    OUnwind result = new OUnwind(-1);
+    result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OUnwind oUnwind = (OUnwind) o;
+
+    if (items != null ? !items.equals(oUnwind.items) : oUnwind.items != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return items != null ? items.hashCode() : 0;
   }
 }
 /* JavaCC - OriginalChecksum=4739190aa6c1a3533a89b76a15bd6fdf (do not edit this line) */

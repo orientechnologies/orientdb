@@ -4,8 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class OSleepStatement extends OStatement {
+public class OSleepStatement extends OStatement {
 
   protected OInteger millis;
 
@@ -20,6 +19,30 @@ class OSleepStatement extends OStatement {
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("SLEEP ");
     millis.toString(params, builder);
+  }
+
+  @Override public OSleepStatement copy() {
+    OSleepStatement result = new OSleepStatement(-1);
+    result.millis = millis == null ? null : millis.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OSleepStatement that = (OSleepStatement) o;
+
+    if (millis != null ? !millis.equals(that.millis) : that.millis != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return millis != null ? millis.hashCode() : 0;
   }
 }
 /* JavaCC - OriginalChecksum=2ea765ee266d4215414908b0e09c0779 (do not edit this line) */

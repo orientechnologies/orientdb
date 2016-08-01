@@ -4,34 +4,35 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ODeleteEdgeStatement extends OStatement {
-  private static final Object unset           = new Object();
+  private static final Object unset = new Object();
 
-  protected OIdentifier       className;
-  protected OIdentifier       targetClusterName;
+  protected OIdentifier className;
+  protected OIdentifier targetClusterName;
 
-  protected ORid              rid;
-  protected List<ORid>        rids;
+  protected ORid       rid;
+  protected List<ORid> rids;
 
-  protected ORid              leftRid;
-  protected List<ORid>        leftRids;
-  protected OSelectStatement  leftStatement;
-  protected OInputParameter   leftParam;
-  protected Object            leftParamValue  = unset;
-  protected OIdentifier       leftIdentifier;
+  protected ORid             leftRid;
+  protected List<ORid>       leftRids;
+  protected OSelectStatement leftStatement;
+  protected OInputParameter  leftParam;
+  protected Object leftParamValue = unset;
+  protected OIdentifier leftIdentifier;
 
-  protected ORid              rightRid;
-  protected List<ORid>        rightRids;
-  protected OSelectStatement  rightStatement;
-  protected OInputParameter   rightParam;
-  protected Object            rightParamValue = unset;
-  protected OIdentifier       rightIdentifier;
+  protected ORid             rightRid;
+  protected List<ORid>       rightRids;
+  protected OSelectStatement rightStatement;
+  protected OInputParameter  rightParam;
+  protected Object rightParamValue = unset;
+  protected OIdentifier rightIdentifier;
 
-  protected OWhereClause      whereClause;
+  protected OWhereClause whereClause;
 
-  protected OLimit            limit;
-  protected OBatch            batch        = null;
+  protected OLimit limit;
+  protected OBatch batch = null;
 
   public ODeleteEdgeStatement(int id) {
     super(id);
@@ -41,7 +42,9 @@ public class ODeleteEdgeStatement extends OStatement {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -140,5 +143,98 @@ public class ODeleteEdgeStatement extends OStatement {
     }
   }
 
+  @Override public ODeleteEdgeStatement copy() {
+    ODeleteEdgeStatement result = null;
+    try {
+      result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    result.className = className == null ? null : className.copy();
+    result.targetClusterName = targetClusterName == null ? null : targetClusterName.copy();
+    result.rid = rid == null ? null : rid.copy();
+    result.rids = rids == null ? null : rids.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.leftRid = leftRid == null ? null : leftRid.copy();
+    result.leftRids = leftRids == null ? null : leftRids.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.leftStatement = leftStatement == null ? null : leftStatement.copy();
+    result.leftParam = leftParam == null ? null : leftParam.copy();
+    result.leftIdentifier = leftIdentifier == null ? null : leftIdentifier.copy();
+    result.rightRid = rightRid == null ? null : rightRid.copy();
+    result.rightRids = rightRids == null ? null : rightRids.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.rightStatement = rightStatement == null ? null : rightStatement.copy();
+    result.rightParam = rightParam == null ? null : rightParam.copy();
+    result.rightIdentifier = rightIdentifier == null ? null : rightIdentifier.copy();
+    result.whereClause = whereClause == null ? null : whereClause.copy();
+    result.limit = limit == null ? null : limit.copy();
+    result.batch = batch == null ? null : batch.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ODeleteEdgeStatement that = (ODeleteEdgeStatement) o;
+
+    if (className != null ? !className.equals(that.className) : that.className != null)
+      return false;
+    if (targetClusterName != null ? !targetClusterName.equals(that.targetClusterName) : that.targetClusterName != null)
+      return false;
+    if (rid != null ? !rid.equals(that.rid) : that.rid != null)
+      return false;
+    if (rids != null ? !rids.equals(that.rids) : that.rids != null)
+      return false;
+    if (leftRid != null ? !leftRid.equals(that.leftRid) : that.leftRid != null)
+      return false;
+    if (leftRids != null ? !leftRids.equals(that.leftRids) : that.leftRids != null)
+      return false;
+    if (leftStatement != null ? !leftStatement.equals(that.leftStatement) : that.leftStatement != null)
+      return false;
+    if (leftParam != null ? !leftParam.equals(that.leftParam) : that.leftParam != null)
+      return false;
+    if (leftIdentifier != null ? !leftIdentifier.equals(that.leftIdentifier) : that.leftIdentifier != null)
+      return false;
+    if (rightRid != null ? !rightRid.equals(that.rightRid) : that.rightRid != null)
+      return false;
+    if (rightRids != null ? !rightRids.equals(that.rightRids) : that.rightRids != null)
+      return false;
+    if (rightStatement != null ? !rightStatement.equals(that.rightStatement) : that.rightStatement != null)
+      return false;
+    if (rightParam != null ? !rightParam.equals(that.rightParam) : that.rightParam != null)
+      return false;
+    if (rightIdentifier != null ? !rightIdentifier.equals(that.rightIdentifier) : that.rightIdentifier != null)
+      return false;
+    if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
+      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
+      return false;
+    if (batch != null ? !batch.equals(that.batch) : that.batch != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = className != null ? className.hashCode() : 0;
+    result = 31 * result + (targetClusterName != null ? targetClusterName.hashCode() : 0);
+    result = 31 * result + (rid != null ? rid.hashCode() : 0);
+    result = 31 * result + (rids != null ? rids.hashCode() : 0);
+    result = 31 * result + (leftRid != null ? leftRid.hashCode() : 0);
+    result = 31 * result + (leftRids != null ? leftRids.hashCode() : 0);
+    result = 31 * result + (leftStatement != null ? leftStatement.hashCode() : 0);
+    result = 31 * result + (leftParam != null ? leftParam.hashCode() : 0);
+    result = 31 * result + (leftIdentifier != null ? leftIdentifier.hashCode() : 0);
+    result = 31 * result + (rightRid != null ? rightRid.hashCode() : 0);
+    result = 31 * result + (rightRids != null ? rightRids.hashCode() : 0);
+    result = 31 * result + (rightStatement != null ? rightStatement.hashCode() : 0);
+    result = 31 * result + (rightParam != null ? rightParam.hashCode() : 0);
+    result = 31 * result + (rightIdentifier != null ? rightIdentifier.hashCode() : 0);
+    result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
+    result = 31 * result + (limit != null ? limit.hashCode() : 0);
+    result = 31 * result + (batch != null ? batch.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=8f4c5bafa99572d7d87a5d0a2c7d55a7 (do not edit this line) */

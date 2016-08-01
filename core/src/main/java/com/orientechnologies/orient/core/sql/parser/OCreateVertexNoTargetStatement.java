@@ -17,5 +17,9 @@ class OCreateVertexNoTargetStatement extends OCreateVertexStatement {
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
+  @Override public OCreateVertexStatement copy() {
+    return super.copy();
+  }
 }
 /* JavaCC - OriginalChecksum=25d9cdfd149e7b374a84dfd166e11306 (do not edit this line) */

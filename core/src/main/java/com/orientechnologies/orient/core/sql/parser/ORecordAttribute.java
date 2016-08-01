@@ -16,13 +16,39 @@ public class ORecordAttribute extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(name);
+  }
+
+  public ORecordAttribute copy() {
+    ORecordAttribute result = new ORecordAttribute(-1);
+    result.name = name;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ORecordAttribute that = (ORecordAttribute) o;
+
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return name != null ? name.hashCode() : 0;
   }
 }
 /* JavaCC - OriginalChecksum=45ce3cd16399dec7d7ef89f8920d02ae (do not edit this line) */

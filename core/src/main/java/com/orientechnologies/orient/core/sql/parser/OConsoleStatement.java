@@ -22,5 +22,34 @@ public class OConsoleStatement extends OStatement {
     builder.append(" ");
     message.toString(params, builder);
   }
+
+  @Override public OConsoleStatement copy() {
+    OConsoleStatement result = new OConsoleStatement(-1);
+    result.logLevel = logLevel == null ? null : logLevel.copy();
+    result.message = message == null ? null : message.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OConsoleStatement that = (OConsoleStatement) o;
+
+    if (logLevel != null ? !logLevel.equals(that.logLevel) : that.logLevel != null)
+      return false;
+    if (message != null ? !message.equals(that.message) : that.message != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = logLevel != null ? logLevel.hashCode() : 0;
+    result = 31 * result + (message != null ? message.hashCode() : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=626c09cda52a1a8a63eeefcb37bd66a1 (do not edit this line) */

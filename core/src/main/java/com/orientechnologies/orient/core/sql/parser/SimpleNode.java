@@ -87,12 +87,16 @@ public class SimpleNode implements Node {
     this.lastToken = token;
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object childrenAccept(OrientSqlVisitor visitor, Object data) {
     if (children != null) {
       for (int i = 0; i < children.length; ++i) {
@@ -144,6 +148,10 @@ public class SimpleNode implements Node {
 
   public Object getValue() {
     return value;
+  }
+
+  public SimpleNode copy(){
+    throw new UnsupportedOperationException();
   }
 }
 

@@ -16,7 +16,9 @@ public class OMetadataIdentifier extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -24,6 +26,34 @@ public class OMetadataIdentifier extends SimpleNode {
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("metadata:");
     builder.append(name);
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public OMetadataIdentifier copy() {
+    OMetadataIdentifier result = new OMetadataIdentifier(-1);
+    result.name = name;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OMetadataIdentifier that = (OMetadataIdentifier) o;
+
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return name != null ? name.hashCode() : 0;
   }
 }
 /* JavaCC - OriginalChecksum=85e179b9505270f0596904070fdf0745 (do not edit this line) */

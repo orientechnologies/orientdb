@@ -6,11 +6,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OBinaryCondition extends OBooleanExpression {
   protected OExpression            left;
@@ -32,6 +30,11 @@ public class OBinaryCondition extends OBooleanExpression {
 
   @Override
   public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+    return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
+  }
+
+  @Override
+  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
   }
 
@@ -89,11 +92,11 @@ public class OBinaryCondition extends OBooleanExpression {
   }
 
   public long estimateIndexed(OFromClause target, OCommandContext context) {
-    return left.estimateIndexedFunction(target, context, operator, right.execute(null, context));
+    return left.estimateIndexedFunction(target, context, operator, right.execute((OResult)null, context));
   }
 
   public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context) {
-    return left.executeIndexedFunction(target, context, operator, right.execute(null, context));
+    return left.executeIndexedFunction(target, context, operator, right.execute((OResult)null, context));
   }
 
   public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
@@ -101,6 +104,73 @@ public class OBinaryCondition extends OBooleanExpression {
       return Collections.singletonList(this);
     }
     return null;
+  }
+
+  @Override public boolean needsAliases(Set<String> aliases) {
+    if(left.needsAliases(aliases)){
+      return true;
+    }
+    if(right.needsAliases(aliases)){
+      return true;
+    }
+    return false;
+  }
+
+  @Override public OBinaryCondition copy() {
+    OBinaryCondition result = new OBinaryCondition(-1);
+    result.left = left.copy();
+    result.operator = (OBinaryCompareOperator) operator.copy();
+    result.right = right.copy();
+    return result;
+  }
+
+  public OExpression getLeft() {
+    return left;
+  }
+
+  public OBinaryCompareOperator getOperator() {
+    return operator;
+  }
+
+  public OExpression getRight() {
+    return right;
+  }
+
+  public void setLeft(OExpression left) {
+    this.left = left;
+  }
+
+  public void setOperator(OBinaryCompareOperator operator) {
+    this.operator = operator;
+  }
+
+  public void setRight(OExpression right) {
+    this.right = right;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OBinaryCondition that = (OBinaryCondition) o;
+
+    if (left != null ? !left.equals(that.left) : that.left != null)
+      return false;
+    if (operator != null ? !operator.equals(that.operator) : that.operator != null)
+      return false;
+    if (right != null ? !right.equals(that.right) : that.right != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = left != null ? left.hashCode() : 0;
+    result = 31 * result + (operator != null ? operator.hashCode() : 0);
+    result = 31 * result + (right != null ? right.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.collate.OCollateFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -42,17 +43,11 @@ import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
@@ -66,6 +61,10 @@ public class OSQLEngine {
   private static List<OCollateFactory>            COLLATE_FACTORIES  = null;
   private static OQueryOperator[]                 SORTED_OPERATORS   = null;
   private static ClassLoader                      orientClassLoader  = OSQLEngine.class.getClassLoader();
+
+  public static OStatement parse(String query, ODatabaseDocumentInternal db) {
+    return OStatementCache.get(query, db);
+  }
 
   /**
    * internal use only, to sort operators.

@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OMatchFilter extends SimpleNode {
   // TODO transform in a map
@@ -137,5 +138,28 @@ public class OMatchFilter extends SimpleNode {
     builder.append("}");
   }
 
+  @Override public OMatchFilter copy() {
+    OMatchFilter result = new OMatchFilter(-1);
+    result.items = items == null ? null : items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OMatchFilter that = (OMatchFilter) o;
+
+    if (items != null ? !items.equals(that.items) : that.items != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return items != null ? items.hashCode() : 0;
+  }
 }
 /* JavaCC - OriginalChecksum=6b099371c69e0d0c1c106fc96b3072de (do not edit this line) */

@@ -2,53 +2,46 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlanner;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 
 public class OSelectStatement extends OStatement {
 
-  protected OFromClause  target;
+  protected OFromClause target;
 
-  protected OProjection  projection;
+  protected OProjection projection;
 
   protected OWhereClause whereClause;
 
-  protected OGroupBy     groupBy;
+  protected OGroupBy groupBy;
 
-  protected OOrderBy     orderBy;
+  protected OOrderBy orderBy;
 
-  protected OUnwind      unwind;
+  protected OUnwind unwind;
 
-  protected OSkip        skip;
+  protected OSkip skip;
 
-  protected OLimit       limit;
+  protected OLimit limit;
 
   protected OStorage.LOCKING_STRATEGY lockRecord = null;
 
-  protected OFetchPlan   fetchPlan;
+  protected OFetchPlan fetchPlan;
 
-  protected OLetClause   letClause;
+  protected OLetClause letClause;
 
-  protected OTimeout     timeout;
+  protected OTimeout timeout;
 
-  protected Boolean      parallel;
+  protected Boolean parallel;
 
-  protected Boolean      noCache;
+  protected Boolean noCache;
 
   public OSelectStatement(int id) {
     super(id);
@@ -56,15 +49,6 @@ public class OSelectStatement extends OStatement {
 
   public OSelectStatement(OrientSql p, int id) {
     super(p, id);
-  }
-
-  private OIdentifier getAlias(OProjectionItem item) {
-    if (item.getAlias() != null) {
-      return item.getAlias();
-    } else {
-      return item.getDefaultAlias();
-    }
-
   }
 
   public OProjection getProjection() {
@@ -192,9 +176,9 @@ public class OSelectStatement extends OStatement {
       limit.toString(params, builder);
     }
 
-    if (lockRecord!=null) {
+    if (lockRecord != null) {
       builder.append(" LOCK ");
-      switch (lockRecord){
+      switch (lockRecord) {
       case DEFAULT:
         builder.append("DEFAULT");
         break;
@@ -229,85 +213,110 @@ public class OSelectStatement extends OStatement {
   }
 
   public void validate() throws OCommandSQLParsingException {
-
-  }
-
-  private boolean isClassTarget(OFromClause target) {
-
-    return target != null && target.item != null && target.item.identifier != null && target.item.identifier.suffix != null
-        && target.item.identifier.suffix.identifier != null;
-  }
-
-  private boolean isIndexTarget(OFromClause target) {
-    return target != null && target.item != null && target.item.index != null;
-  }
-
-  public OQueryCursor execute(OCommandContext ctx) {
-    // TODO projections
-    return new OQueryCursor(fetchFromTarget(ctx), whereClause, orderBy, calculateSkip(ctx), calculateLimit(ctx), ctx);
-  }
-
-  private int calculateLimit(OCommandContext ctx) {
-    return -1;// TODO
-  }
-
-  private int calculateSkip(OCommandContext ctx) {
-    return -1;// TODO
-  }
-
-  private Iterator<OIdentifiable> fetchFromTarget(OCommandContext ctx) {
-    OFromItem targetItem = target.getItem();
-    Iterator<OIdentifiable> result = null;
-    if (targetItem.cluster != null) {
-      // TODO
-    } else if (targetItem.identifier != null) {
-      if (targetItem.identifier.isBaseIdentifier()) {
-        String className = targetItem.identifier.toString();
-        OClass oClass = getDatabase().getMetadata().getSchema().getClass(className);
-        if (oClass == null) {
-          throw new OCommandExecutionException("Class not found in database schema: " + className);
-        }
-        if (whereClause != null) {
-          Iterable resultIterable = whereClause.fetchFromIndexes(oClass, ctx);
-          if (resultIterable != null) {
-            result = resultIterable.iterator();
-          }
-        }
-        if (result == null) {
-          boolean ascendingOrder = true;// TODO
-          result = (Iterator<OIdentifiable>) searchInClasses(oClass, true, ascendingOrder);
-        }
-      } else {
-        Object calculationResult = targetItem.identifier.execute(null, ctx);
-        if (calculationResult instanceof Iterable) {
-          result = ((Iterable<OIdentifiable>) calculationResult).iterator();
-        } else if (calculationResult instanceof OIdentifiable) {
-          result = (Iterator) Collections.singleton(calculationResult).iterator();
-        } else {
-          // TODO
-        }
+    if (projection != null) {
+      projection.validate();
+      if (projection.isExpand() && groupBy != null) {
+        throw new OCommandSQLParsingException("expand() cannot be used together with GROUP BY");
       }
-    } else {
-      // TODO
     }
+  }
+
+  @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    ctx.setArgs(args);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+
+    return new OLocalResultSet(executionPlan);
+
+  }
+
+  public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
+    OSelectExecutionPlanner planner = new OSelectExecutionPlanner(this);
+    return planner.createExecutionPlan(ctx);
+  }
+
+  @Override public OSelectStatement copy() {
+    OSelectStatement result = null;
+    try {
+      result = getClass().getConstructor(Integer.TYPE).newInstance(-1);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    result.target = target == null ? null : target.copy();
+    result.projection = projection == null ? null : projection.copy();
+    result.whereClause = whereClause == null ? null : whereClause.copy();
+    result.groupBy = groupBy == null ? null : groupBy.copy();
+    result.orderBy = orderBy == null ? null : orderBy.copy();
+    result.unwind = unwind == null ? null : unwind.copy();
+    result.skip = skip == null ? null : skip.copy();
+    result.limit = limit == null ? null : limit.copy();
+    result.lockRecord = lockRecord;
+    result.fetchPlan = fetchPlan == null ? null : fetchPlan.copy();
+    result.letClause = letClause == null ? null : letClause.copy();
+    result.timeout = timeout == null ? null : timeout.copy();
+    result.parallel = parallel;
+    result.noCache = noCache;
 
     return result;
   }
 
-  protected Iterator<? extends OIdentifiable> searchInClasses(final OClass iCls, final boolean iPolymorphic,
-      final boolean iAscendentOrder) {
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
 
-    final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iCls.getName().toLowerCase());
+    OSelectStatement that = (OSelectStatement) o;
 
-    final ORID[] range = new ORID[2];// TODO
-    boolean useCache = false;// TODO
-    if (iAscendentOrder)
-      return new ORecordIteratorClass<ORecord>(database, database, iCls.getName(), iPolymorphic, useCache, false).setRange(range[0],
-          range[1]);
-    else
-      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, iCls.getName(), iPolymorphic).setRange(range[0],
-          range[1]);
+    if (target != null ? !target.equals(that.target) : that.target != null)
+      return false;
+    if (projection != null ? !projection.equals(that.projection) : that.projection != null)
+      return false;
+    if (whereClause != null ? !whereClause.equals(that.whereClause) : that.whereClause != null)
+      return false;
+    if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null)
+      return false;
+    if (orderBy != null ? !orderBy.equals(that.orderBy) : that.orderBy != null)
+      return false;
+    if (unwind != null ? !unwind.equals(that.unwind) : that.unwind != null)
+      return false;
+    if (skip != null ? !skip.equals(that.skip) : that.skip != null)
+      return false;
+    if (limit != null ? !limit.equals(that.limit) : that.limit != null)
+      return false;
+    if (lockRecord != that.lockRecord)
+      return false;
+    if (fetchPlan != null ? !fetchPlan.equals(that.fetchPlan) : that.fetchPlan != null)
+      return false;
+    if (letClause != null ? !letClause.equals(that.letClause) : that.letClause != null)
+      return false;
+    if (timeout != null ? !timeout.equals(that.timeout) : that.timeout != null)
+      return false;
+    if (parallel != null ? !parallel.equals(that.parallel) : that.parallel != null)
+      return false;
+    if (noCache != null ? !noCache.equals(that.noCache) : that.noCache != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = target != null ? target.hashCode() : 0;
+    result = 31 * result + (projection != null ? projection.hashCode() : 0);
+    result = 31 * result + (whereClause != null ? whereClause.hashCode() : 0);
+    result = 31 * result + (groupBy != null ? groupBy.hashCode() : 0);
+    result = 31 * result + (orderBy != null ? orderBy.hashCode() : 0);
+    result = 31 * result + (unwind != null ? unwind.hashCode() : 0);
+    result = 31 * result + (skip != null ? skip.hashCode() : 0);
+    result = 31 * result + (limit != null ? limit.hashCode() : 0);
+    result = 31 * result + (lockRecord != null ? lockRecord.hashCode() : 0);
+    result = 31 * result + (fetchPlan != null ? fetchPlan.hashCode() : 0);
+    result = 31 * result + (letClause != null ? letClause.hashCode() : 0);
+    result = 31 * result + (timeout != null ? timeout.hashCode() : 0);
+    result = 31 * result + (parallel != null ? parallel.hashCode() : 0);
+    result = 31 * result + (noCache != null ? noCache.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

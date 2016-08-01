@@ -927,6 +927,40 @@ public class ODocument extends ORecordAbstract
     return names.toArray(new String[names.size()]);
   }
 
+  public Set<String> getPropertyNames() {
+    checkForLoading();
+
+    if (_status == ORecordElement.STATUS.LOADED && _source != null && ODatabaseRecordThreadLocal.INSTANCE.isDefined()
+        && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()) {
+      // DESERIALIZE FIELD NAMES ONLY (SUPPORTED ONLY BY BINARY SERIALIZER)
+      final String[] fieldNames = _recordFormat.getFieldNames(_source);
+      if (fieldNames != null) {
+        return arrayToSet(fieldNames);
+      }
+    }
+
+    checkForFields();
+
+    if (_fields == null || _fields.size() == 0)
+      return Collections.EMPTY_SET;
+    final List<String> names = new ArrayList<String>(_fields.size());
+    for (Entry<String, ODocumentEntry> entry : _fields.entrySet()) {
+      if (entry.getValue().exist())
+        names.add(entry.getKey());
+    }
+    Set<String> result = new HashSet<>();
+    result.addAll(names);
+    return result;
+  }
+
+  private Set<String> arrayToSet(String[] fieldNames) {
+    Set<String> result = new HashSet<>();
+    for (String s : fieldNames) {
+      result.add(s);
+    }
+    return result;
+  }
+
   /**
    * Returns the array of field values.
    */

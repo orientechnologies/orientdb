@@ -5,11 +5,10 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class OJson extends SimpleNode {
 
@@ -70,7 +69,20 @@ public class OJson extends SimpleNode {
   }
 
   public Map<String, Object> toMap(OIdentifiable source, OCommandContext ctx) {
-    String className = getClassNameForDocument(ctx);
+    Map<String, Object> doc = new HashMap<String, Object>();
+    for (OJsonItem item : items) {
+      String name = item.getLeftValue();
+      if (name == null) {
+        continue;
+      }
+      Object value = item.right.execute(source, ctx);
+      doc.put(name, value);
+    }
+
+    return doc;
+  }
+
+  public Map<String, Object> toMap(OResult source, OCommandContext ctx) {
     Map<String, Object> doc = new HashMap<String, Object>();
     for (OJsonItem item : items) {
       String name = item.getLeftValue();
@@ -88,10 +100,64 @@ public class OJson extends SimpleNode {
     for (OJsonItem item : items) {
       String left = item.getLeftValue();
       if (left.toLowerCase().equals("@class")) {
-        return "" + item.right.execute(null, ctx);
+        return "" + item.right.execute((OResult) null, ctx);
       }
     }
     return null;
+  }
+
+  public boolean needsAliases(Set<String> aliases) {
+    for (OJsonItem item : items) {
+      if (item.needsAliases(aliases)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean isAggregate() {
+    for (OJsonItem item : items) {
+      if (item.isAggregate()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public OJson splitForAggregation(AggregateProjectionSplit aggregateSplit) {
+    if (isAggregate()) {
+      OJson result = new OJson(-1);
+      for (OJsonItem item : items) {
+        result.items.add(item.splitForAggregation(aggregateSplit));
+      }
+      return result;
+    } else {
+      return this;
+    }
+  }
+
+  public OJson copy() {
+    OJson result = new OJson(-1);
+    result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OJson oJson = (OJson) o;
+
+    if (items != null ? !items.equals(oJson.items) : oJson.items != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return items != null ? items.hashCode() : 0;
   }
 }
 /* JavaCC - OriginalChecksum=3beec9f6db486de944498588b51a505d (do not edit this line) */

@@ -5,14 +5,13 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-public
-class ORevokeStatement extends OStatement {
+public class ORevokeStatement extends OStatement {
 
   protected OPermission permission;
   protected List<OResourcePathItem> resourceChain = new ArrayList<OResourcePathItem>();
   protected OIdentifier actor;
-
 
   public ORevokeStatement(int id) {
     super(id);
@@ -22,9 +21,7 @@ class ORevokeStatement extends OStatement {
     super(p, id);
   }
 
-
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("REVOKE ");
     permission.toString(params, builder);
     builder.append(" ON ");
@@ -38,6 +35,40 @@ class ORevokeStatement extends OStatement {
     }
     builder.append(" FROM ");
     actor.toString(params, builder);
+  }
+
+  @Override public ORevokeStatement copy() {
+    ORevokeStatement result = new ORevokeStatement(-1);
+    result.permission = permission == null ? null : permission.copy();
+    result.resourceChain =
+        resourceChain == null ? null : resourceChain.stream().map(OResourcePathItem::copy).collect(Collectors.toList());
+    result.actor = actor == null ? null : actor.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ORevokeStatement that = (ORevokeStatement) o;
+
+    if (permission != null ? !permission.equals(that.permission) : that.permission != null)
+      return false;
+    if (resourceChain != null ? !resourceChain.equals(that.resourceChain) : that.resourceChain != null)
+      return false;
+    if (actor != null ? !actor.equals(that.actor) : that.actor != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = permission != null ? permission.hashCode() : 0;
+    result = 31 * result + (resourceChain != null ? resourceChain.hashCode() : 0);
+    result = 31 * result + (actor != null ? actor.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=d483850d10e1562c1b942fcc249278eb (do not edit this line) */

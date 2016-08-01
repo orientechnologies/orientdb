@@ -11,10 +11,10 @@ public class OUpdateItem extends SimpleNode {
   public static final int OPERATOR_STARASSIGN  = 3;
   public static final int OPERATOR_SLASHASSIGN = 4;
 
-  protected OIdentifier   left;
-  protected OModifier     leftModifier;
-  protected int           operator;
-  protected OExpression   right;
+  protected OIdentifier left;
+  protected OModifier   leftModifier;
+  protected int         operator;
+  protected OExpression right;
 
   public OUpdateItem(int id) {
     super(id);
@@ -24,11 +24,12 @@ public class OUpdateItem extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
-
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
@@ -54,6 +55,43 @@ public class OUpdateItem extends SimpleNode {
 
     }
     right.toString(params, builder);
+  }
+
+  public OUpdateItem copy() {
+    OUpdateItem result = new OUpdateItem(-1);
+    result.left = left == null ? null : left.copy();
+    result.leftModifier = leftModifier == null ? null : leftModifier.copy();
+    result.operator = operator;
+    result.right = right == null ? null : right.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OUpdateItem that = (OUpdateItem) o;
+
+    if (operator != that.operator)
+      return false;
+    if (left != null ? !left.equals(that.left) : that.left != null)
+      return false;
+    if (leftModifier != null ? !leftModifier.equals(that.leftModifier) : that.leftModifier != null)
+      return false;
+    if (right != null ? !right.equals(that.right) : that.right != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = left != null ? left.hashCode() : 0;
+    result = 31 * result + (leftModifier != null ? leftModifier.hashCode() : 0);
+    result = 31 * result + operator;
+    result = 31 * result + (right != null ? right.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=df7444be87bba741316df8df0d653600 (do not edit this line) */

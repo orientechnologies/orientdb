@@ -9,6 +9,11 @@ public class OIdentifier extends SimpleNode {
   protected String  value;
   protected boolean quoted = false;
 
+  /**
+   * set to true by the query executor/optimizer for internally generated aliases for query optimization
+   */
+  protected boolean internalAlias = false;
+
   public OIdentifier(int id) {
     super(id);
   }
@@ -82,5 +87,40 @@ public class OIdentifier extends SimpleNode {
     }
   }
 
+  public void setQuoted(boolean quoted) {
+    this.quoted = quoted;
+  }
+
+  public OIdentifier copy(){
+    OIdentifier result = new OIdentifier(-1);
+    result.value = value;
+    result.quoted = quoted;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIdentifier that = (OIdentifier) o;
+
+    if (quoted != that.quoted)
+      return false;
+    if (internalAlias != that.internalAlias)
+      return false;
+    if (value != null ? !value.equals(that.value) : that.value != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = value != null ? value.hashCode() : 0;
+    result = 31 * result + (quoted ? 1 : 0);
+    result = 31 * result + (internalAlias ? 1 : 0);
+    return result;
+  }
 }
 /* JavaCC - OriginalChecksum=691a2eb5096f7b5e634b2ca8ac2ded3a (do not edit this line) */

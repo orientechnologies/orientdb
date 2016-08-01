@@ -24,8 +24,7 @@ public class OCreateLinkStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE LINK ");
     name.toString(params, builder);
     builder.append(" TYPE ");
@@ -49,6 +48,63 @@ public class OCreateLinkStatement extends OStatement {
     if (inverse) {
       builder.append(" INVERSE");
     }
+  }
+
+  @Override public OCreateLinkStatement copy() {
+    OCreateLinkStatement result = new OCreateLinkStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.type = type == null ? null : type.copy();
+    result.sourceClass = sourceClass == null ? null : sourceClass.copy();
+    result.sourceField = sourceField == null ? null : sourceField.copy();
+    result.sourceRecordAttr = sourceRecordAttr == null ? null : sourceRecordAttr.copy();
+    result.destClass = destClass == null ? null : destClass.copy();
+    result.destField = destField == null ? null : destField.copy();
+    result.destRecordAttr = destRecordAttr == null ? null : destRecordAttr.copy();
+    result.inverse = inverse;
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OCreateLinkStatement that = (OCreateLinkStatement) o;
+
+    if (inverse != that.inverse)
+      return false;
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+    if (type != null ? !type.equals(that.type) : that.type != null)
+      return false;
+    if (sourceClass != null ? !sourceClass.equals(that.sourceClass) : that.sourceClass != null)
+      return false;
+    if (sourceField != null ? !sourceField.equals(that.sourceField) : that.sourceField != null)
+      return false;
+    if (sourceRecordAttr != null ? !sourceRecordAttr.equals(that.sourceRecordAttr) : that.sourceRecordAttr != null)
+      return false;
+    if (destClass != null ? !destClass.equals(that.destClass) : that.destClass != null)
+      return false;
+    if (destField != null ? !destField.equals(that.destField) : that.destField != null)
+      return false;
+    if (destRecordAttr != null ? !destRecordAttr.equals(that.destRecordAttr) : that.destRecordAttr != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (type != null ? type.hashCode() : 0);
+    result = 31 * result + (sourceClass != null ? sourceClass.hashCode() : 0);
+    result = 31 * result + (sourceField != null ? sourceField.hashCode() : 0);
+    result = 31 * result + (sourceRecordAttr != null ? sourceRecordAttr.hashCode() : 0);
+    result = 31 * result + (destClass != null ? destClass.hashCode() : 0);
+    result = 31 * result + (destField != null ? destField.hashCode() : 0);
+    result = 31 * result + (destRecordAttr != null ? destRecordAttr.hashCode() : 0);
+    result = 31 * result + (inverse ? 1 : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=de46c9bdaf3b36691764a78cd89d1c2b (do not edit this line) */

@@ -4,8 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class ODropSequenceStatement extends OStatement {
+public class ODropSequenceStatement extends OStatement {
   OIdentifier name;
 
   public ODropSequenceStatement(int id) {
@@ -19,6 +18,30 @@ class ODropSequenceStatement extends OStatement {
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DROP SEQUENCE ");
     name.toString(params, builder);
+  }
+
+  @Override public ODropSequenceStatement copy() {
+    ODropSequenceStatement result = new ODropSequenceStatement(-1);
+    result.name = name == null ? null : name.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ODropSequenceStatement that = (ODropSequenceStatement) o;
+
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    return name != null ? name.hashCode() : 0;
   }
 }
 /* JavaCC - OriginalChecksum=def62b1d04db5223307fe51873a9edd0 (do not edit this line) */

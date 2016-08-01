@@ -4,10 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Map;
 
-public
-class ODropClusterStatement extends OStatement {
+public class ODropClusterStatement extends OStatement {
   protected OIdentifier name;
-  protected OInteger id;
+  protected OInteger    id;
 
   public ODropClusterStatement(int id) {
     super(id);
@@ -19,11 +18,40 @@ class ODropClusterStatement extends OStatement {
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DROP CLUSTER ");
-    if(name!=null){
+    if (name != null) {
       name.toString(params, builder);
-    }else{
+    } else {
       id.toString(params, builder);
     }
+  }
+
+  @Override public ODropClusterStatement copy() {
+    ODropClusterStatement result = new ODropClusterStatement(-1);
+    result.name = name == null ? null : name.copy();
+    result.id = id == null ? null : id.copy();
+    return result;
+  }
+
+  @Override public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    ODropClusterStatement that = (ODropClusterStatement) o;
+
+    if (name != null ? !name.equals(that.name) : that.name != null)
+      return false;
+    if (id != null ? !id.equals(that.id) : that.id != null)
+      return false;
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (id != null ? id.hashCode() : 0);
+    return result;
   }
 }
 /* JavaCC - OriginalChecksum=239ffe92e79e1d5c82976ed9814583ec (do not edit this line) */
