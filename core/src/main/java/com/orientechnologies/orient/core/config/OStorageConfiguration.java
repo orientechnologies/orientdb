@@ -796,26 +796,6 @@ public class OStorageConfiguration implements OSerializableStream {
     setProperty("validation", validation ? "true" : "false");
   }
 
-  protected void bindPropertiesToContext(final Map<String, Object> iProperties) {
-    final String compressionMethod = iProperties != null
-        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase()) : null;
-    if (compressionMethod != null)
-      // SAVE COMPRESSION METHOD IN CONFIGURATION
-      getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
-
-    final String encryptionMethod = iProperties != null
-        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase()) : null;
-    if (encryptionMethod != null)
-      // SAVE ENCRYPTION METHOD IN CONFIGURATION
-      getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
-
-    final String encryptionKey = iProperties != null
-        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase()) : null;
-    if (encryptionKey != null)
-      // SAVE ENCRYPTION KEY IN CONFIGURATION
-      getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
-  }
-
   private int phySegmentFromStream(final String[] values, int index, final OStorageSegmentConfiguration iSegment) {
     iSegment.location = version > 2 ? read(values[index++]) : null;
     iSegment.maxSize = read(values[index++]);
