@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -97,7 +98,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
     throw new UnsupportedOperationException("use OrientDBFactory");
   }
 
-  public ODatabaseDocumentTx copy() {
+  public ODatabaseDocumentInternal copy() {
     return null;
   }
 

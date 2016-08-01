@@ -26,6 +26,8 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -570,7 +572,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     int rollbacks = 0;
     int tasks = 0;
 
-    final ODatabaseDocumentTx database = getDatabaseInstance();
+    final ODatabaseDocumentInternal database = getDatabaseInstance();
     try {
       final Iterator<ODistributedTxContextImpl> pendingReqIterator = activeTxContexts.values().iterator();
       while (pendingReqIterator.hasNext()) {
@@ -602,8 +604,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public ODatabaseDocumentTx getDatabaseInstance() {
-    return (ODatabaseDocumentTx) manager.getServerInstance().openDatabase(databaseName, "internal", "internal", null, true);
+  public ODatabaseDocumentInternal getDatabaseInstance() {
+    return manager.getServerInstance().openDatabase(databaseName, "internal", "internal", null, true);
   }
 
   @Override

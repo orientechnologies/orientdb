@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
@@ -958,4 +959,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   public OSharedContext getSharedContext() {
     return underlying.getSharedContext();
   }
+  
+  @Override
+  public OTodoResultSet query(String query, Object... args) {
+    return underlying.query(query, args);
+  }
+  
 }

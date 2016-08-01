@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.orientechnologies.common.thread.OSoftThread;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -86,7 +88,7 @@ public class ODistributedDatabaseRepair extends OSoftThread {
 
       final long start = System.currentTimeMillis();
 
-      final ODatabaseDocumentTx db = dManager.getMessageService().getDatabase(data.databaseName).getDatabaseInstance();
+      final ODatabaseDocumentInternal db = dManager.getMessageService().getDatabase(data.databaseName).getDatabaseInstance();
       try {
 
         final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(data.databaseName);

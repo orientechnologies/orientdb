@@ -550,7 +550,7 @@ import java.util.concurrent.atomic.AtomicReference;
    * Returns a copy of current database if it's open. The returned instance can be used by another thread without affecting current
    * instance. The database copy is not set in thread local.
    */
-  public ODatabaseDocumentTx copy() {
+  public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentInternal dbInThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (this.isClosed())
       throw new ODatabaseException("Cannot copy a closed db");

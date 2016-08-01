@@ -22,6 +22,7 @@ package com.orientechnologies.orient.stresstest;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 /**
@@ -46,7 +47,7 @@ public class ODatabaseUtils {
 
   public static ODatabase openDatabase(final ODatabaseIdentifier databaseIdentifier,
       final OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
-    ODatabaseDocumentTx database = null;
+    ODatabaseDocument database = null;
 
     switch (databaseIdentifier.getMode()) {
     case PLOCAL:

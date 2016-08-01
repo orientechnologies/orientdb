@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -46,7 +47,7 @@ public class NonBlockingQueryTest extends DocumentDBBaseTest {
     db.begin();
     db.command(new OCommandSQL("insert into Foo (a) values ('bar')")).execute();
     db.commit();
-    ODatabaseDocumentTx newDb = db.copy();
+    ODatabaseDocumentInternal newDb = db.copy();
 
     List<ODocument> result = newDb.query(new OSQLSynchQuery<ODocument>("Select from Foo"));
     Assert.assertEquals(result.size(), 1);

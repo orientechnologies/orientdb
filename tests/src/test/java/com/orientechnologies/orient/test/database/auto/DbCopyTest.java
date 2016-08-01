@@ -16,6 +16,8 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -44,7 +46,7 @@ public class DbCopyTest extends DocumentDBBaseTest implements OCommandOutputList
     Thread thread = new Thread() {
       @Override
       public void run() {
-        final ODatabaseDocumentTx otherDB = database.copy();
+        final ODatabaseDocument otherDB = database.copy();
         otherDB.activateOnCurrentThread();
         for (int i = 0; i < 5; i++) {
           ODocument doc = otherDB.newInstance(className);

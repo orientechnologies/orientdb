@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -12,7 +13,7 @@ import java.util.Optional;
  * Created by luigidellaquila on 07/07/16.
  */
 public class OExplainStatementExecutionTest {
-  static ODatabaseDocumentTx db;
+  static ODatabaseDocument db;
 
   @BeforeClass public static void beforeClass() {
 

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.command.traverse;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -17,7 +18,7 @@ import java.util.List;
  */
 public class OTraverseTest {
 
-  private ODatabaseDocumentTx db;
+  private ODatabaseDocument db;
   private ODocument           rootDocument;
   private OTraverse           traverse;
 

@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -20,7 +22,7 @@ import java.util.Optional;
  * Created by luigidellaquila on 07/07/16.
  */
 public class OSelectStatementExecutionTest {
-  static ODatabaseDocumentTx db;
+  static ODatabaseDocument db;
 
   @BeforeClass public static void beforeClass() {
 
@@ -547,7 +549,7 @@ public class OSelectStatementExecutionTest {
 
   @Test public void testFetchFromClusterNumber() {
     String className = "testFetchFromClusterNumber";
-    OSchemaProxy schema = db.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
     int targetCluster = clazz.getClusterIds()[0];
     String targetClusterName = db.getClusterNameById(targetCluster);
@@ -574,7 +576,7 @@ public class OSelectStatementExecutionTest {
 
   @Test public void testFetchFromClusterNumberOrderByRidDesc() {
     String className = "testFetchFromClusterNumberOrderByRidDesc";
-    OSchemaProxy schema = db.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
     int targetCluster = clazz.getClusterIds()[0];
     String targetClusterName = db.getClusterNameById(targetCluster);
@@ -601,7 +603,7 @@ public class OSelectStatementExecutionTest {
 
   @Test public void testFetchFromClusterNumberOrderByRidAsc() {
     String className = "testFetchFromClusterNumberOrderByRidAsc";
-    OSchemaProxy schema = db.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
     int targetCluster = clazz.getClusterIds()[0];
     String targetClusterName = db.getClusterNameById(targetCluster);
@@ -628,7 +630,7 @@ public class OSelectStatementExecutionTest {
 
   @Test public void testFetchFromClustersNumberOrderByRidAsc() {
     String className = "testFetchFromClustersNumberOrderByRidAsc";
-    OSchemaProxy schema = db.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
     if (clazz.getClusterIds().length < 2) {
       clazz.addCluster("testFetchFromClustersNumberOrderByRidAsc_2");
@@ -667,7 +669,7 @@ public class OSelectStatementExecutionTest {
 
   @Test public void testQueryAsTarget() {
     String className = "testQueryAsTarget";
-    OSchemaProxy schema = db.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
 
     for (int i = 0; i < 10; i++) {
@@ -692,7 +694,7 @@ public class OSelectStatementExecutionTest {
 
   @Test public void testQuerySchema() {
     String className = "testQuerySchema";
-    OSchemaProxy schema = db.getMetadata().getSchema();
+    OSchema schema = db.getMetadata().getSchema();
     OClass clazz = schema.createClass(className);
 
     OTodoResultSet result = db.query("select from metadata:schema");
