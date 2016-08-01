@@ -1168,6 +1168,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       }
     }
 
+    final long timer = Orient.instance().getProfiler().startChrono();
     stateLock.acquireReadLock();
     try {
       checkOpeness();
