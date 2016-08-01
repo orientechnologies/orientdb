@@ -1040,8 +1040,9 @@ public class ODocument extends ORecordAbstract
         unTrack((ORID) value);
         track((OIdentifiable) newValue);
         value = newValue;
-        ORecordInternal.setDirtyManager((ORecord) value, this.getDirtyManager());
-
+        if(this.isTrackingChanges()) {
+          ORecordInternal.setDirtyManager((ORecord) value, this.getDirtyManager());
+        }
         if (!iFieldName.contains(".")) {
           ODocumentEntry entry = _fields.get(iFieldName);
           removeCollectionChangeListener(entry, entry.value);
