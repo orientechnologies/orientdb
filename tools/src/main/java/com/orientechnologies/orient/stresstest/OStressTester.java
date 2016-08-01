@@ -76,7 +76,7 @@ public class OStressTester {
   }
 
   @SuppressWarnings("unchecked")
-  public int execute() throws Exception {
+  private int execute() throws Exception {
 
     int returnCode = 0;
 
