@@ -82,5 +82,17 @@ public interface OIndexableSQLFunction extends OSQLFunction {
   public boolean allowsIndexedExecution(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
       OExpression... args);
 
+  /**
+   * Checks if this function should be called even if the method {@link #searchFromTarget} is executed.
+   * @param target the query target
+   * @param operator the operator after the function, eg. in <code>select from Foo where myFunction(name) &gt; 4</code> the operator is &gt;
+   * @param rightValue the value that has to be compared to the function result, eg. in <code>select from Foo where myFunction(name) &gt; 4</code> the right value is 4
+   * @param ctx the command context for this query
+   * @param args the function arguments, eg. in <code>select from Foo where myFunction(name) &gt; 4</code> the arguments are [name]
+   * @return True if this function should be called even if the method {@link #searchFromTarget} is executed. False otherwise
+   */
+  public boolean shouldExecuteAfterSearch(OFromClause target, OBinaryCompareOperator operator, Object rightValue, OCommandContext ctx,
+      OExpression... args);
+
 
 }
