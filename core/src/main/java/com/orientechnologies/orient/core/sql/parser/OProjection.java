@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 public class OProjection extends SimpleNode {
 
+  protected boolean distinct = false;
+
   List<OProjectionItem> items;
 
   public OProjection(int id) {
@@ -47,6 +49,9 @@ public class OProjection extends SimpleNode {
     }
     boolean first = true;
 
+    if(distinct){
+      builder.append("DISTINCT ");
+    }
     // print * before
     for (OProjectionItem item : items) {
       if (item.isAll()) {
@@ -149,6 +154,10 @@ public class OProjection extends SimpleNode {
 
   @Override public int hashCode() {
     return items != null ? items.hashCode() : 0;
+  }
+
+  public boolean isDistinct() {
+    return distinct;
   }
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

@@ -41,6 +41,7 @@ public class OSelectExecutionPlanner {
   public OSelectExecutionPlanner(OSelectStatement oSelectStatement) {
     //copying the content, so that it can be manipulated and optimized
     this.projection = oSelectStatement.getProjection();
+    this.distinct = projection == null ? false : projection.isDistinct();
     this.target = oSelectStatement.getTarget();
     this.whereClause = oSelectStatement.getWhereClause();
     this.perRecordLetClause = oSelectStatement.getLetClause();
@@ -60,7 +61,6 @@ public class OSelectExecutionPlanner {
     handleLet(result, perRecordLetClause, ctx);
 
     handleWhere(result, whereClause, ctx);
-
 
     handleProjectionsBeforeOrderBy(result, projection, orderBy, ctx);
     if (!expand) {

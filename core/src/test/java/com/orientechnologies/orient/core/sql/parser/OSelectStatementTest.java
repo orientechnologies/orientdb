@@ -701,6 +701,12 @@ public class OSelectStatementTest {
 
   }
 
+  @Test
+  public void testDistinct() {
+    checkRightSyntax("select distinct(foo) from V");
+    checkRightSyntax("select distinct foo, bar, baz from V");
+  }
+
 
   protected OrientSql getParserFor(String string) {
     InputStream is = new ByteArrayInputStream(string.getBytes());

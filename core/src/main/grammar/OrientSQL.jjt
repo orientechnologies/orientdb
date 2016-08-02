@@ -345,6 +345,8 @@ TOKEN:
 	|
 	< COUNT: ( "C" | "c") ( "O" | "o") ( "U" | "u") ( "N" | "n") ( "T" | "t") >
 	|
+	< DISTINCT: ( "D" | "d") ( "I" | "i") ( "S" | "s") ( "T" | "t") ( "I" | "i") ( "N" | "n") ( "C" | "c") ( "T" | "t") >
+	|
 	< THIS: "@" ( ( "t" | "T" ) ( "h" | "H" ) ( "i" | "I" ) ( "s" | "S" ) ) >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> | <RID_ID_ATTR> | <RID_POS_ATTR> | <FIELDS_ATTR> >
@@ -1903,8 +1905,18 @@ OProjection Projection():
 }
 {
     (
-	 	lastItem = ProjectionItem() {items.add(lastItem);} ( "," lastItem = ProjectionItem() {items.add(lastItem);} )*
-	)
+        LOOKAHEAD(ProjectionItem())
+        (
+            lastItem = ProjectionItem() {items.add(lastItem);} ( "," lastItem = ProjectionItem() {items.add(lastItem);} )*
+        )
+        |
+        (
+            <DISTINCT> { jjtThis.distinct = true; }
+            (
+                lastItem = ProjectionItem() {items.add(lastItem);} ( "," lastItem = ProjectionItem() {items.add(lastItem);} )*
+            )
+        )
+    )
 	{
 	    jjtThis.items = items;
 	    return jjtThis;
@@ -2012,7 +2024,9 @@ OFunctionCall FunctionCall():
 {
     (
     	(
-    	    jjtThis.name = Identifier()
+    	    (  jjtThis.name = Identifier() )
+    	    |
+    	    ( <DISTINCT> { jjtThis.name = new OIdentifier("distinct"); } )
     	)
     	<LPAREN>
     	(

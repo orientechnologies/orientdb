@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class OIdentifier extends SimpleNode {
 
-  protected String  value;
+  protected String value;
   protected boolean quoted = false;
 
   /**
@@ -18,17 +18,25 @@ public class OIdentifier extends SimpleNode {
     super(id);
   }
 
+  public OIdentifier(String content) {
+    this(-1);
+    setStringValue(content);
+  }
+
   public OIdentifier(OrientSql p, int id) {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
   /**
    * returns the value as is, with back-ticks quoted with backslash
+   *
    * @return
    */
   public String getValue() {
@@ -37,6 +45,7 @@ public class OIdentifier extends SimpleNode {
 
   /**
    * accepts a plain value. Back-ticks have to be quoted.
+   *
    * @param value
    */
   public void setValue(String value) {
@@ -45,10 +54,11 @@ public class OIdentifier extends SimpleNode {
 
   /**
    * returns the plain string representation of this identifier, with quoting removed from back-ticks
+   *
    * @return
    */
-  public String getStringValue(){
-    if(value == null){
+  public String getStringValue() {
+    if (value == null) {
       return null;
     }
     return value.replaceAll("\\\\`", "`");
@@ -56,26 +66,25 @@ public class OIdentifier extends SimpleNode {
 
   /**
    * returns the plain string representation of this identifier, with quoting removed from back-ticks
+   *
    * @return
    */
-  public void setStringValue(String s){
-    if(s == null){
+  public void setStringValue(String s) {
+    if (s == null) {
       value = null;
-    }else{
+    } else {
       value = s.replaceAll("`", "\\\\`");
     }
   }
 
-
-  @Override
-  public String toString(String prefix) {
+  @Override public String toString(String prefix) {
     if (quoted) {
       return '`' + value + '`';
     }
     return value;
   }
 
-  public String toString(){
+  public String toString() {
     return toString("");
   }
 
@@ -91,7 +100,7 @@ public class OIdentifier extends SimpleNode {
     this.quoted = quoted;
   }
 
-  public OIdentifier copy(){
+  public OIdentifier copy() {
     OIdentifier result = new OIdentifier(-1);
     result.value = value;
     result.quoted = quoted;
