@@ -27,8 +27,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -816,7 +814,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           final long now = System.currentTimeMillis();
           final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
 
-          ODatabaseDocumentTx database = null;
+          ODatabaseDocumentInternal database = null;
 
           for (final Iterator<ODistributedTxContextImpl> it = activeTxContexts.values().iterator(); it.hasNext();) {
             final ODistributedTxContextImpl ctx = it.next();
