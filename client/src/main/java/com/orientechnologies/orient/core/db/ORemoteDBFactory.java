@@ -66,13 +66,17 @@ public class ORemoteDBFactory implements OrientDBFactory {
   
   @Override
   public synchronized ODatabaseDocument open(String name, String user, String password, OrientDBConfig config) {
-    OStorage storage = storages.get(name);
-    if (storage == null) {
-      storage = remote.createStorage(buildUrl(name), new HashMap<>());
+    try {
+      OStorage storage = storages.get(name);
+      if (storage == null) {
+        storage = remote.createStorage(buildUrl(name), new HashMap<>());
+      }
+      ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
+      db.internalOpen(user, password, solveConfig(config));
+      return db;
+    } catch (Exception e) {
+      throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
     }
-    ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
-    db.internalOpen(user, password, solveConfig(config));
-    return db;
   }
 
   @Override

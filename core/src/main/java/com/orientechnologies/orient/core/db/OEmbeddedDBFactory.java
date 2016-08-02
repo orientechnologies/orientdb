@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -27,6 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -83,12 +85,17 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
   @Override
   public ODatabaseDocument open(String name, String user, String password, OrientDBConfig config) {
-    config = solveConfig(config);
-    OAbstractPaginatedStorage storage = getStorage(name);
-    storage.open(config.getConfigurations());
-    final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-    embedded.internalOpen(user, password, config);
-    return embedded;
+    try {
+      config = solveConfig(config);
+      OAbstractPaginatedStorage storage = getStorage(name);
+      storage.open(config.getConfigurations());
+      final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
+      embedded.internalOpen(user, password, config);
+
+      return embedded;
+    } catch (Exception e) {
+      throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
+    }
   }
 
   private OrientDBConfig solveConfig(OrientDBConfig config) {
@@ -127,26 +134,30 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   @Override
   public synchronized void create(String name, String user, String password, DatabaseType type, OrientDBConfig config) {
     if (!exists(name, user, password)) {
-      config = solveConfig(config);
-      OAbstractPaginatedStorage storage;
-      if (type == DatabaseType.MEMORY) {
-        storage = (OAbstractPaginatedStorage) memory.createStorage(buildName(name), new HashMap<>());
-      } else {
-        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
-      }
-      // CHECK Configurations
-      storage.create(config.getConfigurations());
-      storages.put(name, storage);
-      ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
-      storage.getConfiguration().setRecordSerializer(serializer.toString());
-      storage.getConfiguration().setRecordSerializerVersion(serializer.getCurrentVersion());
-      // since 2.1 newly created databases use strict SQL validation by default
-      storage.getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
+      try {
+        config = solveConfig(config);
+        OAbstractPaginatedStorage storage;
+        if (type == DatabaseType.MEMORY) {
+          storage = (OAbstractPaginatedStorage) memory.createStorage(buildName(name), new HashMap<>());
+        } else {
+          storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
+        }
+        // CHECK Configurations
+        storage.create(config.getConfigurations());
+        storages.put(name, storage);
+        ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
+        storage.getConfiguration().setRecordSerializer(serializer.toString());
+        storage.getConfiguration().setRecordSerializerVersion(serializer.getCurrentVersion());
+        // since 2.1 newly created databases use strict SQL validation by default
+        storage.getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
 
-      storage.getConfiguration().update();
+        storage.getConfiguration().update();
 
-      try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
-        embedded.internalCreate(config);
+        try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
+          embedded.internalCreate(config);
+        }
+      } catch (Exception e) {
+        throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
       }
     } else
       throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
