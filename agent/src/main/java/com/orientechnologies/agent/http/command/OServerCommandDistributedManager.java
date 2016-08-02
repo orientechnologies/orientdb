@@ -71,7 +71,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       final OHazelcastPlugin manager = (OHazelcastPlugin) server.getDistributedManager();
 
-      manager.executeInDistributedDatabaseLock(id, new OCallable<Object, ODistributedConfiguration>() {
+      manager.executeInDistributedDatabaseLock(id, 0, new OCallable<Object, ODistributedConfiguration>() {
         @Override
         public Object call(final ODistributedConfiguration cfg) {
           final ODocument doc = cfg.getDocument().fromJSON(iRequest.content, "noMap");
@@ -97,54 +97,14 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     final ODocument doc;
 
+    // NODE CONFIG
     if (command.equalsIgnoreCase("node")) {
 
-      if (manager != null) {
-        doc = manager.getClusterConfiguration();
-        enhanceStats(doc, (ODocument) manager.getConfigurationMap().get("clusterStats"));
-      } else {
-        doc = new ODocument();
-
-        final ODocument member = new ODocument();
-
-        member.field("name", "orientdb");
-        member.field("status", "ONLINE");
-
-        List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
-
-        member.field("listeners", listeners, OType.EMBEDDEDLIST);
-
-        String realtime = Orient.instance().getProfiler().toJSON("realtime", "system.config.");
-        ODocument cfg = new ODocument().fromJSON(realtime);
-
-        Map<String, Object> eval = (Map) cfg.eval("realtime.hookValues");
-
-        ODocument configuration = new ODocument();
-        member.field("configuration", configuration);
-        for (String key : eval.keySet()) {
-          if (key.startsWith("system.config.")) {
-            configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
-          }
-        }
-        for (OServerNetworkListener listener : server.getNetworkListeners()) {
-          final Map<String, Object> listenerCfg = new HashMap<String, Object>();
-          listeners.add(listenerCfg);
-
-          listenerCfg.put("protocol", listener.getProtocolType().getSimpleName());
-          listenerCfg.put("listen", listener.getListeningAddress(true));
-        }
-        member.field("databases", server.getAvailableStorageNames().keySet());
-        doc.field("members", new ArrayList<ODocument>() {
-          {
-            add(member);
-          }
-        });
-      }
+      doc = doGetNodeConfig(manager);
 
     } else if (command.equalsIgnoreCase("database")) {
 
-      ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
-      doc = cfg.getDocument();
+      doc = doGetDatabaseInfo(manager, id);
 
     } else if (command.equalsIgnoreCase("stats")) {
 
@@ -152,7 +112,12 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
         if (manager != null) {
           ODocument clusterStats = (ODocument) manager.getConfigurationMap().get("clusterStats");
+          if (clusterStats == null) {
+            iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "OK", OHttpUtils.CONTENT_JSON, "{}", null);
+            return;
+          }
           doc = new ODocument().fromMap(clusterStats.<Map<String, Object>> field(id));
+          doc.field("member", getMemberConfig(manager.getClusterConfiguration(), id));
         } else {
           doc = new ODocument().fromJSON(Orient.instance().getProfiler().toJSON("realtime", null));
         }
@@ -172,6 +137,59 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
   }
 
+  private ODocument doGetDatabaseInfo(ODistributedServerManager manager, String id) {
+    ODocument doc;
+    ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
+    doc = cfg.getDocument();
+    return doc;
+  }
+
+  private ODocument doGetNodeConfig(ODistributedServerManager manager) {
+    ODocument doc;
+    if (manager != null) {
+      doc = manager.getClusterConfiguration();
+      enhanceStats(doc, (ODocument) manager.getConfigurationMap().get("clusterStats"));
+    } else {
+      doc = new ODocument();
+
+      final ODocument member = new ODocument();
+
+      member.field("name", "orientdb");
+      member.field("status", "ONLINE");
+
+      List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
+
+      member.field("listeners", listeners, OType.EMBEDDEDLIST);
+
+      String realtime = Orient.instance().getProfiler().toJSON("realtime", "system.config.");
+      ODocument cfg = new ODocument().fromJSON(realtime);
+
+      Map<String, Object> eval = (Map) cfg.eval("realtime.hookValues");
+
+      ODocument configuration = new ODocument();
+      member.field("configuration", configuration);
+      for (String key : eval.keySet()) {
+        if (key.startsWith("system.config.")) {
+          configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
+        }
+      }
+      for (OServerNetworkListener listener : server.getNetworkListeners()) {
+        final Map<String, Object> listenerCfg = new HashMap<String, Object>();
+        listeners.add(listenerCfg);
+
+        listenerCfg.put("protocol", listener.getProtocolType().getSimpleName());
+        listenerCfg.put("listen", listener.getListeningAddress(true));
+      }
+      member.field("databases", server.getAvailableStorageNames().keySet());
+      doc.field("members", new ArrayList<ODocument>() {
+        {
+          add(member);
+        }
+      });
+    }
+    return doc;
+  }
+
   private void enhanceStats(ODocument doc, ODocument clusterStats) {
 
     Collection<ODocument> documents = doc.field("members");
@@ -184,7 +202,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         ODocument dStat = new ODocument().fromMap(profilerStats);
 
         Map<String, Object> eval = (Map) dStat.eval("realtime.hookValues");
-        if( eval != null ) {
+        if (eval != null) {
           ODocument configuration = new ODocument();
           document.field("configuration", configuration);
           for (String key : eval.keySet()) {
@@ -195,6 +213,21 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         }
       }
     }
+  }
+
+  private ODocument getMemberConfig(ODocument doc, String node) {
+
+    Collection<ODocument> documents = doc.field("members");
+
+    ODocument member = null;
+    for (ODocument document : documents) {
+      String name = document.field("name");
+      if (name.equalsIgnoreCase(node)) {
+        member = document;
+        break;
+      }
+    }
+    return member;
   }
 
   @Override
