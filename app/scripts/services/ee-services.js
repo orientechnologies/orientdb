@@ -703,6 +703,24 @@ ee.factory("BackupService", function (Profiler, $q, $http) {
 })
 
 
+ee.factory("ThreadService", function ($q,$http) {
+  var threads = {};
+
+  threads.dump = function (server) {
+    var deferred = $q.defer();
+    var url = API + 'node/threadDump';
+    if (server && server.name) {
+      url += '?node=' + server.name;
+    }
+    $http.get(url).success(function (data) {
+      deferred.resolve(data)
+    }).error(function (data, status, headers, config) {
+      deferred.reject({data: data, status: status});
+    });
+    return deferred.promise;
+  }
+  return threads;
+})
 ee.factory("BackupCalendar", function () {
 
   var calendar = {};

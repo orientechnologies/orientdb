@@ -1215,47 +1215,82 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
   }
 });
 
+ee.controller('ThreadsController', function ($scope, ThreadService, Notification, AgentService) {
+
+  $scope.editorOptions = {
+    lineWrapping: true,
+    lineNumbers: true,
+    readOnly: true
+  };
+
+  $scope.agentActive = AgentService.active;
+
+  $scope.dump = function () {
+    ThreadService.dump($scope.currentServer).then(function (data) {
+      $scope.dumpDate = new Date();
+      $scope.threadDump = data.threadDump;
+    }).catch(function (err) {
+      Notification.push({content: err.data, error: true, autoHide: true});
+    })
+  }
+  if (AgentService.active) {
+    $scope.$watch('server', function (server) {
+      $scope.currentServer = server;
+      $scope.dump();
+    })
+  }
+
+});
+ee.controller('MonitoringController', function ($scope, Cluster, AgentService) {
+
+  $scope.clazz = 'tabs-style-linebox';
+  $scope.agentActive = AgentService.active;
+
+});
 ee.controller('MetricsController', function ($scope, Cluster, AgentService) {
 
   $scope.clazz = 'tabs-style-linebox';
 
   $scope.agentActive = AgentService.active;
 
-  $scope.$watch('server', function (server) {
 
-    Cluster.stats(server.name).then(function (data) {
+  if (AgentService.active) {
+    $scope.$watch('server', function (server) {
 
-      $scope.chronos = Object.keys(data.realtime.chronos).filter(function (k) {
-        return k.match(/db.*command/g) == null;
-      }).map(function (k) {
-        var obj = {};
-        angular.copy(data.realtime.chronos[k], obj);
-        obj.name = k;
-        return obj
-      });
+      Cluster.stats(server.name).then(function (data) {
+
+        $scope.chronos = Object.keys(data.realtime.chronos).filter(function (k) {
+          return k.match(/db.*command/g) == null;
+        }).map(function (k) {
+          var obj = {};
+          angular.copy(data.realtime.chronos[k], obj);
+          obj.name = k;
+          return obj
+        });
 
 
-      $scope.stats = Object.keys(data.realtime.statistics).map(function (k) {
-        var obj = {};
-        angular.copy(data.realtime.statistics[k], obj);
-        obj.name = k;
-        return obj
-      });
+        $scope.stats = Object.keys(data.realtime.statistics).map(function (k) {
+          var obj = {};
+          angular.copy(data.realtime.statistics[k], obj);
+          obj.name = k;
+          return obj
+        });
 
-      $scope.counters = Object.keys(data.realtime.counters).map(function (k) {
-        var obj = {};
-        obj.name = k;
-        obj.value = data.realtime.counters[k];
-        return obj
-      });
-      $scope.hookValues = Object.keys(data.realtime.hookValues).map(function (k) {
-        var obj = {};
-        obj.name = k;
-        obj.value = data.realtime.hookValues[k];
-        return obj
-      });
+        $scope.counters = Object.keys(data.realtime.counters).map(function (k) {
+          var obj = {};
+          obj.name = k;
+          obj.value = data.realtime.counters[k];
+          return obj
+        });
+        $scope.hookValues = Object.keys(data.realtime.hookValues).map(function (k) {
+          var obj = {};
+          obj.name = k;
+          obj.value = data.realtime.hookValues[k];
+          return obj
+        });
+      })
     })
-  })
+  }
 });
 
 ee.controller('TeleporterController', function ($scope, Teleporter, $timeout, Notification, AgentService) {
