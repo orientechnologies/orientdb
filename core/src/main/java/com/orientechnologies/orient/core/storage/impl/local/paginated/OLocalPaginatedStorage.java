@@ -182,7 +182,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
         return OZIPCompressionUtil
-            .compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" }, iOutput,
+            .compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" , ".fl"}, iOutput,
                 compressionLevel);
       } finally {
         if (bufferSize > 0) {
