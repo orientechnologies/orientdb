@@ -361,12 +361,12 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
 
       if (lastRequest != null) {
 
-        $scope.requests = Math.abs(requests - lastRequest);
+        $scope.requests = Math.round(Math.abs(requests - lastRequest) / (POLLING / 1000));
       }
       lastRequest = requests;
 
       if (lastOps != null) {
-        $scope.operations = Math.abs(lastOps - operations);
+        $scope.operations = Math.round(Math.abs(lastOps - operations) / (POLLING / 1000));
       }
       lastOps = operations;
 

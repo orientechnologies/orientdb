@@ -192,7 +192,7 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
   });
 
 });
-var POLLING = 2000;
+var POLLING = 5000;
 App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $templateCache, Aside) {
   $rootScope.$on('$routeChangeSuccess', function (event, currentRoute, oldRoute) {
     switch (currentRoute.templateUrl) {

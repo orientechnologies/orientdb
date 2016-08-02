@@ -178,6 +178,9 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
 
     var startChart = function () {
       var counter = 0;
+      var length = 0;
+      var limit = 60;
+      var tail = 1;
       element.id = scope.server.name;
 
 
@@ -243,52 +246,60 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
           var deleteOperation = 0;
 
           if (lastC != null) {
-            createOperation = Math.abs(lastC - cOps);
+            createOperation = Math.abs(lastC - cOps) / (POLLING / 1000);
           }
           lastC = cOps;
           if (lastR != null) {
-            readOperation = Math.abs(lastR - rOps);
+            readOperation = Math.abs(lastR - rOps) / (POLLING / 1000);
           }
           lastR = rOps;
           if (lastU != null) {
-            updateOperation = Math.abs(lastU - uOps);
+            updateOperation = Math.abs(lastU - uOps) / (POLLING / 1000);
           }
           lastU = uOps;
           if (lastD != null) {
-            deleteOperation = Math.abs(lastD - dOps);
+            deleteOperation = Math.abs(lastD - dOps) / (POLLING / 1000);
           }
           lastD = dOps;
+
+
+          if (counter == limit) {
+            length = tail;
+            counter -= tail;
+          } else {
+            length = 0;
+          }
 
           scope.chart.flow({
             columns: [
               ['x', new Date()],
-              ['Create', createOperation],
-              ['Read', readOperation],
-              ['Update', updateOperation],
-              ['Delete', deleteOperation],
+              ['Create', Math.round(createOperation)],
+              ['Read', Math.round(readOperation)],
+              ['Update', Math.round(updateOperation)],
+              ['Delete', Math.round(deleteOperation)],
             ],
-            length: 0,
+            length: length,
             duration: 1500
           })
           counter++;
-          if (counter == 60) {
-            counter = 0;
-            lastC = null;
-            lastR = null;
-            lastU = null;
-            lastD = null;
-            scope.chart.load({
-              columns: [
-                ['x', new Date()],
-                ['Create', 0],
-                ['Read', 0],
-                ['Update', 0],
-                ['Delete', 0],
-              ],
-              unload: ['x', "Create", "Read", "Update", "Delete"]
-
-            })
-          }
+          //if (counter == 60) {
+          //  counter = 0;
+          //  //lastC = null;
+          //  //lastR = null;
+          //  //lastU = null;
+          //  //lastD = null;
+          //  //scope.chart.load({
+          //  //  columns: [
+          //  //    ['x', new Date()],
+          //  //    ['Create', 0],
+          //  //    ['Read', 0],
+          //  //    ['Update', 0],
+          //  //    ['Delete', 0],
+          //  //  ],
+          //  //  unload: ['x', "Create", "Read", "Update", "Delete"]
+          //  //
+          //  //})
+          //}
         }
       })
     }

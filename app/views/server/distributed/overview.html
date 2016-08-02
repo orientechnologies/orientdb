@@ -55,7 +55,7 @@
             </a>
           </div>
           <div class="col-md-6">
-            <b>Ops/Sec:</b> {{operations}}
+            <b>CRUD Ops:</b> {{operations}} /s
           </div>
         </div>
 
@@ -64,12 +64,12 @@
             <b>Active Connections:</b> {{activeConnections}}</span>
           </div>
           <div class="col-md-6">
-            <b>Network Requests:</b> {{requests}}</span>
+            <b>Network Requests:</b> {{requests}} /s</span>
           </div>
         </div>
         <div class="row">
           <div class="col-md-6">
-            <b>Average Latency:</b> {{latency}}</span>
+            <b>Average Latency:</b> {{latency}} ms</span>
           </div>
           <div class="col-md-6">
             <b>Warnings:</b> {{ tips }} </span>
@@ -82,7 +82,7 @@
   <div class="col-md-6">
     <div class="panel panel-default">
       <div class="panel-heading">
-        <b> Cluster CRUD Operations</b>
+        <b> Cluster CRUD Operations / Sec</b>
       </div>
       <div class="panel-body">
         <div id="orientdb-cluster" c3chart></div>

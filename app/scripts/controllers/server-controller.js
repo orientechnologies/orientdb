@@ -340,7 +340,7 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
       });
 
       if (lastOps != null) {
-        $scope.operations = Math.abs(lastOps - ops);
+        $scope.operations = Math.round(Math.abs(lastOps - ops) / (POLLING / 1000));
       }
       lastOps = ops;
 
@@ -349,7 +349,7 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
 
         var req = realtime['chronos']['server.network.requests'].entries;
         if (lastReq != null) {
-          $scope.requests = Math.abs(req - lastReq);
+          $scope.requests = Math.round(Math.abs(req - lastReq) / (POLLING / 1000));
         }
         lastReq = req;
       }
