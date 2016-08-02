@@ -19,4 +19,8 @@ public class ODatabaseDocumentTxInternal {
     ((ODatabaseDocumentTxOrig)db).sessionMetadata = sessionMetadata;
   }
 
+  public static ODatabaseDocumentTx wrap(ODatabaseDocumentInternal database) {
+    return new ODatabaseDocumentTx(database, null);
+  }
+  
 }

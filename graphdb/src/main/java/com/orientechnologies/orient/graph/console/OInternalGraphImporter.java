@@ -33,7 +33,7 @@ public class OInternalGraphImporter {
       throw new OSystemException("needed an database location as second argument");
 
     ODatabaseDocumentInternal db = new ODatabaseDocumentTx(dbURL);
-    ODatabaseHelper.deleteDatabase(db, db.getStorage().getType());
+    ODatabaseHelper.deleteDatabase(db, db.getType());
 
     OrientBaseGraph g = new OrientGraphNoTx(dbURL);
 

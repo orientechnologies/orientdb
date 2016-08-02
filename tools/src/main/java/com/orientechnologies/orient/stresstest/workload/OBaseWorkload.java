@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxOrig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 
@@ -132,7 +133,7 @@ public abstract class OBaseWorkload implements OWorkload {
             final AtomicInteger operationsExecutedInTx = new AtomicInteger();
 
             for (final AtomicInteger i = new AtomicInteger(); i.get() < context.totalPerThread; i.incrementAndGet()) {
-              ODatabaseDocumentTx.executeWithRetries(new OCallable<Object, Integer>() {
+              ODatabaseDocumentTxOrig.executeWithRetries(new OCallable<Object, Integer>() {
                 @Override
                 public Object call(final Integer retry) {
                   if (retry > 0) {
