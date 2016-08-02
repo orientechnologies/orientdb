@@ -14,9 +14,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author Luigi Dell'Aquila
@@ -947,6 +945,140 @@ public class OSelectStatementExecutionTest {
     } catch (Exception x) {
       Assert.fail();
     }
+  }
+
+  @Test public void testFetchFromIndexValues() {
+    String className = "testFetchFromIndexValues";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from indexvalues:" + className + ".name");
+    printExecutionPlan(result);
+    Set<String> expectedValues = new HashSet<>();
+    expectedValues.add("name0");
+    expectedValues.add("name1");
+    expectedValues.add("name2");
+    Object lastValue = null;
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      String currentValue = next.getProperty("name");
+      Assert.assertNotNull(currentValue);
+      if (lastValue != null) {
+        Assert.assertTrue(currentValue.compareTo(lastValue.toString()) >= 0);
+      }
+      expectedValues.remove(lastValue);
+      lastValue = currentValue;
+    }
+    Assert.assertTrue(expectedValues.isEmpty());
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromIndexValuesAsc() {
+    String className = "testFetchFromIndexValuesAsc";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from indexvaluesasc:" + className + ".name");
+    printExecutionPlan(result);
+    Set<String> expectedValues = new HashSet<>();
+    expectedValues.add("name0");
+    expectedValues.add("name1");
+    expectedValues.add("name2");
+    Object lastValue = null;
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      String currentValue = next.getProperty("name");
+      Assert.assertNotNull(currentValue);
+      if (lastValue != null) {
+        Assert.assertTrue(currentValue.compareTo(lastValue.toString()) >= 0);
+      }
+      expectedValues.remove(lastValue);
+      lastValue = currentValue;
+    }
+    Assert.assertTrue(expectedValues.isEmpty());
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromIndexValuesDesc() {
+    String className = "testFetchFromIndexValuesDesc";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from indexvaluesdesc:" + className + ".name");
+    printExecutionPlan(result);
+    Set<String> expectedValues = new HashSet<>();
+    expectedValues.add("name0");
+    expectedValues.add("name1");
+    expectedValues.add("name2");
+    Object lastValue = null;
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      String currentValue = next.getProperty("name");
+      Assert.assertNotNull(currentValue);
+      if (lastValue != null) {
+        Assert.assertTrue(currentValue.compareTo(lastValue.toString()) <= 0);
+      }
+      expectedValues.remove(lastValue);
+      lastValue = currentValue;
+    }
+    Assert.assertTrue(expectedValues.isEmpty());
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromIndexValuesDescWithCondition() {
+    String className = "testFetchFromIndexValuesDescWithCondition";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from indexvaluesdesc:" + className + ".name where name = 'name0'");
+    printExecutionPlan(result);
+    for (int i = 0; i < 4; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      String currentValue = next.getProperty("name");
+      Assert.assertNotNull(currentValue);
+      Assert.assertEquals("name0", currentValue);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
   }
 
   @Test public void testFetchFromClassWithIndex() {

@@ -15,7 +15,7 @@ import java.util.*;
  * Created by luigidellaquila on 23/07/16.
  */
 public class FetchFromIndexStep extends AbstractExecutionStep {
-  private final OIndex           index;
+  protected final OIndex           index;
   private final OBinaryCondition additional;
 
   OBooleanExpression condition;
@@ -213,7 +213,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   }
 
-  private boolean isOrderAsc() {
+  protected boolean isOrderAsc() {
     return true;//TODO
   }
 

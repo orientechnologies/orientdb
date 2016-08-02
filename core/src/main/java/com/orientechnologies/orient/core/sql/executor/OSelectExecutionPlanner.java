@@ -337,37 +337,38 @@ public class OSelectExecutionPlanner {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }
 
-    OBooleanExpression condition = null;
-
-    if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
-      if (!index.supportsOrderedIterations()) {
-        throw new OCommandExecutionException("Index " + indexName + " does not allow iteration without a condition");
-      }
-    } else if (flattenedWhereClause.size() > 1) {
-      throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
-    } else {
-      OAndBlock andBlock = flattenedWhereClause.get(0);
-      if (andBlock.getSubBlocks().size() != 1) {
-        throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
-      }
-      this.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
-
-      condition = andBlock.getSubBlocks().get(0);
-    }
-
     switch (indexIdentifier.getType()) {
     case INDEX:
+      OBooleanExpression condition = null;
+      if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
+        if (!index.supportsOrderedIterations()) {
+          throw new OCommandExecutionException("Index " + indexName + " does not allow iteration without a condition");
+        }
+      } else if (flattenedWhereClause.size() > 1) {
+        throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
+      } else {
+        OAndBlock andBlock = flattenedWhereClause.get(0);
+        if (andBlock.getSubBlocks().size() != 1) {
+          throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
+        }
+        this.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
+        condition = andBlock.getSubBlocks().get(0);
+      }
       result.chain(new FetchFromIndexStep(index, condition, null, ctx));
-
       break;
     case VALUES:
     case VALUESASC:
-      //      result.chain(new FetchFromIndexValuesStep(index, condition, ctx, true));
-      throw new OCommandExecutionException("indexvalues*: is not yet supported");//TODO
-
+      if (!index.supportsOrderedIterations()) {
+        throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
+      }
+      result.chain(new FetchFromIndexValuesStep(index, true, ctx));
+      break;
     case VALUESDESC:
-      //      result.chain(new FetchFromIndexValuesStep(index, condition, ctx, false));
-      throw new OCommandExecutionException("indexvaluesdesc: is not yet supported");//TODO
+      if (!index.supportsOrderedIterations()) {
+        throw new OCommandExecutionException("Index " + indexName + " does not allow iteration on values");
+      }
+      result.chain(new FetchFromIndexValuesStep(index, false, ctx));
+      break;
     }
   }
 
