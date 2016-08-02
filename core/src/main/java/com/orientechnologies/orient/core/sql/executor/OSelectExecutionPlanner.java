@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
 
 import java.util.*;
@@ -56,8 +57,14 @@ public class OSelectExecutionPlanner {
     this.limit = oSelectStatement.getLimit();
   }
 
+  /**
+   * for backward compatibility, translate "distinct(foo)" to "DISTINCT foo".
+   * This method modifies the projection itself.
+   *
+   * @param projection the projection
+   */
   private void translateDistinct(OProjection projection) {
-    //TODO backward compatibility, translate "distinct(foo)" to "DISTINCT foo"
+    //TODO
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
@@ -361,14 +368,17 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleMetadataAsTarget(OSelectExecutionPlan plan, OMetadataIdentifier metadata, OCommandContext ctx) {
-    if (metadata.getName().equalsIgnoreCase("schema")) {
-      ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
-      String schemaRecordIdAsString = db.getStorage().getConfiguration().schemaRecordId;
-      ORecordId schemaRid = new ORecordId(schemaRecordIdAsString);
-      plan.chain(new FetchFromRidsStep(Collections.singleton(schemaRid), ctx));
+    ODatabaseInternal db = (ODatabaseInternal) ctx.getDatabase();
+    String schemaRecordIdAsString = null;
+    if (metadata.getName().equalsIgnoreCase(OCommandExecutorSQLAbstract.METADATA_SCHEMA)) {
+      schemaRecordIdAsString = db.getStorage().getConfiguration().schemaRecordId;
+    } else if (metadata.getName().equalsIgnoreCase(OCommandExecutorSQLAbstract.METADATA_INDEXMGR)) {
+      schemaRecordIdAsString = db.getStorage().getConfiguration().indexMgrRecordId;
     } else {
-      throw new UnsupportedOperationException();//TODO other metadata types
+      throw new UnsupportedOperationException("Invalid metadata: " + metadata.getName());
     }
+    ORecordId schemaRid = new ORecordId(schemaRecordIdAsString);
+    plan.chain(new FetchFromRidsStep(Collections.singleton(schemaRid), ctx));
 
   }
 

@@ -693,10 +693,6 @@ public class OSelectStatementExecutionTest {
   }
 
   @Test public void testQuerySchema() {
-    String className = "testQuerySchema";
-    OSchema schema = db.getMetadata().getSchema();
-    OClass clazz = schema.createClass(className);
-
     OTodoResultSet result = db.query("select from metadata:schema");
     printExecutionPlan(result);
 
@@ -706,6 +702,25 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(item.getProperty("classes"));
     }
     Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testQueryMetadataIndexManager() {
+    OTodoResultSet result = db.query("select from metadata:indexmanager");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item.getProperty("indexes"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testQueryMetadataIndexManager2() {
+    OTodoResultSet result = db.query("select expand(indexes) from metadata:indexmanager");
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
     result.close();
   }
 
