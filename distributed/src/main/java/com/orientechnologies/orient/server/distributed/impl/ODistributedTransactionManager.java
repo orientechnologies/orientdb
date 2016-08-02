@@ -615,7 +615,7 @@ public class ODistributedTransactionManager {
       // AUTO RETRY
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
+        ODistributedServerLog.info(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
             "Distributed transaction %s error: record %s is locked", reqId, ((ODistributedRecordLockedException) result).getRid());
 
       // ctx.unlock();

@@ -44,10 +44,16 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   private final ODistributedRequestId reqId;
   private final List<ORemoteTask>     undoTasks     = new ArrayList<ORemoteTask>();
   private final List<ORID>            acquiredLocks = new ArrayList<ORID>();
+  private final long                  startedOn     = System.currentTimeMillis();
 
   public ODistributedTxContextImpl(final ODistributedDatabase iDatabase, final ODistributedRequestId iRequestId) {
     db = iDatabase;
     reqId = iRequestId;
+  }
+
+  @Override
+  public String toString() {
+    return "reqId=" + reqId + " undoTasks=" + undoTasks.size() + " startedOn=" + startedOn;
   }
 
   public synchronized void lock(ORID rid) {
@@ -123,5 +129,9 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
         db.unlockRecord(lockedRID, reqId);
       acquiredLocks.clear();
     }
+  }
+
+  public long getStartedOn() {
+    return startedOn;
   }
 }

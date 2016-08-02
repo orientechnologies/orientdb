@@ -193,7 +193,7 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
     final String dictProfilerMetric = PROFILER.getProcessMetric("network.channel.binary.*");
 
     profilerMetric = PROFILER.getProcessMetric(
-        "network.channel.binary." + socket.getRemoteSocketAddress().toString() + socket.getLocalPort() + "".replace('.', '_'));
+        "network.channel.binary." + socket.getRemoteSocketAddress().toString() +":"+ socket.getLocalPort() + "".replace('.', '_'));
 
     PROFILER.registerHookValue(profilerMetric + ".transmittedBytes", "Bytes transmitted to a network channel", METRIC_TYPE.SIZE,
         new OProfilerHookValue() {

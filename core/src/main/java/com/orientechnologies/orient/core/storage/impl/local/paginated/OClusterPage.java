@@ -39,10 +39,10 @@ import java.util.List;
  */
 public class OClusterPage extends ODurablePage {
 
-  private static final int VERSION_SIZE = ORecordVersionHelper.SERIALIZED_SIZE;
+  private static final int VERSION_SIZE               = ORecordVersionHelper.SERIALIZED_SIZE;
 
-  private static final int NEXT_PAGE_OFFSET = NEXT_FREE_POSITION;
-  private static final int PREV_PAGE_OFFSET = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
+  private static final int NEXT_PAGE_OFFSET           = NEXT_FREE_POSITION;
+  private static final int PREV_PAGE_OFFSET           = NEXT_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int FREELIST_HEADER_OFFSET     = PREV_PAGE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int FREE_POSITION_OFFSET       = FREELIST_HEADER_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -51,14 +51,14 @@ public class OClusterPage extends ODurablePage {
   private static final int PAGE_INDEXES_LENGTH_OFFSET = ENTRIES_COUNT_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int PAGE_INDEXES_OFFSET        = PAGE_INDEXES_LENGTH_OFFSET + OIntegerSerializer.INT_SIZE;
 
-  private static final int INDEX_ITEM_SIZE        = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
-  private static final int MARKED_AS_DELETED_FLAG = 1 << 16;
-  private static final int POSITION_MASK          = 0xFFFF;
-  public static final  int PAGE_SIZE              = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final int INDEX_ITEM_SIZE            = OIntegerSerializer.INT_SIZE + VERSION_SIZE;
+  private static final int MARKED_AS_DELETED_FLAG     = 1 << 16;
+  private static final int POSITION_MASK              = 0xFFFF;
+  public static final int  PAGE_SIZE                  = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
-  public static final int MAX_ENTRY_SIZE = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
+  public static final int  MAX_ENTRY_SIZE             = PAGE_SIZE - PAGE_INDEXES_OFFSET - INDEX_ITEM_SIZE;
 
-  public static final int MAX_RECORD_SIZE = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
+  public static final int  MAX_RECORD_SIZE            = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
   public OClusterPage(OCacheEntry cacheEntry, boolean newPage, OWALChanges changes) throws IOException {
     super(cacheEntry, changes);
@@ -148,10 +148,7 @@ public class OClusterPage extends ODurablePage {
     int entryIndexPosition = PAGE_INDEXES_OFFSET + entryIndex * INDEX_ITEM_SIZE;
 
     if (recordVersion != -1) {
-      int storedRecordVersion = getIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE);
-      if (recordVersion > storedRecordVersion) {
-        setIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
-      }
+      setIntValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, recordVersion);
     }
 
     int entryPointer = getIntValue(entryIndexPosition);
@@ -332,7 +329,7 @@ public class OClusterPage extends ODurablePage {
     setLongValue(PREV_PAGE_OFFSET, prevPage);
   }
 
-  public void setRecordLongValue(final int recordPosition, final int offset,final  long value) throws IOException {
+  public void setRecordLongValue(final int recordPosition, final int offset, final long value) throws IOException {
     assert isPositionInsideInterval(recordPosition);
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + recordPosition * INDEX_ITEM_SIZE;
@@ -349,7 +346,7 @@ public class OClusterPage extends ODurablePage {
     }
   }
 
-  public long getRecordLongValue(final int recordPosition,final  int offset) {
+  public long getRecordLongValue(final int recordPosition, final int offset) {
     assert isPositionInsideInterval(recordPosition);
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + recordPosition * INDEX_ITEM_SIZE;
@@ -366,7 +363,7 @@ public class OClusterPage extends ODurablePage {
     }
   }
 
-  public byte[] getRecordBinaryValue(final int recordPosition,final  int offset,final  int size) throws IOException {
+  public byte[] getRecordBinaryValue(final int recordPosition, final int offset, final int size) throws IOException {
     assert isPositionInsideInterval(recordPosition);
 
     final int entryIndexPosition = PAGE_INDEXES_OFFSET + recordPosition * INDEX_ITEM_SIZE;

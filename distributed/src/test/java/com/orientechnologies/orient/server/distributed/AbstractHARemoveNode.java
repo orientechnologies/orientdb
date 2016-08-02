@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Abstract class to test when a node is down.
  */
 public abstract class AbstractHARemoveNode extends AbstractServerClusterTxTest {
-  private AtomicBoolean lastNodeIsUp = new AtomicBoolean(true);
+  protected AtomicBoolean lastNodeIsUp = new AtomicBoolean(true);
 
   @Override
   protected void onBeforeChecks() throws InterruptedException {

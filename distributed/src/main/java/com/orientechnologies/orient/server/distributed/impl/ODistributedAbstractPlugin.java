@@ -1322,7 +1322,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
                 try {
                   final ODistributedDatabase distrDatabase = getMessageService().getDatabase(databaseName);
 
-                  distrDatabase.getSyncConfiguration().setLSN(iNode, lsn.get());
+                  distrDatabase.setLSN(iNode, lsn.get());
 
                 } catch (IOException e) {
                   ODistributedServerLog.error(this, nodeName, iNode, DIRECTION.IN,

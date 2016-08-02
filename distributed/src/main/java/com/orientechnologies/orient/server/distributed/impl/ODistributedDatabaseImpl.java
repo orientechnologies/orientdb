@@ -95,6 +95,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     startAcceptingRequests();
 
     checkLocalNodeInConfiguration();
+
+    startTxTimeoutTimerTask();
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
@@ -118,11 +120,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     if (task instanceof OAbstractReplicatedTask) {
       final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
-      final OLogSequenceNumber lastLSN = getLastLSN(task.getNodeSource());
+      final OLogSequenceNumber lastLSN = getLastLSN(manager.getNodeNameById(request.getId().getNodeId()));
 
       if (taskLastLSN != null && lastLSN != null && taskLastLSN.compareTo(lastLSN) < 0) {
         // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
-        ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+        ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
             "Skipped request %s on database '%s' because LSN %s < current LSN %s", request, databaseName, taskLastLSN, lastLSN);
         return;
       }
@@ -190,7 +192,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             if (!locked) {
               final String msg = String.format("Cannot execute distributed request (%s) because all worker threads (%d) are busy",
                   request, workerThreads.size());
-              ODistributedWorker.sendResponseBack(manager, request, new ODistributedOperationException(msg));
+              ODistributedWorker.sendResponseBack(this, manager, request, new ODistributedOperationException(msg));
               return;
             }
           }
@@ -199,7 +201,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           Thread.currentThread().interrupt();
           final String msg = String.format("Cannot execute distributed request (%s) because all worker threads (%d) are busy",
               request, workerThreads.size());
-          ODistributedWorker.sendResponseBack(manager, request, new ODistributedOperationException(msg));
+          ODistributedWorker.sendResponseBack(this, manager, request, new ODistributedOperationException(msg));
           return;
         }
 
@@ -781,6 +783,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
+  @Override
   public void setLSN(final String sourceNodeName, final OLogSequenceNumber taskLastLSN) throws IOException {
     if (taskLastLSN == null)
       return;
@@ -801,5 +804,52 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         storedLSN);
 
     lastLSNWrittenOnDisk = System.currentTimeMillis();
+  }
+
+  private void startTxTimeoutTimerTask() {
+    Orient.instance().scheduleTask(new TimerTask() {
+      @Override
+      public void run() {
+        try {
+          final long now = System.currentTimeMillis();
+          final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
+
+          ODatabaseDocumentTx database = null;
+
+          for (final Iterator<ODistributedTxContextImpl> it = activeTxContexts.values().iterator(); it.hasNext();) {
+            final ODistributedTxContextImpl ctx = it.next();
+            if (ctx != null) {
+              final long started = ctx.getStartedOn();
+              final long elapsed = now - started;
+              if (elapsed > timeout) {
+                // TRANSACTION EXPIRED, ROLLBACK IT
+
+                if (database == null)
+                  // GET THE DATABASE THE FIRST TIME
+                  database = getDatabaseInstance();
+
+                ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE,
+                    "Distributed transaction %s on database '%s' is expired after %dms", ctx.getReqId(), databaseName, elapsed);
+
+                try {
+                  ctx.rollback(database);
+                  ctx.destroy();
+                } catch (Throwable t) {
+                  ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+                      "Error on rolling back distributed transaction %s on database '%s'", ctx.getReqId(), databaseName);
+                } finally {
+                  it.remove();
+                }
+              }
+            }
+          }
+        } catch (Throwable t) {
+          // CATCH EVERYTHING TO AVOID THE TIMER IS CANCELED
+          ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+              "Error on checking for expired distributed transaction on database '%s'", databaseName);
+        }
+      }
+    }, OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong(),
+        OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong() / 2);
   }
 }

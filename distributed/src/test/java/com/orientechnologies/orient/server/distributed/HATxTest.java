@@ -36,6 +36,7 @@ public class HATxTest extends AbstractHARemoveNode {
   protected void onAfterExecution() throws Exception {
     banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
     serverInstance.get(SERVERS - 1).shutdownServer();
+    lastNodeIsUp.set(false);
 
     banner("RESTARTING TESTS WITH SERVER " + (SERVERS - 1) + " DOWN...");
 
@@ -47,6 +48,8 @@ public class HATxTest extends AbstractHARemoveNode {
     serverInstance.get(SERVERS - 1).startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
     if (serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class) != null)
       serverInstance.get(SERVERS - 1).server.getPluginByClass(OHazelcastPlugin.class).waitUntilNodeOnline();
+
+    lastNodeIsUp.set(true);
 
     Thread.sleep(1000);
 

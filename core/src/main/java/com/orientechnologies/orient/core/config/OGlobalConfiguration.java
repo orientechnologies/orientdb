@@ -643,6 +643,9 @@ public enum OGlobalConfiguration {
       "Maximum timeout (in ms) to collect all the asynchronous responses from replication. This is the delay the purge thread uses to check asynchronous requests in timeout",
       Long.class, 15000l),
 
+  DISTRIBUTED_TX_EXPIRE_TIMEOUT("distributed.txAliveTimeout", "Maximum timeout (in ms) a distributed transaction can be alive. This timeout is to rollback pending transactions after a while",
+      Long.class, 30000l, true),
+
   /**
    * @Since 2.2.6
    */
