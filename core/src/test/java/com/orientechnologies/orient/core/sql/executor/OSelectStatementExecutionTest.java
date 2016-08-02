@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Created by luigidellaquila on 07/07/16.
+ * @author Luigi Dell'Aquila
  */
 public class OSelectStatementExecutionTest {
   static ODatabaseDocument db;
@@ -906,6 +906,49 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testFetchFromIndexWithoutConditions1() {
+    String className = "testFetchFromIndexWithoutConditions1";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from index:" + className + ".name");
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromIndexWithoutConditions2() {
+    String className = "testFetchFromIndexWithoutConditions2";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createIndex(className + ".name", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "name");
+
+    ODocument doc = db.newInstance(className);
+    doc.setProperty("name", "name1");
+    doc.save();
+
+    try {
+      db.query("select from index:" + className + ".name");
+      Assert.fail();
+    } catch (OCommandExecutionException ex) {
+
+    } catch (Exception x) {
+      Assert.fail();
+    }
+  }
+
   @Test public void testFetchFromClassWithIndex() {
     String className = "testFetchFromClassWithIndex";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
@@ -1514,7 +1557,7 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db.query("select distinct name, surname from " + className );
+    OTodoResultSet result = db.query("select distinct name, surname from " + className);
     printExecutionPlan(result);
 
     for (int i = 0; i < 10; i++) {

@@ -73,10 +73,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         return;
       }
       inited = true;
-
-      if (condition != null) {
-        init(condition);
-      }
+      init(condition);
     }
   }
 
@@ -85,7 +82,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       return;
     }
     if (condition == null) {
-      throw new OCommandExecutionException("Implement search from index without condition!");
+      processFlatIteration();
     } else if (condition instanceof OBinaryCondition) {
       processBinaryCondition();
     } else if (condition instanceof OBetweenCondition) {
@@ -106,6 +103,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     boolean fromKeyIncluded = indexKeyFromIncluded((OAndBlock) condition, additional);
     boolean toKeyIncluded = indexKeyToIncluded((OAndBlock) condition, additional);
     init(fromKey, fromKeyIncluded, toKey, toKeyIncluded);
+  }
+
+  private void processFlatIteration() {
+    cursor = isOrderAsc() ? index.cursor() : index.descCursor();
   }
 
   private void init(OCollection fromKey, boolean fromKeyIncluded, OCollection toKey, boolean toKeyIncluded) {
@@ -170,9 +171,9 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     if (definition.getFields().size() == 1 && rightValue instanceof Collection) {
       rightValue = ((Collection) rightValue).iterator().next();
     }
-    if(rightValue instanceof List) {
+    if (rightValue instanceof List) {
       rightValue = definition.createValue((List<?>) rightValue);
-    }else{
+    } else {
       rightValue = definition.createValue(rightValue);
     }
     if (!(rightValue instanceof Collection)) {
@@ -326,8 +327,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX " + index.getName() + "\n" +
-        OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ? "" : " and " + additional);
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ FETCH FROM INDEX " + index.getName() + (condition == null ?
+        "" :
+        ("\n" +
+            OExecutionStepInternal.getIndent(depth, indent) + "  " + condition + (additional == null ? "" : " and " + additional)));
   }
 
 }

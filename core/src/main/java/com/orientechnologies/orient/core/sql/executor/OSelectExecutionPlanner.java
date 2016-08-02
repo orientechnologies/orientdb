@@ -336,21 +336,25 @@ public class OSelectExecutionPlanner {
     if (index == null) {
       throw new OCommandExecutionException("Index not found: " + indexName);
     }
-    if (flattenedWhereClause == null) {
-      throw new OCommandExecutionException(
-          "Index queries must have a WHERE conditioni with like 'key = [val1, val2, valN]");//TODO check if you can iterate over the index without a key
-    }
-    if (flattenedWhereClause.size() != 1) {
-      throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);//TODO
+
+    OBooleanExpression condition = null;
+
+    if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
+      if (!index.supportsOrderedIterations()) {
+        throw new OCommandExecutionException("Index " + indexName + " does not allow iteration without a condition");
+      }
+    } else if (flattenedWhereClause.size() > 1) {
+      throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
+    } else {
+      OAndBlock andBlock = flattenedWhereClause.get(0);
+      if (andBlock.getSubBlocks().size() != 1) {
+        throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
+      }
+      this.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
+
+      condition = andBlock.getSubBlocks().get(0);
     }
 
-    OAndBlock andBlock = flattenedWhereClause.get(0);
-    if (andBlock.getSubBlocks().size() != 1) {
-      throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);//TODO
-    }
-    this.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
-
-    OBooleanExpression condition = andBlock.getSubBlocks().get(0);
     switch (indexIdentifier.getType()) {
     case INDEX:
       result.chain(new FetchFromIndexStep(index, condition, null, ctx));
