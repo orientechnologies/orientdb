@@ -539,10 +539,11 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       ORID rid = OLinkSerializer.INSTANCE.deserialize(serializedContent, offset);
       offset += OLinkSerializer.RID_SIZE;
 
-      OIdentifiable identifiable;
+      OIdentifiable identifiable = null;
       if (rid.isTemporary())
         identifiable = rid.getRecord();
-      else
+
+      if (identifiable == null)
         identifiable = rid;
 
       if( identifiable == null )
