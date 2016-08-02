@@ -1150,6 +1150,9 @@ public class OServer {
     pluginManager.config(this);
     pluginManager.startup();
 
+    if (serverSecurity != null)
+      serverSecurity.onAfterDynamicPlugins();
+
     // PLUGINS CONFIGURED IN XML
     final OServerConfiguration configuration = serverCfg.getConfiguration();
 
