@@ -250,9 +250,8 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
           waitingHead.set(node);
         } else {
           last.next = node;
+          last.linkLatch.countDown();
         }
-
-        node.linkLatch.countDown();
 
         break;
       }
