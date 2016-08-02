@@ -49,6 +49,8 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
+import org.apache.commons.codec.binary.StringUtils;
+import org.apache.commons.compress.utils.IOUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -60,6 +62,7 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.InflaterInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private static final String          COMMAND_SEPARATOR = "|";
@@ -128,8 +131,27 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     response = new OHttpResponse(channel.outStream, request.httpVersion, additionalResponseHeaders, responseCharSet,
         connection.getData().serverInfo, request.sessionId, callbackF, request.keepAlive, connection);
     response.setJsonErrorResponse(jsonResponseError);
-    if (request.contentEncoding != null && request.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
-      response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
+
+    if (request.contentEncoding != null) {
+      String[] encodingTypes;
+
+      if (request.contentEncoding.contains(",")) {
+        encodingTypes = request.contentEncoding.split(",");
+      } else {
+        encodingTypes = new String[]{
+            request.contentEncoding
+        };
+      }
+
+      for (String encodingType : encodingTypes) {
+        if (
+            encodingType.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED) ||
+            encodingType.equals(OHttpUtils.CONTENT_ACCEPT_DEFLATE_ENCODED)
+        ) {
+          response.setContentEncoding(encodingType);
+          break;
+        }
+      }
     }
 
     final long begin = System.currentTimeMillis();
@@ -522,8 +544,16 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
           channel.read(buffer, 1, contentLength - 1);
 
-          if (iRequest.contentEncoding != null && iRequest.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
-            iRequest.content = this.deCompress(buffer);
+          if (iRequest.contentEncoding != null) {
+            if (iRequest.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_DEFLATE_ENCODED)) {
+              iRequest.content = this.inflate(buffer);
+            } else if (iRequest.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+              iRequest.content = this.deCompress(buffer);
+            }
+
+            if (iRequest.content == null) {
+              iRequest.content = new String(buffer);
+            }
           } else {
             iRequest.content = new String(buffer);
           }
@@ -647,36 +677,78 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     }
   }
 
-  protected String deCompress(byte[] zipBytes) {
-    if (zipBytes == null || zipBytes.length == 0)
+	/**
+     * Inflate deflated byte array.
+     *
+     * @param bytes
+     * @return
+     */
+  protected String inflate(byte[] bytes) {
+    if (bytes == null || bytes.length == 0) {
       return null;
-    GZIPInputStream gzip = null;
-    ByteArrayInputStream in = null;
-    ByteArrayOutputStream baos = null;
+    }
+
+    ByteArrayInputStream byteArrayInputStream = null;
+    InflaterInputStream inflaterInputStream = null;
+
     try {
-      in = new ByteArrayInputStream(zipBytes);
-      gzip = new GZIPInputStream(in, 16384); // 16KB
-      byte[] buffer = new byte[1024];
-      baos = new ByteArrayOutputStream();
-      int len = -1;
-      while ((len = gzip.read(buffer, 0, buffer.length)) != -1) {
-        baos.write(buffer, 0, len);
+      byteArrayInputStream = new ByteArrayInputStream(bytes);
+      inflaterInputStream = new InflaterInputStream(byteArrayInputStream);
+
+      String result = "";
+      byte[] buf = new byte[5];
+      int rlen = -1;
+      while ((rlen = inflaterInputStream.read(buf)) != -1) {
+        result += new String(Arrays.copyOf(buf, rlen));
       }
-      String newstr = new String(baos.toByteArray(), "UTF-8");
-      return newstr;
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "Error on decompressing HTTP response", ex);
+
+      return result;
+    } catch (IOException ex) {
+      OLogManager.instance().error(this, "Error on decompressing deflate", ex);
     } finally {
-      try {
-        if (gzip != null)
-          gzip.close();
-        if (in != null)
-          in.close();
-        if (baos != null)
-          baos.close();
-      } catch (Exception ex) {
+      if (byteArrayInputStream != null) {
+        try {
+          byteArrayInputStream.close();
+        } catch (IOException ex) {
+          OLogManager.instance().error(this, "Error on decompressing deflate", ex);
+        }
+      }
+
+      if (inflaterInputStream != null) {
+        try {
+          inflaterInputStream.close();
+        } catch (IOException ex) {
+          OLogManager.instance().error(this, "Error on decompressing deflate", ex);
+        }
       }
     }
+
+    return null;
+  }
+
+	/**
+     * Decompress gzip compressed byte array.
+     *
+     * @param zipBytes
+     * @return
+     */
+  protected String deCompress(byte[] zipBytes) {
+    GZIPInputStream gzipIn = null;
+    try {
+      gzipIn = new GZIPInputStream(new ByteArrayInputStream(zipBytes));
+      return StringUtils.newString(IOUtils.toByteArray(gzipIn), "UTF-8");
+    } catch (IOException ex) {
+      OLogManager.instance().error(this, "Error on decompressing gzip", ex);
+    } finally {
+      if (gzipIn != null) {
+        try {
+          gzipIn.close();
+        } catch (IOException ex) {
+          OLogManager.instance().error(this, "Error on decompressing gzip", ex);
+        }
+      }
+    }
+
     return null;
   }
 
