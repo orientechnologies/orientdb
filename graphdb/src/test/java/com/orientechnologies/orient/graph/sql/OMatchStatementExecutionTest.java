@@ -1361,6 +1361,15 @@ public class OMatchStatementExecutionTest {
 
   }
 
+  @Test
+  public void testAliasesWithSubquery() throws Exception {
+    List<ODocument> qResult = db
+        .command(new OCommandSQL("select from ( match {class:Person, as:A} return A.name as namexx ) limit 1")).execute();
+    assertEquals(1, qResult.size());
+    assertNotNull(qResult.get(0).field("namexx"));
+    assertTrue(qResult.get(0).field("namexx").toString().startsWith("n"));
+  }
+
   private List<OIdentifiable> getManagedPathElements(String managerName) {
     StringBuilder query = new StringBuilder();
     query.append("  match {class:Employee, as:boss, where: (name = '" + managerName + "')}");

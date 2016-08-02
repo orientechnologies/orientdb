@@ -344,7 +344,7 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
 
         Set<OIdentifiable> ids = new HashSet<OIdentifiable>();
         if (!matches.iterator().hasNext()) {
-          if(pattern.get(nextAlias).isOptionalNode()){
+          if (pattern.get(nextAlias).isOptionalNode()) {
             continue;
           }
           return true;
@@ -445,7 +445,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
         Object rightValues = outEdge.executeTraversal(matchContext, iCommandContext, startingPoint, 0);
 
-        if (outEdge.in.isOptionalNode() && (isEmptyResult(rightValues) || !contains(rightValues, matchContext.matched.get(outEdge.in.alias)))) {
+        if (outEdge.in.isOptionalNode() && (isEmptyResult(rightValues) || !contains(rightValues,
+            matchContext.matched.get(outEdge.in.alias)))) {
           MatchContext childContext = matchContext.copy(outEdge.in.alias, null);
           childContext.matched.put(outEdge.in.alias, null);
           childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1; //TODO testOptional 3 match passa con +1
@@ -505,7 +506,8 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
         }
         if (!matchContext.matchedEdges.containsKey(inEdge)) {
           Object leftValues = inEdge.item.method.executeReverse(matchContext.matched.get(inEdge.in.alias), iCommandContext);
-          if (inEdge.out.isOptionalNode()   && (isEmptyResult(leftValues) || !contains(leftValues, matchContext.matched.get(inEdge.out.alias)))) {
+          if (inEdge.out.isOptionalNode() && (isEmptyResult(leftValues) || !contains(leftValues,
+              matchContext.matched.get(inEdge.out.alias)))) {
             MatchContext childContext = matchContext.copy(inEdge.out.alias, null);
             childContext.matched.put(inEdge.out.alias, null);
             childContext.currentEdgeNumber = matchContext.currentEdgeNumber + 1;
@@ -566,27 +568,27 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
   }
 
   private boolean contains(Object rightValues, OIdentifiable oIdentifiable) {
-    if(oIdentifiable==null){
+    if (oIdentifiable == null) {
       return true;
     }
-    if(rightValues==null){
+    if (rightValues == null) {
       return false;
     }
-    if(rightValues instanceof OIdentifiable){
+    if (rightValues instanceof OIdentifiable) {
       return ((OIdentifiable) rightValues).getIdentity().equals(oIdentifiable.getIdentity());
     }
     Iterator iterator = null;
-    if(rightValues instanceof Iterable){
+    if (rightValues instanceof Iterable) {
       iterator = ((Iterable) rightValues).iterator();
     }
-    if(rightValues instanceof Iterator){
+    if (rightValues instanceof Iterator) {
       iterator = (Iterator) rightValues;
     }
-    if(iterator!=null){
-      while(iterator.hasNext()){
+    if (iterator != null) {
+      while (iterator.hasNext()) {
         Object next = iterator.next();
-        if(next instanceof OIdentifiable){
-          if(((OIdentifiable) next).getIdentity().equals(oIdentifiable.getIdentity())) {
+        if (next instanceof OIdentifiable) {
+          if (((OIdentifiable) next).getIdentity().equals(oIdentifiable.getIdentity())) {
             return true;
           }
         }
@@ -1033,11 +1035,17 @@ public class OMatchStatement extends OStatement implements OCommandExecutor, OIt
     }
     builder.append(" RETURN ");
     first = true;
+    int i = 0;
     for (OExpression expr : this.returnItems) {
       if (!first) {
         builder.append(", ");
       }
       expr.toString(params, builder);
+      if (returnAliases != null && i < returnAliases.size() &&  returnAliases.get(i) != null) {
+        builder.append(" AS ");
+        returnAliases.get(i).toString(params, builder);
+      }
+      i++;
       first = false;
     }
     if (limit != null) {
