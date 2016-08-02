@@ -598,8 +598,8 @@ public class ODistributedResponseManager {
         "Detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request (%s)",
         conflicts, quorum, request);
 
-    // if (ODistributedServerLog.isDebugEnabled())
-    ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
 
     if (!undoRequest()) {
       // SKIP UNDO

@@ -23,7 +23,9 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
+import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -90,4 +92,6 @@ public interface ODistributedDatabase {
   long getReceivedRequests();
 
   long getProcessedRequests();
+
+  void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN) throws IOException;
 }

@@ -75,6 +75,8 @@ import javax.naming.directory.InitialDirContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,6 +91,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private static final int     DEFAULT_SSL_PORT          = 2434;
   private static final String  ADDRESS_SEPARATOR         = ";";
   public static final String   DRIVER_NAME               = "OrientDB Java";
+  private static final String  LOCAL_IP                  = "127.0.0.1";
+  private static final String  LOCALHOST                 = "localhost";
   private static AtomicInteger sessionSerialId           = new AtomicInteger(-1);
 
   public enum CONNECTION_STRATEGY {
@@ -1962,8 +1966,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * Registers the remote server with port.
    */
   protected String addHost(String host) {
-    if (host.startsWith("localhost"))
-      host = "127.0.0.1" + host.substring("localhost".length());
+    if (host.startsWith(LOCALHOST))
+      host = LOCAL_IP + host.substring("localhost".length());
 
     if (host.contains("/"))
       host = host.substring(0, host.indexOf("/"));
@@ -1974,6 +1978,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
     else if (host.split(":").length < 2 || host.split(":")[1].trim().length() == 0)
       host += (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
+
+    // CONVERT 127.0.0.1 TO THE PUBLIC IP IF POSSIBLE
+    if (host.startsWith(LOCAL_IP)) {
+      try {
+        final String publicIP = InetAddress.getLocalHost().getHostAddress();
+        host = publicIP + host.substring(LOCAL_IP.length());
+      } catch (UnknownHostException e) {
+        // IGNORE IT
+      }
+    }
 
     synchronized (serverURLs) {
       if (!serverURLs.contains(host)) {

@@ -27,8 +27,10 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.impl.task.OHeartbeatTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
 
 import static com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX;
@@ -53,6 +55,7 @@ public class OClusterHealthChecker extends TimerTask {
       checkServerStatus();
       checkDatabaseStatuses();
       checkServerInStall();
+      checkServerList();
 
     } catch (HazelcastInstanceNotActiveException e) {
       // IGNORE IT
@@ -60,6 +63,33 @@ public class OClusterHealthChecker extends TimerTask {
       OLogManager.instance().error(this, "Error on checking cluster health", t);
     } finally {
       OLogManager.instance().debug(this, "Cluster health checking completed");
+    }
+  }
+
+  private void checkServerList() {
+    final Set<String> activeServers = manager.getActiveServers();
+    for (String server : activeServers) {
+      int id = manager.getNodeIdByName(server);
+      if (id == -1) {
+        ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "Server '%s' was not found in the list of registered servers. Reloading configuration from cluster...", server);
+
+        ((OHazelcastPlugin) manager).reloadRegisteredNodes();
+        id = manager.getNodeIdByName(server);
+        if (id == -1) {
+          ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+              "Server '%s' was not found in the list of registered servers after the update, setting the server as OFFLINE...",
+              server);
+
+          try {
+            ((OHazelcastPlugin) manager).restartNode(server);
+          } catch (IOException e) {
+            ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                "Error on restarting server '%s' (error=%s)", server, e);
+          }
+        }
+        break;
+      }
     }
   }
 
@@ -139,6 +169,12 @@ public class OClusterHealthChecker extends TimerTask {
       for (String server : servers) {
         setDatabaseOffline(dbName, server);
       }
+    }
+  }
+
+  private void setAllDatabasesOffline(final String server) {
+    for (String dbName : manager.getMessageService().getDatabases()) {
+      manager.setDatabaseStatus(server, dbName, ODistributedServerManager.DB_STATUS.OFFLINE);
     }
   }
 

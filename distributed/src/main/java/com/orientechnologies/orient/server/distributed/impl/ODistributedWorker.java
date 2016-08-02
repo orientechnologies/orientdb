@@ -226,23 +226,32 @@ public class ODistributedWorker extends Thread {
    */
   protected void onMessage(final ODistributedRequest iRequest) {
     String senderNodeName = null;
-    while (true) {
+    for (int retry = 0; retry < 10; retry++) {
       senderNodeName = manager.getNodeNameById(iRequest.getId().getNodeId());
       if (senderNodeName != null)
         break;
 
       try {
-        Thread.sleep(100);
+        Thread.sleep(200);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new ODistributedException("Execution has been interrupted");
       }
     }
 
+    if (senderNodeName == null) {
+      ODistributedServerLog.warn(this, localNodeName, senderNodeName, DIRECTION.IN,
+          "Sender server id %d is not registered in the cluster configuration, discard the request: (%s) (worker=%d)",
+          iRequest.getId().getNodeId(), iRequest, id);
+      sendResponseBack(iRequest, new ODistributedException("Sender server id " + iRequest.getId().getNodeId()
+          + " is not registered in the cluster configuration, discard the request"));
+      return;
+    }
+
     final ORemoteTask task = iRequest.getTask();
 
     if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, localNodeName, senderNodeName, DIRECTION.IN, "Received request: (%s) worker=%d", iRequest,
+      ODistributedServerLog.debug(this, localNodeName, senderNodeName, DIRECTION.IN, "Received request: (%s) (worker=%d)", iRequest,
           id);
 
     // EXECUTE IT LOCALLY
@@ -321,10 +330,10 @@ public class ODistributedWorker extends Thread {
   }
 
   private void sendResponseBack(final ODistributedRequest iRequest, Object responsePayload) {
-    sendResponseBack(manager, iRequest, responsePayload);
+    sendResponseBack(this, manager, iRequest, responsePayload);
   }
 
-  static void sendResponseBack(final ODistributedServerManager manager, final ODistributedRequest iRequest,
+  static void sendResponseBack(final Object current, final ODistributedServerManager manager, final ODistributedRequest iRequest,
       Object responsePayload) {
     if (iRequest.getId().getMessageId() < 0)
       // INTERNAL MSG
@@ -341,13 +350,13 @@ public class ODistributedWorker extends Thread {
       // GET THE SENDER'S RESPONSE QUEUE
       final ORemoteServerController remoteSenderServer = manager.getRemoteServer(senderNodeName);
 
-      ODistributedServerLog.debug(manager, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+      ODistributedServerLog.debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Sending response %s back", response);
 
       remoteSenderServer.sendResponse(response);
 
     } catch (Exception e) {
-      ODistributedServerLog.debug(manager, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
+      ODistributedServerLog.debug(current, localNodeName, senderNodeName, ODistributedServerLog.DIRECTION.OUT,
           "Error on sending response %s back", response);
     }
   }

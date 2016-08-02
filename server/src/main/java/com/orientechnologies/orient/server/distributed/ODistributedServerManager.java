@@ -237,4 +237,6 @@ public interface ODistributedServerManager {
   void repairRecord(String databaseName, ORecordId rid);
 
   ODistributedConflictResolver getConflictResolver();
+
+  Set<String> getActiveServers();
 }

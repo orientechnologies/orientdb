@@ -154,44 +154,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         }
       }
 
-      final Lock lock = getLock("registeredNodes");
-      lock.lock();
-      try {
-        final ODocument registeredNodesFromCluster = new ODocument();
-        final String registeredNodesFromClusterAsJson = (String) configurationMap.get(CONFIG_REGISTEREDNODES);
-
-        if (registeredNodesFromClusterAsJson != null) {
-          registeredNodesFromCluster.fromJSON(registeredNodesFromClusterAsJson);
-          registeredNodeById = registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST);
-          registeredNodeByName = registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP);
-
-          if (registeredNodeByName.containsKey(nodeName)) {
-            nodeId = registeredNodeByName.get(nodeName);
-          } else {
-            // ADD CURRENT NODE
-            registeredNodeById.add(nodeName);
-            nodeId = registeredNodeById.size() - 1;
-            registeredNodeByName.put(nodeName, nodeId);
-          }
-        } else {
-          // FIRST TIME: CREATE NEW CFG
-          nodeId = 0;
-
-          registeredNodeById = new ArrayList<String>();
-          registeredNodeById.add(nodeName);
-          registeredNodesFromCluster.field("ids", registeredNodeById, OType.EMBEDDEDLIST);
-
-          registeredNodeByName = new HashMap<String, Integer>();
-          registeredNodeByName.put(nodeName, nodeId);
-          registeredNodesFromCluster.field("names", registeredNodeByName, OType.EMBEDDEDMAP);
-        }
-
-        // SAVE NEW CFG
-        configurationMap.put(CONFIG_REGISTEREDNODES, registeredNodesFromCluster.toJSON());
-
-      } finally {
-        lock.unlock();
-      }
+      initRegisteredNodeIds();
 
       messageService = new ODistributedMessageServiceImpl(this);
 
@@ -253,6 +216,47 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     dumpServersStatus();
+  }
+
+  private void initRegisteredNodeIds() {
+    final Lock lock = getLock(CONFIG_REGISTEREDNODES);
+    lock.lock();
+    try {
+      final ODocument registeredNodesFromCluster = new ODocument();
+      final String registeredNodesFromClusterAsJson = (String) configurationMap.get(CONFIG_REGISTEREDNODES);
+
+      if (registeredNodesFromClusterAsJson != null) {
+        registeredNodesFromCluster.fromJSON(registeredNodesFromClusterAsJson);
+        registeredNodeById = registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST);
+        registeredNodeByName = registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP);
+
+        if (registeredNodeByName.containsKey(nodeName)) {
+          nodeId = registeredNodeByName.get(nodeName);
+        } else {
+          // ADD CURRENT NODE
+          registeredNodeById.add(nodeName);
+          nodeId = registeredNodeById.size() - 1;
+          registeredNodeByName.put(nodeName, nodeId);
+        }
+      } else {
+        // FIRST TIME: CREATE NEW CFG
+        nodeId = 0;
+
+        registeredNodeById = new ArrayList<String>();
+        registeredNodeById.add(nodeName);
+        registeredNodesFromCluster.field("ids", registeredNodeById, OType.EMBEDDEDLIST);
+
+        registeredNodeByName = new HashMap<String, Integer>();
+        registeredNodeByName.put(nodeName, nodeId);
+        registeredNodesFromCluster.field("names", registeredNodeByName, OType.EMBEDDEDMAP);
+      }
+
+      // SAVE NEW CFG
+      configurationMap.put(CONFIG_REGISTEREDNODES, registeredNodesFromCluster.toJSON());
+
+    } finally {
+      lock.unlock();
+    }
   }
 
   protected void waitStartupIsCompleted() throws InterruptedException {
@@ -879,7 +883,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
   }
 
-  private void reloadRegisteredNodes() {
+  public void reloadRegisteredNodes() {
     final ODocument registeredNodesFromCluster = new ODocument();
     final String registeredNodesFromClusterAsJson = (String) configurationMap.getHazelcastMap().get(CONFIG_REGISTEREDNODES);
 
@@ -888,7 +892,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       registeredNodeById = registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST);
       registeredNodeByName = registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP);
     } else
-      throw new ODistributedException("Cannot find distributed registeredNodes configuration");
+      throw new ODistributedException("Cannot find distributed 'registeredNodes' configuration");
 
   }
 
@@ -1017,5 +1021,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (messageService != null)
         messageService.handleUnreachableNode(nodeLeftName);
     }
+  }
+
+  @Override
+  public Set<String> getActiveServers() {
+    return activeNodes.keySet();
   }
 }

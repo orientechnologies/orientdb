@@ -126,9 +126,6 @@ public abstract class OBaseWorkload implements OWorkload {
           try {
             final int startIdx = totalPerThread * context.threadId;
 
-            if (operationsPerTransaction > 0)
-              beginTransaction(context);
-
             final AtomicInteger operationsExecutedInTx = new AtomicInteger();
 
             for (final AtomicInteger i = new AtomicInteger(); i.get() < context.totalPerThread; i.incrementAndGet()) {

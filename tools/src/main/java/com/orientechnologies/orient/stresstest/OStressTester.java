@@ -145,10 +145,13 @@ public class OStressTester {
         System.out.println("HA METRICS");
         System.out.println(output);
 
+      } catch (Exception e) {
+        // IGNORE IT
       } finally {
         db.close();
       }
     }
+
   }
 
   private void writeFile() {

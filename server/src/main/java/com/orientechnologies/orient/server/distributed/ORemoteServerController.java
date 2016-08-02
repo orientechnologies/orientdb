@@ -55,12 +55,16 @@ public class ORemoteServerController {
   }
 
   public void sendRequest(final ODistributedRequest req) {
-    final int idx = requestChannelIndex++;
+    int idx = requestChannelIndex++;
+    if( idx < 0)
+      idx = 0;
     requestChannels[idx % responseChannels.length].sendRequest(req);
   }
 
   public void sendResponse(final ODistributedResponse response) {
-    final int idx = responseChannelIndex++;
+    int idx = responseChannelIndex++;
+    if( idx < 0)
+      idx = 0;
     responseChannels[idx % responseChannels.length].sendResponse(response);
   }
 
