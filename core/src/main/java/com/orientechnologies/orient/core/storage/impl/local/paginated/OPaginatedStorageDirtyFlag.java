@@ -114,8 +114,20 @@ public class OPaginatedStorageDirtyFlag {
     lock.lock();
     try {
       dirtyFile = new File(dirtyFilePath);
-      if (!dirtyFile.exists())
-        throw new IllegalStateException("File '" + dirtyFilePath + "' does not exist.");
+      if (!dirtyFile.exists()) {
+        final boolean fileCreated = dirtyFile.createNewFile();
+
+        if (!fileCreated)
+          throw new IllegalStateException("Cannot create file : " + dirtyFilePath);
+
+        dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
+        channel = dirtyFileData.getChannel();
+
+        channel.position(0);
+        ByteBuffer buffer = ByteBuffer.allocate(1);
+        channel.write(buffer);
+      }
+
 
       dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
       channel = dirtyFileData.getChannel();
