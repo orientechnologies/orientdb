@@ -68,8 +68,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
-  private static ConcurrentMap<String, OrientDBFactory> embedded = new ConcurrentHashMap<>();
-  private static ConcurrentMap<String, OrientDBFactory> remote   = new ConcurrentHashMap<>();
+  private static ConcurrentMap<String, OrientDBFactory> embedded          = new ConcurrentHashMap<>();
+  private static ConcurrentMap<String, OrientDBFactory> remote            = new ConcurrentHashMap<>();
 
   protected ODatabaseDocumentInternal                   internal;
   private final String                                  url;
@@ -77,6 +77,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private final String                                  type;
   private final String                                  dbName;
   private final String                                  baseUrl;
+  private final Map<String, Object>                     preopenProperties = new HashMap<>();
 
   public ODatabaseDocumentTx(String url) {
     this.url = url;
@@ -768,7 +769,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
           embedded.put(baseUrl, factory);
         }
       }
-      internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword);
+      OrientDBConfig config = bindPropertiesToConfig(preopenProperties);
+      internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
     }
     return (DB) this;
   }
@@ -786,6 +788,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <DB extends ODatabase> DB create(Map<OGlobalConfiguration, Object> iInitialSettings) {
+    OrientDBConfig config = bindPropertiesToConfig(preopenProperties);
     if ("remote".equals(type)) {
       throw new UnsupportedOperationException();
     } else if ("memory".equals(type)) {
@@ -796,8 +799,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
           embedded.put(baseUrl, factory);
         }
       }
-      factory.create(dbName, null, null, OrientDBFactory.DatabaseType.MEMORY);
-      internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin");
+      factory.create(dbName, null, null, OrientDBFactory.DatabaseType.MEMORY, config);
+      internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", config);
 
     } else {
       synchronized (embedded) {
@@ -807,8 +810,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
           embedded.put(baseUrl, factory);
         }
       }
-      factory.create(dbName, null, null, OrientDBFactory.DatabaseType.PLOCAL);
-      internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin");
+      factory.create(dbName, null, null, OrientDBFactory.DatabaseType.PLOCAL, config);
+      
+      internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", config);
     }
     return (DB) this;
 
@@ -870,9 +874,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void close() {
-    // TODO
     checkOpeness();
     internal.close();
+    internal = null;
   }
 
   @Override
@@ -1037,14 +1041,18 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public Object setProperty(String iName, Object iValue) {
-    checkOpeness();
-    return internal.setProperty(iName, iValue);
+    if(internal != null)
+      return internal.setProperty(iName, iValue);
+    else 
+      return preopenProperties.put(iName, iValue);
   }
 
   @Override
   public Object getProperty(String iName) {
-    checkOpeness();
-    return internal.getProperty(iName);
+    if (internal != null)
+      return internal.getProperty(iName);
+    else
+      return preopenProperties.get(iName);
   }
 
   @Override
@@ -1120,7 +1128,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     checkOpeness();
     ((ODatabaseDocumentTxOrig) internal).setSerializer(serializer);
   }
-  
+
   @Override
   public OTodoResultSet query(String query, Object... args) {
     checkOpeness();
