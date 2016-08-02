@@ -135,6 +135,7 @@ public class OProjection extends SimpleNode {
     if (items != null) {
       result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());
     }
+    result.distinct = distinct;
     return result;
   }
 
@@ -158,6 +159,10 @@ public class OProjection extends SimpleNode {
 
   public boolean isDistinct() {
     return distinct;
+  }
+
+  public void setDistinct(boolean distinct) {
+    this.distinct = distinct;
   }
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

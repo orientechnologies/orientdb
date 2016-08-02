@@ -40,8 +40,13 @@ public class OSelectExecutionPlanner {
 
   public OSelectExecutionPlanner(OSelectStatement oSelectStatement) {
     //copying the content, so that it can be manipulated and optimized
-    this.projection = oSelectStatement.getProjection();
+    this.projection = oSelectStatement.getProjection() == null ? null : oSelectStatement.getProjection().copy();
+    translateDistinct(this.projection);
     this.distinct = projection == null ? false : projection.isDistinct();
+    if (projection != null) {
+      this.projection.setDistinct(false);
+    }
+
     this.target = oSelectStatement.getTarget();
     this.whereClause = oSelectStatement.getWhereClause();
     this.perRecordLetClause = oSelectStatement.getLetClause();
@@ -51,8 +56,16 @@ public class OSelectExecutionPlanner {
     this.limit = oSelectStatement.getLimit();
   }
 
+  private void translateDistinct(OProjection projection) {
+    //TODO backward compatibility, translate "distinct(foo)" to "DISTINCT foo"
+  }
+
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
     OSelectExecutionPlan result = new OSelectExecutionPlan(ctx);
+
+    if (expand && distinct) {
+      throw new OCommandExecutionException("Cannot execute a statement with DISTINCT expand(), please use a subquery");
+    }
 
     optimizeQuery();
 
@@ -62,33 +75,44 @@ public class OSelectExecutionPlanner {
 
     handleWhere(result, whereClause, ctx);
 
-    handleProjectionsBeforeOrderBy(result, projection, orderBy, ctx);
-    if (!expand) {
-      handleOrderBy(result, orderBy, ctx);
-      if (skip != null) {
-        result.chain(new SkipExecutionStep(skip, ctx));
-      }
-
-      if (limit != null) {
-        result.chain(new LimitExecutionStep(limit, ctx));
-      }
-    }
-
-    handleProjections(result, ctx);
-
-    handleExpand(result, ctx);
-
     if (expand) {
+      handleProjectionsBeforeOrderBy(result, projection, orderBy, ctx);
+      handleProjections(result, ctx);
+      handleExpand(result, ctx);
       handleOrderBy(result, orderBy, ctx);
       if (skip != null) {
         result.chain(new SkipExecutionStep(skip, ctx));
       }
-
       if (limit != null) {
         result.chain(new LimitExecutionStep(limit, ctx));
+      }
+    } else {
+      handleProjectionsBeforeOrderBy(result, projection, orderBy, ctx);
+      handleOrderBy(result, orderBy, ctx);
+      if (distinct) {
+        handleProjections(result, ctx);
+        handleDistinct(result, ctx);
+        if (skip != null) {
+          result.chain(new SkipExecutionStep(skip, ctx));
+        }
+        if (limit != null) {
+          result.chain(new LimitExecutionStep(limit, ctx));
+        }
+      } else {
+        if (skip != null) {
+          result.chain(new SkipExecutionStep(skip, ctx));
+        }
+        if (limit != null) {
+          result.chain(new LimitExecutionStep(limit, ctx));
+        }
+        handleProjections(result, ctx);
       }
     }
     return result;
+  }
+
+  private void handleDistinct(OSelectExecutionPlan result, OCommandContext ctx) {
+    result.chain(new DistinctExecutionStep(ctx));
   }
 
   private void handleProjectionsBeforeOrderBy(OSelectExecutionPlan result, OProjection projection, OOrderBy orderBy,
@@ -381,6 +405,7 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleOrderBy(OSelectExecutionPlan plan, OOrderBy orderBy, OCommandContext ctx) {
+    //TODO skip and limit in line
     if (!orderApplied && orderBy != null && orderBy.getItems() != null && orderBy.getItems().size() > 0) {
       plan.chain(new OrderByStep(orderBy, ctx));
     }
