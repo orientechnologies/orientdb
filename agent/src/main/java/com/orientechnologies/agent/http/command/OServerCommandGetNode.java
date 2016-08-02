@@ -18,6 +18,8 @@
 
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerInfo;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -64,8 +66,8 @@ public class OServerCommandGetNode extends OServerCommandDistributedScope {
       } else {
         throw new IllegalArgumentException("Connection command '" + parts[2] + "' is unknown. Supported are: kill, interrupt");
       }
-      iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION,
-          OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+      iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+          null, null);
     } else {
       throw new IllegalArgumentException(" Command '" + command + "' is unknown.");
     }
@@ -76,6 +78,10 @@ public class OServerCommandGetNode extends OServerCommandDistributedScope {
       iRequest.data.commandInfo = "Server status";
       final String result = OServerInfo.getServerInfo(server);
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, result, null);
+    } else if (command.equalsIgnoreCase("threadDump")) {
+      ODocument doc = new ODocument();
+      doc.field("threadDump", Orient.instance().getProfiler().threadDump());
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_JSON, doc.toJSON(), null);
     } else {
       throw new IllegalArgumentException(" Command '" + command + "' is unknown.");
     }
