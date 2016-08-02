@@ -69,10 +69,9 @@ public class OFileClassic implements OFile, OClosableItem {
   private int version;
 
   private boolean failCheck = true;
-  private volatile long     size;                                                                                // PART OF
+  private volatile long size;                                                                                // PART OF
   // HEADER (4
   // bytes)
-  private          FileLock fileLock;
   private boolean wasSoftlyClosed = true;
 
   public OFileClassic(String osFile, String mode) {
@@ -641,9 +640,6 @@ public class OFileClassic implements OFile, OClosableItem {
       if (accessFile != null && (accessFile.length() - HEADER_SIZE) < getFileSize())
         accessFile.setLength(getFileSize() + HEADER_SIZE);
 
-      if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
-        unlock();
-
       if (channel != null && channel.isOpen()) {
         channel.close();
         channel = null;
@@ -688,87 +684,6 @@ public class OFileClassic implements OFile, OClosableItem {
     }
   }
 
-  /*
-   * Locks a portion of file.
-   */
-  public FileLock lock(final long iRangeFrom, final long iRangeSize, final boolean iShared) throws IOException {
-    acquireWriteLock();
-    try {
-      return channel.lock(iRangeFrom, iRangeSize, iShared);
-    } finally {
-      releaseWriteLock();
-    }
-  }
-
-  /*
-   * Unlocks a portion of file.
-   */
-  public OFile unlock(final FileLock iLock) throws IOException {
-    acquireWriteLock();
-    try {
-      if (iLock != null) {
-        try {
-          iLock.release();
-        } catch (ClosedChannelException e) {
-        }
-      }
-      return this;
-    } finally {
-      releaseWriteLock();
-    }
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#lock()
-   */
-  public void lock() throws IOException {
-    if (channel == null)
-      return;
-
-    acquireWriteLock();
-    try {
-      for (int i = 0; i < LOCK_MAX_RETRIES; ++i) {
-        try {
-          fileLock = channel.tryLock();
-          if (fileLock != null)
-            break;
-        } catch (OverlappingFileLockException e) {
-          OLogManager.instance().debug(this,
-              "Cannot open file '" + osFile.getAbsolutePath() + "' because it is locked. Waiting %d ms and retrying %d/%d...",
-              LOCK_WAIT_TIME, i, LOCK_MAX_RETRIES);
-        }
-
-        if (fileLock == null)
-          throw new OFileLockedByAnotherProcessException("File '" + osFile.getPath()
-              + "' is locked by another process, maybe the database is in use by another process. Use the remote mode with a OrientDB server to allow multiple access to the same database");
-      }
-    } finally {
-      releaseWriteLock();
-    }
-  }
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#unlock()
-   */
-  public void unlock() throws IOException {
-    acquireWriteLock();
-    try {
-      if (fileLock != null) {
-        try {
-          fileLock.release();
-        } catch (ClosedChannelException e) {
-        }
-        fileLock = null;
-      }
-    } finally {
-      releaseWriteLock();
-    }
-  }
-
   private void openChannel() throws IOException {
     acquireWriteLock();
     try {
@@ -797,8 +712,6 @@ public class OFileClassic implements OFile, OClosableItem {
 
       channel = accessFile.getChannel();
 
-      if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
-        lock();
     } finally {
       releaseWriteLock();
     }
@@ -957,13 +870,6 @@ public class OFileClassic implements OFile, OClosableItem {
 
     acquireWriteLock();
     try {
-      try {
-        unlock();
-      } catch (IOException ioe) {
-        OLogManager.instance()
-            .error(this, "Error during unlock of file '" + osFile.getName() + "', during IO exception handling", ioe);
-      }
-
       try {
         channel.close();
       } catch (IOException ioe) {

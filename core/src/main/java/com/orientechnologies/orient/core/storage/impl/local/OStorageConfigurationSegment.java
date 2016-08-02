@@ -103,14 +103,10 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
   @Override
   public void lock() throws IOException {
-    if (segment != null)
-      segment.getFile().lock();
   }
 
   @Override
   public void unlock() throws IOException {
-    if (segment != null)
-      segment.getFile().unlock();
   }
 
   @Override
