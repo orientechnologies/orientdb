@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
 import java.util.Set;
@@ -72,6 +73,9 @@ public class OSuffixIdentifier extends SimpleNode {
     }
     if (identifier != null) {
       String varName = identifier.getStringValue();
+      if (ctx != null && varName.equalsIgnoreCase("$parent")) {
+        return ctx.getParent();
+      }
       if (ctx != null && ctx.getVariable(varName) != null) {
         return ctx.getVariable(varName);
       }
@@ -86,38 +90,72 @@ public class OSuffixIdentifier extends SimpleNode {
     return null;
   }
 
-  public Object execute(Object currentValue, OCommandContext ctx) {
-    if (currentValue == null) {
+  public Object execute(Map iCurrentRecord, OCommandContext ctx) {
+    if (star) {
+      OResultInternal result = new OResultInternal();
+      if (iCurrentRecord != null) {
+        for (Map.Entry<Object, Object> x : ((Map<Object, Object>) iCurrentRecord).entrySet()) {
+          result.setProperty("" + x.getKey(), x.getValue());
+        }
+        return result;
+      }
+      return iCurrentRecord;
+    }
+    if (identifier != null) {
+      String varName = identifier.getStringValue();
+      if (ctx != null && varName.equalsIgnoreCase("$parent")) {
+        return ctx.getParent();
+      }
+      if (ctx != null && ctx.getVariable(varName) != null) {
+        return ctx.getVariable(varName);
+      }
+      if (iCurrentRecord != null) {
+        return iCurrentRecord.get(varName);
+      }
       return null;
     }
+    if (recordAttribute != null) {
+      return iCurrentRecord.get(recordAttribute.name);
+    }
+    return null;
+  }
+
+  public Object execute(OCommandContext iCurrentRecord) {
+    if (star) {
+      return null;
+    }
+    if (identifier != null) {
+      String varName = identifier.getStringValue();
+      if (iCurrentRecord != null) {
+        return iCurrentRecord.getVariable(varName);
+      }
+      return null;
+    }
+    if (recordAttribute != null) {
+      return iCurrentRecord.getVariable(recordAttribute.name);
+    }
+    return null;
+  }
+
+  public Object execute(Object currentValue, OCommandContext ctx) {
     if (currentValue instanceof OResult) {
       return execute((OResult) currentValue, ctx);
     }
     if (currentValue instanceof OIdentifiable) {
       return execute((OIdentifiable) currentValue, ctx);
     }
-    if (star) {
-      return currentValue;
+    if (currentValue instanceof Map) {
+      return execute((Map) currentValue, ctx);
     }
-    if (identifier != null) {
-      String varName = identifier.getStringValue();
-      if (ctx.getVariable(varName) != null) {
-        return ctx.getVariable(varName);
-      }
-      if (currentValue instanceof Map) {
-        return ((Map) currentValue).get(varName);
-      }
-      throw new UnsupportedOperationException("Implement SuffixIdentifier!");
-      // TODO other cases?
+    if (currentValue instanceof OCommandContext) {
+      return execute((OCommandContext) currentValue);
     }
-    if (recordAttribute != null) {
-      if (currentValue instanceof Map) {
-        return ((Map) currentValue).get(recordAttribute.name);
-      }
-      throw new UnsupportedOperationException("Implement SuffixIdentifier!");
-      // TODO other cases?
+    if (currentValue == null) {
+      return execute((OResult) null, ctx);
     }
+
     return null;
+    // TODO other cases?
   }
 
   public boolean isBaseIdentifier() {
