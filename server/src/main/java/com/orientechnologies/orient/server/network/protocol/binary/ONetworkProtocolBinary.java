@@ -117,7 +117,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   protected volatile int   requestType;
   protected int            clientTxId;
   protected boolean        okSent;
-  private boolean          tokenConnection = false;
+  private boolean          tokenConnection = true;
   private long             requests        = 0;
 
   public ONetworkProtocolBinary() {
@@ -169,8 +169,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   
   private boolean isHandshaking(int requestType) {
     return requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
-        || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN
-        || requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE;
+        || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN || requestType == OChannelBinaryProtocol.REQUEST_DB_REOPEN;
   }
 
   private boolean isDistributed(int requestType) {
@@ -208,12 +207,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       try {
         connection = onBeforeHandshakeRequest(connection, channel);
       } catch (Exception e) {
-        if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
-          sendError(connection, clientTxId, e);
-          handleConnectionError(connection, e);
-          afterOperationRequest(connection);
-          sendShutdown();
-        }
+        sendError(null, clientTxId, e);
+        handleConnectionError(null, e);
+        afterOperationRequest(null);
+        sendShutdown();
         return;
       }
       OLogManager.instance().debug(this, "Request id:" + clientTxId + " type:" + requestType);
@@ -234,10 +231,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           
         case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
           reopenDatabase(connection);
-          break;
-          
-        case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
-          closeDatabase(connection);
           break;
 
         }
@@ -348,62 +341,26 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   private OClientConnection onBeforeHandshakeRequest(OClientConnection connection, OChannelBinary channel) throws IOException {
     try {
-      boolean noToken = false;
-      if (connection == null && clientTxId < 0
-          && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || requestType == OChannelBinaryProtocol.REQUEST_CONNECT)) {
-        // OPEN OF OLD STYLE SESSION.
-        noToken = true;
-      }
-      if (requestType == OChannelBinaryProtocol.REQUEST_CONNECT || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN
-          || requestType == OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
-        // OPERATIONS THAT DON'T USE TOKEN
-        noToken = true;
-      }
-      if (connection != null && !Boolean.TRUE.equals(connection.getTokenBased())) {
-        // CONNECTION WITHOUT TOKEN/OLD MODE
-        noToken = true;
-      }
-
-      if (connection == null && clientTxId < 0 && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE)
-        // CLOSE OF NOT EXISTING SESSION, DO NOTHING
-        return null;
-
-      if (noToken) {
-        if (clientTxId < 0) {
-          connection = server.getClientConnectionManager().connect(this);
-          connection.getData().sessionId = clientTxId;
+      if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
+        if (clientTxId >= 0 && connection == null
+            && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN)) {
+          //THIS EXCEPTION SHULD HAPPEN IN ANY CASE OF OPEN/CONNECT WITH SESSIONID >= 0, BUT FOR COMPATIBILITY IT'S ONLY IF THERE IS NO CONNECTION
+          shutdown();
+          throw new OIOException("Found unknown session " + clientTxId);
         }
-        if (connection != null) {
-          // This should not be needed
-          connection.setTokenBytes(null);
-          connection.acquire();
-        }
+        connection = server.getClientConnectionManager().connect(this);
+        connection.getData().sessionId = clientTxId;
+        connection.setTokenBytes(null);
+        connection.acquire();
       } else {
-        tokenConnection = true;
         byte[] bytes = channel.readBytes();
-        if (connection == null && bytes != null && bytes.length > 0) {
-          // THIS IS THE CASE OF A TOKEN OPERATION WITHOUT HANDSHAKE ON THIS CONNECTION.
-          connection = server.getClientConnectionManager().connect(this);
-        }
+        connection.validateSession(bytes, server.getTokenHandler(), this);
+        server.getClientConnectionManager().disconnect(clientTxId);
+        connection = server.getClientConnectionManager().reConnect(this, connection.getTokenBytes(), connection.getToken());
+        connection.acquire();
+        waitDistribuedIsOnline(connection);
+        connection.init(server);
 
-        if (connection == null) {
-          throw new OTokenSecurityException("missing session and token");
-        }
-        if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
-          connection.acquire();
-          connection.validateSession(bytes, server.getTokenHandler(), this);
-        } else {
-          connection.validateSession(bytes, server.getTokenHandler(), this);
-          server.getClientConnectionManager().disconnect(clientTxId);
-          connection = server.getClientConnectionManager().reConnect(this, connection.getTokenBytes(), connection.getToken());
-          connection.acquire();
-        }
-
-        if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
-          waitDistribuedIsOnline(connection);
-
-          connection.init(server);
-        }
         if (connection.getData().serverUser) {
           connection.setServerUser(server.getUser(connection.getData().serverUsername));
         }
@@ -420,16 +377,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       throw e;
     }
 
-    if (connection != null) {
-      connection.statsUpdate();
-    } else {
-      ODatabaseRecordThreadLocal.INSTANCE.remove();
-      if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
-        OLogManager.instance().debug(this, "Found unknown session %d, shutdown current connection", clientTxId);
-        shutdown();
-        throw new OIOException("Found unknown session " + clientTxId);
-      }
-    }
+    connection.statsUpdate();
 
     OServerPluginHelper.invokeHandlerCallbackOnBeforeClientRequest(server, connection, (byte) requestType);
     return connection;
@@ -438,20 +386,26 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   private OClientConnection onBeforeOperationalRequest(OClientConnection connection, OChannelBinary channel) throws IOException {
     try {
+      if (connection == null && requestType == OChannelBinaryProtocol.REQUEST_DB_CLOSE)
+        return null;
+      
       if (connection != null && !Boolean.TRUE.equals(connection.getTokenBased())) {
         // BACKWARD COMPATIBILITY MODE
         connection.setTokenBytes(null);
         connection.acquire();
       } else {
         // STANDAR FLOW
-        tokenConnection = true;
+        if (!tokenConnection) {
+          // ARRIVED HERE FOR DIRECT TOKEN CONNECTION, BUT OLD STYLE SESSION.
+          throw new OIOException("Found unknown session " + clientTxId);
+        }
         byte[] bytes = channel.readBytes();
         if (connection == null && bytes != null && bytes.length > 0) {
           // THIS IS THE CASE OF A TOKEN OPERATION WITHOUT HANDSHAKE ON THIS CONNECTION.
           connection = server.getClientConnectionManager().connect(this);
         }
         if (connection == null) {
-          throw new OTokenSecurityException("missing session and token");
+          throw new OIOException("Found unknown session " + clientTxId);
         }
         connection.acquire();
         connection.validateSession(bytes, server.getTokenHandler(), this);
@@ -505,13 +459,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     try {
       switch (requestType) {
 
-      case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
-        shutdownConnection(connection);
-        break;
-
-      case OChannelBinaryProtocol.REQUEST_CONNECT:
-        connect(connection);
-        break;
 
       case OChannelBinaryProtocol.REQUEST_DB_LIST:
         listDatabases(connection);
@@ -519,14 +466,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
       case OChannelBinaryProtocol.REQUEST_SERVER_INFO:
         serverInfo(connection);
-        break;
-
-      case OChannelBinaryProtocol.REQUEST_DB_OPEN:
-        openDatabase(connection);
-        break;
-
-      case OChannelBinaryProtocol.REQUEST_DB_REOPEN:
-        reopenDatabase(connection);
         break;
 
       case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
@@ -2108,7 +2047,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           // throw new OException("Not supported mixed connection managment");
         }
     }
-
+    tokenConnection = Boolean.TRUE.equals(connection.getTokenBased());
     if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_33) {
       connection.getData().supportsPushMessages = channel.readBoolean();
       connection.getData().collectStats = channel.readBoolean();
