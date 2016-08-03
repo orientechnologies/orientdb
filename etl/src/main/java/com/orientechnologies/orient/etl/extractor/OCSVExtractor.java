@@ -110,7 +110,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
       }
 
       log(OETLProcessor.LOG_LEVELS.INFO, "column types: %s", columnTypes);
-      csvFormat = csvFormat.withHeader(columnNames.toArray(new String[] {}));
+      csvFormat = csvFormat.withHeader(columnNames.toArray(new String[] {})).withSkipHeaderRecord();
 
     }
 
@@ -209,6 +209,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     Object fieldValue;
     if ((fieldValue = transformToDate(fieldStringValue)) == null)// try maybe Date type
       if ((fieldValue = transformToNumeric(fieldStringValue)) == null)// try maybe Numeric type
+        if ((fieldValue = transformToBoolean(fieldStringValue)) == null)// try maybe Boolean type
         fieldValue = fieldStringValue; // type String
     return fieldValue;
   }
@@ -228,12 +229,12 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
 
   private Object transformToNumeric(final String fieldStringValue) {
     if (fieldStringValue.isEmpty())
-      return fieldStringValue;
+      return null;
 
     final char c = fieldStringValue.charAt(0);
     if (c != '-' && !Character.isDigit(c))
       // NOT A NUMBER FOR SURE
-      return fieldStringValue;
+      return null;
 
     Object fieldValue;
     try {
@@ -251,9 +252,15 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
         }
       }
     } catch (NumberFormatException nf) {
-      fieldValue = fieldStringValue;
+      fieldValue = null;
     }
     return fieldValue;
+  }
+
+  private Object transformToBoolean(final String fieldStringValue) {
+    if (fieldStringValue.equalsIgnoreCase(Boolean.FALSE.toString()) || fieldStringValue.equalsIgnoreCase(Boolean.TRUE.toString()))
+      return Boolean.parseBoolean(fieldStringValue);
+    return null;
   }
 
   /**
