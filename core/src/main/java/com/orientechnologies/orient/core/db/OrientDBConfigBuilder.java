@@ -76,4 +76,9 @@ public class OrientDBConfigBuilder {
     configurations = contextConfiguration;
     return this;
   }
+
+  public OrientDBConfigBuilder fromContext(OContextConfiguration contextConfiguration) {
+    configurations = contextConfiguration;
+    return this;
+  }
 }
