@@ -1312,6 +1312,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       //skip broken record
       if (record == null || record.getIdentity() == null) {
+        OLogManager.instance().warn(this, "Broken record was detected and will be skipped");
         return null;
       }
 
