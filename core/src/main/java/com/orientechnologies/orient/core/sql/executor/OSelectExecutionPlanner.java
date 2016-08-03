@@ -28,6 +28,7 @@ public class OSelectExecutionPlanner {
 
   private OLetClause globalLetClause    = null;
   private OLetClause perRecordLetClause = null;
+
   private OFromClause     target;
   private OWhereClause    whereClause;
   private List<OAndBlock> flattenedWhereClause;
@@ -50,7 +51,7 @@ public class OSelectExecutionPlanner {
 
     this.target = oSelectStatement.getTarget();
     this.whereClause = oSelectStatement.getWhereClause() == null ? null : oSelectStatement.getWhereClause().copy();
-    this.perRecordLetClause = oSelectStatement.getLetClause();
+    this.perRecordLetClause = oSelectStatement.getLetClause() == null ? null : oSelectStatement.getLetClause().copy();
     this.groupBy = oSelectStatement.getGroupBy() == null ? null : oSelectStatement.getGroupBy().copy();
     this.orderBy = oSelectStatement.getOrderBy() == null ? null : oSelectStatement.getOrderBy().copy();
     this.skip = oSelectStatement.getSkip();
@@ -144,6 +145,7 @@ public class OSelectExecutionPlanner {
   }
 
   private void optimizeQuery() {
+    splitLet();
     extractSubQueries();
     if (projection != null && this.projection.isExpand()) {
       expand = true;
@@ -157,6 +159,25 @@ public class OSelectExecutionPlanner {
 
     extractAggregateProjections();
     addOrderByProjections();
+  }
+
+  /**
+   * splits LET clauses in global (executed once) and local (executed once per record)
+   */
+  private void splitLet() {
+    if (this.perRecordLetClause != null && this.perRecordLetClause.getItems() != null) {
+      Iterator<OLetItem> iterator = this.perRecordLetClause.getItems().iterator();
+      while (iterator.hasNext()) {
+        OLetItem item = iterator.next();
+        if (item.getExpression() != null && item.getExpression().isEarlyCalculated()) {
+          iterator.remove();
+          addGlobalLet(item.getVarName(), item.getExpression());
+        } else if (item.getQuery() != null && !item.getQuery().refersToParent()) {
+          iterator.remove();
+          addGlobalLet(item.getVarName(), item.getQuery());
+        }
+      }
+    }
   }
 
   /**
@@ -294,6 +315,22 @@ public class OSelectExecutionPlanner {
    */
   private void extractSubQueries() {
     SubQueryCollector collector = new SubQueryCollector();
+    if (perRecordLetClause != null) {
+      perRecordLetClause.extractSubQueries(collector);
+    }
+    int i = 0;
+    int j = 0;
+    for (Map.Entry<OIdentifier, OStatement> entry : collector.getSubQueries().entrySet()) {
+      OIdentifier alias = entry.getKey();
+      OStatement query = entry.getValue();
+      if (query.refersToParent()) {
+        addRecordLevelLet(alias, query, j++);
+      } else {
+        addGlobalLet(alias, query, i++);
+      }
+    }
+    collector.reset();
+
     if (whereClause != null) {
       whereClause.extractSubQueries(collector);
     }
@@ -311,11 +348,21 @@ public class OSelectExecutionPlanner {
       OIdentifier alias = entry.getKey();
       OStatement query = entry.getValue();
       if (query.refersToParent()) {
-        addGlobalLet(alias, query);
-      } else {
         addRecordLevelLet(alias, query);
+      } else {
+        addGlobalLet(alias, query);
       }
     }
+  }
+
+  private void addGlobalLet(OIdentifier alias, OExpression exp) {
+    if (globalLetClause == null) {
+      globalLetClause = new OLetClause(-1);
+    }
+    OLetItem item = new OLetItem(-1);
+    item.setVarName(alias);
+    item.setExpression(exp);
+    globalLetClause.addItem(item);
   }
 
   private void addGlobalLet(OIdentifier alias, OStatement stm) {
@@ -328,6 +375,16 @@ public class OSelectExecutionPlanner {
     globalLetClause.addItem(item);
   }
 
+  private void addGlobalLet(OIdentifier alias, OStatement stm, int pos) {
+    if (globalLetClause == null) {
+      globalLetClause = new OLetClause(-1);
+    }
+    OLetItem item = new OLetItem(-1);
+    item.setVarName(alias);
+    item.setQuery(stm);
+    globalLetClause.getItems().add(pos, item);
+  }
+
   private void addRecordLevelLet(OIdentifier alias, OStatement stm) {
     if (perRecordLetClause == null) {
       perRecordLetClause = new OLetClause(-1);
@@ -338,8 +395,22 @@ public class OSelectExecutionPlanner {
     perRecordLetClause.addItem(item);
   }
 
+  private void addRecordLevelLet(OIdentifier alias, OStatement stm, int pos) {
+    if (perRecordLetClause == null) {
+      perRecordLetClause = new OLetClause(-1);
+    }
+    OLetItem item = new OLetItem(-1);
+    item.setVarName(alias);
+    item.setQuery(stm);
+    perRecordLetClause.getItems().add(pos, item);
+  }
+
   private void handleFetchFromTarger(OSelectExecutionPlan result, OCommandContext ctx) {
     if (target == null) {
+      if (perRecordLetClause != null) {
+        handleGlobalLet(result, perRecordLetClause, ctx);
+        perRecordLetClause = null;
+      }
       result.chain(new ProjectionCalculationNoTargetStep(projection, ctx));
       projectionsCalculated = true;
     } else {
@@ -774,6 +845,7 @@ public class OSelectExecutionPlanner {
   private void handleSubqueryAsTarget(OSelectExecutionPlan plan, OStatement subQuery, OCommandContext ctx) {
     OBasicCommandContext subCtx = new OBasicCommandContext();
     subCtx.setDatabase(ctx.getDatabase());
+    subCtx.setParent(ctx);
     OInternalExecutionPlan subExecutionPlan = subQuery.createExecutionPlan(subCtx);
     plan.chain(new SubQueryStep(subExecutionPlan, ctx, subCtx));
   }

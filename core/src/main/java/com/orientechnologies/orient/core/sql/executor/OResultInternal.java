@@ -20,10 +20,13 @@ public class OResultInternal implements OResult {
   }
 
   public <T> T getProperty(String name) {
+    if (content.containsKey(name)) {
+      return (T) content.get(name);
+    }
     if (element != null) {
       return ((ODocument) element.getRecord()).getProperty(name);
     }
-    return (T) content.get(name);
+    return null;
   }
 
   public Set<String> getPropertyNames() {
@@ -44,9 +47,6 @@ public class OResultInternal implements OResult {
   }
 
   @Override public OIdentifiable toElement() {
-    if (element != null) {
-      return element;
-    }
     throw new UnsupportedOperationException("Implement OResultInternal.toElement()!");
   }
 

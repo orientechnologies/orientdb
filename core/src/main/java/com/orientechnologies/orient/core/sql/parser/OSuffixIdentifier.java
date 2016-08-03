@@ -9,8 +9,7 @@ import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class OSuffixIdentifier extends SimpleNode {
 
@@ -84,9 +83,13 @@ public class OSuffixIdentifier extends SimpleNode {
       }
       return null;
     }
-    if (recordAttribute != null) {
+
+    if (recordAttribute != null)
+
+    {
       return iCurrentRecord.getProperty(recordAttribute.name);
     }
+
     return null;
   }
 
@@ -120,6 +123,28 @@ public class OSuffixIdentifier extends SimpleNode {
     return null;
   }
 
+  public Object execute(Iterable iterable, OCommandContext ctx) {
+    if (star) {
+      return null;
+    }
+    List<Object> result = new ArrayList<>();
+    for (Object o : iterable) {
+      result.add(execute(o, ctx));
+    }
+    return result;
+  }
+
+  public Object execute(Iterator iterator, OCommandContext ctx) {
+    if (star) {
+      return null;
+    }
+    List<Object> result = new ArrayList<>();
+    while (iterator.hasNext()) {
+      result.add(execute(iterator.next(), ctx));
+    }
+    return result;
+  }
+
   public Object execute(OCommandContext iCurrentRecord) {
     if (star) {
       return null;
@@ -149,6 +174,12 @@ public class OSuffixIdentifier extends SimpleNode {
     }
     if (currentValue instanceof OCommandContext) {
       return execute((OCommandContext) currentValue);
+    }
+    if (currentValue instanceof Iterable) {
+      return execute((Iterable) currentValue, ctx);
+    }
+    if (currentValue instanceof Iterator) {
+      return execute((Iterator) currentValue, ctx);
     }
     if (currentValue == null) {
       return execute((OResult) null, ctx);

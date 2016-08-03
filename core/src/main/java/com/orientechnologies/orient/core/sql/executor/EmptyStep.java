@@ -12,26 +12,11 @@ public class EmptyStep extends AbstractExecutionStep {
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OInternalResultSet();
   }
 
   @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
-
-  }
-
-  @Override public void sendTimeout() {
-
-  }
-
-  @Override public void setPrevious(OExecutionStepInternal step) {
-
-  }
-
-  @Override public void setNext(OExecutionStepInternal step) {
-
-  }
-
-  @Override public void close() {
 
   }
 

@@ -12,6 +12,8 @@ public class GlobalLetExpressionStep extends AbstractExecutionStep {
   private final OIdentifier varname;
   private final OExpression expression;
 
+  boolean executed = false;
+
   public GlobalLetExpressionStep(OIdentifier varName, OExpression expression, OCommandContext ctx) {
     super(ctx);
     this.varname = varName;
@@ -19,7 +21,18 @@ public class GlobalLetExpressionStep extends AbstractExecutionStep {
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    return null;
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
+    calculate(ctx);
+    return new OInternalResultSet();
+  }
+
+  private void calculate(OCommandContext ctx) {
+    if (executed) {
+      return;
+    }
+    Object value = expression.execute((OResult) null, ctx);
+    ctx.setVariable(varname.getStringValue(), value);
+    executed = true;
   }
 
   @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
@@ -28,5 +41,11 @@ public class GlobalLetExpressionStep extends AbstractExecutionStep {
 
   @Override public void sendResult(Object o, Status status) {
 
+  }
+
+  @Override public String prettyPrint(int depth, int indent) {
+    String spaces = OExecutionStepInternal.getIndent(depth, indent);
+    return spaces + "+ LET (once)\n" +
+        spaces + "  " + varname + " = " + expression;
   }
 }

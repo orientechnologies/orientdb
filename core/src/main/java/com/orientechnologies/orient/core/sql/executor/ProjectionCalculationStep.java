@@ -61,6 +61,6 @@ public class ProjectionCalculationStep extends AbstractExecutionStep {
 
   @Override public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ CALCULATE PROJECTIONS\n"+spaces+"      " + projection.toString() + "";
+    return spaces + "+ CALCULATE PROJECTIONS\n"+spaces+"  " + projection.toString() + "";
   }
 }

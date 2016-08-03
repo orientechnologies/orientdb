@@ -18,4 +18,7 @@ public interface OTodoResultSet {
 
   Map<String, Object> getQueryStats();
 
+  default void reset() {
+    throw new UnsupportedOperationException("Implement RESET on " + getClass().getSimpleName());
+  }
 }

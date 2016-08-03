@@ -64,7 +64,7 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OTodoResultSet() {
 
       int totDispatched = 0;

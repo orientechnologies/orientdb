@@ -39,7 +39,7 @@ public class OLetClause extends SimpleNode {
   }
 
   public void addItem(OLetItem item) {
-
+    this.items.add(item);
   }
 
   public OLetClause copy() {
@@ -77,6 +77,12 @@ public class OLetClause extends SimpleNode {
       }
     }
     return false;
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    for(OLetItem item:items){
+      item.extractSubQueries(collector);
+    }
   }
 }
 

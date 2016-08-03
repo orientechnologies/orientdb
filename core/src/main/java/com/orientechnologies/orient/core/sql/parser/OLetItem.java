@@ -103,5 +103,12 @@ public class OLetItem extends SimpleNode {
   public OStatement getQuery() {
     return query;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    //this is to transform LET expressions with subqueries in simple LET, plus LET with query only, so the direct query is ignored
+    if (expression != null) {
+      expression.extractSubQueries(collector);
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=bb3cd298d79f50d72f6842e6d6ea4fb2 (do not edit this line) */

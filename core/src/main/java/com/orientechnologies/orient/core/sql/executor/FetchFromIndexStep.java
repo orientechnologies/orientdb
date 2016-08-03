@@ -16,7 +16,7 @@ import java.util.*;
  */
 public class FetchFromIndexStep extends AbstractExecutionStep {
   protected final OIndex           index;
-  private final OBinaryCondition additional;
+  private final   OBinaryCondition additional;
 
   OBooleanExpression condition;
 
@@ -33,6 +33,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     init();
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OTodoResultSet() {
       int localCount = 0;
 
@@ -48,6 +49,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
         localCount++;
         OResultInternal result = new OResultInternal();
         result.setElement(record);
+        ctx.setVariable("$current", result);
         return result;
       }
 
@@ -64,17 +66,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     };
   }
 
-  private void init() {
+  private synchronized void init() {
     if (inited) {
       return;
     }
-    synchronized (this) {
-      if (inited) {
-        return;
-      }
-      inited = true;
-      init(condition);
-    }
+    inited = true;
+    init(condition);
   }
 
   private void init(OBooleanExpression condition) {

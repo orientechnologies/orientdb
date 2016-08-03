@@ -15,27 +15,28 @@ import java.util.Optional;
  */
 public class FetchFromClassExecutionStep extends AbstractExecutionStep {
 
-  private final String           className;
+  private final String className;
   FetchFromClusterExecutionStep[] subSteps;
   OTodoResultSet                  currentResultSet;
-  private boolean orderByRidAsc = false;
+  private boolean orderByRidAsc  = false;
   private boolean orderByRidDesc = false;
 
   int currentStep = 0;
 
   /**
    * iterates over a class and its subclasses
+   *
    * @param className the class name
-   * @param ctx the query context
-   * @param ridOrder true to sort by RID asc, false to sort by RID desc, null for no sort.
+   * @param ctx       the query context
+   * @param ridOrder  true to sort by RID asc, false to sort by RID desc, null for no sort.
    */
   public FetchFromClassExecutionStep(String className, OCommandContext ctx, Boolean ridOrder) {
     super(ctx);
 
     this.className = className;
-    if(Boolean.TRUE.equals(ridOrder)){
+    if (Boolean.TRUE.equals(ridOrder)) {
       orderByRidAsc = true;
-    }else if(Boolean.FALSE.equals(ridOrder)){
+    } else if (Boolean.FALSE.equals(ridOrder)) {
       orderByRidDesc = true;
     }
     OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(className);
@@ -70,9 +71,8 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
     }
   }
 
-
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return new OTodoResultSet() {
 
       int totDispatched = 0;
@@ -116,7 +116,9 @@ public class FetchFromClassExecutionStep extends AbstractExecutionStep {
             continue;
           }
           totDispatched++;
-          return currentResultSet.next();
+          OResult result = currentResultSet.next();
+          ctx.setVariable("$current", result);
+          return result;
         }
       }
 

@@ -40,8 +40,9 @@ public class ProjectionCalculationNoTargetStep extends AbstractExecutionStep {
 
   @Override public synchronized OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
     if (!keepRunning) {
-      return null;
+      return new OInternalResultSet();
     }
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     if (calculatedResult == null) {
       calculatedResult = calculate(projection, ctx);
     }
@@ -91,6 +92,6 @@ public class ProjectionCalculationNoTargetStep extends AbstractExecutionStep {
 
   @Override public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ CALCULATE PROJECTIONS (no target)\n"+spaces+"   " + projection.toString() + "";
+    return spaces + "+ CALCULATE PROJECTIONS (no target)\n" + spaces + "  " + projection.toString() + "";
   }
 }

@@ -27,6 +27,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     if (iterator == null) {
       iterator = new ORecordIteratorCluster((ODatabaseDocumentInternal) ctx.getDatabase(),
           (ODatabaseDocumentInternal) ctx.getDatabase(), clusterId);
@@ -68,6 +69,7 @@ public class FetchFromClusterExecutionStep extends AbstractExecutionStep {
         nFetched++;
         OResultInternal result = new OResultInternal();
         result.element = record;
+        ctx.setVariable("$current", result);
         return result;
       }
 

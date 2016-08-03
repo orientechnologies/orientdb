@@ -6,7 +6,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFiltered;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
@@ -71,7 +73,14 @@ public class OMethodCall extends SimpleNode {
       Iterable<OIdentifiable> iPossibleResults) {
     List<Object> paramValues = new ArrayList<Object>();
     for (OExpression expr : iParams) {
-      paramValues.add(expr.execute((OIdentifiable) ctx.getVariable("$current"), ctx));
+      Object val = ctx.getVariable("$current");
+      if (val instanceof OIdentifiable) {
+        paramValues.add(expr.execute((OIdentifiable) val, ctx));
+      } else if (val instanceof OResult) {
+        paramValues.add(expr.execute((OResult) val, ctx));
+      } else {
+        throw new OCommandExecutionException("Invalild value for $current: " + val);
+      }
     }
     if (graphMethods.contains(name)) {
       OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
@@ -86,7 +95,11 @@ public class OMethodCall extends SimpleNode {
     }
     OSQLMethod method = OSQLEngine.getMethod(name);
     if (method != null) {
-      return method.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), ctx, targetObjects, paramValues.toArray());
+      Object val = ctx.getVariable("$current");
+      if (val instanceof OResult) {
+        val = ((OResult) val).getElement();
+      }
+      return method.execute(targetObjects, (OIdentifiable) val, ctx, targetObjects, paramValues.toArray());
     }
     throw new UnsupportedOperationException("OMethod call, something missing in the implementation...?");
 

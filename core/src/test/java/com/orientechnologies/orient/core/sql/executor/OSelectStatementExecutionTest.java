@@ -1701,6 +1701,67 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testLet1() {
+    OTodoResultSet result = db.query("select $a as one, $b as two let $a = 1, $b = 1+1");
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals(1L, item.<Object>getProperty("one"));
+    Assert.assertEquals(2L, item.<Object>getProperty("two"));
+    printExecutionPlan(result);
+    result.close();
+  }
+
+  @Test public void testLet2() {
+    OTodoResultSet result = db.query("select $a as one let $a = (select 1 as a)");
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Object one = item.<Object>getProperty("one");
+    Assert.assertTrue(one instanceof List);
+    Assert.assertEquals(1, ((List) one).size());
+    Object x = ((List) one).get(0);
+    Assert.assertTrue(x instanceof OResult);
+    Assert.assertEquals(1l, (Object) ((OResult) x).getProperty("a"));
+    result.close();
+  }
+
+  @Test public void testLet3() {
+    OTodoResultSet result = db.query("select $a[0].foo as one let $a = (select 1 as foo)");
+    printExecutionPlan(result);
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Object one = item.<Object>getProperty("one");
+    Assert.assertEquals(1l, one);
+    result.close();
+  }
+
+  @Test public void testLet4() {
+    String className = "testLet4";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db
+        .query("select name, surname, $nameAndSurname as fullname from " + className + " let $nameAndSurname = name + ' ' + surname");
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals(item.getProperty("fullname"), item.getProperty("name") + " " + item.getProperty("surname"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   public void stressTestNew() {
     String className = "stressTestNew";
     db.getMetadata().getSchema().createClass(className);

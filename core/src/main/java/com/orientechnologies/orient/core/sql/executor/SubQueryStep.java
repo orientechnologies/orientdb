@@ -25,6 +25,7 @@ public class SubQueryStep extends AbstractExecutionStep {
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
+    getPrev().ifPresent(x -> x.syncPull(ctx, nRecords));
     return subExecuitonPlan.fetchNext(nRecords);
   }
 
