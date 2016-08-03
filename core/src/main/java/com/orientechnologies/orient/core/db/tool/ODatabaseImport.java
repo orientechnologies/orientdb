@@ -1316,6 +1316,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         return null;
       }
 
+      //Incorrect record format , skip this record
+      if (record == null || record.getIdentity() == null) {
+        return null;
+      }
+
       if (schemaImported && record.getIdentity().equals(schemaRecordId)) {
         // JUMP THE SCHEMA
         return null;
