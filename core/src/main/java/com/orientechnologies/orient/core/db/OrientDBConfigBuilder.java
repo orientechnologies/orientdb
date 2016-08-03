@@ -66,4 +66,9 @@ public class OrientDBConfigBuilder {
   public OrientDBConfig build() {
     return new OrientDBConfig(configurations, attributes, listeners);
   }
+
+  public OrientDBConfigBuilder fromContext(OContextConfiguration contextConfiguration) {
+    configurations = contextConfiguration;
+    return this;
+  }
 }

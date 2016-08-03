@@ -36,7 +36,10 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.OEmbeddedDBFactory;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -111,6 +114,7 @@ public class OServer {
   private ClassLoader                                      extensionClassLoader;
   private OTokenHandler                                    tokenHandler;
   private OSystemDatabase                                  systemDatabase;
+  private OEmbeddedDBFactory                               databases;
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
@@ -321,6 +325,8 @@ public class OServer {
     if (!databaseDirectory.endsWith("/"))
       databaseDirectory += "/";
 
+    databases = OrientDBFactory.embedded(this.databaseDirectory, OrientDBConfig.builder().fromContext(contextConfiguration).build());
+    
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
     Orient.instance().getProfiler().registerHookValue("system.databases", "List of databases configured in Server",
@@ -345,7 +351,6 @@ public class OServer {
     try {
       serverSecurity = new ODefaultServerSecurity(this, serverCfg);
       Orient.instance().setSecurity(serverSecurity);
-
       // Checks to see if the OrientDB System Database exists and creates it if not.
       // Make sure this happens after setSecurityFactory() is called.
       initSystemDatabase();
@@ -383,6 +388,7 @@ public class OServer {
 
       } else
         OLogManager.instance().warn(this, "Network configuration was not found");
+
 
       try {
         loadStorages();
@@ -1088,6 +1094,11 @@ public class OServer {
             db.close();
         }
       }
+    for (OServerStorageConfiguration stg : configuration.storages) {
+      if (stg.loadOnStartup)
+        databases.initCustomStorage(stg.name, stg.path, stg.userName, stg.userPassword);
+    }
+    
   }
 
   protected void createDefaultServerUsers() throws IOException {

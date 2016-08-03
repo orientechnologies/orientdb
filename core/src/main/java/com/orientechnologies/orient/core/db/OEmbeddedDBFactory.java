@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -118,7 +119,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     OAbstractPaginatedStorage storage = storages.get(name);
     if (storage == null) {
       storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
-      storages.put("storage", storage);
+      storages.put(name, storage);
     }
     return storage;
   }
@@ -257,6 +258,16 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
           }
         }
     }
+  }
+
+  public synchronized void initCustomStorage(String name, String path, String userName, String userPassword) {
+    boolean exists = OLocalPaginatedStorage.exists(path);
+    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) disk.createStorage(path, new HashMap<>());
+    //TODO: Add Creation settings and parameters
+    if (!exists) {
+      storage.create(this.configurations.getConfigurations());
+    }
+    storages.put(name, storage);      
   }
 
 }
