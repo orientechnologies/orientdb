@@ -383,11 +383,22 @@ public class OCSVExtractorTest extends OETLBaseTest {
     String cfgJson = "{source: { content: { value: 'id\n#1:1'} }, extractor : { csv : {'columns':['id:LINK']} }, loader : { test: {} } }";
     process(cfgJson);
     List<ODocument> res = getResult();
-    assertFalse(res.isEmpty());
-    ODocument doc = res.get(1);
-    System.out.println(doc.toJSON());
+    assertThat(res).hasSize(1);
+    ODocument doc = res.get(0);
 
     assertThat(doc.<String>field("id")).isEqualTo("#1:1");
+
+
+  }
+  @Test
+  public void testBooleanType() {
+    String cfgJson = "{source: { content: { value: 'fake\ntrue'} }, extractor : { csv : {} }, loader : { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+    assertThat(res).hasSize(1);
+    ODocument doc = res.get(0);
+
+    assertThat(doc.<Boolean>field("fake")).isTrue();
 
 
   }

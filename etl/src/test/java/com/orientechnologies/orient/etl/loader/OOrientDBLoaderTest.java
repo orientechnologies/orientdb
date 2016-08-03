@@ -101,14 +101,17 @@ public class OOrientDBLoaderTest extends OETLBaseTest {
     db.command(new OCommandSQL("CREATE Class Person")).execute();
     db.command(new OCommandSQL("CREATE property Person.name STRING")).execute();
     db.command(new OCommandSQL("CREATE property Person.surname STRING")).execute();
+    db.command(new OCommandSQL("CREATE property Person.married BOOLEAN")).execute();
+    db.command(new OCommandSQL("CREATE property Person.birthday DATETIME")).execute();
 
     db.close();
 
     //store data
     process(
-        "{source: { content: { value: 'name,surname,@class\nJay,Miner,Person' } }, extractor : { csv: {} }, loader: { orientdb: {\n"
-            + "      dbURL: \"memory:OETLBaseTest\",\n" + "      dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n"
-            + "      dbAutoCreate: true,\n      tx: false,\n" + "      batchCommit: 1000,\n" + "      wal : false,\n"
+        "{source: { content: { value: 'name,surname,married,birthday\nJay,Miner,false,1970-01-01 05:30:00' } }, "
+            + "extractor : { csv: {columns:['name:string','surname:string','married:boolean','birthday:datetime'], dateFormat :'yyyy-MM-dd HH:mm:ss'} }, loader: { orientdb: {\n"
+            + "      dbURL: \"memory:OETLBaseTest\", class:'Person',     dbUser: \"admin\",\n" + "      dbPassword: \"admin\",\n"
+            + "      dbAutoCreate: false,\n      tx: false,\n" + "      batchCommit: 1000,\n" + "      wal : false,\n"
             + "      dbType: \"document\" } } }");
 
     graph.makeActive();

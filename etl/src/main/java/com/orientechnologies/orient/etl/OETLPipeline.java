@@ -18,21 +18,20 @@
 
 package com.orientechnologies.orient.etl;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
-
-import java.util.List;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.transformer.OTransformer;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+
+import java.util.List;
+
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
 
 /**
  * ETL pipeline: sequence of OTransformer and a OLoader.

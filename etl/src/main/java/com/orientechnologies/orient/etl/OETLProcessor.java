@@ -380,6 +380,7 @@ public class OETLProcessor {
       executor.shutdown();
     } catch (OETLProcessHaltedException e) {
       out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
+
       executor.shutdownNow();
     } catch (Exception e) {
       out(LOG_LEVELS.ERROR, "ETL process has problem: %s", e);

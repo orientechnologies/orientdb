@@ -15,9 +15,13 @@ import java.io.Reader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
 
 /**
  * An extractor based on Apache Commons CSV
@@ -111,7 +115,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
       }
 
       log(OETLProcessor.LOG_LEVELS.INFO, "column types: %s", columnTypes);
-      csvFormat = csvFormat.withHeader(columnNames.toArray(new String[] {}));
+      csvFormat = csvFormat.withHeader(columnNames.toArray(new String[] {})).withSkipHeaderRecord(true);
 
     }
 
@@ -195,7 +199,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
           doc.field(fieldName, fieldValue);
         } catch (Exception e) {
           processor.getStats().incrementErrors();
-          log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s",
+          log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' , value '%s' (class:%s) to type: %s",
               csvRecord.getRecordNumber(), fieldName, fieldValueAsString, fieldValueAsString.getClass().getName(), fieldType);
         }
       }
@@ -210,7 +214,8 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     Object fieldValue;
     if ((fieldValue = transformToDate(fieldStringValue)) == null)// try maybe Date type
       if ((fieldValue = transformToNumeric(fieldStringValue)) == null)// try maybe Numeric type
-        fieldValue = fieldStringValue; // type String
+        if ((fieldValue = transformToBoolean(fieldStringValue)) == null)// try maybe Boolean type
+          fieldValue = fieldStringValue; // type String
     return fieldValue;
   }
 
@@ -224,17 +229,18 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     } catch (ParseException pe) {
       fieldValue = null;
     }
+
     return fieldValue;
   }
 
   private Object transformToNumeric(final String fieldStringValue) {
     if (fieldStringValue.isEmpty())
-      return fieldStringValue;
+      return null;
 
     final char c = fieldStringValue.charAt(0);
     if (c != '-' && !Character.isDigit(c))
       // NOT A NUMBER FOR SURE
-      return fieldStringValue;
+      return null;
 
     Object fieldValue;
     try {
@@ -252,9 +258,15 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
         }
       }
     } catch (NumberFormatException nf) {
-      fieldValue = fieldStringValue;
+      fieldValue = null;
     }
     return fieldValue;
+  }
+
+  private Object transformToBoolean(final String fieldStringValue) {
+    if (fieldStringValue.equalsIgnoreCase(Boolean.FALSE.toString()) || fieldStringValue.equalsIgnoreCase(Boolean.TRUE.toString()))
+      return Boolean.parseBoolean(fieldStringValue);
+    return null;
   }
 
   /**
