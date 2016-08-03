@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -982,6 +983,10 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
           if (fieldValue != null || !indexDefinition.isNullValuesIgnored()) {
             try {
               populateIndex(doc, fieldValue);
+            } catch (OTooBigIndexKeyException e) {
+              OLogManager.instance().error(this,
+                  "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
+                      + " Rebuild will continue from this point", e, fieldValue, doc.getIdentity());
             } catch (OIndexException e) {
               OLogManager.instance().error(this,
                   "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."

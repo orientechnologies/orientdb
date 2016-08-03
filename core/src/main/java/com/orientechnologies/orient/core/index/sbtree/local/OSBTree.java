@@ -25,6 +25,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.OAlwaysLessKey;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -259,9 +260,9 @@ public class OSBTree<K, V> extends ODurableComponent {
 
           final int valueSize = valueSerializer.getObjectSize(value);
           if (keySize > MAX_KEY_SIZE)
-            throw new OSBTreeException(
+            throw new OTooBigIndexKeyException(
                 "Key size is more than allowed, operation was canceled. Current key size " + keySize + ", allowed  " + MAX_KEY_SIZE,
-                this);
+                getName());
 
           final boolean createLinkToTheValue = valueSize > MAX_EMBEDDED_VALUE_SIZE;
 
