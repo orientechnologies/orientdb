@@ -373,5 +373,24 @@ public class OExpression extends SimpleNode {
   public void setMathExpression(OMathExpression mathExpression) {
     this.mathExpression = mathExpression;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (mathExpression != null) {
+      mathExpression.extractSubQueries(collector);
+    }
+    if (json != null) {
+      json.extractSubQueries(collector);
+    }
+  }
+
+  public boolean refersToParent() {
+    if (mathExpression != null && mathExpression.refersToParent()) {
+      return true;
+    }
+    if (json != null && json.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

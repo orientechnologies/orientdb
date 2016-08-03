@@ -95,6 +95,29 @@ public class OContainsValueCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    left.extractSubQueries(collector);
+    if (condition != null) {
+      condition.extractSubQueries(collector);
+    }
+    if (expression != null) {
+      expression.extractSubQueries(collector);
+    }
+  }
+
+  @Override public boolean refersToParent() {
+    if (left != null && left.refersToParent()) {
+      return true;
+    }
+    if (condition != null && condition.refersToParent()) {
+      return true;
+    }
+    if (expression != null && condition.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

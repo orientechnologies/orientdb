@@ -189,5 +189,6 @@ public class OFromItem extends SimpleNode {
     result = 31 * result + (modifier != null ? modifier.hashCode() : 0);
     return result;
   }
+
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

@@ -430,6 +430,21 @@ public class OMathExpression extends SimpleNode {
     return result;
   }
 
+  public void extractSubQueries(SubQueryCollector collector) {
+    for (OMathExpression expr : this.childExpressions) {
+      expr.extractSubQueries(collector);
+    }
+  }
+
+  public boolean refersToParent() {
+    for (OMathExpression expr : this.childExpressions) {
+      if (expr.refersToParent()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

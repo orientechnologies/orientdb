@@ -202,6 +202,16 @@ public class OBaseExpression extends OMathExpression {
     return result;
   }
 
+  public boolean refersToParent() {
+    if(identifier!=null && identifier.refersToParent()){
+      return true;
+    }
+    if(modifier!=null && modifier.refersToParent()){
+      return true;
+    }
+    return false;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

@@ -82,6 +82,17 @@ public class OMatchesCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    expression.extractSubQueries(collector);
+  }
+
+  @Override public boolean refersToParent() {
+    if (expression != null && expression.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

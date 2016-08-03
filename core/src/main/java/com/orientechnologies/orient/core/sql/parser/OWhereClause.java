@@ -263,11 +263,6 @@ public class OWhereClause extends SimpleNode {
     return this.baseExpression.needsAliases(aliases);
   }
 
-  public boolean containsSubqueries() {
-
-    return false;
-  }
-
   public void setBaseExpression(OBooleanExpression baseExpression) {
     this.baseExpression = baseExpression;
   }
@@ -299,6 +294,17 @@ public class OWhereClause extends SimpleNode {
     int result = baseExpression != null ? baseExpression.hashCode() : 0;
     result = 31 * result + (flattened != null ? flattened.hashCode() : 0);
     return result;
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if(baseExpression!=null){
+      baseExpression.extractSubQueries(collector);
+    }
+    flattened = null;
+  }
+
+  public boolean refersToParent() {
+    return baseExpression!=null && baseExpression.refersToParent();
   }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

@@ -133,6 +133,29 @@ public class OContainsAllCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    left.extractSubQueries(collector);
+    if (right != null) {
+      right.extractSubQueries(collector);
+    }
+    if (rightBlock != null) {
+      rightBlock.extractSubQueries(collector);
+    }
+  }
+
+  @Override public boolean refersToParent() {
+    if (left != null && left.refersToParent()) {
+      return true;
+    }
+    if (right != null && right.refersToParent()) {
+      return true;
+    }
+    if (rightBlock != null && rightBlock.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

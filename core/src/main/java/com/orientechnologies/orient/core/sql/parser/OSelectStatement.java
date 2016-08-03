@@ -318,5 +318,26 @@ public class OSelectStatement extends OStatement {
     result = 31 * result + (noCache != null ? noCache.hashCode() : 0);
     return result;
   }
+
+  @Override public boolean refersToParent() {
+    //no FROM, if a subquery refers to parent it does not make sense, so that reference will be just ignored
+
+    if (projection != null && projection.refersToParent()) {
+      return true;
+    }
+    if (whereClause != null && whereClause.refersToParent()) {
+      return true;
+    }
+    if (groupBy != null && groupBy.refersToParent()) {
+      return true;
+    }
+    if (orderBy != null && orderBy.refersToParent()) {
+      return true;
+    }
+    if (letClause != null && letClause.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

@@ -88,6 +88,15 @@ public class OContainsTextCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    left.extractSubQueries(collector);
+    right.extractSubQueries(collector);
+  }
+
+  @Override public boolean refersToParent() {
+    return left.refersToParent() || right.refersToParent();
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

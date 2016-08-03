@@ -55,5 +55,6 @@ public class OFromClause extends SimpleNode {
   @Override public int hashCode() {
     return item != null ? item.hashCode() : 0;
   }
+
 }
 /* JavaCC - OriginalChecksum=051839d20dabfa4cce26ebcbe0d03a86 (do not edit this line) */

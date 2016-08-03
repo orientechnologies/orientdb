@@ -61,5 +61,9 @@ public class OStatement extends SimpleNode {
   public OStatement copy() {
     throw new UnsupportedOperationException("IMPLEMENT copy() ON " + getClass().getSimpleName());
   }
+
+  public boolean refersToParent() {
+    throw new UnsupportedOperationException("Implement " + getClass().getSimpleName() + ".refersToParent()");
+  }
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */

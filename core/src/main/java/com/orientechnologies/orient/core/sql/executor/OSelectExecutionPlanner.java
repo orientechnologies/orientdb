@@ -49,10 +49,10 @@ public class OSelectExecutionPlanner {
     }
 
     this.target = oSelectStatement.getTarget();
-    this.whereClause = oSelectStatement.getWhereClause();
+    this.whereClause = oSelectStatement.getWhereClause() == null ? null : oSelectStatement.getWhereClause().copy();
     this.perRecordLetClause = oSelectStatement.getLetClause();
-    this.groupBy = oSelectStatement.getGroupBy();
-    this.orderBy = oSelectStatement.getOrderBy();
+    this.groupBy = oSelectStatement.getGroupBy() == null ? null : oSelectStatement.getGroupBy().copy();
+    this.orderBy = oSelectStatement.getOrderBy() == null ? null : oSelectStatement.getOrderBy().copy();
     this.skip = oSelectStatement.getSkip();
     this.limit = oSelectStatement.getLimit();
   }
@@ -144,6 +144,7 @@ public class OSelectExecutionPlanner {
   }
 
   private void optimizeQuery() {
+    extractSubQueries();
     if (projection != null && this.projection.isExpand()) {
       expand = true;
       this.projection = projection.getExpandContent();
@@ -156,7 +157,6 @@ public class OSelectExecutionPlanner {
 
     extractAggregateProjections();
     addOrderByProjections();
-    extractSubQueries();
   }
 
   /**
@@ -278,7 +278,7 @@ public class OSelectExecutionPlanner {
         OProjectionItem newItem = new OProjectionItem(-1);
         newItem.setExpression(exp);
         OIdentifier groupByAlias = new OIdentifier(-1);
-        groupByAlias.setStringValue("__$$$GROUP_BY_ALIAS$$$__" + i);
+        groupByAlias.setStringValue("_$$$GROUP_BY_ALIAS$$$_" + i);
         newItem.setAlias(groupByAlias);
         preAggregateProjection.getItems().add(newItem);
         newGroupBy.getItems().add(new OExpression(groupByAlias));
@@ -293,10 +293,49 @@ public class OSelectExecutionPlanner {
    * translates subqueries to LET statements
    */
   private void extractSubQueries() {
-    if (whereClause != null && whereClause.containsSubqueries()) {
-      //      whereClause.extractSubQueries(ctx);
-      //TODO
+    SubQueryCollector collector = new SubQueryCollector();
+    if (whereClause != null) {
+      whereClause.extractSubQueries(collector);
     }
+    if (projection != null) {
+      projection.extractSubQueries(collector);
+    }
+    if (orderBy != null) {
+      orderBy.extractSubQueries(collector);
+    }
+    if (groupBy != null) {
+      groupBy.extractSubQueries(collector);
+    }
+
+    for (Map.Entry<OIdentifier, OStatement> entry : collector.getSubQueries().entrySet()) {
+      OIdentifier alias = entry.getKey();
+      OStatement query = entry.getValue();
+      if (query.refersToParent()) {
+        addGlobalLet(alias, query);
+      } else {
+        addRecordLevelLet(alias, query);
+      }
+    }
+  }
+
+  private void addGlobalLet(OIdentifier alias, OStatement stm) {
+    if (globalLetClause == null) {
+      globalLetClause = new OLetClause(-1);
+    }
+    OLetItem item = new OLetItem(-1);
+    item.setVarName(alias);
+    item.setQuery(stm);
+    globalLetClause.addItem(item);
+  }
+
+  private void addRecordLevelLet(OIdentifier alias, OStatement stm) {
+    if (perRecordLetClause == null) {
+      perRecordLetClause = new OLetClause(-1);
+    }
+    OLetItem item = new OLetItem(-1);
+    item.setVarName(alias);
+    item.setQuery(stm);
+    perRecordLetClause.addItem(item);
   }
 
   private void handleFetchFromTarger(OSelectExecutionPlan result, OCommandContext ctx) {
@@ -403,13 +442,27 @@ public class OSelectExecutionPlanner {
 
   private void handleGlobalLet(OSelectExecutionPlan result, OLetClause letClause, OCommandContext ctx) {
     if (letClause != null) {
-      //TODO
+      List<OLetItem> items = letClause.getItems();
+      for (OLetItem item : items) {
+        if (item.getExpression() != null) {
+          result.chain(new GlobalLetExpressionStep(item.getVarName(), item.getExpression(), ctx));
+        } else {
+          result.chain(new GlobalLetQueryStep(item.getVarName(), item.getQuery(), ctx));
+        }
+      }
     }
   }
 
   private void handleLet(OSelectExecutionPlan result, OLetClause letClause, OCommandContext ctx) {
     if (letClause != null) {
-      //TODO
+      List<OLetItem> items = letClause.getItems();
+      for (OLetItem item : items) {
+        if (item.getExpression() != null) {
+          result.chain(new LetExpressionStep(item.getVarName(), item.getExpression(), ctx));
+        } else {
+          result.chain(new LetQueryStep(item.getVarName(), item.getQuery(), ctx));
+        }
+      }
     }
   }
 

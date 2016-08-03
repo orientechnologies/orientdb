@@ -69,6 +69,14 @@ public class OParenthesisBlock extends OBooleanExpression {
     return result;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    this.subElement.extractSubQueries(collector);
+  }
+
+  @Override public boolean refersToParent() {
+    return subElement.refersToParent();
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

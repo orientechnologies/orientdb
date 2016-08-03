@@ -84,5 +84,24 @@ public class OOrderBy extends SimpleNode {
   @Override public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if(items!=null){
+      for(OOrderByItem item:items){
+        item.extractSubQueries(collector);
+      }
+    }
+  }
+
+  public boolean refersToParent() {
+    if(items!=null){
+      for(OOrderByItem item:items){
+        if(item.refersToParent()){
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=d5529400217169f15e556e5dc6fe4f5b (do not edit this line) */

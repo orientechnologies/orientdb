@@ -202,5 +202,20 @@ public class OAndBlock extends OBooleanExpression {
     return true;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    for (OBooleanExpression exp : subBlocks) {
+      exp.extractSubQueries(collector);
+    }
+  }
+
+  @Override public boolean refersToParent() {
+    for (OBooleanExpression exp : subBlocks) {
+      if(exp.refersToParent()){
+        return true;
+      }
+    }
+    return false;
+  }
+
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */

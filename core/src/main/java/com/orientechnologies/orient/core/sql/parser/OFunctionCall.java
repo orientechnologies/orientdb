@@ -277,5 +277,16 @@ public class OFunctionCall extends SimpleNode {
     result = 31 * result + (params != null ? params.hashCode() : 0);
     return result;
   }
+
+  public boolean refersToParent() {
+    if(params!=null){
+      for(OExpression param:params){
+        if(param!=null && param.refersToParent()){
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */

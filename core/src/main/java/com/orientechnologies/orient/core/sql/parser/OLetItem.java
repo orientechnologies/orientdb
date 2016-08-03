@@ -45,6 +45,18 @@ public class OLetItem extends SimpleNode {
     return result;
   }
 
+  public void setVarName(OIdentifier varName) {
+    this.varName = varName;
+  }
+
+  public void setExpression(OExpression expression) {
+    this.expression = expression;
+  }
+
+  public void setQuery(OStatement query) {
+    this.query = query;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;
@@ -68,6 +80,28 @@ public class OLetItem extends SimpleNode {
     result = 31 * result + (expression != null ? expression.hashCode() : 0);
     result = 31 * result + (query != null ? query.hashCode() : 0);
     return result;
+  }
+
+  public boolean refersToParent() {
+    if (expression != null && expression.refersToParent()) {
+      return true;
+    }
+    if (query != null && query.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
+  public OIdentifier getVarName() {
+    return varName;
+  }
+
+  public OExpression getExpression() {
+    return expression;
+  }
+
+  public OStatement getQuery() {
+    return query;
   }
 }
 /* JavaCC - OriginalChecksum=bb3cd298d79f50d72f6842e6d6ea4fb2 (do not edit this line) */

@@ -133,6 +133,31 @@ public class OInCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    if (left != null) {
+      left.extractSubQueries(collector);
+    } else if (rightMathExpression != null) {
+      rightMathExpression.extractSubQueries(collector);
+    } else if (rightStatement != null) {
+      OIdentifier alias = collector.addStatement(rightStatement);
+      rightMathExpression = new OBaseExpression(alias);
+      rightStatement = null;
+    }
+  }
+
+  @Override public boolean refersToParent() {
+    if (left != null && left.refersToParent()) {
+      return true;
+    }
+    if (rightStatement != null && rightStatement.refersToParent()) {
+      return true;
+    }
+    if (rightMathExpression != null && rightMathExpression.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

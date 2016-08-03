@@ -61,7 +61,9 @@ public class AggregateProjectionSplit {
     this.aggregate = aggregate;
   }
 
-
+  /**
+   * clean the content, but NOT the counter!
+   */
   public void reset() {
     this.preAggregate.clear();
     this.aggregate.clear();

@@ -159,5 +159,20 @@ public class OJson extends SimpleNode {
   @Override public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    for (OJsonItem item : items) {
+      item.extractSubQueries(collector);
+    }
+  }
+
+  public boolean refersToParent() {
+    for (OJsonItem item : items) {
+      if (item.refersToParent()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=3beec9f6db486de944498588b51a505d (do not edit this line) */

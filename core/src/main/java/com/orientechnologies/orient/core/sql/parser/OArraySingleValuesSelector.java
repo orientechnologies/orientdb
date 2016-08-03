@@ -99,5 +99,24 @@ public class OArraySingleValuesSelector extends SimpleNode {
   @Override public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (items != null) {
+      for (OArraySelector item : items) {
+        item.extractSubQueries(collector);
+      }
+    }
+  }
+
+  public boolean refersToParent() {
+    if (items != null) {
+      for (OArraySelector item : items) {
+        if (item.refersToParent()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=991998c77a4831184b6dca572513fd8d (do not edit this line) */

@@ -125,6 +125,37 @@ public class OIndexMatchCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    if (leftExpressions != null) {
+      for (OExpression exp : leftExpressions) {
+        exp.extractSubQueries(collector);
+      }
+    }
+    if (rightExpressions != null) {
+      for (OExpression exp : rightExpressions) {
+        exp.extractSubQueries(collector);
+      }
+    }
+  }
+
+  @Override public boolean refersToParent() {
+    if (leftExpressions != null) {
+      for (OExpression exp : leftExpressions) {
+        if (exp != null && exp.refersToParent()) {
+          return true;
+        }
+      }
+    }
+    if (rightExpressions != null) {
+      for (OExpression exp : rightExpressions) {
+        if (exp != null && exp.refersToParent()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

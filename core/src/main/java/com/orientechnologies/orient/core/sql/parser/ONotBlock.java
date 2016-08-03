@@ -110,6 +110,14 @@ public class ONotBlock extends OBooleanExpression {
     return result;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    sub.extractSubQueries(collector);
+  }
+
+  @Override public boolean refersToParent() {
+    return sub.refersToParent();
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

@@ -179,5 +179,24 @@ public class OArrayRangeSelector extends SimpleNode {
     result = 31 * result + (toSelector != null ? toSelector.hashCode() : 0);
     return result;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if(fromSelector!=null){
+      fromSelector.extractSubQueries(collector);
+    }
+    if(toSelector!=null){
+      toSelector.extractSubQueries(collector);
+    }
+  }
+
+  public boolean refersToParent() {
+    if(fromSelector!=null && fromSelector.refersToParent()){
+      return true;
+    }
+    if(toSelector!=null && toSelector.refersToParent()){
+      return true;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=594a372e31fcbcd3ed962c2260e76468 (do not edit this line) */

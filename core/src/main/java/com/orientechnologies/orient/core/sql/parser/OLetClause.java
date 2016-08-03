@@ -38,10 +38,18 @@ public class OLetClause extends SimpleNode {
     }
   }
 
+  public void addItem(OLetItem item) {
+
+  }
+
   public OLetClause copy() {
     OLetClause result = new OLetClause(-1);
     result.items = items.stream().map(x -> x.copy()).collect(Collectors.toList());
     return result;
+  }
+
+  public List<OLetItem> getItems() {
+    return items;
   }
 
   @Override public boolean equals(Object o) {
@@ -60,6 +68,15 @@ public class OLetClause extends SimpleNode {
 
   @Override public int hashCode() {
     return items != null ? items.hashCode() : 0;
+  }
+
+  public boolean refersToParent() {
+    for (OLetItem item : items) {
+      if (item.refersToParent()) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 

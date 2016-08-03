@@ -56,6 +56,14 @@ public abstract class OBooleanExpression extends SimpleNode {
     @Override public boolean isEmpty() {
       return false;
     }
+
+    @Override public void extractSubQueries(SubQueryCollector collector) {
+
+    }
+
+    @Override public boolean refersToParent() {
+      return false;
+    }
   };
 
   public static final OBooleanExpression FALSE = new OBooleanExpression(0) {
@@ -96,6 +104,14 @@ public abstract class OBooleanExpression extends SimpleNode {
     }
 
     @Override public boolean isEmpty() {
+      return false;
+    }
+
+    @Override public void extractSubQueries(SubQueryCollector collector) {
+
+    }
+
+    @Override public boolean refersToParent() {
       return false;
     }
   };
@@ -159,4 +175,8 @@ public abstract class OBooleanExpression extends SimpleNode {
   public boolean isEmpty() {
     return false;
   }
+
+  public abstract void extractSubQueries(SubQueryCollector collector);
+
+  public abstract boolean refersToParent();
 }

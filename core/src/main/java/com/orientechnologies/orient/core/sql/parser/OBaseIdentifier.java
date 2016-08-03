@@ -204,5 +204,15 @@ public class OBaseIdentifier extends SimpleNode {
     result = 31 * result + (suffix != null ? suffix.hashCode() : 0);
     return result;
   }
+
+  public boolean refersToParent() {
+    if(levelZero!=null && levelZero.refersToParent()){
+      return true;
+    }
+    if(suffix!=null && suffix.refersToParent()){
+      return true;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

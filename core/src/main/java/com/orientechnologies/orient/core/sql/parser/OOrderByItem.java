@@ -117,4 +117,20 @@ public class OOrderByItem {
     result.type = type;
     return result;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (modifier != null) {
+      modifier.extractSubQueries(collector);
+    }
+  }
+
+  public boolean refersToParent() {
+    if (alias != null && alias.equalsIgnoreCase("$parent")) {
+      return true;
+    }
+    if (modifier != null && modifier.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
 }

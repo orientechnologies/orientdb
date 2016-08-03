@@ -169,5 +169,24 @@ public class OMethodCall extends SimpleNode {
     result = 31 * result + (params != null ? params.hashCode() : 0);
     return result;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (params != null) {
+      for (OExpression param : params) {
+        param.extractSubQueries(collector);
+      }
+    }
+  }
+
+  public boolean refersToParent() {
+    if (params != null) {
+      for (OExpression exp : params) {
+        if (exp.refersToParent()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=da95662da21ceb8dee3ad88c0d980413 (do not edit this line) */

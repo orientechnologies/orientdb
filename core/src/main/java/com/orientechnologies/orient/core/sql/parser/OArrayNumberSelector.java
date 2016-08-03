@@ -124,5 +124,18 @@ public class OArrayNumberSelector extends SimpleNode {
     result = 31 * result + (integer != null ? integer.hashCode() : 0);
     return result;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (expressionValue != null) {
+      expressionValue.extractSubQueries(collector);
+    }
+  }
+
+  public boolean refersToParent() {
+    if (expressionValue != null && expressionValue.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=5b2e495391ede3ccdc6c25aa63c8e591 (do not edit this line) */

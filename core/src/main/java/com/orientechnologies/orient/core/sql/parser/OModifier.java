@@ -197,5 +197,47 @@ public class OModifier extends SimpleNode {
     result = 31 * result + (next != null ? next.hashCode() : 0);
     return result;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (arrayRange != null) {
+      arrayRange.extractSubQueries(collector);
+    }
+    if (condition != null) {
+      condition.extractSubQueries(collector);
+    }
+    if (arraySingleValues != null) {
+      arraySingleValues.extractSubQueries(collector);
+    }
+    if (methodCall != null) {
+      methodCall.extractSubQueries(collector);
+    }
+    if (suffix != null) {
+      suffix.extractSubQueries(collector);
+    }
+    if (next != null) {
+      next.extractSubQueries(collector);
+    }
+
+  }
+
+  public boolean refersToParent() {
+    if (arrayRange != null && arrayRange.refersToParent()) {
+      return true;
+    }
+    if (condition != null && condition.refersToParent()) {
+      return true;
+    }
+
+    if (arraySingleValues != null && arraySingleValues.refersToParent()) {
+      return true;
+    }
+    if (methodCall != null && methodCall.refersToParent()) {
+      return true;
+    }
+    if (suffix != null && suffix.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

@@ -109,6 +109,30 @@ public class OParenthesisExpression extends OMathExpression {
     return result;
   }
 
+  public void setStatement(OStatement statement) {
+    this.statement = statement;
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (expression != null) {
+      expression.extractSubQueries(collector);
+    } else if (statement != null) {
+      OIdentifier alias = collector.addStatement(statement);
+      statement = null;
+      expression = new OExpression(alias);
+    }
+  }
+
+  public boolean refersToParent() {
+    if (expression != null && expression.refersToParent()) {
+      return true;
+    }
+    if (statement != null && statement.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

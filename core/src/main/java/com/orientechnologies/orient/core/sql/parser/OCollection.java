@@ -44,7 +44,7 @@ public class OCollection extends SimpleNode {
     builder.append("]");
   }
 
-  public void add(OExpression exp){
+  public void add(OExpression exp) {
     this.expressions.add(exp);
   }
 
@@ -129,6 +129,17 @@ public class OCollection extends SimpleNode {
 
   @Override public int hashCode() {
     return expressions != null ? expressions.hashCode() : 0;
+  }
+
+  public boolean refersToParent() {
+    if (expressions != null) {
+      for (OExpression exp : expressions) {
+        if (exp != null && exp.refersToParent()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=c93b20138b2ae58c5f76e458c34b5946 (do not edit this line) */

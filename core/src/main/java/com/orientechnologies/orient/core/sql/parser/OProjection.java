@@ -49,7 +49,7 @@ public class OProjection extends SimpleNode {
     }
     boolean first = true;
 
-    if(distinct){
+    if (distinct) {
       builder.append("DISTINCT ");
     }
     // print * before
@@ -163,6 +163,23 @@ public class OProjection extends SimpleNode {
 
   public void setDistinct(boolean distinct) {
     this.distinct = distinct;
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (items != null) {
+      for (OProjectionItem item : items) {
+        item.extractSubQueries(collector);
+      }
+    }
+  }
+
+  public boolean refersToParent() {
+    for (OProjectionItem item : items) {
+      if (item.refersToParent()) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

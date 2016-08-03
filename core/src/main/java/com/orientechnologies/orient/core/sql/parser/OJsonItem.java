@@ -69,4 +69,12 @@ public class OJsonItem {
     result.right = right.copy();
     return result;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    right.extractSubQueries(collector);
+  }
+
+  public boolean refersToParent() {
+    return right != null && right.refersToParent();
+  }
 }

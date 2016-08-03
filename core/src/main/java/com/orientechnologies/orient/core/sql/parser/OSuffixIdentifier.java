@@ -193,5 +193,16 @@ public class OSuffixIdentifier extends SimpleNode {
     result = 31 * result + (star ? 1 : 0);
     return result;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+
+  }
+
+  public boolean refersToParent() {
+    if (identifier != null && identifier.getStringValue().equalsIgnoreCase("$parent")) {
+      return true;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

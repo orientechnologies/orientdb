@@ -60,6 +60,17 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    this.expression.extractSubQueries(collector);
+  }
+
+  @Override public boolean refersToParent() {
+    if (expression != null && expression.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     expression.toString(params, builder);
     builder.append(" is not defined");

@@ -124,6 +124,15 @@ public class OBinaryCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    left.extractSubQueries(collector);
+    right.extractSubQueries(collector);
+  }
+
+  @Override public boolean refersToParent() {
+    return left.refersToParent() || right.refersToParent();
+  }
+
   public OExpression getLeft() {
     return left;
   }

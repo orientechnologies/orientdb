@@ -88,13 +88,13 @@ public class OArraySelector extends SimpleNode {
     return false;
   }
 
-  public OArraySelector copy(){
+  public OArraySelector copy() {
     OArraySelector result = new OArraySelector(-1);
 
-    result.rid = rid==null?null:rid.copy();
-    result.inputParam = inputParam==null?null:inputParam.copy();
-    result.expression = expression==null?null:expression.copy();
-    result.integer = integer==null?null:integer.copy();
+    result.rid = rid == null ? null : rid.copy();
+    result.inputParam = inputParam == null ? null : inputParam.copy();
+    result.expression = expression == null ? null : expression.copy();
+    result.integer = integer == null ? null : integer.copy();
 
     return result;
   }
@@ -125,6 +125,19 @@ public class OArraySelector extends SimpleNode {
     result = 31 * result + (expression != null ? expression.hashCode() : 0);
     result = 31 * result + (integer != null ? integer.hashCode() : 0);
     return result;
+  }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (expression != null) {
+      expression.extractSubQueries(collector);
+    }
+  }
+
+  public boolean refersToParent() {
+    if (expression != null && expression.refersToParent()) {
+      return true;
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=f87a5543b1dad0fb5f6828a0663a7c9e (do not edit this line) */

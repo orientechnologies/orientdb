@@ -205,5 +205,15 @@ public class OLevelZeroIdentifier extends SimpleNode {
   public void setCollection(OCollection collection) {
     this.collection = collection;
   }
+
+  public boolean refersToParent() {
+    if(functionCall!=null && functionCall.refersToParent()){
+      return true;
+    }
+    if(collection!=null && collection.refersToParent()){
+      return true;
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */

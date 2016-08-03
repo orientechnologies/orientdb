@@ -83,6 +83,17 @@ public class OInstanceofCondition extends OBooleanExpression {
     return result;
   }
 
+  @Override public void extractSubQueries(SubQueryCollector collector) {
+    left.extractSubQueries(collector);
+  }
+
+  @Override public boolean refersToParent() {
+    if (left != null && left.refersToParent()) {
+      return true;
+    }
+    return false;
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;

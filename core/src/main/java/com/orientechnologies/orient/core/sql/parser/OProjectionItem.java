@@ -198,5 +198,18 @@ public class OProjectionItem extends SimpleNode {
     result = 31 * result + (aggregate != null ? aggregate.hashCode() : 0);
     return result;
   }
+
+  public void extractSubQueries(SubQueryCollector collector) {
+    if (expression != null) {
+      expression.extractSubQueries(collector);
+    }
+  }
+
+  public boolean refersToParent() {
+    if(expression!=null){
+      return expression.refersToParent();
+    }
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */
