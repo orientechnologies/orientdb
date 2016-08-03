@@ -36,9 +36,9 @@ public abstract class OSequence extends ODocumentWrapper {
   private static final String FIELD_TYPE        = "type";
 
   public static class CreateParams {
-    public Long    start;
-    public Integer increment;
-    public Integer cacheSize;
+    public Long    start = DEFAULT_START;
+    public Integer increment = DEFAULT_INCREMENT;
+    public Integer cacheSize = DEFAULT_CACHE;
 
     public CreateParams setStart(Long start) {
       this.start = start;
