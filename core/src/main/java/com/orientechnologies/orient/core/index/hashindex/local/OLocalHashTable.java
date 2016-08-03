@@ -3,9 +3,12 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OLocalHashTableException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -79,6 +82,8 @@ import java.util.List;
  * @since 12.03.13
  */
 public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTable<K, V> {
+  private static final int MAX_KEY_SIZE = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+
   private static final long HASH_CODE_MIN_VALUE = 0;
   private static final long HASH_CODE_MAX_VALUE = 0xFFFFFFFFFFFFFFFFL;
 
@@ -329,8 +334,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
             OCacheEntry cacheEntry = loadPage(atomicOperation, nullBucketFileId, 0, false);
             cacheEntry.acquireSharedLock();
             try {
-              ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, valueSerializer,
-                  false);
+              ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, valueSerializer, false);
               result = nullBucket.getValue();
             } finally {
               cacheEntry.releaseSharedLock();
@@ -355,7 +359,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
             OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
             cacheEntry.acquireSharedLock();
             try {
-              final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(cacheEntry, keySerializer, valueSerializer, keyTypes);
+              final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(cacheEntry, keySerializer, valueSerializer,
+                  keyTypes);
 
               OHashIndexBucket.Entry<K, V> entry = bucket.find(key, hashCode);
               if (entry == null)
@@ -400,6 +405,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
       try {
 
         checkNullSupport(key);
+
+        if (key != null) {
+          final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
+          if (keySize > MAX_KEY_SIZE)
+            throw new OTooBigIndexKeyException(
+                "Key size is more than allowed, operation was canceled. Current key size " + keySize + ", allowed  " + MAX_KEY_SIZE,
+                getName());
+        }
 
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
