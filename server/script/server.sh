@@ -97,6 +97,10 @@ if [ -z "$ORIENTDB_OPTS_MEMORY" ] ; then
     ORIENTDB_OPTS_MEMORY="-Xms512m -Xmx512m"
 fi
 
+if [ -z "$JAVA_OPTS_SCRIPT" ] ; then
+    JAVA_OPTS_SCRIPT="-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -XX:MaxDirectMemorySize=512g -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9"
+fi
+
 # ORIENTDB SETTINGS LIKE DISKCACHE, ETC
 if [ -z "$ORIENTDB_SETTINGS" ]; then
     ORIENTDB_SETTINGS="" # HERE YOU CAN PUT YOUR DEFAULT SETTINGS
