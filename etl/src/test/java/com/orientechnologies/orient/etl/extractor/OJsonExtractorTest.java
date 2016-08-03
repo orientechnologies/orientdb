@@ -18,12 +18,11 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLBaseTest;
+import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * Tests ETL JSON Extractor.
@@ -54,6 +53,19 @@ public class OJsonExtractorTest extends OETLBaseTest {
     assertEquals(2, doc.fields());
     assertEquals("Jay", doc.field("name"));
     assertEquals("Miner", doc.field("surname"));
+  }
+
+  @Test
+  public void shouldMapFieldTypes() {
+    process(
+        "{source: { content: { value: { name: 'Jay', surname: 'Miner', married: false , birthday: '1972-08-21 12:00:00'} } }, extractor : { json: {} }, loader: { test: {} } }");
+    assertEquals(1, getResult().size());
+    ODocument doc = getResult().get(0);
+    assertEquals(4, doc.fields());
+    assertEquals("Jay", doc.field("name"));
+    assertEquals("Miner", doc.field("surname"));
+    assertEquals(false, doc.field("married"));
+    assertEquals("1972-08-21 12:00:00", doc.field("birthday"));
   }
 
   @Test
