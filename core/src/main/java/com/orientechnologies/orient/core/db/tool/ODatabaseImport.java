@@ -1333,6 +1333,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           throw OException.wrapException(new ODatabaseImportException("Error on importing record"), e);
       }
 
+      //Incorrect record format , skip this record
+      if (record == null || record.getIdentity() == null) {
+        return null;
+      }
+
       if (schemaImported && record.getIdentity().equals(schemaRecordId)) {
         // JUMP THE SCHEMA
         return null;
