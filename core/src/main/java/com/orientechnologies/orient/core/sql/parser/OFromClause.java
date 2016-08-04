@@ -35,7 +35,7 @@ public class OFromClause extends SimpleNode {
   public OFromClause copy() {
     OFromClause result= new OFromClause(-1);
     result.item = item.copy();
-    return null;
+    return result;
   }
 
   @Override public boolean equals(Object o) {
