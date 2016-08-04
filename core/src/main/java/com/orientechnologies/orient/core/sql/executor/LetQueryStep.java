@@ -87,7 +87,7 @@ public class LetQueryStep extends AbstractExecutionStep {
 
   @Override public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
-    return spaces + "+ LET\n" +
+    return spaces + "+ LET (for each record)\n" +
         spaces + "  " + varName + " = (" + query + ")";
   }
 }

@@ -15,15 +15,19 @@ import java.util.List;
  */
 public class GlobalLetQueryStep extends AbstractExecutionStep {
 
-  private final OIdentifier varName;
-  private final OStatement  query;
+  private final OIdentifier            varName;
+  private final OInternalExecutionPlan subExecutionPlan;
 
   boolean executed = false;
 
   public GlobalLetQueryStep(OIdentifier varName, OStatement query, OCommandContext ctx) {
     super(ctx);
     this.varName = varName;
-    this.query = query;
+
+    OBasicCommandContext subCtx = new OBasicCommandContext();
+    subCtx.setDatabase(ctx.getDatabase());
+    subCtx.setParent(ctx);
+    subExecutionPlan = query.createExecutionPlan(subCtx);
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
@@ -36,11 +40,6 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
     if (executed) {
       return;
     }
-    OBasicCommandContext subCtx = new OBasicCommandContext();
-    subCtx.setDatabase(ctx.getDatabase());
-    subCtx.setParent(ctx);
-    OInternalExecutionPlan subExecutionPlan = query.createExecutionPlan(subCtx);
-    //TODO lazy?
     ctx.setVariable(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
     executed = true;
   }
@@ -65,6 +64,22 @@ public class GlobalLetQueryStep extends AbstractExecutionStep {
   @Override public String prettyPrint(int depth, int indent) {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ LET (once)\n" +
-        spaces + "  " + varName + " = (" + query + ")";
+        spaces + "  " + varName + " = \n" + box(spaces+"    ", this.subExecutionPlan.prettyPrint(0, indent));
+  }
+
+  private String box(String spaces, String s) {
+    String[] rows = s.split("\n");
+    StringBuilder result = new StringBuilder();
+    result.append(spaces);
+    result.append("+-------------------------\n");
+    for(String row:rows){
+      result.append(spaces);
+      result.append("| ");
+      result.append(row);
+      result.append("\n");
+    }
+    result.append(spaces);
+    result.append("+-------------------------");
+    return result.toString();
   }
 }
