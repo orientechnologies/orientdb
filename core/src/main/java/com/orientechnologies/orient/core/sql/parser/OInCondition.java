@@ -2,9 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +45,46 @@ public class OInCondition extends OBooleanExpression {
   }
 
   @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
-    throw new UnsupportedOperationException("TODO Implement IN!!!");//TODO
+    Object leftVal = left.execute(currentRecord, ctx);
+    Object rightVal = null;
+    if (rightStatement != null) {
+      throw new UnsupportedOperationException("TODO Implement IN for statements!!!");
+    } else if (rightParam != null) {
+      rightVal = rightParam.bindFromInputParams(ctx.getInputParameters());
+    } else if (rightMathExpression != null) {
+      rightVal = rightMathExpression.execute(currentRecord, ctx);
+    }
+    if (rightVal == null) {
+      return false;
+    }
+    return evaluateExpression(leftVal, rightVal);
+  }
+
+  protected boolean evaluateExpression(final Object iLeft, final Object iRight) {
+    if (OMultiValue.isMultiValue(iRight)) {
+      if (iRight instanceof Set<?>)
+        return ((Set) iRight).contains(iLeft);
+
+      for (final Object o : OMultiValue.getMultiValueIterable(iRight, false)) {
+        if (OQueryOperatorEquals.equals(iLeft, o))
+          return true;
+      }
+    } else if (iRight.getClass().isArray()) {
+
+      for (final Object o : (Object[]) iRight) {
+        if (OQueryOperatorEquals.equals(iLeft, o))
+          return true;
+      }
+    } else if (iRight instanceof OTodoResultSet) {
+      OTodoResultSet rsRight = (OTodoResultSet) iRight;
+      rsRight.reset();
+      while (((OTodoResultSet) iRight).hasNext()) {
+        if (OQueryOperatorEquals.equals(iLeft, rsRight.next())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -136,9 +178,11 @@ public class OInCondition extends OBooleanExpression {
   @Override public void extractSubQueries(SubQueryCollector collector) {
     if (left != null) {
       left.extractSubQueries(collector);
-    } else if (rightMathExpression != null) {
+    }
+    if (rightMathExpression != null) {
       rightMathExpression.extractSubQueries(collector);
-    } else if (rightStatement != null) {
+    }
+    if (rightStatement != null) {
       OIdentifier alias = collector.addStatement(rightStatement);
       rightMathExpression = new OBaseExpression(alias);
       rightStatement = null;

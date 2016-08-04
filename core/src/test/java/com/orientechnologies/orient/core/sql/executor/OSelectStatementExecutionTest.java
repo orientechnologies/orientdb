@@ -1749,14 +1749,38 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db
-        .query("select name, surname, $nameAndSurname as fullname from " + className + " let $nameAndSurname = name + ' ' + surname");
+    OTodoResultSet result = db.query(
+        "select name, surname, $nameAndSurname as fullname from " + className + " let $nameAndSurname = name + ' ' + surname");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals(item.getProperty("fullname"), item.getProperty("name") + " " + item.getProperty("surname"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testLet5() {
+    String className = "testLet5";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db
+        .query("select from " + className + " where name in (select name from " + className + " where name = 'name1')");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("name1", item.getProperty("name"));
     }
     Assert.assertFalse(result.hasNext());
     result.close();
