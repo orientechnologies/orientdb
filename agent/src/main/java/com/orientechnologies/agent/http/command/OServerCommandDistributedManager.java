@@ -17,11 +17,11 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
@@ -69,24 +69,21 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     if (command.equalsIgnoreCase("database")) {
 
-      final OHazelcastPlugin manager = (OHazelcastPlugin) server.getDistributedManager();
+      String jsonContent = iRequest.content;
 
-      manager.executeInDistributedDatabaseLock(id, 0, new OCallable<Object, ODistributedConfiguration>() {
-        @Override
-        public Object call(final ODistributedConfiguration cfg) {
-          final ODocument doc = cfg.getDocument().fromJSON(iRequest.content, "noMap");
-
-          Integer version = doc.field("version");
-          version++;
-          doc.field("version", version);
-
-          return null;
-        }
-      });
+      changeConfig(server, id, jsonContent);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
 
     }
+  }
+
+  public void changeConfig(OServer server, String database, final String jsonContent) {
+    final OHazelcastPlugin manager = (OHazelcastPlugin) server.getDistributedManager();
+    ODistributedConfiguration databaseConfiguration = manager.getDatabaseConfiguration(database);
+    ODocument cfg = databaseConfiguration.getDocument().fromJSON(jsonContent, "noMap");
+    cfg.field("version", (Integer) cfg.field("version") + 1);
+    manager.updateCachedDatabaseConfiguration(database, cfg, true, true);
   }
 
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String[] parts) throws IOException {
@@ -104,7 +101,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     } else if (command.equalsIgnoreCase("database")) {
 
-      doc = doGetDatabaseInfo(manager, id);
+      doc = doGetDatabaseInfo(server, id);
 
     } else if (command.equalsIgnoreCase("stats")) {
 
@@ -137,9 +134,9 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, doc.toJSON(""), null);
   }
 
-  private ODocument doGetDatabaseInfo(ODistributedServerManager manager, String id) {
+  public ODocument doGetDatabaseInfo(OServer server, String id) {
     ODocument doc;
-    ODistributedConfiguration cfg = manager.getDatabaseConfiguration(id);
+    ODistributedConfiguration cfg = server.getDistributedManager().getDatabaseConfiguration(id);
     doc = cfg.getDocument();
     return doc;
   }
