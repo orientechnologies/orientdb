@@ -1081,7 +1081,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
 
       document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
-      document.field("collate", collate.getName());
+      if (collate != null) {
+        document.field("collate", collate.getName());
+      }
 
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
