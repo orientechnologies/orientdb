@@ -1274,3 +1274,8 @@ table.table-backup {
   max-height: 100px;
   overflow: auto;
 }
+
+
+.nav-tabs {
+  margin-bottom: 15px;
+}

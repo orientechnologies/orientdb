@@ -29,7 +29,7 @@
   "index.type": "Supported type are : <br> <ul class='indexType'><li><strong>UNIQUE</strong></li><li><strong>NOTUNIQUE</strong></li><li><strong>FULLTEXT</strong></li><li><strong>DICTIONARY</strong></li><li><strong>UNIQUE_HASH_INDEX</strong></li><li><strong>NOTUNIQUE_HASH_INDEX</strong></li><li><strong>NOTUNIQUE_HASH_INDEX</strong></li><li><strong>DICTIONARY_HASH_INDEX</strong></li></ul> For more details about index types, visit the <a href='{{type}}' target='_blank'>docs</a>",
   "index.engine": "Supported engines are : <br> <ul class='indexType'><li><strong>SBTREE</strong></li><li><strong>HASHINDEX</strong></li><li><strong>LUCENE</strong></li></ul> For more details about supported engines, visit the <a href='{{engine}}' target='_blank'>docs</a>",
   "agent.notFound": "This feature is available in OrientDB Enterprise Edition. To download OrientDB Enterprise Edition click <a href='{{ee}}' target='_blank'>here</a>.",
-  "agent.pluginsNotFound" : "No plugins installed.",
+  "agent.pluginsNotFound": "No plugins installed.",
   "sec.authentication.allowDefault": "When checked, indicates if a database's default authentication should be allowed in addition to the external authenticators",
   "sec.kerberos.configFile": "Specifies the location of the krb5.conf file",
   "sec.kerberos.service.ktname": "Specifies the location of the keytab file used for decrypting OrientDB client service tickets",
@@ -61,5 +61,11 @@
   "sec.passwordValidator.minimumLength": "Defines the minimum number of characters required in the password",
   "sec.passwordValidator.numberRegEx": "Defines the regular expression for the minimum count of required numbers and what symbols are considered numbers",
   "sec.passwordValidator.uppercaseRegEx": "Defines the regular expression for the minimum count of required uppercase characters and what symbols are considered uppercase characters",
-  "sec.passwordValidator.specialRegEx": "Defines the regular expression for the minimum count of special characters and what symbols are considered special characters"
+  "sec.passwordValidator.specialRegEx": "Defines the regular expression for the minimum count of special characters and what symbols are considered special characters",
+  "cluster.distribution": "It's the map of the partitions (clusters), who is the owner and who has a copy. <a href='{{ownership}}' target='_blank'>Documentation</a>",
+  "cluster.role": "Is the role of the server in the cluster. <b> master </b> can read and write, <b>replica</b> can only do reads. <a href='{{role}}' target='_blank'>Documentation</a>",
+  "cluster.readYourWrites": "Enable it if you want the replication always waits for the local node for further reads",
+  "cluster.autoDeploy": "Whether to deploy the database to any joining node that does not have it.",
+  "cluster.readQuorum": "On <b>read</b> operation (record read, query and traverse) this is the number of responses to be coherent before sending the response to the client. Set to 1 if you don't want this check at read time",
+  "cluster.writeQuorum": "On <b>write</b> operation (any write on database) this is the number of responses to be coherent before sending the response to the client. Set to 1 if you don't want this check at write time. Suggested value is <b>majority</b>, the default, that means N/2+1 where N is the number of available nodes. In this way the quorum is reached only if the majority of nodes are coherent. <b>all</b> means all the available nodes. Starting from v2.2, N represent the MASTER only servers"
 }

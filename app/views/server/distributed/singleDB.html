@@ -6,16 +6,32 @@
     <div class="col-md-12">
       <div id="menu" class="panel panel-default list-group">
         <div class="panel-heading">
-          Configuration
+          <b> Configuration</b>
+          <a href="{{ links['configuration'] }}" class="btn btn-trasparent btn-help"
+             data-placement="right"
+             data-title="Help"
+             target="_blank"
+             data-trigger="hover"
+             data-animation="am-flip-x"
+             bs-tooltip>
+            <i class="fa fa-question-circle"></i>
+          </a>
         </div>
         <div class="panel-body">
 
           <div class="col-md-6">
             <form class="form-horizontal">
               <div class="form-group">
-                <label class="control-label col-md-2">Write Quorum</label>
-                <div class="col-md-10">
-                  <ui-select tagging  ng-model="config.writeQuorum" theme="selectize" title="Choose write quorum">
+                <label class="control-label col-md-3">Write Quorum
+                  <a href="javascript:void(0)" tabindex="1"
+                     data-trigger="focus" data-placement="right"
+                     data-container="body"
+                     data-content="{{ 'cluster.writeQuorum' | translate:links }}" bs-popover>
+                    <i class="fa fa-question-circle"></i>
+                  </a>
+                </label>
+                <div class="col-md-9">
+                  <ui-select tagging ng-model="config.writeQuorum" theme="selectize" title="Choose write quorum">
                     <ui-select-match placeholder="Select write quorum...">{{$select.selected}}</ui-select-match>
                     <ui-select-choices repeat="q in quorums | filter: $select.search">
                       <div ng-bind-html="q | highlight: $select.search"></div>
@@ -25,30 +41,50 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="control-label col-md-2">Read Quorum</label>
+                <label class="control-label col-md-3">Read Quorum
+                  <a href="javascript:void(0)" tabindex="1"
+                     data-trigger="focus" data-placement="right"
+                     data-container="body"
+                     data-content="{{ 'cluster.readQuorum' | translate:links }}" bs-popover>
+                    <i class="fa fa-question-circle"></i>
+                  </a>
+                </label>
 
-                <div class="col-md-10">
+                <div class="col-md-9">
                   <input type="number" class="form-control"
                          ng-model="config.readQuorum">
                 </div>
               </div>
               <div class="form-group">
-                <div class="col-md-10 col-md-offset-2">
+                <div class="col-md-9 col-md-offset-3">
                   <div class="checkbox">
                     <label>
                       <input type="checkbox" ng-model="config.autoDeploy"
                              ng-change="change('autoDeploy')"> Auto Deploy
+                      <a href="javascript:void(0)" tabindex="1"
+                         data-trigger="focus" data-placement="right"
+                         data-container="body"
+                         data-content="{{ 'cluster.autoDeploy' | translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a>
                     </label>
                   </div>
                 </div>
               </div>
               <div class="form-group">
-                <div class="col-md-10 col-md-offset-2">
+                <div class="col-md-9 col-md-offset-3">
                   <div class="checkbox">
                     <label>
                       <input type="checkbox"
                              ng-model="config.readYourWrites">
                       Read Your Writes
+                      <a href="javascript:void(0)" tabindex="1"
+                         data-trigger="focus" data-placement="right"
+                         data-container="body"
+                         data-content="{{ 'cluster.readYourWrites' | translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a>
+
                     </label>
                   </div>
                 </div>
@@ -65,7 +101,14 @@
                     <thead>
                     <tr>
                       <th>Server</th>
-                      <th>Role</th>
+                      <th>Role
+                        <a href="javascript:void(0)" tabindex="1"
+                           data-trigger="focus" data-placement="right"
+                           data-container="body"
+                           data-content="{{ 'cluster.role' | translate:links }}" bs-popover>
+                          <i class="fa fa-question-circle"></i>
+                        </a>
+                      </th>
                     </tr>
 
                     </thead>
@@ -73,7 +116,7 @@
                     <tr ng-repeat="s in servers">
 
                       <td>
-                        {{s.name}}
+                        <a href="#/dashboard/general/{{s.name}}">{{s.name}}</a>
                       </td>
                       <td>
                         <select class="form-control" ng-model="calculatedRoles[s.name]"
@@ -100,13 +143,22 @@
     <div class="col-md-12">
       <div class="panel panel-default list-group">
         <div class="panel-heading">
-          Clusters Distribution <span class="pull-right"> <b>LEGEND: </b> X = Owner, o = Copy </span>
+          <b> Clusters Distribution
+            <a href="javascript:void(0)" tabindex="1"
+               data-trigger="focus" data-placement="right"
+               data-container="body"
+               data-content="{{ 'cluster.distribution' | translate:links }}" bs-popover>
+              <i class="fa fa-question-circle"></i>
+            </a>
+          </b> <span class="pull-right"> <b>LEGEND: </b> X = Owner, o = Copy </span>
         </div>
         <table class=" table table-striped  table-hover table-condensed ">
           <thead>
           <tr>
             <th>#</th>
-            <th ng-repeat="s in servers">{{s.name}}</th>
+            <th ng-repeat="s in servers">
+              <a href="#/dashboard/general/{{s.name}}">{{s.name}}</a>
+            </th>
           </tr>
           </thead>
           <tbody>

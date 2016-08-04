@@ -47,7 +47,17 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
 
     Cluster.node().then(function (data) {
       $scope.servers = data.members;
+
+
       $scope.server = $scope.servers[0];
+
+      if ($scope.rid) {
+        $scope.servers.forEach(function (e) {
+          if (e.name === $scope.rid) {
+            $scope.server = e;
+          }
+        })
+      }
     });
   }
 
@@ -93,17 +103,22 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
       }
     }
   });
-  $scope.$watch("server", function (server) {
+  $scope.$watch("server", function (server, oldServer) {
+
     if (server) {
-      server.attached = true;
-      $scope.attached = server.attached;
 
-      $scope.databases = server.databases;
+      if (!oldServer) {
+        server.attached = true;
+        $scope.attached = server.attached;
 
-      Cluster.configFile(server).then(function (data) {
-        $scope.configuration = data;
-      });
+        $scope.databases = server.databases;
 
+        Cluster.configFile(server).then(function (data) {
+          $scope.configuration = data;
+        });
+      } else {
+        $location.path('/dashboard/general/' + server.name);
+      }
     }
   });
   $scope.initMetrics = function () {
@@ -994,48 +1009,67 @@ ee.controller("WarningsController", function ($scope, $rootScope, AgentService) 
 
 });
 
-ee.controller('ClusterDBController', function ($scope, $rootScope, $timeout) {
+ee.controller('ClusterDBController', function ($scope, Cluster, $rootScope, $timeout) {
 
 
   $scope.clazz = 'tabs-style-linebox';
   $scope.icon = 'fa-database';
 
   $scope.databases = null;
-  $scope.$on('context:changed', function (evt, context) {
 
-    $timeout(function () {
-      $scope.$broadcast('db-chosen', {name: context, servers: $scope.databases[context]});
-    }, 500)
+  $scope.$watch('selectedDb', function (db) {
 
+    if (db) {
+      $scope.$broadcast('db-chosen', {name: db, servers: $scope.databases[db]});
+    }
   })
-  $scope.$on('server-list', function (evt, servers) {
+
+  Cluster.stats().then(function (data) {
+    initDatabases(data.members);
+
+  }).catch(function (error) {
+    Notification.push({content: error.data, error: true, autoHide: true});
+    $scope.polling = false;
+  })
+  function initDatabases(servers) {
     if (!$scope.databases) {
       $scope.databases = {};
       servers.forEach(function (s) {
-        s.databases.forEach(function (db) {
+        s.databases.forEach(function (db, idx) {
           if (!$scope.databases[db]) {
             $scope.databases[db] = [];
           }
           $scope.databases[db].push(s);
+          if (idx == 0) {
+
+            $scope.selectedDb = db;
+          }
         })
       })
     }
-  })
+  }
 
-})
+});
 
-ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notification) {
+ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notification, Database) {
 
+
+  $scope.links = {
+    "ownership": Database.getOWikiFor("Distributed-Architecture.html#cluster-ownership"),
+    "role": Database.getOWikiFor("Distributed-Architecture.html"),
+    "configuration": Database.getOWikiFor("Distributed-Configuration.html#default-distributed-db-configjson")
+  }
 
   $scope.roles = ["master", "replica"];
 
 
-  $scope.quorums = ['majority'];
+  $scope.quorums = ['majority', 'all'];
 
 
   $scope.$on('db-chosen', function (evt, db) {
 
-    $scope.servers = angular.copy($scope.servers);
+
+    $scope.servers = angular.copy(db.servers);
 
     $scope.servers.forEach(function (el, idx, arr) {
       $scope.quorums.push((idx + 1).toString());
