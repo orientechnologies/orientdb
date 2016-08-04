@@ -43,7 +43,7 @@ public class LetQueryStep extends AbstractExecutionStep {
         if (result != null) {
           calculate(result, ctx);
         }
-        return null;
+        return result;
       }
 
       private void calculate(OResultInternal result, OCommandContext ctx) {

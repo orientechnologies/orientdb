@@ -1740,7 +1740,7 @@ public class OSelectStatementExecutionTest {
 
   @Test public void testLet4() {
     String className = "testLet4";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    db.getMetadata().getSchema().createClass(className);
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -1764,7 +1764,7 @@ public class OSelectStatementExecutionTest {
 
   @Test public void testLet5() {
     String className = "testLet5";
-    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    db.getMetadata().getSchema().createClass(className);
 
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -1781,6 +1781,58 @@ public class OSelectStatementExecutionTest {
       OResult item = result.next();
       Assert.assertNotNull(item);
       Assert.assertEquals("name1", item.getProperty("name"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testLet6() {
+    String className = "testLet6";
+    db.getMetadata().getSchema().createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db
+        .query("select $foo as name from " + className + " let $foo = (select name from " + className + " where name = $parent.$current.name)");
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("name"));
+      Assert.assertTrue(item.getProperty("name") instanceof Collection);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testLet7() {
+    String className = "testLet7";
+    db.getMetadata().getSchema().createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db
+        .query("select $bar as name from " + className + " "
+            + "let $foo = (select name from " + className + " where name = $parent.$current.name),"
+            + "$bar = $foo[0].name");
+    printExecutionPlan(result);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("name"));
+      Assert.assertTrue(item.getProperty("name") instanceof String);
     }
     Assert.assertFalse(result.hasNext());
     result.close();
