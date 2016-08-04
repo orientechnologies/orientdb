@@ -406,37 +406,36 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleFetchFromTarger(OSelectExecutionPlan result, OCommandContext ctx) {
+
+    OFromItem target = this.target == null ? null : this.target.getItem();
     if (target == null) {
-      if (perRecordLetClause != null) {
-        handleGlobalLet(result, perRecordLetClause, ctx);
-        perRecordLetClause = null;
-      }
-      result.chain(new ProjectionCalculationNoTargetStep(projection, ctx));
-      projectionsCalculated = true;
+      handleNoTarget(result, ctx);
+    } else if (target.getIdentifier() != null) {
+      handleClassAsTarget(result, target.getIdentifier(), ctx);
+    } else if (target.getCluster() != null) {
+      handleClustersAsTarget(result, Collections.singletonList(target.getCluster()), ctx);
+    } else if (target.getClusterList() != null) {
+      handleClustersAsTarget(result, target.getClusterList().toListOfClusters(), ctx);
+    } else if (target.getStatement() != null) {
+      handleSubqueryAsTarget(result, target.getStatement(), ctx);
+    } else if (target.getFunctionCall() != null) {
+      //        handleFunctionCallAsTarget(result, target.getFunctionCall(), ctx);//TODO
+    } else if (target.getInputParam() != null) {
+      //        handleInputParamAsTarget(result, target.getInputParam(), ctx);//TODO
+    } else if (target.getIndex() != null) {
+      handleIndexAsTarget(result, target.getIndex(), whereClause, orderBy, ctx);
+    } else if (target.getMetadata() != null) {
+      handleMetadataAsTarget(result, target.getMetadata(), ctx);
+    } else if (target.getRids() != null && target.getRids().size() > 0) {
+      handleRidsAsTarget(result, target.getRids(), ctx);
     } else {
-      OFromItem target = this.target.getItem();
-      if (target.getIdentifier() != null) {
-        handleClassAsTarget(result, target.getIdentifier(), ctx);
-      } else if (target.getCluster() != null) {
-        handleClustersAsTarget(result, Collections.singletonList(target.getCluster()), ctx);
-      } else if (target.getClusterList() != null) {
-        handleClustersAsTarget(result, target.getClusterList().toListOfClusters(), ctx);
-      } else if (target.getStatement() != null) {
-        handleSubqueryAsTarget(result, target.getStatement(), ctx);
-      } else if (target.getFunctionCall() != null) {
-        //        handleFunctionCallAsTarget(result, target.getFunctionCall(), ctx);//TODO
-      } else if (target.getInputParam() != null) {
-        //        handleInputParamAsTarget(result, target.getInputParam(), ctx);//TODO
-      } else if (target.getIndex() != null) {
-        handleIndexAsTarget(result, target.getIndex(), whereClause, orderBy, ctx);
-      } else if (target.getMetadata() != null) {
-        handleMetadataAsTarget(result, target.getMetadata(), ctx);
-      } else if (target.getRids() != null && target.getRids().size() > 0) {
-        handleRidsAsTarget(result, target.getRids(), ctx);
-      } else {
-        throw new UnsupportedOperationException();
-      }
+      throw new UnsupportedOperationException();
     }
+
+  }
+
+  private void handleNoTarget(OSelectExecutionPlan result, OCommandContext ctx) {
+    result.chain(new EmptyDataGeneratorStep(1, ctx));
   }
 
   private void handleIndexAsTarget(OSelectExecutionPlan result, OIndexIdentifier indexIdentifier, OWhereClause whereClause,
