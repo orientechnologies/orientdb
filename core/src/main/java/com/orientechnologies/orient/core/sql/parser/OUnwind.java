@@ -59,5 +59,9 @@ public class OUnwind extends SimpleNode {
   @Override public int hashCode() {
     return items != null ? items.hashCode() : 0;
   }
+
+  public List<OIdentifier> getItems() {
+    return items;
+  }
 }
 /* JavaCC - OriginalChecksum=4739190aa6c1a3533a89b76a15bd6fdf (do not edit this line) */

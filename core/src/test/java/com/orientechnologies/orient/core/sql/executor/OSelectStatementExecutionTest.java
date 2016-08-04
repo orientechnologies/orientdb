@@ -1797,8 +1797,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db
-        .query("select $foo as name from " + className + " let $foo = (select name from " + className + " where name = $parent.$current.name)");
+    OTodoResultSet result = db.query("select $foo as name from " + className + " let $foo = (select name from " + className
+        + " where name = $parent.$current.name)");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1822,10 +1822,8 @@ public class OSelectStatementExecutionTest {
       doc.save();
     }
 
-    OTodoResultSet result = db
-        .query("select $bar as name from " + className + " "
-            + "let $foo = (select name from " + className + " where name = $parent.$current.name),"
-            + "$bar = $foo[0].name");
+    OTodoResultSet result = db.query("select $bar as name from " + className + " " + "let $foo = (select name from " + className
+        + " where name = $parent.$current.name)," + "$bar = $foo[0].name");
     printExecutionPlan(result);
     for (int i = 0; i < 10; i++) {
       Assert.assertTrue(result.hasNext());
@@ -1833,6 +1831,64 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(item);
       Assert.assertNotNull(item.getProperty("name"));
       Assert.assertTrue(item.getProperty("name") instanceof String);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testUnwind1() {
+    String className = "testUnwind1";
+    db.getMetadata().getSchema().createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("i", i);
+      doc.setProperty("iSeq", new int[] { i, 2 * i, 4 * i });
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select i, iSeq from " + className + " unwind iSeq");
+    printExecutionPlan(result);
+    for (int i = 0; i < 30; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("i"));
+      Assert.assertNotNull(item.getProperty("iSeq"));
+      Integer first = (Integer) item.getProperty("i");
+      Integer second = (Integer) item.getProperty("iSeq");
+      Assert.assertTrue(first + second == 0 || second.intValue() % first.intValue() == 0);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testUnwind2() {
+    String className = "testUnwind2";
+    db.getMetadata().getSchema().createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("i", i);
+      List<Integer> iSeq = new ArrayList<>();
+      iSeq.add(i);
+      iSeq.add(i*2);
+      iSeq.add(i*4);
+      doc.setProperty("iSeq", iSeq);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select i, iSeq from " + className + " unwind iSeq");
+    printExecutionPlan(result);
+    for (int i = 0; i < 30; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("i"));
+      Assert.assertNotNull(item.getProperty("iSeq"));
+      Integer first = (Integer) item.getProperty("i");
+      Integer second = (Integer) item.getProperty("iSeq");
+      Assert.assertTrue(first + second == 0 || second.intValue() % first.intValue() == 0);
     }
     Assert.assertFalse(result.hasNext());
     result.close();

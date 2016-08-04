@@ -339,5 +339,9 @@ public class OSelectStatement extends OStatement {
     }
     return false;
   }
+
+  public OUnwind getUnwind() {
+    return unwind;
+  }
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

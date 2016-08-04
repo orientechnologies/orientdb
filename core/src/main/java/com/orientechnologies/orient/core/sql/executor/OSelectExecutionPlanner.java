@@ -34,6 +34,7 @@ public class OSelectExecutionPlanner {
   private List<OAndBlock> flattenedWhereClause;
   private OGroupBy        groupBy;
   private OOrderBy        orderBy;
+  private OUnwind         unwind;
   private OSkip           skip;
   private OLimit          limit;
 
@@ -54,6 +55,7 @@ public class OSelectExecutionPlanner {
     this.perRecordLetClause = oSelectStatement.getLetClause() == null ? null : oSelectStatement.getLetClause().copy();
     this.groupBy = oSelectStatement.getGroupBy() == null ? null : oSelectStatement.getGroupBy().copy();
     this.orderBy = oSelectStatement.getOrderBy() == null ? null : oSelectStatement.getOrderBy().copy();
+    this.unwind = oSelectStatement.getUnwind() == null ? null : oSelectStatement.getUnwind().copy();
     this.skip = oSelectStatement.getSkip();
     this.limit = oSelectStatement.getLimit();
   }
@@ -83,10 +85,11 @@ public class OSelectExecutionPlanner {
 
     handleWhere(result, whereClause, ctx);
 
-    if (expand) {
+    if (expand || unwind != null) {
       handleProjectionsBeforeOrderBy(result, projection, orderBy, ctx);
       handleProjections(result, ctx);
       handleExpand(result, ctx);
+      handleUnwind(result, unwind, ctx);
       handleOrderBy(result, orderBy, ctx);
       if (skip != null) {
         result.chain(new SkipExecutionStep(skip, ctx));
@@ -117,6 +120,12 @@ public class OSelectExecutionPlanner {
       }
     }
     return result;
+  }
+
+  private void handleUnwind(OSelectExecutionPlan result, OUnwind unwind, OCommandContext ctx) {
+    if (unwind != null) {
+      result.chain(new UnwindStep(unwind, ctx));
+    }
   }
 
   private void handleDistinct(OSelectExecutionPlan result, OCommandContext ctx) {
