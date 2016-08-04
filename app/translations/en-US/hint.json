@@ -28,7 +28,7 @@
   "security.users": "A user interacts with the database. To access a database, you need to specify the username and password for the user. Each user has it's own credentials and permissions. For more details about users, visit the <a href='{{users}}' target='_blank'>docs</a>",
   "index.type": "Supported type are : <br> <ul class='indexType'><li><strong>UNIQUE</strong></li><li><strong>NOTUNIQUE</strong></li><li><strong>FULLTEXT</strong></li><li><strong>DICTIONARY</strong></li><li><strong>UNIQUE_HASH_INDEX</strong></li><li><strong>NOTUNIQUE_HASH_INDEX</strong></li><li><strong>NOTUNIQUE_HASH_INDEX</strong></li><li><strong>DICTIONARY_HASH_INDEX</strong></li></ul> For more details about index types, visit the <a href='{{type}}' target='_blank'>docs</a>",
   "index.engine": "Supported engines are : <br> <ul class='indexType'><li><strong>SBTREE</strong></li><li><strong>HASHINDEX</strong></li><li><strong>LUCENE</strong></li></ul> For more details about supported engines, visit the <a href='{{engine}}' target='_blank'>docs</a>",
-  "agent.notFound": "This feature is available in OrientDB Enterprise Edition. To download OrientDB Enterprise Edition (FREE for development) click <a href='{{ee}}' target='_blank'>here</a>.",
+  "agent.notFound": "This feature is available in OrientDB Enterprise Edition. To download OrientDB Enterprise Edition click <a href='{{ee}}' target='_blank'>here</a>.",
   "agent.pluginsNotFound" : "No plugins installed.",
   "sec.authentication.allowDefault": "When checked, indicates if a database's default authentication should be allowed in addition to the external authenticators",
   "sec.kerberos.configFile": "Specifies the location of the krb5.conf file",
