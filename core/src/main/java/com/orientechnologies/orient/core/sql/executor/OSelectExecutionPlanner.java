@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.parser.*;
@@ -577,7 +578,7 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier targetClass, OCommandContext ctx) {
-    List<OExecutionStepInternal> result = handleSubclassAsTargetWithIndex(targetClass.getStringValue(), ctx);
+    List<OExecutionStepInternal> result = handleClassAsTargetWithIndex(targetClass.getStringValue(), ctx);
     if (result != null) {
       result.stream().forEach(x -> plan.chain(x));
       this.whereClause = null;
@@ -597,7 +598,7 @@ public class OSelectExecutionPlanner {
 
     List<OInternalExecutionPlan> subclassPlans = new ArrayList<>();
     for (OClass subClass : subclasses) {
-      List<OExecutionStepInternal> subSteps = handleSubclassAsTargetWithIndexDeep(subClass.getName(), ctx);
+      List<OExecutionStepInternal> subSteps = handleClassAsTargetWithIndexRecursive(subClass.getName(), ctx);
       if (subSteps == null || subSteps.size() == 0) {
         return false;
       }
@@ -612,6 +613,12 @@ public class OSelectExecutionPlanner {
     return false;
   }
 
+  /**
+   * checks if a class is the top of a diamond hierarchy
+   *
+   * @param clazz
+   * @return
+   */
   private boolean isDiamondHierarchy(OClass clazz) {
     Set<OClass> traversed = new HashSet<>();
     List<OClass> stack = new ArrayList<>();
@@ -630,11 +637,10 @@ public class OSelectExecutionPlanner {
     return false;
   }
 
-  private List<OExecutionStepInternal> handleSubclassAsTargetWithIndexDeep(String targetClass, OCommandContext ctx) {
-    List<OExecutionStepInternal> result = handleSubclassAsTargetWithIndex(targetClass, ctx);
+  private List<OExecutionStepInternal> handleClassAsTargetWithIndexRecursive(String targetClass, OCommandContext ctx) {
+    List<OExecutionStepInternal> result = handleClassAsTargetWithIndex(targetClass, ctx);
     if (result == null) {
       result = new ArrayList<>();
-      //TODO recursive on subclassess
       OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
       if (clazz == null) {
         throw new OCommandExecutionException("Cannot find class " + targetClass);
@@ -647,7 +653,7 @@ public class OSelectExecutionPlanner {
 
       List<OInternalExecutionPlan> subclassPlans = new ArrayList<>();
       for (OClass subClass : subclasses) {
-        List<OExecutionStepInternal> subSteps = handleSubclassAsTargetWithIndexDeep(subClass.getName(), ctx);
+        List<OExecutionStepInternal> subSteps = handleClassAsTargetWithIndexRecursive(subClass.getName(), ctx);
         if (subSteps == null || subSteps.size() == 0) {
           return null;
         }
@@ -662,7 +668,7 @@ public class OSelectExecutionPlanner {
     return result.size() == 0 ? null : result;
   }
 
-  private List<OExecutionStepInternal> handleSubclassAsTargetWithIndex(String targetClass, OCommandContext ctx) {
+  private List<OExecutionStepInternal> handleClassAsTargetWithIndex(String targetClass, OCommandContext ctx) {
     if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
       return null;
     }
@@ -688,7 +694,12 @@ public class OSelectExecutionPlanner {
     if (indexSearchDescriptors.size() == 1) {
       IndexSearchDescriptor desc = indexSearchDescriptors.get(0);
       result = new ArrayList<>();
-      result.add(new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, ctx));
+      Boolean orderAsc = getOrderDirection();
+      result.add(
+          new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, !Boolean.FALSE.equals(orderAsc), ctx));
+      if (orderAsc != null && orderBy != null && fullySorted(orderBy, desc.keyCondition, desc.idx)) {
+        orderApplied = true;
+      }
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
         result.add(new FilterStep(createWhereFrom(desc.remainingCondition), ctx));
       }
@@ -697,6 +708,94 @@ public class OSelectExecutionPlanner {
       result.add(createParallelIndexFetch(optimumIndexSearchDescriptors, ctx));
     }
     return result;
+  }
+
+  private boolean fullySorted(OOrderBy orderBy, OAndBlock conditions, OIndex idx) {
+    if (!idx.supportsOrderedIterations())
+      return false;
+
+    List<String> orderItems = new ArrayList<>();
+    String order = null;
+
+    for (OOrderByItem item : orderBy.getItems()) {
+      if (order == null) {
+        order = item.getType();
+      } else if (!order.equals(item.getType())) {
+        return false;
+      }
+      orderItems.add(item.getAlias());
+    }
+
+    List<String> conditionItems = new ArrayList<>();
+
+    for (int i = 0; i < conditions.getSubBlocks().size(); i++) {
+      OBooleanExpression item = conditions.getSubBlocks().get(i);
+      if (item instanceof OBinaryCondition) {
+        if (((OBinaryCondition) item).getOperator() instanceof OEqualsCompareOperator) {
+          conditionItems.add(((OBinaryCondition) item).getLeft().toString());
+        } else if (i != conditions.getSubBlocks().size() - 1) {
+          return false;
+        }
+
+      } else if (i != conditions.getSubBlocks().size() - 1) {
+        return false;
+      }
+    }
+
+    List<String> orderedFields = new ArrayList<>();
+    boolean overlapping = false;
+    for (String s : conditionItems) {
+      if (orderItems.isEmpty()) {
+        return true;//nothing to sort, the conditions completely overlap the ORDER BY
+      }
+      if (s.equals(orderItems.get(0))) {
+        orderItems.remove(0);
+        overlapping = true; //start overlapping
+      } else if (overlapping) {
+        return false; //overlapping, but next order item does not match...
+      }
+      orderedFields.add(s);
+    }
+    orderedFields.addAll(orderItems);
+
+    final OIndexDefinition definition = idx.getDefinition();
+    final List<String> fields = definition.getFields();
+    if (fields.size() < orderedFields.size()) {
+      return false;
+    }
+
+    for (int i = 0; i < orderedFields.size(); i++) {
+      final String orderFieldName = orderedFields.get(i).toLowerCase();//toLowerCase...? remove this?
+      final String indexFieldName = fields.get(i).toLowerCase();//toLowerCase...?
+      if (!orderFieldName.equals(indexFieldName)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * returns TRUE if all the order clauses are ASC, FALSE if all are DESC, null otherwise
+   *
+   * @return TRUE if all the order clauses are ASC, FALSE if all are DESC, null otherwise
+   */
+  private Boolean getOrderDirection() {
+    if (orderBy == null) {
+      return null;
+    }
+    String result = null;
+    for (OOrderByItem item : orderBy.getItems()) {
+      if (result == null) {
+        result = item.getType() == null ? OOrderByItem.ASC : item.getType();
+      } else {
+        String newType = item.getType() == null ? OOrderByItem.ASC : item.getType();
+        if (!newType.equals(result)) {
+          return null;
+        }
+      }
+    }
+    return result == null || result.equals(OOrderByItem.ASC) ? true : false;
   }
 
   private OExecutionStepInternal createParallelIndexFetch(List<IndexSearchDescriptor> indexSearchDescriptors, OCommandContext ctx) {

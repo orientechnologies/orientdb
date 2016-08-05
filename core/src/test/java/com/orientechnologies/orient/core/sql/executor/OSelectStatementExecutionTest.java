@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -2149,6 +2150,289 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(item);
     }
     Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testIndexPlusSort1() {
+    String className = "testIndexPlusSort1";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by surname ASC");
+    printExecutionPlan(result);
+    String lastSurname = null;
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("surname"));
+      if (i == 0) {
+        lastSurname = item.getProperty("surname");
+      } else {
+        Assert.assertTrue(((String) item.getProperty("surname")).compareTo(lastSurname) > 0);
+      }
+
+    }
+    Assert.assertFalse(result.hasNext());
+    Assert.assertEquals(1, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    result.close();
+  }
+
+  @Test public void testIndexPlusSort2() {
+    String className = "testIndexPlusSort2";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by surname DESC");
+    printExecutionPlan(result);
+    String lastSurname = null;
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("surname"));
+      if (i == 0) {
+        lastSurname = item.getProperty("surname");
+      } else {
+        Assert.assertTrue(((String) item.getProperty("surname")).compareTo(lastSurname) < 0);
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    Assert.assertEquals(1, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    result.close();
+  }
+
+  @Test public void testIndexPlusSort3() {
+    String className = "testIndexPlusSort3";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by name DESC, surname DESC");
+    printExecutionPlan(result);
+    String lastSurname = null;
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("surname"));
+      if (i == 0) {
+        lastSurname = item.getProperty("surname");
+      } else {
+        Assert.assertTrue(((String) item.getProperty("surname")).compareTo(lastSurname) < 0);
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    Assert.assertEquals(1, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    result.close();
+  }
+
+  @Test public void testIndexPlusSort4() {
+    String className = "testIndexPlusSort4";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by name ASC, surname ASC");
+    printExecutionPlan(result);
+    String lastSurname = null;
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("surname"));
+      if (i == 0) {
+        lastSurname = item.getProperty("surname");
+      } else {
+        Assert.assertTrue(((String) item.getProperty("surname")).compareTo(lastSurname) > 0);
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    Assert.assertEquals(1, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    result.close();
+  }
+
+  @Test public void testIndexPlusSort5() {
+    String className = "testIndexPlusSort5";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createProperty("address", OType.STRING);
+    db.command(
+        new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by surname ASC");
+    printExecutionPlan(result);
+    String lastSurname = null;
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("surname"));
+      if (i == 0) {
+        lastSurname = item.getProperty("surname");
+      } else {
+        Assert.assertTrue(((String) item.getProperty("surname")).compareTo(lastSurname) > 0);
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    Assert.assertEquals(1, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    result.close();
+  }
+
+  @Test public void testIndexPlusSort6() {
+    String className = "testIndexPlusSort6";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createProperty("address", OType.STRING);
+    db.command(
+        new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by surname DESC");
+    printExecutionPlan(result);
+    String lastSurname = null;
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("surname"));
+      if (i == 0) {
+        lastSurname = item.getProperty("surname");
+      } else {
+        Assert.assertTrue(((String) item.getProperty("surname")).compareTo(lastSurname) < 0);
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    Assert.assertEquals(1, result.getExecutionPlan().get().getSteps().size());//index used, no ORDER BY step
+    result.close();
+  }
+
+  @Test public void testIndexPlusSort7() {
+    String className = "testIndexPlusSort7";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    clazz.createProperty("address", OType.STRING);
+    db.command(
+        new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname, address) NOTUNIQUE"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by address DESC");
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("surname"));
+    }
+    Assert.assertFalse(result.hasNext());
+    boolean orderStepFound = false;
+    for (OExecutionStep step : result.getExecutionPlan().get().getSteps()) {
+      if (step instanceof OrderByStep) {
+        orderStepFound = true;
+        break;
+      }
+    }
+    Assert.assertTrue(orderStepFound);
+    result.close();
+  }
+
+  @Test public void testIndexPlusSort8() {
+    String className = "testIndexPlusSort8";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+    db.command(new OCommandSQL("create index " + className + ".name_surname on " + className + " (name, surname) NOTUNIQUE"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 3);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + className + " where name = 'name1' order by name ASC, surname DESC");
+    printExecutionPlan(result);
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertNotNull(item.getProperty("surname"));
+    }
+    Assert.assertFalse(result.hasNext());
+    Assert.assertFalse(result.hasNext());
+    boolean orderStepFound = false;
+    for (OExecutionStep step : result.getExecutionPlan().get().getSteps()) {
+      if (step instanceof OrderByStep) {
+        orderStepFound = true;
+        break;
+      }
+    }
+    Assert.assertTrue(orderStepFound);
     result.close();
   }
 

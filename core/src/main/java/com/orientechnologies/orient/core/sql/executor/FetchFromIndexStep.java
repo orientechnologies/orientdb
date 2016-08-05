@@ -17,6 +17,7 @@ import java.util.*;
 public class FetchFromIndexStep extends AbstractExecutionStep {
   protected final OIndex           index;
   private final   OBinaryCondition additional;
+  private final   boolean          orderAsc;
 
   OBooleanExpression condition;
 
@@ -25,10 +26,16 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
       OCommandContext ctx) {
+    this(index, condition, additionalRangeCondition, true, ctx);
+  }
+
+  public FetchFromIndexStep(OIndex<?> index, OBooleanExpression condition, OBinaryCondition additionalRangeCondition,
+      boolean orderAsc, OCommandContext ctx) {
     super(ctx);
     this.index = index;
     this.condition = condition;
     this.additional = additionalRangeCondition;
+    this.orderAsc = orderAsc;
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
@@ -211,7 +218,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   protected boolean isOrderAsc() {
-    return true;//TODO
+    return orderAsc;
   }
 
   @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
