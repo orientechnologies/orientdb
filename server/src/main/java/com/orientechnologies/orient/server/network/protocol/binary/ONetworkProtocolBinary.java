@@ -406,7 +406,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           connection = server.getClientConnectionManager().connect(this);
         }
         if (connection == null) {
-          throw new OIOException("Found unknown session " + clientTxId);
+          throw new OTokenSecurityException("missing session and token");
         }
         connection.acquire();
         connection.validateSession(bytes, server.getTokenHandler(), this);
