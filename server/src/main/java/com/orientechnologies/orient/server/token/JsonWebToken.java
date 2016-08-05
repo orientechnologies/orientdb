@@ -103,4 +103,11 @@ public class JsonWebToken implements OJsonWebToken, OToken {
   public void setExpiry(long expiry) {
     this.payload.setExpiry(expiry);
   }
+  
+  @Override
+  public boolean isNowValid() {
+    long now =System.currentTimeMillis();
+    return getExpiry() > now && payload.getNotBefore() < now;
+  }
+  
 }

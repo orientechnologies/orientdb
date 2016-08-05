@@ -138,8 +138,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
       return false;
     }
     final OrientJwtPayload payload = (OrientJwtPayload) ((JsonWebToken) token).getPayload();
-    if (token.getDatabase().equalsIgnoreCase(database) && token.getExpiry() > System.currentTimeMillis()
-        && payload.getNotBefore() < System.currentTimeMillis()) {
+    if (token.getDatabase().equalsIgnoreCase(database) && token.isNowValid()) {
       valid = true;
     }
     // TODO: Other validations... (e.g. check audience, etc.)
