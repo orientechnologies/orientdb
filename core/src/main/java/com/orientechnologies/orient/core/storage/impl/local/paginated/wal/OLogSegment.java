@@ -92,7 +92,7 @@ final class OLogSegment implements Comparable<OLogSegment> {
    *
    * @see #rndFile
    */
-  private final ScheduledExecutorService closer = Executors.newScheduledThreadPool(0, new ThreadFactory() {
+  private final ScheduledExecutorService closer = Executors.newScheduledThreadPool(1, new ThreadFactory() {
     @Override
     public Thread newThread(Runnable r) {
       final Thread thread = new Thread(OStorageAbstract.storageThreadGroup, r);
