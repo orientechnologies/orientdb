@@ -323,6 +323,8 @@ TOKEN:
     |
     < COMMIT: ( "C" | "c") ( "O" | "o")  ( "M" | "m") ( "M" | "m") ( "I" | "i")  ( "T" | "t") >
     |
+    < ROLLBACK: ( "R" | "r") ( "O" | "o")  ( "L" | "l") ( "L" | "l") ( "B" | "b") ( "A" | "a") ( "C" | "c") ( "K" | "k")>
+    |
     < IF: ( "I" | "i") ( "F" | "f") >
     |
     < ISOLATION: ( "I" | "i") ( "S" | "s") ( "O" | "o") ( "L" | "l") ( "A" | "a") ( "T" | "t") ( "I" | "i") ( "O" | "o") ( "N" | "n") >
@@ -770,6 +772,8 @@ OIdentifier Identifier():
     |
     token = <COMMIT>
     |
+    token = <ROLLBACK>
+    |
     token = <IF>
     |
     token = <ISOLATION>
@@ -985,6 +989,8 @@ OStatement StatementInternal():
                 result = BeginStatement()
                 |
                 result = CommitStatement()
+                |
+                result = RollbackStatement()
                 |
                 result = ReturnStatement()
                 |
@@ -4427,6 +4433,15 @@ OCommitStatement CommitStatement():
             <RETRY>
             jjtThis.retry = Integer()
         ]
+    )
+    {return jjtThis;}
+}
+
+ORollbackStatement RollbackStatement():
+{ }
+{
+    (
+        <ROLLBACK>
     )
     {return jjtThis;}
 }
