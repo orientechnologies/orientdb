@@ -182,7 +182,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
         return OZIPCompressionUtil
-            .compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" , ".fl"}, iOutput,
+            .compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal", ".fl" }, iOutput,
                 compressionLevel);
       } finally {
         if (bufferSize > 0) {
@@ -317,8 +317,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   protected OWriteAheadLog createWalFromIBUFiles(File directory) throws IOException {
     final OWriteAheadLog restoreWAL = new ODiskWriteAheadLog(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(),
         OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
-        ((long) OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger()) * ONE_KB * ONE_KB, directory.getAbsolutePath(),
-        this);
+        ((long) OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger()) * ONE_KB * ONE_KB, directory.getAbsolutePath(), this,
+        OGlobalConfiguration.WAL_FILE_AUTOCLOSE_INTERVAL.getValueAsInteger());
 
     return restoreWAL;
   }
