@@ -564,6 +564,10 @@ public class OSelectExecutionPlanner {
       return;
     }
 
+    if (orderBy != null && handleClassWithIndexForSortOnly(plan, identifier, orderBy, ctx)) {
+      return;
+    }
+
     Boolean orderByRidAsc = null;//null: no order. true: asc, false:desc
     if (isOrderByRidAsc()) {
       orderByRidAsc = true;
@@ -575,6 +579,46 @@ public class OSelectExecutionPlanner {
       this.orderApplied = true;
     }
     plan.chain(fetcher);
+  }
+
+  private boolean handleClassWithIndexForSortOnly(OSelectExecutionPlan plan, OIdentifier identifier, OOrderBy orderBy,
+      OCommandContext ctx) {
+    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(identifier.getStringValue());
+    if (clazz == null) {
+      throw new OCommandExecutionException("Class not found: " + identifier.getStringValue());
+    }
+
+    for (OIndex idx : clazz.getIndexes().stream().filter(i -> i.supportsOrderedIterations()).filter(i -> i.getDefinition() != null)
+        .collect(Collectors.toList())) {
+      List<String> indexFields = idx.getDefinition().getFields();
+      if (indexFields.size() < orderBy.getItems().size()) {
+        continue;
+      }
+      boolean indexFound = true;
+      String orderType = null;
+      for (int i = 0; i < orderBy.getItems().size(); i++) {
+        OOrderByItem orderItem = orderBy.getItems().get(i);
+        String indexField = indexFields.get(i);
+        if (i == 0) {
+          orderType = orderItem.getType();
+        } else {
+          if (orderType == null || !orderType.equals(orderItem.getType())) {
+            indexFound = false;
+            break;//ASC/DESC interleaved, cannot be used with index.
+          }
+        }
+        if (!indexField.equals(orderItem.getAlias())) {
+          indexFound = false;
+          break;
+        }
+      }
+      if (indexFound && orderType != null) {
+        plan.chain(new FetchFromIndexValuesStep(idx, orderType.equals(OOrderByItem.ASC), ctx));
+        orderApplied = true;
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier targetClass, OCommandContext ctx) {
