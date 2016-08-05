@@ -31,4 +31,6 @@ public interface OToken {
   long getExpiry();
 
   void setExpiry(long expiry);
+
+  boolean isNowValid();
 }

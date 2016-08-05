@@ -105,6 +105,10 @@ public class OClientConnectionManager {
           OLogManager.instance().error(this, "Error during close of connection for close channel", e);
         }
         iterator.remove();
+      } else if(Boolean.TRUE.equals(entry.getValue().getTokenBased())){
+        if (!entry.getValue().getToken().isNowValid()) {
+          iterator.remove();
+        }
       }
     }
   }
