@@ -563,8 +563,6 @@ public class OSelectExecutionPlanner {
       return;
     }
 
-    //TODO subclass indexes
-
     Boolean orderByRidAsc = null;//null: no order. true: asc, false:desc
     if (isOrderByRidAsc()) {
       orderByRidAsc = true;
@@ -576,57 +574,132 @@ public class OSelectExecutionPlanner {
       this.orderApplied = true;
     }
     plan.chain(fetcher);
-
   }
 
-  private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier identifier, OCommandContext ctx) {
-    if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
+  private boolean handleClassAsTargetWithIndex(OSelectExecutionPlan plan, OIdentifier targetClass, OCommandContext ctx) {
+    List<OExecutionStepInternal> result = handleSubclassAsTargetWithIndex(targetClass.getStringValue(), ctx);
+    if (result != null) {
+      result.stream().forEach(x -> plan.chain(x));
+      this.whereClause = null;
+      this.flattenedWhereClause = null;
+      return true;
+    }
+    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass.getStringValue());
+    if (clazz == null) {
+      throw new OCommandExecutionException("Cannot find class " + targetClass);
+    }
+    if (clazz.count(false) != 0 || clazz.getSubclasses().size() == 0 || isDiamondHierarchy(clazz)) {
       return false;
+    }
+    //try subclasses
+
+    Collection<OClass> subclasses = clazz.getSubclasses();
+
+    List<OInternalExecutionPlan> subclassPlans = new ArrayList<>();
+    for (OClass subClass : subclasses) {
+      List<OExecutionStepInternal> subSteps = handleSubclassAsTargetWithIndexDeep(subClass.getName(), ctx);
+      if (subSteps == null || subSteps.size() == 0) {
+        return false;
+      }
+      OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+      subSteps.stream().forEach(x -> subPlan.chain(x));
+      subclassPlans.add(subPlan);
+    }
+    if (subclassPlans.size() > 0) {
+      plan.chain(new ParallelExecStep(subclassPlans, ctx));
+      return true;
+    }
+    return false;
+  }
+
+  private boolean isDiamondHierarchy(OClass clazz) {
+    Set<OClass> traversed = new HashSet<>();
+    List<OClass> stack = new ArrayList<>();
+    stack.add(clazz);
+    while (!stack.isEmpty()) {
+      OClass current = stack.remove(0);
+      traversed.add(current);
+      for (OClass sub : current.getSubclasses()) {
+        if (traversed.contains(sub)) {
+          return true;
+        }
+        stack.add(sub);
+        traversed.add(sub);
+      }
+    }
+    return false;
+  }
+
+  private List<OExecutionStepInternal> handleSubclassAsTargetWithIndexDeep(String targetClass, OCommandContext ctx) {
+    List<OExecutionStepInternal> result = handleSubclassAsTargetWithIndex(targetClass, ctx);
+    if (result == null) {
+      result = new ArrayList<>();
+      //TODO recursive on subclassess
+      OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
+      if (clazz == null) {
+        throw new OCommandExecutionException("Cannot find class " + targetClass);
+      }
+      if (clazz.count(false) != 0 || clazz.getSubclasses().size() == 0 || isDiamondHierarchy(clazz)) {
+        return null;
+      }
+
+      Collection<OClass> subclasses = clazz.getSubclasses();
+
+      List<OInternalExecutionPlan> subclassPlans = new ArrayList<>();
+      for (OClass subClass : subclasses) {
+        List<OExecutionStepInternal> subSteps = handleSubclassAsTargetWithIndexDeep(subClass.getName(), ctx);
+        if (subSteps == null || subSteps.size() == 0) {
+          return null;
+        }
+        OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+        subSteps.stream().forEach(x -> subPlan.chain(x));
+        subclassPlans.add(subPlan);
+      }
+      if (subclassPlans.size() > 0) {
+        result.add(new ParallelExecStep(subclassPlans, ctx));
+      }
+    }
+    return result.size() == 0 ? null : result;
+  }
+
+  private List<OExecutionStepInternal> handleSubclassAsTargetWithIndex(String targetClass, OCommandContext ctx) {
+    if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
+      return null;
     }
 
     //TODO indexable functions!
 
-    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(identifier.getStringValue());
+    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
+    if (clazz == null) {
+      throw new OCommandExecutionException("Cannot find class " + targetClass);
+    }
+
     Set<OIndex<?>> indexes = clazz.getIndexes();
 
     List<IndexSearchDescriptor> indexSearchDescriptors = flattenedWhereClause.stream().map(x -> findBestIndexFor(ctx, indexes, x))
         .filter(Objects::nonNull).collect(Collectors.toList());
     if (indexSearchDescriptors.size() != flattenedWhereClause.size()) {
-      return false; //some blocks could not be managed with an index
+      return null; //some blocks could not be managed with an index
     }
 
+    List<OExecutionStepInternal> result = null;
     List<IndexSearchDescriptor> optimumIndexSearchDescriptors = commonFactor(indexSearchDescriptors);
 
     if (indexSearchDescriptors.size() == 1) {
       IndexSearchDescriptor desc = indexSearchDescriptors.get(0);
-      plan.chain(new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, ctx));
+      result = new ArrayList<>();
+      result.add(new FetchFromIndexStep(desc.idx, desc.keyCondition, desc.additionalRangeCondition, ctx));
       if (desc.remainingCondition != null && !desc.remainingCondition.isEmpty()) {
-        plan.chain(new FilterStep(createWhereFrom(desc.remainingCondition), ctx));
+        result.add(new FilterStep(createWhereFrom(desc.remainingCondition), ctx));
       }
-      this.whereClause = null;
-      this.flattenedWhereClause = null;
     } else {
-      createParallelIndexFetch(plan, optimumIndexSearchDescriptors, ctx);
-      this.whereClause = null;
-      this.flattenedWhereClause = null;
+      result = new ArrayList<>();
+      result.add(createParallelIndexFetch(optimumIndexSearchDescriptors, ctx));
     }
-    return true;
-  }
-
-  private OExpression toExpression(OCollection right) {
-    OLevelZeroIdentifier id0 = new OLevelZeroIdentifier(-1);
-    id0.setCollection(right);
-    OBaseIdentifier id1 = new OBaseIdentifier(-1);
-    id1.setLevelZero(id0);
-    OBaseExpression id2 = new OBaseExpression(-1);
-    id2.setIdentifier(id1);
-    OExpression result = new OExpression(-1);
-    result.setMathExpression(id2);
     return result;
   }
 
-  private void createParallelIndexFetch(OSelectExecutionPlan plan, List<IndexSearchDescriptor> indexSearchDescriptors,
-      OCommandContext ctx) {
+  private OExecutionStepInternal createParallelIndexFetch(List<IndexSearchDescriptor> indexSearchDescriptors, OCommandContext ctx) {
     List<OInternalExecutionPlan> subPlans = new ArrayList<>();
     for (IndexSearchDescriptor desc : indexSearchDescriptors) {
       OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
@@ -636,7 +709,7 @@ public class OSelectExecutionPlanner {
       }
       subPlans.add(subPlan);
     }
-    plan.chain(new ParallelExecStep(subPlans, ctx));
+    return new ParallelExecStep(subPlans, ctx);
   }
 
   private OWhereClause createWhereFrom(OBooleanExpression remainingCondition) {

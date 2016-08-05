@@ -1872,8 +1872,8 @@ public class OSelectStatementExecutionTest {
       doc.setProperty("i", i);
       List<Integer> iSeq = new ArrayList<>();
       iSeq.add(i);
-      iSeq.add(i*2);
-      iSeq.add(i*4);
+      iSeq.add(i * 2);
+      iSeq.add(i * 4);
       doc.setProperty("iSeq", iSeq);
       doc.save();
     }
@@ -1889,6 +1889,264 @@ public class OSelectStatementExecutionTest {
       Integer first = (Integer) item.getProperty("i");
       Integer second = (Integer) item.getProperty("iSeq");
       Assert.assertTrue(first + second == 0 || second.intValue() % first.intValue() == 0);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromSubclassIndexes1() {
+    String parent = "testFetchFromSubclassIndexes1_parent";
+    String child1 = "testFetchFromSubclassIndexes1_child1";
+    String child2 = "testFetchFromSubclassIndexes1_child2";
+    OClass parentClass = db.getMetadata().getSchema().createClass(parent);
+    OClass childClass1 = db.getMetadata().getSchema().createClass(child1, parentClass);
+    OClass childClass2 = db.getMetadata().getSchema().createClass(child2, parentClass);
+
+    parentClass.createProperty("name", OType.STRING);
+    childClass1.createIndex(child1 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+    childClass2.createIndex(child2 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child1);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child2);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1'");
+    printExecutionPlan(result);
+    OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
+    Assert.assertTrue(plan.getSteps().get(0) instanceof ParallelExecStep);
+    for (int i = 0; i < 2; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromSubclassIndexes2() {
+    String parent = "testFetchFromSubclassIndexes2_parent";
+    String child1 = "testFetchFromSubclassIndexes2_child1";
+    String child2 = "testFetchFromSubclassIndexes2_child2";
+    OClass parentClass = db.getMetadata().getSchema().createClass(parent);
+    OClass childClass1 = db.getMetadata().getSchema().createClass(child1, parentClass);
+    OClass childClass2 = db.getMetadata().getSchema().createClass(child2, parentClass);
+
+    parentClass.createProperty("name", OType.STRING);
+    childClass1.createIndex(child1 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+    childClass2.createIndex(child2 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child1);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child2);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    printExecutionPlan(result);
+    OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
+    Assert.assertTrue(plan.getSteps().get(0) instanceof ParallelExecStep);
+    for (int i = 0; i < 2; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromSubclassIndexes3() {
+    String parent = "testFetchFromSubclassIndexes3_parent";
+    String child1 = "testFetchFromSubclassIndexes3_child1";
+    String child2 = "testFetchFromSubclassIndexes3_child2";
+    OClass parentClass = db.getMetadata().getSchema().createClass(parent);
+    OClass childClass1 = db.getMetadata().getSchema().createClass(child1, parentClass);
+    OClass childClass2 = db.getMetadata().getSchema().createClass(child2, parentClass);
+
+    parentClass.createProperty("name", OType.STRING);
+    childClass1.createIndex(child1 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child1);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child2);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    printExecutionPlan(result);
+    OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
+    Assert.assertTrue(plan.getSteps().get(0) instanceof FetchFromClassExecutionStep);//no index used
+    for (int i = 0; i < 2; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromSubclassIndexes4() {
+    String parent = "testFetchFromSubclassIndexes4_parent";
+    String child1 = "testFetchFromSubclassIndexes4_child1";
+    String child2 = "testFetchFromSubclassIndexes4_child2";
+    OClass parentClass = db.getMetadata().getSchema().createClass(parent);
+    OClass childClass1 = db.getMetadata().getSchema().createClass(child1, parentClass);
+    OClass childClass2 = db.getMetadata().getSchema().createClass(child2, parentClass);
+
+    parentClass.createProperty("name", OType.STRING);
+    childClass1.createIndex(child1 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+    childClass2.createIndex(child2 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    ODocument parentdoc = db.newInstance(parent);
+    parentdoc.setProperty("name", "foo");
+    parentdoc.save();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child1);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child2);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    printExecutionPlan(result);
+    OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
+    Assert
+        .assertTrue(plan.getSteps().get(0) instanceof FetchFromClassExecutionStep); //no index, because the superclass is not empty
+    for (int i = 0; i < 2; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromSubSubclassIndexes() {
+    String parent = "testFetchFromSubSubclassIndexes_parent";
+    String child1 = "testFetchFromSubSubclassIndexes_child1";
+    String child2 = "testFetchFromSubSubclassIndexes_child2";
+    String child2_1 = "testFetchFromSubSubclassIndexes_child2_1";
+    String child2_2 = "testFetchFromSubSubclassIndexes_child2_2";
+    OClass parentClass = db.getMetadata().getSchema().createClass(parent);
+    OClass childClass1 = db.getMetadata().getSchema().createClass(child1, parentClass);
+    OClass childClass2 = db.getMetadata().getSchema().createClass(child2, parentClass);
+    OClass childClass2_1 = db.getMetadata().getSchema().createClass(child2_1, childClass2);
+    OClass childClass2_2 = db.getMetadata().getSchema().createClass(child2_2, childClass2);
+
+    parentClass.createProperty("name", OType.STRING);
+    childClass1.createIndex(child1 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+    childClass2_1.createIndex(child2_1 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+    childClass2_2.createIndex(child2_2 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child1);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child2_1);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child2_2);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    printExecutionPlan(result);
+    OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
+    Assert.assertTrue(plan.getSteps().get(0) instanceof ParallelExecStep);
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testFetchFromSubSubclassIndexesWithDiamond() {
+    String parent = "testFetchFromSubSubclassIndexesWithDiamond_parent";
+    String child1 = "testFetchFromSubSubclassIndexesWithDiamond_child1";
+    String child2 = "testFetchFromSubSubclassIndexesWithDiamond_child2";
+    String child12 = "testFetchFromSubSubclassIndexesWithDiamond_child12";
+
+    OClass parentClass = db.getMetadata().getSchema().createClass(parent);
+    OClass childClass1 = db.getMetadata().getSchema().createClass(child1, parentClass);
+    OClass childClass2 = db.getMetadata().getSchema().createClass(child2, parentClass);
+    OClass childClass12 = db.getMetadata().getSchema().createClass(child12, childClass1, childClass2);
+
+    parentClass.createProperty("name", OType.STRING);
+    childClass1.createIndex(child1 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+    childClass2.createIndex(child2 + ".name", OClass.INDEX_TYPE.NOTUNIQUE, "name");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child1);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child2);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(child12);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select from " + parent + " where name = 'name1' and surname = 'surname1'");
+    printExecutionPlan(result);
+    OInternalExecutionPlan plan = (OInternalExecutionPlan) result.getExecutionPlan().get();
+    Assert.assertTrue(plan.getSteps().get(0) instanceof FetchFromClassExecutionStep);
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
     }
     Assert.assertFalse(result.hasNext());
     result.close();
