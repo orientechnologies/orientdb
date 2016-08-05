@@ -41,7 +41,6 @@ public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
 
   public LuceneInsertIntegrityRemoteTest() {
     super();
-    //super(true);
   }
 
   @Before
@@ -111,7 +110,6 @@ public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
     Assert.assertEquals(coll.size(), 1);
 
     Thread.sleep(1000);
-    kill(false);
 
     initDB(false);
 

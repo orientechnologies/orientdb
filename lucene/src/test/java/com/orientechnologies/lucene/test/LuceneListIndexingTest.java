@@ -41,14 +41,11 @@ import java.util.Set;
  * Created by enricorisa on 28/06/14.
  */
 
-public class LuceneListIndexing extends BaseLuceneTest {
-
-  public LuceneListIndexing() {
-    super();
-  }
+public class LuceneListIndexingTest extends BaseLuceneTest {
 
   @Before
   public void init() {
+
     initDB();
 
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -182,8 +179,8 @@ public class LuceneListIndexing extends BaseLuceneTest {
 
     Assert.assertEquals(query.size(), 1);
 
-    query = databaseDocumentTx.query(new OSQLSynchQuery<Object>(
-        "select from (select from Person where [name,tags] lucene 'Enrico')"));
+    query = databaseDocumentTx
+        .query(new OSQLSynchQuery<Object>("select from (select from Person where [name,tags] lucene 'Enrico')"));
 
     Assert.assertEquals(query.size(), 1);
 
@@ -199,8 +196,8 @@ public class LuceneListIndexing extends BaseLuceneTest {
 
     Assert.assertEquals(query.size(), 2);
 
-    query = databaseDocumentTx.query(new OSQLSynchQuery<Object>(
-        "select from Person where [name,tags] lucene '(name:Enrico AND tags:Geek)'"));
+    query = databaseDocumentTx
+        .query(new OSQLSynchQuery<Object>("select from Person where [name,tags] lucene '(name:Enrico AND tags:Geek)'"));
 
     Assert.assertEquals(query.size(), 1);
   }

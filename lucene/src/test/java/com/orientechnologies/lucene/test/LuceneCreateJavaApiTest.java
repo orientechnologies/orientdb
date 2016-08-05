@@ -33,12 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Created by Enrico Risa on 07/07/15.
  */
-public class LuceneCreateJavaApi extends BaseLuceneTest {
+public class LuceneCreateJavaApiTest extends BaseLuceneTest {
 
-  public LuceneCreateJavaApi() {
-
-    //super(false);
-  }
 
   @Before
   public void init() {

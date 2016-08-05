@@ -35,13 +35,14 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 
 /**
  * Created by Enrico Risa on 29/04/15.
  */
-public class LuceneBooleanIndex extends BaseLuceneTest {
+public class LuceneBooleanIndexTest extends BaseLuceneTest {
 
   @Before
   public void init() {
@@ -62,6 +63,7 @@ public class LuceneBooleanIndex extends BaseLuceneTest {
     deInitDB();
   }
 
+  @Test
   public void insertPerson() {
 
     for (int i = 0; i < 1000; i++) {
@@ -81,6 +83,7 @@ public class LuceneBooleanIndex extends BaseLuceneTest {
     Assert.assertEquals(true, docs.get(0).field("isDeleted"));
   }
 
+  @Test
   public void testMemoryIndex() throws ParseException {
     // TODO To be used in evaluate Record
     MemoryIndex index = new MemoryIndex();
