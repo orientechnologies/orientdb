@@ -115,6 +115,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private final String PROFILER_UPDATE_RECORD;
   private final String PROFILER_DELETE_RECORD;
   private final String PROFILER_RECYCLE_RECORD;
+  private final String PROFILER_CONFLICT_RECORD;
+  private final String PROFILER_TX_BEGUN;
+  private final String PROFILER_TX_COMMIT;
+  private final String PROFILER_TX_ROLLBACK;
+
   private final Map<String, OCluster> clusterMap = new HashMap<String, OCluster>();
   private       List<OCluster>        clusters   = new ArrayList<OCluster>();
 
@@ -163,6 +168,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     PROFILER_UPDATE_RECORD = "db." + this.name + ".updateRecord";
     PROFILER_DELETE_RECORD = "db." + this.name + ".deleteRecord";
     PROFILER_RECYCLE_RECORD = "db." + this.name + ".recyclePosition";
+    PROFILER_CONFLICT_RECORD = "db." + this.name + ".conflictRecord";
+    PROFILER_TX_BEGUN = "db." + this.name + ".txBegun";
+    PROFILER_TX_COMMIT= "db." + this.name + ".txCommit";
+    PROFILER_TX_ROLLBACK = "db." + this.name + ".txRollback";
 
     sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
   }
@@ -1302,6 +1311,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkOpeness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
+    Orient.instance().getProfiler().updateCounter(PROFILER_TX_BEGUN, "Number of transactions begun", +1,
+        "db.*.txBegun");
+
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
     final OIndexManagerProxy indexManager = databaseRecord.getMetadata().getIndexManager();
     final TreeMap<String, OTransactionIndexChanges> indexesToCommit = getSortedIndexEntries(clientTx);
@@ -1407,6 +1419,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           endStorageTx();
 
           OTransactionAbstract.updateCacheFromEntries(clientTx, entries, true);
+
+          Orient.instance().getProfiler().updateCounter(PROFILER_TX_COMMIT, "Number of transaction committed", +1,
+              "db.*.txCommit");
 
         } catch (IOException ioe) {
           makeRollback(clientTx, ioe);
@@ -2314,6 +2329,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
 
+        Orient.instance().getProfiler().updateCounter(PROFILER_TX_ROLLBACK, "Number of transaction rolled back", +1,
+            "db.*.txRollbacks");
+
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error during transaction rollback"), e);
       } finally {
@@ -3180,6 +3198,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return new OStorageOperationResult<Integer>(ppos.recordVersion, content, false);
       else
         return new OStorageOperationResult<Integer>(ppos.recordVersion);
+    } catch (OConcurrentModificationException e) {
+      Orient.instance().getProfiler().updateCounter(PROFILER_CONFLICT_RECORD, "Number of conflicts during updating and deleting records", +1,
+          "db.*.conflictRecord");
+      throw e;
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", ioe);
 
@@ -3243,11 +3265,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
         return new OStorageOperationResult<Boolean>(false);
 
       // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-      if (version > -1 && ppos.recordVersion != version)
+      if (version > -1 && ppos.recordVersion != version) {
+        Orient.instance().getProfiler().updateCounter(PROFILER_CONFLICT_RECORD, "Number of conflicts during updating and deleting records", +1,
+            "db.*.conflictRecord");
+
         if (OFastConcurrentModificationException.enabled())
           throw OFastConcurrentModificationException.instance();
         else
           throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.DELETED);
+      }
 
       makeStorageDirty();
       atomicOperationsManager.startAtomicOperation((String) null, true);
