@@ -300,7 +300,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       } catch (Exception e) {
         if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
           sendError(connection, clientTxId, e);
-          handleConnectionError(connection, e);
+          channel.flush();
+          OServerPluginHelper.invokeHandlerCallbackOnClientError(server, connection, e);
           afterOperationRequest(connection);
           sendShutdown();
         }
