@@ -22,9 +22,11 @@ package com.orientechnologies.orient.server.distributed.conflict;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,38 +38,61 @@ import java.util.Map;
 public class OMajorityDistributedConflictResolver extends OAbstractDistributedConflictResolver {
   public static final String NAME = "majority";
 
-  public Object onConflict(final String databaseName, final String clusterName, final ORecordId rid,
-      final ODistributedServerManager dManager, final Map<Object, List<String>> groupedServerValues) {
+  public OConflictResult onConflict(final String databaseName, final String clusterName, final ORecordId rid,
+      final ODistributedServerManager dManager, final Map<Object, List<String>> candidates, final ODocument config) {
 
-    final Object bestResult = getBestResult(groupedServerValues, null);
+    final OConflictResult result = new OConflictResult();
+
+    final Object bestResult = getBestResult(candidates, null);
     if (bestResult == null)
-      return null;
+      return result;
 
     final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
     final int writeQuorum = dCfg.getWriteQuorum(clusterName, dManager.getAvailableNodes(databaseName), dManager.getLocalNodeName());
 
-    final int bestResultServerCount = groupedServerValues.get(bestResult).size();
+    final int bestResultServerCount = candidates.get(bestResult).size();
     if (bestResultServerCount >= writeQuorum) {
       // BEST RESULT RESPECT THE QUORUM, IT'S DEFINITELY THE WINNER
       OLogManager.instance().info(this,
-          "Majority Conflict Resolver decided the value '%s' is the winner for record %s, because is major than the configured writeQuorum (%d)",
-          bestResult, rid, writeQuorum);
-      return bestResult;
+          "Majority Conflict Resolver decided the value '%s' is the winner for record %s, because is major than the configured writeQuorum (%d). Servers ok=%s",
+          bestResult, rid, writeQuorum, candidates.get(result.winner));
+      result.winner = bestResult;
+    } else {
+      // FOUND IF THERE IS AT LEAST A MAJORITY
+      final List<Object> exclude = new ArrayList<Object>();
+      exclude.add(bestResult);
+
+      final Object secondBestResult = getBestResult(candidates, exclude);
+      if (bestResultServerCount > candidates.get(secondBestResult).size()) {
+        OLogManager.instance().info(this,
+            "Majority Conflict Resolver decided the value '%s' is the winner for the record %s because it is the majority even if under the configured writeQuorum (%d). Servers ok=%s",
+            bestResult, rid, writeQuorum, candidates.get(result.winner));
+
+        result.winner = bestResult;
+      } else {
+        // NO MAJORITY: DON'T TAKE ANY ACTION
+        OLogManager.instance().info(this, "Majority Conflict Resolver could not find a winner for the record %s: %s", rid,
+            candidates);
+
+        // COLLECT ALL THE RESULT == BEST RESULT
+        result.candidates.put(bestResult, candidates.get(bestResult));
+        result.candidates.put(secondBestResult, candidates.get(secondBestResult));
+        exclude.add(secondBestResult);
+
+        Object lastBestResult = getBestResult(candidates, exclude);
+        int resultCount = candidates.get(secondBestResult).size();
+        while (lastBestResult != null && resultCount == bestResultServerCount && exclude.size() < candidates.size()) {
+          result.candidates.put(lastBestResult, candidates.get(lastBestResult));
+          exclude.add(lastBestResult);
+          lastBestResult = getBestResult(candidates, exclude);
+          if (lastBestResult == null)
+            break;
+          resultCount = candidates.get(lastBestResult).size();
+        }
+      }
     }
 
-    // FOUND IF THERE IS AT LEAST A MAJORITY
-    final Object secondBestResult = getBestResult(groupedServerValues, bestResult);
-    if (bestResultServerCount > groupedServerValues.get(secondBestResult).size()) {
-      OLogManager.instance().info(this,
-          "Majority Conflict Resolver decided the value '%s' is the winner for the record %s because it is the majority even if under the configured writeQuorum (%d)",
-          bestResult, rid, writeQuorum);
-      return bestResult;
-    }
-
-    // NO MAJORITY: DON'T TAKE ANY ACTION
-    OLogManager.instance().info(this, "Majority Conflict Resolver could not find a winner for the record %s: %s", rid,
-        groupedServerValues);
-    return null;
+    return result;
   }
 
   public String getName() {

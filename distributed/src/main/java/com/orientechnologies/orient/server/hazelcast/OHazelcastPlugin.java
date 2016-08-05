@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -66,9 +65,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   public static final String           CONFIG_DATABASE_PREFIX = "database.";
 
-  protected static final String        CONFIG_NODE_PREFIX     = "node.";
-  protected static final String        CONFIG_DBSTATUS_PREFIX = "dbstatus.";
-  protected static final String        CONFIG_REGISTEREDNODES = "registeredNodes";
+  public static final String           CONFIG_NODE_PREFIX     = "node.";
+  public static final String           CONFIG_DBSTATUS_PREFIX = "dbstatus.";
+  public static final String           CONFIG_REGISTEREDNODES = "registeredNodes";
 
   protected String                     hazelcastConfigFile    = "hazelcast.xml";
   protected String                     membershipListenerRegistration;
@@ -77,7 +76,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   // THIS MAP IS BACKED BY HAZELCAST EVENTS. IN THIS WAY WE AVOID TO USE HZ MAP DIRECTLY
   protected OHazelcastDistributedMap   configurationMap;
-  protected ODistributedDatabaseRepair repair;
 
   public OHazelcastPlugin() {
   }
@@ -170,9 +168,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       for (String m : activeNodes.keySet())
         if (!m.equals(nodeName))
           getRemoteServer(m);
-
-      repair = new ODistributedDatabaseRepair(this);
-      repair.start();
 
       installNewDatabasesFromCluster(true);
 
@@ -302,16 +297,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void repairRecord(final String databaseName, final ORecordId rid) {
-    try {
-      repair.repair(databaseName, rid);
-    } catch (IllegalStateException e) {
-      ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
-          "Error on adding record %s to the check queue because it is full");
-    }
-  }
-
-  @Override
   public void shutdown() {
     if (!enabled)
       return;
@@ -340,9 +325,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
 
     super.shutdown();
-
-    if (repair != null)
-      repair.sendShutdown();
 
     if (membershipListenerRegistration != null) {
       try {

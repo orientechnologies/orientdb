@@ -93,4 +93,9 @@ public class ORawBuffer extends OBuffer {
     result = 31 * result + (int) recordType;
     return result;
   }
+
+  @Override
+  public String toString() {
+    return super.toString() + " v." + version;
+  }
 }

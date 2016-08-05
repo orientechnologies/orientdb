@@ -82,7 +82,7 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioTe
     ((ODistributedStorage) dbServer2.getStorage()).setEventListener(new AfterRecordLockDelayer("server2", DOCUMENT_WRITE_TIMEOUT / 4));
     ((ODistributedStorage) dbServer3.getStorage()).setEventListener(new AfterRecordLockDelayer("server3", DOCUMENT_WRITE_TIMEOUT / 2));
 
-    // updates the same record from three different clients, each calling a different server
+    // deletes the same record from three different clients, each calling a different server
     List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
     clients.add(new RecordDeleter(getDatabaseURL(serverInstance.get(0)), RECORD_ID, true));
     clients.add(new RecordDeleter(getDatabaseURL(serverInstance.get(1)), RECORD_ID, true));

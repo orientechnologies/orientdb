@@ -56,13 +56,22 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     return "reqId=" + reqId + " undoTasks=" + undoTasks.size() + " startedOn=" + startedOn;
   }
 
+  @Override
   public synchronized void lock(ORID rid) {
+    lock(rid, -1);
+  }
+
+  @Override
+  public synchronized void lock(ORID rid, long timeout) {
+    if (timeout < 0)
+      timeout = OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger();
+
     if (!rid.isPersistent())
       // CREATE A COPY TO MAINTAIN THE LOCK ON THE CLUSTER AVOIDING THE RID IS TRANSFORMED IN PERSISTENT. THIS ALLOWS TO HAVE
       // PARALLEL TX BECAUSE NEW RID LOCKS THE ENTIRE CLUSTER.
       rid = new ORecordId(rid.getClusterId(), -1l);
 
-    if (db.lockRecord(rid, reqId, OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsInteger()))
+    if (db.lockRecord(rid, reqId, timeout))
       // NEW LOCK (FALSE=LOCK WAS ALREADY TAKEN. THIS CAN HAPPEN WITH CREATE, BECAUSE THE RID IS ON CLUSTER ID ONLY (LIKE #25:-1),
       // SO 2 CREATE OPERATIONS AGAIN THE SAME CLUSTER RESULT IN 2 LOCKS AGAINST THE SAME RESOURCE
       acquiredLocks.add(rid);
@@ -106,7 +115,8 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
     for (ORemoteTask task : undoTasks) {
       try {
 
-        db.getManager().executeOnLocalNode(reqId, task, database);
+        if (task != null)
+          db.getManager().executeOnLocalNode(reqId, task, database);
 
       } catch (Exception e) {
         ODistributedServerLog.error(this, db.getManager().getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,

@@ -123,7 +123,7 @@ public final class DistributedDatabaseCRUDTest {
     log("Running SQL based vertex update");
     List<Future<?>> ths = new ArrayList<Future<?>>();
     ExecutorService executorService = newFixedThreadPool("testnode-sql-update", 10);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
       Future<?> future = executorService.submit(startSQLUpdateThread(i, getGraphFactory()));
       ths.add(future);
     }
@@ -175,7 +175,7 @@ public final class DistributedDatabaseCRUDTest {
                       || ex instanceof ODistributedException) {
                     if (ex instanceof ONeedRetryException || ex.getCause() instanceof ONeedRetryException) {
                       // update is true. retry
-                      Thread.sleep( new Random().nextInt(500));
+                      Thread.sleep(new Random().nextInt(500));
                     } else {
                       log("[" + id + "][ Retry: " + k + "] Failed to update. OrientDB Exception [" + ex + "]");
                     }
@@ -247,48 +247,52 @@ public final class DistributedDatabaseCRUDTest {
             }
             OrientGraph graph = graphFactory.getTx();
             try {
-              Iterable<Vertex> vtxs = graph.command(new OCommandSQL(query)).execute();
-              boolean retry = true;
-              for (Vertex vtx : vtxs) {
-                if (retry) {
-                  retry = true;
-                  boolean isException = false;
-                  Exception tex = null;
-                  int k = 1;
-                  for (; k <= 100 && retry; k++) {
-                    OrientVertex vtx1 = (OrientVertex) vtx;
-                    try {
-                      vtx1.setProperty("prop5", "prop55");
-                      vtx1.setProperty("updateTime", new Date().toString());
-                      graph.commit();
-                      if (isException) {
-                        // log("********** [" + id + "][" + k + "] Update success after distributed lock Exception for vertex " +
-                        // vtx1);
-                      }
-                      retry = false;
-                      break;
-                    } catch (Exception ex) {
-                      tex = ex;
-
-                      if (ex instanceof ODatabaseException || ex instanceof ONeedRetryException
-                          || ex instanceof ODistributedException) {
-                        if (ex instanceof ONeedRetryException || ex.getCause() instanceof ONeedRetryException) {
-                          Thread.sleep( new Random().nextInt(500));
-                        } else {
-                          log("[" + id + "][" + vtx + "][ Retry: " + k + "] Failed to update. OrientDB Exception [" + ex + "]");
+              try {
+                Iterable<Vertex> vtxs = graph.command(new OCommandSQL(query)).execute();
+                boolean retry = true;
+                for (Vertex vtx : vtxs) {
+                  if (retry) {
+                    retry = true;
+                    boolean isException = false;
+                    Exception tex = null;
+                    int k = 1;
+                    for (; k <= 100 && retry; k++) {
+                      OrientVertex vtx1 = (OrientVertex) vtx;
+                      try {
+                        vtx1.setProperty("prop5", "prop55");
+                        vtx1.setProperty("updateTime", new Date().toString());
+                        graph.commit();
+                        if (isException) {
+                          // log("********** [" + id + "][" + k + "] Update success after distributed lock Exception for vertex " +
+                          // vtx1);
                         }
-                        vtx1.reload();
-                        isException = true;
-                      } else
-                        log("[" + id + "][" + k + "] Failed to update non OrientDB Exception [" + ex + "] for vertex [" + vtx1
-                            + "]");
+                        retry = false;
+                        break;
+                      } catch (Exception ex) {
+                        tex = ex;
+
+                        if (ex instanceof ODatabaseException || ex instanceof ONeedRetryException
+                            || ex instanceof ODistributedException) {
+                          if (ex instanceof ONeedRetryException || ex.getCause() instanceof ONeedRetryException) {
+                            Thread.sleep(new Random().nextInt(500));
+                          } else {
+                            log("[" + id + "][" + vtx + "][ Retry: " + k + "] Failed to update. OrientDB Exception [" + ex + "]");
+                          }
+                          vtx1.reload();
+                          isException = true;
+                        } else
+                          log("[" + id + "][" + k + "] Failed to update non OrientDB Exception [" + ex + "] for vertex [" + vtx1
+                              + "]");
+                      }
+                    }
+                    if (retry) {
+                      log("*******#################******* [" + id + "][" + vtx + "][ Retry: " + k
+                          + "] Failed to update after Exception [" + ((tex != null) ? tex : "----") + "]");
                     }
                   }
-                  if (retry) {
-                    log("*******#################******* [" + id + "][" + vtx + "][ Retry: " + k
-                        + "] Failed to update after Exception [" + ((tex != null) ? tex : "----") + "]");
-                  }
                 }
+              } catch (ONeedRetryException e) {
+                // CONTINUE
               }
             } finally {
               graph.shutdown();

@@ -29,8 +29,10 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.distributed.impl.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODeleteRecordTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateRecordTask;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -457,6 +459,23 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected String getDatabaseURL(ServerRun server) {
+    return null;
+  }
+
+  protected ODocument readRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
+    final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
+
+    final Collection<String> clusterNames = new ArrayList<String>(1);
+    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
+
+    ODistributedResponse response = dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
+        new OReadRecordTask(rid), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+
+    if (response != null) {
+      final ORawBuffer buffer = (ORawBuffer) response.getPayload();
+      return new ODocument().fromStream(buffer.getBuffer());
+    }
+
     return null;
   }
 

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -85,6 +86,9 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
 
     // UNLOCK ALL LOCKS ACQUIRED IN TX
     final ODistributedDatabase ddb = iManager.getMessageService().getDatabase(database.getName());
+    if (ddb == null)
+      throw new ODatabaseException(
+          "Database '" + database.getName() + " is not available on server '" + iManager.getLocalNodeName() + "'");
 
     final ODistributedTxContext pRequest = ddb.popTxContext(requestId);
     try {
@@ -195,5 +199,9 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   public String toString() {
     return getName() + " origReqId: " + requestId + " type: "
         + (success ? "commit" : (fixTasks.isEmpty() ? "rollback" : "fix (" + fixTasks.size() + " ops) [" + fixTasks + "]"));
+  }
+
+  public List<ORemoteTask> getFixTasks() {
+    return fixTasks;
   }
 }

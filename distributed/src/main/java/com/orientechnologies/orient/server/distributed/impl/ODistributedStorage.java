@@ -605,6 +605,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     } catch (ONeedRetryException e) {
       // PASS THROUGH
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
+      final ORecordId lockEntireCluster = iRecordId.copy();
+      lockEntireCluster.clusterPosition = -1;
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(lockEntireCluster);
+
       throw e;
     } catch (HazelcastInstanceNotActiveException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");
@@ -613,6 +618,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
+      final ORecordId lockEntireCluster = iRecordId.copy();
+      lockEntireCluster.clusterPosition = -1;
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(lockEntireCluster);
+
       handleDistributedException("Cannot route create record operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
@@ -856,6 +866,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
 
       handleDistributedException("Cannot route UPDATE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
@@ -979,6 +990,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     } catch (ONeedRetryException e) {
       // PASS THROUGH
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
+
       throw e;
 
     } catch (HazelcastInstanceNotActiveException e) {
@@ -988,6 +1001,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
 
       handleDistributedException("Cannot route DELETE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE

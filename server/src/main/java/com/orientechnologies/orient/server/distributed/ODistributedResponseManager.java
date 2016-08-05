@@ -586,6 +586,7 @@ public class ODistributedResponseManager {
         return null;
 
       if (checkNoWinnerCase(bestResponsesGroup))
+        // TODO: CALL THE RECORD CONFLICT PIPELINE
         return null;
 
       if (fixNodesInConflict(bestResponsesGroup, conflicts))
@@ -594,12 +595,13 @@ public class ODistributedResponseManager {
     }
 
     // QUORUM HASN'T BEEN REACHED
-    ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-        "Detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request (%s)",
-        conflicts, quorum, request);
+    if (ODistributedServerLog.isDebugEnabled()) {
+      ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+          "Detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request (%s)",
+          conflicts, quorum, request);
 
-    if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, composeConflictMessage());
+    }
 
     if (!undoRequest()) {
       // SKIP UNDO
@@ -713,7 +715,7 @@ public class ODistributedResponseManager {
     if (goodResponse.getPayload() instanceof Throwable)
       return false;
 
-    ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+    ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
         "Detected %d conflicts, but the quorum (%d) has been reached. Fixing remote records. Request (%s)", conflicts, quorum,
         request);
 
@@ -721,6 +723,10 @@ public class ODistributedResponseManager {
       if (responseGroup != bestResponsesGroup) {
         // CONFLICT GROUP: FIX THEM ONE BY ONE
         for (ODistributedResponse r : responseGroup) {
+          if( r.getPayload() instanceof ODistributedRecordLockedException)
+            // NO FIX, THE RECORD WAS LOCKED
+            return false;
+
           final ORemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, request.getTask(),
               r.getPayload(), goodResponse.getPayload(), r.getExecutorNodeName(), dManager);
 
