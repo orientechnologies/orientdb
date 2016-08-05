@@ -11,13 +11,22 @@ import java.util.*;
  */
 public class OrderByStep extends AbstractExecutionStep {
   private final OOrderBy orderBy;
+  private       Integer  maxResults;
 
   List<OResult> cachedResult = null;
-  int                   nextElement  = 0;
+  int           nextElement  = 0;
 
   public OrderByStep(OOrderBy orderBy, OCommandContext ctx) {
+    this(orderBy, null, ctx);
+  }
+
+  public OrderByStep(OOrderBy orderBy, Integer maxResults, OCommandContext ctx) {
     super(ctx);
     this.orderBy = orderBy;
+    this.maxResults = maxResults;
+    if (this.maxResults != null && this.maxResults < 0) {
+      this.maxResults = null;
+    }
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
@@ -68,6 +77,7 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   private void init(OExecutionStepInternal p, OCommandContext ctx) {
+    boolean sorted = true;
     do {
       OTodoResultSet lastBatch = p.syncPull(ctx, 100);
       if (!lastBatch.hasNext()) {
@@ -78,9 +88,27 @@ public class OrderByStep extends AbstractExecutionStep {
           break;
         }
         cachedResult.add(lastBatch.next());
+        sorted = false;
+        //compact, only at twice as the buffer, to avoid to do it at each add
+        if (this.maxResults != null && maxResults * 2 < cachedResult.size()) {
+          cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+          cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
+          sorted = true;
+        }
+      }
+      if (timedOut) {
+        break;
+      }
+      //compact at each batch, if needed
+      if (!sorted && this.maxResults != null && maxResults < cachedResult.size()) {
+        cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+        cachedResult = new ArrayList<>(cachedResult.subList(0, maxResults));
+        sorted = true;
       }
     } while (true);
-    cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+    if (!sorted) {
+      cachedResult.sort((a, b) -> orderBy.compare(a, b, ctx));
+    }
   }
 
   @Override public void asyncPull(OCommandContext ctx, int nRecords, OExecutionCallback callback) throws OTimeoutException {
@@ -92,6 +120,8 @@ public class OrderByStep extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ "+orderBy;
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ " + orderBy + (maxResults != null ?
+        "\n  (buffer size: " + maxResults + ")" :
+        "");
   }
 }

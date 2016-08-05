@@ -553,9 +553,20 @@ public class OSelectExecutionPlanner {
   }
 
   private void handleOrderBy(OSelectExecutionPlan plan, OOrderBy orderBy, OCommandContext ctx) {
-    //TODO skip and limit in line
+    int skipSize = skip == null ? 0 : skip.getValue(ctx);
+    if (skipSize < 0) {
+      throw new OCommandExecutionException("Cannot execute a query with a negative SKIP");
+    }
+    int limitSize = limit == null ? -1 : limit.getValue(ctx);
+    Integer maxResults = null;
+    if (limitSize >= 0) {
+      maxResults = skipSize + limitSize;
+    }
+    if (expand || unwind != null) {
+      maxResults = null;
+    }
     if (!orderApplied && orderBy != null && orderBy.getItems() != null && orderBy.getItems().size() > 0) {
-      plan.chain(new OrderByStep(orderBy, ctx));
+      plan.chain(new OrderByStep(orderBy, maxResults, ctx));
     }
   }
 
@@ -581,11 +592,20 @@ public class OSelectExecutionPlanner {
     plan.chain(fetcher);
   }
 
-  private boolean handleClassWithIndexForSortOnly(OSelectExecutionPlan plan, OIdentifier identifier, OOrderBy orderBy,
+  /**
+   * tries to use an index for sorting only. Also adds the fetch step to the execution plan
+   *
+   * @param plan        current execution plan
+   * @param queryTarget the query target (class)
+   * @param orderBy     ORDER BY clause
+   * @param ctx         the current context
+   * @return true if it succeeded to use an index to sort, false otherwise.
+   */
+  private boolean handleClassWithIndexForSortOnly(OSelectExecutionPlan plan, OIdentifier queryTarget, OOrderBy orderBy,
       OCommandContext ctx) {
-    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(identifier.getStringValue());
+    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(queryTarget.getStringValue());
     if (clazz == null) {
-      throw new OCommandExecutionException("Class not found: " + identifier.getStringValue());
+      throw new OCommandExecutionException("Class not found: " + queryTarget.getStringValue());
     }
 
     for (OIndex idx : clazz.getIndexes().stream().filter(i -> i.supportsOrderedIterations()).filter(i -> i.getDefinition() != null)

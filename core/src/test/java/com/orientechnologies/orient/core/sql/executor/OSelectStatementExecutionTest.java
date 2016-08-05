@@ -268,6 +268,30 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testSelectOrderByMassiveAsc() {
+    String className = "testSelectOrderByMassiveAsc";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 100000; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i % 100);
+      doc.save();
+    }
+    long begin = System.nanoTime();
+    OTodoResultSet result = db.query("select from " + className + " order by surname asc limit 100");
+    System.out.println("elapsed: " + (System.nanoTime() - begin));
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 100; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("surname0", item.getProperty("surname"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   @Test public void testSelectFullScanWithFilter1() {
     String className = "testSelectFullScanWithFilter1";
     db.getMetadata().getSchema().createClass(className);
@@ -1724,7 +1748,7 @@ public class OSelectStatementExecutionTest {
     Assert.assertEquals(1, ((List) one).size());
     Object x = ((List) one).get(0);
     Assert.assertTrue(x instanceof OResult);
-    Assert.assertEquals(1l, (Object) ((OResult) x).getProperty("a"));
+    Assert.assertEquals(1L, (Object) ((OResult) x).getProperty("a"));
     result.close();
   }
 
@@ -1856,8 +1880,8 @@ public class OSelectStatementExecutionTest {
       Assert.assertNotNull(item);
       Assert.assertNotNull(item.getProperty("i"));
       Assert.assertNotNull(item.getProperty("iSeq"));
-      Integer first = (Integer) item.getProperty("i");
-      Integer second = (Integer) item.getProperty("iSeq");
+      Integer first = item.getProperty("i");
+      Integer second = item.getProperty("iSeq");
       Assert.assertTrue(first + second == 0 || second.intValue() % first.intValue() == 0);
     }
     Assert.assertFalse(result.hasNext());
