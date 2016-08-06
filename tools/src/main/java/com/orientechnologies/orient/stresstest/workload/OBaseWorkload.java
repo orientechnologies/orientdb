@@ -138,6 +138,8 @@ public abstract class OBaseWorkload implements OWorkload {
                 public Object call(final Integer retry) {
                   if (retry > 0) {
                     i.addAndGet(operationsExecutedInTx.get() * -1);
+                    if (i.get() < 0)
+                      i.set(0);
                     operationsExecutedInTx.set(0);
                   }
 
@@ -152,7 +154,11 @@ public abstract class OBaseWorkload implements OWorkload {
                   final long startOp = System.nanoTime();
                   try {
 
-                    return callback.call(context);
+                    try {
+                      return callback.call(context);
+                    } finally {
+                      operationsExecutedInTx.incrementAndGet();
+                    }
 
                   } catch (ONeedRetryException e) {
                     result.conflicts.incrementAndGet();
@@ -170,7 +176,6 @@ public abstract class OBaseWorkload implements OWorkload {
                     }
                   } finally {
                     operationTiming[context.currentIdx] = System.nanoTime() - startOp;
-                    operationsExecutedInTx.incrementAndGet();
                   }
 
                   return null;
