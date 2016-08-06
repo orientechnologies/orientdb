@@ -294,7 +294,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       }
     }
 
-    expected = writerCount * count * serverId + baseCount;
+    computeExpected(serverId);
 
     System.out.println("Expected records="+expected);
 
@@ -321,6 +321,10 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     checkInsertedEntries();
     checkIndexedEntries();
+  }
+
+  protected void computeExpected(final int serverId) {
+    expected = writerCount * count * serverId + baseCount;
   }
 
   protected void onBeforeChecks() throws InterruptedException {
