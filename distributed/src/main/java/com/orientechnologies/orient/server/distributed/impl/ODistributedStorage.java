@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.ONeedRetryException;
@@ -67,18 +79,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.task.*;
 import com.orientechnologies.orient.server.security.OSecurityServerUser;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -606,6 +606,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     } catch (ONeedRetryException e) {
       // PASS THROUGH
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
+      final ORecordId lockEntireCluster = iRecordId.copy();
+      lockEntireCluster.clusterPosition = -1;
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(lockEntireCluster);
+
       throw e;
     } catch (HazelcastInstanceNotActiveException e) {
       throw new OOfflineNodeException("Hazelcast instance is not available");
@@ -614,6 +619,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
+      final ORecordId lockEntireCluster = iRecordId.copy();
+      lockEntireCluster.clusterPosition = -1;
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(lockEntireCluster);
+
       handleDistributedException("Cannot route create record operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
       return null;
@@ -857,6 +867,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
 
       handleDistributedException("Cannot route UPDATE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
@@ -980,6 +991,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
     } catch (ONeedRetryException e) {
       // PASS THROUGH
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
+
       throw e;
 
     } catch (HazelcastInstanceNotActiveException e) {
@@ -989,6 +1002,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       throw new OOfflineNodeException("Hazelcast instance is not available");
 
     } catch (Exception e) {
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
 
       handleDistributedException("Cannot route DELETE_RECORD operation for %s to the distributed node", e, iRecordId);
       // UNREACHABLE
@@ -1118,7 +1132,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
   }
 
   @Override
-  public void open(final String iUserName, final String iUserPassword, final OContextConfiguration contextConfiguration) {
+  public void open(String iUserName, String iUserPassword, final OContextConfiguration contextConfiguration) {
     wrapped.open(iUserName, iUserPassword, contextConfiguration);
   }
 
@@ -1698,7 +1712,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
         @Override
         public Object call() throws Exception {
-          ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          ODatabaseDocumentTx database = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
           final boolean databaseAlreadyDefined;
 
           if (database == null) {

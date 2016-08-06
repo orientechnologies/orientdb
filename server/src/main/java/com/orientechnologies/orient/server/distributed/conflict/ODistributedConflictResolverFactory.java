@@ -27,6 +27,8 @@ public class ODistributedConflictResolverFactory extends OConfigurableStatelessF
     final OMajorityDistributedConflictResolver def = new OMajorityDistributedConflictResolver();
 
     registerImplementation(OMajorityDistributedConflictResolver.NAME, def);
+    registerImplementation(OVersionDistributedConflictResolver.NAME, new OVersionDistributedConflictResolver());
+    registerImplementation(ODCDistributedConflictResolver.NAME, new ODCDistributedConflictResolver());
 
     setDefaultImplementation(def);
   }

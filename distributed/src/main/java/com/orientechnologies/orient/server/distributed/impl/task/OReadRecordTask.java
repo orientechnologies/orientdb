@@ -46,8 +46,21 @@ public class OReadRecordTask extends OAbstractReadRecordTask {
   }
 
   @Override
+  public void checkRecordExists() {
+  }
+
+  @Override
+  public ORecord prepareUndoOperation() {
+    return null;
+  }
+
+  @Override
   public Object executeRecordTask(ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
+    if (rid.clusterPosition < 0)
+      // USED TO JUST LOCK THE CLUSTER
+      return null;
+
     final ORecord record = database.load(rid);
     if (record == null)
       return null;

@@ -65,12 +65,13 @@ import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolver;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
+import com.orientechnologies.orient.server.distributed.conflict.OMajorityDistributedConflictResolver;
+import com.orientechnologies.orient.server.distributed.conflict.OVersionDistributedConflictResolver;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import com.orientechnologies.orient.server.hazelcast.OClusterHealthChecker;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
@@ -123,13 +124,17 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
   protected ODistributedStrategy                                 responseManagerFactory            = new ODefaultDistributedStrategy();
   protected ODistributedConflictResolverFactory                  conflictResolverFactory           = new ODistributedConflictResolverFactory();
-  protected ODistributedConflictResolver                         conflictResolver                  = conflictResolverFactory
-      .getDefaultImplementation();
+  protected List<ODistributedConflictResolver>                   conflictResolvers                 = new ArrayList<ODistributedConflictResolver>();
 
   private volatile String                                        lastServerDump                    = "";
   protected CountDownLatch                                       serverStarted                     = new CountDownLatch(1);
 
   protected abstract ODistributedConfiguration getLastDatabaseConfiguration(String databaseName);
+
+  protected ODistributedAbstractPlugin() {
+    conflictResolvers.add(conflictResolverFactory.getImplementation(OMajorityDistributedConflictResolver.NAME));
+    conflictResolvers.add(conflictResolverFactory.getImplementation(OVersionDistributedConflictResolver.NAME));
+  }
 
   public void waitUntilNodeOnline() throws InterruptedException {
     serverStarted.await();
@@ -1359,7 +1364,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       throw OException.wrapException(new ODistributedException("Error on transferring database"), e);
     }
 
-    final ODatabaseDocumentInternal db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
+    final ODatabaseDocumentTx db = installDatabaseOnLocalNode(databaseName, dbPath, iNode, fileName, delta,
         uniqueClustersBackupDirectory);
     if (db != null) {
       try {
@@ -1703,7 +1708,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     return chunk.buffer.length;
   }
 
-  protected ODatabaseDocumentInternal installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode,
+  protected ODatabaseDocumentTx installDatabaseOnLocalNode(final String databaseName, final String dbPath, final String iNode,
       final String iDatabaseCompressedFile, final boolean delta, final File uniqueClustersBackupDirectory) {
     ODistributedServerLog.info(this, nodeName, iNode, DIRECTION.IN, "Installing database '%s' to: %s...", databaseName, dbPath);
 
@@ -1712,7 +1717,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final File fCompleted = new File(iDatabaseCompressedFile + ".completed");
 
       new File(dbPath).mkdirs();
-      final ODatabaseDocumentInternal db = new ODatabaseDocumentTx("plocal:" + dbPath);
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath);
 
       // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)
       final FileInputStream in = new FileInputStream(f) {
@@ -1928,12 +1933,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public ODistributedConflictResolver getConflictResolver() {
-    return conflictResolver;
+  public List<ODistributedConflictResolver> getConflictResolver() {
+    return conflictResolvers;
   }
-
-  public void setConflictResolver(final ODistributedConflictResolver conflictResolver) {
-    this.conflictResolver = conflictResolver;
-  }
-
 }

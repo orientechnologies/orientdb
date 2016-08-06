@@ -75,6 +75,7 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
     return OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
   }
 
+  @Override
   public boolean isUsingDatabase() {
     return false;
   }

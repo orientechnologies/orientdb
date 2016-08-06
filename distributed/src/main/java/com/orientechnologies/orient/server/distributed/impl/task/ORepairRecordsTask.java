@@ -20,26 +20,26 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.id.ORecordId;
 
 /**
- * Execute a read of a record from a distributed node. This is used in the database repair.
+ * Repairs records through the distributed server.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ORepairReadRecordTask extends OAbstractReadRecordTask {
+public class ORepairRecordsTask extends OTxTask {
   private static final long serialVersionUID = 1L;
   public static final int   FACTORYID        = 17;
 
-  public ORepairReadRecordTask() {
-  }
-
-  public ORepairReadRecordTask(final ORecordId iRid) {
-    super(iRid);
+  public ORepairRecordsTask() {
   }
 
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
     return OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
+  }
+
+  @Override
+  public long getSynchronousTimeout(final int iSynchNodes) {
+    return 3000;
   }
 
   @Override
@@ -49,7 +49,7 @@ public class ORepairReadRecordTask extends OAbstractReadRecordTask {
 
   @Override
   public String getName() {
-    return "repair_record_read";
+    return "repair_records";
   }
 
   @Override

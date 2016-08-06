@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -34,17 +43,11 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.*;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
+import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Distributed database implementation. There is one instance per database. Each node creates own instance to talk with each others.
@@ -61,6 +64,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   protected final ODistributedMessageServiceImpl                                msgService;
   protected final String                                                        databaseName;
   protected final Lock                                                          requestLock;
+  protected final ODistributedDatabaseRepairer                                  repairer;
   protected ODistributedSyncConfiguration                                       syncConfiguration;
   protected ConcurrentHashMap<ORID, ODistributedLock>                           lockManager                    = new ConcurrentHashMap<ORID, ODistributedLock>(
       256);
@@ -97,6 +101,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     checkLocalNodeInConfiguration();
 
     startTxTimeoutTimerTask();
+
+    repairer = new ODelayedDistributedDatabaseRepairer(manager, databaseName);
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
@@ -118,17 +124,17 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     totalReceivedRequests.incrementAndGet();
 
-    if (task instanceof OAbstractReplicatedTask) {
-      final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
-      final OLogSequenceNumber lastLSN = getLastLSN(manager.getNodeNameById(request.getId().getNodeId()));
-
-      if (taskLastLSN != null && lastLSN != null && taskLastLSN.compareTo(lastLSN) < 0) {
-        // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
-        ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
-            "Skipped request %s on database '%s' because LSN %s < current LSN %s", request, databaseName, taskLastLSN, lastLSN);
-        return;
-      }
-    }
+    // if (task instanceof OAbstractReplicatedTask) {
+    // final OLogSequenceNumber taskLastLSN = ((OAbstractReplicatedTask) task).getLastLSN();
+    // final OLogSequenceNumber lastLSN = getLastLSN(manager.getNodeNameById(request.getId().getNodeId()));
+    //
+    // if (taskLastLSN != null && lastLSN != null && taskLastLSN.compareTo(lastLSN) < 0) {
+    // // SKIP REQUEST BECAUSE CONTAINS AN OLD LSN
+    // ODistributedServerLog.info(this, localNodeName, null, DIRECTION.NONE,
+    // "Skipped request %s on database '%s' because LSN %s < current LSN %s", request, databaseName, taskLastLSN, lastLSN);
+    // return;
+    // }
+    // }
 
     final int[] partitionKeys = task.getPartitionKey();
 
@@ -624,6 +630,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void shutdown() {
+    if (repairer != null)
+      repairer.shutdown();
+
     // SEND THE SHUTDOWN TO ALL THE WORKER THREADS
     for (ODistributedWorker workerThread : workerThreads) {
       if (workerThread != null)
@@ -795,6 +804,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
+  @Override
+  public ODistributedDatabaseRepairer getDatabaseRapairer() {
+    return repairer;
+  }
+
   protected void saveLSNTable(final String sourceNodeName) throws IOException {
     final OLogSequenceNumber storedLSN = lastLSN.get(sourceNodeName);
 
@@ -851,5 +865,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       }
     }, OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong(),
         OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong() / 2);
+  }
+
+  @Override
+  public void dumpLocks() {
+    OLogManager.instance().info(this, "Current locks database '%s' server '%s'", databaseName, manager.getLocalNodeName());
+    for (Map.Entry<ORID, ODistributedLock> entry : lockManager.entrySet()) {
+      OLogManager.instance().info(this, "- %s = %s (count=%d)", entry.getKey(), entry.getValue().reqId,
+          entry.getValue().lock.getCount());
+    }
+
   }
 }

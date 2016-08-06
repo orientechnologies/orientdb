@@ -17,23 +17,21 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.server.hazelcast;
+package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.impl.task.OHeartbeatTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
-
-import static com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX;
 
 /**
  * Timer task that checks periodically the cluster health status.
@@ -200,7 +198,7 @@ public class OClusterHealthChecker extends TimerTask {
   private void checkDatabaseStatuses() {
     for (String dbName : manager.getMessageService().getDatabases()) {
       final ODistributedServerManager.DB_STATUS status = (ODistributedServerManager.DB_STATUS) manager.getConfigurationMap()
-          .get(CONFIG_DBSTATUS_PREFIX + manager.getLocalNodeName() + "." + dbName);
+          .get(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + manager.getLocalNodeName() + "." + dbName);
       if (status == null) {
         OLogManager.instance().warn(this, "Status of database '%s' on server '%s' is missing, republishing it...", dbName,
             manager.getLocalNodeName());

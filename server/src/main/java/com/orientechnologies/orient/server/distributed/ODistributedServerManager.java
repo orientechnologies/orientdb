@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
@@ -228,15 +227,7 @@ public interface ODistributedServerManager {
 
   ORemoteTaskFactory getTaskFactory();
 
-  /**
-   * Checks the integrity of a record across the cluster.
-   *
-   * @param databaseName
-   * @param rid
-   */
-  void repairRecord(String databaseName, ORecordId rid);
-
-  ODistributedConflictResolver getConflictResolver();
+  List<ODistributedConflictResolver> getConflictResolver();
 
   Set<String> getActiveServers();
 }

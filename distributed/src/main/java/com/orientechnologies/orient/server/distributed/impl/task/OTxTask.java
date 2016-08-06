@@ -44,6 +44,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -72,7 +73,7 @@ public class OTxTask extends OAbstractReplicatedTask {
   public Object execute(final ODistributedRequestId requestId, final OServer iServer, ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database) throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "Committing transaction against db=%s...", database.getName());
+        "Committing transaction db=%s (reqId=%s)...", database.getName(), requestId);
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
 
@@ -83,11 +84,15 @@ public class OTxTask extends OAbstractReplicatedTask {
 
     final ODistributedConfiguration dCfg = iManager.getDatabaseConfiguration(database.getName());
 
+    result = new OTxTaskResult();
+
+    if (tasks.size() == 0)
+      // RETURN AFTER REGISTERED THE CONTEXT
+      return result;
+
     database.begin();
     try {
       final OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
-
-      result = new OTxTaskResult();
 
       // REGISTER CREATE FIRST TO RESOLVE TEMP RIDS
       for (OAbstractRecordReplicatedTask task : tasks) {
@@ -110,6 +115,15 @@ public class OTxTask extends OAbstractReplicatedTask {
         }
       }
 
+      final List<ORecordId> rids2Lock = new ArrayList<ORecordId>();
+      // LOCK ALL THE RECORDS FIRST (ORDERED TO AVOID DEADLOCK)
+      for (OAbstractRecordReplicatedTask task : tasks)
+        rids2Lock.add(task.getRid());
+
+      Collections.sort(rids2Lock);
+      for (ORecordId rid : rids2Lock)
+        reqContext.lock(rid);
+
       for (OAbstractRecordReplicatedTask task : tasks) {
         final Object taskResult;
 
@@ -119,8 +133,6 @@ public class OTxTask extends OAbstractReplicatedTask {
           taskResult = NON_LOCAL_CLUSTER;
         else {
           task.setLockRecords(false);
-
-          reqContext.lock(task.getRid());
 
           task.checkRecordExists();
 
@@ -156,6 +168,11 @@ public class OTxTask extends OAbstractReplicatedTask {
       return result;
 
     } catch (Throwable e) {
+      // if (e instanceof ODistributedRecordLockedException)
+      // ddb.dumpLocks();
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "Rolling back transaction db=%s (reqId=%s error=%s)...", database.getName(), requestId, e);
+
       database.rollback();
       // ddb.popTxContext(requestId);
       reqContext.unlock();
@@ -166,6 +183,9 @@ public class OTxTask extends OAbstractReplicatedTask {
         ODistributedServerLog.info(this, getNodeSource(), null, DIRECTION.NONE, "Error on distributed transaction commit", e);
 
       return e;
+    } finally {
+      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+          "Transaction completed db=%s (reqId=%s)...", database.getName(), requestId);
     }
   }
 

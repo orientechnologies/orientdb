@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import java.util.concurrent.CountDownLatch;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
@@ -28,6 +26,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
+
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Task wrapper to manage synchronized operations like transactions.

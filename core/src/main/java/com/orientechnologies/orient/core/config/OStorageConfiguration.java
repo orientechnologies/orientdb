@@ -174,7 +174,7 @@ public class OStorageConfiguration implements OSerializableStream {
    * This method load the record information by the internal cluster segment. It's for compatibility with older database than
    * 0.9.25.
    *
-   * @param iProperties
+   * @param configuration
    * @return
    * @throws OSerializationException
    * @compatibility 0.9.25

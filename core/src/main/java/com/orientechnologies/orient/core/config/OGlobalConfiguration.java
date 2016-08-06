@@ -642,8 +642,20 @@ public enum OGlobalConfiguration {
       "Maximum timeout (in ms) to collect all the asynchronous responses from replication. This is the delay the purge thread uses to check asynchronous requests in timeout",
       Long.class, 15000l),
 
-  DISTRIBUTED_TX_EXPIRE_TIMEOUT("distributed.txAliveTimeout", "Maximum timeout (in ms) a distributed transaction can be alive. This timeout is to rollback pending transactions after a while",
-      Long.class, 30000l, true),
+  /**
+   * @Since 2.2.7
+   */
+  DISTRIBUTED_DELAYED_AUTO_REPAIRER_CHECK_EVERY("distributed.delayedAutoRepairerCheckEvery", "Time (in ms) when the delayed auto-repairer checks for records/cluster to repair", Long.class, 30000l, true),
+
+  /**
+   * @Since 2.2.7
+   */
+  DISTRIBUTED_DELAYED_AUTO_REPAIRER_BATCH("distributed.delayedAutoRepairerBatch", "Number of record to repair in batch", Integer.class, 100, true),
+
+  /**
+   * @Since 2.2.7
+   */
+  DISTRIBUTED_TX_EXPIRE_TIMEOUT("distributed.txAliveTimeout", "Maximum timeout (in ms) a distributed transaction can be alive. This timeout is to rollback pending transactions after a while", Long.class, 30000l, true),
 
   /**
    * @Since 2.2.6

@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
@@ -48,7 +47,6 @@ public interface ODistributedDatabase {
    * Locks the record to be sure distributed transactions never work concurrently against the same records in the meanwhile the
    * transaction is executed and the OCompleteTxTask is not arrived.
    *
-   * @see #unlockRecord(OIdentifiable, ODistributedRequestId)
    * @param iRecord
    *          Record to lock
    * @param iRequestId
@@ -57,21 +55,22 @@ public interface ODistributedDatabase {
    *          Timeout in ms to wait for the lock
    * @throws com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException
    *           if the record wasn't locked
+   * @see #unlockRecord(OIdentifiable, ODistributedRequestId)
    */
   boolean lockRecord(OIdentifiable iRecord, final ODistributedRequestId iRequestId, long timeout);
 
   /**
    * Unlocks the record previously locked through #lockRecord method.
    *
-   * @see #lockRecord(OIdentifiable, ODistributedRequestId, long)
    * @param iRecord
    * @param requestId
+   * @see #lockRecord(OIdentifiable, ODistributedRequestId, long)
    */
   void unlockRecord(OIdentifiable iRecord, ODistributedRequestId requestId);
 
   /**
    * Unlocks all the record locked by node iNodeName
-   * 
+   *
    * @param iNodeId
    *          node id
    */
@@ -94,4 +93,8 @@ public interface ODistributedDatabase {
   long getProcessedRequests();
 
   void setLSN(String sourceNodeName, OLogSequenceNumber taskLastLSN) throws IOException;
+
+  ODistributedDatabaseRepairer getDatabaseRapairer();
+
+  void dumpLocks();
 }

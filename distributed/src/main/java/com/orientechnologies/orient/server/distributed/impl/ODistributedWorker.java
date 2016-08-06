@@ -26,7 +26,6 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -117,7 +116,7 @@ public class ODistributedWorker extends Thread {
       }
     }
 
-    ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE, "end of reading requests for database %s", databaseName);
+    ODistributedServerLog.debug(this, localNodeName, null, DIRECTION.NONE, "End of reading requests for database %s", databaseName);
   }
 
   /**

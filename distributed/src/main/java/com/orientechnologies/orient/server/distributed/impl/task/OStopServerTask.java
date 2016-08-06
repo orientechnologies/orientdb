@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import java.util.TimerTask;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -29,6 +27,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+
+import java.util.TimerTask;
 
 /**
  * Distributed task to stop a server.

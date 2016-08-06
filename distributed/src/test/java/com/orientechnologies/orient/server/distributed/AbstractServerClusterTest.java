@@ -29,8 +29,10 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.server.distributed.impl.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ODeleteRecordTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateRecordTask;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -236,9 +238,7 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void log(final String iMessage) {
-    OLogManager.instance().flush();
-    System.out.println("\n" + iMessage);
-    System.out.flush();
+    OLogManager.instance().info(this, iMessage);
   }
 
   protected void onServerStarting(ServerRun server) {
@@ -386,7 +386,7 @@ public abstract class AbstractServerClusterTest {
 
   protected void waitForDatabaseIsOnline(final String serverName, final String dbName, final long timeout) {
     final long startTime = System.currentTimeMillis();
-    while (! serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
+    while (!serverInstance.get(0).getServerInstance().getDistributedManager().isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
         OLogManager.instance().error(this, "TIMEOUT on wait-for condition (timeout=" + timeout + ")");
@@ -459,6 +459,23 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected String getDatabaseURL(ServerRun server) {
+    return null;
+  }
+
+  protected ODocument readRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
+    final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
+
+    final Collection<String> clusterNames = new ArrayList<String>(1);
+    clusterNames.add(ODatabaseRecordThreadLocal.INSTANCE.get().getClusterNameById(rid.getClusterId()));
+
+    ODistributedResponse response = dManager.sendRequest(getDatabaseName(), clusterNames, Arrays.asList(servers),
+        new OReadRecordTask(rid), dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
+
+    if (response != null) {
+      final ORawBuffer buffer = (ORawBuffer) response.getPayload();
+      return new ODocument().fromStream(buffer.getBuffer());
+    }
+
     return null;
   }
 
