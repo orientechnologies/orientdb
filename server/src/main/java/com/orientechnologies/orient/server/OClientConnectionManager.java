@@ -106,7 +106,7 @@ public class OClientConnectionManager {
         }
         iterator.remove();
       } else if(Boolean.TRUE.equals(entry.getValue().getTokenBased())){
-        if (!entry.getValue().getToken().isNowValid()) {
+        if (entry.getValue().getToken() == null || !entry.getValue().getToken().isNowValid()) {
           iterator.remove();
         }
       }
