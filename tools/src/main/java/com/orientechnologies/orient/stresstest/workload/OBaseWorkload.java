@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.stresstest.workload;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -50,8 +51,8 @@ public abstract class OBaseWorkload implements OWorkload {
   }
 
   public class OWorkLoadResult {
-    public AtomicInteger current = new AtomicInteger();
-    public int           total   = 1;
+    public AtomicInteger current   = new AtomicInteger();
+    public int           total     = 1;
     public long          totalTime;
     public long          totalTimeOperationsNs;
     public long          throughputAvgNs;
@@ -63,16 +64,18 @@ public abstract class OBaseWorkload implements OWorkload {
     public long          latencyPercentile99Ns;
     public long          latencyPercentile99_9Ns;
 
+    public AtomicInteger conflicts = new AtomicInteger();
+
     public String toOutput(final int leftSpaces) {
       final StringBuilder indent = new StringBuilder();
       for (int i = 0; i < leftSpaces; ++i)
         indent.append(' ');
 
       return String.format(
-          "\n%s- Throughput: %.3f/sec (Avg %.3fms/op)\n%s- Latency Avg: %.3fms/op (%dth percentile) - Min: %.3fms - 99th Perc: %.3fms - 99.9th Perc: %.3fms - Max: %.3fms",
+          "\n%s- Throughput: %.3f/sec (Avg %.3fms/op)\n%s- Latency Avg: %.3fms/op (%dth percentile) - Min: %.3fms - 99th Perc: %.3fms - 99.9th Perc: %.3fms - Max: %.3fms - Conflicts: %d",
           indent, total * 1000 / (float) totalTime, throughputAvgNs / 1000000f, indent, latencyAvgNs / 1000000f,
           latencyPercentileAvg, latencyMinNs / 1000000f, latencyPercentile99Ns / 1000000f, latencyPercentile99_9Ns / 1000000f,
-          latencyMaxNs / 1000000f);
+          latencyMaxNs / 1000000f, conflicts.get());
     }
 
     public ODocument toJSON() {
@@ -90,6 +93,7 @@ public abstract class OBaseWorkload implements OWorkload {
       json.field("latencyPerc99", latencyPercentile99Ns / 1000000f);
       json.field("latencyPerc99_9", latencyPercentile99_9Ns / 1000000f);
       json.field("latencyMax", latencyMaxNs / 1000000f);
+      json.field("conflicts", conflicts.get());
       return json;
     }
   }
@@ -149,6 +153,14 @@ public abstract class OBaseWorkload implements OWorkload {
                   try {
 
                     return callback.call(context);
+
+                  } catch (ONeedRetryException e) {
+                    result.conflicts.incrementAndGet();
+
+                    if (operationsPerTransaction > 0)
+                      beginTransaction(context);
+
+                    throw e;
 
                   } catch (Exception e) {
                     errors.add(e.toString());
