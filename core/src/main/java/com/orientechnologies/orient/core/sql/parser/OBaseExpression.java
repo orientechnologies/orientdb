@@ -40,6 +40,21 @@ public class OBaseExpression extends OMathExpression {
     this.identifier = new OBaseIdentifier(identifier);
   }
 
+  public OBaseExpression(OIdentifier identifier, OModifier modifier) {
+    this(identifier);
+    if (modifier != null) {
+      this.modifier = modifier;
+    }
+  }
+
+  public OBaseExpression(ORecordAttribute attr, OModifier modifier) {
+    super(-1);
+    this.identifier = new OBaseIdentifier(attr);
+    if(modifier!=null){
+      this.modifier = modifier;
+    }
+  }
+
   /**
    * Accept the visitor.
    **/
@@ -147,14 +162,15 @@ public class OBaseExpression extends OMathExpression {
 
   /**
    * tests if current expression is an indexed function AND that function can be used on this target
-   * @param target the query target
-   * @param context the execution context
+   *
+   * @param target   the query target
+   * @param context  the execution context
    * @param operator
    * @param right
    * @return true if current expression is an indexed function AND that function can be used on this target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     if (this.identifier == null) {
       return false;
     }
@@ -165,12 +181,13 @@ public class OBaseExpression extends OMathExpression {
    * tests if current expression is an indexed function AND the function has also to be executed after the index search.
    * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
    * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
-   * @param target the query target
+   *
+   * @param target  the query target
    * @param context the execution context
    * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     if (this.identifier == null) {
       return false;
     }
@@ -252,10 +269,10 @@ public class OBaseExpression extends OMathExpression {
   }
 
   public boolean refersToParent() {
-    if(identifier!=null && identifier.refersToParent()){
+    if (identifier != null && identifier.refersToParent()) {
       return true;
     }
-    if(modifier!=null && modifier.refersToParent()){
+    if (modifier != null && modifier.refersToParent()) {
       return true;
     }
     return false;

@@ -29,6 +29,10 @@ public class OBaseIdentifier extends SimpleNode {
     this.suffix = new OSuffixIdentifier(identifier);
   }
 
+  public OBaseIdentifier(ORecordAttribute attr) {
+    this.suffix = new OSuffixIdentifier(attr);
+  }
+
   /**
    * Accept the visitor.
    **/

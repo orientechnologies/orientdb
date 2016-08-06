@@ -2972,7 +2972,7 @@ OOrderBy OrderBy():
                 }
                 (
                     (
-                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.getStringValue(); }
                         [ lastModifier = Modifier()  { lastItem.modifier = lastModifier; } ]
                     )
                     |
@@ -2993,7 +2993,7 @@ OOrderBy OrderBy():
                 }
                 (
                     (
-                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+                        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.getStringValue(); }
                         [ lastModifier = Modifier()  { lastItem.modifier = lastModifier; } ]
                     )
                     |

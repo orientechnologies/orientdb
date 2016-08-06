@@ -133,4 +133,8 @@ public class OOrderByItem {
     }
     return false;
   }
+
+  public OModifier getModifier() {
+    return modifier;
+  }
 }

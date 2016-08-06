@@ -36,6 +36,15 @@ public class OExpression extends SimpleNode {
     mathExpression = new OBaseExpression(identifier);
   }
 
+  public OExpression(OIdentifier identifier, OModifier modifier) {
+
+    mathExpression = new OBaseExpression(identifier, modifier);
+  }
+
+  public OExpression(ORecordAttribute attr, OModifier modifier) {
+    mathExpression = new OBaseExpression(attr, modifier);
+  }
+
   /**
    * Accept the visitor.
    **/
@@ -442,6 +451,12 @@ public class OExpression extends SimpleNode {
     return false;
   }
 
+  public ORid getRid() {
+    return rid;
+  }
 
+  public void setRid(ORid rid) {
+    this.rid = rid;
+  }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

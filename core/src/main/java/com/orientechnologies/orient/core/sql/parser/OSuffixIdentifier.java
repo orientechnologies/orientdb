@@ -29,6 +29,10 @@ public class OSuffixIdentifier extends SimpleNode {
     this.identifier = identifier;
   }
 
+  public OSuffixIdentifier(ORecordAttribute attr) {
+    this.recordAttribute = attr;
+  }
+
   /**
    * Accept the visitor.
    **/

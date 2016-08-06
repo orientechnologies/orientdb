@@ -9480,7 +9480,7 @@ Token token;
         case IDENTIFIER:
         case QUOTED_IDENTIFIER:
           lastIdentifier = Identifier();
-                                                        lastItem.alias = lastIdentifier.toString();
+                                                        lastItem.alias = lastIdentifier.getStringValue();
           switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
           case LBRACKET:
           case DOT:
@@ -9622,7 +9622,7 @@ Token token;
         case IDENTIFIER:
         case QUOTED_IDENTIFIER:
           lastIdentifier = Identifier();
-                                                        lastItem.alias = lastIdentifier.toString();
+                                                        lastItem.alias = lastIdentifier.getStringValue();
           switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
           case LBRACKET:
           case DOT:

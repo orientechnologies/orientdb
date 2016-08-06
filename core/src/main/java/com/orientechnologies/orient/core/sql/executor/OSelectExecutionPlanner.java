@@ -26,7 +26,8 @@ public class OSelectExecutionPlanner {
 
   private OProjection preAggregateProjection;
   private OProjection aggregateProjection;
-  private OProjection projection = null;
+  private OProjection projection             = null;
+  private OProjection projectionAfterOrderBy = null;
 
   private OLetClause globalLetClause    = null;
   private OLetClause perRecordLetClause = null;
@@ -168,7 +169,7 @@ public class OSelectExecutionPlanner {
       flattenedWhereClause = moveFlattededEqualitiesLeft(flattenedWhereClause);
     }
 
-    extractAggregateProjections();
+    splitProjectionsForGroupBy();
     addOrderByProjections();
   }
 
@@ -227,15 +228,81 @@ public class OSelectExecutionPlanner {
     return result;
   }
 
+  /**
+   * creates additional projections for ORDER BY
+   */
   private void addOrderByProjections() {
-    if (orderApplied || orderBy == null || orderBy.getItems().size() == 0 || projection == null || projection.getItems() == null
-        || (projection.getItems().size() == 1 && projection.getItems().get(0).isAll())) {
+    if (orderApplied || expand || unwind != null || orderBy == null || orderBy.getItems().size() == 0 || projection == null
+        || projection.getItems() == null || (projection.getItems().size() == 1 && projection.getItems().get(0).isAll())) {
       return;
     }
-    //TODO
+
+    OOrderBy newOrderBy = orderBy == null ? null : orderBy.copy();
+    List<OProjectionItem> additionalOrderByProjections = calculateAdditionalOrderByProjections(this.projection.getAllAliases(),
+        newOrderBy);
+    if (additionalOrderByProjections.size() > 0) {
+      orderBy = newOrderBy;//the ORDER BY has changed
+    }
+    if (additionalOrderByProjections.size() > 0) {
+      projectionAfterOrderBy = new OProjection(-1);
+      projectionAfterOrderBy.setItems(new ArrayList<>());
+      for (String alias : projection.getAllAliases()) {
+        projectionAfterOrderBy.getItems().add(projectionFromAlias(new OIdentifier(alias)));
+      }
+
+      for (OProjectionItem item : additionalOrderByProjections) {
+        if (preAggregateProjection != null) {
+          preAggregateProjection.getItems().add(item);
+          aggregateProjection.getItems().add(projectionFromAlias(item.getAlias()));
+          projection.getItems().add(projectionFromAlias(item.getAlias()));
+        } else {
+          projection.getItems().add(item);
+        }
+      }
+    }
   }
 
-  private void extractAggregateProjections() {
+  /**
+   * given a list of aliases (present in the existing projections) calculates a list of additional projections to
+   * add to the existing projections to allow ORDER BY calculation.
+   * The sorting clause will be modified with new replaced aliases
+   *
+   * @param allAliases existing aliases in the projection
+   * @param orderBy    sorting clause
+   * @return a list of additional projections to add to the existing projections to allow ORDER BY calculation (empty if nothing has to be added).
+   */
+  private List<OProjectionItem> calculateAdditionalOrderByProjections(Set<String> allAliases, OOrderBy orderBy) {
+    List<OProjectionItem> result = new ArrayList<>();
+    int nextAliasCount = 0;
+    if (orderBy != null && orderBy.getItems() != null || !orderBy.getItems().isEmpty()) {
+      for (OOrderByItem item : orderBy.getItems()) {
+        if (!allAliases.contains(item.getAlias())) {
+          OProjectionItem newProj = new OProjectionItem(-1);
+          if (item.getAlias() != null) {
+            newProj.setExpression(new OExpression(new OIdentifier(item.getAlias()), item.getModifier()));
+          } else if (item.getRecordAttr() != null) {
+            ORecordAttribute attr = new ORecordAttribute(-1);
+            attr.setName(item.getRecordAttr());
+            newProj.setExpression(new OExpression(attr, item.getModifier()));
+          } else if (item.getRid() != null) {
+            OExpression exp = new OExpression(-1);
+            exp.setRid(item.getRid().copy());
+            newProj.setExpression(exp);
+          }
+          OIdentifier newAlias = new OIdentifier("_$$$ORDER_BY_ALIAS$$$_" + (nextAliasCount++));
+          newProj.setAlias(newAlias);
+          item.setAlias(newAlias.getStringValue());
+          result.add(newProj);
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * splits projections in three parts (pre-aggregate, aggregate and final) to efficiently manage aggregations
+   */
+  private void splitProjectionsForGroupBy() {
     if (projection == null) {
       return;
     }
@@ -247,12 +314,14 @@ public class OSelectExecutionPlanner {
     OProjection postAggregate = new OProjection(-1);
     postAggregate.setItems(new ArrayList<>());
 
-    boolean isAggregate = false;
+    boolean isSplitted = false;
+
+    //split for aggregate projections
     AggregateProjectionSplit result = new AggregateProjectionSplit();
     for (OProjectionItem item : this.projection.getItems()) {
       result.reset();
       if (item.isAggregate()) {
-        isAggregate = true;
+        isSplitted = true;
         OProjectionItem post = item.splitForAggregation(result);
         OIdentifier postAlias = item.getProjectionAlias();
         postAlias.setQuoted(true);
@@ -269,7 +338,9 @@ public class OSelectExecutionPlanner {
         postAggregate.getItems().add(aggItem);
       }
     }
-    if (isAggregate) {
+
+    //bind split projections to the execution planner
+    if (isSplitted) {
       this.preAggregateProjection = preAggregate;
       if (preAggregateProjection.getItems() == null || preAggregateProjection.getItems().size() == 0) {
         preAggregateProjection = null;
@@ -282,6 +353,12 @@ public class OSelectExecutionPlanner {
 
       addGroupByExpressionsToProjections();
     }
+  }
+
+  private OProjectionItem projectionFromAlias(OIdentifier oIdentifier) {
+    OProjectionItem result = new OProjectionItem(-1);
+    result.setExpression(new OExpression(oIdentifier));
+    return result;
   }
 
   /**
@@ -569,6 +646,9 @@ public class OSelectExecutionPlanner {
     }
     if (!orderApplied && orderBy != null && orderBy.getItems() != null && orderBy.getItems().size() > 0) {
       plan.chain(new OrderByStep(orderBy, maxResults, ctx));
+      if (projectionAfterOrderBy != null) {
+        plan.chain(new ProjectionCalculationStep(projectionAfterOrderBy, ctx));
+      }
     }
   }
 

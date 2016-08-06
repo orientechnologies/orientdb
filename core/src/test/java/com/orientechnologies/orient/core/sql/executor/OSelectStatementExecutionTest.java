@@ -292,6 +292,66 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testSelectOrderWithProjections() {
+    String className = "testSelectOrderWithProjections";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 100; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 10);
+      doc.setProperty("surname", "surname" + i % 10);
+      doc.save();
+    }
+    long begin = System.nanoTime();
+    OTodoResultSet result = db.query("select name from " + className + " order by surname asc");
+    System.out.println("elapsed: " + (System.nanoTime() - begin));
+    printExecutionPlan(result);
+
+    String lastName = null;
+    for (int i = 0; i < 100; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      String name = item.getProperty("name");
+      Assert.assertNotNull(name);
+      if (i > 0) {
+        Assert.assertTrue(name.compareTo(lastName) >= 0);
+      }
+      lastName = name;
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testSelectOrderWithProjections2() {
+    String className = "testSelectOrderWithProjections2";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 100; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 10);
+      doc.setProperty("surname", "surname" + i % 10);
+      doc.save();
+    }
+    long begin = System.nanoTime();
+    OTodoResultSet result = db.query("select name from " + className + " order by name asc, surname asc");
+    System.out.println("elapsed: " + (System.nanoTime() - begin));
+    printExecutionPlan(result);
+
+    String lastName = null;
+    for (int i = 0; i < 100; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      String name = item.getProperty("name");
+      Assert.assertNotNull(name);
+      if (i > 0) {
+        Assert.assertTrue(name.compareTo(lastName) >= 0);
+      }
+      lastName = name;
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   @Test public void testSelectFullScanWithFilter1() {
     String className = "testSelectFullScanWithFilter1";
     db.getMetadata().getSchema().createClass(className);

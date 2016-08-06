@@ -50,5 +50,13 @@ public class ORecordAttribute extends SimpleNode {
   @Override public int hashCode() {
     return name != null ? name.hashCode() : 0;
   }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
 }
 /* JavaCC - OriginalChecksum=45ce3cd16399dec7d7ef89f8920d02ae (do not edit this line) */
