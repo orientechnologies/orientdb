@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -421,7 +422,7 @@ public class OSelectExecutionPlanner {
     if (target == null) {
       handleNoTarget(result, ctx);
     } else if (target.getIdentifier() != null) {
-      handleClassAsTarget(result, target.getIdentifier(), ctx);
+      handleClassAsTarget(result, this.target, ctx);
     } else if (target.getCluster() != null) {
       handleClustersAsTarget(result, Collections.singletonList(target.getCluster()), ctx);
     } else if (target.getClusterList() != null) {
@@ -471,6 +472,7 @@ public class OSelectExecutionPlanner {
           throw new OCommandExecutionException("Index queries with this kind of condition are not supported yet: " + whereClause);
         }
         this.whereClause = null;//The WHERE clause won't be used anymore, the index does all the filtering
+        this.flattenedWhereClause = null;
         condition = andBlock.getSubBlocks().get(0);
       }
       result.chain(new FetchFromIndexStep(index, condition, null, ctx));
@@ -570,7 +572,11 @@ public class OSelectExecutionPlanner {
     }
   }
 
-  private void handleClassAsTarget(OSelectExecutionPlan plan, OIdentifier identifier, OCommandContext ctx) {
+  private void handleClassAsTarget(OSelectExecutionPlan plan, OFromClause queryTarget, OCommandContext ctx) {
+    OIdentifier identifier = queryTarget.getItem().getIdentifier();
+    if (handleClassAsTargetWithIndexedFunction(plan, queryTarget, flattenedWhereClause, ctx)) {
+      return;
+    }
     if (handleClassAsTargetWithIndex(plan, identifier, ctx)) {
       return;
     }
@@ -592,6 +598,86 @@ public class OSelectExecutionPlanner {
     plan.chain(fetcher);
   }
 
+  private boolean handleClassAsTargetWithIndexedFunction(OSelectExecutionPlan plan, OFromClause fromClause,
+      List<OAndBlock> flattenedWhereClause, OCommandContext ctx) {
+    OIdentifier queryTarget = fromClause.getItem().getIdentifier();
+    if (queryTarget == null) {
+      return false;
+    }
+    OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(queryTarget.getStringValue());
+    if (clazz == null) {
+      throw new OCommandExecutionException("Class not found: " + queryTarget);
+    }
+    if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
+      return false;
+    }
+
+    List<OInternalExecutionPlan> resultSubPlans = new ArrayList<>();
+
+    for (OAndBlock block : flattenedWhereClause) {
+      List<OBinaryCondition> indexedFunctionConditions = block
+          .getIndexedFunctionConditions(clazz, (ODatabaseDocumentInternal) ctx.getDatabase());
+      if (indexedFunctionConditions == null || indexedFunctionConditions.size() == 0) {
+        return false;//no indexed functions for this block
+      } else {
+        OBinaryCondition blockCandidateFunction = null;
+        for (OBinaryCondition cond : indexedFunctionConditions) {
+          if (!cond.allowsIndexedFunctionExecutionOnTarget(fromClause, ctx)) {
+            if (!cond.canExecuteIndexedFunctionWithoutIndex(fromClause, ctx)) {
+              throw new OCommandExecutionException("Cannot execute " + block + " on " + queryTarget);
+            }
+          }
+          if (blockCandidateFunction == null) {
+            blockCandidateFunction = cond;
+          } else {
+            boolean thisAllowsNoIndex = cond.canExecuteIndexedFunctionWithoutIndex(fromClause, ctx);
+            boolean prevAllowsNoIndex = blockCandidateFunction.canExecuteIndexedFunctionWithoutIndex(fromClause, ctx);
+            if (!thisAllowsNoIndex && !prevAllowsNoIndex) {
+              //none of the functions allow execution without index, so cannot choose one
+              throw new OCommandExecutionException(
+                  "Cannot choose indexed function between " + cond + " and " + blockCandidateFunction
+                      + ". Both require indexed execution");
+            } else if (thisAllowsNoIndex && prevAllowsNoIndex) {
+              //both can be calculated without index, choose the best one for index execution
+              long thisEstimate = cond.estimateIndexed(fromClause, ctx);
+              long lastEstimate = blockCandidateFunction.estimateIndexed(fromClause, ctx);
+              if (thisEstimate > -1 && thisEstimate < lastEstimate) {
+                blockCandidateFunction = cond;
+              }
+            } else if (prevAllowsNoIndex) {
+              //choose current condition, because the other one can be calculated without index
+              blockCandidateFunction = cond;
+            }
+          }
+        }
+
+        FetchFromIndexedFunctionStep step = new FetchFromIndexedFunctionStep(blockCandidateFunction, queryTarget, ctx);
+        if (!blockCandidateFunction.executeIndexedFunctionAfterIndexSearch(fromClause, ctx)) {
+          block = block.copy();
+          block.getSubBlocks().remove(blockCandidateFunction);
+        }
+        if (flattenedWhereClause.size() == 1) {
+          plan.chain(step);
+          if (!block.getSubBlocks().isEmpty()) {
+            plan.chain(new FilterStep(createWhereFrom(block), ctx));
+          }
+        } else {
+          OSelectExecutionPlan subPlan = new OSelectExecutionPlan(ctx);
+          subPlan.chain(step);
+          if (!block.getSubBlocks().isEmpty()) {
+            subPlan.chain(new FilterStep(createWhereFrom(block), ctx));
+          }
+          resultSubPlans.add(subPlan);
+        }
+      }
+    }
+    plan.chain(new ParallelExecStep(resultSubPlans, ctx));
+    //WHERE condition already applied
+    this.whereClause = null;
+    this.flattenedWhereClause = null;
+    return true;
+  }
+
   /**
    * tries to use an index for sorting only. Also adds the fetch step to the execution plan
    *
@@ -601,6 +687,7 @@ public class OSelectExecutionPlanner {
    * @param ctx         the current context
    * @return true if it succeeded to use an index to sort, false otherwise.
    */
+
   private boolean handleClassWithIndexForSortOnly(OSelectExecutionPlan plan, OIdentifier queryTarget, OOrderBy orderBy,
       OCommandContext ctx) {
     OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(queryTarget.getStringValue());

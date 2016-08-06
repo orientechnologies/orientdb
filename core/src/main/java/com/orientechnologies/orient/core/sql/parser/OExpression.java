@@ -210,15 +210,15 @@ public class OExpression extends SimpleNode {
   }
 
   public boolean supportsBasicCalculation() {
-    if (value instanceof OMathExpression) {
-      return ((OMathExpression) value).supportsBasicCalculation();
+    if (mathExpression != null) {
+      return mathExpression.supportsBasicCalculation();
     }
     return true;
   }
 
   public boolean isIndexedFunctionCal() {
-    if (value instanceof OMathExpression) {
-      return ((OMathExpression) value).isIndexedFunctionCall();
+    if (mathExpression != null) {
+      return mathExpression.isIndexedFunctionCall();
     }
     return false;
   }
@@ -244,18 +244,67 @@ public class OExpression extends SimpleNode {
   }
 
   public long estimateIndexedFunction(OFromClause target, OCommandContext context, OBinaryCompareOperator operator, Object right) {
-    if (value instanceof OMathExpression) {
-      return ((OMathExpression) value).estimateIndexedFunction(target, context, operator, right);
+    if (mathExpression != null) {
+      return mathExpression.estimateIndexedFunction(target, context, operator, right);
     }
     return -1;
   }
 
   public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context,
       OBinaryCompareOperator operator, Object right) {
-    if (value instanceof OMathExpression) {
-      return ((OMathExpression) value).executeIndexedFunction(target, context, operator, right);
+    if (mathExpression != null) {
+      return mathExpression.executeIndexedFunction(target, context, operator, right);
     }
     return null;
+  }
+
+  /**
+   * tests if current expression is an indexed function AND that function can also be executed without using the index
+   *
+   * @param target   the query target
+   * @param context  the execution context
+   * @param operator
+   * @param right
+   * @return true if current expression is an indexed funciton AND that function can also be executed without using the index, false otherwise
+   */
+  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
+      Object right) {
+    if (mathExpression != null) {
+      return mathExpression.canExecuteIndexedFunctionWithoutIndex(target, context, operator, right);
+    }
+    return false;
+  }
+
+  /**
+   * tests if current expression is an indexed function AND that function can be used on this target
+   * @param target the query target
+   * @param context the execution context
+   * @param operator
+   * @param right
+   * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
+   */
+  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
+      Object right){
+    if (mathExpression != null) {
+      return mathExpression.allowsIndexedFunctionExecutionOnTarget(target, context, operator, right);
+    }
+    return false;
+  }
+
+  /**
+   * tests if current expression is an indexed function AND the function has also to be executed after the index search.
+   * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
+   * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * @param target the query target
+   * @param context the execution context
+   * @return true if current expression involves an indexed function AND the function has also to be executed after the index search.
+   */
+  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
+      Object right){
+    if (mathExpression != null) {
+      return mathExpression.executeIndexedFunctionAfterIndexSearch(target, context, operator, right);
+    }
+    return false;
   }
 
   public boolean isExpand() {
@@ -392,5 +441,7 @@ public class OExpression extends SimpleNode {
     }
     return false;
   }
+
+
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

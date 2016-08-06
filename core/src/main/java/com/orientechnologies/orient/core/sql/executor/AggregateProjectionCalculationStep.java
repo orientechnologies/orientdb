@@ -125,6 +125,6 @@ public class AggregateProjectionCalculationStep extends ProjectionCalculationSte
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     return spaces + "+ CALCULATE AGGREGATE PROJECTIONS\n" +
         spaces + "      " + projection.toString() + "" +
-        (groupBy == null ? "" : (spaces + "\n      " + groupBy.toString()));
+        (groupBy == null ? "" : (spaces + "\n  " + groupBy.toString()));
   }
 }

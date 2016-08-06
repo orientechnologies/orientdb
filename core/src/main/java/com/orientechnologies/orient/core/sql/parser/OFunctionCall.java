@@ -139,6 +139,61 @@ public class OFunctionCall extends SimpleNode {
     return -1;
   }
 
+  /**
+   * tests if current function is an indexed function AND that function can also be executed without using the index
+   *
+   * @param target   the query target
+   * @param context  the execution context
+   * @param operator
+   * @param right
+   * @return true if current function is an indexed funciton AND that function can also be executed without using the index, false otherwise
+   */
+  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
+      Object right) {
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
+    if (function instanceof OIndexableSQLFunction) {
+      return ((OIndexableSQLFunction) function)
+          .canExecuteWithoutIndex(target, operator, right, context, this.getParams().toArray(new OExpression[] {}));
+    }
+    return false;
+  }
+
+  /**
+   * tests if current function is an indexed function AND that function can be used on this target
+   * @param target the query target
+   * @param context the execution context
+   * @param operator
+   * @param right
+   * @return true if current function is an indexed function AND that function can be used on this target, false otherwise
+   */
+  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
+      Object right){
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
+    if (function instanceof OIndexableSQLFunction) {
+      return ((OIndexableSQLFunction) function)
+          .allowsIndexedExecution(target, operator, right, context, this.getParams().toArray(new OExpression[] {}));
+    }
+    return false;
+  }
+
+  /**
+   * tests if current expression is an indexed function AND the function has also to be executed after the index search.
+   * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
+   * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
+   * @param target the query target
+   * @param context the execution context
+   * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
+   */
+  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
+      Object right){
+    OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
+    if (function instanceof OIndexableSQLFunction) {
+      return ((OIndexableSQLFunction) function)
+          .shouldExecuteAfterSearch(target, operator, right, context, this.getParams().toArray(new OExpression[] {}));
+    }
+    return false;
+  }
+
   public boolean isExpand() {
     return name.getStringValue().equals("expand");
   }
@@ -279,14 +334,15 @@ public class OFunctionCall extends SimpleNode {
   }
 
   public boolean refersToParent() {
-    if(params!=null){
-      for(OExpression param:params){
-        if(param!=null && param.refersToParent()){
+    if (params != null) {
+      for (OExpression param : params) {
+        if (param != null && param.refersToParent()) {
           return true;
         }
       }
     }
     return false;
   }
+
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */
