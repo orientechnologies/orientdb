@@ -54,10 +54,7 @@ import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFact
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -350,6 +347,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       return result;
 
+    } catch (OConcurrentModificationException e) {
+      localDistributedDatabase.getDatabaseRapairer().repairRecord((ORecordId) e.getRid());
+      throw e;
     } catch (ONeedRetryException e) {
       // PASS THROUGH
       throw e;
@@ -857,6 +857,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           });
 
     } catch (ONeedRetryException e) {
+      localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
+
       // PASS THROUGH
       throw e;
 
@@ -990,9 +992,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
           });
 
     } catch (ONeedRetryException e) {
-      // PASS THROUGH
       localDistributedDatabase.getDatabaseRapairer().repairRecord(iRecordId);
 
+      // PASS THROUGH
       throw e;
 
     } catch (HazelcastInstanceNotActiveException e) {

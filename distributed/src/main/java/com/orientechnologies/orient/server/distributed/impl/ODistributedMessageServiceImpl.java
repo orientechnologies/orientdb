@@ -107,7 +107,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   public void handleUnreachableNode(final String nodeName) {
     // WAKE UP ALL THE WAITING RESPONSES
     for (ODistributedResponseManager r : responsesByRequestIds.values())
-      r.notifyWaiters();
+      r.removeServerBecauseUnreachable(nodeName);
   }
 
   public long getAverageResponseTime() {

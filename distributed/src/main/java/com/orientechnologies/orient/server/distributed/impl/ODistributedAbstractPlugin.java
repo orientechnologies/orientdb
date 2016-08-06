@@ -63,10 +63,6 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolver;
-import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
-import com.orientechnologies.orient.server.distributed.conflict.OMajorityDistributedConflictResolver;
-import com.orientechnologies.orient.server.distributed.conflict.OVersionDistributedConflictResolver;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
@@ -123,8 +119,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected Date                                                 startedOn                         = new Date();
   protected ORemoteTaskFactory                                   taskFactory                       = new ODefaultRemoteTaskFactory();
   protected ODistributedStrategy                                 responseManagerFactory            = new ODefaultDistributedStrategy();
-  protected ODistributedConflictResolverFactory                  conflictResolverFactory           = new ODistributedConflictResolverFactory();
-  protected List<ODistributedConflictResolver>                   conflictResolvers                 = new ArrayList<ODistributedConflictResolver>();
 
   private volatile String                                        lastServerDump                    = "";
   protected CountDownLatch                                       serverStarted                     = new CountDownLatch(1);
@@ -132,8 +126,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
   protected abstract ODistributedConfiguration getLastDatabaseConfiguration(String databaseName);
 
   protected ODistributedAbstractPlugin() {
-    conflictResolvers.add(conflictResolverFactory.getImplementation(OMajorityDistributedConflictResolver.NAME));
-    conflictResolvers.add(conflictResolverFactory.getImplementation(OVersionDistributedConflictResolver.NAME));
   }
 
   public void waitUntilNodeOnline() throws InterruptedException {
@@ -1930,10 +1922,5 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         storage = oldStorage;
     }
     return storage;
-  }
-
-  @Override
-  public List<ODistributedConflictResolver> getConflictResolver() {
-    return conflictResolvers;
   }
 }

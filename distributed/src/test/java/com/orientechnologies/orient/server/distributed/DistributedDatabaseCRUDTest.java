@@ -28,9 +28,11 @@ public final class DistributedDatabaseCRUDTest {
    ******************************************************************************************************/
   private String             dbName;
   private OrientGraphFactory graphReadFactory;
+  private int                totalRecords;
 
-  public DistributedDatabaseCRUDTest(String dbName) {
+  public DistributedDatabaseCRUDTest(String dbName, int totalRecords) {
     this.dbName = dbName;
+    this.totalRecords = totalRecords;
   }
 
   public void createDBData() {
@@ -82,7 +84,8 @@ public final class DistributedDatabaseCRUDTest {
     for (int j = 1; j <= totalClassCount; j++) {
       String edgeName = "Test" + j;
       String className = edgeName + "Node";
-      for (int i = 1; i <= 500; i++) {
+      System.out.print("[" + className + "] -> ");
+      for (int i = 1; i <= totalRecords; i++) {
         Vertex vertex = graph.addVertex("class:" + className);
         vertex.setProperty("property1", "value1-" + i);
         vertex.setProperty("property2", "value2-" + i);
@@ -99,7 +102,7 @@ public final class DistributedDatabaseCRUDTest {
         vertex.setProperty("prop14", System.currentTimeMillis());
         vertex.setProperty("prop15", System.currentTimeMillis());
         graph.commit();
-        if ((i % 50) == 0) {
+        if ((i % 200) == 0) {
           System.out.print(".[" + j + "]" + i + ".");
         }
         String edgeSQL = "Create EDGE " + edgeName + " FROM (SELECT FROM TestNode WHERE property1='value1-" + edgeCounter + "') "
@@ -117,14 +120,15 @@ public final class DistributedDatabaseCRUDTest {
   }
 
   // ----------------------------------------------------------------------------------------------------------------
-  // ---------------------------- Start update based on SQL -------------------------------------------------
+  // ---------------------------- Start Different vertex update with Java API ------------------------------------
   // ----------------------------------------------------------------------------------------------------------------
-  public void runSQLUpdateTest() {
-    log("Running SQL based vertex update");
+
+  private void runMultipleVertexUpdateTest() {
+    log("Running Java API based multiple vertex update");
     List<Future<?>> ths = new ArrayList<Future<?>>();
-    ExecutorService executorService = newFixedThreadPool("testnode-sql-update", 10);
-    for (int i = 0; i < 10; i++) {
-      Future<?> future = executorService.submit(startSQLUpdateThread(i, getGraphFactory()));
+    ExecutorService executorService = newFixedThreadPool("testnode-java-api-multi-update", 30);
+    for (int i = 1; i <= 30; i++) {
+      Future<?> future = executorService.submit(startVertexUpdateThread(i, getGraphFactory(), "value4-" + i));
       ths.add(future);
     }
 
@@ -138,18 +142,72 @@ public final class DistributedDatabaseCRUDTest {
     }
   }
 
-  private Runnable startSQLUpdateThread(final int id, final OrientGraphFactory graphFactory) {
+  // ----------------------------------------------------------------------------------------------------------------
+  // ---------------------------- Start Different vertex update with Java API ------------------------------------
+  // ----------------------------------------------------------------------------------------------------------------
+
+  // ----------------------------------------------------------------------------------------------------------------
+  // ---------------------------- Start Different vertex update with Java API ------------------------------------
+  // ----------------------------------------------------------------------------------------------------------------
+
+  private void runMultipleVertexSQLUpdateTest() {
+    log("Running Java API based multiple vertex update using SQL");
+    List<Future<?>> ths = new ArrayList<Future<?>>();
+    ExecutorService executorService = newFixedThreadPool("testnode-sql-multi-update", 20);
+    for (int i = 1; i <= 20; i++) {
+      Future<?> future = executorService.submit(startSQLUpdateThread(i, getGraphFactory(), "value4-" + i));
+      ths.add(future);
+    }
+
+    for (Future<?> th : ths) {
+      try {
+        th.get();
+      } catch (Exception ex) {
+        System.out.println("********** Future Exception " + ex);
+        ex.printStackTrace();
+      }
+    }
+  }
+
+  // ----------------------------------------------------------------------------------------------------------------
+  // ---------------------------- Start Different vertex update with Java API ------------------------------------
+  // ----------------------------------------------------------------------------------------------------------------
+
+  // ----------------------------------------------------------------------------------------------------------------
+  // ---------------------------- Start update based on SQL -------------------------------------------------
+  // ----------------------------------------------------------------------------------------------------------------
+  public void runSQLUpdateTest() {
+    log("Running SQL based vertex update");
+    List<Future<?>> ths = new ArrayList<Future<?>>();
+    ExecutorService executorService = newFixedThreadPool("testnode-sql-update", 10);
+    for (int i = 0; i < 10; i++) {
+      Future<?> future = executorService.submit(startSQLUpdateThread(i, getGraphFactory(), "value4-1"));
+      ths.add(future);
+    }
+
+    for (Future<?> th : ths) {
+      try {
+        th.get();
+      } catch (Exception ex) {
+        System.out.println("********** Future Exception " + ex);
+        ex.printStackTrace();
+      }
+    }
+  }
+
+  private Runnable startSQLUpdateThread(final int id, final OrientGraphFactory graphFactory, final String propertyValue) {
     Runnable th = new Runnable() {
       @Override
       public void run() {
+        log("Starting runnable for sql update thread for property " + propertyValue);
         long st = System.currentTimeMillis();
         try {
           boolean isRunning = true;
           for (int i = 1; i < 10000000 && isRunning; i++) {
-            if ((i % 250) == 0) {
+            if ((i % 100) == 0) {
               long et = System.currentTimeMillis();
-              log(" [" + id + "][" + new Date() + "] Total Records Processed: [" + i + "] Time taken for [250] records: ["
-                  + (et - st) / 1000 + "] seconds");
+              log(" [" + id + "] Total Records Processed: [" + i + "] Time taken for [100] records: [" + (et - st) / 1000
+                  + "] seconds");
               st = System.currentTimeMillis();
             }
             OrientGraph graph = graphFactory.getTx();
@@ -157,8 +215,11 @@ public final class DistributedDatabaseCRUDTest {
               boolean update = true;
               boolean isException = false;
               Exception tex = null;
-              String sql = "Update TestNode set prop5='" + String.valueOf(System.currentTimeMillis()) + "', updateTime='"
-                  + new Date().toString() + "' where property4='value4-1'";
+              String sql = "Update TestNode set prop5='" + String.valueOf(System.currentTimeMillis()) + "'"
+                  + ", prop-7='value7-1', prop-8='value8-1', prop-9='value9-1',prop-10='value10-1', prop11='value11-1'"
+                  + ", prop-07='value07-1', prop-08='value08-1', prop-09='value09-1',prop-010='value010-1', prop011='value011-1'"
+                  + ", prop12='vaue12-1', prop13='value13-1'" + ", updateTime='" + new Date().toString() + "' where property4='"
+                  + propertyValue + "'";
               int k = 1;
               for (; k <= 100 && update; k++) {
                 try {
@@ -169,25 +230,31 @@ public final class DistributedDatabaseCRUDTest {
                   update = false;
                   break;
                 } catch (Exception ex) {
-                  tex = ex;
-
                   if (ex instanceof ODatabaseException || ex instanceof ONeedRetryException
                       || ex instanceof ODistributedException) {
+                    tex = ex;
                     if (ex instanceof ONeedRetryException || ex.getCause() instanceof ONeedRetryException) {
                       // update is true. retry
-                      Thread.sleep( new Random().nextInt(500));
+                      // log("[" + id + "][" + propertyValue + "][ Retry: " + k + "] OrientDB Exception [" + ex + "]");
+                      try {
+                        Thread.sleep(new Random().nextInt(500));
+                      } catch (InterruptedException e) {
+                        e.printStackTrace();
+                      }
                     } else {
                       log("[" + id + "][ Retry: " + k + "] Failed to update. OrientDB Exception [" + ex + "]");
                     }
                     isException = true;
-                  } else
+                  } else {
+                    tex = ex;
                     log("[" + id + "][" + k + "] Failed non OrientDB Exception [" + ex + "]");
-                }
+                  }
 
-              }
-              if (update) {
-                log("*******#################******* [" + id + "][ Retry: " + k + "] Failed to update after Exception ["
-                    + ((tex != null) ? tex : "----") + "]for vertex with property4='value4-1'");
+                  if (update) {
+                    log("*******#################******* [" + id + "][ Retry: " + k + "] Failed to update after Exception ["
+                        + ((tex != null) ? tex : "----") + "]for vertex with property4='" + propertyValue + "'");
+                  }
+                }
               }
             } finally {
               graph.shutdown();
@@ -216,7 +283,7 @@ public final class DistributedDatabaseCRUDTest {
     List<Future<?>> ths = new ArrayList<Future<?>>();
     ExecutorService executorService = newFixedThreadPool("testnode-java-update", 10);
     for (int i = 0; i < 10; i++) {
-      Future<?> future = executorService.submit(startVertexUpdateThread(i, getGraphFactory()));
+      Future<?> future = executorService.submit(startVertexUpdateThread(i, getGraphFactory(), "value4-1"));
       ths.add(future);
     }
 
@@ -230,19 +297,20 @@ public final class DistributedDatabaseCRUDTest {
     }
   }
 
-  private Runnable startVertexUpdateThread(final int id, final OrientGraphFactory graphFactory) {
+  private Runnable startVertexUpdateThread(final int id, final OrientGraphFactory graphFactory, final String propertyValue) {
     Runnable th = new Runnable() {
       @Override
       public void run() {
-
+        log("Starting runnable for vertex update thread for property value " + propertyValue);
         long st = System.currentTimeMillis();
         try {
-          String query = "select from TestNode where property4='value4-1'";
+          // String query = "select from TestNode where property4='value4-1'";
+          String query = "select from TestNode where property4='" + propertyValue + "'";
           boolean isRunning = true;
           for (int i = 1; i < 100000000 && isRunning; i++) {
-            if ((i % 250) == 0) {
+            if ((i % 100) == 0) {
               long et = System.currentTimeMillis();
-              log(" Total Records Processed: [" + i + "] Time taken for [250] records: [" + (et - st) / 1000 + "] seconds");
+              log(" Total Records Processed: [" + i + "] Time taken for [100] records: [" + (et - st) / 1000 + "] seconds");
               st = System.currentTimeMillis();
             }
             OrientGraph graph = graphFactory.getTx();
@@ -268,20 +336,26 @@ public final class DistributedDatabaseCRUDTest {
                       retry = false;
                       break;
                     } catch (Exception ex) {
-                      tex = ex;
-
                       if (ex instanceof ODatabaseException || ex instanceof ONeedRetryException
                           || ex instanceof ODistributedException) {
+                        tex = ex;
                         if (ex instanceof ONeedRetryException || ex.getCause() instanceof ONeedRetryException) {
-                          Thread.sleep( new Random().nextInt(500));
+                          // log("[" + id + "][" + vtx + "][ Retry: " + k + "] OrientDB Exception [" + ex + "]");
+                          try {
+                            Thread.sleep(new Random().nextInt(500));
+                          } catch (InterruptedException e) {
+                            e.printStackTrace();
+                          }
+                          vtx1.reload();
                         } else {
                           log("[" + id + "][" + vtx + "][ Retry: " + k + "] Failed to update. OrientDB Exception [" + ex + "]");
                         }
-                        vtx1.reload();
                         isException = true;
-                      } else
+                      } else {
+                        tex = ex;
                         log("[" + id + "][" + k + "] Failed to update non OrientDB Exception [" + ex + "] for vertex [" + vtx1
                             + "]");
+                      }
                     }
                   }
                   if (retry) {
@@ -341,6 +415,9 @@ public final class DistributedDatabaseCRUDTest {
         log(dbName + " database already exists");
       }
       serverAdmin.close();
+      OrientBaseGraph orientGraph = new OrientGraphNoTx(getDBURL());
+      orientGraph.command(new OCommandSQL("ALTER DATABASE custom strictSQL=false")).execute();
+      orientGraph.shutdown();
     } catch (Exception ex) {
       log("Failed to create database", ex);
     }
@@ -461,8 +538,10 @@ public final class DistributedDatabaseCRUDTest {
     Scanner keyboard = new Scanner(System.in);
     System.out.println("Choose database test");
     System.out.println("0. Create database Records");
-    System.out.println("1. Update using Java API");
-    System.out.println("2. Update using SQL");
+    System.out.println("1. Update using Java API - Same vertex from all threads");
+    System.out.println("2. Update using SQL - Same vertex from all threads");
+    System.out.println("3. Update using Java API - Different vertex");
+    System.out.println("4. Update using SQL - Different vertex");
 
     int choice = keyboard.nextInt();
     if (choice == 0) {
@@ -472,6 +551,10 @@ public final class DistributedDatabaseCRUDTest {
       runVertexUpdateTest();
     } else if (choice == 2) {
       runSQLUpdateTest();
+    } else if (choice == 3) {
+      runMultipleVertexUpdateTest();
+    } else if (choice == 4) {
+      runMultipleVertexSQLUpdateTest();
     } else {
       System.out.println("Try again.....");
       choice = -1;
@@ -487,7 +570,7 @@ public final class DistributedDatabaseCRUDTest {
   public static void main(String args[]) {
     // DistributedDatabaseCRUDTest test = new DistributedDatabaseCRUDTest("testdb1");
     // test.createDBData();
-    DistributedDatabaseCRUDTest test1 = new DistributedDatabaseCRUDTest("testdb");
+    DistributedDatabaseCRUDTest test1 = new DistributedDatabaseCRUDTest("testdb", 2000);
     test1.promptTest();
     Runtime.getRuntime().halt(0);
   }

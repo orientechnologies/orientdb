@@ -38,7 +38,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Asynchronous response manager
+ * Asynchronous response manager. All the public methods have to pay attention on synchronizing access by using
+ * synchronousResponsesLock lock.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
@@ -196,29 +197,30 @@ public class ODistributedResponseManager {
     return sentOn / 1000000;
   }
 
-  @SuppressWarnings("unchecked")
-  public ODistributedResponse merge(final ODistributedResponse merged) {
-    final StringBuilder executor = new StringBuilder(64);
-    HashSet<Object> mergedPayload = new HashSet<Object>();
+  public void setLocalResult(final String localNodeName, final Object localResult) {
+    synchronousResponsesLock.lock();
+    try {
 
-    for (Map.Entry<String, Object> entry : responses.entrySet()) {
-      if (entry.getValue() != NO_RESPONSE) {
-        // APPEND THE EXECUTOR
-        if (executor.length() > 0)
-          executor.append(',');
-        executor.append(entry.getKey());
+      localResponse = new ODistributedResponse(request.getId(), localNodeName, localNodeName, localResult);
+      collectResponse(localResponse);
 
-        // MERGE THE RESULTSET
-        final ODistributedResponse response = (ODistributedResponse) entry.getValue();
-        final Object payload = response.getPayload();
-        mergedPayload = (HashSet<Object>) OMultiValue.add(mergedPayload, payload);
-      }
+    } finally {
+      synchronousResponsesLock.unlock();
     }
+  }
 
-    merged.setExecutorNodeName(executor.toString());
-    merged.setPayload(mergedPayload);
+  public void removeServerBecauseUnreachable(final String node) {
+    synchronousResponsesLock.lock();
+    try {
 
-    return merged;
+      if (responses.remove(node) != null) {
+        totalExpectedResponses--;
+        nodesConcurInQuorum.remove(node);
+      }
+
+    } finally {
+      synchronousResponsesLock.unlock();
+    }
   }
 
   public int getQuorum() {
@@ -263,28 +265,22 @@ public class ODistributedResponseManager {
         int synchronizingNodes = 0;
         int missingActiveNodes = 0;
 
-        synchronousResponsesLock.lock();
-        try {
-          for (Iterator<Map.Entry<String, Object>> iter = responses.entrySet().iterator(); iter.hasNext();) {
-            final Map.Entry<String, Object> curr = iter.next();
+        for (Iterator<Map.Entry<String, Object>> iter = responses.entrySet().iterator(); iter.hasNext();) {
+          final Map.Entry<String, Object> curr = iter.next();
 
-            if (curr.getValue() == NO_RESPONSE) {
-              // ANALYZE THE NODE WITHOUT A RESPONSE
-              final ODistributedServerManager.DB_STATUS dbStatus = dManager.getDatabaseStatus(curr.getKey(), getDatabaseName());
-              switch (dbStatus) {
-              case SYNCHRONIZING:
-                synchronizingNodes++;
-                missingActiveNodes++;
-                break;
-              case ONLINE:
-                missingActiveNodes++;
-                break;
-              }
+          if (curr.getValue() == NO_RESPONSE) {
+            // ANALYZE THE NODE WITHOUT A RESPONSE
+            final ODistributedServerManager.DB_STATUS dbStatus = dManager.getDatabaseStatus(curr.getKey(), getDatabaseName());
+            switch (dbStatus) {
+            case SYNCHRONIZING:
+              synchronizingNodes++;
+              missingActiveNodes++;
+              break;
+            case ONLINE:
+              missingActiveNodes++;
+              break;
             }
           }
-
-        } finally {
-          synchronousResponsesLock.unlock();
         }
 
         if (missingActiveNodes == 0) {
@@ -304,10 +300,10 @@ public class ODistributedResponseManager {
           continue;
         } else if (synchronizingNodes > 0) {
           // SOME NODE IS SYNCHRONIZING: WAIT FOR THEM
-          currentTimeout = synchTimeout;
-          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "%d nodes are in synchronization mode during request (%s): enlarge timeout +%dms, wait again for %dms",
-              synchronizingNodes, request, synchTimeout, currentTimeout);
+          // currentTimeout = synchTimeout;
+          // ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+          // "%d nodes are in synchronization mode during request (%s): enlarge timeout +%dms, wait again for %dms",
+          // synchronizingNodes, request, synchTimeout, currentTimeout);
         }
       }
 
@@ -723,7 +719,7 @@ public class ODistributedResponseManager {
       if (responseGroup != bestResponsesGroup) {
         // CONFLICT GROUP: FIX THEM ONE BY ONE
         for (ODistributedResponse r : responseGroup) {
-          if( r.getPayload() instanceof ODistributedRecordLockedException)
+          if (r.getPayload() instanceof ODistributedRecordLockedException)
             // NO FIX, THE RECORD WAS LOCKED
             return false;
 
@@ -781,17 +777,5 @@ public class ODistributedResponseManager {
       }
     }
     return false;
-  }
-
-  public void setLocalResult(final String localNodeName, final Object localResult) {
-    localResponse = new ODistributedResponse(request.getId(), localNodeName, localNodeName, localResult);
-    collectResponse(localResponse);
-  }
-
-  public void removeServerBecauseUnreachable(final String node) {
-    if (responses.remove(node) != null) {
-      totalExpectedResponses--;
-      nodesConcurInQuorum.remove(node);
-    }
   }
 }

@@ -19,10 +19,15 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
@@ -30,32 +35,42 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolver;
+import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedTransactionManager;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
-import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Distributed database repairer delayed respect to the reporting. This assure better performance by grouping multiple requests.
+ * Distributed database repairer that, based on the reported records to check, executes repair of record in configurable batches.
+ * This assure better performance by grouping multiple requests. The repair is based on the chain of conflict resolver.
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class ODelayedDistributedDatabaseRepairer implements ODistributedDatabaseRepairer {
+public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRepairer {
   private final ODistributedServerManager       dManager;
   private final String                          databaseName;
 
-  private final AtomicLong                      processed           = new AtomicLong(0);
-  private final AtomicLong                      totalTimeProcessing = new AtomicLong(0);
+  private final AtomicLong                      processed               = new AtomicLong(0);
+  private final AtomicLong                      totalTimeProcessing     = new AtomicLong(0);
 
-  private ConcurrentHashMap<ORecordId, Boolean> records             = new ConcurrentHashMap<ORecordId, Boolean>();
+  private ConcurrentHashMap<ORecordId, Boolean> records                 = new ConcurrentHashMap<ORecordId, Boolean>();
   private final TimerTask                       checkTask;
+  protected ODistributedConflictResolverFactory conflictResolverFactory = new ODistributedConflictResolverFactory();
+  protected List<ODistributedConflictResolver>  conflictResolvers       = new ArrayList<ODistributedConflictResolver>();
 
-  public ODelayedDistributedDatabaseRepairer(final ODistributedServerManager manager, final String databaseName) {
+  public OConflictResolverDatabaseRepairer(final ODistributedServerManager manager, final String databaseName) {
     this.dManager = manager;
     this.databaseName = databaseName;
+
+    // REGISTER THE CHAIN OF CONFLICT RESOLVERS
+    final String chain = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHAIN.getValueAsString();
+    final String[] items = chain.split(",");
+    for (String item : items) {
+      final ODistributedConflictResolver cr = conflictResolverFactory.getImplementation(item);
+      if (cr == null)
+        throw new OConfigurationException("Cannot find '" + item + "' conflict resolver implementation. Available are: "
+            + conflictResolverFactory.getRegisteredImplementationNames());
+      conflictResolvers.add(cr);
+    }
 
     checkTask = new TimerTask() {
       @Override
@@ -75,8 +90,9 @@ public class ODelayedDistributedDatabaseRepairer implements ODistributedDatabase
       }
 
     };
-    Orient.instance().scheduleTask(checkTask, OGlobalConfiguration.DISTRIBUTED_DELAYED_AUTO_REPAIRER_CHECK_EVERY.getValueAsLong(),
-        OGlobalConfiguration.DISTRIBUTED_DELAYED_AUTO_REPAIRER_CHECK_EVERY.getValueAsLong());
+    Orient.instance().scheduleTask(checkTask,
+        OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY.getValueAsLong(),
+        OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY.getValueAsLong());
 
   }
 
@@ -102,7 +118,7 @@ public class ODelayedDistributedDatabaseRepairer implements ODistributedDatabase
     // OPEN THE DATABASE ONLY IF NEEDED
     ODatabaseDocumentInternal db = null;
     try {
-      final int batchMax = OGlobalConfiguration.DISTRIBUTED_DELAYED_AUTO_REPAIRER_BATCH.getValueAsInteger();
+      final int batchMax = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH.getValueAsInteger();
       final List<ORecordId> rids = new ArrayList<ORecordId>(batchMax);
 
       for (ORecordId rid : records.keySet()) {
@@ -193,8 +209,6 @@ public class ODelayedDistributedDatabaseRepairer implements ODistributedDatabase
           if (response != null) {
             final Object payload = response.getPayload();
             if (payload instanceof Map) {
-
-              final List<ODistributedConflictResolver> conflictResolvers = dManager.getConflictResolver();
 
               final Map<String, Object> map = (Map<String, Object>) payload;
 
@@ -321,8 +335,11 @@ public class ODelayedDistributedDatabaseRepairer implements ODistributedDatabase
         localDistributedDatabase.popTxContext(requestId);
         ctx.destroy();
       }
-    } catch (ODistributedRecordLockedException e) {
-      // IGNORE IT
+
+    } catch (Throwable e) {
+      ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Error executing auto repairing (error=%s, reqId=%s)", e.toString(), requestId);
+      return false;
     }
 
     return true;

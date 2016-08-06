@@ -645,12 +645,17 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.7
    */
-  DISTRIBUTED_DELAYED_AUTO_REPAIRER_CHECK_EVERY("distributed.delayedAutoRepairerCheckEvery", "Time (in ms) when the delayed auto-repairer checks for records/cluster to repair", Long.class, 30000l, true),
+  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHAIN("distributed.conflictResolverRepairerChain", "Chain of conflict resolver implementation to use", String.class, "majority,content,version", false),
 
   /**
    * @Since 2.2.7
    */
-  DISTRIBUTED_DELAYED_AUTO_REPAIRER_BATCH("distributed.delayedAutoRepairerBatch", "Number of record to repair in batch", Integer.class, 100, true),
+  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY("distributed.conflictResolverRepairerCheckEvery", "Time (in ms) when the conflict resolver auto-repairer checks for records/cluster to repair", Long.class, 5000l, true),
+
+  /**
+   * @Since 2.2.7
+   */
+  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH("distributed.conflictResolverRepairerBatch", "Number of record to repair in batch", Integer.class, 100, true),
 
   /**
    * @Since 2.2.7

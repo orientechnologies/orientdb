@@ -102,7 +102,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     startTxTimeoutTimerTask();
 
-    repairer = new ODelayedDistributedDatabaseRepairer(manager, databaseName);
+    repairer = new OConflictResolverDatabaseRepairer(manager, databaseName);
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
