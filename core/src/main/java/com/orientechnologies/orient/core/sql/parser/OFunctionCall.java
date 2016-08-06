@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OFuncitonAggregationContext;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 
@@ -86,11 +87,25 @@ public class OFunctionCall extends SimpleNode {
   private Object execute(Object targetObjects, OCommandContext ctx, String name) {
     List<Object> paramValues = new ArrayList<Object>();
     for (OExpression expr : this.params) {
-      paramValues.add(expr.execute((OIdentifiable) ctx.getVariable("$current"), ctx));
+      Object current = ctx.getVariable("$current");
+      if (current instanceof OIdentifiable) {
+        paramValues.add(expr.execute((OIdentifiable) current, ctx));
+      } else if (current instanceof OResult) {
+        paramValues.add(expr.execute((OResult) current, ctx));
+      } else {
+        throw new OCommandExecutionException("Invalid value for $current: " + current);
+      }
     }
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
     if (function != null) {
-      return function.execute(targetObjects, (OIdentifiable) ctx.getVariable("$current"), null, paramValues.toArray(), ctx);
+      Object current = ctx.getVariable("$current");
+      if (current instanceof OIdentifiable) {
+        return function.execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
+      } else if (current instanceof OResult) {
+        return function.execute(targetObjects, ((OResult) current).getElement(), null, paramValues.toArray(), ctx);
+      } else {
+        throw new OCommandExecutionException("Invalid value for $current: " + current);
+      }
     }
     throw new UnsupportedOperationException("finish OFunctionCall implementation!");
   }
@@ -160,14 +175,15 @@ public class OFunctionCall extends SimpleNode {
 
   /**
    * tests if current function is an indexed function AND that function can be used on this target
-   * @param target the query target
-   * @param context the execution context
+   *
+   * @param target   the query target
+   * @param context  the execution context
    * @param operator
    * @param right
    * @return true if current function is an indexed function AND that function can be used on this target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     if (function instanceof OIndexableSQLFunction) {
       return ((OIndexableSQLFunction) function)
@@ -180,12 +196,13 @@ public class OFunctionCall extends SimpleNode {
    * tests if current expression is an indexed function AND the function has also to be executed after the index search.
    * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
    * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
-   * @param target the query target
+   *
+   * @param target  the query target
    * @param context the execution context
    * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     if (function instanceof OIndexableSQLFunction) {
       return ((OIndexableSQLFunction) function)
@@ -247,9 +264,9 @@ public class OFunctionCall extends SimpleNode {
 
             newFunct.params.add(new OExpression(nextAlias));
           }
-          aggregateProj.getAggregate().add(createProjection(newFunct, functionResultAlias));
-          return new OExpression(functionResultAlias);
         }
+        aggregateProj.getAggregate().add(createProjection(newFunct, functionResultAlias));
+        return new OExpression(functionResultAlias);
       } else {
         if (isStar()) {
           for (OExpression param : params) {

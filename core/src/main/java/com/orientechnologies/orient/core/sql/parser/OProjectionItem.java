@@ -147,7 +147,7 @@ public class OProjectionItem extends SimpleNode {
   public OProjectionItem splitForAggregation(AggregateProjectionSplit aggregateSplit) {
     if (isAggregate()) {
       OProjectionItem result = new OProjectionItem(-1);
-      result.alias = alias;
+      result.alias = getProjectionAlias();
       result.expression = expression.splitForAggregation(aggregateSplit);
       return result;
     } else {

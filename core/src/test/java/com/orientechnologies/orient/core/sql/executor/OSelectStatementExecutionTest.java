@@ -429,10 +429,47 @@ public class OSelectStatementExecutionTest {
     String className = "testCountStar";
     db.getMetadata().getSchema().createClass(className);
 
+    for (int i = 0; i < 7; i++) {
+      ODocument doc = new ODocument(className);
+      doc.save();
+    }
     try {
       OTodoResultSet result = db.query("select count(*) from " + className);
       printExecutionPlan(result);
+      Assert.assertNotNull(result);
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+      Assert.assertEquals(7L, (Object) next.getProperty("count(*)"));
+      Assert.assertFalse(result.hasNext());
     } catch (Exception e) {
+      e.printStackTrace();
+      Assert.fail();
+    }
+  }
+
+  @Test public void testCountStar2() {
+    String className = "testCountStar2";
+    db.getMetadata().getSchema().createClass(className);
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = new ODocument(className);
+      doc.setProperty("name", "name" + (i % 5));
+      doc.save();
+    }
+    try {
+      OTodoResultSet result = db.query("select count(*), name from " + className+" group by name");
+      printExecutionPlan(result);
+      Assert.assertNotNull(result);
+      for(int i=0;i<5;i++) {
+        Assert.assertTrue(result.hasNext());
+        OResult next = result.next();
+        Assert.assertNotNull(next);
+        Assert.assertEquals(2L, (Object) next.getProperty("count(*)"));
+      }
+      Assert.assertFalse(result.hasNext());
+    } catch (Exception e) {
+      e.printStackTrace();
       Assert.fail();
     }
   }

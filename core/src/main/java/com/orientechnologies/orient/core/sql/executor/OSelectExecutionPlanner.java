@@ -374,7 +374,7 @@ public class OSelectExecutionPlanner {
     AggregateProjectionSplit result = new AggregateProjectionSplit();
     for (OProjectionItem item : this.projection.getItems()) {
       result.reset();
-      if (item.isAggregate()) {
+      if (isAggregate(item)) {
         isSplitted = true;
         OProjectionItem post = item.splitForAggregation(result);
         OIdentifier postAlias = item.getProjectionAlias();
@@ -407,6 +407,13 @@ public class OSelectExecutionPlanner {
 
       addGroupByExpressionsToProjections();
     }
+  }
+
+  private boolean isAggregate(OProjectionItem item) {
+    if (item.isAggregate()) {
+      return true;
+    }
+    return false;
   }
 
   private OProjectionItem projectionFromAlias(OIdentifier oIdentifier) {
