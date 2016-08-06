@@ -65,5 +65,13 @@ public class ORid extends SimpleNode {
     result = 31 * result + (position != null ? position.hashCode() : 0);
     return result;
   }
+
+  public void setCluster(OInteger cluster) {
+    this.cluster = cluster;
+  }
+
+  public void setPosition(OInteger position) {
+    this.position = position;
+  }
 }
 /* JavaCC - OriginalChecksum=c2c6d67d7722e29212e438574698d7cd (do not edit this line) */

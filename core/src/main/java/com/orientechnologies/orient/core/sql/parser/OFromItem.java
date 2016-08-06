@@ -190,5 +190,44 @@ public class OFromItem extends SimpleNode {
     return result;
   }
 
+  public void setRids(List<ORid> rids) {
+    this.rids = rids;
+  }
+
+  public void setCluster(OCluster cluster) {
+    this.cluster = cluster;
+  }
+
+  public void setClusterList(OClusterList clusterList) {
+    this.clusterList = clusterList;
+  }
+
+  public void setIndex(OIndexIdentifier index) {
+    this.index = index;
+  }
+
+  public void setMetadata(OMetadataIdentifier metadata) {
+    this.metadata = metadata;
+  }
+
+  public void setStatement(OStatement statement) {
+    this.statement = statement;
+  }
+
+  public void setInputParam(OInputParameter inputParam) {
+    this.inputParam = inputParam;
+  }
+
+  public void setIdentifier(OIdentifier identifier) {
+    this.identifier = identifier;
+  }
+
+  public void setFunctionCall(OFunctionCall functionCall) {
+    this.functionCall = functionCall;
+  }
+
+  public void setModifier(OModifier modifier) {
+    this.modifier = modifier;
+  }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

@@ -374,12 +374,4 @@ public class OBasicCommandContext implements OCommandContext {
   public void setDatabase(ODatabase database) {
     this.database = database;
   }
-
-  public Object[] getArgs() {
-    return args;
-  }
-
-  public void setArgs(Object[] args) {
-    this.args = args;
-  }
 }

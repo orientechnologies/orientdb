@@ -5,7 +5,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -569,8 +571,9 @@ public class OSelectExecutionPlanner {
       handleSubqueryAsTarget(result, target.getStatement(), ctx);
     } else if (target.getFunctionCall() != null) {
       //        handleFunctionCallAsTarget(result, target.getFunctionCall(), ctx);//TODO
+      throw new OCommandExecutionException("function call as target is not supported yet");
     } else if (target.getInputParam() != null) {
-      //        handleInputParamAsTarget(result, target.getInputParam(), ctx);//TODO
+      handleInputParamAsTarget(result, target.getInputParam(), ctx);
     } else if (target.getIndex() != null) {
       handleIndexAsTarget(result, target.getIndex(), whereClause, orderBy, ctx);
     } else if (target.getMetadata() != null) {
@@ -581,6 +584,60 @@ public class OSelectExecutionPlanner {
       throw new UnsupportedOperationException();
     }
 
+  }
+
+  private void handleInputParamAsTarget(OSelectExecutionPlan result, OInputParameter inputParam, OCommandContext ctx) {
+    Object paramValue = inputParam.bindFromInputParams(ctx.getInputParameters());
+    if (paramValue == null) {
+      result.chain(new EmptyStep(ctx));//nothing to return
+    } else if (paramValue instanceof OClass) {
+      OFromClause from = new OFromClause(-1);
+      OFromItem item = new OFromItem(-1);
+      from.setItem(item);
+      item.setIdentifier(new OIdentifier(((OClass) paramValue).getName()));
+      handleClassAsTarget(result, from, ctx);
+    } else if (paramValue instanceof String) {
+      //strings are treated as classes
+      OFromClause from = new OFromClause(-1);
+      OFromItem item = new OFromItem(-1);
+      from.setItem(item);
+      item.setIdentifier(new OIdentifier((String) paramValue));
+      handleClassAsTarget(result, from, ctx);
+    } else if (paramValue instanceof OIdentifiable) {
+      ORID orid = ((OIdentifiable) paramValue).getIdentity();
+
+      ORid rid = new ORid(-1);
+      OInteger cluster = new OInteger(-1);
+      cluster.setValue(orid.getClusterId());
+      OInteger position = new OInteger(-1);
+      position.setValue(orid.getClusterPosition());
+      rid.setCluster(cluster);
+      rid.setPosition(position);
+
+      handleRidsAsTarget(result, Collections.singletonList(rid), ctx);
+    } else if (paramValue instanceof Iterable) {
+      //try list of RIDs
+      List<ORid> rids = new ArrayList<>();
+      for (Object x : (Iterable) paramValue) {
+        if (!(x instanceof OIdentifiable)) {
+          throw new OCommandExecutionException("Cannot use colleciton as target: " + paramValue);
+        }
+        ORID orid = ((OIdentifiable) x).getIdentity();
+
+        ORid rid = new ORid(-1);
+        OInteger cluster = new OInteger(-1);
+        cluster.setValue(orid.getClusterId());
+        OInteger position = new OInteger(-1);
+        position.setValue(orid.getClusterPosition());
+        rid.setCluster(cluster);
+        rid.setPosition(position);
+
+        rids.add(rid);
+      }
+      handleRidsAsTarget(result, rids, ctx);
+    } else {
+      throw new OCommandExecutionException("Invalid target: " + paramValue);
+    }
   }
 
   private void handleNoTarget(OSelectExecutionPlan result, OCommandContext ctx) {

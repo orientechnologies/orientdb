@@ -743,6 +743,15 @@ public interface ODatabase<T> extends OBackupable, Closeable {
   public OTodoResultSet query(String query, Object... args);
 
   /**
+   * Experimental
+   *
+   * @param query
+   * @param args
+   * @return
+   */
+  public OTodoResultSet query(String query, Map args);
+
+  /**
    * Execute a command against the database. A command can be a SQL statement or a Procedure. If the OStorage used is remote
    * (OStorageRemote) then the command will be executed remotely and the result returned back to the calling client.
    *

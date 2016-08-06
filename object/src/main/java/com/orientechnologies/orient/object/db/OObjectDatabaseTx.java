@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -962,6 +961,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   
   @Override
   public OTodoResultSet query(String query, Object... args) {
+    return underlying.query(query, args);
+  }
+
+  @Override
+  public OTodoResultSet query(String query, Map args) {
     return underlying.query(query, args);
   }
   

@@ -2737,6 +2737,52 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testSelectFromStringParam() {
+    String className = "testSelectFromStringParam";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+    OTodoResultSet result = db.query("select from ?", className);
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
+
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testSelectFromStringNamedParam() {
+    String className = "testSelectFromStringNamedParam";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.save();
+    }
+    Map<Object, Object> params = new HashMap<>();
+    params.put("target", className);
+    OTodoResultSet result = db.query("select from :target", params);
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertTrue(("" + item.getProperty("name")).startsWith("name"));
+
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   public void stressTestNew() {
     String className = "stressTestNew";
     db.getMetadata().getSchema().createClass(className);

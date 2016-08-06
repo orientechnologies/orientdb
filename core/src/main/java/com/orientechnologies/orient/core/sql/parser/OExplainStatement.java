@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.sql.executor.OExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class OExplainStatement extends OStatement {
@@ -31,7 +32,23 @@ public class OExplainStatement extends OStatement {
   @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
-    ctx.setArgs(args);
+    Map<Object, Object> params = new HashMap<>();
+    if (args != null) {
+      for (int i = 0; i < args.length; i++)
+        params.put(i, args[i]);
+    }
+    ctx.setInputParameters(params);
+
+    OExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
+
+    OExplainResultSet result = new OExplainResultSet(executionPlan);
+    return result;
+  }
+
+  @Override public OTodoResultSet execute(ODatabase db, Map args) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    ctx.setInputParameters(args);
 
     OExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
 

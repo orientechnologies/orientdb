@@ -32,6 +32,10 @@ public class OFromClause extends SimpleNode {
     return item;
   }
 
+  public void setItem(OFromItem item) {
+    this.item = item;
+  }
+
   public OFromClause copy() {
     OFromClause result= new OFromClause(-1);
     result.item = item.copy();

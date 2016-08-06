@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.util.OBackupable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -52,6 +53,10 @@ public interface OStorage extends OBackupable, OSharedContainer {
   String CLUSTER_DEFAULT_NAME = "default";
 
   default OTodoResultSet query(ODatabase db, String query, Object[] args){
+    throw new UnsupportedOperationException();
+  }
+
+  default OTodoResultSet query(ODatabase db, String query, Map args){
     throw new UnsupportedOperationException();
   }
 

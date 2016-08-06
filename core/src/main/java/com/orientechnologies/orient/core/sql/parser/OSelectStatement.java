@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.sql.executor.OSelectExecutionPlanner;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class OSelectStatement extends OStatement {
@@ -224,7 +225,16 @@ public class OSelectStatement extends OStatement {
   @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
     OBasicCommandContext ctx = new OBasicCommandContext();
     ctx.setDatabase(db);
-    ctx.setArgs(args);
+    Map<Object, Object> params = new HashMap<>();
+    if (args != null) {
+      if (args.length == 1 && args[0] instanceof Map) {
+        params = (Map) args[0];
+      } else {
+        for (int i = 0; i < args.length; i++)
+          params.put(i, args[i]);
+      }
+    }
+    ctx.setInputParameters(params);
     OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
 
     return new OLocalResultSet(executionPlan);

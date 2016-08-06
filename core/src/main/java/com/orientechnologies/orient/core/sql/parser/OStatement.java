@@ -54,6 +54,10 @@ public class OStatement extends SimpleNode {
     throw new UnsupportedOperationException();
   }
 
+  public OTodoResultSet execute(ODatabase db, Map args) {
+    throw new UnsupportedOperationException();
+  }
+
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
     throw new UnsupportedOperationException();
   }

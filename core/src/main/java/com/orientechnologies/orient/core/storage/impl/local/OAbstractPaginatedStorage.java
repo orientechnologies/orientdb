@@ -4294,6 +4294,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   @Override public OTodoResultSet query(ODatabase db, String query, Object[] args) {
     OStatement statement = OSQLEngine.parse(query, (ODatabaseDocumentInternal) db);
     return statement.execute(db, args);
+  }
 
+  @Override public OTodoResultSet query(ODatabase db, String query, Map args) {
+    OStatement statement = OSQLEngine.parse(query, (ODatabaseDocumentInternal) db);
+    return statement.execute(db, args);
   }
 }
