@@ -268,6 +268,13 @@ public class OBaseIdentifier extends SimpleNode {
     return false;
   }
 
+  public OSuffixIdentifier getSuffix() {
+    return suffix;
+  }
 
+  public OLevelZeroIdentifier getLevelZero() {
+
+    return levelZero;
+  }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

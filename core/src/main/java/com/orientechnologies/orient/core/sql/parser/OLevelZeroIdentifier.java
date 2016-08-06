@@ -265,6 +265,16 @@ public class OLevelZeroIdentifier extends SimpleNode {
     return false;
   }
 
+  public OFunctionCall getFunctionCall() {
+    return functionCall;
+  }
 
+  public Boolean getSelf() {
+    return self;
+  }
+
+  public OCollection getCollection() {
+    return collection;
+  }
 }
 /* JavaCC - OriginalChecksum=0305fcf120ba9395b4c975f85cdade72 (do not edit this line) */

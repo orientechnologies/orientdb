@@ -312,6 +312,14 @@ public class OBaseExpression extends OMathExpression {
   public void setIdentifier(OBaseIdentifier identifier) {
     this.identifier = identifier;
   }
+
+  public OBaseIdentifier getIdentifier() {
+    return identifier;
+  }
+
+  public OModifier getModifier() {
+    return modifier;
+  }
 }
 
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

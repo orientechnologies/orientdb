@@ -47,7 +47,7 @@ public class OSelectExecutionPlanner {
   public OSelectExecutionPlanner(OSelectStatement oSelectStatement) {
     //copying the content, so that it can be manipulated and optimized
     this.projection = oSelectStatement.getProjection() == null ? null : oSelectStatement.getProjection().copy();
-    translateDistinct(this.projection);
+    projection = translateDistinct(this.projection);
     this.distinct = projection == null ? false : projection.isDistinct();
     if (projection != null) {
       this.projection.setDistinct(false);
@@ -69,8 +69,62 @@ public class OSelectExecutionPlanner {
    *
    * @param projection the projection
    */
-  private void translateDistinct(OProjection projection) {
-    //TODO
+  private OProjection translateDistinct(OProjection projection) {
+    if (projection != null && projection.getItems().size() == 1) {
+      if (isDistinct(projection.getItems().get(0))) {
+        projection = projection.copy();
+        OProjectionItem item = projection.getItems().get(0);
+        OFunctionCall function = ((OBaseExpression) item.getExpression().getMathExpression()).getIdentifier().getLevelZero()
+            .getFunctionCall();
+        OExpression exp = function.getParams().get(0);
+        OProjectionItem resultItem = new OProjectionItem(-1);
+        resultItem.setAlias(item.getAlias());
+        resultItem.setExpression(exp.copy());
+        OProjection result = new OProjection(-1);
+        result.setItems(new ArrayList<>());
+        result.setDistinct(true);
+        result.getItems().add(resultItem);
+        return result;
+      }
+    }
+    return projection;
+  }
+
+  /**
+   * checks if a projection is a distinct(expr).
+   * In new executor the distinct() function is not supported, so "distinct(expr)" is translated to "DISTINCT expr"
+   *
+   * @param item the projection
+   * @return
+   */
+  private boolean isDistinct(OProjectionItem item) {
+    if (item.getExpression() == null) {
+      return false;
+    }
+    if (item.getExpression().getMathExpression() == null) {
+      return false;
+    }
+    if (!(item.getExpression().getMathExpression() instanceof OBaseExpression)) {
+      return false;
+    }
+    OBaseExpression base = (OBaseExpression) item.getExpression().getMathExpression();
+    if (base.getIdentifier() == null) {
+      return false;
+    }
+    if (base.getModifier() != null) {
+      return false;
+    }
+    if (base.getIdentifier().getLevelZero() == null) {
+      return false;
+    }
+    OFunctionCall function = base.getIdentifier().getLevelZero().getFunctionCall();
+    if (function == null) {
+      return false;
+    }
+    if (function.getName().getStringValue().equalsIgnoreCase("distinct")) {
+      return true;
+    }
+    return false;
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
@@ -903,8 +957,6 @@ public class OSelectExecutionPlanner {
     if (flattenedWhereClause == null || flattenedWhereClause.size() == 0) {
       return null;
     }
-
-    //TODO indexable functions!
 
     OClass clazz = ctx.getDatabase().getMetadata().getSchema().getClass(targetClass);
     if (clazz == null) {

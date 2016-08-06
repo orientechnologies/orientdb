@@ -1786,6 +1786,31 @@ public class OSelectStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testDistinct2() {
+    String className = "testDistinct2";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("surname", OType.STRING);
+
+    for (int i = 0; i < 30; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i % 10);
+      doc.setProperty("surname", "surname" + i % 10);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.query("select distinct(name) from " + className);
+    printExecutionPlan(result);
+
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult next = result.next();
+      Assert.assertNotNull(next);
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   @Test public void testLet1() {
     OTodoResultSet result = db.query("select $a as one, $b as two let $a = 1, $b = 1+1");
     Assert.assertTrue(result.hasNext());

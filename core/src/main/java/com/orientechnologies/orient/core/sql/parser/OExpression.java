@@ -458,5 +458,9 @@ public class OExpression extends SimpleNode {
   public void setRid(ORid rid) {
     this.rid = rid;
   }
+
+  public OMathExpression getMathExpression() {
+    return mathExpression;
+  }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */
