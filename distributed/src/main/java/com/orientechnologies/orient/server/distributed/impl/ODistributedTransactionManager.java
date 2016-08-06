@@ -41,6 +41,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordVersionHelper;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationError;
 import com.orientechnologies.orient.core.replication.OAsyncReplicationOk;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -564,9 +566,18 @@ public class ODistributedTransactionManager {
             if (txEntry != null && txEntry.type == ORecordOperation.DELETED)
               // GET DELETED RECORD FROM TX
               previousRecord.set(txEntry.getRecord());
-            else
-              // LOAD FROM DATABASE. WHY NOT JUST STORAGE? BECAUSE IT COULD BE SHARDED AND RESIDE ON ANOTHER SERVER
-              previousRecord.set(db.load(rid));
+            else {
+              final OStorageOperationResult<ORawBuffer> loadedBuffer = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+                  .getUnderlying().readRecord(rid, null, true, null);
+              if (loadedBuffer != null) {
+                // LOAD THE RECORD FROM THE STORAGE AVOIDING USING THE DB TO GET THE TRANSACTIONAL CHANGES
+                final ORecord loaded = Orient.instance().getRecordFactoryManager().newInstance(loadedBuffer.getResult().recordType);
+                ORecordInternal.fill(loaded, rid, loadedBuffer.getResult().version, loadedBuffer.getResult().getBuffer(), false);
+                previousRecord.set(loaded);
+              } else
+                // RECORD NOT FOUND ON LOCAL STORAGE, ASK TO DB BECAUSE IT COULD BE SHARDED AND RESIDE ON ANOTHER SERVER
+                previousRecord.set(db.load(rid));
+            }
 
             return null;
           }
