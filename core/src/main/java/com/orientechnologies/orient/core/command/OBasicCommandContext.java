@@ -259,6 +259,14 @@ public class OBasicCommandContext implements OCommandContext {
     return this;
   }
 
+  public OCommandContext setParentWithoutOverridingChild(final OCommandContext iParentContext) {
+    if (parent != iParentContext) {
+      parent = iParentContext;
+    }
+    return this;
+  }
+
+
   @Override
   public String toString() {
     return getVariables().toString();

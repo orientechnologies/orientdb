@@ -49,7 +49,7 @@ public class LetQueryStep extends AbstractExecutionStep {
       private void calculate(OResultInternal result, OCommandContext ctx) {
         OBasicCommandContext subCtx = new OBasicCommandContext();
         subCtx.setDatabase(ctx.getDatabase());
-        subCtx.setParent(ctx);
+        subCtx.setParentWithoutOverridingChild(ctx);
         OInternalExecutionPlan subExecutionPlan = query.createExecutionPlan(subCtx);
         result.setProperty(varName.getStringValue(), toList(new OLocalResultSet(subExecutionPlan)));
       }
