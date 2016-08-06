@@ -71,7 +71,7 @@ public class OMajorityDistributedConflictResolver extends OAbstractDistributedCo
         result.winner = bestResult;
       } else {
         // NO MAJORITY: DON'T TAKE ANY ACTION
-        OLogManager.instance().info(this, "Majority Conflict Resolver could not find a winner for the record %s: %s", rid,
+        OLogManager.instance().info(this, "Majority Conflict Resolver could not find a winner for the record %s (candidates=%s)", rid,
             candidates);
 
         // COLLECT ALL THE RESULT == BEST RESULT

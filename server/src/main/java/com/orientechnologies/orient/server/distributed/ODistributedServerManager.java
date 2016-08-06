@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
@@ -26,15 +33,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -226,8 +225,6 @@ public interface ODistributedServerManager {
   boolean installDatabase(boolean iStartup, String databaseName, ODocument config);
 
   ORemoteTaskFactory getTaskFactory();
-
-  List<ODistributedConflictResolver> getConflictResolver();
 
   Set<String> getActiveServers();
 }

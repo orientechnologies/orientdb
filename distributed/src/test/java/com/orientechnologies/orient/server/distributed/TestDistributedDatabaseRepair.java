@@ -39,13 +39,13 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
 
   @Test
   public void test() throws Exception {
-    final long checkEvery = OGlobalConfiguration.DISTRIBUTED_DELAYED_AUTO_REPAIRER_CHECK_EVERY.getValueAsLong();
-    final int batchSize = OGlobalConfiguration.DISTRIBUTED_DELAYED_AUTO_REPAIRER_BATCH.getValueAsInteger();
+    final long checkEvery = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY.getValueAsLong();
+    final int batchSize = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH.getValueAsInteger();
 
     try {
 
-      OGlobalConfiguration.DISTRIBUTED_DELAYED_AUTO_REPAIRER_CHECK_EVERY.setValue(1);
-      OGlobalConfiguration.DISTRIBUTED_DELAYED_AUTO_REPAIRER_BATCH.setValue(0);
+      OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY.setValue(1);
+      OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH.setValue(0);
 
       init(SERVERS);
       prepare(false);
@@ -53,8 +53,8 @@ public class TestDistributedDatabaseRepair extends AbstractServerClusterTest {
 
     } finally {
       // RESTORE DEFAULT VALUES
-      OGlobalConfiguration.DISTRIBUTED_DELAYED_AUTO_REPAIRER_CHECK_EVERY.setValue(checkEvery);
-      OGlobalConfiguration.DISTRIBUTED_DELAYED_AUTO_REPAIRER_BATCH.setValue(batchSize);
+      OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY.setValue(checkEvery);
+      OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH.setValue(batchSize);
     }
   }
 
