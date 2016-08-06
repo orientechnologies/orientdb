@@ -45,6 +45,20 @@ public class StressTestWorkloadTest {
   }
 
   @Test
+  public void testGraphInsertRandomStrategy() throws Exception {
+    final OStressTester stressTester = OStressTesterCommandLineParser
+        .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "GINSERT:V100F3Srandom" });
+    stressTester.execute();
+  }
+
+  @Test
+  public void testGraphInsertSuperNodeStrategy() throws Exception {
+    final OStressTester stressTester = OStressTesterCommandLineParser
+        .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "GINSERT:V100F3Ssupernode" });
+    stressTester.execute();
+  }
+
+  @Test
   public void testGraphShortestPath() throws Exception {
     final OStressTester stressTester = OStressTesterCommandLineParser
         .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "GINSERT:V100F3,GSP:L3" });
