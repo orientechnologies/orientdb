@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.graph.stresstest;
 
+import java.util.List;
+
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -27,8 +30,6 @@ import com.orientechnologies.orient.stresstest.ODatabaseIdentifier;
 import com.orientechnologies.orient.stresstest.OStressTesterSettings;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.List;
 
 /**
  * CRUD implementation of the workload.
@@ -101,11 +102,10 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
 
             resultVertices.current.incrementAndGet();
 
-            if( settings.operationsPerTransaction > 0 && context.currentIdx % settings.operationsPerTransaction == 0 ){
+            if (settings.operationsPerTransaction > 0 && context.currentIdx % settings.operationsPerTransaction == 0) {
               graph.commit();
               graph.begin();
             }
-
             return null;
           }
         });
@@ -116,15 +116,24 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
       // CONNECTED ALL THE SUB GRAPHS
       OrientVertex lastVertex = null;
       for (OBaseWorkLoadContext context : contexts) {
-        if (lastVertex != null)
-          lastVertex.addEdge("E", ((OWorkLoadContext) context).lastVertexToConnect);
+        for (int retry = 0; retry < 100; ++retry)
+          try {
+            if (lastVertex != null)
+              lastVertex.addEdge("E", ((OWorkLoadContext) context).lastVertexToConnect);
 
-        lastVertex = ((OWorkLoadContext) context).lastVertexToConnect;
+            lastVertex = ((OWorkLoadContext) context).lastVertexToConnect;
+          } catch (ONeedRetryException e) {
+            lastVertex.reload();
+            ((OWorkLoadContext) context).lastVertexToConnect.reload();
+          }
       }
     } finally {
       graph.shutdown();
     }
+  }
 
+  protected void manageNeedRetryException(OBaseWorkLoadContext context, ONeedRetryException e) {
+    ((OWorkLoadContext) context).lastVertexToConnect.reload();
   }
 
   @Override

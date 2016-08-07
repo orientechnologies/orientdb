@@ -41,8 +41,7 @@ public abstract class OBaseGraphWorkload extends OBaseWorkload implements OCheck
     int             lastVertexEdges;
 
     @Override
-    public void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction,
-        OStorageRemote.CONNECTION_STRATEGY connectionStrategy) {
+    public void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction) {
       graph = operationsPerTransaction > 0 ? getGraph(dbIdentifier) : getGraphNoTx(dbIdentifier);
     }
 

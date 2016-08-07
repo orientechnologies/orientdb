@@ -68,7 +68,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
       }
 
       int itemInTx = 0;
-      final OrientGraph graph = factory.getTx();
+      final OrientBaseGraph graph = factory.getTx();
       try {
         for (int i = 1; i <= count; i++) {
           if (i % 100 == 0)
@@ -77,8 +77,8 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
           for (int retry = 0; retry < 100; retry++) {
             try {
               OrientVertex person = createVertex(graph, serverId, threadId, i);
-              updateVertex(graph, person);
-              // checkVertex(graph, person);
+               updateVertex(graph, person);
+               checkVertex(graph, person);
 
               final OrientVertex root = graph.getVertex(rootVertexId);
               root.addEdge("E", person);
@@ -165,18 +165,18 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     return new TxWriter(serverId, threadId, databaseURL);
   }
 
-  protected OrientVertex createVertex(OrientGraph graph, int serverId, int threadId, int i) {
+  protected OrientVertex createVertex(OrientBaseGraph graph, int serverId, int threadId, int i) {
     final String uniqueId = serverId + "-" + threadId + "-" + i;
 
     return graph.addVertex("class:Person", "id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
         "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
   }
 
-  protected void updateVertex(OrientGraph graph, OrientVertex v) {
+  protected void updateVertex(OrientBaseGraph graph, OrientVertex v) {
     v.setProperty("updated", true);
   }
 
-  protected void checkVertex(OrientGraph graph, OrientVertex v) {
+  protected void checkVertex(OrientBaseGraph graph, OrientVertex v) {
     v.reload();
     Assert.assertEquals(v.getProperty("updated"), Boolean.TRUE);
   }

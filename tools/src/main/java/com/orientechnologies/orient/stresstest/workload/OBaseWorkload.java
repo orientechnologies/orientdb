@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.stresstest.workload;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -43,15 +44,14 @@ public abstract class OBaseWorkload implements OWorkload {
     public int currentIdx;
     public int totalPerThread;
 
-    public abstract void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction,
-        OStorageRemote.CONNECTION_STRATEGY connectionStrategy);
+    public abstract void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction);
 
     public abstract void close();
   }
 
   public class OWorkLoadResult {
-    public AtomicInteger current = new AtomicInteger();
-    public int           total   = 1;
+    public AtomicInteger current   = new AtomicInteger();
+    public int           total     = 1;
     public long          totalTime;
     public long          totalTimeOperationsNs;
     public long          throughputAvgNs;
@@ -63,16 +63,18 @@ public abstract class OBaseWorkload implements OWorkload {
     public long          latencyPercentile99Ns;
     public long          latencyPercentile99_9Ns;
 
+    public AtomicInteger conflicts = new AtomicInteger();
+
     public String toOutput(final int leftSpaces) {
       final StringBuilder indent = new StringBuilder();
       for (int i = 0; i < leftSpaces; ++i)
         indent.append(' ');
 
       return String.format(
-          "\n%s- Throughput: %.3f/sec (Avg %.3fms/op)\n%s- Latency Avg: %.3fms/op (%dth percentile) - Min: %.3fms - 99th Perc: %.3fms - 99.9th Perc: %.3fms - Max: %.3fms",
+          "\n%s- Throughput: %.3f/sec (Avg %.3fms/op)\n%s- Latency Avg: %.3fms/op (%dth percentile) - Min: %.3fms - 99th Perc: %.3fms - 99.9th Perc: %.3fms - Max: %.3fms - Conflicts: %d",
           indent, total * 1000 / (float) totalTime, throughputAvgNs / 1000000f, indent, latencyAvgNs / 1000000f,
           latencyPercentileAvg, latencyMinNs / 1000000f, latencyPercentile99Ns / 1000000f, latencyPercentile99_9Ns / 1000000f,
-          latencyMaxNs / 1000000f);
+          latencyMaxNs / 1000000f, conflicts.get());
     }
 
     public ODocument toJSON() {
@@ -90,6 +92,7 @@ public abstract class OBaseWorkload implements OWorkload {
       json.field("latencyPerc99", latencyPercentile99Ns / 1000000f);
       json.field("latencyPerc99_9", latencyPercentile99_9Ns / 1000000f);
       json.field("latencyMax", latencyMaxNs / 1000000f);
+      json.field("conflicts", conflicts.get());
       return json;
     }
   }
@@ -122,7 +125,7 @@ public abstract class OBaseWorkload implements OWorkload {
           context.threadId = currentThread;
           context.totalPerThread = context.threadId < concurrencyLevel - 1 ? totalPerThread : totalPerLastThread;
 
-          context.init(dbIdentifier, operationsPerTransaction, connectionStrategy);
+          context.init(dbIdentifier, operationsPerTransaction);
           try {
             final int startIdx = totalPerThread * context.threadId;
 
@@ -141,12 +144,6 @@ public abstract class OBaseWorkload implements OWorkload {
 
                   context.currentIdx = startIdx + i.get();
 
-                  if (operationsPerTransaction > 0 && (i.get() + 1) % operationsPerTransaction == 0) {
-                    commitTransaction(context);
-                    operationsExecutedInTx.set(0);
-                    beginTransaction(context);
-                  }
-
                   final long startOp = System.nanoTime();
                   try {
 
@@ -154,7 +151,24 @@ public abstract class OBaseWorkload implements OWorkload {
                       return callback.call(context);
                     } finally {
                       operationsExecutedInTx.incrementAndGet();
+
+                      if (operationsPerTransaction > 0 && (i.get() + 1) % operationsPerTransaction == 0
+                          || i.get() == context.totalPerThread - 1) {
+                        commitTransaction(context);
+                        operationsExecutedInTx.set(0);
+                        beginTransaction(context);
+                      }
                     }
+
+                  } catch (ONeedRetryException e) {
+                    result.conflicts.incrementAndGet();
+
+                    manageNeedRetryException(context, e);
+
+                    if (operationsPerTransaction > 0)
+                      beginTransaction(context);
+
+                    throw e;
 
                   } catch (Exception e) {
                     errors.add(e.toString());
@@ -218,6 +232,9 @@ public abstract class OBaseWorkload implements OWorkload {
     result.latencyPercentile99_9Ns = operationTiming[(int) (operationTiming.length * 99.9f / 100f)];
 
     return contexts;
+  }
+
+  protected void manageNeedRetryException(final OBaseWorkLoadContext context, final ONeedRetryException e) {
   }
 
   protected abstract void beginTransaction(OBaseWorkLoadContext context);
