@@ -36,7 +36,7 @@ public abstract class OAbstractDistributedConflictResolver implements ODistribut
       boolean skip = false;
       if (exclude != null && !exclude.isEmpty()) {
         for (Object ex : exclude) {
-          if (ex.equals(entry.getKey())) {
+          if (ex == null && entry.getKey() == null || ex != null && entry.getKey() != null && ex.equals(entry.getKey())) {
             // SKIP IT
             skip = true;
             break;

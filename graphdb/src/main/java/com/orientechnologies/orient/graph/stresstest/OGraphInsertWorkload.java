@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.graph.stresstest;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -128,12 +129,6 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
               graphContext.lastVertexToConnect = v;
 
             resultVertices.current.incrementAndGet();
-
-            if (settings.operationsPerTransaction > 0 && context.currentIdx % settings.operationsPerTransaction == 0) {
-              graph.commit();
-              graph.begin();
-            }
-
             return null;
           }
         });
@@ -144,15 +139,24 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
       // CONNECTED ALL THE SUB GRAPHS
       OrientVertex lastVertex = null;
       for (OBaseWorkLoadContext context : contexts) {
-        if (lastVertex != null)
-          lastVertex.addEdge("E", ((OWorkLoadContext) context).lastVertexToConnect);
+        for (int retry = 0; retry < 100; ++retry)
+          try {
+            if (lastVertex != null)
+              lastVertex.addEdge("E", ((OWorkLoadContext) context).lastVertexToConnect);
 
-        lastVertex = ((OWorkLoadContext) context).lastVertexToConnect;
+            lastVertex = ((OWorkLoadContext) context).lastVertexToConnect;
+          } catch (ONeedRetryException e) {
+            lastVertex.reload();
+            ((OWorkLoadContext) context).lastVertexToConnect.reload();
+          }
       }
     } finally {
       graph.shutdown();
     }
+  }
 
+  protected void manageNeedRetryException(OBaseWorkLoadContext context, ONeedRetryException e) {
+    ((OWorkLoadContext) context).lastVertexToConnect.reload();
   }
 
   @Override

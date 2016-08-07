@@ -44,8 +44,7 @@ public abstract class OBaseWorkload implements OWorkload {
     public int currentIdx;
     public int totalPerThread;
 
-    public abstract void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction,
-        OStorageRemote.CONNECTION_STRATEGY connectionStrategy);
+    public abstract void init(ODatabaseIdentifier dbIdentifier, int operationsPerTransaction);
 
     public abstract void close();
   }
@@ -126,7 +125,7 @@ public abstract class OBaseWorkload implements OWorkload {
           context.threadId = currentThread;
           context.totalPerThread = context.threadId < concurrencyLevel - 1 ? totalPerThread : totalPerLastThread;
 
-          context.init(dbIdentifier, operationsPerTransaction, connectionStrategy);
+          context.init(dbIdentifier, operationsPerTransaction);
           try {
             final int startIdx = totalPerThread * context.threadId;
 
@@ -145,12 +144,6 @@ public abstract class OBaseWorkload implements OWorkload {
 
                   context.currentIdx = startIdx + i.get();
 
-                  if (operationsPerTransaction > 0 && (i.get() + 1) % operationsPerTransaction == 0) {
-                    commitTransaction(context);
-                    operationsExecutedInTx.set(0);
-                    beginTransaction(context);
-                  }
-
                   final long startOp = System.nanoTime();
                   try {
 
@@ -158,10 +151,19 @@ public abstract class OBaseWorkload implements OWorkload {
                       return callback.call(context);
                     } finally {
                       operationsExecutedInTx.incrementAndGet();
+
+                      if (operationsPerTransaction > 0 && (i.get() + 1) % operationsPerTransaction == 0
+                          || i.get() == context.totalPerThread - 1) {
+                        commitTransaction(context);
+                        operationsExecutedInTx.set(0);
+                        beginTransaction(context);
+                      }
                     }
 
                   } catch (ONeedRetryException e) {
                     result.conflicts.incrementAndGet();
+
+                    manageNeedRetryException(context, e);
 
                     if (operationsPerTransaction > 0)
                       beginTransaction(context);
@@ -230,6 +232,9 @@ public abstract class OBaseWorkload implements OWorkload {
     result.latencyPercentile99_9Ns = operationTiming[(int) (operationTiming.length * 99.9f / 100f)];
 
     return contexts;
+  }
+
+  protected void manageNeedRetryException(final OBaseWorkLoadContext context, final ONeedRetryException e) {
   }
 
   protected abstract void beginTransaction(OBaseWorkLoadContext context);
