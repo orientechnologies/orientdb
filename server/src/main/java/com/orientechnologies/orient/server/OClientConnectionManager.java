@@ -107,6 +107,8 @@ public class OClientConnectionManager {
         iterator.remove();
       } else if(Boolean.TRUE.equals(entry.getValue().getTokenBased())){
         if (entry.getValue().getToken() == null || !entry.getValue().getToken().isNowValid()) {
+          // Close the current session but not the network because can be used by another session.
+          entry.getValue().close();
           iterator.remove();
         }
       }
