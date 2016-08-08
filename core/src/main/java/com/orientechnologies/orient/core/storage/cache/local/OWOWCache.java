@@ -229,7 +229,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   /**
    * Fires event about exception is thrown in data flush thread
    */
-  private void fireBackgroundDataProcessingExceptionEvent(Exception e) {
+  private void fireBackgroundDataProcessingExceptionEvent(Throwable e) {
     for (WeakReference<OBackgroundExceptionListener> ref : backgroundExceptionListeners) {
       final OBackgroundExceptionListener listener = ref.get();
       if (listener != null) {
@@ -521,7 +521,6 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       }
     }
   }
-
 
   public boolean exists(String fileName) {
     filesLock.acquireReadLock();
@@ -1483,11 +1482,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             }
           }
         }
-
-      } catch (IOException e) {
-        OLogManager.instance().error(this, "Exception during data flush", e);
-        OWOWCache.this.fireBackgroundDataProcessingExceptionEvent(e);
-      } catch (RuntimeException e) {
+      } catch (Throwable e) {
         OLogManager.instance().error(this, "Exception during data flush", e);
         OWOWCache.this.fireBackgroundDataProcessingExceptionEvent(e);
       } finally {
@@ -1756,37 +1751,32 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           return;
 
         OLogManager.instance().debug(this, "Start fuzzy checkpoint flushed LSN is %s", minLsn);
-        try {
-          writeAheadLog.logFuzzyCheckPointStart(minLsn);
+        writeAheadLog.logFuzzyCheckPointStart(minLsn);
 
-          for (Integer intId : nameIdMap.values()) {
-            if (intId < 0)
-              continue;
+        for (Integer intId : nameIdMap.values()) {
+          if (intId < 0)
+            continue;
 
-            final long fileId = composeFileId(id, intId);
-            final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
-            try {
-              final OFileClassic fileClassic = entry.get();
-              fileClassic.synch();
-            } finally {
-              files.release(entry);
-            }
+          final long fileId = composeFileId(id, intId);
+          final OClosableEntry<Long, OFileClassic> entry = files.acquire(fileId);
+          try {
+            final OFileClassic fileClassic = entry.get();
+            fileClassic.synch();
+          } finally {
+            files.release(entry);
           }
-
-          writeAheadLog.logFuzzyCheckPointEnd();
-          writeAheadLog.flush();
-
-          if (minLsn.compareTo(new OLogSequenceNumber(-1, -1)) > 0)
-            writeAheadLog.cutTill(minLsn);
-        } catch (IOException ioe) {
-          OLogManager.instance().error(this, "Error during fuzzy checkpoint", ioe);
-          fireBackgroundDataProcessingExceptionEvent(ioe);
-        } catch (RuntimeException e) {
-          OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
-          fireBackgroundDataProcessingExceptionEvent(e);
         }
 
+        writeAheadLog.logFuzzyCheckPointEnd();
+        writeAheadLog.flush();
+
+        if (minLsn.compareTo(new OLogSequenceNumber(-1, -1)) > 0)
+          writeAheadLog.cutTill(minLsn);
+
         OLogManager.instance().debug(this, "End fuzzy checkpoint");
+      } catch (Throwable e) {
+        OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
+        fireBackgroundDataProcessingExceptionEvent(e);
       } finally {
         if (statistic != null)
           statistic.stopFuzzyCheckpointTimer();

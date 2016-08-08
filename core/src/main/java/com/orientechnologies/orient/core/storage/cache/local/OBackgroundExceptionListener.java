@@ -5,5 +5,5 @@ package com.orientechnologies.orient.core.storage.cache.local;
  * write cache.
  */
 public interface OBackgroundExceptionListener {
-  void onException(Exception e);
+  void onException(Throwable t);
 }

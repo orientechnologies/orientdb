@@ -146,7 +146,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private volatile OLowDiskSpaceInformation lowDiskSpace                               = null;
   private volatile boolean                  checkpointRequest                          = false;
 
-  private volatile Exception dataFlushException = null;
+  private volatile Throwable dataFlushException = null;
 
   private final int id;
 
@@ -170,7 +170,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     PROFILER_RECYCLE_RECORD = "db." + this.name + ".recyclePosition";
     PROFILER_CONFLICT_RECORD = "db." + this.name + ".conflictRecord";
     PROFILER_TX_BEGUN = "db." + this.name + ".txBegun";
-    PROFILER_TX_COMMIT= "db." + this.name + ".txCommit";
+    PROFILER_TX_COMMIT = "db." + this.name + ".txCommit";
     PROFILER_TX_ROLLBACK = "db." + this.name + ".txRollback";
 
     sbTreeCollectionManager = new OSBTreeCollectionManagerShared(this);
@@ -1088,8 +1088,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         return doUpdateRecord(rid, updateContent, content, version, recordType, callback, cluster);
       } finally {
-        Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer,
-            "db.*.updateRecord");
+        Orient.instance().getProfiler()
+            .stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
       }
     }
 
@@ -1172,8 +1172,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       try {
         return doDeleteRecord(rid, version, cluster);
       } finally {
-        Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer,
-            "db.*.deleteRecord");
+        Orient.instance().getProfiler()
+            .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
       }
     }
 
@@ -1184,8 +1184,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       return doDeleteRecord(rid, version, cluster);
     } finally {
       stateLock.releaseReadLock();
-      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer,
-          "db.*.deleteRecord");
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
 
     }
   }
@@ -1311,8 +1311,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
     checkOpeness();
     checkLowDiskSpaceFullCheckpointRequestsAndBackgroundDataFlushExceptions();
 
-    Orient.instance().getProfiler().updateCounter(PROFILER_TX_BEGUN, "Number of transactions begun", +1,
-        "db.*.txBegun");
+    Orient.instance().getProfiler().updateCounter(PROFILER_TX_BEGUN, "Number of transactions begun", +1, "db.*.txBegun");
 
     final ODatabaseDocumentInternal databaseRecord = (ODatabaseDocumentInternal) clientTx.getDatabase();
     final OIndexManagerProxy indexManager = databaseRecord.getMetadata().getIndexManager();
@@ -1400,7 +1399,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               rid.clusterId = cluster.getId();
 
               if (rid.clusterPosition > -1 && rid.clusterPosition != ppos.clusterPosition) {
-                throw new OConcurrentCreateException( rid, new ORecordId(rid.clusterId, ppos.clusterPosition));
+                throw new OConcurrentCreateException(rid, new ORecordId(rid.clusterId, ppos.clusterPosition));
               }
 
               rid.clusterPosition = ppos.clusterPosition;
@@ -1420,8 +1419,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
           OTransactionAbstract.updateCacheFromEntries(clientTx, entries, true);
 
-          Orient.instance().getProfiler().updateCounter(PROFILER_TX_COMMIT, "Number of transaction committed", +1,
-              "db.*.txCommit");
+          Orient.instance().getProfiler().updateCounter(PROFILER_TX_COMMIT, "Number of transaction committed", +1, "db.*.txCommit");
 
         } catch (IOException ioe) {
           makeRollback(clientTx, ioe);
@@ -2329,8 +2327,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
         OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
 
-        Orient.instance().getProfiler().updateCounter(PROFILER_TX_ROLLBACK, "Number of transaction rolled back", +1,
-            "db.*.txRollbacks");
+        Orient.instance().getProfiler()
+            .updateCounter(PROFILER_TX_ROLLBACK, "Number of transaction rolled back", +1, "db.*.txRollbacks");
 
       } catch (IOException e) {
         throw OException.wrapException(new OStorageException("Error during transaction rollback"), e);
@@ -3199,8 +3197,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       else
         return new OStorageOperationResult<Integer>(ppos.recordVersion);
     } catch (OConcurrentModificationException e) {
-      Orient.instance().getProfiler().updateCounter(PROFILER_CONFLICT_RECORD, "Number of conflicts during updating and deleting records", +1,
-          "db.*.conflictRecord");
+      Orient.instance().getProfiler()
+          .updateCounter(PROFILER_CONFLICT_RECORD, "Number of conflicts during updating and deleting records", +1,
+              "db.*.conflictRecord");
       throw e;
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", ioe);
@@ -3266,8 +3265,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
       // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
       if (version > -1 && ppos.recordVersion != version) {
-        Orient.instance().getProfiler().updateCounter(PROFILER_CONFLICT_RECORD, "Number of conflicts during updating and deleting records", +1,
-            "db.*.conflictRecord");
+        Orient.instance().getProfiler()
+            .updateCounter(PROFILER_CONFLICT_RECORD, "Number of conflicts during updating and deleting records", +1,
+                "db.*.conflictRecord");
 
         if (OFastConcurrentModificationException.enabled())
           throw OFastConcurrentModificationException.instance();
@@ -3299,8 +3299,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       throw OException.wrapException(new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")"), ioe);
 
     } finally {
-      Orient.instance().getProfiler().stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer,
-          "db.*.deleteRecord");
+      Orient.instance().getProfiler()
+          .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
     }
   }
 
@@ -3491,7 +3491,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   }
 
   @Override
-  public void onException(Exception e) {
+  public void onException(Throwable e) {
     dataFlushException = e;
   }
 
