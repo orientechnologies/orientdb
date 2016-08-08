@@ -2,9 +2,16 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlanner;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -16,10 +23,10 @@ public class OUpdateStatement extends OStatement {
 
   protected boolean upsert = false;
 
-  protected boolean                 returnBefore = false;
-  protected boolean                 returnAfter  = false;
-  protected boolean                 returnCount  = false;
-  protected OProjection             returnProjection;
+  protected boolean returnBefore = false;
+  protected boolean returnAfter  = false;
+  protected boolean returnCount  = false;
+  protected OProjection returnProjection;
 
   public OWhereClause whereClause;
 
@@ -55,9 +62,9 @@ public class OUpdateStatement extends OStatement {
       builder.append(" RETURN");
       if (returnBefore) {
         builder.append(" BEFORE");
-      } else if (returnAfter){
+      } else if (returnAfter) {
         builder.append(" AFTER");
-      } else{
+      } else {
         builder.append(" COUNT");
       }
       if (returnProjection != null) {
@@ -120,6 +127,35 @@ public class OUpdateStatement extends OStatement {
     return result;
   }
 
+  @Override public OTodoResultSet execute(ODatabase db, Object[] args) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    Map<Object, Object> params = new HashMap<>();
+    if (args != null) {
+      for (int i = 0; i < args.length; i++) {
+        params.put(i, args[i]);
+      }
+    }
+    ctx.setInputParameters(params);
+    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx);
+    executionPlan.executeInternal();
+    return new OLocalResultSet(executionPlan);
+  }
+
+  @Override public OTodoResultSet execute(ODatabase db, Map params) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    ctx.setInputParameters(params);
+    OUpdateExecutionPlan executionPlan = createExecutionPlan(ctx);
+    executionPlan.executeInternal();
+    return new OLocalResultSet(executionPlan);
+  }
+
+  public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx) {
+    OUpdateExecutionPlanner planner = new OUpdateExecutionPlanner(this);
+    return planner.createExecutionPlan(ctx);
+  }
+
   @Override public boolean equals(Object o) {
     if (this == o)
       return true;
@@ -164,6 +200,50 @@ public class OUpdateStatement extends OStatement {
     result = 31 * result + (limit != null ? limit.hashCode() : 0);
     result = 31 * result + (timeout != null ? timeout.hashCode() : 0);
     return result;
+  }
+
+  public OFromClause getTarget() {
+    return target;
+  }
+
+  public List<OUpdateOperations> getOperations() {
+    return operations;
+  }
+
+  public boolean isUpsert() {
+    return upsert;
+  }
+
+  public boolean isReturnBefore() {
+    return returnBefore;
+  }
+
+  public boolean isReturnAfter() {
+    return returnAfter;
+  }
+
+  public boolean isReturnCount() {
+    return returnCount;
+  }
+
+  public OProjection getReturnProjection() {
+    return returnProjection;
+  }
+
+  public OWhereClause getWhereClause() {
+    return whereClause;
+  }
+
+  public OStorage.LOCKING_STRATEGY getLockRecord() {
+    return lockRecord;
+  }
+
+  public OLimit getLimit() {
+    return limit;
+  }
+
+  public OTimeout getTimeout() {
+    return timeout;
   }
 }
 /* JavaCC - OriginalChecksum=093091d7273f1073ad49f2a2bf709a53 (do not edit this line) */

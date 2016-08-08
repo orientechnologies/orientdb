@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 
 /**
@@ -9,7 +8,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
  */
 public class SubQueryStep extends AbstractExecutionStep {
   private final OInternalExecutionPlan subExecuitonPlan;
-  private final OBasicCommandContext   childCtx;
+  private final OCommandContext   childCtx;
 
   /**
    * executes a sub-query
@@ -18,7 +17,7 @@ public class SubQueryStep extends AbstractExecutionStep {
    * @param ctx              the context of the current execution plan
    * @param subCtx           the context of the subquery execution plan
    */
-  public SubQueryStep(OInternalExecutionPlan subExecutionPlan, OCommandContext ctx, OBasicCommandContext subCtx) {
+  public SubQueryStep(OInternalExecutionPlan subExecutionPlan, OCommandContext ctx, OCommandContext subCtx) {
     super(ctx);
     this.subExecuitonPlan = subExecutionPlan;
     this.childCtx = subCtx;

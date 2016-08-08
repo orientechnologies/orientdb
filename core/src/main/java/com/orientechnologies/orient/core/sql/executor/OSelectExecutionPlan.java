@@ -46,7 +46,7 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     throw new UnsupportedOperationException();
   }
 
-  protected void chain(OExecutionStepInternal nextStep) {
+  public void chain(OExecutionStepInternal nextStep) {
     if (lastStep != null) {
       lastStep.setNext(nextStep);
       nextStep.setPrevious(lastStep);
