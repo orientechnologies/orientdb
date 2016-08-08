@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OLiveQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OStreamSerializerAnyStreamable implements OStreamSerializer {
@@ -104,14 +105,16 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
 
     // SERIALIZE THE CLASS NAME
     final byte[] className;
-    if (iObject instanceof OQuery<?>)
+    if (iObject instanceof OLiveQuery<?>)
+      className = iObject.getClass().getName().getBytes("UTF-8");
+    else if (iObject instanceof OSQLSynchQuery<?>)
       className = QUERY_COMMAND_CLASS_ASBYTES;
     else if (iObject instanceof OCommandSQL)
       className = SQL_COMMAND_CLASS_ASBYTES;
     else if (iObject instanceof OCommandScript)
       className = SCRIPT_COMMAND_CLASS_ASBYTES;
     else {
-      if(iObject == null)
+      if (iObject == null)
         className = null;
       else
         className = iObject.getClass().getName().getBytes("UTF-8");
