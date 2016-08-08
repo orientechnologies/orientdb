@@ -282,30 +282,118 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
             duration: 1500
           })
           counter++;
-          //if (counter == 60) {
-          //  counter = 0;
-          //  //lastC = null;
-          //  //lastR = null;
-          //  //lastU = null;
-          //  //lastD = null;
-          //  //scope.chart.load({
-          //  //  columns: [
-          //  //    ['x', new Date()],
-          //  //    ['Create', 0],
-          //  //    ['Read', 0],
-          //  //    ['Update', 0],
-          //  //    ['Delete', 0],
-          //  //  ],
-          //  //  unload: ['x', "Create", "Read", "Update", "Delete"]
-          //  //
-          //  //})
-          //}
         }
       })
     }
   }
   return {
     restrict: 'A',
+    link: linker
+  }
+});
+
+
+graph.directive('serverChart', function ($http, $compile, $timeout, $rootScope) {
+
+  var linker = function (scope, element, attrs) {
+
+
+    scope.$watch("server", function (server) {
+
+
+      if (server) {
+        startChart();
+      }
+    })
+
+
+    var startChart = function () {
+      var counter = 0;
+      var length = 0;
+      var limit = 60;
+      var tail = 1;
+
+
+      element[0].id = scope.server.name + "_" + Math.round(Math.random() * 1000);
+
+
+      if (scope.headers) {
+
+
+        var columns = [['x', new Date()]];
+
+        scope.headers.forEach(function (h) {
+          columns.push([h.name, 0]);
+        })
+        scope.chart = c3.generate({
+          bindto: "#" + element[0].id,
+          data: {
+            x: 'x',
+            columns: columns
+          },
+          point: {
+            show: false
+          },
+          size: {
+            height: 250
+          },
+          axis: {
+            x: {
+              type: 'timeseries',
+              tick: {
+                culling: {
+                  max: 4 // the number of tick texts will be adjusted to less than this value
+                },
+                format: '%H:%M:%S',
+              }
+            },
+            y: {}
+          }
+        });
+
+        $rootScope.$on('server:updated', function (evt, server) {
+          if (!server.name || server.name == scope.server.name) {
+
+
+            var columns = [];
+
+            scope.headers.forEach(function (h) {
+              var counter = h.transform(server);
+              var value = 0;
+              if (h.last != null) {
+                value = Math.abs(h.last - counter) / (POLLING / 1000)
+              }
+              columns.push([h.name, Math.ceil(value)]);
+              h.last = counter;
+            })
+
+            if (counter == limit) {
+              length = tail;
+              counter -= tail;
+            } else {
+              length = 0;
+            }
+
+
+
+            columns.unshift(['x', new Date()]);
+            scope.chart.flow({
+              columns: columns,
+              length: length,
+              duration: 1500
+            })
+            counter++;
+          }
+        })
+      }
+    }
+  }
+  return {
+    restrict: 'A',
+    scope: {
+      headers: '=headers',
+      server: '=server',
+    },
     link: linker
   }
 });

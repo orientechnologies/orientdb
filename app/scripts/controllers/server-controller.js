@@ -243,9 +243,9 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
   }
   initMonitoring();
 });
-ctrl.controller('SingleChartServerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, $q) {
+ctrl.controller('SingleChartServerController', function ($scope, ChartHelper) {
 
-
+  $scope.transactionHeaders = angular.copy(ChartHelper.serverStatsHeader);
 })
 ctrl.controller('SingleServerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, $q, AgentService) {
 

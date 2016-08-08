@@ -12,19 +12,14 @@
           <b>{{ server.name }}</b>
         </div>
         <div class="panel-body">
-
           <div class="row">
-
             <div class="col-md-3">
-
               <div id="{{'cpu-gauge-' + server.name}}" c3-gauge value="cpuPercent" height="height"></div>
-
               <div class="chart-label text-center">
                 <span>CPU</span>
               </div>
             </div>
             <div class="col-md-3">
-
               <div id="{{'ram-gauge-' + server.name}}" c3-gauge value="ramPercent" height="height"></div>
               <div class="chart-label text-center">
                 <span>RAM</span>
@@ -89,10 +84,13 @@
     <div class="{{serverClass}}" ng-repeat="server in servers" ng-controller="SingleChartServerController">
       <div class="panel panel-default">
         <div class="panel-heading">
-          <b>Server {{ server.name}} CRUD Operations / Sec  </b>
+          <b>Server {{ server.name}} Operations / Sec </b>
         </div>
         <div class="panel-body">
-          <div id="{{server.name}}" c3chart></div>
+          <!--<div id="{{server.name}}" c3chart></div>-->
+
+          <div server-chart server="server" headers="transactionHeaders"></div>
+
         </div>
       </div>
     </div>

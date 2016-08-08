@@ -703,7 +703,7 @@ ee.factory("BackupService", function (Profiler, $q, $http) {
 })
 
 
-ee.factory("ThreadService", function ($q,$http) {
+ee.factory("ThreadService", function ($q, $http) {
   var threads = {};
 
   threads.dump = function (server) {
@@ -730,6 +730,136 @@ ee.factory("BackupCalendar", function () {
   return calendar;
 
 })
+
+
+ee.factory("ChartHelper", function () {
+
+  var helper = {};
+  helper.countOps = function (array, regexp) {
+
+    var keys = Object.keys(array).filter(function (k) {
+      return k.match(regexp) != null;
+    })
+
+    var ops = 0;
+    keys.forEach(function (k) {
+      ops += array[k];
+    });
+    return ops;
+  }
+  helper.countChronos = function (array, regexp) {
+
+    var keys = Object.keys(array).filter(function (k) {
+      return k.match(regexp) != null;
+    })
+
+    var ops = 0;
+    keys.forEach(function (k) {
+      ops += array[k].entries;
+    });
+    return ops;
+  }
+
+  helper.serverStatsHeader = [{
+    name: 'Create',
+    description: '',
+    transform: function (stats) {
+      try {
+        var val = helper.countChronos(stats['realtime']['chronos'], /db.*createRecord/g);
+        return val;
+      } catch (e) {
+        return 0;
+      }
+    }
+  },
+    {
+      name: 'Read',
+      description: '',
+      transform: function (stats) {
+        try {
+          var val = helper.countChronos(stats['realtime']['chronos'], /db.*readRecord/g);
+          return val;
+        } catch (e) {
+          return 0;
+        }
+      }
+    },
+    {
+      name: 'Update',
+      description: '',
+      transform: function (stats) {
+        try {
+          var val = helper.countChronos(stats['realtime']['chronos'], /db.*updateRecord/g);
+          return val;
+        } catch (e) {
+          return 0;
+        }
+      }
+    },
+    {
+      name: 'Delete',
+      description: '',
+      transform: function (stats) {
+        try {
+          var val = helper.countChronos(stats['realtime']['chronos'], /db.*deleteRecord/g);
+          return val;
+        } catch (e) {
+          return 0;
+        }
+      }
+    },
+    {
+      name: 'Conflict',
+      description: '',
+      transform: function (stats) {
+        try {
+          var val = helper.countOps(stats['realtime']['counters'], /db.*conflictRecord/g);
+          return val;
+        } catch (e) {
+          return 0;
+        }
+      }
+    },
+    {
+      name: 'Tx Commit',
+      description: '',
+      transform: function (stats) {
+        try {
+          var val = helper.countOps(stats['realtime']['counters'], /db.*txCommit/g);
+          return val;
+        } catch (e) {
+          return 0;
+        }
+      }
+    },
+    {
+      name: 'Tx Rollback',
+      description: '',
+      transform: function (stats) {
+        try {
+          var val = helper.countOps(stats['realtime']['counters'], /db.*txRollback/g);
+          return val;
+        } catch (e) {
+          return 0;
+        }
+      }
+    }, {
+      name: 'Distributed Tx Retries',
+      description: '',
+      transform: function (stats) {
+        try {
+          var val = helper.countOps(stats['realtime']['counters'], /db.*distributedTxRetries/g);
+          return val;
+        } catch (e) {
+          return 0;
+        }
+      }
+    }]
+  return helper;
+
+})
+
+
 ee.factory("SecurityService", function (Profiler, $q, $http) {
   var config = {}
 

@@ -5,12 +5,23 @@
       <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
     </div>
   </div>
-  <div class="panel panel-default" ng-show="agentActive">
-    <div class="panel-heading">
-      <b> Server {{server.name}} CRUD Operations / Sec </b>
+
+  <div class="row" ng-show="agentActive">
+    <div class="col-md-6">
+      <div ng-if="server">
+        <ng-include src="'views/server/general/singleServer.html'"></ng-include>
+      </div>
     </div>
-    <div class="panel-body">
-      <div id="{{server.name}}" c3chart></div>
+    <div class="col-md-6">
+      <div class="panel panel-default" ng-show="agentActive">
+        <div class="panel-heading">
+          <b> Server {{server.name}} Operations / Sec </b>
+        </div>
+        <div class="panel-body">
+          <div server-chart server="server" headers="transactionHeaders"></div>
+        </div>
+      </div>
     </div>
   </div>
+
 </div>

@@ -174,11 +174,15 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
 });
 
 
-ee.controller('SinglePollerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, Cluster, AgentService) {
+ee.controller('SinglePollerController', function ($scope, $rootScope, $location, $routeParams, $timeout, Profiler, Cluster, AgentService, ChartHelper) {
 
 
   $scope.polling = true;
 
+
+  $scope.transactionHeaders = angular.copy(ChartHelper.serverStatsHeader);
+
+  $scope.height = 80;
 
   $scope.links = {
     ee: "http://www.orientdb.com/orientdb-enterprise"
@@ -209,8 +213,12 @@ ee.controller('SinglePollerController', function ($scope, $rootScope, $location,
       }
     }, POLLING);
   }
-
-  statsWatching(singlePoll);
+  $scope.$watch('server', function (server) {
+    if (server) {
+      singlePoll();
+      statsWatching(singlePoll);
+    }
+  })
 })
 
 
@@ -255,17 +263,22 @@ ee.controller('ClusterController', function ($scope, Cluster, Notification, $roo
     $scope.polling = false;
   });
 
+
+  clusterPolling();
   statsWatching(clusterPolling)
 })
 
 
-ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
+ee.controller('ClusterOverviewController', function ($scope, $rootScope, ChartHelper) {
 
 
   $scope.height = 100;
 
   $scope.status = 'ONLINE';
   $scope.operations = 0;
+
+
+  $scope.transactionHeaders = angular.copy(ChartHelper.serverStatsHeader);
 
   $scope.activeConnections = 0;
 
@@ -304,6 +317,7 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
       var operations = 0;
       var maxDiskCache = 0;
       var totalDiskCache = 0;
+
       keys.forEach(function (val) {
         var realtime = data[val].realtime;
         // CPU
@@ -352,6 +366,16 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope) {
         operations += ops;
 
 
+        var keys = Object.keys(realtime['counters']);
+        keys.forEach(function (k) {
+          if (!clusterCrud.realtime['counters']) {
+            clusterCrud.realtime['counters'] = {};
+          }
+          if (!clusterCrud.realtime['counters'][k]) {
+            clusterCrud.realtime['counters'][k] = 0;
+          }
+          clusterCrud.realtime['counters'][k] += realtime['counters'][k];
+        });
       })
 
       $scope.cpu = (cpu / keys.length).toFixed(2);
@@ -1121,7 +1145,16 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
       }
     })
 
-    Cluster.saveDBConfig({name: $scope.name, config: $scope.config}).then(function () {
+    var config = Object.assign({}, $scope.config);
+
+    try {
+      var val = parseInt(config.writeQuorum);
+      if (!isNaN(val)) {
+        config.writeQuorum = val;
+      }
+    } catch (e) {
+    }
+    Cluster.saveDBConfig({name: $scope.name, config: config}).then(function () {
       Notification.push({content: "Distributed Configuration correctly saved.", autoHide: true});
     }).catch(function (err) {
       Notification.push({content: err.data, error: true, autoHide: true});
