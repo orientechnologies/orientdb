@@ -649,6 +649,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
               if (pageGroup != null) {
                 pagePointers[n].decrementReadersReferrer();
                 pagePointers[n] = pageGroup.page;
+                pagePointers[n].incrementReadersReferrer();
               }
             }
           }
