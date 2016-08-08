@@ -69,5 +69,9 @@ public class OStatement extends SimpleNode {
   public boolean refersToParent() {
     throw new UnsupportedOperationException("Implement " + getClass().getSimpleName() + ".refersToParent()");
   }
+
+  public boolean isIdempotent() {
+    return false;
+  }
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */

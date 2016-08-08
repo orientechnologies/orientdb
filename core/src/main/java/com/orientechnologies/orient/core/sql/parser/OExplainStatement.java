@@ -83,5 +83,9 @@ public class OExplainStatement extends OStatement {
   @Override public int hashCode() {
     return statement != null ? statement.hashCode() : 0;
   }
+
+  @Override public boolean isIdempotent() {
+    return true;
+  }
 }
 /* JavaCC - OriginalChecksum=9fdd24510993cbee32e38a51c838bdb4 (do not edit this line) */

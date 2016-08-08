@@ -60,6 +60,14 @@ public interface OStorage extends OBackupable, OSharedContainer {
     throw new UnsupportedOperationException();
   }
 
+  default OTodoResultSet command(ODatabase db, String query, Object[] args){
+    throw new UnsupportedOperationException();
+  }
+
+  default OTodoResultSet command(ODatabase db, String query, Map args){
+    throw new UnsupportedOperationException();
+  }
+
   enum SIZE {
     TINY, MEDIUM, LARGE, HUGE
   }

@@ -227,18 +227,23 @@ public class OSelectStatement extends OStatement {
     ctx.setDatabase(db);
     Map<Object, Object> params = new HashMap<>();
     if (args != null) {
-      if (args.length == 1 && args[0] instanceof Map) {
-        params = (Map) args[0];
-      } else {
-        for (int i = 0; i < args.length; i++)
-          params.put(i, args[i]);
+      for (int i = 0; i < args.length; i++) {
+        params.put(i, args[i]);
       }
     }
     ctx.setInputParameters(params);
     OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
 
     return new OLocalResultSet(executionPlan);
+  }
 
+  @Override public OTodoResultSet execute(ODatabase db, Map params) {
+    OBasicCommandContext ctx = new OBasicCommandContext();
+    ctx.setDatabase(db);
+    ctx.setInputParameters(params);
+    OInternalExecutionPlan executionPlan = createExecutionPlan(ctx);
+
+    return new OLocalResultSet(executionPlan);
   }
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
@@ -352,6 +357,10 @@ public class OSelectStatement extends OStatement {
 
   public OUnwind getUnwind() {
     return unwind;
+  }
+
+  @Override public boolean isIdempotent() {
+    return true;
   }
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

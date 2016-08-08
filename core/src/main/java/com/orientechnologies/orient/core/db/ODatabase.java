@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
@@ -33,6 +34,7 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
@@ -77,16 +79,14 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param iUserPassword Password associated to the user
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  @Deprecated
-  <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword);
+  @Deprecated <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword);
 
   /**
    * Creates a new database.
    *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  @Deprecated
-  <DB extends ODatabase> DB create();
+  @Deprecated <DB extends ODatabase> DB create();
 
   /**
    * Creates new database from database backup.
@@ -94,19 +94,16 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @param incrementalBackupPath Path to incremental backup
    * @param <DB>                  Concrete database instance type.
-   *
    * @return he Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  @Deprecated
-  <DB extends ODatabase> DB create(String incrementalBackupPath);
+  @Deprecated <DB extends ODatabase> DB create(String incrementalBackupPath);
 
   /**
    * Creates a new database passing initial settings.
    *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  @Deprecated
-  <DB extends ODatabase> DB create(Map<OGlobalConfiguration, Object> iInitialSettings);
+  @Deprecated <DB extends ODatabase> DB create(Map<OGlobalConfiguration, Object> iInitialSettings);
 
   /**
    * Activate current database instance on current thread. Call this method before using the database if you switch between multiple
@@ -166,8 +163,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * Returns the current status of database.
    * deprecated since 2.2
    */
-  @Deprecated
-  <DB extends ODatabase> DB setStatus(STATUS iStatus);
+  @Deprecated <DB extends ODatabase> DB setStatus(STATUS iStatus);
 
   /**
    * Returns the total size of database as the real used space.
@@ -403,8 +399,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    */
   void unregisterListener(ODatabaseListener iListener);
 
-  @Deprecated
-  ORecordMetadata getRecordMetadata(final ORID rid);
+  @Deprecated ORecordMetadata getRecordMetadata(final ORID rid);
 
   /**
    * Flush cached storage content to the disk.
@@ -492,8 +487,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return The record received
    * @deprecated Usage of this method may lead to deadlocks.
    */
-  @Deprecated
-  <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+  @Deprecated <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   /**
@@ -505,9 +499,8 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return The record received
    * @deprecated Usage of this method may lead to deadlocks.
    */
-  @Deprecated
-  <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache, boolean iUpdateCache, boolean loadTombstone,
-      OStorage.LOCKING_STRATEGY iLockingStrategy);
+  @Deprecated <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache, boolean iUpdateCache,
+      boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   /**
    * Loads a record using a fetch plan.
@@ -699,8 +692,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  @Deprecated
-  ODatabase<T> begin(OTransaction iTx) throws OTransactionException;
+  @Deprecated ODatabase<T> begin(OTransaction iTx) throws OTransactionException;
 
   /**
    * Commits the current transaction. The approach is all or nothing. All changes will be permanent following the storage type. If
@@ -732,15 +724,33 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return List of POJOs
    */
   <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs);
-  
+
   /**
-   * Experimental
-   * 
-   * @param query
-   * @param args
+   * Experimental. Executes an SQL query.
+   *
+   * @param query the query string
+   * @param args  query parameters (positional)
    * @return
    */
-  public OTodoResultSet query(String query, Object... args);
+  public OTodoResultSet query(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException;
+
+  /**
+   * Experimental. Executes an SQL query (idempotent)
+   *
+   * @param query the query string
+   * @param args  query parameters (named)
+   * @return
+   */
+  public OTodoResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException;
+
+  /**
+   * Experimental. Executes
+   *
+   * @param query
+   * @param args  query arguments
+   * @return
+   */
+  public OTodoResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException;
 
   /**
    * Experimental
@@ -749,7 +759,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @param args
    * @return
    */
-  public OTodoResultSet query(String query, Map args);
+  public OTodoResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException;
 
   /**
    * Execute a command against the database. A command can be a SQL statement or a Procedure. If the OStorage used is remote
@@ -800,8 +810,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * @return true if enabled, otherwise false
    * @see com.orientechnologies.orient.core.db.document.ODatabaseDocument#setMVCC(boolean) deprecated since 2.2
    */
-  @Deprecated
-  boolean isMVCC();
+  @Deprecated boolean isMVCC();
 
   /**
    * Retrieves all the registered listeners.
@@ -819,8 +828,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    * deprecated since 2.2
    * @see com.orientechnologies.orient.core.db.document.ODatabaseDocument#isMVCC()
    */
-  @Deprecated
-  <DB extends ODatabase<?>> DB setMVCC(boolean iValue);
+  @Deprecated <DB extends ODatabase<?>> DB setMVCC(boolean iValue);
 
   String getType();
 

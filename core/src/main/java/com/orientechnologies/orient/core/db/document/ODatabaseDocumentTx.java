@@ -3319,6 +3319,14 @@ import java.util.concurrent.atomic.AtomicReference;
     return getStorage().query(this, query, args);
   }
 
+  public OTodoResultSet command(String query, Object... args) {
+    return getStorage().command(this, query, args);
+  }
+
+  public OTodoResultSet command(String query, Map args) {
+    return getStorage().command(this, query, args);
+  }
+
   public static Object executeWithRetries(final OCallable<Object, Integer> callback, final int maxRetry) {
     return executeWithRetries(callback, maxRetry, 0);
   }
