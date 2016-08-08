@@ -226,7 +226,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   /**
    * Fires event about exception is thrown in data flush thread
    */
-  private void fireBackgroundDataFlushExceptionEvent(Exception e) {
+  private void fireBackgroundDataFlushExceptionEvent(Throwable e) {
     for (WeakReference<OBackgroundExceptionListener> ref : backgroundExceptionListeners) {
       final OBackgroundExceptionListener listener = ref.get();
       if (listener != null) {
@@ -1476,7 +1476,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           }
         }
 
-      } catch (IOException | RuntimeException e) {
+      } catch (Throwable e) {
         OLogManager.instance().error(this, "Exception during data flush", e);
         OWOWCache.this.fireBackgroundDataFlushExceptionEvent(e);
       } finally {
@@ -1746,33 +1746,31 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       try {
         OLogSequenceNumber minLsn = findMinLsn(flushedLsn, writeCachePages);
         OLogManager.instance().debug(this, "Start fuzzy checkpoint flushed LSN is %s", minLsn);
-        try {
-          writeAheadLog.logFuzzyCheckPointStart(minLsn);
+        writeAheadLog.logFuzzyCheckPointStart(minLsn);
 
-          for (int intId : nameIdMap.values()) {
-            if (intId < 0)
-              continue;
+        for (int intId : nameIdMap.values()) {
+          if (intId < 0)
+            continue;
 
-            final long extFileId = composeFileId(id, intId);
-            final OClosableEntry<Long, OFileClassic> entry = files.acquire(extFileId);
-            try {
-              entry.get().synch();
-            } finally {
-              files.release(entry);
-            }
+          final long extFileId = composeFileId(id, intId);
+          final OClosableEntry<Long, OFileClassic> entry = files.acquire(extFileId);
+          try {
+            entry.get().synch();
+          } finally {
+            files.release(entry);
           }
-
-          writeAheadLog.logFuzzyCheckPointEnd();
-          writeAheadLog.flush();
-
-          if (minLsn.compareTo(new OLogSequenceNumber(-1, -1)) > 0)
-            writeAheadLog.cutTill(minLsn);
-        } catch (IOException | RuntimeException e) {
-          OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
-          fireBackgroundDataFlushExceptionEvent(e);
         }
 
+        writeAheadLog.logFuzzyCheckPointEnd();
+        writeAheadLog.flush();
+
+        if (minLsn.compareTo(new OLogSequenceNumber(-1, -1)) > 0)
+          writeAheadLog.cutTill(minLsn);
+
         OLogManager.instance().debug(this, "End fuzzy checkpoint");
+      } catch (Throwable e) {
+        OLogManager.instance().error(this, "Error during fuzzy checkpoint", e);
+        fireBackgroundDataFlushExceptionEvent(e);
       } finally {
         if (statistic != null)
           statistic.stopFuzzyCheckpointTimer();
