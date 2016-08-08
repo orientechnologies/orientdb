@@ -35,8 +35,9 @@ public class OLocalLiveResultListener implements OLiveResultListener, OCommandRe
     underlying.onLiveResult(iLiveToken, iOp);
   }
 
-  @Override public void onError(int iLiveToken) {
-    //TODO
+  @Override 
+  public void onError(int iLiveToken) {
+    underlying.onError(iLiveToken);
   }
 
   @Override public void onUnsubscribe(int iLiveToken) {
