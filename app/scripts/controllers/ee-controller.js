@@ -238,9 +238,9 @@ ee.controller('ClusterController', function ($scope, Cluster, Notification, $roo
 
         $scope.servers = data.members;
 
-
-        $scope.clusterStats = data.clusterStats;
         $rootScope.$broadcast("server-list", $scope.servers);
+        $scope.clusterStats = data.clusterStats;
+
 
       }).catch(function (error) {
         Notification.push({content: error.data, error: true, autoHide: true});
@@ -296,9 +296,13 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope, ChartHe
   var lastRequest = null;
   var lastOps = null;
 
-  $scope.$watch('clusterStats', function (data) {
-    if (data) {
 
+  $rootScope.$on('server-list', function (evt,data) {
+    $scope.members = data;
+  });
+  $scope.$watch('clusterStats', function (data) {
+
+    if (data) {
 
       var clusterCrud = {
         name: "orientdb-cluster",
@@ -1970,10 +1974,13 @@ ee.controller('ServerAuthTabController', function ($scope, SecurityService, Noti
 
   var setDefault = function () {
     $scope.currentAuthenticator = null;
-    if ($scope.authentication.authenticators.length > 0) {
-      for (var i in $scope.authentication.authenticators) {
-        if ($scope.authentication.authenticators[i].template) {
-          $scope.currentAuthenticator = $scope.authentication.authenticators[i];
+
+    if ($scope.authentication) {
+      if ($scope.authentication.authenticators.length > 0) {
+        for (var i in $scope.authentication.authenticators) {
+          if ($scope.authentication.authenticators[i].template) {
+            $scope.currentAuthenticator = $scope.authentication.authenticators[i];
+          }
         }
       }
     }
@@ -2175,7 +2182,9 @@ ee.controller('OLdapController', function ($scope, SecurityService, Notification
       return r.class == k;
     });
   }
-  $scope.authenticators = $scope.security.authentication.authenticators;
+
+  if ($scope.security.authentication)
+    $scope.authenticators = $scope.security.authentication.authenticators;
 
   if ($scope.ldap.databases.length > 0) {
     $scope.currentSelected = $scope.ldap.databases[0];

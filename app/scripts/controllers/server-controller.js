@@ -199,6 +199,7 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
           $scope.servers.push(s);
         }
         $scope.serverClass = calculateSpan($scope.servers);
+        multiplePoll();
         statsWatching(multiplePoll);
       }).catch(function (err) {
 
@@ -211,6 +212,7 @@ ctrl.controller('MultipleServerController', function ($scope, $rootScope, $locat
             $scope.servers.push(data);
 
             $scope.serverClass = calculateSpan($scope.servers);
+            singlePoll();
             statsWatching(singlePoll);
 
           }).catch(function (err) {

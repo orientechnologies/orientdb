@@ -78,7 +78,6 @@
       </div>
     </div>
   </div>
-
   <div class="col-md-6">
     <div class="panel panel-default">
       <div class="panel-heading">
@@ -87,6 +86,34 @@
       <div class="panel-body">
         <!--<div id="orientdb-cluster" c3chart></div>-->
         <div server-chart server="server" headers="transactionHeaders"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <b> Replication Latency Average</b>
+      </div>
+      <div class="panel-body">
+        <table class="table">
+          <thead>
+          <tr>
+            <th>Servers</th>
+            <th ng-repeat="server in members">{{server.name}}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="s1 in members">
+            <td>
+              {{s1.name}}
+            </td>
+            <td ng-repeat="s in members">
+              <span ng-hide="s.name === s1.name">
+                {{(s1.latencies[s.name].average / 1000000).toFixed(2)}}
+              </span></td>
+          </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
