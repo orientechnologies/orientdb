@@ -13,6 +13,8 @@ import java.util.Optional;
 public class FilterStep extends AbstractExecutionStep {
   private final OWhereClause whereClause;
 
+  OTodoResultSet prevResult = null;
+
   public FilterStep(OWhereClause whereClause, OCommandContext ctx) {
     super(ctx);
     this.whereClause = whereClause;
@@ -26,7 +28,7 @@ public class FilterStep extends AbstractExecutionStep {
 
     return new OTodoResultSet() {
       public boolean finished = false;
-      OTodoResultSet prevResult = null;
+
       OResult nextItem = null;
       int fetched = 0;
 
