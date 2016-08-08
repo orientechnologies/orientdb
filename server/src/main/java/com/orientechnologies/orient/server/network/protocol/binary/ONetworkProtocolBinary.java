@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBFactory.DatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -1185,10 +1186,12 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     checkServerAccess("database.create", connection);
     checkStorageExistence(dbName);
-    connection.setDatabase(getDatabaseInstance(dbName, dbType, storageType));
+//    connection.setDatabase(getDatabaseInstance(dbName, dbType, storageType));
 
-    createDatabase(connection.getDatabase(), null, null, backupPath);
-
+//    createDatabase(connection.getDatabase(), null, null, backupPath);
+    if(server.getDatabases().exists(dbName, null, null))
+      throw new ODatabaseException("Database named '" + dbName + "' already exists");
+    server.getDatabases().create(dbName, null, null, DatabaseType.valueOf(storageType.toUpperCase()));
     beginResponse();
     try {
       sendOk(connection, clientTxId);

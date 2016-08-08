@@ -20,6 +20,14 @@
 package com.orientechnologies.orient.core.db;
 
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -31,15 +39,13 @@ import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-
-import java.io.File;
-import java.util.*;
 
 /**
  * Created by tglman on 08/04/16.
@@ -80,12 +86,12 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   }
 
   @Override
-  public synchronized ODatabaseDocument open(String name, String user, String password) {
+  public synchronized ODatabaseDocumentInternal open(String name, String user, String password) {
     return open(name, user, password, null);
   }
 
   @Override
-  public ODatabaseDocument open(String name, String user, String password, OrientDBConfig config) {
+  public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
     try {
       config = solveConfig(config);
       OAbstractPaginatedStorage storage = getStorage(name);
@@ -268,6 +274,21 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       storage.create(this.configurations.getConfigurations());
     }
     storages.put(name, storage);      
+  }
+
+  public ODatabaseDocumentInternal openNoAutheticate(String name, String user,Class<?> sec) {
+    try {
+      OrientDBConfig config = solveConfig(null);
+      OAbstractPaginatedStorage storage = getStorage(name);
+      storage.open(config.getConfigurations());
+      final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
+      embedded.setProperty(ODatabase.OPTIONS.SECURITY.toString(), sec);
+      embedded.internalOpen(user,"nopwd", config);
+
+      return embedded;
+    } catch (Exception e) {
+      throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
+    }
   }
 
 }

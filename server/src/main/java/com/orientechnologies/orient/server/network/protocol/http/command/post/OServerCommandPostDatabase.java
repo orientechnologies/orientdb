@@ -23,6 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBFactory.DatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
@@ -71,18 +72,15 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       String url = getStoragePath(databaseName, storageMode);
       final String type = urlParts.length > 3 ? urlParts[3] : "document";
       if (url != null) {
-        final ODatabaseDocumentInternal database = new ODatabaseDocumentTx(url);
-        if (database.exists()) {
+        if (server.getDatabases().exists(databaseName, null, null)) {
           iResponse.send(OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-              "Database '" + database.getURL() + "' already exists.", null);
+              "Database '" + databaseName + "' already exists.", null);
         } else {
-          for (OStorage stg : Orient.instance().getStorages()) {
-            if (stg.getName().equalsIgnoreCase(database.getName()) && stg.exists())
-              throw new ODatabaseException("Database named '" + database.getName() + "' already exists: " + stg);
+//          server
+          server.getDatabases().create(databaseName, null, null, DatabaseType.valueOf(storageMode.toUpperCase()));
+          try (ODatabaseDocumentInternal database = server.openDatabase(databaseName, null, null, null, true)) {
+            sendDatabaseInfo(iRequest, iResponse, database);
           }
-          OLogManager.instance().info(this, "Creating database: " + url);
-          database.create();
-          sendDatabaseInfo(iRequest, iResponse, database);
         }
       } else {
         throw new OCommandExecutionException("The '" + storageMode + "' storage mode does not exists.");

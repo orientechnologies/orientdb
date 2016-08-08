@@ -607,7 +607,7 @@ public class OServer {
   protected void loadDatabases() {
     if (!OGlobalConfiguration.SERVER_OPEN_ALL_DATABASES_AT_STARTUP.getValueAsBoolean())
       return;
-
+    /*
     final String dbPath = getDatabaseDirectory();
     for (Map.Entry<String, String> storageEntry : getAvailableStorageNames().entrySet()) {
       final String databaseName = storageEntry.getKey();
@@ -644,6 +644,7 @@ public class OServer {
         db.close();
       }
     }
+    */
   }
 
   private boolean askForEncryptionKey(final String iDatabaseName) {
@@ -898,17 +899,18 @@ public class OServer {
   }
 
   public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final OToken iToken) {
-    final String path = getStoragePath(iDbUrl);
+//    final String path = getStoragePath(iDbUrl);
 
-    final ODatabaseDocumentInternal database = new ODatabaseDocumentTx(path);
-    if (database.isClosed()) {
-      final OStorage storage = database.getStorage();
-      if (storage instanceof ODirectMemoryStorage && !storage.exists())
-        database.create();
-      else
-        database.open(iToken);
-    }
-
+//    final ODatabaseDocumentInternal database = new ODatabaseDocumentTx(path);
+//    if (database.isClosed()) {
+//      final OStorage storage = database.getStorage();
+//      if (storage instanceof ODirectMemoryStorage && !storage.exists())
+//        database.create();
+//      else
+//        database.open(iToken);
+//    }
+    final ODatabaseDocumentInternal database = databases.openNoAutheticate(iDbUrl, iToken.getUserName(), OSecurityServerUser.class);
+    
     return database;
   }
 
@@ -920,13 +922,34 @@ public class OServer {
     return openDatabase(iDbUrl, user, password, data, false);
   }
 
-  public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final String user, final String password, ONetworkProtocolData data,
+  public ODatabaseDocumentInternal openDatabase(final String iDbUrl, String user, final String password, ONetworkProtocolData data,
       final boolean iBypassAccess) {
-    final String path = getStoragePath(iDbUrl);
-
-    final ODatabaseDocumentInternal database = new ODatabaseDocumentTx(path);
-
-    return openDatabase(database, user, password, data, iBypassAccess);
+    final ODatabaseDocumentInternal database;
+    //TODO: memory used to be created on the fly not sure for which reason.
+    //TODO: final String path = getStoragePath(iDbUrl); it use to resolve the path in some way
+    boolean serverAuth = false;
+    if (iBypassAccess) {
+      database = databases.openNoAutheticate(iDbUrl, user, OSecurityServerUser.class);
+      serverAuth = true;
+    } else {
+      OServerUserConfiguration serverUser = serverLogin(user, password, "database.passthrough");
+      if (serverUser != null) {
+        user = serverUser.name;
+        serverAuth = true;
+        database = databases.openNoAutheticate(iDbUrl, user, OSecurityServerUser.class);
+      } else {
+        // TRY DATABASE AUTHENTICATION
+        database = databases.open(iDbUrl, user, password);
+      }
+    }
+    if (serverAuth && data != null) {
+      data.serverUser = true;
+      data.serverUsername = user;
+    } else if (data != null) {
+      data.serverUser = false;
+      data.serverUsername = null;
+    }
+    return database;
   }
 
   public ODatabaseDocumentInternal openDatabase(final ODatabaseDocumentInternal database, final String user, final String password,
@@ -969,6 +992,7 @@ public class OServer {
     return database;
   }
 
+  
   public void openDatabaseBypassingSecurity(final ODatabaseInternal<?> database, final ONetworkProtocolData data,
       final String user) {
     database.activateOnCurrentThread();
@@ -1047,7 +1071,7 @@ public class OServer {
 
     if (configuration.storages == null)
       return;
-
+     /*
     String type;
     for (OServerStorageConfiguration stg : configuration.storages)
       if (stg.loadOnStartup) {
@@ -1094,6 +1118,7 @@ public class OServer {
             db.close();
         }
       }
+      */
     for (OServerStorageConfiguration stg : configuration.storages) {
       if (stg.loadOnStartup)
         databases.initCustomStorage(stg.name, stg.path, stg.userName, stg.userPassword);
@@ -1285,4 +1310,16 @@ public class OServer {
   private void initSystemDatabase() {
     systemDatabase = new OSystemDatabase(this);
   }
+  
+  public OEmbeddedDBFactory getDatabases() {
+    return databases;
+  }
+
+  public void dropDatabase(String databaseName, String serverUser, String serverPassword) {
+    OServerUserConfiguration user = serverLogin(serverUser, serverPassword, "database.passthrough");
+    if (user != null) {
+      databases.drop(databaseName, null, null);
+    }
+  }
+  
 }
