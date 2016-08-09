@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
+
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -31,11 +36,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Ask for a database chunk.
@@ -95,11 +95,6 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
     return OCommandDistributedReplicateRequest.QUORUM_TYPE.NONE;
-  }
-
-  @Override
-  public String getPayload() {
-    return null;
   }
 
   @Override

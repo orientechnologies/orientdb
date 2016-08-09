@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -174,8 +175,8 @@ public class ODistributedTransactionManager {
 
             // ONLY CASE: ODistributedRecordLockedException MORE THAN AUTO-RETRY
             ODistributedServerLog.debug(this, localNodeName, null, ODistributedServerLog.DIRECTION.NONE,
-                "Distributed transaction retries exceed maximum auto-retries (%d). Task: %s - Payload: %s - Tasks: %s",
-                maxAutoRetry, txTask, txTask.getPayload(), txTask.getTasks());
+                "Distributed transaction retries exceed maximum auto-retries (%d). Task: %s - Tasks: %s", maxAutoRetry, txTask,
+                txTask.getTasks());
 
             // ROLLBACK TX
             storage.executeUndoOnLocalServer(requestId, txTask);
@@ -233,15 +234,20 @@ public class ODistributedTransactionManager {
 
     } catch (OValidationException e) {
       throw e;
+    } catch (OConcurrentCreateException e) {
+
+      // REQUEST A REPAIR OF THE CLUSTER BECAUSE IS NOT ALIGNED
+      localDistributedDatabase.getDatabaseRapairer().repairCluster(e.getActualRid().getClusterId());
+      throw e;
+
     } catch (Exception e) {
 
       for (ORecordOperation op : iTx.getAllRecordEntries()) {
-        localDistributedDatabase.getDatabaseRapairer().repairRecord((ORecordId) op.getRecord().getIdentity());
         if (iTx.hasRecordCreation()) {
           final ORecordId lockEntireCluster = (ORecordId) op.getRecord().getIdentity().copy();
-          lockEntireCluster.clusterPosition = -1;
-          localDistributedDatabase.getDatabaseRapairer().repairRecord(lockEntireCluster);
+          localDistributedDatabase.getDatabaseRapairer().repairCluster(lockEntireCluster.clusterId);
         }
+        localDistributedDatabase.getDatabaseRapairer().repairRecord((ORecordId) op.getRecord().getIdentity());
       }
 
       storage.handleDistributedException("Cannot route TX operation against distributed node", e);
@@ -436,7 +442,7 @@ public class ODistributedTransactionManager {
     try {
       // SEND FINAL TX COMPLETE TASK TO UNLOCK RECORDS
       final ODistributedResponse response = dManager.sendRequest(storage.getName(), involvedClusters, nodes,
-          new OCompletedTxTask(reqId, status, partitionKey), dManager.getNextMessageIdCounter(),
+          new OCompleted2pcTask(reqId, status, partitionKey), dManager.getNextMessageIdCounter(),
           SYNC_TX_COMPLETED ? EXECUTION_MODE.NO_RESPONSE : EXECUTION_MODE.NO_RESPONSE, null, null);
 
       if (SYNC_TX_COMPLETED) {

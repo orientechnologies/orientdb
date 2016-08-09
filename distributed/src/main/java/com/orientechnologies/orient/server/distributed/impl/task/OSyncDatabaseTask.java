@@ -204,11 +204,6 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
   }
 
   @Override
-  public String getPayload() {
-    return null;
-  }
-
-  @Override
   public String getName() {
     return "deploy_db";
   }

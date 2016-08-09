@@ -10,7 +10,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 public interface ODistributedDatabaseRepairer {
   void repairRecord(ORecordId rid);
 
-  long getProcessed();
+  void repairCluster(int brokenRecord);
+
+  long getRecordProcessed();
 
   long getTotalTimeProcessing();
 

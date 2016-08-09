@@ -20,8 +20,6 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
@@ -30,19 +28,12 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,21 +43,10 @@ import java.util.List;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class OTxTask extends OAbstractReplicatedTask {
-  private static final long                   serialVersionUID  = 1L;
-  public static final int                     FACTORYID         = 7;
-  public static final String                  NON_LOCAL_CLUSTER = "_non_local_cluster";
-
-  private List<OAbstractRecordReplicatedTask> tasks             = new ArrayList<OAbstractRecordReplicatedTask>();
-
-  private transient List<OAbstractRemoteTask> localUndoTasks    = new ArrayList<OAbstractRemoteTask>();
-  private transient OTxTaskResult             result;
+public class OTxTask extends OAbstract2pcTask {
+  public static final int FACTORYID = 7;
 
   public OTxTask() {
-  }
-
-  public void add(final OAbstractRecordReplicatedTask iTask) {
-    tasks.add(iTask);
   }
 
   @Override
@@ -189,141 +169,13 @@ public class OTxTask extends OAbstractReplicatedTask {
     }
   }
 
-  /**
-   * Return the partition keys of all the sub-tasks.
-   */
-  @Override
-  public int[] getPartitionKey() {
-    if (tasks.size() == 1)
-      // ONE TASK, USE THE INNER TASK'S PARTITION KEY
-      return tasks.get(0).getPartitionKey();
-
-    // MULTIPLE PARTITION
-    final int[] partitions = new int[tasks.size()];
-    for (int i = 0; i < tasks.size(); ++i) {
-      final OAbstractRecordReplicatedTask task = tasks.get(i);
-      partitions[i] = task.getPartitionKey()[0];
-    }
-
-    return partitions;
-  }
-
-  @Override
-  public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
-  }
-
-  @Override
-  public ORemoteTask getFixTask(final ODistributedRequest iRequest, final ORemoteTask iOriginalTask, final Object iBadResponse,
-      final Object iGoodResponse, final String executorNodeName, final ODistributedServerManager dManager) {
-    if (!(iGoodResponse instanceof OTxTaskResult)) {
-      // TODO: MANAGE ERROR ON LOCAL NODE
-      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
-          "Error on creating fix-task for request: '%s' because good response is not expected type: %s", iRequest, iBadResponse);
-      return null;
-    }
-
-    final OCompletedTxTask fixTask = new OCompletedTxTask(iRequest.getId(), false, null);
-
-    for (int i = 0; i < tasks.size(); ++i) {
-      final OAbstractRecordReplicatedTask t = tasks.get(i);
-
-      final Object badResult = iBadResponse instanceof Throwable ? iBadResponse : ((OTxTaskResult) iBadResponse).results.get(i);
-      final Object goodResult = ((OTxTaskResult) iGoodResponse).results.get(i);
-
-      final ORemoteTask undoTask = t.getFixTask(iRequest, t, badResult, goodResult, executorNodeName, dManager);
-      if (undoTask != null)
-        fixTask.addFixTask(undoTask);
-    }
-
-    return fixTask;
-  }
-
-  @Override
-  public ORemoteTask getUndoTask(final ODistributedRequestId reqId) {
-    final OCompletedTxTask fixTask = new OCompletedTxTask(reqId, false, null);
-
-    for (ORemoteTask undoTask : localUndoTasks)
-      fixTask.addFixTask(undoTask);
-
-    return fixTask;
-  }
-
-  @Override
-  public void toStream(final DataOutput out) throws IOException {
-    out.writeInt(tasks.size());
-    for (OAbstractRecordReplicatedTask task : tasks) {
-      out.writeByte(task.getFactoryId());
-      task.toStream(out);
-    }
-    if (lastLSN != null) {
-      out.writeBoolean(true);
-      lastLSN.toStream(out);
-    } else
-      out.writeBoolean(false);
-  }
-
-  @Override
-  public void fromStream(final DataInput in, final ORemoteTaskFactory factory) throws IOException {
-    final int size = in.readInt();
-    for (int i = 0; i < size; ++i) {
-      final ORemoteTask task = factory.createTask(in.readByte());
-      task.fromStream(in, factory);
-      tasks.add((OAbstractRecordReplicatedTask) task);
-    }
-    final boolean hasLastLSN = in.readBoolean();
-    if (hasLastLSN)
-      lastLSN = new OLogSequenceNumber(in);
-  }
-
-  /**
-   * Computes the timeout according to the transaction size.
-   *
-   * @return
-   */
-  @Override
-  public long getDistributedTimeout() {
-    final long to = OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
-    return to + ((to / 2) * tasks.size());
-  }
-
   @Override
   public String getName() {
     return "tx";
   }
 
   @Override
-  public String getPayload() {
-    return null;
-  }
-
-  public List<OAbstractRecordReplicatedTask> getTasks() {
-    return tasks;
-  }
-
-  @Override
   public int getFactoryId() {
     return FACTORYID;
-  }
-
-  @Override
-  public void setNodeSource(final String nodeSource) {
-    super.setNodeSource(nodeSource);
-    for (OAbstractRecordReplicatedTask t : tasks) {
-      t.setNodeSource(nodeSource);
-    }
-  }
-
-  public void setLocalUndoTasks(final List<OAbstractRemoteTask> undoTasks) {
-    this.localUndoTasks = undoTasks;
-  }
-
-  @Override
-  public OLogSequenceNumber getLastLSN() {
-    return lastLSN;
-  }
-
-  public void setLastLSN(final OLogSequenceNumber lastLSN) {
-    this.lastLSN = lastLSN;
   }
 }

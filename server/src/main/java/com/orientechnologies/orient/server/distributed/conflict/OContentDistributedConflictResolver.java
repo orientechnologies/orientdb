@@ -111,7 +111,7 @@ public class OContentDistributedConflictResolver extends OMajorityDistributedCon
         } else {
           result.candidates = candidates;
           OLogManager.instance().info(this,
-              "Content Conflict Resolver cannot decided the winner for record %s, because there is no majoriy in the content", rid);
+              "Content Conflict Resolver cannot decide the winner for record %s, because there is no majoriy in the content", rid);
         }
       }
     }

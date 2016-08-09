@@ -63,6 +63,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolverFactory;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 import com.orientechnologies.orient.server.distributed.sql.OCommandExecutorSQLHASyncCluster;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
@@ -122,6 +123,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   private volatile String                                        lastServerDump                    = "";
   protected CountDownLatch                                       serverStarted                     = new CountDownLatch(1);
+  private ODistributedConflictResolverFactory                    conflictResolverFactory           = new ODistributedConflictResolverFactory();
 
   protected abstract ODistributedConfiguration getLastDatabaseConfiguration(String databaseName);
 
@@ -1922,5 +1924,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         storage = oldStorage;
     }
     return storage;
+  }
+
+  @Override
+  public ODistributedConflictResolverFactory getConflictResolverFactory() {
+    return conflictResolverFactory;
   }
 }

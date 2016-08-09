@@ -479,7 +479,7 @@ public abstract class AbstractServerClusterTest {
     return null;
   }
 
-  protected Object createRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
+  protected ODistributedResponse createRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
 
     final Collection<String> clusterNames = new ArrayList<String>(1);
@@ -491,7 +491,7 @@ public abstract class AbstractServerClusterTest {
         dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
   }
 
-  protected Object updateRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
+  protected ODistributedResponse updateRemoteRecord(final int serverId, final ORecord record, final String[] servers) {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
 
     final Collection<String> clusterNames = new ArrayList<String>(1);
@@ -503,7 +503,7 @@ public abstract class AbstractServerClusterTest {
         dManager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
   }
 
-  protected Object deleteRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
+  protected ODistributedResponse deleteRemoteRecord(final int serverId, final ORecordId rid, final String[] servers) {
     final ODistributedServerManager dManager = serverInstance.get(serverId).getServerInstance().getDistributedManager();
 
     final Collection<String> clusterNames = new ArrayList<String>(1);
