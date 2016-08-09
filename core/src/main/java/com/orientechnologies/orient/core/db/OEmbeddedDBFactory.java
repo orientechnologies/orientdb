@@ -101,7 +101,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     try {
       config = solveConfig(config);
       OAbstractPaginatedStorage storage = getStorage(name);
-      // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+      //THIS OPEN THE STORAGE ONLY THE FIRST TIME
       storage.open(config.getConfigurations());
       final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
       embedded.internalOpen(user, password, config);
@@ -319,6 +319,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       internalCreate(getConfigurations(), storage);
     }
     storages.put(name, storage);
+
   }
 
 }

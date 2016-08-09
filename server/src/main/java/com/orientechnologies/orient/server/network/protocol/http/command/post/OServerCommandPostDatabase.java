@@ -76,7 +76,6 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
           iResponse.send(OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
               "Database '" + databaseName + "' already exists.", null);
         } else {
-//          server
           server.createDatabase(databaseName, DatabaseType.valueOf(storageMode.toUpperCase()), null);
           try (ODatabaseDocumentInternal database = server.openDatabase(databaseName, serverUser, serverPassword, null, false)) {
             sendDatabaseInfo(iRequest, iResponse, database);
