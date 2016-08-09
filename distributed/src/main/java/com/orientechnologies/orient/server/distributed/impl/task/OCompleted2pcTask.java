@@ -44,7 +44,7 @@ import java.util.List;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  */
-public class OCompletedTxTask extends OAbstractReplicatedTask {
+public class OCompleted2pcTask extends OAbstractReplicatedTask {
   private static final long     serialVersionUID = 1L;
   public static final int       FACTORYID        = 8;
 
@@ -53,11 +53,11 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   private List<ORemoteTask>     fixTasks         = new ArrayList<ORemoteTask>();
   private int[]                 partitionKey;
 
-  public OCompletedTxTask() {
+  public OCompleted2pcTask() {
     partitionKey = PK;
   }
 
-  public OCompletedTxTask(final ODistributedRequestId iRequestId, final boolean iSuccess, final int[] partitionKey) {
+  public OCompleted2pcTask(final ODistributedRequestId iRequestId, final boolean iSuccess, final int[] partitionKey) {
     this.requestId = iRequestId;
     this.success = iSuccess;
     this.partitionKey = partitionKey != null ? partitionKey : PK;
@@ -183,11 +183,6 @@ public class OCompletedTxTask extends OAbstractReplicatedTask {
   @Override
   public String getName() {
     return "tx-completed";
-  }
-
-  @Override
-  public String getPayload() {
-    return null;
   }
 
   @Override

@@ -78,7 +78,7 @@ public class OVersionDistributedConflictResolver extends OMajorityDistributedCon
         }
 
         OLogManager.instance().info(this,
-            "Version Conflict Resolver cannot decided the winner for record %s, because %d records have the highest version %d",
+            "Version Conflict Resolver cannot decide the winner for record %s, because %d records have the highest version %d",
             rid, winners.size(), maxVersion);
       }
     }

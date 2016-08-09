@@ -216,11 +216,6 @@ public class OSyncDatabaseDeltaTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public String getPayload() {
-    return null;
-  }
-
-  @Override
   public String getName() {
     return "deploy_delta_db";
   }

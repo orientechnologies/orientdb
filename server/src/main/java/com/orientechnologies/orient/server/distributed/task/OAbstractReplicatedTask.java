@@ -43,8 +43,6 @@ public abstract class OAbstractReplicatedTask extends OAbstractRemoteTask {
     return null;
   }
 
-  public abstract String getPayload();
-
   public OLogSequenceNumber getLastLSN(){
     return null;
   }

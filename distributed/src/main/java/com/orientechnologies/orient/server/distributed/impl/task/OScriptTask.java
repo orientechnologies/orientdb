@@ -120,11 +120,6 @@ public class OScriptTask extends OAbstractCommandTask {
   }
 
   @Override
-  public String getPayload() {
-    return text;
-  }
-
-  @Override
   public int getFactoryId() {
     return FACTORYID;
   }

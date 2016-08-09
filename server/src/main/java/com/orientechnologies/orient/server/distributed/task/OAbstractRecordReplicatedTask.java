@@ -183,11 +183,6 @@ public abstract class OAbstractRecordReplicatedTask extends OAbstractReplicatedT
     this.lockRecords = lockRecords;
   }
 
-  @Override
-  public String getPayload() {
-    return "rid=" + rid + " v=" + version;
-  }
-
   public OLogSequenceNumber getLastLSN() {
     return lastLSN;
   }

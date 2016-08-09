@@ -205,11 +205,6 @@ public class OSyncClusterTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public String getPayload() {
-    return null;
-  }
-
-  @Override
   public String getName() {
     return "deploy_cluster";
   }
