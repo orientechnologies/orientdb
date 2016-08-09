@@ -506,9 +506,13 @@ public class OStorageConfiguration implements OSerializableStream {
       write(buffer, configuration.getContextSize());
       for (String k : configuration.getContextKeys()) {
         final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(k);
-
         write(buffer, k);
-        write(buffer, cfg.isHidden() ? null : configuration.getValueAsString(cfg));
+        if (cfg != null) {
+          write(buffer, cfg.isHidden() ? null : configuration.getValueAsString(cfg));
+        } else {
+          write(buffer, null);
+          OLogManager.instance().warn(this, "Storing configuration for property:'" + k + "' not existing in current version");
+        }
       }
     }
 
