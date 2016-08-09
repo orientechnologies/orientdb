@@ -1,121 +1,209 @@
-<div ng-controller="ClusterOverviewController">
-  <div class="col-md-6">
-    <div class="panel panel-default">
+<div class="col-md-12" ng-controller="ClusterOverviewController">
+  <div class="row">
+    <div class="col-md-6">
+      <div class="panel panel-default">
 
-      <div class="panel-heading">
-        <b> Cluster Health</b></div>
-      <div class="panel-body">
-        <div class="row">
-          <div class="col-md-3">
-            <div id="cpu-gauge" c3-gauge value="cpu" height="height"></div>
+        <div class="panel-heading">
+          <b> Cluster Health</b></div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-md-3">
+              <div id="cpu-gauge" c3-gauge value="cpu" height="height"></div>
 
-            <div class="chart-label text-center">
-              <span>CPU</span>
+              <div class="chart-label text-center">
+                <span>CPU</span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div id="ram-gauge" c3-gauge value="ram" height="height"></div>
+              <div class="chart-label text-center">
+                <span>RAM</span>
+                <br>
+                <span><b>{{usedRam | toSizeString}} / {{maxRam | toSizeString}}</b></span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div id="disk-cache-gauge" c3-gauge value="diskCache" height="height"></div>
+              <div class="chart-label text-center">
+                <span>DISK CACHE</span>
+                <br>
+                <span><b>{{totalDiskCache | toSizeString}} / {{maxDiskCacke | toSizeString}}</b></span>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div id="disk-gauge" c3-gauge value="disk" height="height"></div>
+              <div class="chart-label text-center">
+                <span>DISK</span>
+              </div>
             </div>
           </div>
-          <div class="col-md-3">
-            <div id="ram-gauge" c3-gauge value="ram" height="height"></div>
-            <div class="chart-label text-center">
-              <span>RAM</span>
-              <br>
-              <span><b>{{usedRam | toSizeString}} / {{maxRam | toSizeString}}</b></span>
+          <hr>
+          <div class="row">
+            <div class="col-md-6">
+              <b>Active Nodes:</b> {{servers.length}}
+            </div>
+            <div class="col-md-6">
             </div>
           </div>
-          <div class="col-md-3">
-            <div id="disk-cache-gauge" c3-gauge value="diskCache" height="height"></div>
-            <div class="chart-label text-center">
-              <span>DISK CACHE</span>
-              <br>
-              <span><b>{{totalDiskCache | toSizeString}} / {{maxDiskCacke | toSizeString}}</b></span>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div id="disk-gauge" c3-gauge value="disk" height="height"></div>
-            <div class="chart-label text-center">
-              <span>DISK</span>
-            </div>
-          </div>
-        </div>
-        <hr>
-        <div class="row">
-          <div class="col-md-6">
-            <b>Active Nodes:</b> {{servers.length}}
-          </div>
-          <div class="col-md-6">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6">
-            <b>Status:</b> <span ng-class="getStatusLabel(server.status)">{{ status }}</span>
+          <div class="row">
+            <div class="col-md-6">
+              <b>Status:</b> <span ng-class="getStatusLabel(server.status)">{{ status }}</span>
 
-            <a ng-show="!agent" href="javascript:void(0)" tabindex="1"
-               data-trigger="focus" data-placement="bottom"
-               data-content="{{ 'agent.notFound' | translate:links }}" bs-popover>
-              <i class="fa fa-question-circle"></i>
-            </a>
+              <a ng-show="!agent" href="javascript:void(0)" tabindex="1"
+                 data-trigger="focus" data-placement="bottom"
+                 data-content="{{ 'agent.notFound' | translate:links }}" bs-popover>
+                <i class="fa fa-question-circle"></i>
+              </a>
+            </div>
+            <div class="col-md-6">
+              <b>CRUD Ops:</b> {{operations}} /s
+            </div>
           </div>
-          <div class="col-md-6">
-            <b>CRUD Ops:</b> {{operations}} /s
-          </div>
-        </div>
 
-        <div class="row">
-          <div class="col-md-6">
-            <b>Active Connections:</b> {{activeConnections}}</span>
+          <div class="row">
+            <div class="col-md-6">
+              <b>Active Connections:</b> {{activeConnections}}</span>
+            </div>
+            <div class="col-md-6">
+              <b>Network Requests:</b> {{requests}} /s</span>
+            </div>
           </div>
-          <div class="col-md-6">
-            <b>Network Requests:</b> {{requests}} /s</span>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-6">
-            <b>Average Latency:</b> {{latency}} ms</span>
-          </div>
-          <div class="col-md-6">
-            <b>Warnings:</b> {{ tips }} </span>
+          <div class="row">
+            <div class="col-md-6">
+              <b>Average Latency:</b> {{latency}} ms</span>
+            </div>
+            <div class="col-md-6">
+              <b>Warnings:</b> {{ tips }} </span>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="col-md-6">
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <b> Cluster CRUD Operations / Sec</b>
-      </div>
-      <div class="panel-body">
-        <!--<div id="orientdb-cluster" c3chart></div>-->
-        <div server-chart server="server" headers="transactionHeaders"></div>
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b> Cluster CRUD Operations / Sec</b>
+        </div>
+        <div class="panel-body">
+          <!--<div id="orientdb-cluster" c3chart></div>-->
+          <div server-chart server="server" headers="transactionHeaders"></div>
+        </div>
       </div>
     </div>
   </div>
-  <div class="col-md-6">
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <b> Replication Latency Average</b>
-      </div>
-      <div class="panel-body">
-        <table class="table">
-          <thead>
-          <tr>
-            <th>Servers</th>
-            <th ng-repeat="server in members">{{server.name}}</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr ng-repeat="s1 in members">
-            <td>
-              {{s1.name}}
-            </td>
-            <td ng-repeat="s in members">
+  <div class="row">
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b> Replication Latency Average</b>
+        </div>
+        <div class="panel-body">
+          <table class="table">
+            <thead>
+            <tr>
+              <th><b>Servers (From / To)</b></th>
+              <th ng-repeat="server in members">{{server.name}}</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="s1 in members">
+              <td>
+                {{s1.name}}
+              </td>
+              <td ng-repeat="s in members">
               <span ng-hide="s.name === s1.name">
                 {{(s1.latencies[s.name].average / 1000000).toFixed(2)}}
               </span></td>
-          </tr>
-          </tbody>
-        </table>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b> Replication Message Counters
+          </b>
+        </div>
+        <div class="panel-body">
+          <table class="table">
+            <thead>
+            <tr>
+              <th><b>Servers (From / To)</b></th>
+              <th ng-repeat="server in members">{{server.name}}</th>
+              <th><b>Total</b></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="s1 in members">
+              <td>
+                {{s1.name}}
+              </td>
+              <td ng-repeat="s in members">
+              <span ng-hide="s.name === s1.name">
+                {{(s1.latencies[s.name].entries )}}
+              </span></td>
+              <td class="active">
+                {{(latenciesTotal[s1.name].out)}}
+              </td>
+            </tr>
+            <tr class="active">
+              <td><b>Total</b></td>
+              <td ng-repeat="s in members">
+              <span>
+                {{(latenciesTotal[s.name].in)}}
+              </span></td>
+              <td>{{totalLatency}}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+    <div class="col-md-12">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <b> Replication Message Coordinator Stats
+          </b>
+        </div>
+        <div class="panel-body">
+          <table class="table ">
+            <thead>
+            <tr>
+              <th>Servers</th>
+              <th ng-repeat="m in messages">{{m}}</th>
+              <th><b>Total</b></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr ng-repeat="s1 in members">
+              <td>
+                {{s1.name}}
+              </td>
+              <td ng-repeat="m in messages">
+              <span>
+                {{(s1.messages[m])}}
+              </span></td>
 
+              <td class="active">
+                {{(totalMessagesServer[s1.name])}}
+              </td>
+            </tr>
+
+            <tr class="active">
+              <td><b>Total</b></td>
+              <td ng-repeat="m in messages">
+              <span>
+                {{(totalMessages[m])}}
+              </span></td>
+              <td>{{total}}</td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

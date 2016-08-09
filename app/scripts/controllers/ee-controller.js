@@ -297,8 +297,60 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope, ChartHe
   var lastOps = null;
 
 
-  $rootScope.$on('server-list', function (evt,data) {
+  $rootScope.$on('server-list', function (evt, data) {
     $scope.members = data;
+
+
+    var messages = [];
+
+    var totalMessages = {};
+    var totalMessagesServer = {};
+    var total = 0;
+
+
+    var totalLatency = 0;
+    var latenciesTotal = {}
+
+    $scope.members.forEach(function (m) {
+      messages = messages.concat(Object.keys(m.messages).filter(function (k) {
+
+        if (!totalMessages[k]) {
+          totalMessages[k] = 0;
+        }
+        if (!totalMessagesServer[m.name]) {
+          totalMessagesServer[m.name] = 0;
+        }
+        totalMessagesServer[m.name] += m.messages[k];
+        total += m.messages[k];
+        totalMessages[k] += m.messages[k];
+        return messages.indexOf(k) == -1;
+      }));
+      if (!latenciesTotal[m.name]) {
+        latenciesTotal[m.name] = {}
+        latenciesTotal[m.name].in = 0;
+        latenciesTotal[m.name].out = 0;
+      }
+      Object.keys(m.latencies).forEach(function (n) {
+
+        if (!latenciesTotal[n]) {
+          latenciesTotal[n] = {}
+          latenciesTotal[n].in = 0;
+          latenciesTotal[n].out = 0;
+        }
+        if (n !== m.name) {
+          totalLatency += m.latencies[n].entries
+          latenciesTotal[m.name].out += m.latencies[n].entries;
+          latenciesTotal[n].in += m.latencies[n].entries;
+        }
+      })
+    })
+
+    $scope.messages = messages;
+    $scope.totalMessages = totalMessages;
+    $scope.totalMessagesServer = totalMessagesServer;
+    $scope.total = total;
+    $scope.latenciesTotal = latenciesTotal;
+    $scope.totalLatency = totalLatency;
   });
   $scope.$watch('clusterStats', function (data) {
 
