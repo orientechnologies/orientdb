@@ -655,7 +655,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public ODatabaseDocumentInternal getDatabaseInstance() {
-    return manager.getServerInstance().openDatabase(databaseName, "internal", "internal", null, true);
+    return manager.getServerInstance().openDatabase(databaseName);
   }
 
   @Override

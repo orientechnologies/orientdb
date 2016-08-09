@@ -899,19 +899,7 @@ public class OServer {
   }
 
   public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final OToken iToken) {
-//    final String path = getStoragePath(iDbUrl);
-
-//    final ODatabaseDocumentInternal database = new ODatabaseDocumentTx(path);
-//    if (database.isClosed()) {
-//      final OStorage storage = database.getStorage();
-//      if (storage instanceof ODirectMemoryStorage && !storage.exists())
-//        database.create();
-//      else
-//        database.open(iToken);
-//    }
-    final ODatabaseDocumentInternal database = databases.openNoAutheticate(iDbUrl, iToken.getUserName(), OSecurityServerUser.class);
-    
-    return database;
+    return databases.openNoAutheticate(iDbUrl, iToken.getUserName(), OSecurityServerUser.class);
   }
 
   public ODatabaseDocumentInternal openDatabase(final String iDbUrl, final String user, final String password) {
@@ -936,6 +924,12 @@ public class OServer {
       if (serverUser != null) {
         user = serverUser.name;
         serverAuth = true;
+        // Why do we use the returned serverUser name instead of just passing-in user?
+        // Because in some security implementations the user is embedded inside a ticket of some kind
+        // that must be decrypted to retrieve the actual user identity. If serverLogin() is successful,
+        // that user identity is returned.
+
+        // SERVER AUTHENTICATED, BYPASS SECURITY
         database = databases.openNoAutheticate(iDbUrl, user, OSecurityServerUser.class);
       } else {
         // TRY DATABASE AUTHENTICATION
@@ -951,47 +945,10 @@ public class OServer {
     }
     return database;
   }
-
-  public ODatabaseDocumentInternal openDatabase(final ODatabaseDocumentInternal database, final String user, final String password,
-      final ONetworkProtocolData data, final boolean iBypassAccess) {
-    final OStorage storage = database.getStorage();
-    if (database.isClosed()) {
-      if (storage instanceof ODirectMemoryStorage && !storage.exists()) {
-        try {
-          database.create();
-        } catch (OStorageException e) {
-        }
-      } else {
-        if (iBypassAccess) {
-          // BYPASS SECURITY
-          openDatabaseBypassingSecurity(database, data, user);
-        } else {
-          // TRY WITH SERVER'S AUTHENTICATION
-          OServerUserConfiguration serverUser = serverLogin(user, password, "database.passthrough");
-
-          if (serverUser != null) {
-            // Why do we use the returned serverUser name instead of just passing-in user?
-            // Because in some security implementations the user is embedded inside a ticket of some kind
-            // that must be decrypted to retrieve the actual user identity. If serverLogin() is successful,
-            // that user identity is returned.
-
-            // SERVER AUTHENTICATED, BYPASS SECURITY
-            openDatabaseBypassingSecurity(database, data, serverUser.name);
-          } else {
-            // TRY DATABASE AUTHENTICATION
-            database.open(user, password);
-            if (data != null) {
-              data.serverUser = false;
-              data.serverUsername = null;
-            }
-          }
-        }
-      }
-    }
-
-    return database;
+  
+  public ODatabaseDocumentInternal openDatabase(String database) {
+    return openDatabase(database, "internal", "internal", null, true);
   }
-
   
   public void openDatabaseBypassingSecurity(final ODatabaseInternal<?> database, final ONetworkProtocolData data,
       final String user) {
@@ -1315,11 +1272,16 @@ public class OServer {
     return databases;
   }
 
-  public void dropDatabase(String databaseName, String serverUser, String serverPassword) {
-    OServerUserConfiguration user = serverLogin(serverUser, serverPassword, "database.passthrough");
-    if (user != null) {
+  public void dropDatabase(String databaseName) {
+    if (databases.exists(databaseName, null, null)) {
       databases.drop(databaseName, null, null);
+    } else {
+      throw new OStorageException("Database with name '" + databaseName + "' does not exist");
     }
+  }
+
+  public boolean existDatabase(String databaseName) {
+    return databases.exists(databaseName, null, null);
   }
   
 }

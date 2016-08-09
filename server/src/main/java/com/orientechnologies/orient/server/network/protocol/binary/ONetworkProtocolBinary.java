@@ -30,6 +30,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import javax.xml.crypto.Data;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -1117,21 +1119,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     checkServerAccess("database.drop", connection);
 
-    connection.setDatabase(getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType));
-
-    if (connection.getDatabase().exists()) {
-      if (connection.getDatabase().isClosed())
-        server.openDatabaseBypassingSecurity(connection.getDatabase(), connection.getData(), connection.getServerUser().name);
-
-      connection.getDatabase().drop();
-
-      OLogManager.instance().info(this, "Dropped database '%s'", connection.getDatabase().getName());
-
-      connection.close();
-    } else {
-      throw new OStorageException("Database with name '" + dbName + "' does not exist");
-    }
-
+    server.dropDatabase(dbName);
+    OLogManager.instance().info(this, "Dropped database '%s'", dbName);
+    connection.close();
     beginResponse();
     try {
       sendOk(connection, clientTxId);
@@ -1152,14 +1142,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     checkServerAccess("database.exists", connection);
 
-    boolean result = false;
-    ODatabaseDocumentInternal database;
-
-    database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
-    if (database.exists())
-      result = true;
-    else
-      Orient.instance().unregisterStorage(database.getStorage());
+    boolean result = server.existDatabase(dbName);
 
     beginResponse();
     try {
@@ -2026,21 +2009,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     String storageType = null;
     storageType = channel.readString();
 
-    if (storageType == null)
-      storageType = "plocal";
+    ODatabaseDocumentInternal database = server.openDatabase(dbName, connection.getServerUser().name, null, connection.getData(),
+        true);
+    connection.setDatabase(database);
 
-    connection.setDatabase(getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType));
+    OLogManager.instance().info(this, "Freezing database '%s'", connection.getDatabase().getURL());
 
-    if (connection.getDatabase().exists()) {
-      OLogManager.instance().info(this, "Freezing database '%s'", connection.getDatabase().getURL());
-
-      if (connection.getDatabase().isClosed())
-        server.openDatabaseBypassingSecurity(connection.getDatabase(), connection.getData(), connection.getServerUser().name);
-
-      connection.getDatabase().freeze(true);
-    } else {
-      throw new OStorageException("Database with name '" + dbName + "' does not exist");
-    }
+    connection.getDatabase().freeze(true);
+  
 
     beginResponse();
     try {
@@ -2062,18 +2038,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     if (storageType == null)
       storageType = "plocal";
 
-    connection.setDatabase(getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType));
+    ODatabaseDocumentInternal database = server.openDatabase(dbName, connection.getServerUser().name, null, connection.getData(),
+        true);
 
-    if (connection.getDatabase().exists()) {
-      OLogManager.instance().info(this, "Realising database '%s'", connection.getDatabase().getURL());
+    connection.setDatabase(database);
 
-      if (connection.getDatabase().isClosed())
-        server.openDatabaseBypassingSecurity(connection.getDatabase(), connection.getData(), connection.getServerUser().name);
+    OLogManager.instance().info(this, "Realising database '%s'", connection.getDatabase().getURL());
 
-      connection.getDatabase().release();
-    } else {
-      throw new OStorageException("Database with name '" + dbName + "' does not exist");
-    }
+    connection.getDatabase().release();
 
     beginResponse();
     try {
@@ -2486,7 +2458,13 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   private void listDatabases(OClientConnection connection) throws IOException {
     checkServerAccess("server.listDatabases", connection);
     final ODocument result = new ODocument();
-    result.field("databases", server.getAvailableStorageNames());
+    Set<String> dbs = server.getDatabases().listDatabases(null, null);
+    Map<String, String> toSend = new HashMap<String, String>();
+    for (String dbName : dbs) {
+      if (!dbName.equals("OSystem"))
+        toSend.put(dbName, dbName);
+    }
+    result.field("databases", toSend);
 
     setDataCommandInfo(connection, "List databases");
 
@@ -2621,35 +2599,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     // iDatabase.close();
 
     return iDatabase;
-  }
-
-  /**
-   * Returns a database instance giving the database name, the database type and storage type.
-   *
-   * @param dbName
-   * @param dbType
-   * @param storageType
-   *          Storage type between "plocal" or "memory".
-   * @return
-   */
-  protected ODatabaseDocumentInternal getDatabaseInstance(final String dbName, final String dbType, final String storageType) {
-    String path;
-
-    final OStorage stg = Orient.instance().getStorage(dbName);
-    if (stg != null)
-      path = stg.getURL();
-    else if (storageType.equals(OEngineLocalPaginated.NAME)) {
-      // if this storage was configured return always path from config file, otherwise return default path
-      path = server.getConfiguration().getStoragePath(dbName);
-
-      if (path == null)
-        path = storageType + ":" + server.getDatabaseDirectory() + "/" + dbName;
-    } else if (storageType.equals(OEngineMemory.NAME)) {
-      path = storageType + ":" + dbName;
-    } else
-      throw new IllegalArgumentException("Cannot create database: storage mode '" + storageType + "' is not supported.");
-
-    return new ODatabaseDocumentTx(path);
   }
 
   protected int deleteRecord(final ODatabaseDocument iDatabase, final ORID rid, final int version) {

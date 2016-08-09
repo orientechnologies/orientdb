@@ -25,10 +25,13 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBFactory.DatabaseType;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
@@ -148,18 +151,12 @@ public class OSystemDatabase {
     final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
     final ODatabaseDocumentInternal oldDbInThread = tl != null ? tl.getIfDefined() : null;
     try {
-
-      ODatabaseDocument sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDatabasePath());
-
-      if (!sysDB.exists()) {
+      if (!exists()) {
         OLogManager.instance().info(this, "Creating the system database '%s' for current server", SYSTEM_DB_NAME);
 
-        Map<OGlobalConfiguration, Object> settings = new ConcurrentHashMap<OGlobalConfiguration, Object>();
-        settings.put(OGlobalConfiguration.CREATE_DEFAULT_USERS, false);
-        settings.put(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1);
-
-        sysDB.create(settings);
-        sysDB.close();
+        OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
+            .addConfig(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1).build();
+        server.getDatabases().create(SYSTEM_DB_NAME, null, null, DatabaseType.PLOCAL, config);
       }
 
     } finally {
@@ -192,19 +189,6 @@ public class OSystemDatabase {
   }
 
   public boolean exists() {
-    final ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    try {
-
-      ODatabaseDocument sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDatabasePath());
-
-      return sysDB.exists();
-
-    } finally {
-      if (oldDbInThread != null) {
-        ODatabaseRecordThreadLocal.INSTANCE.set(oldDbInThread);
-      } else {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
-      }
-    }
+    return server.existDatabase(getSystemDatabaseName());
   }
 }

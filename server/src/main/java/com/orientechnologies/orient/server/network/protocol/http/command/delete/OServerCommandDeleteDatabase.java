@@ -38,7 +38,7 @@ public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedSer
     iRequest.data.commandInfo = "Drop database";
     iRequest.data.commandDetail = urlParts[1];
 
-    server.dropDatabase(urlParts[1],serverUser,serverPassword);
+    server.dropDatabase(urlParts[1]);
 
     iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, OHttpUtils.STATUS_OK_NOCONTENT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
         null, null);

@@ -90,11 +90,27 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     return open(name, user, password, null);
   }
 
+  public ODatabaseDocumentInternal openNoAutheticate(String name, String user, Class<?> sec) {
+    try {
+      OrientDBConfig config = solveConfig(null);
+      OAbstractPaginatedStorage storage = getStorage(name);
+      // THIS OPEN THE STORAGE ONLY THE FIRST TIME
+      storage.open(config.getConfigurations());
+      final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
+      embedded.setProperty(ODatabase.OPTIONS.SECURITY.toString(), sec);
+      embedded.internalOpen(user, "nopwd", config);
+      return embedded;
+    } catch (Exception e) {
+      throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
+    }
+  }
+  
   @Override
   public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
     try {
       config = solveConfig(config);
       OAbstractPaginatedStorage storage = getStorage(name);
+      //THIS OPEN THE STORAGE ONLY THE FIRST TIME
       storage.open(config.getConfigurations());
       final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
       embedded.internalOpen(user, password, config);
@@ -277,21 +293,6 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       storage.create(this.configurations.getConfigurations());
     }
     storages.put(name, storage);      
-  }
-
-  public ODatabaseDocumentInternal openNoAutheticate(String name, String user,Class<?> sec) {
-    try {
-      OrientDBConfig config = solveConfig(null);
-      OAbstractPaginatedStorage storage = getStorage(name);
-      storage.open(config.getConfigurations());
-      final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-      embedded.setProperty(ODatabase.OPTIONS.SECURITY.toString(), sec);
-      embedded.internalOpen(user,"nopwd", config);
-
-      return embedded;
-    } catch (Exception e) {
-      throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
-    }
   }
 
 }

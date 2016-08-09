@@ -769,7 +769,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       final Set<String> clustersWithNotAvailableOwner, final boolean rebalance) {
 
     // REASSIGN CLUSTERS WITHOUT AN OWNER, AVOIDING TO REBALANCE EXISTENT
-    final ODatabaseDocumentInternal database = serverInstance.openDatabase(databaseName, "internal", "internal", null, true);
+    final ODatabaseDocumentInternal database = serverInstance.openDatabase(databaseName);
     try {
       return executeInDistributedDatabaseLock(databaseName, 5000, new OCallable<Boolean, ODistributedConfiguration>() {
         @Override
@@ -1527,7 +1527,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     dumpServersStatus();
   }
 
-  protected boolean rebalanceClusterOwnership(final String iNode, final ODatabaseInternal iDatabase,
+  protected boolean rebalanceClusterOwnership(final String iNode, ODatabaseInternal iDatabase,
       final ODistributedConfiguration cfg, final Set<String> clustersWithNotAvailableOwner, final boolean rebalance) {
     if (!rebalance && clustersWithNotAvailableOwner.isEmpty())
       return false;
@@ -1538,7 +1538,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return false;
 
     if (iDatabase.isClosed())
-      getServerInstance().openDatabase(iDatabase);
+      iDatabase = getServerInstance().openDatabase(iDatabase.getName());
+
 
     ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "Reassigning cluster ownership for database %s",
         iDatabase.getName());

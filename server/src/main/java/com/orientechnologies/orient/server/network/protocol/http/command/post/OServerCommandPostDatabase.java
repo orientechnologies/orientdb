@@ -78,7 +78,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
         } else {
 //          server
           server.getDatabases().create(databaseName, null, null, DatabaseType.valueOf(storageMode.toUpperCase()));
-          try (ODatabaseDocumentInternal database = server.openDatabase(databaseName, null, null, null, true)) {
+          try (ODatabaseDocumentInternal database = server.openDatabase(databaseName, serverUser, serverPassword, null, false)) {
             sendDatabaseInfo(iRequest, iResponse, database);
           }
         }
