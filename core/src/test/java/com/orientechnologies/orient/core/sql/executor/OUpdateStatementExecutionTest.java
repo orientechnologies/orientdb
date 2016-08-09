@@ -241,7 +241,7 @@ public class OUpdateStatementExecutionTest {
   }
 
   @Test public void testSetOnMap() {
-    String className = "testSetOnList2";
+    String className = "testSetOnMap";
     db.getMetadata().getSchema().createClass(className);
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
@@ -278,7 +278,7 @@ public class OUpdateStatementExecutionTest {
         found = true;
       }else{
         Map<String, String> tags = new HashMap<>();
-        tags.put("foo", "foox");
+        tags.put("foo", "foo");
         tags.put("bar", "bar");
         tags.put("baz", "baz");
         Assert.assertEquals(tags, item.getProperty("tags"));
