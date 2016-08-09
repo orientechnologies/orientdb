@@ -156,6 +156,7 @@
           <thead>
           <tr>
             <th>#</th>
+            <th>Static Owner</th>
             <th ng-repeat="s in servers">
               <a href="#/dashboard/general/{{s.name}}">{{s.name}}</a>
             </th>
@@ -165,7 +166,11 @@
           <tr ng-repeat="(key,value) in config.clusters">
             <td>
               {{key}}
-
+            </td>
+            <td>
+              <select class="form-control" ng-model="value.owner" ng-options="s.name as s.name for s in servers">
+                <option value=""></option>
+              </select>
             </td>
             <td ng-repeat="s in servers">
               <!--<i class="fa fa-check" ng-show="isClusterInNode(key,s.name)"></i>-->

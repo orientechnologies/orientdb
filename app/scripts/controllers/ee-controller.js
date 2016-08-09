@@ -1149,21 +1149,49 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
   $scope.$on('db-chosen', function (evt, db) {
 
 
-    $scope.servers = angular.copy(db.servers);
+    var servers = angular.copy(db.servers);
 
-    $scope.servers.forEach(function (el, idx, arr) {
-      $scope.quorums.push((idx + 1).toString());
-    })
+
     Cluster.database(db.name).then(function (data) {
       $scope.config = data;
       $scope.name = db.name;
 
 
+      //
+      var uniqueServers = [];
+      Object.keys($scope.config.clusters).forEach(function (c) {
+
+        if ($scope.config.clusters[c].servers) {
+          $scope.config.clusters[c].servers.forEach(function (s) {
+            if (uniqueServers.indexOf(s) == -1) {
+              uniqueServers.push(s);
+            }
+          })
+        }
+      })
+
+      uniqueServers = uniqueServers.filter(function (f) {
+        var found = false;
+        servers.forEach(function (s) {
+          if (s.name === f) {
+            found = true;
+          }
+        })
+        return f != "<NEW_NODE>" && !found;
+      })
+      uniqueServers.forEach(function (s) {
+        servers.push({name: s});
+      })
+
+      servers.forEach(function (el, idx, arr) {
+        $scope.quorums.push((idx + 1).toString());
+      })
+
       $scope.calculatedRoles = {};
       if ($scope.config.servers) {
         Object.keys($scope.config.servers).forEach(function (k) {
           if (k === "*") {
-            $scope.servers.forEach(function (s) {
+            servers.forEach(function (s) {
               $scope.calculatedRoles[s.name] = $scope.config.servers[k];
             });
           } else {
@@ -1171,6 +1199,7 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
           }
         })
       }
+      $scope.servers = servers;
     })
 
 
@@ -1183,8 +1212,13 @@ ee.controller('ClusterSingleDBController', function ($scope, Cluster, Notificati
     $scope.getOwnership = function (cluster, node) {
       var tmp = $scope.config.clusters[cluster];
       if (!tmp.servers)return "";
-      return tmp.servers.indexOf(node) == 0 ? "X" : "o";
+
+      if (tmp.owner && tmp.owner != "") {
+        return tmp.owner === node ? "X" : "o";
+      }
+      return (tmp.servers.indexOf(node) == 0) ? "X" : "o";
     }
+
 
   })
 
