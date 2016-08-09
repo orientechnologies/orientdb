@@ -72,7 +72,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
       throw OException.wrapException(new ODatabaseException("Error on opening database "), t);
     }
 
-    setSerializer(defaultSerializer);
   }
 
   public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {

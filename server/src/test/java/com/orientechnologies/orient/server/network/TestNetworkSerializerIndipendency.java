@@ -4,8 +4,11 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.server.OServer;
@@ -30,7 +33,7 @@ public class TestNetworkSerializerIndipendency {
     server.activate();
   }
 
-  @Test
+  @Test(expected = OStorageException.class)
   public void createCsvDatabaseConnectBinary() throws IOException {
     ORecordSerializer prev = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
@@ -51,7 +54,7 @@ public class TestNetworkSerializerIndipendency {
       assertEquals(doc.<Object>field("name"), document.field("name"));
       assertEquals(doc.<Object>field("surname"), document.field("surname"));
     } finally {
-      if (dbTx != null) {
+      if (dbTx != null && !dbTx.isClosed()) {
         dbTx.close();
         dbTx.getStorage().close();
       }
@@ -109,6 +112,7 @@ public class TestNetworkSerializerIndipendency {
     server.shutdown();
     File iDirectory = new File(SERVER_DIRECTORY);
     deleteDirectory(iDirectory);
+    ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerFactory.instance().getFormat(ORecordSerializerBinary.NAME));
     Orient.instance().startup();
   }
 

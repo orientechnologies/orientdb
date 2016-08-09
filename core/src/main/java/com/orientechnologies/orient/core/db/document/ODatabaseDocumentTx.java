@@ -104,12 +104,6 @@ import java.util.concurrent.atomic.AtomicReference;
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
 
-  protected static ORecordSerializer defaultSerializer;
-
-  static {
-    defaultSerializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
-  }
-
   protected final Map<String, Object> properties = new HashMap<String, Object>();
   protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
   protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
@@ -195,14 +189,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw OException.wrapException(new ODatabaseException("Error on opening database '" + iURL + "'"), t);
     }
 
-    setSerializer(defaultSerializer);
+    setSerializer(getDefaultSerializer());
   }
 
   /**
    * @return default serializer which is used to serialize documents. Default serializer is common for all database instances.
    */
   public static ORecordSerializer getDefaultSerializer() {
-    return defaultSerializer;
+    return ORecordSerializerFactory.instance().getDefaultRecordSerializer();
   }
 
   /**
@@ -211,7 +205,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * @param iDefaultSerializer new default serializer value
    */
   public static void setDefaultSerializer(ORecordSerializer iDefaultSerializer) {
-    defaultSerializer = iDefaultSerializer;
+    ORecordSerializerFactory.instance().setDefaultRecordSerializer(iDefaultSerializer);
   }
 
   /**

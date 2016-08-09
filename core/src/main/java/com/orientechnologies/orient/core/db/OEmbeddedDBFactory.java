@@ -153,6 +153,8 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
         storage.create(config.getConfigurations());
         storages.put(name, storage);
         ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
+        if (serializer.toString().equals("ORecordDocument2csv"))
+          throw new ODatabaseException("Impossible to create the database with ORecordDocument2csv serializer");
         storage.getConfiguration().setRecordSerializer(serializer.toString());
         storage.getConfiguration().setRecordSerializerVersion(serializer.getCurrentVersion());
         // since 2.1 newly created databases use strict SQL validation by default
@@ -161,6 +163,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
         storage.getConfiguration().update();
 
         try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
+          embedded.setSerializer(serializer);
           embedded.internalCreate(config);
         }
       } catch (Exception e) {

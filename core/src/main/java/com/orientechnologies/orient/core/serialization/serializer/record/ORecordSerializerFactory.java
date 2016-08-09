@@ -39,7 +39,7 @@ public class ORecordSerializerFactory {
   private static final ORecordSerializerFactory       instance        = new ORecordSerializerFactory();
   private              Map<String, ORecordSerializer> implementations = new HashMap<String, ORecordSerializer>();
 
-  private static ORecordSerializer defaultRecordSerializer;
+  private ORecordSerializer defaultRecordSerializer;
 
   public ORecordSerializerFactory() {
     register(ORecordSerializerSchemaAware2CSV.NAME, ORecordSerializerSchemaAware2CSV.INSTANCE);
@@ -78,6 +78,10 @@ public class ORecordSerializerFactory {
     return instance;
   }
 
+  public void setDefaultRecordSerializer(ORecordSerializer defaultRecordSerializer) {
+    this.defaultRecordSerializer = defaultRecordSerializer;
+  }
+  
   public ORecordSerializer getDefaultRecordSerializer() {
     return defaultRecordSerializer;
   }
