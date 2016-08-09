@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -39,7 +40,7 @@ public class OUpdateExecutionPlanner {
 
     this.returnBefore = oUpdateStatement.isReturnBefore();
     this.returnAfter = oUpdateStatement.isReturnAfter();
-    this.returnCount = oUpdateStatement.isReturnCount();
+    this.returnCount = !(returnAfter || returnBefore);
     this.returnProjection = oUpdateStatement.getReturnProjection() == null ? null : oUpdateStatement.getReturnProjection().copy();
     this.lockRecord = oUpdateStatement.getLockRecord();
     this.limit = oUpdateStatement.getLimit() == null ? null : oUpdateStatement.getLimit().copy();
@@ -50,14 +51,14 @@ public class OUpdateExecutionPlanner {
     OUpdateExecutionPlan result = new OUpdateExecutionPlan(ctx);
 
     handleTarget(result, ctx, this.target, this.whereClause, this.timeout);
+    handleUpsert(result, ctx, this.target, this.whereClause, this.upsert);
     handleTimeout(result, ctx, this.timeout);
     convertToModifiableResult(result, ctx);
-    handleUpsert(result, ctx, this.target, this.whereClause, result);
     handleLimit(result, ctx, this.limit);
     handleReturnBefore(result, ctx, this.returnBefore);
     handleOperations(result, ctx, this.operations);
     handleLock(result, ctx, this.lockRecord);
-    handleSave(result, ctx, this.returnBefore);
+    handleSave(result, ctx);
     handleResultForReturnBefore(result, ctx, this.returnBefore);
     handleResultForReturnAfter(result, ctx, this.returnAfter);
     handleResultForReturnCount(result, ctx, this.returnCount);
@@ -72,23 +73,29 @@ public class OUpdateExecutionPlanner {
    */
   private void convertToModifiableResult(OUpdateExecutionPlan plan, OCommandContext ctx) {
     plan.chain(new ConvertToUpdatableResultStep(ctx));
-    //TODO
   }
 
   private void handleResultForReturnCount(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnCount) {
-    //TODO
+    if (returnCount) {
+      result.chain(new CountStep(ctx));
+    }
   }
 
   private void handleResultForReturnAfter(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnAfter) {
-    //TODO
+    if (returnAfter) {
+      //re-convert to normal step
+      result.chain(new ConvertToResultInternalStep(ctx));
+    }
   }
 
   private void handleResultForReturnBefore(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnBefore) {
-    //TODO
+    if (returnBefore) {
+      result.chain(new UnwrapPreviousValueStep(ctx));
+    }
   }
 
-  private void handleSave(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnBefore) {
-    //TODO
+  private void handleSave(OUpdateExecutionPlan result, OCommandContext ctx) {
+    result.chain(new SaveElementStep(ctx));
   }
 
   private void handleTimeout(OUpdateExecutionPlan result, OCommandContext ctx, OTimeout timeout) {
@@ -98,7 +105,9 @@ public class OUpdateExecutionPlanner {
   }
 
   private void handleReturnBefore(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnBefore) {
-    //TODO
+    if (returnBefore) {
+      result.chain(new CopyRecordContentBeforeUpdateStep(ctx));
+    }
   }
 
   private void handleLock(OUpdateExecutionPlan result, OCommandContext ctx, OStorage.LOCKING_STRATEGY lockRecord) {
@@ -112,11 +121,36 @@ public class OUpdateExecutionPlanner {
   }
 
   private void handleUpsert(OUpdateExecutionPlan plan, OCommandContext ctx, OFromClause target, OWhereClause where,
-      OUpdateExecutionPlan result) {
-    //TODO
+      boolean upsert) {
+    if (upsert) {
+      plan.chain(new UpsertStep(target, where, ctx));
+    }
   }
 
   private void handleOperations(OUpdateExecutionPlan plan, OCommandContext ctx, List<OUpdateOperations> ops) {
+    if (ops != null) {
+      for (OUpdateOperations op : ops) {
+        switch (op.getType()) {
+        case OUpdateOperations.TYPE_SET:
+          plan.chain(new UpdateSetStep(op.getUpdateItems(), ctx));
+          break;
+        case OUpdateOperations.TYPE_REMOVE:
+          plan.chain(new UpdateRemoveStep(op.getUpdateRemoveItems(), ctx));
+          break;
+        case OUpdateOperations.TYPE_MERGE:
+          plan.chain(new UpdateMergeStep(op.getJson(), ctx));
+          break;
+        case OUpdateOperations.TYPE_CONTENT:
+          plan.chain(new UpdateContentStep(op.getJson(), ctx));
+          break;
+        case OUpdateOperations.TYPE_PUT:
+        case OUpdateOperations.TYPE_INCREMENT:
+        case OUpdateOperations.TYPE_ADD:
+          throw new OCommandExecutionException("Cannot execute with UPDATE PUT/ADD/INCREMENT new executor: " + op);
+        }
+      }
+
+    }
     //TODO
   }
 

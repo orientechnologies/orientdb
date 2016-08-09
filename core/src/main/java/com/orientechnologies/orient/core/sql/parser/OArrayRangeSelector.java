@@ -7,14 +7,14 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
+import java.lang.reflect.Array;
+import java.util.*;
 
 public class OArrayRangeSelector extends SimpleNode {
   protected Integer from;
   protected Integer to;
-  boolean newRange = false;
+  protected boolean newRange = false;
+  protected boolean included = false;//TODO implement ellipsis
 
   protected OArrayNumberSelector fromSelector;
   protected OArrayNumberSelector toSelector;
@@ -143,8 +143,8 @@ public class OArrayRangeSelector extends SimpleNode {
     result.to = to;
     result.newRange = newRange;
 
-    result.fromSelector = fromSelector==null?null:fromSelector.copy();
-    result.toSelector = toSelector==null?null:toSelector.copy();
+    result.fromSelector = fromSelector == null ? null : fromSelector.copy();
+    result.toSelector = toSelector == null ? null : toSelector.copy();
 
     return result;
   }
@@ -181,22 +181,133 @@ public class OArrayRangeSelector extends SimpleNode {
   }
 
   public void extractSubQueries(SubQueryCollector collector) {
-    if(fromSelector!=null){
+    if (fromSelector != null) {
       fromSelector.extractSubQueries(collector);
     }
-    if(toSelector!=null){
+    if (toSelector != null) {
       toSelector.extractSubQueries(collector);
     }
   }
 
   public boolean refersToParent() {
-    if(fromSelector!=null && fromSelector.refersToParent()){
+    if (fromSelector != null && fromSelector.refersToParent()) {
       return true;
     }
-    if(toSelector!=null && toSelector.refersToParent()){
+    if (toSelector != null && toSelector.refersToParent()) {
       return true;
     }
     return false;
   }
+
+  /**
+   * @param target
+   * @param value
+   * @param ctx
+   * @return
+   */
+  public void setValue(Object target, Object value, OCommandContext ctx) {
+    if (target == null) {
+      return;
+    }
+    if (target.getClass().isArray()) {
+      setArrayValue(target, value, ctx);
+    } else if (target instanceof List) {
+      setValue((List) target, value, ctx);
+    } else if (OMultiValue.isMultiValue(value)) {
+      //TODO
+    }
+    //TODO
+
+  }
+
+  public void setValue(List target, Object value, OCommandContext ctx) {
+    int from = this.from == null ? 0 : this.from;
+    int to = target.size() - 1;
+    if (this.to != null) {
+      to = this.to;
+      if (!included) {
+        to--;
+      }
+    }
+    if (from > to) {
+      target.clear();
+      return;
+    }
+    for (int i = 0; i <= to; i++) {
+      if (i < from && target.size() - 1 < i) {
+        target.set(i, null);
+      } else if (i >= from) {
+        target.set(i, value);
+      }
+      //else leave untouched the existing element
+    }
+  }
+
+  public void setValue(Set target, Object value, OCommandContext ctx) {
+    Set result = new LinkedHashSet<>();
+    int from = this.from == null ? 0 : this.from;
+    int to = target.size() - 1;
+    if (this.to != null) {
+      to = this.to;
+      if (!included) {
+        to--;
+      }
+    }
+    if (from > to) {
+      target.clear();
+      return;
+    }
+    Iterator targetIterator = target.iterator();
+    for (int i = 0; i <= to; i++) {
+      Object next = null;
+      if (targetIterator.hasNext()) {
+        next = targetIterator.next();
+      }
+      if (i < from && target.size() - 1 < i) {
+        result.add(null);
+      } else if (i >= from) {
+        result.add(value);
+      } else {
+        result.add(next);
+      }
+      target.clear();
+      target.addAll(result);
+    }
+  }
+
+  public void setValue(Map target, Object value, OCommandContext ctx) {
+    int from = this.from == null ? 0 : this.from;
+    int to = this.to;
+    if (!included) {
+      to--;
+    }
+    if (from > to) {
+      target.clear();
+      return;
+    }
+    for (int i = from; i <= to; i++) {
+      target.put(i, value);
+    }
+  }
+
+  private void setArrayValue(Object target, Object value, OCommandContext ctx) {
+
+    int from = this.from == null ? 0 : this.from;
+    int to = Array.getLength(target) - 1;
+    if (this.to != null) {
+      to = this.to;
+      if (!included) {
+        to--;
+      }
+    }
+    if (from > to || from >= Array.getLength(target)) {
+      return;
+    }
+    to = Math.min(to, Array.getLength(target) - 1);
+    for (int i = from; i <= to; i++) {
+      Array.set(target, i, value);//TODO type conversion?
+    }
+  }
+
 }
 /* JavaCC - OriginalChecksum=594a372e31fcbcd3ed962c2260e76468 (do not edit this line) */

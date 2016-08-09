@@ -23,18 +23,18 @@ public class OBinaryCondition extends OBooleanExpression {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor.
+   **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override
-  public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OIdentifiable currentRecord, OCommandContext ctx) {
     return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
   }
 
-  @Override
-  public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
+  @Override public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     return operator.execute(left.execute(currentRecord, ctx), right.execute(currentRecord, ctx));
   }
 
@@ -54,8 +54,7 @@ public class OBinaryCondition extends OBooleanExpression {
 
   }
 
-  @Override
-  protected int getNumberOfExternalCalculations() {
+  @Override protected int getNumberOfExternalCalculations() {
     int total = 0;
     if (!operator.supportsBasicCalculation()) {
       total++;
@@ -69,8 +68,7 @@ public class OBinaryCondition extends OBooleanExpression {
     return total;
   }
 
-  @Override
-  protected List<Object> getExternalCalculationConditions() {
+  @Override protected List<Object> getExternalCalculationConditions() {
     List<Object> result = new ArrayList<Object>();
     if (!operator.supportsBasicCalculation()) {
       result.add(this);
@@ -92,45 +90,47 @@ public class OBinaryCondition extends OBooleanExpression {
   }
 
   public long estimateIndexed(OFromClause target, OCommandContext context) {
-    return left.estimateIndexedFunction(target, context, operator, right.execute((OResult)null, context));
+    return left.estimateIndexedFunction(target, context, operator, right.execute((OResult) null, context));
   }
 
   public Iterable<OIdentifiable> executeIndexedFunction(OFromClause target, OCommandContext context) {
-    return left.executeIndexedFunction(target, context, operator, right.execute((OResult)null, context));
+    return left.executeIndexedFunction(target, context, operator, right.execute((OResult) null, context));
   }
 
   /**
    * tests if current expression involves an indexed funciton AND that function can also be executed without using the index
-   * @param target the query target
+   *
+   * @param target  the query target
    * @param context the execution context
    * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
    */
-  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context){
-    return left.canExecuteIndexedFunctionWithoutIndex(target, context, operator, right.execute((OResult)null, context));
+  public boolean canExecuteIndexedFunctionWithoutIndex(OFromClause target, OCommandContext context) {
+    return left.canExecuteIndexedFunctionWithoutIndex(target, context, operator, right.execute((OResult) null, context));
   }
 
   /**
    * tests if current expression involves an indexed function AND that function can be used on this target
-   * @param target the query target
+   *
+   * @param target  the query target
    * @param context the execution context
    * @return true if current expression involves an indexed function AND that function can be used on this target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context){
-    return left.allowsIndexedFunctionExecutionOnTarget(target, context, operator, right.execute((OResult)null, context));
+  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context) {
+    return left.allowsIndexedFunctionExecutionOnTarget(target, context, operator, right.execute((OResult) null, context));
   }
 
   /**
    * tests if current expression involves an indexed function AND the function has also to be executed after the index search.
    * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
    * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
-   * @param target the query target
+   *
+   * @param target  the query target
    * @param context the execution context
    * @return true if current expression involves an indexed function AND the function has also to be executed after the index search.
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context){
-    return left.executeIndexedFunctionAfterIndexSearch(target, context, operator, right.execute((OResult)null, context));
+  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context) {
+    return left.executeIndexedFunctionAfterIndexSearch(target, context, operator, right.execute((OResult) null, context));
   }
-
 
   public List<OBinaryCondition> getIndexedFunctionConditions(OClass iSchemaClass, ODatabaseDocumentInternal database) {
     if (left.isIndexedFunctionCal()) {
@@ -140,10 +140,10 @@ public class OBinaryCondition extends OBooleanExpression {
   }
 
   @Override public boolean needsAliases(Set<String> aliases) {
-    if(left.needsAliases(aliases)){
+    if (left.needsAliases(aliases)) {
       return true;
     }
-    if(right.needsAliases(aliases)){
+    if (right.needsAliases(aliases)) {
       return true;
     }
     return false;
@@ -164,6 +164,33 @@ public class OBinaryCondition extends OBooleanExpression {
 
   @Override public boolean refersToParent() {
     return left.refersToParent() || right.refersToParent();
+  }
+
+  @Override public Optional<OUpdateItem> transformToUpdateItem() {
+    if (!checkCanTransformToUpdate()) {
+      return Optional.empty();
+    }
+    if (operator instanceof OEqualsCompareOperator) {
+      OUpdateItem result = new OUpdateItem(-1);
+      result.operator = OUpdateItem.OPERATOR_EQ;
+      OBaseExpression baseExp = ((OBaseExpression) left.mathExpression);
+      result.left = baseExp.identifier.suffix.identifier.copy();
+      result.leftModifier = baseExp.modifier == null ? null : baseExp.modifier.copy();
+      result.right = right.copy();
+      return Optional.of(result);
+    }
+    return super.transformToUpdateItem();
+  }
+
+  private boolean checkCanTransformToUpdate() {
+    if (left == null || left.mathExpression == null || !(left.mathExpression instanceof OBaseExpression)) {
+      return false;
+    }
+    OBaseExpression base = (OBaseExpression) left.mathExpression;
+    if (base.identifier == null || base.identifier.suffix == null || base.identifier.suffix.identifier == null) {
+      return false;
+    }
+    return true;
   }
 
   public OExpression getLeft() {
@@ -214,5 +241,6 @@ public class OBinaryCondition extends OBooleanExpression {
     result = 31 * result + (right != null ? right.hashCode() : 0);
     return result;
   }
+
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

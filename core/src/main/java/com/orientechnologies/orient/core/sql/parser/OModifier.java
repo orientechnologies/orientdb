@@ -2,6 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -239,5 +240,63 @@ public class OModifier extends SimpleNode {
     }
     return false;
   }
+
+  protected void setValue(OResult currentRecord, Object target, Object value, OCommandContext ctx) {
+    if (next == null) {
+      doSetValue(currentRecord, target, value, ctx);
+    } else {
+      Object newTarget = calculateLocal(currentRecord, target, ctx);
+      if (newTarget != null) {
+        next.setValue(currentRecord, newTarget, value, ctx);
+      }
+    }
+  }
+
+  private void doSetValue(OResult currentRecord, Object target, Object value, OCommandContext ctx) {
+    if (methodCall != null) {
+      //do nothing
+    } else if (suffix != null) {
+      suffix.setValue(target, value, ctx);
+    } else if (arrayRange != null) {
+      arrayRange.setValue(target, value, ctx);
+    } else if (condition != null) {
+      //do nothing
+    } else if (arraySingleValues != null) {
+      arraySingleValues.setValue(currentRecord, target, value, ctx);
+    }
+  }
+
+  private Object calculateLocal(OResult currentRecord, Object target, OCommandContext ctx) {
+    if (methodCall != null) {
+      return methodCall.execute(target, ctx);
+    } else if (suffix != null) {
+      return suffix.execute(target, ctx);
+    } else if (arrayRange != null) {
+      return arrayRange.execute(currentRecord, target, ctx);
+    } else if (condition != null) {
+      if (target instanceof OResult || target instanceof OIdentifiable || target instanceof Map) {
+        if (condition.evaluate(target, ctx)) {
+          return target;
+        } else {
+          return null;
+        }
+      } else if (OMultiValue.isMultiValue(target)) {
+        List<Object> result = new ArrayList<>();
+        for (Object o : OMultiValue.getMultiValueIterable(target)) {
+          if (condition.evaluate(target, ctx)) {
+            result.add(o);
+          }
+        }
+        return result;
+      } else {
+        return null;
+      }
+    } else if (arraySingleValues != null) {
+      return arraySingleValues.execute(currentRecord, target, ctx);
+    }
+    return null;
+
+  }
+
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

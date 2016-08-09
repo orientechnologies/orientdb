@@ -6,8 +6,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-import java.util.Map;
-import java.util.Set;
+import java.lang.reflect.Array;
+import java.util.*;
 
 public class OArraySelector extends SimpleNode {
 
@@ -138,6 +138,71 @@ public class OArraySelector extends SimpleNode {
       return true;
     }
     return false;
+  }
+
+  public void setValue(OResult currentRecord, Object target, Object value, OCommandContext ctx) {
+    Object idx = null;
+    if (this.rid != null) {
+      idx = this.rid.toRecordId();
+    } else if (inputParam != null) {
+      idx = inputParam.bindFromInputParams(ctx.getInputParameters());
+    } else if (expression != null) {
+      idx = expression.execute(currentRecord, ctx);
+    } else if (integer != null) {
+      idx = integer.getValue();
+    }
+
+    if (target instanceof Set && idx instanceof Number) {
+      setValue((Set) target, ((Number) idx).intValue(), value, ctx);
+    } else if (target instanceof List && idx instanceof Number) {
+      setValue((List) target, ((Number) idx).intValue(), value, ctx);
+    } else if (target instanceof Map) {
+      setValue((Map) target, idx, value, ctx);
+    } else if (target.getClass().isArray() && idx instanceof Number) {
+      setArrayValue(target, ((Number) idx).intValue(), value, ctx);
+    }
+  }
+
+  public void setValue(List target, int idx, Object value, OCommandContext ctx) {
+    int originalSize = target.size();
+    for (int i = originalSize; i <= idx; i++) {
+      if (i >= originalSize) {
+        target.add(null);
+      }
+    }
+    target.set(idx, value);
+  }
+
+  public void setValue(Set target, int idx, Object value, OCommandContext ctx) {
+    Set result = new LinkedHashSet<>();
+    int originalSize = target.size();
+    int max = Math.max(idx, originalSize - 1);
+    Iterator targetIterator = target.iterator();
+    for (int i = 0; i <= max; i++) {
+      Object next = null;
+      if (targetIterator.hasNext()) {
+        next = targetIterator.next();
+      }
+      if (i == idx) {
+        result.add(value);
+      } else if (i < originalSize) {
+        result.add(next);
+      } else {
+        result.add(null);
+      }
+      target.clear();
+      target.addAll(result);
+    }
+  }
+
+  public void setValue(Map target, Object idx, Object value, OCommandContext ctx) {
+    target.put(idx, value);
+  }
+
+  private void setArrayValue(Object target, int idx, Object value, OCommandContext ctx) {
+    if (idx >= 0 && idx < Array.getLength(target)) {
+      Array.set(target, idx, value);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=f87a5543b1dad0fb5f6828a0663a7c9e (do not edit this line) */

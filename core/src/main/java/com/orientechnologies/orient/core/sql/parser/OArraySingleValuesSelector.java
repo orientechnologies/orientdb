@@ -118,5 +118,13 @@ public class OArraySingleValuesSelector extends SimpleNode {
     }
     return false;
   }
+
+  public void setValue(OResult currentRecord, Object target, Object value, OCommandContext ctx) {
+    if(items!=null){
+      for (OArraySelector item : items) {
+        item.setValue(currentRecord, target, value, ctx);
+      }
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=991998c77a4831184b6dca572513fd8d (do not edit this line) */

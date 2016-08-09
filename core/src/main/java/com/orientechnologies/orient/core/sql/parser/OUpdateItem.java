@@ -2,6 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 
 public class OUpdateItem extends SimpleNode {
@@ -92,6 +96,56 @@ public class OUpdateItem extends SimpleNode {
     result = 31 * result + operator;
     result = 31 * result + (right != null ? right.hashCode() : 0);
     return result;
+  }
+
+  public void applyUpdate(OResultInternal doc, OCommandContext ctx) {
+    Object rightValue = right.execute(doc, ctx);
+    if (leftModifier == null) {
+      applyOperation(doc, left, rightValue);
+    } else {
+      Object val = doc.getProperty(left.getStringValue());
+      leftModifier.setValue(doc, val, rightValue, ctx);
+    }
+  }
+
+  public void applyOperation(OResultInternal doc, OIdentifier attrName, Object rightValue) {
+    switch (operator) {
+    case OPERATOR_EQ:
+      doc.setProperty(attrName.getStringValue(), rightValue);
+      break;
+    case OPERATOR_MINUSASSIGN:
+      //TODO
+      throw new UnsupportedOperationException("Implement this!");
+    case OPERATOR_PLUSASSIGN:
+      //TODO
+      throw new UnsupportedOperationException("Implement this!");
+    case OPERATOR_SLASHASSIGN:
+      //TODO
+      throw new UnsupportedOperationException("Implement this!");
+    case OPERATOR_STARASSIGN:
+      //TODO
+      throw new UnsupportedOperationException("Implement this!");
+    }
+  }
+
+  private void applyOperation(ODocument doc, OIdentifier attrName, Object rightValue) {
+    switch (operator) {
+    case OPERATOR_EQ:
+      doc.setProperty(attrName.getStringValue(), rightValue);
+      break;
+    case OPERATOR_MINUSASSIGN:
+      //TODO
+      break;
+    case OPERATOR_PLUSASSIGN:
+      //TODO
+      break;
+    case OPERATOR_SLASHASSIGN:
+      //TODO
+      break;
+    case OPERATOR_STARASSIGN:
+      //TODO
+      break;
+    }
   }
 }
 /* JavaCC - OriginalChecksum=df7444be87bba741316df8df0d653600 (do not edit this line) */

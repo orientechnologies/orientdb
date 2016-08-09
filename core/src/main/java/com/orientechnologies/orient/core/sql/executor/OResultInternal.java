@@ -55,8 +55,8 @@ public class OResultInternal implements OResult {
   }
 
   @Override public String toString() {
-    if (element != null) {
-      return element.toString();
+    if (getElement() != null) {
+      return getElement().toString();
     }
     return "{\n" +
         content.entrySet().stream().map(x -> x.getKey() + ": \n" + x.getValue()).reduce("", (a, b) -> a + b + "\n\n") + "}\n";
@@ -70,13 +70,13 @@ public class OResultInternal implements OResult {
       return false;
     }
     OResultInternal resultObj = (OResultInternal) obj;
-    if (element != null) {
-      if (resultObj.element == null) {
+    if (getElement() != null) {
+      if (resultObj.getElement() == null) {
         return false;
       }
-      return element.equals(resultObj.element);
+      return getElement().equals(resultObj.getElement());
     } else {
-      if (resultObj.element != null) {
+      if (resultObj.getElement() != null) {
         return false;
       }
       return this.content.equals(resultObj.content);
@@ -84,8 +84,8 @@ public class OResultInternal implements OResult {
   }
 
   @Override public int hashCode() {
-    if (element != null) {
-      return element.hashCode();
+    if (getElement() != null) {
+      return getElement().hashCode();
     }
     return content.hashCode();
   }

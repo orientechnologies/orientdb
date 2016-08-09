@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.AggregationContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -276,6 +278,63 @@ public class OSuffixIdentifier extends SimpleNode {
       return true;
     }
     return false;
+  }
+
+  public void setValue(Object target, Object value, OCommandContext ctx) {
+    if (target instanceof OResult) {
+      setValue((OResult) target, value, ctx);
+    } else if (target instanceof OIdentifiable) {
+      setValue((OIdentifiable) target, value, ctx);
+    } else if (target instanceof Map) {
+      setValue((Map) target, value, ctx);
+    }
+  }
+
+  public void setValue(OIdentifiable target, Object value, OCommandContext ctx) {
+    if (target == null) {
+      return;
+    }
+    ODocument doc = null;
+    if (target instanceof ODocument) {
+      doc = (ODocument) target;
+    } else {
+      ORecord rec = target.getRecord();
+      if (rec instanceof ODocument) {
+        doc = (ODocument) rec;
+      }
+    }
+    if (doc != null) {
+      doc.setProperty(identifier.getStringValue(), value);
+    } else {
+      throw new OCommandExecutionException("Cannot set record attribute " + recordAttribute + " on existing document");
+    }
+  }
+
+  public void setValue(Map target, Object value, OCommandContext ctx) {
+    if (target == null) {
+      return;
+    }
+    if (identifier != null) {
+      target.put(identifier.getStringValue(), value);
+    } else if (recordAttribute != null) {
+      target.put(recordAttribute.getName(), value);
+    }
+  }
+
+  public void setValue(OResult target, Object value, OCommandContext ctx) {
+    if (target == null) {
+      return;
+    }
+    if (target instanceof OResultInternal) {
+      OResultInternal intTarget = (OResultInternal) target;
+      if (identifier != null) {
+        intTarget.setProperty(identifier.getStringValue(), value);
+      } else if (recordAttribute != null) {
+        intTarget.setProperty(recordAttribute.getName(), value);
+      }
+    } else {
+      throw new OCommandExecutionException("Cannot set property on unmodifiable target: " + target);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=5d9be0188c7d6e2b67d691fb88a518f8 (do not edit this line) */

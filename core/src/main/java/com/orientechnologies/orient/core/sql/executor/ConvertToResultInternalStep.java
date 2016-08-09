@@ -2,22 +2,23 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.parser.OWhereClause;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * Created by luigidellaquila on 12/07/16.
+ * takes a normal result set and transforms it in another result set made of OUpdatableRecord instances.
+ * Records that are not identifiable are discarded.
+ *
+ * @author Luigi Dell'Aquila
  */
-public class FilterStep extends AbstractExecutionStep {
-  private final OWhereClause whereClause;
-
+public class ConvertToResultInternalStep extends AbstractExecutionStep {
   OTodoResultSet prevResult = null;
 
-  public FilterStep(OWhereClause whereClause, OCommandContext ctx) {
+  public ConvertToResultInternalStep(OCommandContext ctx) {
     super(ctx);
-    this.whereClause = whereClause;
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
@@ -45,7 +46,7 @@ public class FilterStep extends AbstractExecutionStep {
           }
         }
         while (!finished) {
-          while(!prevResult.hasNext()) {
+          while (!prevResult.hasNext()) {
             prevResult = prevStep.syncPull(ctx, nRecords);
             if (!prevResult.hasNext()) {
               finished = true;
@@ -53,7 +54,12 @@ public class FilterStep extends AbstractExecutionStep {
             }
           }
           nextItem = prevResult.next();
-          if (whereClause.matchesFilters(nextItem, ctx)) {
+          if (nextItem instanceof OUpdatableResult) {
+            ORecord element = nextItem.getElement().getRecord();
+            if (element != null && element instanceof ODocument) {
+              nextItem = new OResultInternal();
+              ((OUpdatableResult) nextItem).setElement(element);
+            }
             break;
           }
           nextItem = null;
@@ -61,7 +67,6 @@ public class FilterStep extends AbstractExecutionStep {
       }
 
       @Override public boolean hasNext() {
-
         if (fetched >= nRecords || finished) {
           return false;
         }
@@ -93,7 +98,7 @@ public class FilterStep extends AbstractExecutionStep {
       }
 
       @Override public void close() {
-        FilterStep.this.close();
+        ConvertToResultInternalStep.this.close();
       }
 
       @Override public Optional<OExecutionPlan> getExecutionPlan() {
@@ -116,7 +121,7 @@ public class FilterStep extends AbstractExecutionStep {
   }
 
   @Override public String prettyPrint(int depth, int indent) {
-    return OExecutionStepInternal.getIndent(depth, indent) + "+ FILTER ITEMS WHERE \n" +OExecutionStepInternal.getIndent(depth, indent)+"  "+ whereClause.toString();
+    return OExecutionStepInternal.getIndent(depth, indent) + "+ CONVERT TO REGULAR RESULT ITEM";
   }
 
 }

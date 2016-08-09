@@ -6,10 +6,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by luigidellaquila on 07/11/14.
@@ -64,6 +61,7 @@ public abstract class OBooleanExpression extends SimpleNode {
     @Override public boolean refersToParent() {
       return false;
     }
+
   };
 
   public static final OBooleanExpression FALSE = new OBooleanExpression(0) {
@@ -114,6 +112,7 @@ public abstract class OBooleanExpression extends SimpleNode {
     @Override public boolean refersToParent() {
       return false;
     }
+
   };
 
   public OBooleanExpression(int id) {
@@ -179,4 +178,17 @@ public abstract class OBooleanExpression extends SimpleNode {
   public abstract void extractSubQueries(SubQueryCollector collector);
 
   public abstract boolean refersToParent();
+
+  /**
+   * returns the equivalent of current condition as an UPDATE expression with the same syntax, if possible.
+   * <p>
+   * Eg. name = 3 can be considered a condition or an assignment. This method transforms the condition in an assignment.
+   * This is used mainly for UPSERT operations.
+   *
+   * @return the equivalent of current condition as an UPDATE expression with the same syntax, if possible.
+   */
+  public Optional<OUpdateItem> transformToUpdateItem() {
+    return Optional.empty();
+  }
+
 }
