@@ -27,6 +27,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.exception.OBackupInProgressException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -577,7 +578,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   }
 
   private void replaceConfiguration(ZipInputStream zipInputStream) throws IOException {
-    final Map<String, Object> loadProperties = configuration.getLoadProperties();
+    OContextConfiguration config = configuration.getContextConfiguration();
 
     byte[] buffer = new byte[1024];
 
@@ -603,7 +604,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
 
     configuration.close();
 
-    configuration.load(loadProperties);
+    configuration.load(config);
   }
 
 }
