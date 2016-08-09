@@ -2576,7 +2576,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         throw new ODatabaseException("Database named '" + iDatabaseName + "' already exists: " + stg);
     }
   }
-
+  
+  
   protected int deleteRecord(final ODatabaseDocument iDatabase, final ORID rid, final int version) {
     try {
       // TRY TO SEE IF THE RECORD EXISTS

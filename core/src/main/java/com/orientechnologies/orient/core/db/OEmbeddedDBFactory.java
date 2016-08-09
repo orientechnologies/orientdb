@@ -95,7 +95,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
     }
   }
-
+  
   @Override
   public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
     try {
