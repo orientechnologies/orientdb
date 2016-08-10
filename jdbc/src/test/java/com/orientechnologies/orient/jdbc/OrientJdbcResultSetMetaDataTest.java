@@ -1,15 +1,20 @@
 package com.orientechnologies.orient.jdbc;
 
-import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
@@ -41,7 +46,6 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
     //DECIMAL
     assertThat(rs.getBigDecimal("score"), equalTo(BigDecimal.valueOf(959)));
-
 
   }
 
@@ -145,6 +149,22 @@ public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
   }
 
+  @Test
+  public void shouldFetchMetadataTheSparkStyle() throws Exception {
 
+    //set spark "profile"
+
+    conn.getInfo().setProperty("spark", "true");
+    Statement stmt = conn.createStatement();
+
+    ResultSet rs = stmt.executeQuery("select * from (select * from item) where 1=0");
+
+    ResultSetMetaData metaData = rs.getMetaData();
+
+    assertThat(metaData.getColumnName(1)).isEqualTo("stringKey");
+    assertThat(metaData.getColumnTypeName(1)).isEqualTo("STRING");
+    assertThat(rs.getObject(1)).isInstanceOf(String.class);
+
+  }
 
 }

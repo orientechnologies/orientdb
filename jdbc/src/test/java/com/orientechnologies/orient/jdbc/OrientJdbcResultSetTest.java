@@ -2,13 +2,14 @@ package com.orientechnologies.orient.jdbc;
 
 import org.junit.Test;
 
-import java.nio.channels.Pipe;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.Statement;
 import java.sql.Types;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertThat;
 
 public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
@@ -60,5 +61,19 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM Author where false = true");
 
     assertThat(rs.next(), is(false));
+  }
+
+  @Test
+  public void shouldReturnReultSetWithSparkStyle() throws Exception {
+
+    //set spark "profile"
+
+    conn.getInfo().setProperty("spark", "true");
+    Statement stmt = conn.createStatement();
+
+    ResultSet rs = stmt.executeQuery("select \"stringKey\",\"published\" from item");
+
+    assertThat(rs.next()).isTrue();
+
   }
 }

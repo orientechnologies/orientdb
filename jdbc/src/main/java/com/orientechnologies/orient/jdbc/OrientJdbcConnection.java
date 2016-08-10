@@ -325,4 +325,8 @@ public class OrientJdbcConnection implements Connection {
   public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
     OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT.setValue(arg1);
   }
+
+  public Properties getInfo() {
+    return info;
+  }
 }

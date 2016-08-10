@@ -1,17 +1,17 @@
 /**
  * Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
  *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  *
  * For more information: http://www.orientechnologies.com
  */
@@ -29,24 +29,42 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Date;
-import java.util.*;
+import java.sql.NClob;
+import java.sql.Ref;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.RowId;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 /**
  * @author Roberto Franchini (CELI srl - franchin--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci--at--gmail.com)
  */
 public class OrientJdbcResultSet implements ResultSet {
-  private List<ODocument>     records  = null;
+  private List<ODocument> records = null;
   private OrientJdbcStatement statement;
-  private int                 cursor   = -1;
-  private int                 rowCount = 0;
-  private ODocument           document;
-  private String[]            fieldNames;
-  private int                 type;
-  private int                 concurrency;
-  private int                 holdability;
+  private int cursor   = -1;
+  private int rowCount = 0;
+  private ODocument document;
+  private String[]  fieldNames;
+  private int       type;
+  private int       concurrency;
+  private int       holdability;
 
   protected OrientJdbcResultSet(final OrientJdbcStatement iOrientJdbcStatement, final List<ODocument> iRecords, final int type,
       final int concurrency, int holdability) throws SQLException {
@@ -69,14 +87,16 @@ public class OrientJdbcResultSet implements ResultSet {
     if (concurrency == CONCUR_READ_ONLY || concurrency == CONCUR_UPDATABLE)
       this.concurrency = concurrency;
     else
-      throw new SQLException("Bad ResultSet Concurrency type: " + concurrency + " instead of one of the following values: "
-          + CONCUR_READ_ONLY + " or" + CONCUR_UPDATABLE);
+      throw new SQLException(
+          "Bad ResultSet Concurrency type: " + concurrency + " instead of one of the following values: " + CONCUR_READ_ONLY + " or"
+              + CONCUR_UPDATABLE);
 
     if (holdability == HOLD_CURSORS_OVER_COMMIT || holdability == CLOSE_CURSORS_AT_COMMIT)
       this.holdability = holdability;
     else
-      throw new SQLException("Bad ResultSet Holdability type: " + holdability + " instead of one of the following values: "
-          + HOLD_CURSORS_OVER_COMMIT + " or" + CLOSE_CURSORS_AT_COMMIT);
+      throw new SQLException(
+          "Bad ResultSet Holdability type: " + holdability + " instead of one of the following values: " + HOLD_CURSORS_OVER_COMMIT
+              + " or" + CLOSE_CURSORS_AT_COMMIT);
   }
 
   private void setDatabaseOnThreadLocalInstance() {
@@ -132,6 +152,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
     cursor = iRowNumber;
     document = (ODocument) records.get(cursor).getRecord();
+    fieldNames = document.fieldNames();
     return true;
   }
 
@@ -387,8 +408,8 @@ public class OrientJdbcResultSet implements ResultSet {
       cal.setTimeInMillis(date.getTime());
       return new Date(cal.getTimeInMillis());
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the date value (calendar) " + "at column '" + columnLabel
-          + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the date value (calendar) " + "at column '" + columnLabel + "'", e);
     }
   }
 
@@ -456,7 +477,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
   public long getLong(String columnLabel) throws SQLException {
     try {
-      Long r = document.field(columnLabel, OType.LONG);
+      final Long r = document.field(columnLabel, OType.LONG);
       return r != null ? r : 0;
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the long value at column '" + columnLabel + "'", e);
@@ -502,17 +523,18 @@ public class OrientJdbcResultSet implements ResultSet {
   public Object getObject(String columnLabel) throws SQLException {
     try {
       Object value = document.field(columnLabel);
-      if (value == null)
+      if (value == null) {
         return null;
-      else {
+      } else {
         // resolve the links so that the returned set contains instances
         // of ODocument
         if (value instanceof ORecordLazyMultiValue) {
           ORecordLazyMultiValue lazyRecord = (ORecordLazyMultiValue) value;
           lazyRecord.convertLinks2Records();
           return lazyRecord;
-        } else
+        } else {
           return value;
+        }
       }
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the Java Object at column '" + columnLabel + "'", e);
@@ -603,36 +625,48 @@ public class OrientJdbcResultSet implements ResultSet {
   public Time getTime(String columnLabel) throws SQLException {
     try {
       java.util.Date date = document.field(columnLabel, OType.DATETIME);
-      if (date == null)
-        return null;
-      return new Time(date.getTime());
+      return getTime(date);
     } catch (Exception e) {
       throw new SQLException("An error occurred during the retrieval of the time value at column '" + columnLabel + "'", e);
     }
   }
 
   public Time getTime(int columnIndex, Calendar cal) throws SQLException {
-    return new Time(getDate(columnIndex, cal).getTime());
+    Date date = getDate(columnIndex, cal);
+    return getTime(date);
+  }
+
+  private Time getTime(java.util.Date date) {
+    return date != null ? new Time(date.getTime()) : null;
   }
 
   public Time getTime(String columnLabel, Calendar cal) throws SQLException {
-    return new Time(getDate(columnLabel, cal).getTime());
+    Date date = getDate(columnLabel, cal);
+    return getTime(date);
   }
 
   public Timestamp getTimestamp(int columnIndex) throws SQLException {
-    return new Timestamp(getDate(columnIndex).getTime());
+    Date date = getDate(columnIndex);
+    return getTimestamp(date);
+  }
+
+  private Timestamp getTimestamp(Date date) {
+    return date != null ? new Timestamp(date.getTime()) : null;
   }
 
   public Timestamp getTimestamp(String columnLabel) throws SQLException {
-    return new Timestamp(getDate(columnLabel).getTime());
+    Date date = getDate(columnLabel);
+    return getTimestamp(date);
   }
 
   public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
-    return new Timestamp(getDate(columnIndex, cal).getTime());
+    Date date = getDate(columnIndex, cal);
+    return getTimestamp(date);
   }
 
   public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
-    return new Timestamp(getDate(columnLabel, cal).getTime());
+    Date date = getDate(columnLabel, cal);
+    return getTimestamp(date);
   }
 
   public int getType() throws SQLException {

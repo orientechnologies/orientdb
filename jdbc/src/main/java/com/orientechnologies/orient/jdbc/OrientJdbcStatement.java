@@ -21,16 +21,24 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
-import static java.util.Collections.emptyList;
+import static java.lang.Boolean.*;
+import static java.util.Collections.*;
 
 /**
  * @author Roberto Franchini (CELI Srl - franchini@celi.it)
@@ -52,6 +60,7 @@ public class OrientJdbcStatement implements Statement {
   protected int                        resultSetType;
   protected int                        resultSetConcurrency;
   protected int                        resultSetHoldability;
+  protected Properties info;
 
   public OrientJdbcStatement(final OrientJdbcConnection iConnection) {
     this(iConnection, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
@@ -82,6 +91,7 @@ public class OrientJdbcStatement implements Statement {
     this.resultSetType = resultSetType;
     this.resultSetConcurrency = resultSetConcurrency;
     this.resultSetHoldability = resultSetHoldability;
+    info = connection.getInfo();
   }
 
   public boolean execute(final String sql) throws SQLException {
@@ -92,11 +102,14 @@ public class OrientJdbcStatement implements Statement {
       documents = new ArrayList<ODocument>();
       documents.add(new ODocument().field("1", 1));
     } else {
-      query = new OCommandSQL(sql);
+      query = new OCommandSQL(mayCleanForSpark(sql));
       try {
         rawResult = executeCommand(query);
         if (rawResult instanceof List<?>) {
           documents = (List<ODocument>) rawResult;
+        } else if (rawResult instanceof OIdentifiable) {
+          documents = new ArrayList<ODocument>(1);
+          documents.add((ODocument) ((OIdentifiable) rawResult).getRecord());
         } else {
           return false;
         }
@@ -346,6 +359,18 @@ public class OrientJdbcStatement implements Statement {
 
   public boolean isCloseOnCompletion() throws SQLException {
     return false;
+  }
+
+  protected String mayCleanForSpark(String sql) {
+    //SPARK support
+    if (parseBoolean(info.getProperty("spark", "false"))) {
+      String sqlToClean = sql.toLowerCase();
+      if (sqlToClean.endsWith("where 1=0")) {
+        sqlToClean = sqlToClean.replace("where 1=0", " limit 1");
+      }
+      return sqlToClean.replace('"', ' ');
+    }
+    return sql;
   }
 
 }
