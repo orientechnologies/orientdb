@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.exception.OSystemException;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -40,6 +28,17 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 public class OClientConnection {
   private final int                            id;
@@ -164,8 +163,13 @@ public class OClientConnection {
       }
       
       OToken token = null;
-      if (tokenFromNetwork != null)
-        token = handler.parseBinaryToken(tokenFromNetwork);
+      try {
+        if (tokenFromNetwork != null)
+          token = handler.parseBinaryToken(tokenFromNetwork);
+      } catch (Exception e) {
+        throw OException.wrapException(new OSystemException("Error on token parse"), e);
+      }
+      
       if (token == null || !token.getIsVerified()) {
         cleanSession();
         throw new OTokenSecurityException("The token provided is not a valid token, signature does not match");
