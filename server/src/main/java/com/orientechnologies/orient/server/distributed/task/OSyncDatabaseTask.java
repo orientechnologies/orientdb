@@ -127,6 +127,7 @@ public class OSyncDatabaseTask extends OAbstractReplicatedTask implements OComma
                 Thread.currentThread().setName("OrientDB SyncDatabase node=" + iManager.getLocalNodeName() + " db=" + databaseName);
 
                 try {
+                  database.activateOnCurrentThread();
                   database.backup(fileOutputStream, null, new Callable<Object>() {
                     @Override
                     public Object call() throws Exception {
