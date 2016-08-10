@@ -304,6 +304,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           channel.flush();
           OServerPluginHelper.invokeHandlerCallbackOnClientError(server, connection, e);
           afterOperationRequest(connection);
+          Thread.sleep(1000);
           sendShutdown();
         }
         return;

@@ -19,6 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -36,10 +41,6 @@ import com.orientechnologies.orient.server.distributed.conflict.ODistributedConf
 import com.orientechnologies.orient.server.distributed.impl.ODistributedTransactionManager;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * Distributed database repairer that, based on the reported records to check, executes repair of record in configurable batches.
  * This assure better performance by grouping multiple requests. The repair is based on the chain of conflict resolver.
@@ -51,7 +52,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
   private final String                          databaseName;
 
   private final AtomicLong                      recordProcessed     = new AtomicLong(0);
+  private final AtomicLong                      recordCanceled      = new AtomicLong(0);
   private final AtomicLong                      totalTimeProcessing = new AtomicLong(0);
+  private final boolean                         active;
 
   private ConcurrentHashMap<ORecordId, Boolean> records             = new ConcurrentHashMap<ORecordId, Boolean>();
   private ConcurrentHashMap<Integer, Boolean>   clusters            = new ConcurrentHashMap<Integer, Boolean>();
@@ -93,10 +96,13 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
       }
 
     };
-    Orient.instance().scheduleTask(checkTask,
-        OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY.getValueAsLong(),
-        OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY.getValueAsLong());
 
+    final long time = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY.getValueAsLong();
+    if (time > 0) {
+      Orient.instance().scheduleTask(checkTask, time, time);
+      active = true;
+    } else
+      active = false;
   }
 
   /**
@@ -107,6 +113,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
    */
   @Override
   public void repairRecord(final ORecordId rid) {
+    if (!active)
+      return;
+
     if (rid.clusterPosition < -1)
       // SKIP TRANSACTIONAL RIDS
       return;
@@ -118,6 +127,27 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
   }
 
   /**
+   * Cancel the repair against a record because the update succeed.
+   *
+   * @param rid
+   *          RecordId to remove from repair
+   */
+  @Override
+  public void cancelRepairRecord(final ORecordId rid) {
+    if (!active)
+      return;
+
+    if (rid.clusterPosition < -1)
+      // SKIP TRANSACTIONAL RIDS
+      return;
+
+    // REMOVE THE RECORD TO REPAIR
+    if (records.remove(rid) != null)
+      // REMOVED
+      recordCanceled.incrementAndGet();
+  }
+
+  /**
    * Enqueues the request to repair a cluster. The decision about repairing is taken by the timer task.
    *
    * @param clusterId
@@ -125,6 +155,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
    */
   @Override
   public void repairCluster(final int clusterId) {
+    if (!active)
+      return;
+
     if (clusterId < -1)
       // SKIP TRANSACTIONAL RIDS
       return;
@@ -172,7 +205,10 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     }
   }
 
-  private boolean repairCluster(ODatabaseDocumentInternal db, final Integer clusterId) throws Exception {
+  private void repairCluster(ODatabaseDocumentInternal db, final Integer clusterId) throws Exception {
+    if (clusterId < 0)
+      return;
+
     final ODistributedConfiguration dCfg = dManager.getDatabaseConfiguration(databaseName);
 
     final int maxAutoRetry = OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
@@ -194,9 +230,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     final String serverOwner = dCfg.getClusterOwner(clusterName);
     if (serverOwner == null || !serverOwner.equals(dManager.getLocalNodeName())) {
       ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Cannot auto repair cluster '%s' because current server (%s) is not the owner (owner=%s reqId=%s)", clusterName,
-          dManager.getLocalNodeName(), serverOwner, requestId);
-      return true;
+          "Cannot auto repair cluster '%s' (%d) because current server (%s) is not the owner (owner=%s reqId=%s)", clusterName,
+          clusterId, dManager.getLocalNodeName(), serverOwner, requestId);
+      return;
     }
 
     try {
@@ -218,8 +254,8 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
         nonLocalServers.remove(dManager.getLocalNodeName());
 
         ODistributedServerLog.info(this, dManager.getLocalNodeName(), involvedServers.toString(),
-            ODistributedServerLog.DIRECTION.OUT, "Auto repairing cluster '%s' on servers %s (reqId=%s)...", clusterName,
-            involvedServers, requestId);
+            ODistributedServerLog.DIRECTION.OUT, "Auto repairing cluster '%s' (%d) on servers %s (reqId=%s)...", clusterName,
+            clusterId, involvedServers, requestId);
 
         // CREATE TX TASK
         final OClusterRepairInfoTask task = new OClusterRepairInfoTask(clusterId);
@@ -255,17 +291,16 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
     } catch (Throwable e) {
       ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Error executing auto repairing on cluster '%s' (error=%s, reqId=%s)", clusterName, e.toString(), requestId);
-      return false;
+      return;
     }
 
-    return true;
+    return;
   }
 
   private int repairClusterAtBlocks(final ODatabaseDocumentInternal db, final List<String> clusterNames, final int clusterId,
-      final Map<String, Object> repairInfoResult) {
+      final Map<String, Object> repairInfoResult) throws IOException {
     final OStorage storage = db.getStorage().getUnderlying();
-    final long[] localClusterRange = storage.getClusterDataRange(clusterId);
-    final long localEnd = localClusterRange[1];
+    final long localEnd = storage.getClusterById(clusterId).getNextPosition() - 1;
 
     final int batchMax = OGlobalConfiguration.DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH.getValueAsInteger();
 
@@ -293,6 +328,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
         for (long pos = remoteEnd + 1; pos <= localEnd; ++pos) {
           final ORecordId rid = new ORecordId(clusterId, pos);
           final ORawBuffer rawRecord = storage.readRecord(rid, null, true, null).getResult();
+          if (rawRecord == null)
+            continue;
+
           task.add(new OCreateRecordTask(rid, rawRecord.buffer, rawRecord.version, rawRecord.recordType));
 
           recordRepaired++;

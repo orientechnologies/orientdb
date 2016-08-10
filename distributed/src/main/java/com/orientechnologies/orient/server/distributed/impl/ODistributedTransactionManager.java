@@ -32,10 +32,7 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -234,10 +231,15 @@ public class ODistributedTransactionManager {
 
     } catch (OValidationException e) {
       throw e;
+    } catch (ODistributedRecordLockedException e) {
+      throw e;
     } catch (OConcurrentCreateException e) {
 
       // REQUEST A REPAIR OF THE CLUSTER BECAUSE IS NOT ALIGNED
       localDistributedDatabase.getDatabaseRapairer().repairCluster(e.getActualRid().getClusterId());
+      throw e;
+    } catch (OConcurrentModificationException e) {
+      localDistributedDatabase.getDatabaseRapairer().repairRecord((ORecordId) e.getRid());
       throw e;
 
     } catch (Exception e) {

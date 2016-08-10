@@ -178,6 +178,11 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
+  public long getNextPosition() throws IOException {
+    return ORID.CLUSTER_POS_INVALID;
+  }
+
+  @Override
   public String getFileName() {
     throw new OOfflineClusterException("Cannot return filename of offline cluster '" + name + "'");
   }
