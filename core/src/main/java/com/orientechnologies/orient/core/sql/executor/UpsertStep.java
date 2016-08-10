@@ -46,8 +46,7 @@ public class UpsertStep extends AbstractExecutionStep {
     }
 
     ODocument doc = new ODocument(commandTarget.getItem().getIdentifier().getStringValue());
-    OResultInternal result = new OResultInternal();
-    result.setElement(doc);
+    OUpdatableResult result = new OUpdatableResult(doc);
     if (initialFilter != null) {
       setContent(result, initialFilter);
     }
@@ -74,5 +73,20 @@ public class UpsertStep extends AbstractExecutionStep {
 
   @Override public void sendResult(Object o, Status status) {
 
+  }
+
+  @Override public String prettyPrint(int depth, int indent) {
+    String spaces = OExecutionStepInternal.getIndent(depth, indent);
+    StringBuilder result = new StringBuilder();
+    result.append(spaces);
+    result.append("+ INSERT (upsert, if needed)\n");
+    result.append(spaces);
+    result.append("  target: ");
+    result.append(commandTarget);
+    result.append("\n");
+    result.append(spaces);
+    result.append("  content: ");
+    result.append(initialFilter);
+    return result.toString();
   }
 }

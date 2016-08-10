@@ -517,6 +517,80 @@ public class OUpdateStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testUpsert1() {
+    String className = "testUpsert1";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.command("update " + className + " set foo = 'bar' upsert where name = 'name1'");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals((Object) 1L, item.getProperty("count"));
+    }
+    Assert.assertFalse(result.hasNext());
+
+    result = db.query("select from " + className);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      String name = item.getProperty("name");
+      Assert.assertNotNull(name);
+      if ("name1".equals(name)) {
+        Assert.assertEquals("bar", item.getProperty("foo"));
+      }else{
+        Assert.assertNull(item.getProperty("foo"));
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testUpsert2() {
+    String className = "testUpsert2";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.command("update " + className + " set foo = 'bar' upsert where name = 'name11'");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals((Object) 1L, item.getProperty("count"));
+    }
+    Assert.assertFalse(result.hasNext());
+
+    result = db.query("select from " + className);
+    for (int i = 0; i < 11; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      String name = item.getProperty("name");
+      Assert.assertNotNull(name);
+      if ("name11".equals(name)) {
+        Assert.assertEquals("bar", item.getProperty("foo"));
+      }else{
+        Assert.assertNull(item.getProperty("foo"));
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   private void printExecutionPlan(OTodoResultSet result) {
     printExecutionPlan(null, result);
   }

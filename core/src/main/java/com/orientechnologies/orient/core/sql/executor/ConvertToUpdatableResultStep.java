@@ -54,6 +54,9 @@ public class ConvertToUpdatableResultStep extends AbstractExecutionStep {
             }
           }
           nextItem = prevResult.next();
+          if (nextItem instanceof OUpdatableResult) {
+            break;
+          }
           if (nextItem.isElement()) {
             ORecord element = nextItem.getElement().getRecord();
             if (element != null && element instanceof ODocument) {
