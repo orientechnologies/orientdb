@@ -316,7 +316,7 @@ public class OUpdateStatementExecutionTest {
       Assert.assertTrue(item.getProperty("name").toString().endsWith("foo")); //test concatenate string to string
       Assert.assertEquals(8, item.getProperty("name").toString().length());
       Assert.assertEquals("bar", item.getProperty("surname")); //test concatenate null to string
-      Assert.assertEquals((Object)9L, item.getProperty("number")); //test sum numbers
+      Assert.assertEquals((Object) 9L, item.getProperty("number")); //test sum numbers
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -346,7 +346,7 @@ public class OUpdateStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertNotNull(item);
-      Assert.assertEquals((Object)(-1L), item.getProperty("number"));
+      Assert.assertEquals((Object) (-1L), item.getProperty("number"));
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -376,7 +376,7 @@ public class OUpdateStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertNotNull(item);
-      Assert.assertEquals((Object)20L, item.getProperty("number"));
+      Assert.assertEquals((Object) 20L, item.getProperty("number"));
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -406,7 +406,7 @@ public class OUpdateStatementExecutionTest {
       Assert.assertTrue(result.hasNext());
       OResult item = result.next();
       Assert.assertNotNull(item);
-      Assert.assertEquals((Object)2L, item.getProperty("number"));
+      Assert.assertEquals((Object) 2L, item.getProperty("number"));
     }
     Assert.assertFalse(result.hasNext());
     result.close();
@@ -479,6 +479,39 @@ public class OUpdateStatementExecutionTest {
       Assert.assertEquals("foo", item.getProperty("name"));
       Assert.assertEquals("bar", item.getProperty("secondName"));
       Assert.assertNull(item.getProperty("surname"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testMerge() {
+    String className = "testMerge";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.command("update " + className + " merge {'name': 'foo', 'secondName': 'bar'}");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals((Object) 10L, item.getProperty("count"));
+    }
+    Assert.assertFalse(result.hasNext());
+
+    result = db.query("select from " + className);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("foo", item.getProperty("name"));
+      Assert.assertEquals("bar", item.getProperty("secondName"));
+      Assert.assertTrue(item.getProperty("surname").toString().startsWith("surname"));
     }
     Assert.assertFalse(result.hasNext());
     result.close();
