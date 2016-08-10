@@ -22,6 +22,11 @@ public class OParenthesisExpression extends OMathExpression {
     super(p, id);
   }
 
+  public OParenthesisExpression(OExpression exp) {
+    super(-1);
+    this.expression = exp;
+  }
+
   /**
    * Accept the visitor.
    **/

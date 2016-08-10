@@ -3,7 +3,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 import java.util.Map;
@@ -101,51 +100,45 @@ public class OUpdateItem extends SimpleNode {
   public void applyUpdate(OResultInternal doc, OCommandContext ctx) {
     Object rightValue = right.execute(doc, ctx);
     if (leftModifier == null) {
-      applyOperation(doc, left, rightValue);
+      applyOperation(doc, left, rightValue, ctx);
     } else {
       Object val = doc.getProperty(left.getStringValue());
       leftModifier.setValue(doc, val, rightValue, ctx);
     }
   }
 
-  public void applyOperation(OResultInternal doc, OIdentifier attrName, Object rightValue) {
+  public void applyOperation(OResultInternal doc, OIdentifier attrName, Object rightValue, OCommandContext ctx) {
+
     switch (operator) {
     case OPERATOR_EQ:
       doc.setProperty(attrName.getStringValue(), rightValue);
       break;
     case OPERATOR_MINUSASSIGN:
-      //TODO
-      throw new UnsupportedOperationException("Implement this!");
+      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.MINUS));
+      break;
     case OPERATOR_PLUSASSIGN:
-      //TODO
-      throw new UnsupportedOperationException("Implement this!");
+      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.PLUS));
+      break;
     case OPERATOR_SLASHASSIGN:
-      //TODO
-      throw new UnsupportedOperationException("Implement this!");
+      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.SLASH));
+      break;
     case OPERATOR_STARASSIGN:
-      //TODO
-      throw new UnsupportedOperationException("Implement this!");
+      doc.setProperty(attrName.getStringValue(), calculateNewValue(doc, ctx, OMathExpression.Operator.STAR));
+      break;
     }
   }
 
-  private void applyOperation(ODocument doc, OIdentifier attrName, Object rightValue) {
-    switch (operator) {
-    case OPERATOR_EQ:
-      doc.setProperty(attrName.getStringValue(), rightValue);
-      break;
-    case OPERATOR_MINUSASSIGN:
-      //TODO
-      break;
-    case OPERATOR_PLUSASSIGN:
-      //TODO
-      break;
-    case OPERATOR_SLASHASSIGN:
-      //TODO
-      break;
-    case OPERATOR_STARASSIGN:
-      //TODO
-      break;
+  private Object calculateNewValue(OResultInternal doc, OCommandContext ctx, OMathExpression.Operator explicitOperator) {
+    OExpression leftEx = new OExpression(left.copy());
+    if (leftModifier != null) {
+      ((OBaseExpression) leftEx.mathExpression).modifier = leftModifier.copy();
     }
+    OMathExpression mathExp = new OMathExpression(-1);
+    mathExp.getChildExpressions().add(leftEx.getMathExpression());
+    mathExp.getChildExpressions().add(new OParenthesisExpression(right.copy()));
+    mathExp.getOperators().add(explicitOperator);
+    return mathExp.execute(doc, ctx);
   }
+
 }
 /* JavaCC - OriginalChecksum=df7444be87bba741316df8df0d653600 (do not edit this line) */

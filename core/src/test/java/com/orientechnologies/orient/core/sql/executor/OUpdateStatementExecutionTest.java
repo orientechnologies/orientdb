@@ -276,7 +276,7 @@ public class OUpdateStatementExecutionTest {
         tags.put("baz", "baz");
         Assert.assertEquals(tags, item.getProperty("tags"));
         found = true;
-      }else{
+      } else {
         Map<String, String> tags = new HashMap<>();
         tags.put("foo", "foo");
         tags.put("bar", "bar");
@@ -285,6 +285,129 @@ public class OUpdateStatementExecutionTest {
       }
     }
     Assert.assertTrue(found);
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testPlusAssign() {
+    String className = "testPlusAssign";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("number", 4L);
+      doc.save();
+    }
+    OTodoResultSet result = db.command("update " + className + " set name += 'foo', surname += 'bar', number += 5");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals((Object) 10L, item.getProperty("count"));
+    }
+    Assert.assertFalse(result.hasNext());
+
+    result = db.query("select from " + className);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertTrue(item.getProperty("name").toString().endsWith("foo")); //test concatenate string to string
+      Assert.assertEquals(8, item.getProperty("name").toString().length());
+      Assert.assertEquals("bar", item.getProperty("surname")); //test concatenate null to string
+      Assert.assertEquals((Object)9L, item.getProperty("number")); //test sum numbers
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testMinusAssign() {
+    String className = "testMinusAssign";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("number", 4L);
+      doc.save();
+    }
+    OTodoResultSet result = db.command("update " + className + " set number -= 5");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals((Object) 10L, item.getProperty("count"));
+    }
+    Assert.assertFalse(result.hasNext());
+
+    result = db.query("select from " + className);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals((Object)(-1L), item.getProperty("number"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testStarAssign() {
+    String className = "testStarAssign";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("number", 4L);
+      doc.save();
+    }
+    OTodoResultSet result = db.command("update " + className + " set number *= 5");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals((Object) 10L, item.getProperty("count"));
+    }
+    Assert.assertFalse(result.hasNext());
+
+    result = db.query("select from " + className);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals((Object)20L, item.getProperty("number"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test public void testSlashAssign() {
+    String className = "testSlashAssign";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("number", 4L);
+      doc.save();
+    }
+    OTodoResultSet result = db.command("update " + className + " set number /= 2");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals((Object) 10L, item.getProperty("count"));
+    }
+    Assert.assertFalse(result.hasNext());
+
+    result = db.query("select from " + className);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals((Object)2L, item.getProperty("number"));
+    }
     Assert.assertFalse(result.hasNext());
     result.close();
   }

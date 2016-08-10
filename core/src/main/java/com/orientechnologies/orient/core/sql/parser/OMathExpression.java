@@ -205,6 +205,10 @@ public class OMathExpression extends SimpleNode {
     this.childExpressions = childExpressions;
   }
 
+  public List<Operator> getOperators() {
+    return operators;
+  }
+
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     for (int i = 0; i < childExpressions.size(); i++) {
       if (i > 0) {
@@ -360,14 +364,15 @@ public class OMathExpression extends SimpleNode {
 
   /**
    * tests if current expression is an indexed function AND that function can be used on this target
-   * @param target the query target
-   * @param context the execution context
+   *
+   * @param target   the query target
+   * @param context  the execution context
    * @param operator
    * @param right
    * @return true if current expression is an indexed function AND that function can be used on this target, false otherwise
    */
-  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean allowsIndexedFunctionExecutionOnTarget(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     if (this.childExpressions.size() != 1) {
       return false;
     }
@@ -378,12 +383,13 @@ public class OMathExpression extends SimpleNode {
    * tests if current expression is an indexed function AND the function has also to be executed after the index search.
    * In some cases, the index search is accurate, so this condition can be excluded from further evaluation. In other cases
    * the result from the index is a superset of the expected result, so the function has to be executed anyway for further filtering
-   * @param target the query target
+   *
+   * @param target  the query target
    * @param context the execution context
    * @return true if current expression is an indexed function AND the function has also to be executed after the index search.
    */
-  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context, OBinaryCompareOperator operator,
-      Object right){
+  public boolean executeIndexedFunctionAfterIndexSearch(OFromClause target, OCommandContext context,
+      OBinaryCompareOperator operator, Object right) {
     if (this.childExpressions.size() != 1) {
       return false;
     }

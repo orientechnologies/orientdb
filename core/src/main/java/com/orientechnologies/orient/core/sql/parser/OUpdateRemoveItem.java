@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+
 import java.util.Map;
 
 public class OUpdateRemoveItem extends SimpleNode {
@@ -59,6 +62,10 @@ public class OUpdateRemoveItem extends SimpleNode {
     int result = left != null ? left.hashCode() : 0;
     result = 31 * result + (right != null ? right.hashCode() : 0);
     return result;
+  }
+
+  public void applyUpdate(OResultInternal result, OCommandContext ctx) {
+
   }
 }
 /* JavaCC - OriginalChecksum=72e240d3dc1196fdea69e8fdc2bd69ca (do not edit this line) */
