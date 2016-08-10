@@ -65,7 +65,7 @@ public class OUpdateRemoveItem extends SimpleNode {
   }
 
   public void applyUpdate(OResultInternal result, OCommandContext ctx) {
-
+    result.removeProperty(left.getStringValue());
   }
 }
 /* JavaCC - OriginalChecksum=72e240d3dc1196fdea69e8fdc2bd69ca (do not edit this line) */

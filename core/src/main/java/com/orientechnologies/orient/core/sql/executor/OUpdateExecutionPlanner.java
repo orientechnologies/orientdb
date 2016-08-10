@@ -59,8 +59,8 @@ public class OUpdateExecutionPlanner {
     handleOperations(result, ctx, this.operations);
     handleLock(result, ctx, this.lockRecord);
     handleSave(result, ctx);
-    handleResultForReturnBefore(result, ctx, this.returnBefore);
-    handleResultForReturnAfter(result, ctx, this.returnAfter);
+    handleResultForReturnBefore(result, ctx, this.returnBefore, returnProjection);
+    handleResultForReturnAfter(result, ctx, this.returnAfter, returnProjection);
     handleResultForReturnCount(result, ctx, this.returnCount);
     return result;
   }
@@ -81,16 +81,24 @@ public class OUpdateExecutionPlanner {
     }
   }
 
-  private void handleResultForReturnAfter(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnAfter) {
+  private void handleResultForReturnAfter(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnAfter,
+      OProjection returnProjection) {
     if (returnAfter) {
       //re-convert to normal step
       result.chain(new ConvertToResultInternalStep(ctx));
+      if (returnProjection != null) {
+        result.chain(new ProjectionCalculationStep(returnProjection, ctx));
+      }
     }
   }
 
-  private void handleResultForReturnBefore(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnBefore) {
+  private void handleResultForReturnBefore(OUpdateExecutionPlan result, OCommandContext ctx, boolean returnBefore,
+      OProjection returnProjection) {
     if (returnBefore) {
       result.chain(new UnwrapPreviousValueStep(ctx));
+      if (returnProjection != null) {
+        result.chain(new ProjectionCalculationStep(returnProjection, ctx));
+      }
     }
   }
 
@@ -149,9 +157,7 @@ public class OUpdateExecutionPlanner {
           throw new OCommandExecutionException("Cannot execute with UPDATE PUT/ADD/INCREMENT new executor: " + op);
         }
       }
-
     }
-    //TODO
   }
 
   private void handleTarget(OUpdateExecutionPlan result, OCommandContext ctx, OFromClause target, OWhereClause whereClause,

@@ -19,6 +19,10 @@ public class OResultInternal implements OResult {
     content.put(name, value);
   }
 
+  public void removeProperty(String name) {
+    content.remove(name);
+  }
+
   public <T> T getProperty(String name) {
     if (content.containsKey(name)) {
       return (T) content.get(name);

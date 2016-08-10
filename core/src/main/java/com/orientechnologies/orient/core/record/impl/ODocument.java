@@ -381,7 +381,41 @@ public class ODocument extends ORecordAbstract
         entry.setChanged(true);
       }
     }
+  }
 
+  public Object removeProperty(final String iFieldName) {
+    checkForLoading();
+    checkForFields();
+
+    if (ODocumentHelper.ATTRIBUTE_CLASS.equalsIgnoreCase(iFieldName)) {
+      setClassName(null);
+    } else if (ODocumentHelper.ATTRIBUTE_RID.equalsIgnoreCase(iFieldName)) {
+      _recordId = new ORecordId();
+    }
+
+    final ODocumentEntry entry = _fields.get(iFieldName);
+    if (entry == null)
+      return null;
+    Object oldValue = entry.value;
+    if (entry.exist() && _trackingChanges) {
+      // SAVE THE OLD VALUE IN A SEPARATE MAP
+      if (entry.original == null)
+        entry.original = entry.value;
+      entry.value = null;
+      entry.setExist(false);
+      entry.setChanged(true);
+    } else {
+      _fields.remove(iFieldName);
+    }
+    _fieldSize--;
+
+    removeCollectionChangeListener(entry, oldValue);
+    if (oldValue instanceof OIdentifiable)
+      unTrack((OIdentifiable) oldValue);
+    if (oldValue instanceof ORidBag)
+      ((ORidBag) oldValue).setOwner(null);
+    setDirty();
+    return oldValue;
   }
 
   protected static void validateField(ODocument iRecord, OImmutableProperty p) throws OValidationException {

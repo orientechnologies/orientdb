@@ -39,4 +39,8 @@ public class OUpdatableResult extends OResultInternal {
   @Override public void setProperty(String name, Object value) {
     element.setProperty(name, value);
   }
+
+  public void removeProperty(String name) {
+    element.removeProperty(name);
+  }
 }
