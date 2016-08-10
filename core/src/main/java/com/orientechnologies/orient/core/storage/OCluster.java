@@ -112,6 +112,8 @@ public interface OCluster {
 
   long getLastPosition() throws IOException;
 
+  long getNextPosition() throws IOException;
+
   String getFileName();
 
   int getId();

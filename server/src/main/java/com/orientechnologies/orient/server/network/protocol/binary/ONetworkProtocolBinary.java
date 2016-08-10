@@ -301,6 +301,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           sendError(connection, clientTxId, e);
           handleConnectionError(connection, e);
           afterOperationRequest(connection);
+          Thread.sleep(1000);
           sendShutdown();
         }
         return;

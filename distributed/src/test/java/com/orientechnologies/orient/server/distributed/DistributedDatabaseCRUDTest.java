@@ -24,7 +24,6 @@ public final class DistributedDatabaseCRUDTest {
    * 1. Create 51 Edge and Vertex. Edge: Test, Test1-Test50, Vertex: TestNode, Test1Node - Test50Node 2. Populate TestNode with 50
    * records with unique index for property1 and property2 3. Populate Test1Node - Test31Node with 500 records. Each record will
    * have edge to TestNode 4. Start a pool of threads to update one record in TestNode using both Java API and SQL
-   *
    ******************************************************************************************************/
   private String             dbName;
   private OrientGraphFactory graphReadFactory;
@@ -254,6 +253,8 @@ public final class DistributedDatabaseCRUDTest {
                     log("*******#################******* [" + id + "][ Retry: " + k + "] Failed to update after Exception ["
                         + ((tex != null) ? tex : "----") + "]for vertex with property4='" + propertyValue + "'");
                   }
+
+                  Thread.sleep(200);
                 }
               }
             } finally {
@@ -356,6 +357,7 @@ public final class DistributedDatabaseCRUDTest {
                         log("[" + id + "][" + k + "] Failed to update non OrientDB Exception [" + ex + "] for vertex [" + vtx1
                             + "]");
                       }
+                      Thread.sleep(200);
                     }
                   }
                   if (retry) {
@@ -386,6 +388,7 @@ public final class DistributedDatabaseCRUDTest {
   // ----------------------------------------------------------------------------------------------------------------
   // ---------------------------- Database Methods ---------------------------------------------------------------
   // ----------------------------------------------------------------------------------------------------------------
+
   /**
    * @return
    */
@@ -570,6 +573,7 @@ public final class DistributedDatabaseCRUDTest {
   public static void main(String args[]) {
     // DistributedDatabaseCRUDTest test = new DistributedDatabaseCRUDTest("testdb1");
     // test.createDBData();
+
     DistributedDatabaseCRUDTest test1 = new DistributedDatabaseCRUDTest("testdb", 2000);
     test1.promptTest();
     Runtime.getRuntime().halt(0);

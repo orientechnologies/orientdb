@@ -650,7 +650,7 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.7
    */
-  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY("distributed.conflictResolverRepairerCheckEvery", "Time (in ms) when the conflict resolver auto-repairer checks for records/cluster to repair", Long.class, 5000l, true),
+  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY("distributed.conflictResolverRepairerCheckEvery", "Time (in ms) when the conflict resolver auto-repairer checks for records/cluster to repair", Long.class, 0, true),
 
   /**
    * @Since 2.2.7

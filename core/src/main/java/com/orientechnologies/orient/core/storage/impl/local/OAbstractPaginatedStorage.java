@@ -1334,12 +1334,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
 
               final OCluster cluster = getClusterById(clusterId);
               OPhysicalPosition ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
-              positions.put(txEntry, ppos);
               rid.clusterId = cluster.getId();
 
-              if (rid.clusterPosition > -1 && rid.clusterPosition != ppos.clusterPosition) {
-                throw new OConcurrentCreateException(rid, new ORecordId(rid.clusterId, ppos.clusterPosition));
+              if (rid.clusterPosition > -1 ) {
+                // CREATE EMPTY RECORDS UNTIL THE POSITION IS REACHED. THIS IS THE CASE WHEN A SERVER IS OUT OF SYNC
+                // BECAUSE A TRANSACTION HAS BEEN ROLLED BACK BEFORE TO SEND THE REMOTE CREATES. SO THE OWNER NODE DELETED
+                // RECORD HAVING A HIGHER CLUSTER POSITION
+                while( rid.clusterPosition > ppos.clusterPosition){
+                  ppos = cluster.allocatePosition(ORecordInternal.getRecordType(rec));
+                }
+
+                if( rid.clusterPosition != ppos.clusterPosition)
+                  throw new OConcurrentCreateException(rid, new ORecordId(rid.clusterId, ppos.clusterPosition));
               }
+              positions.put(txEntry, ppos);
 
               rid.clusterPosition = ppos.clusterPosition;
 

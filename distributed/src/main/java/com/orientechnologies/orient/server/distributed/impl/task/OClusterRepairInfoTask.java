@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -65,11 +66,11 @@ public class OClusterRepairInfoTask extends OAbstractReplicatedTask {
     final ODistributedTxContext reqContext = ddb.registerTxContext(requestId);
 
     // LOCK THE ENTIRE CLUSTER
-    reqContext.lock(new ORecordId(clusterId, -1));
+    reqContext.lock(new ORecordId(clusterId, -1), OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong() * 3);
 
     // SEND BACK LAST RECORD POSITION
-    final long[] clusterRange = database.getStorage().getUnderlying().getClusterDataRange(clusterId);
-    return clusterRange[1];
+    final long nextPosition = database.getStorage().getUnderlying().getClusterById(clusterId).getNextPosition();
+    return nextPosition - 1;
   }
 
   @Override
@@ -80,6 +81,11 @@ public class OClusterRepairInfoTask extends OAbstractReplicatedTask {
   @Override
   public void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException {
     clusterId = in.readInt();
+  }
+
+  @Override
+  public long getDistributedTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong() * 6;
   }
 
   @Override

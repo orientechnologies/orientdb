@@ -1436,6 +1436,27 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
+
+  @Override
+  public long getNextPosition() throws IOException {
+    startOperation();
+    try {
+      atomicOperationsManager.acquireReadLock(this);
+      try {
+        acquireSharedLock();
+        try {
+          return clusterPositionMap.getNextPosition();
+        } finally {
+          releaseSharedLock();
+        }
+      } finally {
+        atomicOperationsManager.releaseReadLock(this);
+      }
+    } finally {
+      completeOperation();
+    }
+  }
+
   @Override
   public String getFileName() {
     startOperation();
