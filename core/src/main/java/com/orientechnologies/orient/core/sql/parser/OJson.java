@@ -99,7 +99,7 @@ public class OJson extends SimpleNode {
   private String getClassNameForDocument(OCommandContext ctx) {
     for (OJsonItem item : items) {
       String left = item.getLeftValue();
-      if (left.toLowerCase().equals("@class")) {
+      if (left != null && left.toLowerCase().equals("@class")) {
         return "" + item.right.execute((OResult) null, ctx);
       }
     }

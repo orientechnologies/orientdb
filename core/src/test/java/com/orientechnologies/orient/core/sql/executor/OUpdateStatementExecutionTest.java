@@ -451,6 +451,39 @@ public class OUpdateStatementExecutionTest {
     result.close();
   }
 
+  @Test public void testContent() {
+    String className = "testContent";
+    db.getMetadata().getSchema().createClass(className);
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("name", "name" + i);
+      doc.setProperty("surname", "surname" + i);
+      doc.save();
+    }
+
+    OTodoResultSet result = db.command("update " + className + " content {'name': 'foo', 'secondName': 'bar'}");
+    printExecutionPlan(result);
+    for (int i = 0; i < 1; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals((Object) 10L, item.getProperty("count"));
+    }
+    Assert.assertFalse(result.hasNext());
+
+    result = db.query("select from " + className);
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      Assert.assertEquals("foo", item.getProperty("name"));
+      Assert.assertEquals("bar", item.getProperty("secondName"));
+      Assert.assertNull(item.getProperty("surname"));
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
   private void printExecutionPlan(OTodoResultSet result) {
     printExecutionPlan(null, result);
   }
