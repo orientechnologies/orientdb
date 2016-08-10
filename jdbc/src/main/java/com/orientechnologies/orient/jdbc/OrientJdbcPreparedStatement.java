@@ -31,7 +31,22 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.Date;
+import java.sql.NClob;
+import java.sql.ParameterMetaData;
+import java.sql.PreparedStatement;
+import java.sql.Ref;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.RowId;
+import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
+import java.sql.SQLXML;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -71,7 +86,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
       documents.add(new ODocument().field("1", 1));
     } else {
       try {
-        query = new OSQLSynchQuery<ODocument>(sql);
+        query = new OSQLSynchQuery<ODocument>(mayCleanForSpark(sql));
         documents = database.query((OQuery<? extends Object>) query, params.values().toArray());
       } catch (OQueryParsingException e) {
         throw new SQLSyntaxErrorException("Error while parsing query", e);
@@ -94,6 +109,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   protected <RET> RET executeCommand(OCommandRequest query) throws SQLException {
 
     try {
+      database.activateOnCurrentThread();
       return database.command(query).execute(params.values().toArray());
     } catch (OException e) {
       throw new SQLException("Error while executing command", e);

@@ -5,7 +5,7 @@ import org.junit.Test;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
 
@@ -61,6 +61,20 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     ResultSet rs = stmt.getResultSet();
     assertThat(rs).isNotNull();
     assertThat(rs.getFetchSize()).isEqualTo(20);
+
+  }
+
+  @Test
+  public void shouldReturnReultSetWithSparkStyle() throws Exception {
+
+    //set spark "profile"
+
+    conn.getInfo().setProperty("spark", "true");
+    Statement stmt = conn.createStatement();
+
+    ResultSet rs = stmt.executeQuery("select \"stringKey\",\"published\" from item");
+
+    assertThat(rs.next()).isTrue();
 
   }
 
