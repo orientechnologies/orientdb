@@ -1050,7 +1050,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         } else if (value instanceof Throwable) {
 
           ODistributedServerLog.error(this, nodeName, r.getKey(), DIRECTION.IN, "Error on installing database delta %s in %s (%s)",
-              (Exception) value, databaseName, dbPath, value);
+              value, databaseName, dbPath, value);
 
         } else if (value instanceof ODistributedDatabaseChunk) {
 

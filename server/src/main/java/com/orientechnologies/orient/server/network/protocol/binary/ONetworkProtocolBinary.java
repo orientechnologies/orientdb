@@ -302,6 +302,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE) {
           sendError(connection, clientTxId, e);
           channel.flush();
+          if (!(e instanceof OTokenSecurityException))
+            OLogManager.instance().error(this, "Error executing request", e);
           OServerPluginHelper.invokeHandlerCallbackOnClientError(server, connection, e);
           afterOperationRequest(connection);
           Thread.sleep(1000);
