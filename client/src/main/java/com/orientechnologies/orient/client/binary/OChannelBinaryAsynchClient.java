@@ -460,11 +460,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     writeByte(iCommand);
     writeInt(nodeSession.getSessionId());
     if (nodeSession.getToken() != null) {
-      if (!session.hasConnection(this)) {
+//      if (!session.hasConnection(this) || true) {
         writeBytes(nodeSession.getToken());
-        session.addConnection(this);
-      } else
-        writeBytes(new byte[] {});
+//        session.addConnection(this);
+//      } else
+//        writeBytes(new byte[] {});
     }
   }
 }

@@ -157,11 +157,12 @@ public class OClientConnection {
       if (!protocols.contains(protocol))
         throw new OTokenSecurityException("No valid session found, provide a token");
     } else {
-      // Active This Optimization but it need a periodic check on session
-      /*
-       * if(tokenBytes != null && tokenBytes.length > 0){ if(tokenBytes.equals(tokenFromNetwork)) //SAME SESSION AND TOKEN DO
-       * NOTHING return; }
-       */
+      //IF the byte from the network are the same of the one i have a don't check them
+      if (tokenBytes != null && tokenBytes.length > 0) {
+        if (tokenBytes.equals(tokenFromNetwork)) // SAME SESSION AND TOKEN DO
+          return;
+      }
+      
       OToken token = null;
       if (tokenFromNetwork != null)
         token = handler.parseBinaryToken(tokenFromNetwork);
