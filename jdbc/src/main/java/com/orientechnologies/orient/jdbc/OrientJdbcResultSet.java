@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -305,7 +305,9 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       return (Boolean) document.field(columnLabel, OType.BOOLEAN);
     } catch (Exception e) {
-      throw new SQLException("An error occurred during the retrieval of the boolean value at column '" + columnLabel + "'", e);
+      throw new SQLException(
+          "An error occurred during the retrieval of the boolean value at column '" + columnLabel + "' ---> " + document.toJSON(),
+          e);
     }
 
   }
@@ -594,6 +596,7 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public String getString(String columnLabel) throws SQLException {
+
     if ("@rid".equals(columnLabel))
       return document.getIdentity().toString();
     if ("@class".equals(columnLabel))

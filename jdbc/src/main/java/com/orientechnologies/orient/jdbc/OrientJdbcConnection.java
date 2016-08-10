@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,23 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.NClob;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLClientInfoException;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -47,6 +63,7 @@ public class OrientJdbcConnection implements Connection {
   private ODatabase.STATUS  status;
 
   public OrientJdbcConnection(final String jdbcdDUrl, final Properties info) {
+
     this.dbUrl = jdbcdDUrl.replace("jdbc:orient:", "");
 
     this.info = info;
@@ -68,6 +85,7 @@ public class OrientJdbcConnection implements Connection {
   }
 
   public Statement createStatement() throws SQLException {
+
     return new OrientJdbcStatement(this);
   }
 
@@ -309,5 +327,9 @@ public class OrientJdbcConnection implements Connection {
 
   public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
     OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT.setValue(arg1);
+  }
+
+  public Properties getInfo() {
+    return info;
   }
 }

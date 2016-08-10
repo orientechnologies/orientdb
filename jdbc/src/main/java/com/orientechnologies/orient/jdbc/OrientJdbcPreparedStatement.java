@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,22 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.Date;
+import java.sql.NClob;
+import java.sql.ParameterMetaData;
+import java.sql.PreparedStatement;
+import java.sql.Ref;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.RowId;
+import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
+import java.sql.SQLXML;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -65,13 +80,16 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
 
   @SuppressWarnings("unchecked")
   public ResultSet executeQuery() throws SQLException {
+
     if (sql.equalsIgnoreCase("select 1")) {
       // OPTIMIZATION
       documents = new ArrayList<ODocument>();
       documents.add(new ODocument().field("1", 1));
     } else {
       try {
-        query = new OSQLSynchQuery<ODocument>(sql);
+        ;
+
+        query = new OSQLSynchQuery<ODocument>(mayCleanForSpark(sql));
         documents = database.query((OQuery<? extends Object>) query, params.values().toArray());
       } catch (OQueryParsingException e) {
         throw new SQLSyntaxErrorException("Error while parsing query", e);
@@ -94,6 +112,7 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   protected <RET> RET executeCommand(OCommandRequest query) throws SQLException {
 
     try {
+      database.activateOnCurrentThread();
       return database.command(query).execute(params.values().toArray());
     } catch (OException e) {
       throw new SQLException("Error while executing command", e);
@@ -186,6 +205,8 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   public void addBatch() throws SQLException {
+
+    //    batches.add(sql);
     throw new UnsupportedOperationException();
   }
 

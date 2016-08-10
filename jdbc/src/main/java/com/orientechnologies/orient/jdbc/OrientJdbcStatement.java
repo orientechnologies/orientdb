@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * 	http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,20 +19,25 @@ package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLSyntaxErrorException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
-import static java.util.Collections.emptyList;
+import static java.lang.Boolean.*;
+import static java.util.Collections.*;
 
 /**
  * @author Roberto Franchini (CELI Srl - franchini@celi.it)
@@ -44,16 +49,17 @@ public class OrientJdbcStatement implements Statement {
   protected final ODatabaseDocument    database;
 
   // protected OCommandSQL query;
-  protected OCommandRequest            query;
-  protected List<ODocument>            documents;
-  protected boolean                    closed;
-  protected Object                     rawResult;
-  protected OrientJdbcResultSet        resultSet;
-  protected List<String>               batches;
+  protected OCommandRequest     query;
+  protected List<ODocument>     documents;
+  protected boolean             closed;
+  protected Object              rawResult;
+  protected OrientJdbcResultSet resultSet;
+  protected List<String>        batches;
 
-  protected int                        resultSetType;
-  protected int                        resultSetConcurrency;
-  protected int                        resultSetHoldability;
+  protected int        resultSetType;
+  protected int        resultSetConcurrency;
+  protected int        resultSetHoldability;
+  protected Properties info;
 
   public OrientJdbcStatement(final OrientJdbcConnection iConnection) {
     this(iConnection, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
@@ -85,10 +91,12 @@ public class OrientJdbcStatement implements Statement {
     this.resultSetType = resultSetType;
     this.resultSetConcurrency = resultSetConcurrency;
     this.resultSetHoldability = resultSetHoldability;
+    info = connection.getInfo();
   }
 
   @Override
   public boolean execute(final String sql) throws SQLException {
+
     if ("".equals(sql))
       return false;
 
@@ -96,7 +104,7 @@ public class OrientJdbcStatement implements Statement {
       documents = new ArrayList<ODocument>(1);
       documents.add(new ODocument().field("1", 1));
     } else {
-      query = new OCommandSQL(sql);
+      query = new OCommandSQL(mayCleanForSpark(sql));
       try {
         rawResult = executeCommand(query);
         if (rawResult instanceof List<?>) {
@@ -353,6 +361,18 @@ public class OrientJdbcStatement implements Statement {
 
   public boolean isCloseOnCompletion() throws SQLException {
     return false;
+  }
+
+  protected String mayCleanForSpark(String sql) {
+    //SPARK support
+    if (parseBoolean(info.getProperty("spark", "false"))) {
+      String sqlToClean = sql.toLowerCase();
+      if (sqlToClean.endsWith("where 1=0")) {
+        sqlToClean = sqlToClean.replace("where 1=0", " limit 1");
+      }
+      return sqlToClean.replace('"', ' ');
+    }
+    return sql;
   }
 
 }
