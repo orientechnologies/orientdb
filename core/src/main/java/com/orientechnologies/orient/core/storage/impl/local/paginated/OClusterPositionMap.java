@@ -765,7 +765,7 @@ public class OClusterPositionMap extends ODurableComponent {
             OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false, 1);
             cacheEntry.acquireSharedLock();
             try {
-              OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, getChanges(atomicOperation, cacheEntry));
+              OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry);
               final int bucketSize = bucket.getSize();
               return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + bucketSize;
             } finally {
