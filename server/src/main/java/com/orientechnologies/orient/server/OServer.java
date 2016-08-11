@@ -1294,4 +1294,7 @@ public class OServer {
     return dbs;
   }
   
+  public void restore(String name, String path) {
+    databases.restore(name, path);
+  }
 }

@@ -1169,14 +1169,21 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     checkServerAccess("database.create", connection);
     checkStorageExistence(dbName);
-//    connection.setDatabase(getDatabaseInstance(dbName, dbType, storageType));
 
-//    createDatabase(connection.getDatabase(), null, null, backupPath);
-    if(server.existsDatabase(dbName))
+    if (server.existsDatabase(dbName))
       throw new ODatabaseException("Database named '" + dbName + "' already exists");
-    server.createDatabase(dbName, DatabaseType.valueOf(storageType.toUpperCase()), null);
-    //TODO: it should be here and additional check for open
+    if (backupPath != null && !"".equals(backupPath.trim())) {
+      server.restore(dbName, backupPath);
+      // Just for logging
+      storageType = "plocal";
+    } else {
+      server.createDatabase(dbName, DatabaseType.valueOf(storageType.toUpperCase()), null);
+    }
+    OLogManager.instance().info(this, "Created database '%s' of type '%s'", dbName, storageType);
+
+    //TODO: it should be here an additional check for open with the right user
     connection.setDatabase(server.openDatabase(dbName, connection.getData().serverUsername, null, connection.getData(),true));
+    
     beginResponse();
     try {
       sendOk(connection, clientTxId);
@@ -2568,38 +2575,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       if (!(stg instanceof OStorageProxy) && stg.getName().equalsIgnoreCase(iDatabaseName) && stg.exists())
         throw new ODatabaseException("Database named '" + iDatabaseName + "' already exists: " + stg);
     }
-  }
-
-  protected ODatabaseDocumentInternal createDatabase(final ODatabaseDocumentInternal iDatabase, String dbUser,
-      final String dbPasswd, final String backupPath) {
-    if (iDatabase.exists())
-      throw new ODatabaseException("Database '" + iDatabase.getURL() + "' already exists");
-
-    if (backupPath == null)
-      iDatabase.create();
-    else
-      iDatabase.create(backupPath);
-
-    if (dbUser != null) {
-
-      OUser oUser = iDatabase.getMetadata().getSecurity().getUser(dbUser);
-      if (oUser == null) {
-        iDatabase.getMetadata().getSecurity().createUser(dbUser, dbPasswd, new String[] { ORole.ADMIN });
-      } else {
-        oUser.setPassword(dbPasswd);
-        oUser.save();
-      }
-    }
-
-    OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getName(),
-        iDatabase.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage
-            ? iDatabase.getStorage().getUnderlying().getType() : "memory");
-
-    // if (iDatabase.getStorage() instanceof OStorageLocal)
-    // // CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
-    // iDatabase.close();
-
-    return iDatabase;
   }
 
   protected int deleteRecord(final ODatabaseDocument iDatabase, final ORID rid, final int version) {

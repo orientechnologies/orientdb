@@ -172,6 +172,20 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
   }
 
+  public synchronized void restore(String name, String path) {
+    if (!exists(name, null, null)) {
+      try {
+        OAbstractPaginatedStorage storage;
+        storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
+        storage.restoreFromIncrementalBackup(path);
+        storages.put(name, storage);
+      } catch (Exception e) {
+        throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
+      }
+    } else
+      throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
+  }
+  
   private void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
     storage.create(config.getConfigurations());
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
