@@ -1183,7 +1183,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     //TODO: it should be here an additional check for open with the right user
     connection.setDatabase(server.openDatabase(dbName, connection.getData().serverUsername, null, connection.getData(),true));
-    
+
     beginResponse();
     try {
       sendOk(connection, clientTxId);

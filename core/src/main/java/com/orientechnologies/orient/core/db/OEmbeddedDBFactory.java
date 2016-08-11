@@ -95,7 +95,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
     }
   }
-  
+
   @Override
   public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
     try {
@@ -173,12 +173,30 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
         storage.restoreFromIncrementalBackup(path);
         storages.put(name, storage);
       } catch (Exception e) {
-        throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
+        throw OException.wrapException(new ODatabaseException("Cannot restore database '" + name + "'"), e);
       }
     } else
       throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
   }
   
+  private void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
+    storage.create(config.getConfigurations());
+    ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
+    if (serializer.toString().equals("ORecordDocument2csv"))
+      throw new ODatabaseException("Impossible to create the database with ORecordDocument2csv serializer");
+    storage.getConfiguration().setRecordSerializer(serializer.toString());
+    storage.getConfiguration().setRecordSerializerVersion(serializer.getCurrentVersion());
+    // since 2.1 newly created databases use strict SQL validation by default
+    storage.getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
+
+    storage.getConfiguration().update();
+
+    try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
+      embedded.setSerializer(serializer);
+      embedded.internalCreate(config);
+    }
+  }
+
   private void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
     storage.create(config.getConfigurations());
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
