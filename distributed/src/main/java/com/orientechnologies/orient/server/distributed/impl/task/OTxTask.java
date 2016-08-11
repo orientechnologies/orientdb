@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
@@ -102,7 +103,7 @@ public class OTxTask extends OAbstract2pcTask {
 
       Collections.sort(rids2Lock);
       for (ORecordId rid : rids2Lock)
-        reqContext.lock(rid);
+        reqContext.lock(rid, getRecordLock());
 
       for (OAbstractRecordReplicatedTask task : tasks) {
         final Object taskResult;
@@ -167,6 +168,10 @@ public class OTxTask extends OAbstract2pcTask {
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
           "Transaction completed db=%s (reqId=%s)...", database.getName(), requestId);
     }
+  }
+
+  protected long getRecordLock() {
+    return OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong();
   }
 
   @Override
