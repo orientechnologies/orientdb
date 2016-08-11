@@ -54,13 +54,13 @@ public class OCompleted2pcTask extends OAbstractReplicatedTask {
   private int[]                 partitionKey;
 
   public OCompleted2pcTask() {
-    partitionKey = PK;
+    partitionKey = ALL;
   }
 
   public OCompleted2pcTask(final ODistributedRequestId iRequestId, final boolean iSuccess, final int[] partitionKey) {
     this.requestId = iRequestId;
     this.success = iSuccess;
-    this.partitionKey = partitionKey != null ? partitionKey : PK;
+    this.partitionKey = partitionKey != null ? partitionKey : ALL;
   }
 
   /**

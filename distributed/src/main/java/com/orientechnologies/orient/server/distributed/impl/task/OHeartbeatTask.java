@@ -116,11 +116,6 @@ public class OHeartbeatTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public int[] getPartitionKey() {
-    return ANY;
-  }
-
-  @Override
   public String getName() {
     return "heartbeat";
   }

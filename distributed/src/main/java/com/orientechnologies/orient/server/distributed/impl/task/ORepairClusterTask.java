@@ -106,11 +106,6 @@ public class ORepairClusterTask extends OTxTask {
   }
 
   @Override
-  public int[] getPartitionKey() {
-    return ANY;
-  }
-
-  @Override
   public void toStream(final DataOutput out) throws IOException {
     super.toStream(out);
     out.writeInt(clusterId);

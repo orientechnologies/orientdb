@@ -51,11 +51,6 @@ public class ORepairRecordsTask extends OTxTask {
   }
 
   @Override
-  public int[] getPartitionKey() {
-    return ANY;
-  }
-
-  @Override
   public RESULT_STRATEGY getResultStrategy() {
     return RESULT_STRATEGY.UNION;
   }
