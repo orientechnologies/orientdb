@@ -21,7 +21,7 @@ public class OUpdateStatementExecutionTest {
 
   @BeforeClass public static void beforeClass() {
 
-    db = new ODatabaseDocumentTx("memory:OSelectStatementExecutionTest");
+    db = new ODatabaseDocumentTx("memory:OUpdateStatementExecutionTest");
     db.create();
   }
 

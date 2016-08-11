@@ -140,5 +140,36 @@ public class OUpdateItem extends SimpleNode {
     return mathExp.execute(doc, ctx);
   }
 
+  public OIdentifier getLeft() {
+    return left;
+  }
+
+  public void setLeft(OIdentifier left) {
+    this.left = left;
+  }
+
+  public OModifier getLeftModifier() {
+    return leftModifier;
+  }
+
+  public void setLeftModifier(OModifier leftModifier) {
+    this.leftModifier = leftModifier;
+  }
+
+  public int getOperator() {
+    return operator;
+  }
+
+  public void setOperator(int operator) {
+    this.operator = operator;
+  }
+
+  public OExpression getRight() {
+    return right;
+  }
+
+  public void setRight(OExpression right) {
+    this.right = right;
+  }
 }
 /* JavaCC - OriginalChecksum=df7444be87bba741316df8df0d653600 (do not edit this line) */

@@ -1770,7 +1770,6 @@ OInsertBody InsertBody():
             |
             ( <CONTENT> jjtThis.content = Json() )
          )
-         //[ <RETURN> jjtThis.returnProjection = Projection() ]
     )
     { return jjtThis; }
 }

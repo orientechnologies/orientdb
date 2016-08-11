@@ -2,25 +2,20 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.OBlob;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * @author Luigi Dell'Aquila
+ * Created by luigidellaquila on 11/08/16.
  */
-public class SaveElementStep extends AbstractExecutionStep {
-
-  private final OIdentifier cluster;
-
-  public SaveElementStep(OCommandContext ctx, OIdentifier cluster) {
+public class CopyDocumentStep extends AbstractExecutionStep {
+  public CopyDocumentStep(OInsertExecutionPlan result, OCommandContext ctx) {
     super(ctx);
-    this.cluster = cluster;
-  }
-
-  public SaveElementStep(OCommandContext ctx) {
-    this(ctx, null);
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
@@ -31,15 +26,25 @@ public class SaveElementStep extends AbstractExecutionStep {
       }
 
       @Override public OResult next() {
-        OResult result = upstream.next();
-        if (result.isElement()) {
-          if (cluster == null) {
-            ctx.getDatabase().save(result.getElement());
-          } else {
-            ctx.getDatabase().save(result.getElement(), cluster.getStringValue());
+        OResult toCopy = upstream.next();
+        ORecord resultDoc = null;
+        if (toCopy.isElement()) {
+          ORecord docToCopy = toCopy.getElement().getRecord();
+          if (docToCopy instanceof ODocument) {
+            resultDoc = ((ODocument) docToCopy).copy();
+            resultDoc.getIdentity().reset();
+            ((ODocument) resultDoc).setClassName(null);
+            resultDoc.setDirty();
+          } else if (docToCopy instanceof OBlob) {
+            ORecordBytes newBlob = ((ORecordBytes) docToCopy).copy();
+            OResultInternal result = new OResultInternal();
+            result.setElement(newBlob);
+            return result;
           }
+        } else {
+          resultDoc = toCopy.toElement().getRecord();
         }
-        return result;
+        return new OUpdatableResult((ODocument) resultDoc);
       }
 
       @Override public void close() {
@@ -68,12 +73,7 @@ public class SaveElementStep extends AbstractExecutionStep {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
-    result.append("+ SAVE RECORD");
-    if (cluster != null) {
-      result.append("\n");
-      result.append(spaces);
-      result.append("  on cluster " + cluster);
-    }
+    result.append("+ COPY DOCUMENT");
     return result.toString();
   }
 }

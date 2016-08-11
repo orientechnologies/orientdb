@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.sql.parser.OIdentifier;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Map;
 import java.util.Optional;
@@ -10,40 +10,38 @@ import java.util.Optional;
 /**
  * @author Luigi Dell'Aquila
  */
-public class SaveElementStep extends AbstractExecutionStep {
+public class CreateRecordStep extends AbstractExecutionStep {
+  int created = 0;
+  int total   = 0;
 
-  private final OIdentifier cluster;
-
-  public SaveElementStep(OCommandContext ctx, OIdentifier cluster) {
+  public CreateRecordStep(OCommandContext ctx, int total) {
     super(ctx);
-    this.cluster = cluster;
-  }
-
-  public SaveElementStep(OCommandContext ctx) {
-    this(ctx, null);
+    this.total = total;
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
-    OTodoResultSet upstream = getPrev().get().syncPull(ctx, nRecords);
+
     return new OTodoResultSet() {
+      int locallyCreated = 0;
+
       @Override public boolean hasNext() {
-        return upstream.hasNext();
+        if (locallyCreated >= nRecords) {
+          return false;
+        }
+        return created < total;
       }
 
       @Override public OResult next() {
-        OResult result = upstream.next();
-        if (result.isElement()) {
-          if (cluster == null) {
-            ctx.getDatabase().save(result.getElement());
-          } else {
-            ctx.getDatabase().save(result.getElement(), cluster.getStringValue());
-          }
+        if (!hasNext()) {
+          throw new IllegalStateException();
         }
-        return result;
+        created++;
+        locallyCreated++;
+        return new OUpdatableResult((ODocument) ctx.getDatabase().newInstance());
       }
 
       @Override public void close() {
-        upstream.close();
+
       }
 
       @Override public Optional<OExecutionPlan> getExecutionPlan() {
@@ -68,11 +66,12 @@ public class SaveElementStep extends AbstractExecutionStep {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
-    result.append("+ SAVE RECORD");
-    if (cluster != null) {
-      result.append("\n");
-      result.append(spaces);
-      result.append("  on cluster " + cluster);
+    result.append("+ CREATE EMPTY RECORDS\n");
+    result.append(spaces);
+    if (total == 1) {
+      result.append("  1 record");
+    } else {
+      result.append("  " + total + " record");
     }
     return result.toString();
   }

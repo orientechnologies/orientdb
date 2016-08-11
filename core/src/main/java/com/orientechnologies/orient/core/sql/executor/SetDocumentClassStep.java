@@ -2,25 +2,24 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.parser.OIdentifier;
 
 import java.util.Map;
 import java.util.Optional;
 
 /**
+ * Assigns a class to documents coming from upstream
+ *
  * @author Luigi Dell'Aquila
  */
-public class SaveElementStep extends AbstractExecutionStep {
+public class SetDocumentClassStep extends AbstractExecutionStep {
+  private final String targetClass;
 
-  private final OIdentifier cluster;
-
-  public SaveElementStep(OCommandContext ctx, OIdentifier cluster) {
+  public SetDocumentClassStep(OIdentifier targetClass, OCommandContext ctx) {
     super(ctx);
-    this.cluster = cluster;
-  }
-
-  public SaveElementStep(OCommandContext ctx) {
-    this(ctx, null);
+    this.targetClass = targetClass.getStringValue();
   }
 
   @Override public OTodoResultSet syncPull(OCommandContext ctx, int nRecords) throws OTimeoutException {
@@ -33,10 +32,15 @@ public class SaveElementStep extends AbstractExecutionStep {
       @Override public OResult next() {
         OResult result = upstream.next();
         if (result.isElement()) {
-          if (cluster == null) {
-            ctx.getDatabase().save(result.getElement());
-          } else {
-            ctx.getDatabase().save(result.getElement(), cluster.getStringValue());
+          OIdentifiable element = result.getElement().getRecord();
+          if (element instanceof ODocument) {
+            ODocument doc = (ODocument) element;
+            doc.setClassName(targetClass);
+            if (!(result instanceof OResultInternal)) {
+              result = new OUpdatableResult(doc);
+            } else {
+              ((OResultInternal) result).setElement(doc);
+            }
           }
         }
         return result;
@@ -68,12 +72,10 @@ public class SaveElementStep extends AbstractExecutionStep {
     String spaces = OExecutionStepInternal.getIndent(depth, indent);
     StringBuilder result = new StringBuilder();
     result.append(spaces);
-    result.append("+ SAVE RECORD");
-    if (cluster != null) {
-      result.append("\n");
-      result.append(spaces);
-      result.append("  on cluster " + cluster);
-    }
+    result.append("+ SET CLASS\n");
+    result.append(spaces);
+    result.append("  ");
+    result.append(this.targetClass);
     return result.toString();
   }
 }

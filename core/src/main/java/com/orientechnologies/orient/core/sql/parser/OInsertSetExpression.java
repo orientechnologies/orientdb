@@ -23,4 +23,13 @@ public class OInsertSetExpression {
     result.right = right == null ? null : right.copy();
     return result;
   }
+
+  public OIdentifier getLeft() {
+    return left;
+  }
+
+  public OExpression getRight() {
+    return right;
+  }
 }
+

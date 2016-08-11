@@ -12,11 +12,8 @@ public class OInsertBody extends SimpleNode {
   protected List<List<OExpression>>    valueExpressions;
   protected List<OInsertSetExpression> setExpressions;
 
-  protected OSelectStatement selectStatement;
-  protected boolean          selectInParentheses;
   protected OJson            content;
 
-  protected OProjection returnProjection;
 
   public OInsertBody(int id) {
     super(id);
@@ -81,26 +78,11 @@ public class OInsertBody extends SimpleNode {
       }
     }
 
-    if (selectStatement != null) {
-      builder.append("FROM ");
-      if (selectInParentheses) {
-        builder.append("( ");
-      }
-      selectStatement.toString(params, builder);
-      if (selectInParentheses) {
-        builder.append(")");
-      }
-    }
-
     if (content != null) {
       builder.append("CONTENT ");
       content.toString(params, builder);
     }
 
-    if (returnProjection != null) {
-      builder.append(" RETURN ");
-      returnProjection.toString(params, builder);
-    }
   }
 
   public OInsertBody copy() {
@@ -111,10 +93,7 @@ public class OInsertBody extends SimpleNode {
         valueExpressions.stream().map(sub -> sub.stream().map(x -> x.copy()).collect(Collectors.toList()))
             .collect(Collectors.toList());
     result.setExpressions = setExpressions == null ? null : setExpressions.stream().map(x -> x.copy()).collect(Collectors.toList());
-    result.selectStatement = selectStatement == null ? null : selectStatement.copy();
-    result.selectInParentheses = selectInParentheses;
     result.content = content == null ? null : content.copy();
-    result.returnProjection = returnProjection == null ? null : returnProjection.copy();
     return result;
   }
 
@@ -126,19 +105,13 @@ public class OInsertBody extends SimpleNode {
 
     OInsertBody that = (OInsertBody) o;
 
-    if (selectInParentheses != that.selectInParentheses)
-      return false;
     if (identifierList != null ? !identifierList.equals(that.identifierList) : that.identifierList != null)
       return false;
     if (valueExpressions != null ? !valueExpressions.equals(that.valueExpressions) : that.valueExpressions != null)
       return false;
     if (setExpressions != null ? !setExpressions.equals(that.setExpressions) : that.setExpressions != null)
       return false;
-    if (selectStatement != null ? !selectStatement.equals(that.selectStatement) : that.selectStatement != null)
-      return false;
     if (content != null ? !content.equals(that.content) : that.content != null)
-      return false;
-    if (returnProjection != null ? !returnProjection.equals(that.returnProjection) : that.returnProjection != null)
       return false;
 
     return true;
@@ -148,11 +121,24 @@ public class OInsertBody extends SimpleNode {
     int result = identifierList != null ? identifierList.hashCode() : 0;
     result = 31 * result + (valueExpressions != null ? valueExpressions.hashCode() : 0);
     result = 31 * result + (setExpressions != null ? setExpressions.hashCode() : 0);
-    result = 31 * result + (selectStatement != null ? selectStatement.hashCode() : 0);
-    result = 31 * result + (selectInParentheses ? 1 : 0);
     result = 31 * result + (content != null ? content.hashCode() : 0);
-    result = 31 * result + (returnProjection != null ? returnProjection.hashCode() : 0);
     return result;
+  }
+
+  public List<OIdentifier> getIdentifierList() {
+    return identifierList;
+  }
+
+  public List<List<OExpression>> getValueExpressions() {
+    return valueExpressions;
+  }
+
+  public List<OInsertSetExpression> getSetExpressions() {
+    return setExpressions;
+  }
+
+  public OJson getContent() {
+    return content;
   }
 }
 /* JavaCC - OriginalChecksum=7d2079a41a1fc63a812cb679e729b23a (do not edit this line) */

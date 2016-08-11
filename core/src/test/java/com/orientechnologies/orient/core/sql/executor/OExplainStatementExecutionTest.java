@@ -10,14 +10,14 @@ import org.junit.Test;
 import java.util.Optional;
 
 /**
- * Created by luigidellaquila on 07/07/16.
+ * @author Luigi Dell'Aquila
  */
 public class OExplainStatementExecutionTest {
   static ODatabaseDocument db;
 
   @BeforeClass public static void beforeClass() {
 
-    db = new ODatabaseDocumentTx("memory:OSelectStatementExecutionTest");
+    db = new ODatabaseDocumentTx("memory:OExplainStatementExecutionTest");
     db.create();
   }
 

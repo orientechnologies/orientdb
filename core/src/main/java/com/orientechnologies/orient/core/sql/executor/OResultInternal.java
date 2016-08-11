@@ -51,7 +51,20 @@ public class OResultInternal implements OResult {
   }
 
   @Override public OIdentifiable toElement() {
-    throw new UnsupportedOperationException("Implement OResultInternal.toElement()!");
+    if (isElement()) {
+      return getElement();
+    }
+    ODocument doc = new ODocument();
+    for (String s : getPropertyNames()) {
+      if (s != null && (s.equalsIgnoreCase("@rid") || s.equalsIgnoreCase("@version"))) {
+        continue;
+      } else if (s != null && s.equalsIgnoreCase("@class")) {
+        doc.setClassName(getProperty(s));
+      } else {
+        doc.setProperty(s, getProperty(s));
+      }
+    }
+    return doc;
   }
 
   public void setElement(OIdentifiable element) {
