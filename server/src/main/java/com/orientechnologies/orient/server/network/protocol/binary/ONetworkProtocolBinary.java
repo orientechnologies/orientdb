@@ -1142,7 +1142,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     checkServerAccess("database.exists", connection);
 
-    boolean result = server.existDatabase(dbName);
+    boolean result = server.existsDatabase(dbName);
 
     beginResponse();
     try {
@@ -1172,9 +1172,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 //    connection.setDatabase(getDatabaseInstance(dbName, dbType, storageType));
 
 //    createDatabase(connection.getDatabase(), null, null, backupPath);
-    if(server.getDatabases().exists(dbName, null, null))
+    if(server.existsDatabase(dbName))
       throw new ODatabaseException("Database named '" + dbName + "' already exists");
-    server.getDatabases().create(dbName, null, null, DatabaseType.valueOf(storageType.toUpperCase()));
+    server.createDatabase(dbName, DatabaseType.valueOf(storageType.toUpperCase()), null);
+    //TODO: it should be here and additional check for open
+    connection.setDatabase(server.openDatabase(dbName, connection.getData().serverUsername, null, connection.getData(),true));
     beginResponse();
     try {
       sendOk(connection, clientTxId);
@@ -2458,10 +2460,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   private void listDatabases(OClientConnection connection) throws IOException {
     checkServerAccess("server.listDatabases", connection);
     final ODocument result = new ODocument();
-    Set<String> dbs = server.getDatabases().listDatabases(null, null);
+    Set<String> dbs = server.listDatabases();
     Map<String, String> toSend = new HashMap<String, String>();
     for (String dbName : dbs) {
-      if (!dbName.equals("OSystem"))
         toSend.put(dbName, dbName);
     }
     result.field("databases", toSend);

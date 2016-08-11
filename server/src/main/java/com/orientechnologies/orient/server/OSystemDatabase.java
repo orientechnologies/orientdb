@@ -156,7 +156,7 @@ public class OSystemDatabase {
 
         OrientDBConfig config = OrientDBConfig.builder().addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false)
             .addConfig(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 1).build();
-        server.getDatabases().create(SYSTEM_DB_NAME, null, null, DatabaseType.PLOCAL, config);
+        server.createDatabase(SYSTEM_DB_NAME, DatabaseType.PLOCAL, config);
       }
 
     } finally {
@@ -189,6 +189,6 @@ public class OSystemDatabase {
   }
 
   public boolean exists() {
-    return server.existDatabase(getSystemDatabaseName());
+    return server.existsDatabase(getSystemDatabaseName());
   }
 }

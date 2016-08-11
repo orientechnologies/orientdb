@@ -72,12 +72,12 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       String url = getStoragePath(databaseName, storageMode);
       final String type = urlParts.length > 3 ? urlParts[3] : "document";
       if (url != null) {
-        if (server.getDatabases().exists(databaseName, null, null)) {
+        if (server.existsDatabase(databaseName)) {
           iResponse.send(OHttpUtils.STATUS_CONFLICT_CODE, OHttpUtils.STATUS_CONFLICT_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
               "Database '" + databaseName + "' already exists.", null);
         } else {
 //          server
-          server.getDatabases().create(databaseName, null, null, DatabaseType.valueOf(storageMode.toUpperCase()));
+          server.createDatabase(databaseName, DatabaseType.valueOf(storageMode.toUpperCase()), null);
           try (ODatabaseDocumentInternal database = server.openDatabase(databaseName, serverUser, serverPassword, null, false)) {
             sendDatabaseInfo(iRequest, iResponse, database);
           }

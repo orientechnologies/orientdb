@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,7 +38,6 @@ import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageExistsException;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
@@ -53,7 +51,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 public class OEmbeddedDBFactory implements OrientDBFactory {
   private final Map<String, OAbstractPaginatedStorage> storages = new HashMap<>();
   private final Set<OPool<?>>                          pools    = new HashSet<>();
-  private final OrientDBConfig                       configurations;
+  private final OrientDBConfig                         configurations;
   private final String                                 basePath;
   private final OEngine                                memory;
   private final OEngine                                disk;
@@ -104,13 +102,13 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
       throw OException.wrapException(new ODatabaseException("Cannot open database '" + name + "'"), e);
     }
   }
-  
+
   @Override
   public ODatabaseDocumentInternal open(String name, String user, String password, OrientDBConfig config) {
     try {
       config = solveConfig(config);
       OAbstractPaginatedStorage storage = getStorage(name);
-      //THIS OPEN THE STORAGE ONLY THE FIRST TIME
+      // THIS OPEN THE STORAGE ONLY THE FIRST TIME
       storage.open(config.getConfigurations());
       final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
       embedded.internalOpen(user, password, config);
@@ -150,10 +148,10 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     return basePath + "/" + name;
   }
 
-  public void create(String name, String user, String password, DatabaseType type){
+  public void create(String name, String user, String password, DatabaseType type) {
     create(name, user, password, type, null);
   }
-  
+
   @Override
   public synchronized void create(String name, String user, String password, DatabaseType type, OrientDBConfig config) {
     if (!exists(name, user, password)) {
@@ -165,28 +163,31 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
         } else {
           storage = (OAbstractPaginatedStorage) disk.createStorage(buildName(name), new HashMap<>());
         }
-        // CHECK Configurations
-        storage.create(config.getConfigurations());
         storages.put(name, storage);
-        ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
-        if (serializer.toString().equals("ORecordDocument2csv"))
-          throw new ODatabaseException("Impossible to create the database with ORecordDocument2csv serializer");
-        storage.getConfiguration().setRecordSerializer(serializer.toString());
-        storage.getConfiguration().setRecordSerializerVersion(serializer.getCurrentVersion());
-        // since 2.1 newly created databases use strict SQL validation by default
-        storage.getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
-
-        storage.getConfiguration().update();
-
-        try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
-          embedded.setSerializer(serializer);
-          embedded.internalCreate(config);
-        }
+        internalCreate(config, storage);
       } catch (Exception e) {
         throw OException.wrapException(new ODatabaseException("Cannot create database '" + name + "'"), e);
       }
     } else
       throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
+  }
+
+  private void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
+    storage.create(config.getConfigurations());
+    ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
+    if (serializer.toString().equals("ORecordDocument2csv"))
+      throw new ODatabaseException("Impossible to create the database with ORecordDocument2csv serializer");
+    storage.getConfiguration().setRecordSerializer(serializer.toString());
+    storage.getConfiguration().setRecordSerializerVersion(serializer.getCurrentVersion());
+    // since 2.1 newly created databases use strict SQL validation by default
+    storage.getConfiguration().setProperty(OStatement.CUSTOM_STRICT_SQL, "true");
+
+    storage.getConfiguration().update();
+
+    try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
+      embedded.setSerializer(serializer);
+      embedded.internalCreate(config);
+    }
   }
 
   @Override
@@ -221,9 +222,9 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   public OPool<ODatabaseDocument> openPool(String name, String user, String password) {
     return openPool(name, user, password, null);
   }
-  
+
   @Override
-  public OPool<ODatabaseDocument> openPool(String name, String user, String password,OrientDBConfig config) {
+  public OPool<ODatabaseDocument> openPool(String name, String user, String password, OrientDBConfig config) {
     OEmbeddedPoolByFactory pool = new OEmbeddedPoolByFactory(this, name, user, password, solveConfig(config));
     pools.add(pool);
     return pool;
@@ -288,11 +289,11 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   public synchronized void initCustomStorage(String name, String path, String userName, String userPassword) {
     boolean exists = OLocalPaginatedStorage.exists(path);
     OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) disk.createStorage(path, new HashMap<>());
-    //TODO: Add Creation settings and parameters
+    // TODO: Add Creation settings and parameters
     if (!exists) {
-      storage.create(this.configurations.getConfigurations());
+      internalCreate(getConfigurations(), storage);
     }
-    storages.put(name, storage);      
+    storages.put(name, storage);
   }
 
 }

@@ -82,6 +82,25 @@ public class OEmbeddedDBFactoryTests {
     assertEquals(databases.size(), 1);
     assertTrue(databases.contains("test"));
   }
+  
+  @Test
+  public void testRegisterDatabase() {
+    OEmbeddedDBFactory factory = OrientDBFactory.embedded(".", null);
+    assertEquals(factory.listDatabases("", "").size(), 0);
+    factory.initCustomStorage("database1", "./target/databases/database1", "", "");
+    try (ODatabaseDocument db = factory.open("database1", "admin", "admin")) {
+      assertEquals("database1", db.getName());
+    }
+    factory.initCustomStorage("database2", "./target/databases/database2", "", "");
+
+    try (ODatabaseDocument db = factory.open("database2", "admin", "admin")) {
+      assertEquals("database2", db.getName());
+    }
+    factory.drop("database1", null, null);
+    factory.drop("database2", null, null);
+    factory.close();
+  }
+  
 
   @Test
   public void testCopyOpenedDatabase() {

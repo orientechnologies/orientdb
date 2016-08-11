@@ -1280,8 +1280,18 @@ public class OServer {
     }
   }
 
-  public boolean existDatabase(String databaseName) {
+  public boolean existsDatabase(String databaseName) {
     return databases.exists(databaseName, null, null);
+  }
+  
+  public void createDatabase(String databaseName, OrientDBFactory.DatabaseType type, OrientDBConfig config) {
+    databases.create(databaseName, null, null, type, config);
+  }  
+  
+  public Set<String> listDatabases() {
+    Set<String> dbs = databases.listDatabases(null, null);
+    dbs.remove(OSystemDatabase.SYSTEM_DB_NAME);
+    return dbs;
   }
   
 }
