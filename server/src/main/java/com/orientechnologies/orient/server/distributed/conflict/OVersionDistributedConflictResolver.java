@@ -68,7 +68,7 @@ public class OVersionDistributedConflictResolver extends OMajorityDistributedCon
 
       if (winners.size() == 1) {
         result.winner = winners.get(0);
-        OLogManager.instance().info(this,
+        OLogManager.instance().debug(this,
             "Version Conflict Resolver decided the value '%s' is the winner for record %s, because its version (%d) is the highest. Servers ok=%s",
             result.winner, rid, maxVersion, candidates.get(result.winner));
       } else {
@@ -77,7 +77,7 @@ public class OVersionDistributedConflictResolver extends OMajorityDistributedCon
           result.candidates.put(winner, candidates.get(winner));
         }
 
-        OLogManager.instance().info(this,
+        OLogManager.instance().debug(this,
             "Version Conflict Resolver cannot decide the winner for record %s, because %d records have the highest version %d",
             rid, winners.size(), maxVersion);
       }

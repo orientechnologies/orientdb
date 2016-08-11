@@ -105,12 +105,12 @@ public class OContentDistributedConflictResolver extends OMajorityDistributedCon
             }
           }
 
-          OLogManager.instance().info(this,
+          OLogManager.instance().debug(this,
               "Content Conflict Resolver decided the value '%s' is the winner for record %s, because the content is the majority. Assigning the highest version (%d)",
               result.winner, rid, maxVersion);
         } else {
           result.candidates = candidates;
-          OLogManager.instance().info(this,
+          OLogManager.instance().debug(this,
               "Content Conflict Resolver cannot decide the winner for record %s, because there is no majoriy in the content", rid);
         }
       }

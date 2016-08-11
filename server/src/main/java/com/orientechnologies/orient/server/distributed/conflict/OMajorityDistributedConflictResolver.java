@@ -53,7 +53,7 @@ public class OMajorityDistributedConflictResolver extends OAbstractDistributedCo
     final int bestResultServerCount = candidates.get(bestResult).size();
     if (bestResultServerCount >= writeQuorum) {
       // BEST RESULT RESPECT THE QUORUM, IT'S DEFINITELY THE WINNER
-      OLogManager.instance().info(this,
+      OLogManager.instance().debug(this,
           "Majority Conflict Resolver decided the value '%s' is the winner for record %s, because is major than the configured writeQuorum (%d). Servers ok=%s",
           bestResult, rid, writeQuorum, candidates.get(result.winner));
       result.winner = bestResult;
@@ -64,14 +64,14 @@ public class OMajorityDistributedConflictResolver extends OAbstractDistributedCo
 
       final Object secondBestResult = getBestResult(candidates, exclude);
       if (bestResultServerCount > candidates.get(secondBestResult).size()) {
-        OLogManager.instance().info(this,
+        OLogManager.instance().debug(this,
             "Majority Conflict Resolver decided the value '%s' is the winner for the record %s because it is the majority even if under the configured writeQuorum (%d). Servers ok=%s",
             bestResult, rid, writeQuorum, candidates.get(result.winner));
 
         result.winner = bestResult;
       } else {
         // NO MAJORITY: DON'T TAKE ANY ACTION
-        OLogManager.instance().info(this, "Majority Conflict Resolver could not find a winner for the record %s (candidates=%s)", rid,
+        OLogManager.instance().debug(this, "Majority Conflict Resolver could not find a winner for the record %s (candidates=%s)", rid,
             candidates);
 
         // COLLECT ALL THE RESULT == BEST RESULT
