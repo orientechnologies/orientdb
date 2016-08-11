@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -928,6 +929,8 @@ public class Orient extends OListenerManger<OOrientListener> {
         if (engine.isRunning())
           engine.shutdown();
       engines.clear();
+
+      OByteBufferPool.instance().verifyStateOnShutdown();
     }
 
     @Override

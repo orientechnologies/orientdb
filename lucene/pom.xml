@@ -37,10 +37,13 @@
         <lucene.version>5.3.2</lucene.version>
         <geotools.version>13.2</geotools.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-ea -XX:MaxDirectMemorySize=512g -Xmx2048m -Dstorage.diskCache.bufferSize=4096 -Dindex.flushAfterCreate=false
+        <argLine>-ea -XX:MaxDirectMemorySize=512g -Xmx2048m
+            -Dstorage.diskCache.bufferSize=4096
+            -Dindex.flushAfterCreate=false
             -Dstorage.makeFullCheckpointAfterCreate=false
             -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
             -Dstorage.configuration.syncOnUpdate=false
+            -Dmemory.directMemory.trackMode=true
         </argLine>
 
     </properties>

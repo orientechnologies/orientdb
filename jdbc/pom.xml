@@ -35,7 +35,10 @@
     <inceptionYear>2012</inceptionYear>
 
     <properties>
-        <argLine>-XX:MaxDirectMemorySize=512g</argLine>
+        <argLine>
+            -XX:MaxDirectMemorySize=512g
+            -Dmemory.directMemory.trackMode=true
+        </argLine>
     </properties>
 
     <dependencies>
