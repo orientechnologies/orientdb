@@ -92,6 +92,8 @@ public class OFunctionCall extends SimpleNode {
         paramValues.add(expr.execute((OIdentifiable) current, ctx));
       } else if (current instanceof OResult) {
         paramValues.add(expr.execute((OResult) current, ctx));
+      } else if (current == null) {
+        paramValues.add(expr.execute((OResult) current, ctx));
       } else {
         throw new OCommandExecutionException("Invalid value for $current: " + current);
       }
@@ -103,6 +105,8 @@ public class OFunctionCall extends SimpleNode {
         return function.execute(targetObjects, (OIdentifiable) current, null, paramValues.toArray(), ctx);
       } else if (current instanceof OResult) {
         return function.execute(targetObjects, ((OResult) current).getElement(), null, paramValues.toArray(), ctx);
+      } else if (current == null) {
+        return function.execute(targetObjects, null, null, paramValues.toArray(), ctx);
       } else {
         throw new OCommandExecutionException("Invalid value for $current: " + current);
       }
