@@ -67,5 +67,7 @@
   "cluster.readYourWrites": "Enable it if you want the replication always waits for the local node for further reads",
   "cluster.autoDeploy": "Whether to deploy the database to any joining node that does not have it.",
   "cluster.readQuorum": "On <b>read</b> operation (record read, query and traverse) this is the number of responses to be coherent before sending the response to the client. Set to 1 if you don't want this check at read time",
-  "cluster.writeQuorum": "On <b>write</b> operation (any write on database) this is the number of responses to be coherent before sending the response to the client. Set to 1 if you don't want this check at write time. Suggested value is <b>majority</b>, the default, that means N/2+1 where N is the number of available nodes. In this way the quorum is reached only if the majority of nodes are coherent. <b>all</b> means all the available nodes. Starting from v2.2, N represent the MASTER only servers"
+  "cluster.writeQuorum": "On <b>write</b> operation (any write on database) this is the number of responses to be coherent before sending the response to the client. Set to 1 if you don't want this check at write time. Suggested value is <b>majority</b>, the default, that means N/2+1 where N is the number of available nodes. In this way the quorum is reached only if the majority of nodes are coherent. <b>all</b> means all the available nodes. Starting from v2.2, N represent the MASTER only servers",
+  "events.when": "<b>Be notified when:</b>  <br/> <ul class='indexType'><li>A node status change <br> Ex. (ONLINE, OFFLINE)</li><li>A metric condition is satisfied. <br/> Ex. (CPU avg > 80%)</li></ul>",
+  "events.with": "<b>Be notified by:</b>  <br/> <ul class='indexType'><li>Email</li><li>HTTP Request</li></ul>"
 }

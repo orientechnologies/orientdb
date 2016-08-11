@@ -19,7 +19,7 @@
   </div>
 
 
-  <div ng-show="agentActive && !noPlugins" class="row row-space">
+  <div ng-show="agentActive && !noPlugins" class="col-md-12">
 
     <tabset clazz="clazz">
       <tab ng-repeat="plugin in plugins" context="plugin" title="{{plugin.name}}"

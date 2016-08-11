@@ -1,86 +1,121 @@
 <div class="" ng-controller="EventsController">
 
 
-
   <div ng-show="!agentActive">
     <div class="col-md-12 studio-well-tips">
       <h4 ng-bind-html=" 'agent.notFound' | translate:links "></h4>
     </div>
   </div>
-  <div class="row row-space-2x" ng-show="agentActive">
 
-    <div class="col-md-6">
-      <form class="form-search">
-        <div class="input-group">
-          <input type="text" class="input-xxlarge form-control search-query" ng-model="query"
-                 placeholder="Search event">
+  <div class="row " ng-show="agentActive">
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="row ">
+          <div class="col-md-12">
+            <div class="studio-well-tips-sm">
+              <h5>
+            <span class="tab">
+              Manage your own alerts based on what is happening in OrientDB.
+            </span>
+              </h5>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row row-space-2x" ng-show="agentActive">
+
+      <div class="col-md-6">
+        <form class="form-search">
+          <div class="input-group">
+            <input type="text" class="input-xxlarge form-control search-query" ng-model="query"
+                   placeholder="Search configured alert">
                         <span class="input-group-btn">
                         <button type="submit" class="btn" ng-click="">
                           <i class="fa fa-search"></i>
                         </button>
                             </span>
+          </div>
+        </form>
+      </div>
+      <div class="col-md-6">
+        <div class="btn-toolbar pull-right">
+          <div class="btn-group">
+            <button href="javascript:void(0)" class="btn btn btn-sm"
+                    ng-click="addEvent()"><i
+              class="fa fa-plus"></i>
+              New Alert
+            </button>
+
+          </div>
+          <div class="btn-group">
+            <button href="javascript:void(0)" class="btn btn-primary btn-sm"
+                    ng-click="saveConfig()"><i
+              class="fa fa-save"></i>
+              Save
+            </button>
+          </div>
+
         </div>
-      </form>
+      </div>
     </div>
-    <div class="col-md-6">
-      <div class="btn-toolbar pull-right">
-        <div class="btn-group">
-          <button href="javascript:void(0)" class="btn btn btn-sm"
-                  ng-click="addEvent()"><i
-            class="fa fa-plus"></i>
-            New Event
-          </button>
 
-        </div>
-        <div class="btn-group">
-          <button href="javascript:void(0)" class="btn btn-primary btn-sm"
-                  ng-click="saveConfig()"><i
-            class="fa fa-save"></i>
-            Save
-          </button>
-        </div>
-
+    <div class="row row-space-2x" ng-show="agentActive">
+      <div class="col-md-12">
+        <table st-table="events" st-safe-src="safeCopy" class="table table-hover ">
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th>
+              Notify me when
+              <a href="javascript:void(0)" tabindex="1"
+                 data-trigger="focus" data-placement="top"
+                 data-container="body"
+                 data-content="{{ 'events.when' | translate:links }}" bs-popover>
+                <i class="fa fa-question-circle"></i>
+              </a>
+            </th>
+            <th>
+              Notify with
+              <a href="javascript:void(0)" tabindex="1"
+                 data-trigger="focus" data-placement="right"
+                 data-container="body"
+                 data-content="{{ 'events.with' | translate:links }}" bs-popover>
+                <i class="fa fa-question-circle"></i>
+              </a>
+            </th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="e in events | filter:query">
+            <td><input class="form-control" ng-model="e.name"></td>
+            <td>
+              <div class="col-md-8">
+                <select ng-options="e.name as e.title for e in eventWhen" ng-change="changeWhen(e)" class="form-control"
+                        ng-model="e.when.name"></select>
+              </div>
+              <div class="col-md-4">
+                <button class="btn  btn-sm" ng-click="configureWhen(e.when)"><i class="fa fa-gear"></i> Configure
+                </button>
+              </div>
+            </td>
+            <td>
+              <div class="col-md-8">
+                <select ng-options="e.name as e.title for e in eventWhat" ng-change="changeWhat(e)" class="form-control"
+                        ng-model="e.what.name"></select>
+              </div>
+              <div class="col-md-4">
+                <button class="btn  btn-sm" ng-click="configureWhat(e.what)"><i class="fa fa-gear"></i> Configure
+                </button>
+              </div>
+            </td>
+            <td>
+              <button class="btn btn-danger btn-sm" ng-click="dropEvent(e)">Drop</button>
+            </td>
+          </tr>
+        </table>
       </div>
     </div>
   </div>
-
-  <div class="row row-space-2x" ng-show="agentActive">
-    <div class="col-md-12">
-      <table st-table="events" st-safe-src="safeCopy" class="table table-hover ">
-        <thead>
-        <tr>
-          <th>Name</th>
-          <th>When</th>
-          <th>Do</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr ng-repeat="e in events | filter:query">
-          <td><input class="form-control" ng-model="e.name"></td>
-          <td>
-            <div class="col-md-8">
-              <select ng-options="e.name as e.title for e in eventWhen" ng-change="changeWhen(e)" class="form-control"
-                      ng-model="e.when.name"></select>
-            </div>
-            <div class="col-md-4">
-              <button class="btn  btn-sm" ng-click="configureWhen(e.when)"><i class="fa fa-gear"></i> Configure</button>
-            </div>
-          </td>
-          <td>
-            <div class="col-md-8">
-              <select ng-options="e.name as e.title for e in eventWhat" ng-change="changeWhat(e)"  class="form-control"
-                      ng-model="e.what.name"></select>
-            </div>
-            <div class="col-md-4">
-              <button class="btn  btn-sm" ng-click="configureWhat(e.what)"><i class="fa fa-gear"></i> Configure</button>
-            </div>
-          </td>
-          <td>
-            <button class="btn btn-danger btn-sm" ng-click="dropEvent(e)">Drop</button>
-          </td>
-        </tr>
-      </table>
-    </div>
-  </div>
-</div>

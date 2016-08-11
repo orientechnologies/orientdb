@@ -929,8 +929,16 @@ ee.controller('PluginsController', function ($scope, Plugins, Cluster, Notificat
   $scope.applyAll = function () {
     Plugins.saveConfig('_all', $scope.selectedPlugin.name, $scope.currentEditingPlugin.configuration).then(function (data) {
       $scope.dirty = false;
-      $scope.selectedPlugin.configuration = data;
-      $scope.selectPlugin($scope.selectedPlugin);
+
+      try {
+        if ($scope.data.results[0]) {
+          $scope.selectedPlugin.configuration = $scope.data.results[0];
+          $scope.selectPlugin($scope.selectedPlugin);
+        }
+      } catch (e) {
+
+      }
+
       Notification.push({content: "Plugin configuration saved correctly in all Servers", autoHide: true});
     }).catch(function (error) {
 
@@ -1031,7 +1039,7 @@ ee.controller('EEDashboardController', function ($scope, $rootScope, $routeParam
     {name: "profiler", title: "Query Profiler", template: 'profiler', icon: 'fa-rocket'},
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock'},
     {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb'},
-    {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'}
+    {name: "alerts", title: "Alerts Management", template: 'events', icon: 'fa-bell'}
 
   ]
 
@@ -1295,7 +1303,7 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
     if (!$scope.events) {
       $scope.events = [];
     }
-    $scope.events.push({name: 'New Event', when: {name: $scope.eventWhen[0]}, what: {name: $scope.eventWhat[0]}});
+    $scope.events.push({name: 'New Alert', when: {name: $scope.eventWhen[0]}, what: {name: $scope.eventWhat[0]}});
   }
   $scope.dropEvent = function (e) {
     var idx = $scope.events.indexOf(e);

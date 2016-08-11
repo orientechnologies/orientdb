@@ -2,7 +2,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×</button>
         <h3>
           <i class="icon-exchange"></i>
           Http Request
@@ -37,7 +37,8 @@
                 <div class="form-group">
                   <div class="btn-toolbar">
                     <div class="btn-group  pull-right row-space">
-                      <button class="btn btn-sm" ng-click="addHeader()"><i class="fa fa-plus-circle"> Add header</i>
+                      <button class="btn btn-sm" ng-click="addHeader()"><i class="fa fa-plus-circle"> </i>
+                        Add header
                       </button>
                     </div>
                   </div>

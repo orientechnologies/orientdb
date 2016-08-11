@@ -421,7 +421,7 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock', wiki: "Security-Config.html"},
     {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb', wiki: "Studio-Teleporter.html"},
     {name: "plugins", title: "Plugins Management", template: 'plugins', icon: 'fa-plug'},
-    {name: "events", title: "Events Management", template: 'events', icon: 'fa-bell'}
+    {name: "alerts", title: "Alerts Management", template: 'events', icon: 'fa-bell'}
   ]
   if ($routeParams.tab) {
     $scope.menus.forEach(function (e) {
