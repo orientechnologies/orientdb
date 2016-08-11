@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
@@ -1155,6 +1156,21 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public OTodoResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
     checkOpeness();
+    return internal.command(query, args);
+  }
+
+  @Override
+  public OTodoResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
+    return internal.query(query, args);
+  }
+
+  @Override
+  public OTodoResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException {
+    return internal.command(query, args);
+  }
+
+  @Override
+  public OTodoResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
     return internal.command(query, args);
   }
   
