@@ -10,6 +10,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -43,7 +44,7 @@ public class WALSegmentCreation {
     when(localPaginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
     when(localPaginatedStorage.getName()).thenReturn("WALSegmentCreationTest");
 
-    writeAheadLog = new ODiskWriteAheadLog(400, 500, 64 * 1024L * 1024L, null, localPaginatedStorage, 10);
+    writeAheadLog = new ODiskWriteAheadLog(400, 500, 64 * 1024L * 1024L, null, true, localPaginatedStorage, 10);
 
     writerExecutor = Executors.newCachedThreadPool();
   }
@@ -65,7 +66,7 @@ public class WALSegmentCreation {
     final Set<OOperationUnitId> operations = new HashSet<OOperationUnitId>();
     writeAheadLog.close();
 
-    writeAheadLog = new ODiskWriteAheadLog(200, 500, 64 * 1024L * 1024L, null, localPaginatedStorage, 10);
+    writeAheadLog = new ODiskWriteAheadLog(200, 500, 64 * 1024L * 1024L, null, true, localPaginatedStorage, 10);
 
     OLogSequenceNumber lsn = writeAheadLog.begin();
     long segment = lsn.getSegment();
