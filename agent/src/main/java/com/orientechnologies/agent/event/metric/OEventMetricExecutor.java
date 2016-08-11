@@ -21,12 +21,9 @@ import com.orientechnologies.agent.event.OEventExecutor;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 public abstract class OEventMetricExecutor implements OEventExecutor {
-  protected Map<String, Object> body2name = new HashMap<String, Object>();
 
   public boolean canExecute(ODocument source, ODocument when) {
 
@@ -54,34 +51,10 @@ public abstract class OEventMetricExecutor implements OEventExecutor {
 
   }
 
-  protected void fillMapResolve(ODocument source, ODocument when) {
+  protected Map<String, Object> fillMapResolve(ODocument source, ODocument when) {
 
-    this.getBody2name().clear();
-
-    ODocument snapshot = source.field("snapshot");
-    if (snapshot != null) {
-      ODocument server = snapshot.field("server");
-      if (server != null) {
-        String serverName = server.field("name");
-        this.getBody2name().put("servername", serverName);
-      }
-      Date dateFrom = snapshot.field("dateFrom");
-      this.getBody2name().put("date", dateFrom);
-    }
-    String metricName = source.field("name");
-    this.getBody2name().put("metric", metricName);
-
-    String whenParameter = when.field("parameter");
-    this.getBody2name().put("parameter", whenParameter);
-    this.getBody2name().put("metricvalue", "" + source.field(whenParameter));
+    return source.toMap();
 
   }
 
-  public Map<String, Object> getBody2name() {
-    return body2name;
-  }
-
-  public void setBody2name(Map<String, Object> body2name) {
-    this.body2name = body2name;
-  }
 }

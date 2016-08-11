@@ -20,6 +20,7 @@ package com.orientechnologies.agent.event;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -28,16 +29,16 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
 
 public class EventHelper {
 
@@ -47,17 +48,28 @@ public class EventHelper {
 
   public static Object resolve(final Map<String, Object> body2name2, final Object iContent) {
     Object value = null;
-    if (iContent instanceof String)
-      value = resolveVariables((String) iContent, VAR_BEGIN, OSystemVariableResolver.VAR_END, new OVariableParserListener() {
+    if (iContent instanceof String) {
+      value = OVariableParser.resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN,
+          OSystemVariableResolver.VAR_END, new OVariableParserListener() {
 
-        @Override
-        public Object resolve(final String iVariable) {
-          return body2name2.get(iVariable);
-        }
+            @Override
+            public Object resolve(final String iVariable) {
 
-      });
-    else
+              Object val = body2name2.get(iVariable);
+              if (val == null)
+                return null;
+
+              if (val instanceof Date) {
+                return ODateHelper.getDateTimeFormatInstance().format(Date.class.cast(val));
+              }
+
+              return val.toString();
+            }
+
+          });
+    } else {
       value = iContent;
+    }
 
     return value;
   }
@@ -139,21 +151,21 @@ public class EventHelper {
   }
 
   public static String replaceMarkers(String text) {
-    if (text != null) {
-      text = text.replaceAll("&", "&amp;");
-      text = text.replaceAll("���", "&egrave;");
-      text = text.replaceAll("���", "&eacute;");
-      text = text.replaceAll("���", "&ograve;");
-      text = text.replaceAll("���", "&agrave;");
-      text = text.replaceAll("���", "&ugrave;");
-      text = text.replaceAll("���", "&igrave;");
-      text = text.replaceAll("<", "&lt;");
-      text = text.replaceAll(">", "&gt;");
-      text = text.replaceAll("\u2018", "&lsquo;");
-      text = text.replaceAll("\u2019", "&rsquo;");
-      text = text.replaceAll("'", "&rsquo;");
-      text = text.replaceAll("\n", "<br/>");
-    }
+//    if (text != null) {
+//      text = text.replaceAll("&", "&amp;");
+//      text = text.replaceAll("���", "&egrave;");
+//      text = text.replaceAll("���", "&eacute;");
+//      text = text.replaceAll("���", "&ograve;");
+//      text = text.replaceAll("���", "&agrave;");
+//      text = text.replaceAll("���", "&ugrave;");
+//      text = text.replaceAll("���", "&igrave;");
+//      text = text.replaceAll("<", "&lt;");
+//      text = text.replaceAll(">", "&gt;");
+//      text = text.replaceAll("\u2018", "&lsquo;");
+//      text = text.replaceAll("\u2019", "&rsquo;");
+//      text = text.replaceAll("'", "&rsquo;");
+//      text = text.replaceAll("\n", "<br/>");
+//    }
 
     return text;
   }

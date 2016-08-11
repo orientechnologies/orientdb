@@ -42,6 +42,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginConfigurable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by Enrico Risa on 23/11/15.
@@ -167,14 +168,14 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
         public void onNodeJoined(String iNode) {
           if (isLeader(distributedManager))
             eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN,
-                new ODocument().field("server", iNode).field("message", "ONLINE"));
+                new ODocument().field("server", iNode).field("message", "ONLINE").field("date", new Date()));
         }
 
         @Override
         public void onNodeLeft(String iNode) {
           if (isLeader(distributedManager))
             eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN,
-                new ODocument().field("server", iNode).field("message", "OFFLINE"));
+                new ODocument().field("server", iNode).field("message", "OFFLINE").field("date", new Date()));
         }
 
         @Override
@@ -205,5 +206,16 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
 
     return oldestMember.localMember();
 
+  }
+
+  public String getNodeName() {
+
+    final ODistributedServerManager distributedManager = server.getDistributedManager();
+
+    if (distributedManager != null) {
+      return distributedManager.getLocalNodeName();
+    }
+
+    return null;
   }
 }

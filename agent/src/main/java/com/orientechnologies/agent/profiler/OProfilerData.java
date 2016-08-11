@@ -117,6 +117,10 @@ public class OProfilerData {
     return recordingTo;
   }
 
+  public long getRecordingTo() {
+    return recordingTo;
+  }
+
   public void toJSON(final StringBuilder buffer, final String iFilter) {
     buffer.append("{");
     buffer.append(String.format(Locale.ENGLISH, "\"from\": %d,", recordingFrom));

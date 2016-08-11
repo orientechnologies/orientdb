@@ -20,8 +20,6 @@ package com.orientechnologies.agent.event.metric;
 import com.orientechnologies.agent.event.OEventExecutor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 public abstract class OEventLogExecutor implements OEventExecutor {
@@ -43,21 +41,21 @@ public abstract class OEventLogExecutor implements OEventExecutor {
   }
 
   protected Map<String, Object> fillMapResolve(ODocument source, ODocument when) {
-    Map<String, Object> body2Name = new HashMap<String, Object>();
-    String server = source.field("server");
+//    Map<String, Object> body2Name = new HashMap<String, Object>();
+//    String server = source.field("server");
+//
+//    Date date = source.field("date");
+//    body2Name.put("date", date);
+//    if (server != null) {
+//      body2Name.put("servername", server);
+//
+//    }
+//    String metricName = source.field("name");
+//    body2Name.put("metric", metricName);
+//
+//    String sourcelevel = (String) source.field("levelDescription");
+//    body2Name.put("logvalue", sourcelevel);
 
-    Date date = source.field("date");
-    body2Name.put("date", date);
-    if (server != null) {
-      body2Name.put("servername", server);
-
-    }
-    String metricName = source.field("name");
-    body2Name.put("metric", metricName);
-
-    String sourcelevel = (String) source.field("levelDescription");
-    body2Name.put("logvalue", sourcelevel);
-
-    return body2Name;
+    return source.toMap();
   }
 }

@@ -7,7 +7,6 @@ import com.orientechnologies.orient.server.distributed.ServerRun;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * Created by Enrico Risa on 04/08/16.
@@ -19,7 +18,7 @@ public class HttpEEDistributedTest extends AbstractServerClusterTest {
     return "httpTest";
   }
 
-  @Test
+//  @Test
   public void testChangeConfig() throws Exception {
 
     init(2);
