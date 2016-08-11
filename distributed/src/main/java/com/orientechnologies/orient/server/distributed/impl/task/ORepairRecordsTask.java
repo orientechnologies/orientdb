@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -40,9 +41,18 @@ public class ORepairRecordsTask extends OTxTask {
     return OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
   }
 
+  protected long getRecordLock() {
+    return OGlobalConfiguration.DISTRIBUTED_ATOMIC_LOCK_TIMEOUT.getValueAsLong() * 3;
+  }
+
   @Override
   public long getSynchronousTimeout(final int iSynchNodes) {
     return 3000;
+  }
+
+  @Override
+  public int[] getPartitionKey() {
+    return ANY;
   }
 
   @Override

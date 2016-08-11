@@ -74,6 +74,11 @@ public class OClusterRepairInfoTask extends OAbstractReplicatedTask {
   }
 
   @Override
+  public int[] getPartitionKey() {
+    return ANY;
+  }
+
+  @Override
   public void toStream(DataOutput out) throws IOException {
     out.writeInt(clusterId);
   }

@@ -82,12 +82,10 @@ public class ORepairClusterTask extends OTxTask {
 
           task.checkRecordExists();
 
-          taskResult = task.execute(requestId, iServer, iManager, database);
+          task.execute(requestId, iServer, iManager, database);
 
           reqContext.addUndoTask(task.getUndoTask(requestId));
         }
-
-        result.results.add(taskResult);
       }
       return null;
 
@@ -105,6 +103,11 @@ public class ORepairClusterTask extends OTxTask {
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.IN,
           "Transaction completed db=%s (reqId=%s)...", database.getName(), requestId);
     }
+  }
+
+  @Override
+  public int[] getPartitionKey() {
+    return ANY;
   }
 
   @Override

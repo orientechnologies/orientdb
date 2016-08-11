@@ -251,10 +251,8 @@ public final class DistributedDatabaseCRUDTest {
 
                   if (update) {
                     log("*******#################******* [" + id + "][ Retry: " + k + "] Failed to update after Exception ["
-                        + ((tex != null) ? tex : "----") + "]for vertex with property4='" + propertyValue + "'");
+                        + ((tex != null) ? tex : "----") + "] for vertex with property4='" + propertyValue + "'");
                   }
-
-                  Thread.sleep(200);
                 }
               }
             } finally {
