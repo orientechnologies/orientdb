@@ -252,9 +252,9 @@ public class LocalPaginatedStorageMixCrashRestoreIT {
               minTs = baseDocument.field("timestamp");
           } else {
             ODocument testDocument = testDocuments.get(0);
-            Assert.assertEquals(testDocument.field("id"), baseDocument.field("id"));
-            Assert.assertEquals(testDocument.field("timestamp"), baseDocument.field("timestamp"));
-            Assert.assertEquals(testDocument.field("stringValue"), baseDocument.field("stringValue"));
+            Assert.assertEquals((Object) testDocument.field("id"), baseDocument.field("id"));
+            Assert.assertEquals((Object) testDocument.field("timestamp"), baseDocument.field("timestamp"));
+            Assert.assertEquals((Object) testDocument.field("stringValue"), baseDocument.field("stringValue"));
             recordsRestored++;
           }
 
