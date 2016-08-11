@@ -82,13 +82,26 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = new CopyOnWriteArrayList<>();
   private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = new CopyOnWriteArrayList<>();
 
+  private static class SimpleFileNameFilter implements java.io.FilenameFilter {
+    private final String storageName;
+    private final Locale locale;
+
+    public SimpleFileNameFilter(OLocalPaginatedStorage storage) {
+      this.storageName = storage.getName();
+      this.locale = storage.getConfiguration().getLocaleInstance();
+    }
+
+    @Override
+    public boolean accept(File dir, String name) {
+      return validateSimpleName(name, storageName, locale);
+    }
+  }
+
   private static class FilenameFilter implements java.io.FilenameFilter {
-    private final OLocalPaginatedStorage storage;
-    private final String                 storageName;
-    private final Locale                 locale;
+    private final String storageName;
+    private final Locale locale;
 
     public FilenameFilter(OLocalPaginatedStorage storage) {
-      this.storage = storage;
       this.storageName = storage.getName();
       this.locale = storage.getConfiguration().getLocaleInstance();
     }
@@ -102,7 +115,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   public ODiskWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
     this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
         OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB,
-        OGlobalConfiguration.WAL_LOCATION.getValueAsString(), storage);
+        OGlobalConfiguration.WAL_LOCATION.getValueAsString(), true, storage);
   }
 
   public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
@@ -142,7 +155,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, final String walPath,
-      final OLocalPaginatedStorage storage) throws IOException {
+      boolean filterWALFiles, final OLocalPaginatedStorage storage) throws IOException {
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
@@ -153,7 +166,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     try {
       this.walLocation = new File(calculateWalPath(this.storage, walPath));
 
-      File[] walFiles = this.walLocation.listFiles(new FilenameFilter(storage));
+      File[] walFiles;
+      if (filterWALFiles)
+        walFiles = this.walLocation.listFiles(new FilenameFilter(storage));
+      else
+        walFiles = this.walLocation.listFiles(new SimpleFileNameFilter(storage));
 
       if (walFiles == null)
         throw new IllegalStateException(
@@ -239,7 +256,27 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     return storage.getName() + "." + order + WAL_SEGMENT_EXTENSION;
   }
 
-  public static boolean validateName(String name, String storageName, Locale locale) {
+  static boolean validateSimpleName(String name, String storageName, Locale locale) {
+    if (!name.toLowerCase(locale).endsWith(".wal"))
+      return false;
+
+    int walOrderStartIndex = name.indexOf('.');
+    if (walOrderStartIndex == name.length() - 4)
+      return false;
+
+    final int walOrderEndIndex = name.indexOf('.', walOrderStartIndex + 1);
+
+    String walOrder = name.substring(walOrderStartIndex + 1, walOrderEndIndex);
+    try {
+      Integer.parseInt(walOrder);
+    } catch (NumberFormatException e) {
+      return false;
+    }
+
+    return true;
+  }
+
+  static boolean validateName(String name, String storageName, Locale locale) {
     if (!name.toLowerCase(locale).endsWith(".wal"))
       return false;
 

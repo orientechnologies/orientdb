@@ -46,7 +46,7 @@ public class WALSegmentCreation {
     when(localPaginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
     when(localPaginatedStorage.getName()).thenReturn("WALSegmentCreationTest");
 
-    writeAheadLog = new ODiskWriteAheadLog(400, 500, 64 * 1024L * 1024L, null, localPaginatedStorage);
+    writeAheadLog = new ODiskWriteAheadLog(400, 500, 64 * 1024L * 1024L, null, false, localPaginatedStorage);
 
     writerExecutor = Executors.newCachedThreadPool();
   }
@@ -70,7 +70,7 @@ public class WALSegmentCreation {
     final Set<OOperationUnitId> operations = new HashSet<OOperationUnitId>();
     writeAheadLog.close();
 
-    writeAheadLog = new ODiskWriteAheadLog(200, 500, 64 * 1024L * 1024L, null, localPaginatedStorage);
+    writeAheadLog = new ODiskWriteAheadLog(200, 500, 64 * 1024L * 1024L, null, false, localPaginatedStorage);
 
     OLogSequenceNumber lsn = writeAheadLog.begin();
     long segment = lsn.getSegment();
