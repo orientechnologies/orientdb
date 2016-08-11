@@ -70,10 +70,8 @@ public enum OGlobalConfiguration {
       Boolean.class, true),
 
   DIRECT_MEMORY_TRACK_MODE("memory.directMemory.trackMode",
-      "If 'track mode' is switched on, then the following steps are performed: " + "1. direct memory JMX bean is registered. "
-          + "2. You may check amount of allocated direct memory as a property of the JMX bean. "
-          + "3. If a memory leak is detected, then a JMX event will be fired. "
-          + "This mode causes a large overhead and should be used for testing purposes only", Boolean.class, false),
+      "Activates the direct memory pool leak detector. This detector causes a large overhead and should be used for debugging "
+          + "purposes only", Boolean.class, false),
 
   DIRECT_MEMORY_ONLY_ALIGNED_ACCESS("memory.directMemory.onlyAlignedMemoryAccess",
       "Some architectures do not allow unaligned memory access or may suffer from speed degradation. For such platforms, this flag should be set to true",
@@ -769,7 +767,7 @@ public enum OGlobalConfiguration {
 
   @OApi(maturity = OApi.MATURITY.NEW)CLIENT_CONNECTION_STRATEGY("client.connection.strategy", "Strategy used for open connections from a client in case of multiple servers, possible options:STICKY, ROUND_ROBIN_CONNECT, ROUND_ROBIN_REQUEST",
       String.class, null),
-  
+
   /**
    * @Since 2.2
    */

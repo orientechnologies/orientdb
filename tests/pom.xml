@@ -27,7 +27,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-Xmx3072m -XX:MaxDirectMemorySize=512g</argLine>
+        <argLine>
+            -Xmx3072m
+            -XX:MaxDirectMemorySize=512g
+            -Dmemory.directMemory.trackMode=true
+        </argLine>
     </properties>
 
     <dependencies>

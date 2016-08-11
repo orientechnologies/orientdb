@@ -40,7 +40,10 @@
         <osgi.import>*</osgi.import>
         <osgi.export>com.orientechnologies.orient.client.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <argLine>-XX:MaxDirectMemorySize=512g</argLine>
+        <argLine>
+            -XX:MaxDirectMemorySize=512g
+            -Dmemory.directMemory.trackMode=true
+        </argLine>
     </properties>
 
     <dependencies>
