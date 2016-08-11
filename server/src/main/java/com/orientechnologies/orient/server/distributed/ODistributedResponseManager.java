@@ -730,7 +730,7 @@ public class ODistributedResponseManager {
             // FIX NOT AVAILABLE: UNDO THE ENTIRE OPERATION
             return false;
 
-          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.OUT,
+          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), r.getExecutorNodeName(), DIRECTION.OUT,
               "Sending fix message (%s) for response (%s) on request (%s) to be: %s", fixTask, r, request, goodResponse);
 
           dManager.sendRequest(request.getDatabaseName(), null, OMultiValue.getSingletonList(r.getExecutorNodeName()), fixTask,
