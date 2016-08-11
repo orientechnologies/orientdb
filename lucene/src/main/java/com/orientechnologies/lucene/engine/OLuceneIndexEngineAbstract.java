@@ -215,6 +215,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
       nrt.close();
     }
 
+    reopenToken = 0;
     nrt = new ControlledRealTimeReopenThread(mgrWriter, searcherManager, 60.00, 0.1);
     nrt.setDaemon(true);
     nrt.start();
