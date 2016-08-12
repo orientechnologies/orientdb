@@ -102,12 +102,14 @@ public class OCachePointer {
     int readers = getReaders(readersWriters);
     int writers = getWriters(readersWriters);
     readers++;
+    assert readers == 1;
 
     while (!readersWritersReferrer.compareAndSet(readersWriters, composeReadersWriters(readers, writers))) {
       readersWriters = readersWritersReferrer.get();
       readers = getReaders(readersWriters);
       writers = getWriters(readersWriters);
       readers++;
+      assert readers == 1;
     }
 
     final WritersListener wl = writersListener;
@@ -125,7 +127,7 @@ public class OCachePointer {
     int writers = getWriters(readersWriters);
     readers--;
 
-    assert readers >= 0;
+    assert readers == 0;
 
     while (!readersWritersReferrer.compareAndSet(readersWriters, composeReadersWriters(readers, writers))) {
       readersWriters = readersWritersReferrer.get();
@@ -133,7 +135,7 @@ public class OCachePointer {
       writers = getWriters(readersWriters);
       readers--;
 
-      assert readers >= 0;
+      assert readers == 0;
     }
 
     final WritersListener wl = writersListener;
@@ -151,11 +153,15 @@ public class OCachePointer {
     int writers = getWriters(readersWriters);
     writers++;
 
+    assert writers == 1;
+
     while (!readersWritersReferrer.compareAndSet(readersWriters, composeReadersWriters(readers, writers))) {
       readersWriters = readersWritersReferrer.get();
       readers = getReaders(readersWriters);
       writers = getWriters(readersWriters);
       writers++;
+
+      assert writers == 1;
     }
 
     incrementReferrer();
@@ -167,7 +173,7 @@ public class OCachePointer {
     int writers = getWriters(readersWriters);
     writers--;
 
-    assert writers >= 0;
+    assert writers == 0;
 
     while (!readersWritersReferrer.compareAndSet(readersWriters, composeReadersWriters(readers, writers))) {
       readersWriters = readersWritersReferrer.get();
@@ -175,7 +181,7 @@ public class OCachePointer {
       writers = getWriters(readersWriters);
       writers--;
 
-      assert writers >= 0;
+      assert writers == 0;
     }
 
     final WritersListener wl = writersListener;
