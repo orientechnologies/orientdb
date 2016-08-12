@@ -26,6 +26,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
@@ -251,6 +252,11 @@ public class OCachePointer {
   @Override
   protected void finalize() throws Throwable {
     super.finalize();
+
+    if (getReaders(readersWritersReferrer.get()) != 0)
+      OLogManager.instance().error(this, "OCachePointer.finalize: readers != 0");
+    if (getWriters(readersWritersReferrer.get()) != 0)
+      OLogManager.instance().error(this, "OCachePointer.finalize: writers != 0");
 
     if (referrersCount.get() > 0 && buffer != null) {
       bufferPool.release(buffer);
