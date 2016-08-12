@@ -31,7 +31,6 @@ public class OrientDBConfigBuilder {
 
   private OContextConfiguration   configurations = new OContextConfiguration();
   private Map<ATTRIBUTES, Object> attributes     = new HashMap<>();
-  private Map<String, Object>     properties     = new HashMap<>();
 
   public OrientDBConfigBuilder fromGlobalMap(Map<OGlobalConfiguration, Object> values) {
     for (Map.Entry<OGlobalConfiguration, Object> entry : values.entrySet()) {
@@ -57,12 +56,7 @@ public class OrientDBConfigBuilder {
     return this;
   }
 
-  public OrientDBConfigBuilder addProperty(String property, Object value) {
-    properties.put(property, value);
-    return this;
-  }
-
   public OrientDBConfig build() {
-    return new OrientDBConfig(configurations, attributes, properties);
+    return new OrientDBConfig(configurations, attributes);
   }
 }

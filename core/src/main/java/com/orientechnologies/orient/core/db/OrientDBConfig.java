@@ -33,20 +33,16 @@ public class OrientDBConfig {
   private OrientDBConfig                parent;
   private final OContextConfiguration   configurations;
   private final Map<ATTRIBUTES, Object> attributes;
-  private final Map<String, Object>     properties;
 
   protected OrientDBConfig() {
     configurations = new OContextConfiguration();
     attributes = new HashMap<>();
-    properties = new HashMap<>();
     parent = null;
   }
 
-  protected OrientDBConfig(OContextConfiguration configurations, Map<ATTRIBUTES, Object> attributes,
-      Map<String, Object> properties) {
+  protected OrientDBConfig(OContextConfiguration configurations, Map<ATTRIBUTES, Object> attributes) {
     this.configurations = configurations;
     this.attributes = attributes;
-    this.properties = properties;
     parent = null;
   }
 
@@ -66,9 +62,6 @@ public class OrientDBConfig {
     return attributes;
   }
 
-  public Map<String, Object> getProperties() {
-    return properties;
-  }
 
   protected void setParent(OrientDBConfig parent) {
     this.parent = parent;

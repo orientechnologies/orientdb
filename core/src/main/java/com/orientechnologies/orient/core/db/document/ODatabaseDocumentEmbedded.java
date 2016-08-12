@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
 /**
@@ -84,6 +85,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
     boolean failure = true;
     setupThreadOwner();
     activateOnCurrentThread();
+    applyAttributes(config);
     try {
 
       if (user != null && !user.getName().equals(iUserName))
@@ -144,12 +146,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
 
   /**
    * {@inheritDoc}
-   * @param settings 
+   * @param config 
    */
-  public void internalCreate(OrientDBConfig settings) {
+  public void internalCreate(OrientDBConfig config) {
     this.status = STATUS.OPEN;
     // THIS IF SHOULDN'T BE NEEDED, CREATE HAPPEN ONLY IN EMBEDDED
-
+    applyAttributes(config);
     metadata = new OMetadataDefault(this);
     installHooksEmbedded();
     // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
@@ -179,6 +181,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
 
   }
 
+  private void applyAttributes(OrientDBConfig config) {
+    for (Entry<ATTRIBUTES, Object> attrs : config.getAttributes().entrySet()) {
+      this.set(attrs.getKey(), attrs.getValue());
+    }
+  }
+  
   /**
    * {@inheritDoc}
    */

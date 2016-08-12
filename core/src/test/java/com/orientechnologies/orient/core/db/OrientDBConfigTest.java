@@ -31,11 +31,10 @@ public class OrientDBConfigTest {
   @Test
   public void testBuildSettings() {
     OrientDBConfig settings = OrientDBConfig.builder().addConfig(OGlobalConfiguration.DB_POOL_MAX, 20)
-        .addAttribute(ATTRIBUTES.VALIDATION, true).addProperty("some", "value").build();
+        .addAttribute(ATTRIBUTES.VALIDATION, true).build();
 
     assertEquals(settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), 20);
     assertEquals(settings.getAttributes().get(ATTRIBUTES.VALIDATION), true);
-    assertEquals(settings.getProperties().get("some"), "value");
 
   }
 

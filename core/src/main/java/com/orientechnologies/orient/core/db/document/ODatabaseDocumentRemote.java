@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.db.document;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -36,6 +35,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Created by tglman on 30/06/16.
@@ -110,6 +110,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
   public void internalOpen(String user, String password, OrientDBConfig config) {
     boolean failure = true;
     setupThreadOwner();
+    applyAttributes(config);
     try {
 
       storage.open(user, password, config.getConfigurations());
@@ -131,6 +132,12 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
     } finally {
       if (failure)
         owner.set(null);
+    }
+  }
+
+  private void applyAttributes(OrientDBConfig config) {
+    for (Entry<ATTRIBUTES, Object> attrs : config.getAttributes().entrySet()) {
+      this.set(attrs.getKey(), attrs.getValue());
     }
   }
 
