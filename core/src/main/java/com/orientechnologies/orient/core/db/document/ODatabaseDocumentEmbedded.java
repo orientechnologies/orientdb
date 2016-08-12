@@ -192,8 +192,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
   }
 
   private void applyAttributes(OrientDBConfig config) {
-    for (Entry<ATTRIBUTES, Object> attrs : config.getAttributes().entrySet()) {
-      this.set(attrs.getKey(), attrs.getValue());
+    if (config != null) {
+      for (Entry<ATTRIBUTES, Object> attrs : config.getAttributes().entrySet()) {
+        this.set(attrs.getKey(), attrs.getValue());
+      }
     }
   }
   

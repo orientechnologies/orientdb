@@ -70,13 +70,6 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
-    try {
-      if (OByteBufferPool.instance() != null)
-        OByteBufferPool.instance().registerMBean();
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "MBean for byte buffer pool cannot be registered", e);
-    }
-
     shutdownThread = new Thread(() -> OEmbeddedDBFactory.this.internalClose());
 
     Runtime.getRuntime().addShutdownHook(shutdownThread);
