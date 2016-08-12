@@ -194,8 +194,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         distributedRequest(connection, requestType, clientTxId);
       } else
         sessionRequest(connection, requestType, clientTxId);
-    } catch (EOFException e) {
+    } catch (Exception e) {
+      //if an exception arrive to this point we need to kill the current socket. 
       sendShutdown();
+      throw e;
     }
   }
 
@@ -1349,6 +1351,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       try {
         connection.getDatabase().begin(tx);
       } catch (final ORecordNotFoundException e) {
+        sendShutdown();
         throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
       }
 
