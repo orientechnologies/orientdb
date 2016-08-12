@@ -382,7 +382,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
       for (OStorage stg : storagesCopy) {
         try {
-          OLogManager.instance().info(this, "- closing storage: " + stg.getName() + "...");
+          OLogManager.instance().info(this, "- closing storage: " + stg.getName() + " of type " + stg.getType() + "...");
           stg.close(true, false);
         } catch (Throwable e) {
           OLogManager.instance().warn(this, "-- error on closing storage", e);
