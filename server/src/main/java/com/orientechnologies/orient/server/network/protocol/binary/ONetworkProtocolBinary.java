@@ -185,17 +185,22 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     clientTxId = 0;
     okSent = false;
-    
-    requestType = channel.readByte();
-    clientTxId = channel.readInt();
-    //GET THE CONNECTION IF EXIST
-    OClientConnection connection = server.getClientConnectionManager().getConnection(clientTxId, this);
-    if (isHandshaking(requestType)) {
-      handshakeRequest(connection, requestType, clientTxId);
-    } else if (isDistributed(requestType)) {
-      distributedRequest(connection, requestType, clientTxId);
-    } else
-      sessionRequest(connection, requestType, clientTxId);
+    try {
+      requestType = channel.readByte();
+      clientTxId = channel.readInt();
+      // GET THE CONNECTION IF EXIST
+      OClientConnection connection = server.getClientConnectionManager().getConnection(clientTxId, this);
+      if (isHandshaking(requestType)) {
+        handshakeRequest(connection, requestType, clientTxId);
+      } else if (isDistributed(requestType)) {
+        distributedRequest(connection, requestType, clientTxId);
+      } else
+        sessionRequest(connection, requestType, clientTxId);
+    } catch (Exception e) {
+      //if an exception arrive to this point we need to kill the current socket. 
+      sendShutdown();
+      throw e;
+    }
   }
 
   private void handshakeRequest(OClientConnection connection, int requestType, int clientTxId) throws IOException {
@@ -1348,6 +1353,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       try {
         connection.getDatabase().begin(tx);
       } catch (final ORecordNotFoundException e) {
+        sendShutdown();
         throw e.getCause() instanceof OOfflineClusterException ? (OOfflineClusterException) e.getCause() : e;
       }
 
