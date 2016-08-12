@@ -510,7 +510,7 @@ public class OServer {
       } finally {
         lock.unlock();
       }
-
+      databases.close();
       if (shutdownEngineOnExit && !Orient.isRegisterDatabaseByPath())
         try {
           OLogManager.instance().info(this, "Shutting down databases:");
