@@ -73,7 +73,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
   private static final OByteBufferPool INSTANCE;
 
-  private static final boolean TRACK = false; //OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
+  private static final boolean TRACK = OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
 
   static {
     // page size in bytes
@@ -455,7 +455,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
         checkTrackedBuffersLeaks();
 
-        assert trackedReferences.size() == 0;
+        // assert trackedReferences.size() == 0;
       }
     }
   }
@@ -533,7 +533,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
           if (lastRelease != null)
             OLogManager.instance().error(this, "DIRECT-TRACK: last release.", lastRelease);
 
-          assert false;
+          // assert false;
         } else
           trackedReferences.remove(reference);
 
@@ -547,18 +547,18 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   }
 
   private void checkTrackedBuffersLeaks() {
-    boolean leaked = false;
+    // boolean leaked = false;
 
     TrackedBufferReference reference;
     while ((reference = (TrackedBufferReference) trackedBuffersQueue.poll()) != null) {
       if (trackedReferences.remove(reference)) {
         OLogManager.instance()
             .error(this, "DIRECT-TRACK: unreleased direct byte buffer `%X` detected.", reference.stackTrace, reference.id);
-        leaked = true;
+        // leaked = true;
       }
     }
 
-    assert !leaked;
+    // assert !leaked;
   }
 
   private static int id(Object object) {
