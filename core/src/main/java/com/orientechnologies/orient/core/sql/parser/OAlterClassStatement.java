@@ -2,13 +2,19 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
-public class OAlterClassStatement extends OStatement {
+public class OAlterClassStatement extends ODDLStatement {
 
   /**
    * the name of the class
@@ -185,6 +191,164 @@ public class OAlterClassStatement extends OStatement {
     result = 31 * result + (customString != null ? customString.hashCode() : 0);
     result = 31 * result + (unsafe ? 1 : 0);
     return result;
+  }
+
+  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+    OClass oClass = ctx.getDatabase().getMetadata().getSchema().getClass(name.getStringValue());
+    if (oClass == null) {
+      throw new OCommandExecutionException("Class not found: " + name);
+    }
+    switch (property) {
+    case NAME:
+      if (!unsafe) {
+        checkNotEdge(oClass);
+        checkNotIndexed(oClass);
+      }
+      oClass.setName(identifierValue.getStringValue());
+      break;
+    case SHORTNAME:
+      if (identifierValue != null) {
+        oClass.setShortName(identifierValue.getStringValue());
+      } else {
+        throw new OCommandExecutionException("Invalid class name: " + toString());
+      }
+      break;
+    case ADDCLUSTER:
+      if (identifierValue != null) {
+        oClass.addCluster(identifierValue.getStringValue());
+      } else if (numberValue != null) {
+        oClass.addClusterId(numberValue.getValue().intValue());
+      } else {
+        throw new OCommandExecutionException("Invalid cluster value: " + toString());
+      }
+      break;
+    case REMOVECLUSTER:
+      int clusterId = -1;
+      if (identifierValue != null) {
+        clusterId = ctx.getDatabase().getClusterIdByName(identifierValue.getStringValue());
+        if (clusterId < 0) {
+          throw new OCommandExecutionException("Cluster not found: " + toString());
+        }
+      } else if (numberValue != null) {
+        clusterId = numberValue.getValue().intValue();
+      } else {
+        throw new OCommandExecutionException("Invalid cluster value: " + toString());
+      }
+      oClass.removeClusterId(clusterId);
+      break;
+    case DESCRIPTION:
+      if (identifierValue != null) {
+        oClass.setDescription(identifierValue.getStringValue());
+      } else {
+        throw new OCommandExecutionException("Invalid class name: " + toString());
+      }
+      break;
+    case ENCRYPTION:
+      //TODO
+
+      break;
+    case CLUSTERSELECTION:
+      if (identifierValue != null) {
+        oClass.setClusterSelection(identifierValue.getStringValue());
+      } else if (customString != null) {
+        oClass.setClusterSelection(customString);
+      } else {
+        oClass.setClusterSelection("null");
+      }
+      break;
+    case SUPERCLASS:
+      doSetSuperclass(ctx, oClass, identifierValue);
+      break;
+    case SUPERCLASSES:
+      if (identifierListValue == null) {
+        oClass.setSuperClasses(Collections.EMPTY_LIST);
+      } else {
+        doSetSuperclasses(ctx, oClass, identifierListValue);
+      }
+      break;
+    case OVERSIZE:
+      oClass.setOverSize(numberValue.getValue().floatValue());
+      break;
+    case STRICTMODE:
+      oClass.setStrictMode(booleanValue.booleanValue());
+      break;
+    case ABSTRACT:
+      oClass.setAbstract(booleanValue.booleanValue());
+      break;
+    case CUSTOM:
+      Object value = null;
+      if (customValue != null) {
+        value = customValue.execute((OIdentifiable) null, ctx);
+      }
+      if (value != null) {
+        value = "" + value;
+      }
+      oClass.setCustom(customKey.getStringValue(), (String) value);
+      break;
+    }
+    OInternalResultSet resultSet = new OInternalResultSet();
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "ALTER CLASS");
+    result.setProperty("className", name.getStringValue());
+    result.setProperty("result", "OK");
+    return resultSet;
+  }
+
+  private void checkNotIndexed(OClass oClass) {
+    Set<OIndex<?>> indexes = oClass.getIndexes();
+    if (indexes != null && indexes.size() > 0) {
+      throw new OCommandExecutionException("Cannot rename class '" + oClass.getName()
+          + "' because it has indexes defined on it. Drop indexes before or use UNSAFE (at your won risk)");
+    }
+  }
+
+  private void checkNotEdge(OClass oClass) {
+    if (oClass.isSubClassOf("E")) {
+      throw new OCommandExecutionException("Cannot alter class '" + oClass
+          + "' because is an Edge class and could break vertices. Use UNSAFE if you want to force it");
+    }
+  }
+
+  private void doSetSuperclass(OCommandContext ctx, OClass oClass, OIdentifier superclassName) {
+    if (superclassName == null) {
+      throw new OCommandExecutionException("Invalid superclass name: " + toString());
+    }
+    OClass superclass = ctx.getDatabase().getMetadata().getSchema().getClass(superclassName.getStringValue());
+    if (superclass == null) {
+      throw new OCommandExecutionException("superclass not found: " + toString());
+    }
+    if (Boolean.TRUE.equals(add)) {
+      oClass.addSuperClass(superclass);
+    } else if (Boolean.TRUE.equals(remove)) {
+      oClass.removeSuperClass(superclass);
+    } else {
+      oClass.setSuperClasses(Collections.singletonList(superclass));
+    }
+  }
+
+  private void doSetSuperclasses(OCommandContext ctx, OClass oClass, List<OIdentifier> superclassNames) {
+    if (superclassNames == null) {
+      throw new OCommandExecutionException("Invalid superclass name: " + toString());
+    }
+    List<OClass> superclasses = new ArrayList<>();
+    for (OIdentifier superclassName : superclassNames) {
+      OClass superclass = ctx.getDatabase().getMetadata().getSchema().getClass(superclassName.getStringValue());
+      if (superclass == null) {
+        throw new OCommandExecutionException("superclass not found: " + toString());
+      }
+      superclasses.add(superclass);
+    }
+    if (Boolean.TRUE.equals(add)) {
+      for (OClass superclass : superclasses) {
+        oClass.addSuperClass(superclass);
+      }
+    } else if (Boolean.TRUE.equals(remove)) {
+      for (OClass superclass : superclasses) {
+        oClass.removeSuperClass(superclass);
+      }
+    } else {
+      oClass.setSuperClasses(superclasses);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=4668bb1cd336844052df941f39bdb634 (do not edit this line) */
