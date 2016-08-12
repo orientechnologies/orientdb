@@ -67,15 +67,23 @@ public class OCachePointer {
 
   private final long fileId;
   private final long pageIndex;
+  private final String storageName;
 
   public OCachePointer(final ByteBuffer buffer, final OByteBufferPool bufferPool, final OLogSequenceNumber lastFlushedLsn,
       final long fileId, final long pageIndex) {
+    this(buffer, bufferPool, lastFlushedLsn, fileId, pageIndex, null);
+  }
+
+
+  public OCachePointer(final ByteBuffer buffer, final OByteBufferPool bufferPool, final OLogSequenceNumber lastFlushedLsn,
+      final long fileId, final long pageIndex, String storageName) {
     this.lastFlushedLsn = lastFlushedLsn;
     this.buffer = buffer;
     this.bufferPool = bufferPool;
 
     this.fileId = fileId;
     this.pageIndex = pageIndex;
+    this.storageName = storageName;
   }
 
   public void setWritersListener(WritersListener writersListener) {
@@ -259,6 +267,8 @@ public class OCachePointer {
       OLogManager.instance().error(this, "OCachePointer.finalize: writers != 0");
 
     if (referrersCount.get() > 0 && buffer != null) {
+      if (storageName != null)
+        OLogManager.instance().error(this, "OCachePointer.finalize: storage = " + storageName);
       bufferPool.release(buffer);
     }
   }
