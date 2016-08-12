@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Comparator;
@@ -56,7 +56,7 @@ public interface OHashTable<K, V> {
 
   void load(String name, OType[] keyTypes, boolean nullKeyIsSupported);
 
-  void deleteWithoutLoad(String name, OAbstractPaginatedStorage storageLocal);
+  void deleteWithoutLoad(String name);
 
   OHashIndexBucket.Entry<K, V>[] ceilingEntries(K key);
 

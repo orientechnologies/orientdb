@@ -137,7 +137,7 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
   public void deleteWithoutLoad(final String indexName) {
     if (partitions != null)
       for (OHashTable<Object, Object> p : partitions)
-        p.deleteWithoutLoad(indexName, (OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying());
+        p.deleteWithoutLoad(indexName);
   }
 
   @Override

@@ -721,7 +721,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent implements OHashTab
   }
 
   @Override
-  public void deleteWithoutLoad(String name, OAbstractPaginatedStorage storageLocal) {
+  public void deleteWithoutLoad(String name) {
     startOperation();
     try {
       final OAtomicOperation atomicOperation;

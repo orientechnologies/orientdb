@@ -679,7 +679,7 @@ public class OLocalHashTable20<K, V> extends ODurableComponent implements OHashT
   }
 
   @Override
-  public void deleteWithoutLoad(String name, OAbstractPaginatedStorage storageLocal) {
+  public void deleteWithoutLoad(String name) {
     final OAtomicOperation atomicOperation;
     try {
       atomicOperation = startAtomicOperation(false);

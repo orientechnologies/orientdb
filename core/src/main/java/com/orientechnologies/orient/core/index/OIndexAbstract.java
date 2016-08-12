@@ -95,7 +95,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       final ODocument metadata, final int version, final OStorage storage) {
     acquireExclusiveLock();
     try {
-      databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
+      databaseName = storage.getName();
 
       this.version = version;
       this.name = name;

@@ -76,7 +76,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   public OIndexManagerAbstract load(ODatabaseDocumentInternal database) {
-    if (!autoRecreateIndexesAfterCrash()) {
+    if (!autoRecreateIndexesAfterCrash(database)) {
       acquireExclusiveLock();
       try {
         if (database.getStorage().getConfiguration().indexMgrRecordId == null)
@@ -84,7 +84,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
           create(database);
 
         // RELOAD IT
-        ((ORecordId) document.getIdentity()).fromString(getStorage().getConfiguration().indexMgrRecordId);
+        ((ORecordId) document.getIdentity()).fromString(database.getStorage().getConfiguration().indexMgrRecordId);
         super.reload("*:-1 index:0");
       } finally {
         releaseExclusiveLock();
@@ -138,6 +138,8 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     throw new UnsupportedOperationException();
   }
   
+  public abstract boolean autoRecreateIndexesAfterCrash(ODatabaseDocumentInternal database);
+  
   public void create(ODatabaseDocumentInternal database) {
     acquireExclusiveLock();
     try {
@@ -169,12 +171,16 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  public Collection<? extends OIndex<?>> getIndexes() {
+  public Collection<? extends OIndex<?>> getIndexes(ODatabaseDocumentInternal database) {
     final Collection<OIndex<?>> rawResult = indexes.values();
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>(rawResult.size());
     for (final OIndex<?> index : rawResult)
-      result.add(preProcessBeforeReturn(getDatabase(), index));
+      result.add(preProcessBeforeReturn(database, index));
     return result;
+  }
+  
+  public Collection<? extends OIndex<?>> getIndexes() {
+    throw new UnsupportedOperationException();
   }
 
   public OIndex<?> getIndex(final String iName) {
@@ -523,4 +529,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     return configuration.getLocaleInstance();
   }
 
+  public abstract void recreateIndexes(ODatabaseDocumentInternal database);
+
+  
 }

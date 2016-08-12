@@ -100,7 +100,7 @@ public final class OHashTableIndexEngine implements OIndexEngine {
 
   @Override
   public void deleteWithoutLoad(String indexName) {
-    hashTable.deleteWithoutLoad(indexName, (OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying());
+    hashTable.deleteWithoutLoad(indexName);
   }
 
   @Override
@@ -415,7 +415,4 @@ public final class OHashTableIndexEngine implements OIndexEngine {
     return true;
   }
 
-  private ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
 }

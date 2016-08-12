@@ -53,7 +53,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
   }
 
   public Collection<? extends OIndex<?>> getIndexes() {
-    return delegate.getIndexes();
+    return delegate.getIndexes(database);
   }
 
   public OIndex<?> getIndex(final String iName) {
@@ -157,7 +157,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
 
   @Override
   public void recreateIndexes() {
-    delegate.recreateIndexes();
+    delegate.recreateIndexes(database);
   }
 
   @Override
@@ -167,7 +167,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManagerAbstract> i
 
   @Override
   public boolean autoRecreateIndexesAfterCrash() {
-    return delegate.autoRecreateIndexesAfterCrash();
+    return delegate.autoRecreateIndexesAfterCrash(database);
   }
 
   @Override

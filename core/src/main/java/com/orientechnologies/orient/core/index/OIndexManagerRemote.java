@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -109,11 +108,21 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   public void recreateIndexes() {
     throw new UnsupportedOperationException("recreateIndexes()");
   }
+  
+  @Override
+  public void recreateIndexes(ODatabaseDocumentInternal database) {
+    throw new UnsupportedOperationException("recreateIndexes(ODatabaseDocumentInternal)");    
+  }
 
   @Override
   public void waitTillIndexRestore() {
   }
 
+  @Override
+  public boolean autoRecreateIndexesAfterCrash(ODatabaseDocumentInternal database) {
+    return false;
+  }
+  
   @Override
   public boolean autoRecreateIndexesAfterCrash() {
     return false;
