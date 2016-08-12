@@ -26,6 +26,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.directmemory.OByteBufferPool;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 /**
@@ -247,6 +248,7 @@ public class OCachePointer {
     super.finalize();
 
     if (referrersCount.get() > 0 && buffer != null) {
+      OLogManager.instance().error(this, "OCachePointer.finalize: leak");
       bufferPool.release(buffer);
     }
   }
