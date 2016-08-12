@@ -73,7 +73,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
   private static final OByteBufferPool INSTANCE;
 
-  private static final boolean TRACK = OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
+  private static final boolean TRACK = false; //OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
 
   static {
     // page size in bytes
