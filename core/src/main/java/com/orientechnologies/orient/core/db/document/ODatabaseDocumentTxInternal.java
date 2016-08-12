@@ -12,10 +12,14 @@ public class ODatabaseDocumentTxInternal {
   }
 
   public static ODatabaseSessionMetadata getSessionMetadata(ODatabaseDocument db) {
+    if(db instanceof ODatabaseDocumentTx)
+      db = ((ODatabaseDocumentTx) db).internal;
     return ((ODatabaseDocumentTxOrig)db).sessionMetadata;
   }
 
   public static void setSessionMetadata(ODatabaseDocument db, ODatabaseSessionMetadata sessionMetadata) {
+    if(db instanceof ODatabaseDocumentTx)
+      db = ((ODatabaseDocumentTx) db).internal;
     ((ODatabaseDocumentTxOrig)db).sessionMetadata = sessionMetadata;
   }
 

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBFactory;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -48,7 +51,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
@@ -56,14 +58,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Created by tglman on 20/07/16.
@@ -80,8 +74,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private final String                                  dbName;
   private final String                                  baseUrl;
   private final Map<String, Object>                     preopenProperties = new HashMap<>();
-  private ODatabaseInternal<?> databaseOwner;
-
+  private final Map<ATTRIBUTES, Object>                 preopenAttributes = new HashMap<>();
+  private ODatabaseInternal<?>                          databaseOwner;
+  private OIntent                                       intent;
+  private OStorage                                      delegateStorage;
+  
   public ODatabaseDocumentTx(String url) {
     this.url = url;
     int typeIndex = url.indexOf(':');
@@ -314,7 +311,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public OStorage getStorage() {
     if (internal == null)
-      return null;
+      return delegateStorage;
     return internal.getStorage();
   }
 
@@ -779,11 +776,13 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
           embedded.put(baseUrl, factory);
         }
       }
-      OrientDBConfig config = bindPropertiesToConfig(preopenProperties);
+      OrientDBConfig config = buildConfig(null);
       internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
     }
     if(databaseOwner != null)
       internal.setDatabaseOwner(databaseOwner);
+    if(intent != null)
+      internal.declareIntent(intent);
     return (DB) this;
   }
 
@@ -800,7 +799,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <DB extends ODatabase> DB create(Map<OGlobalConfiguration, Object> iInitialSettings) {
-    OrientDBConfig config = bindPropertiesToConfig(preopenProperties);
+    OrientDBConfig config = buildConfig(iInitialSettings);
     if ("remote".equals(type)) {
       throw new UnsupportedOperationException();
     } else if ("memory".equals(type)) {
@@ -828,6 +827,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     }
     if(databaseOwner != null)
       internal.setDatabaseOwner(databaseOwner);
+    if(intent != null)
+      internal.declareIntent(intent);
     return (DB) this;
   }
 
@@ -865,7 +866,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public boolean declareIntent(OIntent iIntent) {
-    return internal.declareIntent(iIntent);
+    if (internal != null)
+      return internal.declareIntent(iIntent);
+    else {
+      intent = iIntent;
+      return true;
+    }
   }
 
   @Override
@@ -887,6 +893,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public void close() {
     if (internal != null) {
+      delegateStorage = internal.getStorage();
       internal.close();
       internal = null;
     }
@@ -1075,14 +1082,19 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public Object get(ATTRIBUTES iAttribute) {
-    checkOpeness();
-    return internal.get(iAttribute);
+    if (internal != null) {
+      return internal.get(iAttribute);
+    } else {
+      return preopenAttributes.get(iAttribute);
+    }
   }
 
   @Override
   public <DB extends ODatabase> DB set(ATTRIBUTES iAttribute, Object iValue) {
-    checkOpeness();
-    internal.set(iAttribute, iValue);
+    if (internal != null)
+      internal.set(iAttribute, iValue);
+    else
+      preopenAttributes.put(iAttribute, iValue);
     return (DB) this;
   }
 
@@ -1157,23 +1169,45 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   public OTodoResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
     checkOpeness();
     return internal.command(query, args);
-  }
-
-  @Override
-  public OTodoResultSet query(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
-    return internal.query(query, args);
-  }
-
-  @Override
-  public OTodoResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException {
-    return internal.command(query, args);
-  }
-
-  @Override
-  public OTodoResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
-    return internal.command(query, args);
-  }
+  }  
   
+  private OrientDBConfig buildConfig(final Map<OGlobalConfiguration, Object> iProperties) {
+    Map<String, Object> pars = new HashMap<>(preopenProperties);
+    if (iProperties != null) {
+      for (Map.Entry<OGlobalConfiguration, Object> par : iProperties.entrySet()) {
+        pars.put(par.getKey().getKey(), par.getValue());
+      }
+    }
+    OrientDBConfigBuilder builder = OrientDBConfig.builder();
+    final String connectionStrategy = pars != null ? (String) pars.get("connectionStrategy") : null;
+    if (connectionStrategy != null)
+      builder.addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
+    
+    final String compressionMethod = pars != null
+        ? (String) pars.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey()) : null;
+    if (compressionMethod != null)
+      // SAVE COMPRESSION METHOD IN CONFIGURATION
+      builder.addConfig(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
+
+    final String encryptionMethod = pars != null
+        ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey()) : null;
+    if (encryptionMethod != null)
+      // SAVE ENCRYPTION METHOD IN CONFIGURATION
+      builder.addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
+
+    final String encryptionKey = pars != null
+        ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey()) : null;
+    if (encryptionKey != null)
+      // SAVE ENCRYPTION KEY IN CONFIGURATION
+      builder.addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
+
+    for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
+      builder.addAttribute(attr.getKey(), attr.getValue());
+    }
+    
+    return builder.build();
+  }
+
   @Override
   public OTodoResultSet command(String query, Object... args) throws OCommandSQLParsingException, OCommandExecutionException {
     checkOpeness();
