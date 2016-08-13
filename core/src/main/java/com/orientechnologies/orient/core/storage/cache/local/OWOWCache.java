@@ -1233,7 +1233,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
             fileClassic.read(firstPageStartPosition, buffer);
             buffer.position(0);
 
-            final OCachePointer dataPointer = new OCachePointer(buffer, bufferPool, lastLsn, fileId, startPageIndex, storageLocal.getName());
+            final OCachePointer dataPointer = new OCachePointer(buffer, bufferPool, lastLsn, fileId, startPageIndex);
             pagesRead = 1;
             return new OCachePointer[] { dataPointer };
           }
@@ -1255,7 +1255,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           final OCachePointer[] dataPointers = new OCachePointer[buffersRead];
           for (int n = 0; n < buffersRead; n++) {
             buffers[n].position(0);
-            dataPointers[n] = new OCachePointer(buffers[n], bufferPool, lastLsn, fileId, startPageIndex + n, storageLocal.getName());
+            dataPointers[n] = new OCachePointer(buffers[n], bufferPool, lastLsn, fileId, startPageIndex + n);
           }
 
           for (int n = buffersRead; n < buffers.length; n++) {
@@ -1279,7 +1279,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         freeSpaceCheckAfterNewPageAdd();
 
         final ByteBuffer buffer = bufferPool.acquireDirect(true);
-        final OCachePointer dataPointer = new OCachePointer(buffer, bufferPool, lastLsn, fileId, startPageIndex, storageLocal.getName());
+        final OCachePointer dataPointer = new OCachePointer(buffer, bufferPool, lastLsn, fileId, startPageIndex);
 
         cacheHit.setValue(true);
         return new OCachePointer[] { dataPointer };

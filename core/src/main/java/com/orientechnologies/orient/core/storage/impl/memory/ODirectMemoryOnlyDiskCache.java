@@ -64,13 +64,11 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
   private final int                          pageSize;
   private final int                          id;
   private final OPerformanceStatisticManager performanceStatisticManager;
-  private final String name;
 
-  public ODirectMemoryOnlyDiskCache(int pageSize, int id, OPerformanceStatisticManager performanceStatisticManager, String name) {
+  public ODirectMemoryOnlyDiskCache(int pageSize, int id, OPerformanceStatisticManager performanceStatisticManager) {
     this.pageSize = pageSize;
     this.id = id;
     this.performanceStatisticManager = performanceStatisticManager;
-    this.name = name;
   }
 
   @Override
@@ -96,7 +94,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
         counter++;
         final int id = counter;
 
-        files.put(id, new MemoryFile(this.id, id, pageSize, name));
+        files.put(id, new MemoryFile(this.id, id));
         fileNameIdMap.put(fileName, id);
 
         fileId = id;
@@ -188,7 +186,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
       if (fileNameIdMap.containsKey(fileName))
         throw new OStorageException(fileName + " already exists.");
 
-      files.put(intId, new MemoryFile(id, intId, pageSize, name));
+      files.put(intId, new MemoryFile(id, intId));
       fileNameIdMap.put(fileName, intId);
       fileIdNameMap.put(intId, fileName);
 
@@ -459,17 +457,13 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
     private final int id;
     private final int storageId;
 
-    private final int pageSize;
-    private final String name;
     private final ReadWriteLock clearLock = new ReentrantReadWriteLock();
 
     private final ConcurrentSkipListMap<Long, OCacheEntry> content = new ConcurrentSkipListMap<Long, OCacheEntry>();
 
-    private MemoryFile(int storageId, int id, int pageSize, String name) {
+    private MemoryFile(int storageId, int id) {
       this.storageId = storageId;
       this.id = id;
-      this.pageSize = pageSize;
-      this.name = name;
     }
 
     private OCacheEntry loadPage(long index) {
@@ -498,7 +492,7 @@ public class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache implements O
           final OByteBufferPool bufferPool = OByteBufferPool.instance();
           final ByteBuffer buffer = bufferPool.acquireDirect(true);
 
-          final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(-1, -1), id, index, name);
+          final OCachePointer cachePointer = new OCachePointer(buffer, bufferPool, new OLogSequenceNumber(-1, -1), id, index);
           cachePointer.incrementReferrer();
 
           cacheEntry = new OCacheEntry(composeFileId(storageId, id), index, cachePointer, false);
