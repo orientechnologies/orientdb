@@ -38,9 +38,9 @@ public class OSelectStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
-    Assert.assertEquals(1L, item.<Object>getProperty("one"));
-    Assert.assertEquals(2L, item.<Object>getProperty("two"));
-    Assert.assertEquals(5L, item.<Object>getProperty("2 + 3"));
+    Assert.assertEquals(1, item.<Object>getProperty("one"));
+    Assert.assertEquals(2, item.<Object>getProperty("two"));
+    Assert.assertEquals(5, item.<Object>getProperty("2 + 3"));
     printExecutionPlan(result);
 
     result.close();
@@ -59,9 +59,9 @@ public class OSelectStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
-    Assert.assertEquals(1L, item.<Object>getProperty("one"));
-    Assert.assertEquals(2L, item.<Object>getProperty("two"));
-    Assert.assertEquals(5L, item.<Object>getProperty("2 + 3"));
+    Assert.assertEquals(1, item.<Object>getProperty("one"));
+    Assert.assertEquals(2, item.<Object>getProperty("two"));
+    Assert.assertEquals(5, item.<Object>getProperty("2 + 3"));
     printExecutionPlan(result);
 
     result.close();
@@ -80,9 +80,9 @@ public class OSelectStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
-    Assert.assertEquals(1L, item.<Object>getProperty("one"));
-    Assert.assertEquals(2L, item.<Object>getProperty("two"));
-    Assert.assertEquals(5L, item.<Object>getProperty("2 + 3"));
+    Assert.assertEquals(1, item.<Object>getProperty("one"));
+    Assert.assertEquals(2, item.<Object>getProperty("two"));
+    Assert.assertEquals(5, item.<Object>getProperty("2 + 3"));
     printExecutionPlan(result);
 
     result.close();
@@ -1853,8 +1853,19 @@ public class OSelectStatementExecutionTest {
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
     Assert.assertNotNull(item);
-    Assert.assertEquals(1L, item.<Object>getProperty("one"));
-    Assert.assertEquals(2L, item.<Object>getProperty("two"));
+    Assert.assertEquals(1, item.<Object>getProperty("one"));
+    Assert.assertEquals(2, item.<Object>getProperty("two"));
+    printExecutionPlan(result);
+    result.close();
+  }
+
+  @Test public void testLet1Long() {
+    OTodoResultSet result = db.query("select $a as one, $b as two let $a = 1L, $b = 1L+1");
+    Assert.assertTrue(result.hasNext());
+    OResult item = result.next();
+    Assert.assertNotNull(item);
+    Assert.assertEquals(1l, item.<Object>getProperty("one"));
+    Assert.assertEquals(2l, item.<Object>getProperty("two"));
     printExecutionPlan(result);
     result.close();
   }
@@ -1870,7 +1881,7 @@ public class OSelectStatementExecutionTest {
     Assert.assertEquals(1, ((List) one).size());
     Object x = ((List) one).get(0);
     Assert.assertTrue(x instanceof OResult);
-    Assert.assertEquals(1L, (Object) ((OResult) x).getProperty("a"));
+    Assert.assertEquals(1, (Object) ((OResult) x).getProperty("a"));
     result.close();
   }
 
@@ -1881,7 +1892,7 @@ public class OSelectStatementExecutionTest {
     OResult item = result.next();
     Assert.assertNotNull(item);
     Object one = item.<Object>getProperty("one");
-    Assert.assertEquals(1l, one);
+    Assert.assertEquals(1, one);
     result.close();
   }
 

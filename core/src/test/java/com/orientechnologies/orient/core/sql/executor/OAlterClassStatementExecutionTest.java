@@ -17,7 +17,7 @@ public class OAlterClassStatementExecutionTest {
   static ODatabaseDocument db;
 
   @BeforeClass public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:ODeleteStatementExecutionTest");
+    db = new ODatabaseDocumentTx("memory:OAlterClassStatementExecutionTest");
     db.create();
   }
 

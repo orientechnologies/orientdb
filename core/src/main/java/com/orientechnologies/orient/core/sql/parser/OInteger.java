@@ -20,6 +20,19 @@ public class OInteger extends ONumber {
     return value;
   }
 
+  public void setValue(int sign, String stringValue) {
+    if (stringValue.endsWith("L") || stringValue.endsWith("l")) {
+      value = Long.parseLong(stringValue.substring(0, stringValue.length()-1)) * sign;
+    } else {
+      long longValue = Long.parseLong(stringValue) * sign;
+      if (longValue > Integer.MAX_VALUE || longValue < Integer.MIN_VALUE) {
+        value = longValue;
+      } else {
+        value = (int) longValue;
+      }
+    }
+  }
+
   public void setValue(Number value) {
     this.value = value;
   }
@@ -29,7 +42,7 @@ public class OInteger extends ONumber {
   }
 
   public OInteger copy() {
-    OInteger result= new OInteger(-1);
+    OInteger result = new OInteger(-1);
     result.value = value;
     return result;
   }
@@ -47,8 +60,6 @@ public class OInteger extends ONumber {
 
     return true;
   }
-
-
 
   @Override public int hashCode() {
     return value != null ? value.hashCode() : 0;

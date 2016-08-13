@@ -8,6 +8,7 @@ public class OFloatingPoint extends ONumber {
 
   protected int    sign        = 1;
   protected String stringValue = null;
+  Number finalValue = null;
 
   public OFloatingPoint(int id) {
     super(id);
@@ -18,7 +19,34 @@ public class OFloatingPoint extends ONumber {
   }
 
   @Override public Number getValue() {
-    return Double.parseDouble((sign == -1 ? "-" : "") + stringValue);
+    if (finalValue != null) {
+      return finalValue;
+    }
+    if (stringValue.endsWith("F") || stringValue.endsWith("f")) {
+      try {
+        finalValue = Float.parseFloat(stringValue.substring(0, stringValue.length() - 1)) * sign;
+      } catch (Exception e) {
+        return null;//TODO NaN?
+      }
+    } else if (stringValue.endsWith("D") || stringValue.endsWith("d")) {
+      try {
+        finalValue = Double.parseDouble(stringValue.substring(0, stringValue.length() - 1)) * sign;
+      } catch (Exception e) {
+        return null;//TODO NaN?
+      }
+    } else {
+      try {
+        double returnValue = Double.parseDouble(stringValue) * sign;
+        if (Math.abs(returnValue) < Float.MAX_VALUE) {
+          finalValue = (float) returnValue;
+        } else {
+          finalValue = returnValue;
+        }
+      } catch (Exception e) {
+        return null;//TODO NaN?
+      }
+    }
+    return finalValue;
   }
 
   public int getSign() {
