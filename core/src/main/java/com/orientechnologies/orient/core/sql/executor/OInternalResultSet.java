@@ -8,6 +8,7 @@ import java.util.*;
 public class OInternalResultSet implements OTodoResultSet {
   List<OResult> content = new ArrayList<>();
   int                   next    = 0;
+  protected OExecutionPlan plan;
 
   @Override public boolean hasNext() {
     return content.size() > next;
@@ -22,7 +23,7 @@ public class OInternalResultSet implements OTodoResultSet {
   }
 
   @Override public Optional<OExecutionPlan> getExecutionPlan() {
-    return Optional.empty();
+    return Optional.of(plan);
   }
 
   @Override public Map<String, Object> getQueryStats() {

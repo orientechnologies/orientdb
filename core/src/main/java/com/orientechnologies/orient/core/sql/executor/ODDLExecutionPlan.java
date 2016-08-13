@@ -44,7 +44,11 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
       throw new OCommandExecutionException("Trying to execute a result-set twice. Please use reset()");
     }
     executed = true;
-    return statement.executeDDL(this.ctx);
+    OTodoResultSet result = statement.executeDDL(this.ctx);
+    if (result instanceof OInternalResultSet) {
+      ((OInternalResultSet) result).plan = this;
+    }
+    return result;
   }
 
   @Override public List<OExecutionStep> getSteps() {
@@ -56,6 +60,7 @@ public class ODDLExecutionPlan implements OInternalExecutionPlan {
     StringBuilder result = new StringBuilder();
     result.append(spaces);
     result.append("+ DDL\n");
+    result.append("  ");
     result.append(statement.toString());
     return result.toString();
   }
