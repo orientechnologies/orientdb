@@ -376,22 +376,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public void closeAllStorages() {
-    engineLock.writeLock().lock();
-    try {
-      // CLOSE ALL THE STORAGES
-      final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
-      for (OStorage stg : storagesCopy) {
-        try {
-          OLogManager.instance().info(this, "- closing storage: " + stg.getName() + " of type " + stg.getType() + "...");
-          stg.close(true, false);
-        } catch (Throwable e) {
-          OLogManager.instance().warn(this, "-- error on closing storage", e);
-        }
-      }
-      storages.clear();
-    } finally {
-      engineLock.writeLock().unlock();
-    }
+    shutdownAllStorages();
   }
 
   private void shutdownAllStorages() {
