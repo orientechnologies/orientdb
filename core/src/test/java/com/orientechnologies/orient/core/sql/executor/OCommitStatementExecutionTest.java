@@ -10,11 +10,11 @@ import org.junit.Test;
 /**
  * @author Luigi Dell'Aquila
  */
-public class OBeginStatementExecutionTest {
+public class OCommitStatementExecutionTest {
   static ODatabaseDocument db;
 
   @BeforeClass public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:OBeginStatementExecutionTest");
+    db = new ODatabaseDocumentTx("memory:OCommitStatementExecutionTest");
     db.create();
   }
 
@@ -24,14 +24,16 @@ public class OBeginStatementExecutionTest {
 
   @Test public void testBegin() {
     Assert.assertTrue(db.getTransaction() == null || !db.getTransaction().isActive());
-    OTodoResultSet result = db.command("begin");
+    db.begin();
+    Assert.assertFalse(db.getTransaction() == null || !db.getTransaction().isActive());
+    OTodoResultSet result = db.command("commit");
     printExecutionPlan(null, result);
     Assert.assertNotNull(result);
     Assert.assertTrue(result.hasNext());
     OResult item = result.next();
-    Assert.assertEquals("begin", item.getProperty("operation"));
+    Assert.assertEquals("commit", item.getProperty("operation"));
     Assert.assertFalse(result.hasNext());
-    Assert.assertFalse(db.getTransaction() == null || !db.getTransaction().isActive());
+    Assert.assertTrue(db.getTransaction() == null || !db.getTransaction().isActive());
     db.commit();
   }
 
