@@ -2,9 +2,24 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
-public class OAlterDatabaseStatement extends OStatement {
+public class OAlterDatabaseStatement extends ODDLStatement {
 
   OIdentifier customPropertyName;
   OExpression customPropertyValue;
@@ -18,6 +33,56 @@ public class OAlterDatabaseStatement extends OStatement {
 
   public OAlterDatabaseStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+    OInternalResultSet result = new OInternalResultSet();
+    if (customPropertyName == null) {
+      result.add(executeSimpleAlter(settingName, settingValue, ctx));
+    } else {
+      result.add(executeCustomAlter(customPropertyName, customPropertyValue, ctx));
+    }
+    return result;
+  }
+
+  private OResult executeCustomAlter(OIdentifier customPropertyName, OExpression customPropertyValue, OCommandContext ctx) {
+    ODatabaseDocumentTx db = (ODatabaseDocumentTx) ctx.getDatabase();
+    db.checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_UPDATE);
+    List<OStorageEntryConfiguration> oldValues = (List<OStorageEntryConfiguration>) db.get(ODatabase.ATTRIBUTES.CUSTOM);
+    String oldValue = null;
+    if (oldValues != null) {
+      for (OStorageEntryConfiguration entry : oldValues) {
+        if (entry.name.equals(customPropertyName.getStringValue())) {
+          oldValue = entry.value;
+          break;
+        }
+      }
+    }
+    Object finalValue = customPropertyValue.execute((OIdentifiable) null, ctx);
+    db.setCustom(customPropertyName.getStringValue(), finalValue);
+
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "alter database");
+    result.setProperty("customAttribute", customPropertyName.getStringValue());
+    result.setProperty("oldValue", oldValue);
+    result.setProperty("newValue", finalValue);
+    return result;
+  }
+
+  private OResult executeSimpleAlter(OIdentifier settingName, OExpression settingValue, OCommandContext ctx) {
+    ODatabase.ATTRIBUTES attribute = ODatabase.ATTRIBUTES.valueOf(settingName.getStringValue().toUpperCase(Locale.ENGLISH));
+    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
+    db.checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_UPDATE);
+    Object oldValue = db.get(attribute);
+    Object finalValue = settingValue.execute((OIdentifiable) null, ctx);
+    db.setInternal(attribute, finalValue);
+
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "alter database");
+    result.setProperty("attribute", settingName.getStringValue());
+    result.setProperty("oldValue", oldValue);
+    result.setProperty("newValue", finalValue);
+    return result;
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {

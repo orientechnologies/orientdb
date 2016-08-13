@@ -114,14 +114,14 @@ import java.util.concurrent.atomic.AtomicReference;
   protected Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
   protected final Set<OIdentifiable> inHook = new HashSet<OIdentifiable>();
   protected ORecordSerializer    serializer;
-  protected    String               url;
-  protected   OStorage             storage;
-  protected   STATUS               status;
-  protected   OIntent              currentIntent;
-  protected   ODatabaseInternal<?> databaseOwner;
-  protected   OMetadataDefault     metadata;
-  protected   OImmutableUser       user;
-  protected   byte                 recordType;
+  protected String               url;
+  protected OStorage             storage;
+  protected STATUS               status;
+  protected OIntent              currentIntent;
+  protected ODatabaseInternal<?> databaseOwner;
+  protected OMetadataDefault     metadata;
+  protected OImmutableUser       user;
+  protected byte                 recordType;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
   protected OLocalRecordCache                localCache;
@@ -129,16 +129,16 @@ import java.util.concurrent.atomic.AtomicReference;
   protected OCurrentStorageComponentsFactory componentsFactory;
   protected boolean initialized = false;
   protected OTransaction currentTx;
-  protected boolean                 keepStorageOpen = false;
+  protected       boolean                 keepStorageOpen = false;
   protected final AtomicReference<Thread> owner           = new AtomicReference<Thread>();
-  protected boolean                 ownerProtection = true;
+  protected       boolean                 ownerProtection = true;
 
-  protected ODatabaseSessionMetadata                        sessionMetadata;
+  protected ODatabaseSessionMetadata sessionMetadata;
 
   protected final ORecordHook[][] hooksByScope = new ORecordHook[ORecordHook.SCOPE.values().length][];
   protected OSharedContext sharedContext;
 
-  protected ODatabaseDocumentTx(){
+  protected ODatabaseDocumentTx() {
     //DO NOTHING IS FOR EXTENDED OBJECTS
     super(false);
   }
@@ -146,8 +146,7 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * Creates a new connection to the database.
    *
-   * @param iURL
-   *          of the database
+   * @param iURL of the database
    */
   public ODatabaseDocumentTx(final String iURL) {
     this(iURL, false, true);
@@ -207,8 +206,7 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * Sets default serializer. The default serializer is common for all database instances.
    *
-   * @param iDefaultSerializer
-   *          new default serializer value
+   * @param iDefaultSerializer new default serializer value
    */
   public static void setDefaultSerializer(ORecordSerializer iDefaultSerializer) {
     defaultSerializer = iDefaultSerializer;
@@ -220,10 +218,8 @@ import java.util.concurrent.atomic.AtomicReference;
    * But we do suggest {@link com.orientechnologies.orient.core.db.OPartitionedDatabasePool#acquire()} instead. It will make work
    * faster even with embedded database.
    *
-   * @param iUserName
-   *          Username to login
-   * @param iUserPassword
-   *          Password associated to the user
+   * @param iUserName     Username to login
+   * @param iUserPassword Password associated to the user
    * @return Current database instance.
    */
   @Override public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
@@ -254,8 +250,8 @@ import java.util.concurrent.atomic.AtomicReference;
             storage.close(true, false); // force it closed
           }
         }
-      }      
-      
+      }
+
       if (storage.isClosed()) {
         OContextConfiguration conf = new OContextConfiguration();
         bindPropertiesToContext(conf, properties);
@@ -308,8 +304,7 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * Opens a database using an authentication token received as an argument.
    *
-   * @param iToken
-   *          Authentication token
+   * @param iToken Authentication token
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public <DB extends ODatabase> DB open(final OToken iToken) {
@@ -383,7 +378,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
   public void callOnOpenListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
       it.next().onOpen(getDatabaseOwner());
 
     // WAKE UP LISTENERS
@@ -441,7 +436,6 @@ import java.util.concurrent.atomic.AtomicReference;
       bindPropertiesToContextGlobal(config, iInitialSettings);
       bindPropertiesToContext(config, properties);
       storage.create(config);
-      
 
       status = STATUS.OPEN;
 
@@ -485,7 +479,7 @@ import java.util.concurrent.atomic.AtomicReference;
         user = new OImmutableUser(getMetadata().getSecurity().getVersion(), usr);
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
         it.next().onCreate(getDatabaseOwner());
 
       // WAKE UP LISTENERS
@@ -587,7 +581,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
   public void callOnCloseListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); )
       it.next().onClose(getDatabaseOwner());
 
     // WAKE UP LISTENERS
@@ -601,7 +595,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
   public void callOnDropListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();) {
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext(); ) {
       activateOnCurrentThread();
       it.next().onDrop(getDatabaseOwner());
     }
@@ -827,8 +821,9 @@ import java.util.concurrent.atomic.AtomicReference;
       } catch (OSecurityAccessException e) {
 
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "User '%s' tried to access the reserved resource '%s.%s', operation '%s'", getUser(),
-              resourceGeneric, resourceSpecific, iOperation);
+          OLogManager.instance()
+              .debug(this, "User '%s' tried to access the reserved resource '%s.%s', operation '%s'", getUser(), resourceGeneric,
+                  resourceSpecific, iOperation);
 
         throw e;
       }
@@ -855,9 +850,9 @@ import java.util.concurrent.atomic.AtomicReference;
           user.allow(iResourceGeneric, null, iOperation);
       } catch (OSecurityAccessException e) {
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this,
-              "[checkSecurity] User '%s' tried to access the reserved resource '%s', target(s) '%s', operation '%s'", getUser(),
-              iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
+          OLogManager.instance()
+              .debug(this, "[checkSecurity] User '%s' tried to access the reserved resource '%s', target(s) '%s', operation '%s'",
+                  getUser(), iResourceGeneric, Arrays.toString(iResourcesSpecific), iOperation);
 
         throw e;
       }
@@ -879,9 +874,9 @@ import java.util.concurrent.atomic.AtomicReference;
           user.allow(iResourceGeneric, null, iOperation);
       } catch (OSecurityAccessException e) {
         if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this,
-              "[checkSecurity] User '%s' tried to access the reserved resource '%s', target '%s', operation '%s'", getUser(),
-              iResourceGeneric, iResourceSpecific, iOperation);
+          OLogManager.instance()
+              .debug(this, "[checkSecurity] User '%s' tried to access the reserved resource '%s', target '%s', operation '%s'",
+                  getUser(), iResourceGeneric, iResourceSpecific, iOperation);
 
         throw e;
       }
@@ -1077,10 +1072,8 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * Callback the registered hooks if any.
    *
-   * @param type
-   *          Hook type. Define when hook is called.
-   * @param id
-   *          Record received in the callback
+   * @param type Hook type. Define when hook is called.
+   * @param id   Record received in the callback
    * @return True if the input record is changed, otherwise false
    */
   public ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id) {
@@ -1227,12 +1220,12 @@ import java.util.concurrent.atomic.AtomicReference;
 
       callOnCloseListeners();
 
-    if (currentIntent != null) {
-      currentIntent.end(this);
-      currentIntent = null;
-    }
-    sharedContext = null;
-    status = STATUS.CLOSED;
+      if (currentIntent != null) {
+        currentIntent.end(this);
+        currentIntent = null;
+      }
+      sharedContext = null;
+      status = STATUS.CLOSED;
 
       localCache.clear();
 
@@ -1564,6 +1557,23 @@ import java.util.concurrent.atomic.AtomicReference;
     return (DB) this;
   }
 
+  public <DB extends ODatabase> DB setCustom(final String name, final Object iValue) {
+    checkIfActive();
+
+    if ("clear".equalsIgnoreCase(name) && iValue == null) {
+      clearCustomInternal();
+    } else {
+      String customName = name;
+      String customValue = iValue == null ? null : "" + iValue;
+      if (customName == null || customValue.isEmpty())
+        removeCustomInternal(customName);
+      else
+        setCustomInternal(customName, customValue);
+    }
+
+    return (DB) this;
+  }
+
   @Override public ORecordMetadata getRecordMetadata(final ORID rid) {
     checkIfActive();
     return storage.getRecordMetadata(rid);
@@ -1582,16 +1592,16 @@ import java.util.concurrent.atomic.AtomicReference;
   @SuppressWarnings("unchecked") @Override @Deprecated public <RET extends ORecord> RET load(ORecord iRecord, String iFetchPlan,
       boolean iIgnoreCache, boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkIfActive();
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, !iIgnoreCache, loadTombstone,
-        iLockingStrategy);
+    return (RET) currentTx
+        .loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, !iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
   @SuppressWarnings("unchecked") @Override @Deprecated public <RET extends ORecord> RET load(final ORecord iRecord,
       final String iFetchPlan, final boolean iIgnoreCache, final boolean iUpdateCache, final boolean loadTombstone,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkIfActive();
-    return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone,
-        iLockingStrategy);
+    return (RET) currentTx
+        .loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, iUpdateCache, loadTombstone, iLockingStrategy);
   }
 
   @SuppressWarnings("unchecked") @Override public <RET extends ORecord> RET load(final ORecord iRecord) {
@@ -1738,7 +1748,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
       final Collection<ORecordId> rids = new ArrayList<ORecordId>(iRids);
 
-      for (Iterator<ORecordId> it = rids.iterator(); it.hasNext();) {
+      for (Iterator<ORecordId> it = rids.iterator(); it.hasNext(); ) {
         final ORecordId rid = it.next();
 
         // SEARCH IN LOCAL TX
@@ -1818,13 +1828,13 @@ import java.util.concurrent.atomic.AtomicReference;
           record.reload();
 
         if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
-          OLogManager.instance().warn(this,
-              "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
+          OLogManager.instance()
+              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
           record.lock(false);
 
         } else if (lockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
-          OLogManager.instance().warn(this,
-              "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
+          OLogManager.instance()
+              .warn(this, "You use deprecated record locking strategy: %s it may lead to deadlocks " + lockingStrategy);
           record.lock(true);
         }
 
@@ -1883,11 +1893,8 @@ import java.util.concurrent.atomic.AtomicReference;
       if (rid.isTemporary())
         throw OException.wrapException(new ODatabaseException("Error on retrieving record using temporary RID: " + rid), t);
       else
-        throw OException
-            .wrapException(
-                new ODatabaseException(
-                    "Error on retrieving record " + rid + " (cluster: " + storage.getPhysicalClusterNameById(rid.clusterId) + ")"),
-                t);
+        throw OException.wrapException(new ODatabaseException(
+            "Error on retrieving record " + rid + " (cluster: " + storage.getPhysicalClusterNameById(rid.clusterId) + ")"), t);
     } finally {
       ORecordSerializationContext.pullContext();
       getMetadata().clearThreadLocalSchemaSnapshot();
@@ -1955,8 +1962,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
     byte[] content = getSerializer().writeClassOnly(record);
 
-    final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(rid, content, record.getVersion(), recordType,
-        OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
+    final OStorageOperationResult<OPhysicalPosition> ppos = storage
+        .createRecord(rid, content, record.getVersion(), recordType, OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
 
     ORecordInternal.setVersion(record, ppos.getResult().recordVersion);
     ((ORecordId) record.getIdentity()).copyFrom(rid);
@@ -2037,8 +2044,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
           if (forceCreate || ORecordId.isNew(rid.clusterPosition)) {
             // CREATE
-            final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(rid, content, ver, recordType, modeIndex,
-                (ORecordCallback<Long>) recordCreatedCallback);
+            final OStorageOperationResult<OPhysicalPosition> ppos = storage
+                .createRecord(rid, content, ver, recordType, modeIndex, (ORecordCallback<Long>) recordCreatedCallback);
             operationResult = new OStorageOperationResult<Integer>(ppos.getResult().recordVersion, ppos.isMoved());
 
           } else {
@@ -2173,8 +2180,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
       } catch (Exception t) {
         // WRAP IT AS ODATABASE EXCEPTION
-        throw OException.wrapException(
-            new ODatabaseException("Error on deleting record in cluster #" + record.getIdentity().getClusterId()), t);
+        throw OException
+            .wrapException(new ODatabaseException("Error on deleting record in cluster #" + record.getIdentity().getClusterId()),
+                t);
       }
     } finally {
       ORecordSerializationContext.pullContext();
@@ -2292,8 +2300,8 @@ import java.util.concurrent.atomic.AtomicReference;
       storage.freeze(throwException);
     }
 
-    Orient.instance().getProfiler().stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime,
-        "db.*.freeze");
+    Orient.instance().getProfiler()
+        .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
   }
 
   /**
@@ -2315,8 +2323,8 @@ import java.util.concurrent.atomic.AtomicReference;
       storage.freeze(false);
     }
 
-    Orient.instance().getProfiler().stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime,
-        "db.*.freeze");
+    Orient.instance().getProfiler()
+        .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
   }
 
   /**
@@ -2337,8 +2345,8 @@ import java.util.concurrent.atomic.AtomicReference;
       storage.release();
     }
 
-    Orient.instance().getProfiler().stopChrono("db." + getName() + ".release", "Time to release the database", startTime,
-        "db.*.release");
+    Orient.instance().getProfiler()
+        .stopChrono("db." + getName() + ".release", "Time to release the database", startTime, "db.*.release");
   }
 
   /**
@@ -2351,8 +2359,7 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * Creates a document with specific class.
    *
-   * @param iClassName
-   *          the name of class that should be used as a class of created document.
+   * @param iClassName the name of class that should be used as a class of created document.
    * @return new instance of document.
    */
   @Override public ODocument newInstance(final String iClassName) {
@@ -2416,13 +2423,10 @@ import java.util.concurrent.atomic.AtomicReference;
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
    * {@link ODocument#validate()} is called.
    *
-   * @param iRecord
-   *          Record to save.
+   * @param iRecord Record to save.
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   * @throws OConcurrentModificationException
-   *           if the version of the document is different by the version contained in the database.
-   * @throws OValidationException
-   *           if the document breaks some validation constraints defined in the schema
+   * @throws OConcurrentModificationException if the version of the document is different by the version contained in the database.
+   * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   @Override public <RET extends ORecord> RET save(final ORecord iRecord) {
@@ -2441,19 +2445,13 @@ import java.util.concurrent.atomic.AtomicReference;
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
    * {@link ODocument#validate()} is called.
    *
-   * @param iRecord
-   *          Record to save.
-   * @param iForceCreate
-   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
-   * @param iRecordCreatedCallback
-   *          callback that is called after creation of new record
-   * @param iRecordUpdatedCallback
-   *          callback that is called after record update
+   * @param iRecord                Record to save.
+   * @param iForceCreate           Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
+   * @param iRecordCreatedCallback callback that is called after creation of new record
+   * @param iRecordUpdatedCallback callback that is called after record update
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   * @throws OConcurrentModificationException
-   *           if the version of the document is different by the version contained in the database.
-   * @throws OValidationException
-   *           if the document breaks some validation constraints defined in the schema
+   * @throws OConcurrentModificationException if the version of the document is different by the version contained in the database.
+   * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   @Override public <RET extends ORecord> RET save(final ORecord iRecord, final OPERATION_MODE iMode, boolean iForceCreate,
@@ -2473,15 +2471,11 @@ import java.util.concurrent.atomic.AtomicReference;
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
    * {@link ODocument#validate()} is called.
    *
-   * @param iRecord
-   *          Record to save
-   * @param iClusterName
-   *          Cluster name where to save the record
+   * @param iRecord      Record to save
+   * @param iClusterName Cluster name where to save the record
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   * @throws OConcurrentModificationException
-   *           if the version of the document is different by the version contained in the database.
-   * @throws OValidationException
-   *           if the document breaks some validation constraints defined in the schema
+   * @throws OConcurrentModificationException if the version of the document is different by the version contained in the database.
+   * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
    */
   @Override public <RET extends ORecord> RET save(final ORecord iRecord, final String iClusterName) {
@@ -2500,23 +2494,15 @@ import java.util.concurrent.atomic.AtomicReference;
    * constraints declared in the schema if any (can work also in schema-less mode). To validate the document the
    * {@link ODocument#validate()} is called.
    *
-   * @param iRecord
-   *          Record to save
-   * @param iClusterName
-   *          Cluster name where to save the record
-   * @param iMode
-   *          Mode of save: synchronous (default) or asynchronous
-   * @param iForceCreate
-   *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
-   * @param iRecordCreatedCallback
-   *          callback that is called after creation of new record
-   * @param iRecordUpdatedCallback
-   *          callback that is called after record update
+   * @param iRecord                Record to save
+   * @param iClusterName           Cluster name where to save the record
+   * @param iMode                  Mode of save: synchronous (default) or asynchronous
+   * @param iForceCreate           Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
+   * @param iRecordCreatedCallback callback that is called after creation of new record
+   * @param iRecordUpdatedCallback callback that is called after record update
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   * @throws OConcurrentModificationException
-   *           if the version of the document is different by the version contained in the database.
-   * @throws OValidationException
-   *           if the document breaks some validation constraints defined in the schema
+   * @throws OConcurrentModificationException if the version of the document is different by the version contained in the database.
+   * @throws OValidationException             if the document breaks some validation constraints defined in the schema
    * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
    */
   @Override public <RET extends ORecord> RET save(final ORecord iRecord, String iClusterName, final OPERATION_MODE iMode,
@@ -2548,8 +2534,8 @@ import java.util.concurrent.atomic.AtomicReference;
         checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
     }
 
-    doc = (ODocument) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback,
-        iRecordUpdatedCallback);
+    doc = (ODocument) currentTx
+        .saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     return (RET) doc;
   }
@@ -2564,8 +2550,7 @@ import java.util.concurrent.atomic.AtomicReference;
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.
    *
-   * @param record
-   *          record to delete
+   * @param record record to delete
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
@@ -2584,11 +2569,8 @@ import java.util.concurrent.atomic.AtomicReference;
       throw e;
     } catch (Exception e) {
       if (record instanceof ODocument)
-        throw OException
-            .wrapException(
-                new ODatabaseException(
-                    "Error on deleting record " + record.getIdentity() + " of class '" + ((ODocument) record).getClassName() + "'"),
-                e);
+        throw OException.wrapException(new ODatabaseException(
+            "Error on deleting record " + record.getIdentity() + " of class '" + ((ODocument) record).getClassName() + "'"), e);
       else
         throw OException.wrapException(new ODatabaseException("Error on deleting record " + record.getIdentity()), e);
     }
@@ -2676,8 +2658,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
         OLogManager.instance().error(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
             listener.getClass().getName(), e);
-        throw OException.wrapException(new OTransactionException("Cannot commit the transaction: caught exception on execution of "
-            + listener.getClass().getName() + "#onBeforeTxCommit()"), e);
+        throw OException.wrapException(new OTransactionException(
+            "Cannot commit the transaction: caught exception on execution of " + listener.getClass().getName()
+                + "#onBeforeTxCommit()"), e);
       }
 
     try {
@@ -2712,8 +2695,9 @@ import java.util.concurrent.atomic.AtomicReference;
       try {
         listener.onAfterTxCommit(this);
       } catch (Exception e) {
-        final String message = "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of "
-            + listener.getClass() + ".onAfterTxCommit()";
+        final String message =
+            "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of "
+                + listener.getClass() + ".onAfterTxCommit()";
 
         OLogManager.instance().error(this, message, e);
 
@@ -2747,8 +2731,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
         OLogManager.instance().error(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
             listener.getClass().getName(), e);
-        throw OException.wrapException(new OTransactionException("Cannot commit the transaction: caught exception on execution of "
-            + listener.getClass().getName() + "#onBeforeTxCommit()"), e);
+        throw OException.wrapException(new OTransactionException(
+            "Cannot commit the transaction: caught exception on execution of " + listener.getClass().getName()
+                + "#onBeforeTxCommit()"), e);
       }
 
     try {
@@ -2886,8 +2871,7 @@ import java.util.concurrent.atomic.AtomicReference;
   /**
    * Sets serializer for the database which will be used for document serialization.
    *
-   * @param serializer
-   *          the serializer to set.
+   * @param serializer the serializer to set.
    */
   public void setSerializer(ORecordSerializer serializer) {
     this.serializer = serializer;
@@ -3116,10 +3100,11 @@ import java.util.concurrent.atomic.AtomicReference;
   private void checkRecordClass(final OClass recordClass, final String iClusterName, final ORecordId rid) {
     if (getStorageVersions().classesAreDetectedByClusterId()) {
       final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
-      if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
-          || (recordClass != null && !recordClass.equals(clusterIdClass)))
-        throw new IllegalArgumentException("Record saved into cluster '" + iClusterName + "' should be saved with class '"
-            + clusterIdClass + "' but has been created with class '" + recordClass + "'");
+      if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null || (recordClass != null
+          && !recordClass.equals(clusterIdClass)))
+        throw new IllegalArgumentException(
+            "Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
+                + "' but has been created with class '" + recordClass + "'");
     }
   }
 
@@ -3167,8 +3152,9 @@ import java.util.concurrent.atomic.AtomicReference;
     final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
     final ODatabaseDocumentInternal currentDatabase = tl != null ? tl.get() : null;
     if (currentDatabase != this)
-      throw new IllegalStateException("The current database instance (" + toString() + ") is not active on the current thread ("
-          + Thread.currentThread() + "). Current active database is: " + currentDatabase);
+      throw new IllegalStateException(
+          "The current database instance (" + toString() + ") is not active on the current thread (" + Thread.currentThread()
+              + "). Current active database is: " + currentDatabase);
   }
 
   @Override public int addBlobCluster(final String iClusterName, final Object... iParameters) {
@@ -3241,8 +3227,9 @@ import java.util.concurrent.atomic.AtomicReference;
         try {
           listener.onAfterTxCommit(ODatabaseDocumentTx.this);
         } catch (Exception e) {
-          final String message = "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of "
-              + listener.getClass() + ".onAfterTxCommit()";
+          final String message =
+              "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of "
+                  + listener.getClass() + ".onAfterTxCommit()";
 
           OLogManager.instance().error(this, message, e);
 
@@ -3352,45 +3339,47 @@ import java.util.concurrent.atomic.AtomicReference;
     }
     throw lastException;
   }
-  
+
   private void bindPropertiesToContext(OContextConfiguration configuration, final Map<String, Object> iProperties) {
     final String connectionStrategy = iProperties != null ? (String) iProperties.get("connectionStrategy") : null;
     if (connectionStrategy != null)
       configuration.setValue(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
-    
-    final String compressionMethod = iProperties != null
-        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase()) : null;
+
+    final String compressionMethod = iProperties != null ?
+        (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey().toLowerCase()) :
+        null;
     if (compressionMethod != null)
       // SAVE COMPRESSION METHOD IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
 
-    final String encryptionMethod = iProperties != null
-        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase()) : null;
+    final String encryptionMethod = iProperties != null ?
+        (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey().toLowerCase()) :
+        null;
     if (encryptionMethod != null)
       // SAVE ENCRYPTION METHOD IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
 
-    final String encryptionKey = iProperties != null
-        ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase()) : null;
+    final String encryptionKey =
+        iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey().toLowerCase()) : null;
     if (encryptionKey != null)
       // SAVE ENCRYPTION KEY IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
   }
- 
-  
-  private void bindPropertiesToContextGlobal(OContextConfiguration configuration, final Map<OGlobalConfiguration, Object> iProperties) {
+
+  private void bindPropertiesToContextGlobal(OContextConfiguration configuration,
+      final Map<OGlobalConfiguration, Object> iProperties) {
     final String connectionStrategy = iProperties != null ? (String) iProperties.get("connectionStrategy") : null;
     if (connectionStrategy != null)
       configuration.setValue(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
 
-    final String compressionMethod = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD)
-        : null;
+    final String compressionMethod =
+        iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD) : null;
     if (compressionMethod != null)
       // SAVE COMPRESSION METHOD IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
 
-    final String encryptionMethod = iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD)
-        : null;
+    final String encryptionMethod =
+        iProperties != null ? (String) iProperties.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD) : null;
     if (encryptionMethod != null)
       // SAVE ENCRYPTION METHOD IN CONFIGURATION
       configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
@@ -3401,5 +3390,4 @@ import java.util.concurrent.atomic.AtomicReference;
       configuration.setValue(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
   }
 
-  
 }
