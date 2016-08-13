@@ -247,10 +247,8 @@ public class OCachePointer {
   protected void finalize() throws Throwable {
     super.finalize();
 
-    if (referrersCount.get() > 0 && buffer != null) {
-      OLogManager.instance().error(this, "OCachePointer.finalize: leak");
+    if (referrersCount.get() > 0 && buffer != null)
       bufferPool.release(buffer);
-    }
   }
 
   @Override
