@@ -20,17 +20,14 @@ package com.orientechnologies.agent.profiler;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -44,32 +41,22 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @copyrights Orient Technologies.com
  */
 public class OProfilerData {
-  private final ConcurrentLinkedHashMap<String, Long>           counters      = new ConcurrentLinkedHashMap.Builder()
-                                                                                  .maximumWeightedCapacity(
-                                                                                      OGlobalConfiguration.PROFILER_MAXVALUES
-                                                                                          .getValueAsInteger()).build();
-  private final ConcurrentLinkedHashMap<String, OProfilerEntry> chronos       = new ConcurrentLinkedHashMap.Builder()
-                                                                                  .maximumWeightedCapacity(
-                                                                                      OGlobalConfiguration.PROFILER_MAXVALUES
-                                                                                          .getValueAsInteger()).build();
-  private final ConcurrentLinkedHashMap<String, OProfilerEntry> stats         = new ConcurrentLinkedHashMap.Builder()
-                                                                                  .maximumWeightedCapacity(
-                                                                                      OGlobalConfiguration.PROFILER_MAXVALUES
-                                                                                          .getValueAsInteger()).build();
-  private final ConcurrentLinkedHashMap<String, AtomicInteger>  tips          = new ConcurrentLinkedHashMap.Builder()
-                                                                                  .maximumWeightedCapacity(
-                                                                                      OGlobalConfiguration.PROFILER_MAXVALUES
-                                                                                          .getValueAsInteger()).build();
-  private final ConcurrentLinkedHashMap<String, Long>           tipsTimestamp = new ConcurrentLinkedHashMap.Builder()
-                                                                                  .maximumWeightedCapacity(
-                                                                                      OGlobalConfiguration.PROFILER_MAXVALUES
-                                                                                          .getValueAsInteger()).build();
-  private final Map<String, Object>                             hooks         = new WeakHashMap<String, Object>();
-  private long                                                  recordingFrom = 0;
-  private long                                                  recordingTo   = Long.MAX_VALUE;
+  private final ConcurrentLinkedHashMap<String, Long>              counters      = new ConcurrentLinkedHashMap.Builder()
+      .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private final ConcurrentLinkedHashMap<String, OProfilerEntry>    chronos       = new ConcurrentLinkedHashMap.Builder()
+      .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private final ConcurrentLinkedHashMap<String, OProfilerEntry>    stats         = new ConcurrentLinkedHashMap.Builder()
+      .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private final ConcurrentLinkedHashMap<String, AtomicInteger>     tips          = new ConcurrentLinkedHashMap.Builder()
+      .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private final ConcurrentLinkedHashMap<String, Long>              tipsTimestamp = new ConcurrentLinkedHashMap.Builder()
+      .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger()).build();
+  private final Map<String, OAbstractProfiler.OProfilerHookStatic> hooks         = new WeakHashMap<String, OAbstractProfiler.OProfilerHookStatic>();
+  private long                                                     recordingFrom = 0;
+  private long                                                     recordingTo   = Long.MAX_VALUE;
 
   public OProfilerData() {
-    recordingFrom = System.currentTimeMillis();
+    this.recordingFrom = System.currentTimeMillis();
   }
 
   public void clear() {
@@ -133,55 +120,27 @@ public class OProfilerData {
   public void toJSON(final StringBuilder buffer, final String iFilter) {
     buffer.append("{");
     buffer.append(String.format(Locale.ENGLISH, "\"from\": %d,", recordingFrom));
-    buffer.append(String.format(Locale.ENGLISH, "\"to\": %d,", recordingTo));
-
-    // HOOKS
-    buffer.append("\"hookValues\":{ ");
-
-    List<String> names = new ArrayList<String>(hooks.keySet());
-    Collections.sort(names);
-    boolean firstItem = true;
-    for (String k : names) {
-      if (iFilter != null && !k.startsWith(iFilter))
-        // APPLIED FILTER: DOESN'T MATCH
-        continue;
-
-      final Object value = hooks.get(k);
-      if (firstItem)
-        firstItem = false;
-      else
-        buffer.append(',');
-
-      if (value == null)
-        buffer.append(String.format(Locale.ENGLISH, "\"%s\":null", OIOUtils.encode(k)));
-      else if (value instanceof Number)
-        buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", OIOUtils.encode(k), value));
-      else if (value instanceof Boolean)
-        buffer.append(String.format(Locale.ENGLISH, "\"%s\":%s", OIOUtils.encode(k), value));
-      else {
-        buffer.append(String.format(Locale.ENGLISH, "\"%s\":\"%s\"", OIOUtils.encode(k), OIOUtils.encode(value)));
-      }
-    }
-    buffer.append("}");
+    buffer.append(String.format(Locale.ENGLISH, "\"to\": %d", recordingTo));
 
     // CHRONOS
     buffer.append(",\"chronos\":{");
-    names = new ArrayList<String>(chronos.keySet());
+    List<String> names = new ArrayList<String>(chronos.keySet());
     Collections.sort(names);
-    firstItem = true;
-    for (String k : names) {
-      if (iFilter != null && !k.startsWith(iFilter))
-        // APPLIED FILTER: DOESN'T MATCH
-        continue;
+    boolean firstItem = true;
+    for (String k : names)
+      firstItem = chronoToJSON(buffer, iFilter, firstItem, k, chronos.get(k));
 
-      if (firstItem)
-        firstItem = false;
-      else
-        buffer.append(',');
-
-      buffer.append(String.format(Locale.ENGLISH, "\"%s\":", OIOUtils.encode(k)));
-      chronos.get(k).toJSON(buffer);
+    for (Entry<String, OAbstractProfiler.OProfilerHookStatic> entry : hooks.entrySet()) {
+      if (entry.getValue().type == OProfiler.METRIC_TYPE.CHRONO) {
+        final Object v = entry.getValue().value;
+        if (v instanceof OProfilerEntry)
+          firstItem = chronoToJSON(buffer, iFilter, firstItem, entry.getKey(), (OProfilerEntry) entry.getValue().value);
+        else
+          OLogManager.instance().warn(this, "Profiler value '%s' of type '%s' is not of type 'chrono'", entry.getKey(),
+              OProfiler.METRIC_TYPE.CHRONO);
+      }
     }
+
     buffer.append("}");
 
     // STATISTICS
@@ -189,18 +148,10 @@ public class OProfilerData {
     names = new ArrayList<String>(stats.keySet());
     Collections.sort(names);
     firstItem = true;
-    for (String k : names) {
-      if (iFilter != null && !k.startsWith(iFilter))
-        // APPLIED FILTER: DOESN'T MATCH
-        continue;
 
-      if (firstItem)
-        firstItem = false;
-      else
-        buffer.append(',');
-      buffer.append(String.format(Locale.ENGLISH, "\"%s\":", OIOUtils.encode(k)));
-      stats.get(k).toJSON(buffer);
-    }
+    for (String k : names)
+      firstItem = statToJSON(buffer, iFilter, firstItem, k);
+
     buffer.append("}");
 
     // COUNTERS
@@ -208,16 +159,53 @@ public class OProfilerData {
     names = new ArrayList<String>(counters.keySet());
     Collections.sort(names);
     firstItem = true;
-    for (String k : names) {
-      if (iFilter != null && !k.startsWith(iFilter))
-        // APPLIED FILTER: DOESN'T MATCH
-        continue;
+    for (String k : names)
+      firstItem = numberValueToJSON(buffer, iFilter, firstItem, k, counters.get(k));
 
-      if (firstItem)
-        firstItem = false;
-      else
-        buffer.append(',');
-      buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", OIOUtils.encode(k), counters.get(k)));
+    for (Entry<String, OAbstractProfiler.OProfilerHookStatic> entry : hooks.entrySet()) {
+      if (entry.getValue().type == OProfiler.METRIC_TYPE.COUNTER) {
+        final Object v = entry.getValue().value;
+
+        if (v instanceof Number)
+          firstItem = numberValueToJSON(buffer, iFilter, firstItem, entry.getKey(), ((Number) v).longValue());
+        else
+          OLogManager.instance().warn(this, "Profiler value '%s' of type '%s' is not of type LONG", entry.getKey(),
+              OProfiler.METRIC_TYPE.COUNTER);
+      }
+    }
+    buffer.append("}");
+
+    // SIZES
+    buffer.append(",\"sizes\":{");
+    firstItem = true;
+
+    for (Entry<String, OAbstractProfiler.OProfilerHookStatic> entry : hooks.entrySet()) {
+      if (entry.getValue().type == OProfiler.METRIC_TYPE.SIZE) {
+        final Object v = entry.getValue().value;
+
+        if (v instanceof Number)
+          firstItem = numberValueToJSON(buffer, iFilter, firstItem, entry.getKey(), ((Number) v).longValue());
+        else
+          OLogManager.instance().warn(this, "Profiler value '%s' of type '%s' is not of type LONG", entry.getKey(),
+              OProfiler.METRIC_TYPE.SIZE);
+      }
+    }
+    buffer.append("}");
+
+    // SIZES
+    buffer.append(",\"texts\":{");
+    firstItem = true;
+
+    for (Entry<String, OAbstractProfiler.OProfilerHookStatic> entry : hooks.entrySet()) {
+      if (entry.getValue().type == OProfiler.METRIC_TYPE.TEXT) {
+        final Object v = entry.getValue().value;
+
+        if (v instanceof String)
+          firstItem = stringToJSON(buffer, iFilter, firstItem, entry.getKey(), (String) v);
+        else
+          OLogManager.instance().warn(this, "Profiler value '%s' of type '%s' is not of type STRING", entry.getKey(),
+              OProfiler.METRIC_TYPE.TEXT);
+      }
     }
     buffer.append("}");
 
@@ -238,12 +226,79 @@ public class OProfilerData {
     buffer.append("}");
   }
 
+  protected boolean numberValueToJSON(StringBuilder buffer, String iFilter, boolean firstItem, final String k, final Long counter) {
+    if (counter == null)
+      return firstItem;
+
+    if (iFilter != null && !k.startsWith(iFilter))
+      // APPLIED FILTER: DOESN'T MATCH
+      return firstItem;
+
+    if (firstItem)
+      firstItem = false;
+    else
+      buffer.append(',');
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", OIOUtils.encode(k), counter));
+    return firstItem;
+  }
+
+  protected boolean stringToJSON(StringBuilder buffer, String iFilter, boolean firstItem, final String k, final String value) {
+    if (value == null)
+      return firstItem;
+
+    if (iFilter != null && !k.startsWith(iFilter))
+      // APPLIED FILTER: DOESN'T MATCH
+      return firstItem;
+
+    if (firstItem)
+      firstItem = false;
+    else
+      buffer.append(',');
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":\"%s\"", OIOUtils.encode(k), value));
+    return firstItem;
+  }
+
+  protected boolean statToJSON(StringBuilder buffer, String iFilter, boolean firstItem, String k) {
+    if (iFilter != null && !k.startsWith(iFilter))
+      // APPLIED FILTER: DOESN'T MATCH
+      return firstItem;
+
+    final OProfilerEntry stat = stats.get(k);
+    if (stat == null)
+      return firstItem;
+
+    if (firstItem)
+      firstItem = false;
+    else
+      buffer.append(',');
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":", OIOUtils.encode(k)));
+    stat.toJSON(buffer);
+    return firstItem;
+  }
+
+  protected boolean chronoToJSON(final StringBuilder buffer, final String iFilter, boolean firstItem, final String k,
+      final OProfilerEntry chrono) {
+    if (iFilter != null && !k.startsWith(iFilter))
+      // APPLIED FILTER: DOESN'T MATCH
+      return firstItem;
+
+    if (chrono == null)
+      return firstItem;
+
+    if (firstItem)
+      firstItem = false;
+    else
+      buffer.append(',');
+
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":", OIOUtils.encode(k)));
+    chrono.toJSON(buffer);
+    return firstItem;
+  }
+
   public String dump() {
     final StringBuilder buffer = new StringBuilder(OEnterpriseProfiler.BUFFER_SIZE);
     buffer.append("Dump of profiler data from " + new Date(recordingFrom) + " to " + new Date(recordingFrom) + "\n");
 
-    buffer.append(dumpHookValues());
-    buffer.append("\n");
     buffer.append(dumpCounters());
     buffer.append("\n\n");
     buffer.append(dumpStats());
@@ -287,8 +342,8 @@ public class OProfilerData {
 
     buffer
         .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
-    buffer.append(String.format(Locale.ENGLISH, "\n%50s | Value                                                             |",
-        "Name"));
+    buffer.append(
+        String.format(Locale.ENGLISH, "\n%50s | Value                                                             |", "Name"));
     buffer
         .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
 
@@ -320,36 +375,6 @@ public class OProfilerData {
     return dumpEntries(stats, new StringBuilder("Dumping STATISTICS. Times in ms:"));
   }
 
-  public String dumpHookValues() {
-    final StringBuilder buffer = new StringBuilder(OEnterpriseProfiler.BUFFER_SIZE);
-
-    synchronized (hooks) {
-      if (hooks.size() == 0)
-        return "";
-
-      buffer.append("Dumping HOOK VALUES:");
-
-      buffer.append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+",
-          ""));
-      buffer.append(String.format(Locale.ENGLISH, "\n%50s | Value                                                             |",
-          "Name"));
-      buffer.append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+",
-          ""));
-
-      final List<String> names = new ArrayList<String>(hooks.keySet());
-      Collections.sort(names);
-
-      for (String k : names) {
-        final Object hookValue = hooks.get(k);
-        buffer.append(String.format(Locale.ENGLISH, "\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
-      }
-    }
-
-    buffer
-        .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
-    return buffer.toString();
-  }
-
   public Object getHookValue(final String iName) {
     if (iName == null)
       return null;
@@ -359,7 +384,7 @@ public class OProfilerData {
     }
   }
 
-  public void setHookValues(final Map<String, Object> iHooks) {
+  public void setHookValues(final Map<String, OAbstractProfiler.OProfilerHookStatic> iHooks) {
     synchronized (hooks) {
       hooks.clear();
       if (iHooks != null)
@@ -469,12 +494,12 @@ public class OProfilerData {
 
     OProfilerEntry c;
 
-    iBuffer.append(String
-        .format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
+    iBuffer
+        .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
     iBuffer.append(String.format(Locale.ENGLISH, "\n%50s | %10s %10s %10s %10s %10s %10s |", "Name", "last", "total", "min", "max",
         "average", "items"));
-    iBuffer.append(String
-        .format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
+    iBuffer
+        .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
 
     final List<String> keys = new ArrayList<String>(iValues.keySet());
     Collections.sort(keys);
@@ -482,11 +507,11 @@ public class OProfilerData {
     for (String k : keys) {
       c = iValues.get(k);
       if (c != null)
-        iBuffer.append(String.format(Locale.ENGLISH, "\n%-50s | %10d %10d %10d %10d %7.2f %10d |", k, c.last, c.total, c.min,
-            c.max, c.average, c.entries));
+        iBuffer.append(String.format(Locale.ENGLISH, "\n%-50s | %10d %10d %10d %10d %7.2f %10d |", k, c.last, c.total, c.min, c.max,
+            c.average, c.entries));
     }
-    iBuffer.append(String
-        .format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
+    iBuffer
+        .append(String.format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
     return iBuffer.toString();
   }
 

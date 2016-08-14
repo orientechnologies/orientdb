@@ -17,6 +17,9 @@
  */
 package com.orientechnologies.agent.event;
 
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+
 import com.orientechnologies.agent.plugins.OEventPlugin;
 import com.orientechnologies.agent.profiler.OProfilerData;
 import com.orientechnologies.common.log.OLogManager;
@@ -25,9 +28,6 @@ import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
 
 public class OEventController extends Thread {
 
@@ -162,7 +162,7 @@ public class OEventController extends Thread {
     }
 
     private OProfilerEntry sumDBValues(String type, OProfilerData profilerData) {
-        String hookValue = (String) profilerData.getHookValue("system.databases");
+    String hookValue = (String) profilerData.getHookValue("system.databases");
         OProfilerEntry entry = null;
         if (hookValue != null) {
             String[] split = hookValue.split(",");

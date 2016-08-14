@@ -181,7 +181,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
     if (lastSnapshot == null)
       return;
 
-    final Map<String, Object> hookValuesSnapshots = archiveHooks();
+    final Map<String, OProfilerHookStatic> hookValuesSnapshots = archiveHooks();
 
     acquireExclusiveLock();
     try {
@@ -262,7 +262,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
     }
     final StringBuilder buffer = new StringBuilder(BUFFER_SIZE * 5);
     timestamp.set(System.currentTimeMillis());
-    Map<String, Object> hookValuesSnapshots = null;
+    Map<String, OProfilerHookStatic> hookValuesSnapshots = null;
 
     if (iQuery.equals("realtime") || iQuery.equals("last"))
       // GET LATETS HOOK VALUES
@@ -503,9 +503,9 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
       Collections.sort(names);
 
       for (String k : names) {
-        final OProfilerHookValue v = hooks.get(k);
+        final OProfilerHookRuntime v = hooks.get(k);
         if (v != null) {
-          final Object hookValue = v.getValue();
+          final Object hookValue = v.hook.getValue();
           buffer.append(String.format("\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
         }
       }
@@ -519,8 +519,8 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
   }
 
   public Object getHookValue(final String iName) {
-    final OProfilerHookValue v = hooks.get(iName);
-    return v != null ? v.getValue() : null;
+    final OProfilerHookRuntime v = hooks.get(iName);
+    return v != null ? v.hook.getValue() : null;
   }
 
   public String[] getCountersAsString() {
@@ -598,14 +598,14 @@ public class OEnterpriseProfiler extends OAbstractProfiler {
   /**
    * Must be not called inside a lock.
    */
-  protected Map<String, Object> archiveHooks() {
+  protected Map<String, OProfilerHookStatic> archiveHooks() {
     if (!isRecording())
       return null;
 
-    final Map<String, Object> result = new HashMap<String, Object>();
+    final Map<String, OProfilerHookStatic> result = new HashMap<String, OProfilerHookStatic>();
 
-    for (Map.Entry<String, OProfilerHookValue> v : hooks.entrySet())
-      result.put(v.getKey(), v.getValue().getValue());
+    for (Entry<String, OProfilerHookRuntime> entry : hooks.entrySet())
+      result.put(entry.getKey(), new OProfilerHookStatic(entry.getValue().hook.getValue(), entry.getValue().type));
 
     return result;
   }
