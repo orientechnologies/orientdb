@@ -1438,7 +1438,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-
   @Override
   public long getNextPosition() throws IOException {
     startOperation();
@@ -1649,11 +1648,19 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     return recordConflictStrategy;
   }
 
+  /**
+   * Scans records in both orders (ascending or descending) between a range of records.
+   * 
+   * @return The last cluster position or -1 if the end was reached
+   * @throws IOException
+   */
   @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   public long scan(final boolean ascendingOrder, final long from, final long to, final long limit,
       final OCallable<Boolean, ORecord> callback) throws IOException {
     final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     atomicOperationsManager.acquireReadLock(this);
+
+    long browsed = 0;
     try {
       acquireSharedLock();
       try {
@@ -1664,7 +1671,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final int prefetchPages = OGlobalConfiguration.QUERY_SCAN_PREFETCH_PAGES.getValueAsInteger();
 
         long clusterPosition = ascendingOrder ? firstPos : lastPos;
-        long browsed = 0;
 
         for (; ascendingOrder ? clusterPosition <= lastPos
             : clusterPosition >= firstPos; clusterPosition += (ascendingOrder ? 1 : -1)) {
@@ -1697,9 +1703,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               break;
             }
 
-            if (++browsed == limit)
+            if (++browsed == limit) {
               // LIMIT REACHED
               return clusterPosition;
+            }
           } finally {
             if (statistic != null)
               statistic.stopRecordReadTimer();
@@ -1715,7 +1722,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       }
     } finally {
       atomicOperationsManager.releaseReadLock(this);
-
+      storageLocal.getRecordScanned().addAndGet(browsed);
       OLogManager.instance().debug(this, "Scan cluster id=%d completed", id);
     }
   }

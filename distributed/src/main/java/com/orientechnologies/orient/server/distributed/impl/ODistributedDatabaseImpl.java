@@ -22,6 +22,8 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler;
+import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -75,6 +77,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   private Map<String, OLogSequenceNumber>                                       lastLSN                        = new ConcurrentHashMap<String, OLogSequenceNumber>();
   private long                                                                  lastLSNWrittenOnDisk           = 0l;
+  private AtomicLong                                                            totalSentRequests              = new AtomicLong();
   private AtomicLong                                                            totalReceivedRequests          = new AtomicLong();
 
   private class ODistributedLock {
@@ -103,6 +106,48 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     startTxTimeoutTimerTask();
 
     repairer = new OConflictResolverDatabaseRepairer(manager, databaseName);
+
+    Orient.instance().getProfiler().registerHookValue("distributed.db." + databaseName + ".msgSent",
+        "Number of replication messages sent from current node", OProfiler.METRIC_TYPE.COUNTER,
+        new OAbstractProfiler.OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return totalSentRequests.get();
+          }
+        }, "distributed.db.*.msgSent");
+
+    Orient.instance().getProfiler().registerHookValue("distributed.db." + databaseName + ".msgReceived",
+        "Number of replication messages received from external nodes", OProfiler.METRIC_TYPE.COUNTER,
+        new OAbstractProfiler.OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return totalReceivedRequests.get();
+          }
+        }, "distributed.db.*.msgReceived");
+
+    Orient.instance().getProfiler().registerHookValue("distributed.db." + databaseName + ".activeContexts",
+        "Number of active distributed transactions", OProfiler.METRIC_TYPE.COUNTER, new OAbstractProfiler.OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return (long) activeTxContexts.size();
+          }
+        }, "distributed.db.*.activeContexts");
+
+    Orient.instance().getProfiler().registerHookValue("distributed.db." + databaseName + ".workerThreads",
+        "Number of worker threads", OProfiler.METRIC_TYPE.COUNTER, new OAbstractProfiler.OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return (long) workerThreads.size();
+          }
+        }, "distributed.db.*.workerThreads");
+
+    Orient.instance().getProfiler().registerHookValue("distributed.db." + databaseName + ".recordLocks", "Number of record locked",
+        OProfiler.METRIC_TYPE.COUNTER, new OAbstractProfiler.OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return (long) lockManager.size();
+          }
+        }, "distributed.db.*.recordLocks");
   }
 
   public OLogSequenceNumber getLastLSN(final String server) {
@@ -378,8 +423,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, localNodeName, iNodes.toString(), DIRECTION.OUT, "Sent request %s", iRequest);
 
-      Orient.instance().getProfiler().updateCounter("distributed.db." + databaseName + ".msgSent",
-          "Number of replication messages sent from current node", +1, "distributed.db.*.msgSent");
+      totalSentRequests.incrementAndGet();
 
       afterSendCallBackCalled = true;
 
@@ -665,6 +709,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     lockManager.clear();
     activeTxContexts.clear();
+
+    Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".msgSent");
+    Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".msgReceived");
+    Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".activeContexts");
+    Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".workerThreads");
+    Orient.instance().getProfiler().unregisterHookValue("distributed.db." + databaseName + ".recordLocks");
   }
 
   protected void checkForServerOnline(final ODistributedRequest iRequest) throws ODistributedException {
