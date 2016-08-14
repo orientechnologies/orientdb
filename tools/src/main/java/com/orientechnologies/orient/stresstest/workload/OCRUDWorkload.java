@@ -49,7 +49,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   public static final String CLASS_NAME           = "StressTestCRUD";
   public static final String INDEX_NAME           = CLASS_NAME + ".Index";
 
-  static final String        INVALID_FORM_MESSAGE = "CRUD workload must be in form of CxIxUxDx where x is a valid number.";
+  static final String        INVALID_FORM_MESSAGE = "CRUD workload must be in form of CxIxUxDxSx where x is a valid number.";
   static final String        INVALID_NUMBERS      = "Reads, Updates and Deletes must be less or equals to the Creates";
 
   private int                total                = 0;
@@ -58,10 +58,12 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   private OWorkLoadResult    readsResult          = new OWorkLoadResult();
   private OWorkLoadResult    updatesResult        = new OWorkLoadResult();
   private OWorkLoadResult    deletesResult        = new OWorkLoadResult();
+  private OWorkLoadResult    scansResult          = new OWorkLoadResult();
   private int                creates;
   private int                reads;
   private int                updates;
   private int                deletes;
+  private int                scans;
 
   public OCRUDWorkload() {
     connectionStrategy = OStorageRemote.CONNECTION_STRATEGY.ROUND_ROBIN_REQUEST;
@@ -81,7 +83,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
     for (int pos = 0; pos < ops.length(); ++pos) {
       final char c = ops.charAt(pos);
 
-      if (c == 'C' || c == 'R' || c == 'U' || c == 'D') {
+      if (c == 'C' || c == 'R' || c == 'U' || c == 'D' || c == 'S') {
         state = assignState(state, number, c);
       } else if (c >= '0' && c <= '9')
         number.append(c);
@@ -90,7 +92,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
     }
     assignState(state, number, ' ');
 
-    total = creates + reads + updates + deletes;
+    total = creates + reads + updates + deletes + scans;
 
     if (reads > creates || updates > creates || deletes > creates)
       throw new IllegalArgumentException(INVALID_NUMBERS);
@@ -102,6 +104,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
     readsResult.total = reads;
     updatesResult.total = updates;
     deletesResult.total = deletes;
+    scansResult.total = scans;
   }
 
   @Override
@@ -124,6 +127,16 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
 
     if (records.length != createsResult.total)
       throw new RuntimeException("Error on creating records: found " + records.length + " but expected " + createsResult.total);
+
+    executeOperation(databaseIdentifier, scansResult, settings.concurrencyLevel, settings.operationsPerTransaction,
+        new OCallable<Void, OBaseWorkLoadContext>() {
+          @Override
+          public Void call(final OBaseWorkLoadContext context) {
+            scanOperation(((OWorkLoadContext) context).getDb());
+            scansResult.current.incrementAndGet();
+            return null;
+          }
+        });
 
     executeOperation(databaseIdentifier, readsResult, settings.concurrencyLevel, settings.operationsPerTransaction,
         new OCallable<Void, OBaseWorkLoadContext>() {
@@ -175,11 +188,12 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
 
   @Override
   public String getPartialResult() {
-    final long current = createsResult.current.get() + readsResult.current.get() + updatesResult.current.get()
+    final long current = createsResult.current.get()+ scansResult.current.get() + readsResult.current.get() + updatesResult.current.get()
         + deletesResult.current.get();
 
-    return String.format("%d%% [Creates: %d%% - Reads: %d%% - Updates: %d%% - Deletes: %d%%]", ((int) (100 * current / total)),
+    return String.format("%d%% [Creates: %d%% - Scans: %d%% - Reads: %d%% - Updates: %d%% - Deletes: %d%%]", ((int) (100 * current / total)),
         createsResult.total > 0 ? 100 * createsResult.current.get() / createsResult.total : 0,
+        scansResult.total > 0 ? 100 * scansResult.current.get() / scansResult.total : 0,
         readsResult.total > 0 ? 100 * readsResult.current.get() / readsResult.total : 0,
         updatesResult.total > 0 ? 100 * updatesResult.current.get() / updatesResult.total : 0,
         deletesResult.total > 0 ? 100 * deletesResult.current.get() / deletesResult.total : 0);
@@ -191,6 +205,9 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
 
     buffer.append(String.format("- Created %d records in %.3f secs%s", createsResult.total, (createsResult.totalTime / 1000f),
         createsResult.toOutput(1)));
+
+    buffer.append(String.format("\n- Scanned %d records in %.3f secs%s", scansResult.total, (scansResult.totalTime / 1000f),
+        scansResult.toOutput(1)));
 
     buffer.append(String.format("\n- Read %d records in %.3f secs%s", readsResult.total, (readsResult.totalTime / 1000f),
         readsResult.toOutput(1)));
@@ -211,6 +228,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
     json.field("type", getName());
 
     json.field("creates", createsResult.toJSON(), OType.EMBEDDED);
+    json.field("scans", scansResult.toJSON(), OType.EMBEDDED);
     json.field("reads", readsResult.toJSON(), OType.EMBEDDED);
     json.field("updates", updatesResult.toJSON(), OType.EMBEDDED);
     json.field("deletes", deletesResult.toJSON(), OType.EMBEDDED);
@@ -233,6 +251,14 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   public void readOperation(final ODatabase database, final long n) {
     final String query = String.format("SELECT FROM %s WHERE name = ?", CLASS_NAME);
     final List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(query)).execute("value" + n);
+    if (result.size() != 1) {
+      throw new RuntimeException(String.format("The query [%s] result size is %d. Expected size is 1.", query, result.size()));
+    }
+  }
+
+  public void scanOperation(final ODatabase database) {
+    final String query = String.format("SELECT count(*) FROM %s WHERE notexistent is null", CLASS_NAME);
+    final List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>(query)).execute();
     if (result.size() != 1) {
       throw new RuntimeException(String.format("The query [%s] result size is %d. Expected size is 1.", query, result.size()));
     }
@@ -272,6 +298,8 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
       updates = Integer.parseInt(number.toString());
     else if (state == 'D')
       deletes = Integer.parseInt(number.toString());
+    else if (state == 'S')
+      scans = Integer.parseInt(number.toString());
 
     number.setLength(0);
     return c;
@@ -283,6 +311,10 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
 
   public int getReads() {
     return readsResult.total;
+  }
+
+  public int getScans() {
+    return scansResult.total;
   }
 
   public int getUpdates() {
