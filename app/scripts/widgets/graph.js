@@ -162,10 +162,15 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
   var linker = function (scope, element, attrs) {
 
 
-    var lastC = null;
-    var lastR = null;
-    var lastU = null;
-    var lastD = null;
+    var lastRecordCreate = null;
+    var lastRecordRead = null;
+    var lastRecordUpdate = null;
+    var lastRecordDelete = null;
+    var lastRecordScan = null;
+    var lastRecordConflict = null;
+    var lastTxCommit = null;
+    var lastTxRollback = null;
+    var lastDTxRetry = null;
 
 
     scope.$watch("server", function (server) {
@@ -217,7 +222,18 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
       });
 
       var countOps = function (array, regexp) {
+        var keys = Object.keys(array).filter(function (k) {
+          return k.match(regexp) != null;
+        })
 
+        var ops = 0;
+        keys.forEach(function (k) {
+          ops += array[k];
+        });
+        return ops;
+      }
+
+      var countOpsFromChronos = function (array, regexp) {
         var keys = Object.keys(array).filter(function (k) {
           return k.match(regexp) != null;
         })
@@ -231,36 +247,71 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
       $rootScope.$on('server:updated', function (evt, server) {
         if (!server.name || server.name == scope.server.name) {
 
-          var cOps = countOps(server.realtime['chronos'], /db.*createRecord/g);
-
-          var rOps = countOps(server.realtime['chronos'], /db.*readRecord/g);
-
-          var uOps = countOps(server.realtime['chronos'], /db.*updateRecord/g);
-
-          var dOps = countOps(server.realtime['chronos'], /db.*deleteRecord/g);
-
+          var recordCreateOps = countOps(server.realtime['counters'], /db.*createRecord/g);
+          var recordReadOps = countOps(server.realtime['counters'], /db.*readRecord/g);
+          var recordUpdateOps = countOps(server.realtime['counters'], /db.*updateRecord/g);
+          var recordDeleteOps = countOps(server.realtime['counters'], /db.*deleteRecord/g);
+          var recordScanOps = countOps(server.realtime['counters'], /db.*scanRecord/g);
+          var conflictsOps = countOps(server.realtime['counters'], /db.*conflictRecord/g);
+          var txCommitsOps = countOps(server.realtime['counters'], /db.*txCommit/g);
+          var txRollbacksOps = countOps(server.realtime['counters'], /db.*txRollback/g);
+          var dTxRetriesOps = countOps(server.realtime['counters'], /db.*distributedTxRetries/g);
 
           var createOperation = 0;
           var readOperation = 0;
           var updateOperation = 0;
           var deleteOperation = 0;
+          var scanOperation = 0;
+          var conflicts = 0;
+          var txCommits = 0;
+          var txRollbacks = 0;
+          var dTxRetries = 0;
 
-          if (lastC != null) {
-            createOperation = Math.abs(lastC - cOps) / (POLLING / 1000);
+
+          if (lastRecordCreate != null) {
+            createOperation = Math.abs(lastRecordCreate - recordCreateOps) / (POLLING / 1000);
           }
-          lastC = cOps;
-          if (lastR != null) {
-            readOperation = Math.abs(lastR - rOps) / (POLLING / 1000);
+          lastRecordCreate = recordCreateOps;
+
+          if (lastRecordRead != null) {
+            readOperation = Math.abs(lastRecordRead - recordReadOps) / (POLLING / 1000);
           }
-          lastR = rOps;
-          if (lastU != null) {
-            updateOperation = Math.abs(lastU - uOps) / (POLLING / 1000);
+          lastRecordRead = recordReadOps;
+
+          if (lastRecordUpdate != null) {
+            updateOperation = Math.abs(lastRecordUpdate - recordUpdateOps) / (POLLING / 1000);
           }
-          lastU = uOps;
-          if (lastD != null) {
-            deleteOperation = Math.abs(lastD - dOps) / (POLLING / 1000);
+          lastRecordUpdate = recordUpdateOps;
+
+          if (lastRecordDelete != null) {
+            deleteOperation = Math.abs(lastRecordDelete - recordDeleteOps) / (POLLING / 1000);
           }
-          lastD = dOps;
+          lastRecordDelete = recordDeleteOps;
+
+          if (lastRecordScan != null) {
+            scanOperation = Math.abs(lastRecordScan - recordScanOps) / (POLLING / 1000);
+          }
+          lastRecordScan = recordScanOps;
+
+          if (lastRecordConflict != null) {
+            scanOperation = Math.abs(lastRecordConflict - conflicts) / (POLLING / 1000);
+          }
+          lastRecordConflict = conflicts;
+
+          if (lastTxCommit != null) {
+            scanOperation = Math.abs(lastTxCommit - txCommits) / (POLLING / 1000);
+          }
+          lastTxCommit = txCommits;
+
+          if (lastTxRollback != null) {
+            scanOperation = Math.abs(lastTxRollback - txRollbacks) / (POLLING / 1000);
+          }
+          lastTxRollback = txRollbacks;
+
+          if (lastDTxRetry != null) {
+            scanOperation = Math.abs(lastDTxRetry - dTxRetries) / (POLLING / 1000);
+          }
+          lastDTxRetry = dTxRetries;
 
 
           if (counter == limit) {
@@ -277,6 +328,11 @@ graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
               ['Read', Math.round(readOperation)],
               ['Update', Math.round(updateOperation)],
               ['Delete', Math.round(deleteOperation)],
+              ['Scan', Math.round(scanOperation)],
+              ['Conflict', Math.round(conflicts)],
+              ['Tx Commit', Math.round(txCommits)],
+              ['Tx Rollback', Math.round(txRollbacks)],
+              ['Distributed Tx Retries', Math.round(dTxRetries)],
             ],
             length: length,
             duration: 1500

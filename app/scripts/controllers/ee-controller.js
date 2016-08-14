@@ -72,8 +72,7 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
 
   $scope.getServerMetrics = function () {
 
-
-    var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord"];
+    var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord", "db.*.scanRecord"];
 
     var cfg = MetricConfig.create();
     cfg.name = $i18n.get('server.operations');
@@ -81,7 +80,7 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
     cfg.config = new Array;
 
     names.forEach(function (name) {
-      cfg.config.push({name: name, field: 'entries'});
+      cfg.config.push({name: name});
     })
     $scope.config = cfg;
 
@@ -122,7 +121,7 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
     }
   });
   $scope.initMetrics = function () {
-    var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord"];
+    var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord", "db.*.scanRecord"];
     var cfg = MetricConfig.create();
     cfg.name = $i18n.get('db.operations');
     cfg.server = $scope.server['@rid'];
@@ -131,12 +130,12 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
     cfg.config = new Array;
 
     names.forEach(function (name) {
-      cfg.config.push({name: name, field: 'entries'});
+      cfg.config.push({name: name});
     })
     $scope.configDb = cfg;
   }
   $scope.getDbMetrics = function (db) {
-    var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord"];
+    var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord", "db.*.scanRecord"];
     var cfg = MetricConfig.create();
     cfg.name = $i18n.get('db.operations');
     cfg.server = $scope.server['@rid'];
@@ -145,7 +144,7 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
     cfg.config = new Array;
 
     names.forEach(function (name) {
-      cfg.config.push({name: name, field: 'entries'});
+      cfg.config.push({name: name});
     })
     $scope.configDb = cfg;
   }
@@ -380,8 +379,8 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope, ChartHe
         var cpuN = realtime['statistics']['process.runtime.cpu'].last;
         cpu += parseFloat(cpuN);
         // DISK
-        diskTotal += realtime['hookValues']['system.disk./.totalSpace'];
-        diskUsable += realtime['hookValues']['system.disk./.usableSpace'];
+        diskTotal += realtime['sizes']['system.disk./.totalSpace'];
+        diskUsable += realtime['sizes']['system.disk./.usableSpace'];
 
         // RAM
 
@@ -395,7 +394,7 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope, ChartHe
 
         // CONNECTIONS
 
-        connections += realtime['hookValues']['server.connections.actives'];
+        connections += realtime['counters']['server.connections.actives'];
 
 
         if (realtime['chronos']['distributed.node.latency']) {
@@ -410,13 +409,13 @@ ee.controller('ClusterOverviewController', function ($scope, $rootScope, ChartHe
         })
         var ops = 0;
         keys.forEach(function (k) {
-          ops += realtime['chronos'][k].entries;
+          ops += realtime['counters'][k];
 
-          if (!clusterCrud.realtime['chronos'][k]) {
-            clusterCrud.realtime['chronos'][k] = {};
-            clusterCrud.realtime['chronos'][k]['entries'] = realtime['chronos'][k].entries;
+          if (!clusterCrud.realtime['counters'][k]) {
+            clusterCrud.realtime['counters'][k] = {};
+            clusterCrud.realtime['counters'][k] = realtime['chronos'][k];
           } else {
-            clusterCrud.realtime['chronos'][k]['entries'] += realtime['chronos'][k].entries;
+            clusterCrud.realtime['counters'][k] += realtime['chronos'][k];
           }
         });
         operations += ops;
@@ -1445,12 +1444,6 @@ ee.controller('MetricsController', function ($scope, Cluster, AgentService) {
           var obj = {};
           obj.name = k;
           obj.value = data.realtime.counters[k];
-          return obj
-        });
-        $scope.hookValues = Object.keys(data.realtime.hookValues).map(function (k) {
-          var obj = {};
-          obj.name = k;
-          obj.value = data.realtime.hookValues[k];
           return obj
         });
       })

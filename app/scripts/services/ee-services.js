@@ -765,50 +765,57 @@ ee.factory("ChartHelper", function () {
     description: '',
     transform: function (stats) {
       try {
-        var val = helper.countChronos(stats['realtime']['chronos'], /db.*createRecord/g);
+        var val = helper.countOps(stats['realtime']['counters'], /db.*createRecord/g);
         return val;
       } catch (e) {
         return 0;
       }
     }
-  },
-    {
+  }, {
       name: 'Read',
       description: '',
       transform: function (stats) {
         try {
-          var val = helper.countChronos(stats['realtime']['chronos'], /db.*readRecord/g);
+          var val = helper.countOps(stats['realtime']['counters'], /db.*readRecord/g);
           return val;
         } catch (e) {
           return 0;
         }
       }
-    },
-    {
+    }, {
+      name: 'Scan',
+      description: 'Scan records',
+      transform: function (stats) {
+        try {
+          var val = helper.countOps(stats['realtime']['counters'], /db.*scanRecord/g);
+          return val;
+        } catch (e) {
+          return 0;
+        }
+      }
+    }, {
       name: 'Update',
       description: '',
       transform: function (stats) {
         try {
-          var val = helper.countChronos(stats['realtime']['chronos'], /db.*updateRecord/g);
+          var val = helper.countOps(stats['realtime']['counters'], /db.*updateRecord/g);
           return val;
         } catch (e) {
           return 0;
         }
       }
-    },
-    {
+    }, {
       name: 'Delete',
       description: '',
       transform: function (stats) {
         try {
-          var val = helper.countChronos(stats['realtime']['chronos'], /db.*deleteRecord/g);
+          var val = helper.countOps(stats['realtime']['counters'], /db.*deleteRecord/g);
           return val;
         } catch (e) {
           return 0;
         }
       }
-    },
-    {
+    }, {
       name: 'Conflict',
       description: '',
       transform: function (stats) {
@@ -819,8 +826,7 @@ ee.factory("ChartHelper", function () {
           return 0;
         }
       }
-    },
-    {
+    }, {
       name: 'Tx Commit',
       description: '',
       transform: function (stats) {
@@ -831,8 +837,7 @@ ee.factory("ChartHelper", function () {
           return 0;
         }
       }
-    },
-    {
+    }, {
       name: 'Tx Rollback',
       description: '',
       transform: function (stats) {

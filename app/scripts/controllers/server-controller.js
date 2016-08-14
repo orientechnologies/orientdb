@@ -295,8 +295,8 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
         lineCap: 'butt'
       };
 
-      var total = realtime['hookValues']['system.disk./.totalSpace'];
-      var usable = realtime['hookValues']['system.disk./.usableSpace'];
+      var total = realtime['sizes']['system.disk./.totalSpace'];
+      var usable = realtime['sizes']['system.disk./.usableSpace'];
       $scope.diskPercent = Math.floor((100 - (usable * 100) / total));
       $scope.anotherPercent = -45;
       $scope.diskOptions = {
@@ -331,7 +331,7 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
       $scope.diskCache = Math.floor((totalDiskCache * 100) / maxDiskCache);
 
 
-      $scope.connections = realtime['hookValues']['server.connections.actives'];
+      $scope.connections = realtime['counters']['server.connections.actives'];
 
       var keys = Object.keys(realtime['chronos']).filter(function (k) {
         return k.match(/db.*Record/g) != null;
