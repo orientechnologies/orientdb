@@ -100,6 +100,6 @@ public class LuceneExportImportTest extends BaseLuceneTest {
 
   @After
   public void deInit() {
-
+    deInitDB();
   }
 }
