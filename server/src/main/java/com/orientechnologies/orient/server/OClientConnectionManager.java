@@ -73,7 +73,7 @@ public class OClientConnectionManager {
     Orient.instance().getProfiler().registerHookValue("server.connections.actives", "Number of active network connections",
         METRIC_TYPE.COUNTER, new OProfilerHookValue() {
           public Object getValue() {
-            return connections.size();
+            return (long) connections.size();
           }
         });
     this.server = server;

@@ -35,6 +35,8 @@ public interface OProfiler extends OService {
     CHRONO, COUNTER, STAT, SIZE, ENABLED, TEXT
   }
 
+  METRIC_TYPE getType(String k);
+
   void updateCounter(String iStatName, String iDescription, long iPlus);
 
   void updateCounter(String iStatName, String iDescription, long iPlus, String iDictionary);

@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -46,15 +54,8 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -1436,7 +1437,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-
   @Override
   public long getNextPosition() throws IOException {
     startOperation();
@@ -1647,11 +1647,19 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     return recordConflictStrategy;
   }
 
+  /**
+   * Scans records in both orders (ascending or descending) between a range of records.
+   * 
+   * @return The last cluster position or -1 if the end was reached
+   * @throws IOException
+   */
   @SuppressFBWarnings(value = "PZLA_PREFER_ZERO_LENGTH_ARRAYS")
   public long scan(final boolean ascendingOrder, final long from, final long to, final long limit,
       final OCallable<Boolean, ORecord> callback) throws IOException {
     final OSessionStoragePerformanceStatistic statistic = performanceStatisticManager.getSessionPerformanceStatistic();
     atomicOperationsManager.acquireReadLock(this);
+
+    long browsed = 0;
     try {
       acquireSharedLock();
       try {
@@ -1662,7 +1670,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final int prefetchPages = OGlobalConfiguration.QUERY_SCAN_PREFETCH_PAGES.getValueAsInteger();
 
         long clusterPosition = ascendingOrder ? firstPos : lastPos;
-        long browsed = 0;
 
         for (; ascendingOrder ? clusterPosition <= lastPos
             : clusterPosition >= firstPos; clusterPosition += (ascendingOrder ? 1 : -1)) {
@@ -1695,9 +1702,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
               break;
             }
 
-            if (++browsed == limit)
+            if (++browsed == limit) {
               // LIMIT REACHED
               return clusterPosition;
+            }
           } finally {
             if (statistic != null)
               statistic.stopRecordReadTimer();
@@ -1713,7 +1721,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       }
     } finally {
       atomicOperationsManager.releaseReadLock(this);
-
+      storageLocal.getRecordScanned().addAndGet(browsed);
       OLogManager.instance().debug(this, "Scan cluster id=%d completed", id);
     }
   }
