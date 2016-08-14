@@ -36,9 +36,10 @@ public class OCRUDWorkloadTest {
     }
 
     OCRUDWorkload workload = new OCRUDWorkload();
-    workload.parseParameters("C1R1U1D1");
+    workload.parseParameters("C1R1U1D1S1");
     assertEquals(1, workload.getCreates());
     assertEquals(1, workload.getReads());
+    assertEquals(1, workload.getScans());
     assertEquals(1, workload.getUpdates());
     assertEquals(1, workload.getDeletes());
 
@@ -62,5 +63,6 @@ public class OCRUDWorkloadTest {
     assertEquals(99, workload.getReads());
     assertEquals(1, workload.getUpdates());
     assertEquals(99, workload.getDeletes());
+    assertEquals(0, workload.getScans());
   }
 }
