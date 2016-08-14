@@ -595,7 +595,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       if (filter(record, iContext)) {
         if(callHooks){
-          ((ODatabaseDocumentInternal)getDatabase()).callbackHooks(ORecordHook.TYPE.BEFORE_READ,record.getIdentity());
+          ((ODatabaseDocumentInternal)getDatabase()).callbackHooks(ORecordHook.TYPE.BEFORE_READ,record);
           ((ODatabaseDocumentInternal)getDatabase()).callbackHooks(ORecordHook.TYPE.AFTER_READ,record);
         }
 
