@@ -443,14 +443,16 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   }
 
   /**
-   * Verifies a shutdown state of this byte buffer pool for a consistency, leaks, etc.
+   * Verifies the state of this byte buffer pool for a consistency, leaks, etc. {@link OGlobalConfiguration#DIRECT_MEMORY_TRACK_MODE}
+   * must be on, otherwise this method does nothing. Detected problems will be printed to the error log. If assertions are on and
+   * erroneous state is detected, verification will fail with {@link AssertionError} exception.
    */
-  public void verifyStateOnShutdown() {
+  public void verifyState() {
     if (TRACK) {
       synchronized (this) {
         for (TrackedBufferReference reference : trackedReferences)
           OLogManager.instance()
-              .error(this, "DIRECT-TRACK: unreleased direct memory buffer `%X` detected on shutdown.", reference.stackTrace,
+              .error(this, "DIRECT-TRACK: unreleased direct memory buffer `%X` detected.", reference.stackTrace,
                   reference.id);
 
         checkTrackedBuffersLeaks();

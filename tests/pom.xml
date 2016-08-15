@@ -138,7 +138,12 @@
                         <storage.diskCache.bufferSize>4096</storage.diskCache.bufferSize>
                         <memory.directMemory.trackMode>true</memory.directMemory.trackMode>
                     </systemPropertyVariables>
-
+                    <properties>
+                        <property>
+                            <name>listener</name>
+                            <value>com.orientechnologies.OTestNGTestLeaksListener</value>
+                        </property>
+                    </properties>
                 </configuration>
                 <executions>
                     <execution>
