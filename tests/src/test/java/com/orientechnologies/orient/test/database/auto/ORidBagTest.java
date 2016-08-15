@@ -1455,6 +1455,7 @@ import static org.testng.Assert.assertTrue;
     Assert.assertEquals(teamMates.iterator().next().getIdentity(), bob.getIdentity());
   }
 
+  @Test
   public void testDocumentHelper() {
     ODocument document = new ODocument();
     ODocument embeddedDocument = new ODocument();
@@ -1611,6 +1612,7 @@ import static org.testng.Assert.assertTrue;
     Assert.assertEquals(ridBag.size(), size);
   }
 
+  @Test
   public void testJsonSerialization() {
     ODocument externalDoc = new ODocument();
     ODocument testDocument = new ODocument();
