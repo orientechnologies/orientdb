@@ -215,8 +215,15 @@
                         <systemPropertyVariables>
                             <security.userPasswordSaltIterations>1</security.userPasswordSaltIterations>
                         </systemPropertyVariables>
-                    </configuration>
 
+                        <properties>
+                            <property>
+                                <name>listener</name>
+                                <value>com.orientechnologies.OJUnitTestLeaksListener</value>
+                            </property>
+                        </properties>
+
+                    </configuration>
                 </plugin>
 
 

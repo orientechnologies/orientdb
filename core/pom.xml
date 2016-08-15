@@ -185,6 +185,12 @@
                         <exclude>${exclude.test.10}</exclude>
                         <exclude>${exclude.test.11}</exclude>
                     </excludes>
+                    <properties>
+                        <property>
+                            <name>listener</name>
+                            <value>com.orientechnologies.OTestNGTestLeaksListener</value>
+                        </property>
+                    </properties>
                 </configuration>
             </plugin>
             <plugin>

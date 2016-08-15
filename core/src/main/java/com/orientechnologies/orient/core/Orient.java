@@ -915,7 +915,7 @@ public class Orient extends OListenerManger<OOrientListener> {
           engine.shutdown();
       engines.clear();
 
-      OByteBufferPool.instance().verifyStateOnShutdown();
+      OByteBufferPool.instance().verifyState();
     }
 
     @Override
