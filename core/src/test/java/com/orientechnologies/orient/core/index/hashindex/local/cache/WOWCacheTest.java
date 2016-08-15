@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.storage.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import org.apache.commons.lang.SystemUtils;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -270,7 +271,15 @@ public class WOWCacheTest {
       Assert.assertEquals(dataTwo, dataOne);
     }
 
-    Thread.sleep(30000);
+    final long start = System.currentTimeMillis();
+    while (wowCache.getWriteCacheSize() != 0) {
+      Thread.sleep(1000);
+
+      //wait no more than 10 min
+      if (((System.currentTimeMillis() - start) / 1000) > 10 * 60) {
+        Assert.assertEquals(wowCache.getWriteCacheSize(), 0);
+      }
+    }
 
     for (int i = 0; i < pageData.length; i++) {
       byte[] dataContent = pageData[i];
