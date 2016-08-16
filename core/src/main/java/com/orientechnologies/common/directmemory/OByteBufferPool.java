@@ -126,10 +126,10 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
    */
   private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
 
-  private final ReferenceQueue<ByteBuffer>                 trackedBuffersQueue;
-  private final Set<TrackedBufferReference>                trackedReferences;
-  private final Map<TrackedBuffer, TrackedBufferReference> trackedBuffers;
-  private final Map<TrackedBuffer, Exception>              trackedReleases;
+  private final ReferenceQueue<ByteBuffer>                    trackedBuffersQueue;
+  private final Set<TrackedBufferReference>                   trackedReferences;
+  private final Map<TrackedBufferKey, TrackedBufferReference> trackedBuffers;
+  private final Map<TrackedBufferKey, Exception>              trackedReleases;
 
   /**
    * @param pageSize Size of single page (instance of <code>DirectByteBuffer</code>) returned by pool.
@@ -165,8 +165,8 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
     if (TRACK) {
       trackedBuffersQueue = new ReferenceQueue<ByteBuffer>();
       trackedReferences = new HashSet<TrackedBufferReference>();
-      trackedBuffers = new HashMap<TrackedBuffer, TrackedBufferReference>();
-      trackedReleases = new HashMap<TrackedBuffer, Exception>();
+      trackedBuffers = new HashMap<TrackedBufferKey, TrackedBufferReference>();
+      trackedReleases = new HashMap<TrackedBufferKey, Exception>();
     } else {
       trackedBuffersQueue = null;
       trackedReferences = null;
@@ -511,7 +511,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
       synchronized (this) {
         final TrackedBufferReference reference = new TrackedBufferReference(buffer, trackedBuffersQueue);
         trackedReferences.add(reference);
-        trackedBuffers.put(new TrackedBuffer(buffer), reference);
+        trackedBuffers.put(new TrackedBufferKey(buffer), reference);
 
         checkTrackedBuffersLeaks();
       }
@@ -524,14 +524,14 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private ByteBuffer untrackBuffer(ByteBuffer buffer) {
     if (TRACK) {
       synchronized (this) {
-        final TrackedBuffer trackedBuffer = new TrackedBuffer(buffer);
+        final TrackedBufferKey trackedBufferKey = new TrackedBufferKey(buffer);
 
-        final TrackedBufferReference reference = trackedBuffers.remove(trackedBuffer);
+        final TrackedBufferReference reference = trackedBuffers.remove(trackedBufferKey);
         if (reference == null) {
           OLogManager.instance()
               .error(this, "DIRECT-TRACK: untracked direct byte buffer `%X` detected.", new Exception(), id(buffer));
 
-          final Exception lastRelease = trackedReleases.get(trackedBuffer);
+          final Exception lastRelease = trackedReleases.get(trackedBufferKey);
           if (lastRelease != null)
             OLogManager.instance().error(this, "DIRECT-TRACK: last release.", lastRelease);
 
@@ -539,7 +539,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
         } else
           trackedReferences.remove(reference);
 
-        trackedReleases.put(trackedBuffer, new Exception());
+        trackedReleases.put(trackedBufferKey, new Exception());
 
         checkTrackedBuffersLeaks();
       }
@@ -581,23 +581,25 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
   }
 
-  private static class TrackedBuffer extends WeakReference<ByteBuffer> {
+  private static class TrackedBufferKey extends WeakReference<ByteBuffer> {
 
-    public TrackedBuffer(ByteBuffer referent) {
+    private final int hashCode;
+
+    public TrackedBufferKey(ByteBuffer referent) {
       super(referent);
+      hashCode = System.identityHashCode(referent);
     }
 
     @Override
     public int hashCode() {
-      final ByteBuffer buffer = get();
-      return buffer == null ? 0 : System.identityHashCode(buffer);
+      return hashCode;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object obj) {
       final ByteBuffer buffer = get();
-      return buffer != null && buffer == ((TrackedBuffer) obj).get();
+      return buffer != null && buffer == ((TrackedBufferKey) obj).get();
     }
 
   }
