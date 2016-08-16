@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
@@ -1725,15 +1726,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
         @Override
         public Object call() throws Exception {
-          ODatabaseDocumentTx database = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+          ODatabaseDocumentInternal database = (ODatabaseDocumentTx) ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
           final boolean databaseAlreadyDefined;
 
           if (database == null) {
             databaseAlreadyDefined = false;
-
-            database = new ODatabaseDocumentTx(getURL());
-            database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), OSecurityServerUser.class);
-            database.open("system", "system");
+            database = serverInstance.openDatabase(getName(), null, null, null, true);
           } else
             databaseAlreadyDefined = true;
 

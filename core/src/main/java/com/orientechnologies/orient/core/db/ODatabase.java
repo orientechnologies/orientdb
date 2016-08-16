@@ -147,6 +147,7 @@ public interface ODatabase<T> extends OBackupable, Closeable {
    *
    * @return True if already exists, otherwise false.
    */
+  @Deprecated
   boolean exists();
 
   /**
