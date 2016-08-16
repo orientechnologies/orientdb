@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.*;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
@@ -70,6 +71,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public static final String           CONFIG_REGISTEREDNODES = "registeredNodes";
 
   protected String                     hazelcastConfigFile    = "hazelcast.xml";
+  protected Config                     hazelcastConfig;
   protected String                     membershipListenerRegistration;
   protected String                     membershipListenerMapRegistration;
   protected volatile HazelcastInstance hazelcastInstance;
@@ -78,6 +80,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   protected OHazelcastDistributedMap   configurationMap;
 
   public OHazelcastPlugin() {
+  }
+
+  // Must be set before startup() is called.
+  public void setHazelcastConfig(final Config config) {
+    hazelcastConfig = config;
   }
 
   @Override
@@ -377,9 +384,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
-    FileSystemXmlConfig config = new FileSystemXmlConfig(hazelcastConfigFile);
-    config.setClassLoader(this.getClass().getClassLoader());
-    return Hazelcast.newHazelcastInstance(config);
+  	
+  	 // If hazelcastConfig is null, use the file system XML config.
+  	 if (hazelcastConfig == null) {
+      hazelcastConfig = new FileSystemXmlConfig(hazelcastConfigFile);
+      hazelcastConfig.setClassLoader(this.getClass().getClassLoader());
+    }
+
+    return Hazelcast.newHazelcastInstance(hazelcastConfig);
   }
 
   @Override
