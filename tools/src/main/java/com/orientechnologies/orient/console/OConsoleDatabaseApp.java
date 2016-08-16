@@ -2208,12 +2208,15 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         final FileOutputStream fos = new FileOutputStream(fileName);
         try {
           currentDatabase.backup(fos, null, null, this, compressionLevel, bufferSize);
-
-        } finally {
           fos.flush();
           fos.close();
-
           message("\nBackup executed in %.2f seconds", ((float) (System.currentTimeMillis() - startTime) / 1000));
+        } catch (RuntimeException e) {
+          fos.close();
+          File f = new File(fileName);
+          if (f.exists())
+            f.delete();
+          throw e;
         }
       }
     } catch (ODatabaseExportException e) {

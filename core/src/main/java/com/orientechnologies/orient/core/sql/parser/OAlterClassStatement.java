@@ -16,7 +16,7 @@ public class OAlterClassStatement extends OStatement {
   /**
    * the class property to be altered
    */
-  public OClass.ATTRIBUTES property;
+  public    OClass.ATTRIBUTES property;
 
   protected OIdentifier       identifierValue;
   protected List<OIdentifier> identifierListValue;
@@ -24,13 +24,13 @@ public class OAlterClassStatement extends OStatement {
   protected Boolean           remove;
   protected ONumber           numberValue;
   protected Boolean           booleanValue;
-  public OIdentifier       customKey;
-  public OExpression       customValue;
+  public    OIdentifier       customKey;
+  public    OExpression       customValue;
 
   // only to manage 'round-robin' as a cluster selection strategy (not a valid identifier)
-  protected String            customString;
+  protected String customString;
 
-  protected boolean           unsafe;
+  protected boolean unsafe;
 
   public OAlterClassStatement(int id) {
     super(id);
@@ -40,8 +40,7 @@ public class OAlterClassStatement extends OStatement {
     super(p, id);
   }
 
-  @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
+  @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("ALTER CLASS ");
     name.toString(params, builder);
     builder.append(" " + property.name() + " ");
@@ -52,20 +51,20 @@ public class OAlterClassStatement extends OStatement {
     case REMOVECLUSTER:
     case DESCRIPTION:
     case ENCRYPTION:
-      if(numberValue != null){
+      if (numberValue != null) {
         numberValue.toString(params, builder);//clusters only
       } else if (identifierValue != null) {
         identifierValue.toString(params, builder);
-      } else  {
+      } else {
         builder.append("null");
       }
       break;
     case CLUSTERSELECTION:
       if (identifierValue != null) {
         identifierValue.toString(params, builder);
-      } else if (customString!=null){
+      } else if (customString != null) {
         builder.append('\'').append(customString).append('\'');
-      }else{
+      } else {
         builder.append("null");
       }
       break;
@@ -82,9 +81,9 @@ public class OAlterClassStatement extends OStatement {
       }
       break;
     case SUPERCLASSES:
-      if(identifierListValue==null){
+      if (identifierListValue == null) {
         builder.append("null");
-      }else {
+      } else {
         boolean first = true;
         for (OIdentifier ident : identifierListValue) {
           if (!first) {
@@ -104,11 +103,15 @@ public class OAlterClassStatement extends OStatement {
       break;
     case CUSTOM:
       customKey.toString(params, builder);
-      builder.append("=");
-      if (customValue == null) {
-        builder.append("null");
+      if (customKey.getStringValue().equalsIgnoreCase("clear") && customValue == null) {
+        //do nothing
       } else {
-        customValue.toString(params, builder);
+        builder.append("=");
+        if (customValue == null) {
+          builder.append("null");
+        } else {
+          customValue.toString(params, builder);
+        }
       }
       break;
     }

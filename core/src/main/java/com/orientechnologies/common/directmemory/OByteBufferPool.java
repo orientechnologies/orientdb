@@ -583,13 +583,16 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
 
   private static class TrackedBufferKey extends WeakReference<ByteBuffer> {
 
+    private final int hashCode;
+
     public TrackedBufferKey(ByteBuffer referent) {
       super(referent);
+      hashCode = System.identityHashCode(referent);
     }
 
     @Override
     public int hashCode() {
-      return System.identityHashCode(get());
+      return hashCode;
     }
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")

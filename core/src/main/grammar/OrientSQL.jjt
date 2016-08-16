@@ -3841,8 +3841,10 @@ OAlterClassStatement AlterClassStatement():
 		(
 			<CUSTOM> { jjtThis.property = com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES.CUSTOM; }
 			jjtThis.customKey = Identifier()
-			<EQ>
-			jjtThis.customValue = Expression()
+			[
+                <EQ>
+                jjtThis.customValue = Expression()
+			]
 		)
 		|
 		(
@@ -3955,13 +3957,20 @@ OAlterPropertyStatement AlterPropertyStatement():
 		    (
 		        <CUSTOM>
 		        jjtThis.customPropertyName = Identifier()
-		        <EQ>
-		        jjtThis.customPropertyValue = Expression()
+                <EQ>
+                jjtThis.customPropertyValue = Expression()
 		    )
             |
 		    (
                 jjtThis.settingName = Identifier()
 		        jjtThis.settingValue = Expression()
+		        {
+                   if(jjtThis.settingName.getStringValue().equalsIgnoreCase("custom") && jjtThis.settingValue.toString().equalsIgnoreCase("clear")){
+                        jjtThis.settingName = null;
+                        jjtThis.settingValue = null;
+                        jjtThis.clearCustom = true;
+                   }
+                }
 		    )
 		)
 	)

@@ -13,6 +13,7 @@ public class OAlterPropertyStatementTest extends OParserTestAbstract {
     checkRightSyntax("ALTER PROPERTY Foo.foo CUSTOM foo = 'bar'");
     checkRightSyntax("ALTER PROPERTY Foo.foo CUSTOM foo = bar()");
     checkRightSyntax("alter property Foo.foo custom foo = bar()");
+    checkRightSyntax("alter property Foo.foo custom clear");
   }
 
 

@@ -8,14 +8,16 @@ import java.util.Map;
 
 public class OAlterPropertyStatement extends OStatement {
 
-  OIdentifier className;
+  public OIdentifier className;
 
-  OIdentifier propertyName;
-  OIdentifier customPropertyName;
-  OExpression customPropertyValue;
+  public OIdentifier propertyName;
+  public OIdentifier customPropertyName;
+  public OExpression customPropertyValue;
 
-  OIdentifier settingName;
+  public OIdentifier settingName;
   public OExpression settingValue;
+
+  public boolean clearCustom = false;
 
   public OAlterPropertyStatement(int id) {
     super(id);
@@ -36,7 +38,9 @@ public class OAlterPropertyStatement extends OStatement {
     className.toString(params, builder);
     builder.append(".");
     propertyName.toString(params, builder);
-    if (customPropertyName != null) {
+    if(clearCustom) {
+      builder.append(" CUSTOM clear");
+    } else if (customPropertyName != null) {
       builder.append(" CUSTOM ");
       customPropertyName.toString(params, builder);
       builder.append(" = ");
