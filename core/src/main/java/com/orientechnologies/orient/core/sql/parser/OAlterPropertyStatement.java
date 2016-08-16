@@ -40,7 +40,7 @@ public class OAlterPropertyStatement extends OStatement {
     propertyName.toString(params, builder);
     if(clearCustom) {
       builder.append(" CUSTOM clear");
-    } if (customPropertyName != null) {
+    } else if (customPropertyName != null) {
       builder.append(" CUSTOM ");
       customPropertyName.toString(params, builder);
       builder.append(" = ");

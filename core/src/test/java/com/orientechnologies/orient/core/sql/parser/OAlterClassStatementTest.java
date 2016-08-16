@@ -77,7 +77,14 @@ public class OAlterClassStatementTest extends OParserTestAbstract {
     checkWrongSyntax("ALTER CLASS Foo SUPERCLASS *Bar");
     checkWrongSyntax("ALTER CLASS Foo oversize 1.1.1");
     checkWrongSyntax("ALTER CLASS Foo oversize bar");
+
   }
 
 
+  @Test
+  public void testCustomClear(){
+    //issue #6562
+    checkRightSyntax("ALTER CLASS Foo custom clear");
+
+  }
 }
