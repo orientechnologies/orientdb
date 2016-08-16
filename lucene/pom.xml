@@ -44,6 +44,7 @@
             -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
             -Dstorage.configuration.syncOnUpdate=false
             -Dmemory.directMemory.trackMode=true
+            -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager
         </argLine>
 
     </properties>

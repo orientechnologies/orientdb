@@ -58,6 +58,7 @@
             -Ddb.makeFullCheckpointOnSchemaChange=false
             -Dsecurity.userPasswordSaltIterations=10
             -Dmemory.directMemory.trackMode=true
+            -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager
         </argLine>
     </properties>
 
