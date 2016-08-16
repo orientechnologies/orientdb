@@ -800,6 +800,19 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T>, OOrientSta
   }
 
   @Override
+  public int getVersion() {
+    final IndexConfiguration conf = this.configuration;
+    if (conf == null)
+      return -1;
+
+    final ODocument document = conf.getDocument();
+    if (document == null)
+      return -1;
+
+    return document.field(OIndexInternal.INDEX_VERSION);
+  }
+
+  @Override
   public ODocument getMetadata() {
     return metadata;
   }

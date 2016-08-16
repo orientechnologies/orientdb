@@ -34,19 +34,18 @@ import java.util.*;
 
 /**
  * Proxied abstract index.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 @SuppressWarnings("unchecked")
 public abstract class OIndexRemote<T> implements OIndex<T> {
-  public static final String    QUERY_GET_VALUES_BEETWEN_SELECT                   = "select from index:%s where ";
-  public static final String    QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION = "key >= ?";
-  public static final String    QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION = "key > ?";
-  public static final String    QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION   = "key <= ?";
-  public static final String    QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION   = "key < ?";
-  public static final String    QUERY_GET_VALUES_AND_OPERATOR                     = " and ";
-  public static final String    QUERY_GET_VALUES_LIMIT                            = " limit ";
+  public static final    String QUERY_GET_VALUES_BEETWEN_SELECT                   = "select from index:%s where ";
+  public static final    String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION = "key >= ?";
+  public static final    String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION = "key > ?";
+  public static final    String QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION   = "key <= ?";
+  public static final    String QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION   = "key < ?";
+  public static final    String QUERY_GET_VALUES_AND_OPERATOR                     = " and ";
+  public static final    String QUERY_GET_VALUES_LIMIT                            = " limit ";
   protected final static String QUERY_ENTRIES                                     = "select key, rid from index:%s";
   protected final static String QUERY_ENTRIES_DESC                                = "select key, rid from index:%s order by key desc";
 
@@ -65,14 +64,14 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   private final static String QUERY_REBUILD     = "rebuild index %s";
   private final static String QUERY_CLEAR       = "delete from index:%s";
   private final static String QUERY_DROP        = "drop index %s";
-  protected final String      databaseName;
-  private final String        wrappedType;
-  private final String        algorithm;
-  private final ORID          rid;
-  protected OIndexDefinition  indexDefinition;
-  protected String            name;
-  protected ODocument         configuration;
-  protected Set<String>       clustersToIndex;
+  protected final String           databaseName;
+  private final   String           wrappedType;
+  private final   String           algorithm;
+  private final   ORID             rid;
+  protected       OIndexDefinition indexDefinition;
+  protected       String           name;
+  protected       ODocument        configuration;
+  protected       Set<String>      clustersToIndex;
 
   public OIndexRemote(final String iName, final String iWrappedType, final String algorithm, final ORID iRid,
       final OIndexDefinition iIndexDefinition, final ODocument iConfiguration, final Set<String> clustersToIndex) {
@@ -212,6 +211,14 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public boolean isAutomatic() {
     return indexDefinition != null && indexDefinition.getClassName() != null;
+  }
+
+  @Override
+  public int getVersion() {
+    if (configuration == null)
+      return -1;
+
+    return configuration.field(OIndexInternal.INDEX_VERSION);
   }
 
   @Override

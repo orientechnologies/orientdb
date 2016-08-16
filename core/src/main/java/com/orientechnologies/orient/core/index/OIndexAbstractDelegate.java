@@ -30,9 +30,8 @@ import java.util.Set;
 
 /**
  * Generic abstract wrapper for indexes. It delegates all the operations to the wrapped OIndex instance.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OIndexAbstractDelegate<T> implements OIndex<T> {
   protected OIndex<T> delegate;
@@ -269,5 +268,10 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   @Override
   public int compareTo(OIndex<T> o) {
     return delegate.compareTo(o);
+  }
+
+  @Override
+  public int getVersion() {
+    return delegate.getVersion();
   }
 }

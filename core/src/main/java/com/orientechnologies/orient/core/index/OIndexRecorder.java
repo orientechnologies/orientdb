@@ -166,6 +166,11 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
+  public int getVersion() {
+    return -1;
+  }
+
+  @Override
   public long getRebuildVersion() {
     throw new UnsupportedOperationException("Not allowed operation");
   }

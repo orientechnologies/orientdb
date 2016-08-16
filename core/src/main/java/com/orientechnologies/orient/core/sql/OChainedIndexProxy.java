@@ -602,6 +602,11 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return false;
   }
 
+  @Override
+  public int getVersion() {
+    return -1;
+  }
+
   private final class ExternalIndexCursor extends OIndexAbstractCursor {
     private final OIndexCursor internalCursor;
 

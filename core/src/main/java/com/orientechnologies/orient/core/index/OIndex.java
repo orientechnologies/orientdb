@@ -188,6 +188,16 @@ public interface OIndex<T> extends Comparable<OIndex<T>> {
   ODocument getConfiguration();
 
   /**
+   * Returns binary format version for this index.
+   * Index format changes during system development but old formats are supported for binary compatibility.
+   * This method may be used to detect version of binary format which is used by current index and upgrade
+   * index to new one.
+   *
+   * @return Returns binary format version for this index if possible, otherwise -1.
+   */
+  int getVersion();
+
+  /**
    * Returns the internal index used.
    */
   OIndexInternal<T> getInternal();
