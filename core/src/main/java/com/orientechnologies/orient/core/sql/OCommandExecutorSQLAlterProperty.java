@@ -113,7 +113,8 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
 
 
       if(preParsedStatement != null) {
-        OExpression settingExp = ((OAlterPropertyStatement) preParsedStatement).settingValue;
+        OAlterPropertyStatement stm = (OAlterPropertyStatement) preParsedStatement;
+        OExpression settingExp = stm.settingValue;
         if (settingExp != null) {
           Object expValue = settingExp.execute(null, context);
           if(expValue == null){
@@ -123,6 +124,10 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
           if(attribute.equals(ATTRIBUTES.NAME) ||attribute.equals(ATTRIBUTES.LINKEDCLASS)){
             value = decodeClassName(value);
           }
+        } else if (stm.customPropertyName != null) {
+          value = "" + stm.customPropertyName.getStringValue() + "=" + stm.customPropertyValue.toString();
+        } else if(stm.clearCustom){
+          value = "clear";
         }
       }else {
         if (value.equalsIgnoreCase("null")) {
