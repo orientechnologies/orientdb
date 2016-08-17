@@ -108,7 +108,6 @@ public final class OAutoShardingIndexEngine implements OIndexEngine {
 
     this.strategy = new OAutoShardingMurmurStrategy(keySerializer);
 
-    final OStorage storage = getDatabase().getStorage().getUnderlying();
     if (storage instanceof OAbstractPaginatedStorage) {
       final String partitionsAsString = engineProperties.get("partitions");
       if (partitionsAsString == null || partitionsAsString.isEmpty())

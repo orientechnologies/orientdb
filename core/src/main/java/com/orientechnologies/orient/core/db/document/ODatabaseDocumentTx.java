@@ -332,7 +332,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void resetInitialization() {
-    internal.resetInitialization();
+    if (internal != null)
+      internal.resetInitialization();
   }
 
   @Override
@@ -341,7 +342,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
     while (current != null && current != this && current.getDatabaseOwner() != current)
       current = current.getDatabaseOwner();
-
+    if(current == null)
+      return this;
     return current;
   }
 
@@ -854,7 +856,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void drop() {
-    // TODO
+    checkOpeness();
     factory.drop(this.getName(), null, null);
   }
 
