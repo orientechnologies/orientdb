@@ -32,12 +32,12 @@ public class OCreateFunctionStatementExecutionTest {
     Assert.assertEquals(name, next.getProperty("functionName"));
     result.close();
 
-    result = db.query("select " + name + "(1, 3) as sum");
+    result = db.query("select " + name + "('foo', 'bar') as sum");
     Assert.assertTrue(result.hasNext());
     next = result.next();
     Assert.assertFalse(result.hasNext());
     Assert.assertNotNull(next);
-    Assert.assertEquals((Object) 4, next.getProperty("sum"));
+    Assert.assertEquals("foobar", next.getProperty("sum"));
     result.close();
 
   }
