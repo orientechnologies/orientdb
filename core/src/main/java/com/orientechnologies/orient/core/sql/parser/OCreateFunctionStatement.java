@@ -2,11 +2,19 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class OCreateFunctionStatement extends OStatement {
+public class OCreateFunctionStatement extends OSimpleExecStatement {
   protected OIdentifier name;
   protected String      codeQuoted;
   protected String      code;
@@ -21,6 +29,27 @@ public class OCreateFunctionStatement extends OStatement {
 
   public OCreateFunctionStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+    ODatabaseDocument database = getDatabase();
+    final OFunction f = database.getMetadata().getFunctionLibrary().createFunction(name.getStringValue());
+    f.setCode(code);
+    f.setIdempotent(Boolean.TRUE.equals(idempotent));
+    if (parameters != null)
+      f.setParameters(parameters.stream().map(x -> x.getStringValue()).collect(Collectors.toList()));
+    if (language != null)
+      f.setLanguage(language.getStringValue());
+    f.save();
+    ORID functionId = f.getId();
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "create function");
+    result.setProperty("functionName", name.getStringValue());
+    result.setProperty("finalId", functionId);
+
+    OInternalResultSet rs = new OInternalResultSet();
+    rs.add(result);
+    return rs;
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
