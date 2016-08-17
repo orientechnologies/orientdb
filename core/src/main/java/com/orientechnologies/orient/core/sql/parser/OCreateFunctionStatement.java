@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
@@ -32,7 +32,7 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
   }
 
   @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
-    ODatabaseDocument database = getDatabase();
+    ODatabase database = ctx.getDatabase();
     final OFunction f = database.getMetadata().getFunctionLibrary().createFunction(name.getStringValue());
     f.setCode(code);
     f.setIdempotent(Boolean.TRUE.equals(idempotent));
