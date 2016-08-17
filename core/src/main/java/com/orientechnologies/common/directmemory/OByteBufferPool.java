@@ -26,6 +26,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 import javax.management.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -41,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.LogManager;
 
 /**
  * Object of this class works at the same time as factory for <code>DirectByteBuffer</code> objects and pool for
@@ -450,14 +453,19 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   public void verifyState() {
     if (TRACK) {
       synchronized (this) {
+        final boolean logsInAssertions = logInAssertion();
+        final StringBuilder builder = logsInAssertions ? new StringBuilder() : null;
+
         for (TrackedBufferReference reference : trackedReferences)
-          OLogManager.instance()
-              .error(this, "DIRECT-TRACK: unreleased direct memory buffer `%X` detected.", reference.stackTrace,
-                  reference.id);
+          log(builder, this, "DIRECT-TRACK: unreleased direct memory buffer `%X` detected.", reference.stackTrace, reference.id);
 
-        checkTrackedBuffersLeaks();
+        checkTrackedBuffersLeaks(builder);
 
-        assert trackedReferences.size() == 0;
+        if (logsInAssertions) {
+          if (builder.length() > 0)
+            throw new AssertionError(builder.toString());
+        } else
+          assert trackedReferences.size() == 0;
       }
     }
   }
@@ -509,62 +517,99 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
   private ByteBuffer trackBuffer(ByteBuffer buffer) {
     if (TRACK) {
       synchronized (this) {
+        final boolean logInAssertion = logInAssertion();
+        final StringBuilder logBuilder = logInAssertion ? new StringBuilder() : null;
+
         final TrackedBufferReference reference = new TrackedBufferReference(buffer, trackedBuffersQueue);
         trackedReferences.add(reference);
         trackedBuffers.put(new TrackedBufferKey(buffer), reference);
 
-        checkTrackedBuffersLeaks();
+        checkTrackedBuffersLeaks(logBuilder);
+
+        if (logInAssertion && logBuilder.length() > 0)
+          throw new AssertionError(logBuilder.toString());
       }
     }
 
     return buffer;
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+  @SuppressWarnings({ "ThrowableResultOfMethodCallIgnored" })
   private ByteBuffer untrackBuffer(ByteBuffer buffer) {
     if (TRACK) {
       synchronized (this) {
+        final boolean logInAssertion = logInAssertion();
+        final StringBuilder logBuilder = logInAssertion ? new StringBuilder() : null;
+
         final TrackedBufferKey trackedBufferKey = new TrackedBufferKey(buffer);
 
         final TrackedBufferReference reference = trackedBuffers.remove(trackedBufferKey);
         if (reference == null) {
-          OLogManager.instance()
-              .error(this, "DIRECT-TRACK: untracked direct byte buffer `%X` detected.", new Exception(), id(buffer));
+          log(logBuilder, this, "DIRECT-TRACK: untracked direct byte buffer `%X` detected.", new Exception(), id(buffer));
 
           final Exception lastRelease = trackedReleases.get(trackedBufferKey);
           if (lastRelease != null)
-            OLogManager.instance().error(this, "DIRECT-TRACK: last release.", lastRelease);
+            log(logBuilder, this, "DIRECT-TRACK: last release.", lastRelease);
 
-          assert false;
+          if (logInAssertion) {
+            if (logBuilder.length() > 0)
+              throw new AssertionError(logBuilder.toString());
+          } else
+            assert false;
         } else
           trackedReferences.remove(reference);
 
         trackedReleases.put(trackedBufferKey, new Exception());
 
-        checkTrackedBuffersLeaks();
+        checkTrackedBuffersLeaks(logBuilder);
+        if (logInAssertion && logBuilder.length() > 0)
+          throw new AssertionError(logBuilder.toString());
       }
     }
 
     return buffer;
   }
 
-  private void checkTrackedBuffersLeaks() {
+  private void checkTrackedBuffersLeaks(StringBuilder logBuilder) {
     boolean leaked = false;
 
     TrackedBufferReference reference;
     while ((reference = (TrackedBufferReference) trackedBuffersQueue.poll()) != null) {
       if (trackedReferences.remove(reference)) {
-        OLogManager.instance()
-            .error(this, "DIRECT-TRACK: unreleased direct byte buffer `%X` detected.", reference.stackTrace, reference.id);
+        log(logBuilder, this, "DIRECT-TRACK: unreleased direct byte buffer `%X` detected.", reference.stackTrace, reference.id);
         leaked = true;
       }
     }
 
-    assert !leaked;
+    if (logBuilder == null)
+      assert !leaked;
   }
 
   private static int id(Object object) {
     return System.identityHashCode(object);
+  }
+
+  @SuppressWarnings("AssertWithSideEffects")
+  private static boolean logInAssertion() {
+    boolean assertionsEnabled = false;
+    assert assertionsEnabled = true;
+    return assertionsEnabled && !(LogManager.getLogManager() instanceof OLogManager.DebugLogManager);
+  }
+
+  private static void log(StringBuilder builder, final Object from, final String message, final Throwable exception,
+      final Object... args) {
+    if (builder == null)
+      OLogManager.instance().error(from, message, exception, args);
+    else {
+      final String newLine = String.format("%n");
+      builder.append(String.format(message, args)).append(newLine);
+      if (exception != null) {
+        final StringWriter stringWriter = new StringWriter();
+        final PrintWriter printWriter = new PrintWriter(stringWriter);
+        exception.printStackTrace(printWriter);
+        builder.append(stringWriter.toString());
+      }
+    }
   }
 
   private static class TrackedBufferReference extends WeakReference<ByteBuffer> {
