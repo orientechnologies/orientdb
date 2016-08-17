@@ -99,7 +99,7 @@ public class OSchedulerTest {
     }
   }
 
-  @Test
+  @Test(enabled = false)
   public void eventBySQL() throws Exception {
     final ODatabaseDocumentTx db = initDatabase();
     try {
