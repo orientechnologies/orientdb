@@ -1165,11 +1165,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.query(query, args);
   }  
   
-  @Override
-  public OTodoResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
-    checkOpeness();
-    return internal.command(query, args);
-  }  
   
   private OrientDBConfig buildConfig(final Map<OGlobalConfiguration, Object> iProperties) {
     Map<String, Object> pars = new HashMap<>(preopenProperties);
@@ -1214,19 +1209,24 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.command(query, args);
   }
 
+  public OTodoResultSet command(String query, Map args) throws OCommandSQLParsingException, OCommandExecutionException {
+    checkOpeness();
+    return internal.command(query, args);
+  }
+
   @Override
   public <DB extends ODatabase> DB setCustom(String name, Object iValue) {
-    checkOpeness();
     return internal.setCustom(name, iValue);
   }
   
   @Override
   public boolean isPrefetchRecords() {
+    checkOpeness();
     return internal.isPrefetchRecords();
   }
   
   public void setPrefetchRecords(boolean prefetchRecords) {
+    checkOpeness();
     internal.setPrefetchRecords(prefetchRecords);
-  };
-  
+  }
 }
