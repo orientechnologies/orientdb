@@ -62,6 +62,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
    */
   ORecordSerializer getSerializer();
 
+  void setSerializer(ORecordSerializer serializer);
+  
   int assignAndCheckCluster(ORecord record, String iClusterName);
 
   <RET extends ORecord> RET loadIfVersionIsNotLatest(final ORID rid, final int recordVersion, String fetchPlan, boolean ignoreCache)

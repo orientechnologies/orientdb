@@ -11,20 +11,22 @@ public class ODatabaseDocumentTxInternal {
   private ODatabaseDocumentTxInternal() {
   }
 
-  public static ODatabaseSessionMetadata getSessionMetadata(ODatabaseDocument db) {
-    if(db instanceof ODatabaseDocumentTx)
+  public static ODatabaseDocumentInternal getInternal(ODatabaseDocumentInternal db) {
+    if (db instanceof ODatabaseDocumentTx)
       db = ((ODatabaseDocumentTx) db).internal;
-    return ((ODatabaseDocumentTxOrig)db).sessionMetadata;
+    return db;
+  }
+
+  public static ODatabaseSessionMetadata getSessionMetadata(ODatabaseDocument db) {
+    return ((ODatabaseDocumentTxOrig) db).sessionMetadata;
   }
 
   public static void setSessionMetadata(ODatabaseDocument db, ODatabaseSessionMetadata sessionMetadata) {
-    if(db instanceof ODatabaseDocumentTx)
-      db = ((ODatabaseDocumentTx) db).internal;
-    ((ODatabaseDocumentTxOrig)db).sessionMetadata = sessionMetadata;
+    ((ODatabaseDocumentTxOrig) db).sessionMetadata = sessionMetadata;
   }
 
   public static ODatabaseDocumentTx wrap(ODatabaseDocumentInternal database) {
     return new ODatabaseDocumentTx(database, null);
   }
-  
+
 }

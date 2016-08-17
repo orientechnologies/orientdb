@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import com.orientechnologies.orient.core.OUncompletedCommit;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -33,6 +34,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -80,10 +82,22 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private OStorage                                      delegateStorage;
   
   public ODatabaseDocumentTx(String url) {
+    if (url.endsWith("/"))
+      url = url.substring(0, url.length() - 1);
+    url = url.replace('\\', '/');
     this.url = url;
+    
     int typeIndex = url.indexOf(':');
+    if (typeIndex <= 0)
+      throw new OConfigurationException(
+          "Error in database URL: the engine was not specified. Syntax is: " + Orient.URL_SYNTAX + ". URL was: " + url);
+    
     String remoteUrl = url.substring(typeIndex + 1);
     type = url.substring(0, typeIndex);
+    if (!"remote".equals(type) && !"plocal".equals(type) && !"memory".equals(type))
+      throw new OConfigurationException("Error on opening database: the engine '" + type + "' was not found. URL was: " + url
+          + ". Registered engines are: [\"memory\",\"remote\",\"plocal\"]" );
+    
     int index = remoteUrl.lastIndexOf('/');
     if (index > 0) {
       baseUrl = remoteUrl.substring(0, index);
@@ -277,6 +291,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public ODatabaseDocumentTx copy() {
+    checkOpeness();
     return new ODatabaseDocumentTx(this.internal.copy(), this.baseUrl);
   }
 

@@ -779,7 +779,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
     ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     ORecordSerializer dbser = oldDb.getSerializer();
-    ((ODatabaseDocumentTx) oldDb).setSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
+    oldDb.setSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
     final byte[] streamOrigin = "Account@html:{\"path\":\"html/layout\"},config:{\"title\":\"Github Admin\",\"modules\":(githubDisplay:\"github_display\")},complex:(simple1:\"string1\",one_level1:(simple2:\"string2\"),two_levels:(simple3:\"string3\",one_level2:(simple4:\"string4\")))"
         .getBytes();
     ODocument doc = (ODocument) ORecordSerializerSchemaAware2CSV.INSTANCE.fromStream(streamOrigin, new ODocument(), null);
@@ -787,7 +787,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     final byte[] streamDest = ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc, false);
     Assert.assertEquals(streamOrigin, streamDest);
     ODatabaseDocumentTx.setDefaultSerializer(current);
-    ((ODatabaseDocumentTx) oldDb).setSerializer(dbser);
+    oldDb.setSerializer(dbser);
   }
 
   public void testUpdateNoVersionCheck() {
