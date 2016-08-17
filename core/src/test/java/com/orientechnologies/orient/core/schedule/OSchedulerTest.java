@@ -122,7 +122,8 @@ public class OSchedulerTest {
 
       long newCount = getLogCounter(db);
 
-      Assert.assertTrue(newCount - count > 1 && newCount - count <= 2);
+      Assert.assertTrue(newCount - count > 1);
+      Assert.assertTrue(newCount - count <= 2);
 
       // DELETE
       db.command(new OCommandSQL("delete from oschedule where name = 'test'")).execute(func.getId());
