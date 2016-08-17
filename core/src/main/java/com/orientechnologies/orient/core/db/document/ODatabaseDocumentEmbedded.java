@@ -46,6 +46,8 @@ import java.util.concurrent.Callable;
  */
 public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
 
+  private OrientDBConfig config;
+  
   public ODatabaseDocumentEmbedded(final OStorage storage) {
     activateOnCurrentThread();
 
@@ -85,6 +87,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
     boolean failure = true;
     setupThreadOwner();
     activateOnCurrentThread();
+    this.config = config;
     applyAttributes(config);
     applyListeners(config);
     try {
@@ -222,7 +225,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
    */
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage);
-    database.internalOpen(getUser().getName(), null, null, false);
+    database.internalOpen(getUser().getName(), null, config, false);
     this.activateOnCurrentThread();
     return database;
   }
