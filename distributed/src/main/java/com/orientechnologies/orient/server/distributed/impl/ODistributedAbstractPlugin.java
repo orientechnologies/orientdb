@@ -112,7 +112,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
 
   protected static final int                                     DEPLOY_DB_MAX_RETRIES             = 10;
   protected Map<String, Member>                                  activeNodes                       = new ConcurrentHashMap<String, Member>();
-  protected Map<String, String>                                  activeNodesNamesByMemberId        = new ConcurrentHashMap<String, String>();
+  protected Map<String, String>                                  activeNodesNamesByUuid            = new ConcurrentHashMap<String, String>();
+  protected Map<String, String>                                  activeNodesUuidByName             = new ConcurrentHashMap<String, String>();
   protected List<String>                                         registeredNodeById;
   protected Map<String, Integer>                                 registeredNodeByName;
   protected Map<String, Long>                                    autoRemovalOfServers              = new ConcurrentHashMap<String, Long>();
@@ -223,7 +224,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       messageService.shutdown();
 
     activeNodes.clear();
-    activeNodesNamesByMemberId.clear();
+    activeNodesNamesByUuid.clear();
+    activeNodesUuidByName.clear();
 
     setNodeStatus(NODE_STATUS.OFFLINE);
 
@@ -334,7 +336,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       // LOCAL NODE (NOT YET NAMED)
       return nodeName;
 
-    final String name = activeNodesNamesByMemberId.get(iMember.getUuid());
+    final String name = activeNodesNamesByUuid.get(iMember.getUuid());
     if (name != null)
       return name;
 
@@ -548,7 +550,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
     nodeCfg.field("latencies", getMessageService().getLatencies(), OType.EMBEDDED);
     nodeCfg.field("messages", getMessageService().getMessageStats(), OType.EMBEDDED);
 
-    onLocalNodeConfigurationRequest(nodeCfg);
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();) {
+      final ODatabaseLifecycleListener listener = it.next();
+      if (listener != null)
+        listener.onLocalNodeConfigurationRequest(nodeCfg);
+    }
 
     return nodeCfg;
   }
@@ -800,6 +806,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
         return -1;
       return val.intValue();
     }
+  }
+
+  @Override
+  public String getNodeUuidByName(final String name) {
+    if (name == null || name.isEmpty())
+      throw new IllegalArgumentException("Node name " + name + " is invalid");
+
+    return activeNodesUuidByName.get(name);
   }
 
   @Override

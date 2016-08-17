@@ -147,6 +147,8 @@ public interface ODistributedServerManager {
 
   long getNextMessageIdCounter();
 
+  String getNodeUuidByName(String name);
+
   void updateLastClusterChange();
 
   boolean reassignClustersOwnership(String iNode, String databaseName, Set<String> clustersWithNotAvailableOwner,
