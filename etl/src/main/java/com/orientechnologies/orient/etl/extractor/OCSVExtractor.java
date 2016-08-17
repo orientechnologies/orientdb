@@ -14,9 +14,14 @@ import java.io.Reader;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.DEBUG;
+import static com.orientechnologies.orient.etl.OETLProcessor.LOG_LEVELS.*;
 
 /**
  * An extractor based on Apache Commons CSV
@@ -33,8 +38,9 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
   private boolean            unicode         = true;
   private Iterator<CSVRecord> recordIterator;
   private CSVFormat           csvFormat;
-  private String nullValue  = NULL_STRING;
-  private String dateFormat = "yyyy-MM-dd";
+  private String nullValue      = NULL_STRING;
+  private String dateFormat     = "yyyy-MM-dd";
+  private String dateTimeFormat = "yyyy-MM-dd hh:mm";
 
   @Override
   public ODocument getConfiguration() {
@@ -44,6 +50,7 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
             + "{columns:{optional:true,description:'Columns array containing names, and optionally type after : (e.g.: name:String, age:int'}},"
             + "{nullValue:{optional:true,description:'Value to consider as NULL_STRING. Default is NULL'}},"
             + "{dateFormat:{optional:true,description:'Date format used to parde dates. Default is yyyy-MM-dd'}},"
+            + "{dateTimeFormat:{optional:true,description:'DateTime format used to parde dates. Default is yyyy-mm-dd HH:MM'}},"
             + "{quote:{optional:true,description:'String character delimiter. Use \"\" to do not use any delimitator'}},"
             + "{ignoreEmptyLines:{optional:true,description:'Ignore empty lines',type:'boolean'}},"
             + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
@@ -79,6 +86,9 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     if (iConfiguration.containsField("dateFormat")) {
       dateFormat = iConfiguration.<String>field("dateFormat");
     }
+    if (iConfiguration.containsField("dateTimeFormat")) {
+      dateFormat = iConfiguration.<String>field("dateTimeFormat");
+    }
 
     if (iConfiguration.containsField("ignoreEmptyLines")) {
       boolean ignoreEmptyLines = iConfiguration.field("ignoreEmptyLines");
@@ -99,13 +109,13 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
 
       ArrayList<String> columnNames = new ArrayList<String>(columns.size());
       columnTypes = new HashMap<String, OType>(columns.size());
-      for (String c : columns) {
-        final String[] parts = c.split(":");
-        columnNames.add(parts[0]);
-        if (parts.length > 1) {
-          columnTypes.put(parts[0], OType.valueOf(parts[1].toUpperCase()));
+      for (String col : columns) {
+        final String[] col2Type = col.split(":");
+        columnNames.add(col2Type[0]);
+        if (col2Type.length > 1) {
+          columnTypes.put(col2Type[0], OType.valueOf(col2Type[1].toUpperCase()));
         } else {
-          columnTypes.put(parts[0], OType.ANY);
+          columnTypes.put(col2Type[0], OType.ANY);
         }
       }
 
@@ -190,8 +200,15 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
         final OType fieldType = typeEntry.getValue();
         String fieldValueAsString = recordAsMap.get(fieldName);
         try {
-          Object fieldValue = OType.convert(fieldValueAsString, fieldType.getDefaultJavaType());
-          doc.field(fieldName, fieldValue);
+          if (fieldType.getDefaultJavaType().equals(Date.class)) {
+            if (fieldType.equals(OType.DATE))
+              doc.field(fieldName, transformToDate(fieldValueAsString));
+            else
+              doc.field(fieldName, transformToDateTime(fieldValueAsString));
+          } else {
+            Object fieldValue = OType.convert(fieldValueAsString, fieldType.getDefaultJavaType());
+            doc.field(fieldName, fieldValue);
+          }
         } catch (Exception e) {
           processor.getStats().incrementErrors();
           log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s",
@@ -210,13 +227,26 @@ public class OCSVExtractor extends OAbstractSourceExtractor {
     if ((fieldValue = transformToDate(fieldStringValue)) == null)// try maybe Date type
       if ((fieldValue = transformToNumeric(fieldStringValue)) == null)// try maybe Numeric type
         if ((fieldValue = transformToBoolean(fieldStringValue)) == null)// try maybe Boolean type
-        fieldValue = fieldStringValue; // type String
+          fieldValue = fieldStringValue; // type String
     return fieldValue;
   }
 
   private Object transformToDate(String fieldStringValue) {
     // DATE
     DateFormat df = new SimpleDateFormat(dateFormat);
+    df.setLenient(true);
+    Object fieldValue;
+    try {
+      fieldValue = df.parse(fieldStringValue);
+    } catch (ParseException pe) {
+      fieldValue = null;
+    }
+    return fieldValue;
+  }
+
+  private Object transformToDateTime(String fieldStringValue) {
+    // DATE
+    DateFormat df = new SimpleDateFormat(dateTimeFormat);
     df.setLenient(true);
     Object fieldValue;
     try {

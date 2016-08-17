@@ -5,6 +5,10 @@ import com.orientechnologies.orient.etl.OETLBaseTest;
 import com.orientechnologies.orient.etl.transformer.OCSVTransformer;
 import org.junit.Test;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 
@@ -393,8 +397,8 @@ public class OCSVExtractorTest extends OETLBaseTest {
 
     assertThat(doc.<String>field("id")).isEqualTo("#1:1");
 
-
   }
+
   @Test
   public void testBooleanType() {
     String cfgJson = "{source: { content: { value: 'fake\ntrue'} }, extractor : { csv : {} }, loader : { test: {} } }";
@@ -405,6 +409,27 @@ public class OCSVExtractorTest extends OETLBaseTest {
 
     assertThat(doc.<Boolean>field("fake")).isTrue();
 
+  }
+
+  @Test
+  public void testColumsDefinitions() {
+    String cfgJson = "{source: { content: { value: 'name,date,datetime\nfrank,2008-04-30,2015-03-30 11:00'} }, extractor : { csv : { 'columns':['name:string','date:date','datetime:datetime']} }, loader : { test: {} } }";
+    process(cfgJson);
+    List<ODocument> res = getResult();
+    assertThat(res).hasSize(1);
+    ODocument doc = res.get(0);
+
+    System.out.println(doc.toJSON());
+    assertThat(doc.<Date>field("date")).isEqualTo("2008-04-30");
+
+    //DATETIME: java.util.Date from DB,
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    LocalDateTime time = LocalDateTime.parse("2015-03-30 11:00", formatter);
+
+    DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+    assertThat(df.format(doc.<Date>field("datetime"))).isEqualTo(formatter.format(time));
 
   }
 }
