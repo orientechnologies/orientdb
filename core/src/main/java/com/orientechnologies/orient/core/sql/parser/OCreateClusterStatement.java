@@ -2,9 +2,16 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
 import java.util.Map;
 
-public class OCreateClusterStatement extends OStatement {
+public class OCreateClusterStatement extends ODDLStatement {
 
   /**
    * Class name
@@ -21,6 +28,51 @@ public class OCreateClusterStatement extends OStatement {
 
   public OCreateClusterStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+    checkNotExistsCluster(ctx);
+    ODatabase db = ctx.getDatabase();
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "create cluster");
+    result.setProperty("clusterName", name.getStringValue());
+
+    int requestedId = id == null ? -1 : id.getValue().intValue();
+    int finalId = -1;
+    if (blob) {
+      if (requestedId == -1) {
+        finalId = db.addBlobCluster(name.getStringValue());
+        result.setProperty("finalId", finalId);
+      } else {
+        throw new OCommandExecutionException("Request id not supported by blob cluster creation.");
+      }
+    } else {
+      if (requestedId == -1) {
+        finalId = db.addCluster(name.getStringValue());
+      } else {
+        result.setProperty("requestedId", requestedId);
+        finalId = db.addCluster(name.getStringValue(), requestedId, null);
+      }
+    }
+    result.setProperty("finalId", finalId);
+
+    OInternalResultSet rs = new OInternalResultSet();
+    rs.add(result);
+    return rs;
+  }
+
+  private void checkNotExistsCluster(OCommandContext ctx) {
+    ODatabase db = ctx.getDatabase();
+    int existingId = db.getClusterIdByName(name.getStringValue());
+    if (existingId >= 0) {
+      throw new OCommandExecutionException("Cluster " + name.getStringValue() + " already exists");
+    }
+    if (id != null) {
+      String existingName = db.getClusterNameById(id.getValue().intValue());
+      if (existingName != null) {
+        throw new OCommandExecutionException("Cluster " + id.getValue() + " already exists");
+      }
+    }
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
