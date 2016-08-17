@@ -95,4 +95,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
   void callOnOpenListeners();
 
   void callOnCloseListeners();
+  
+  public <DB extends ODatabase> DB setCustom(final String name, final Object iValue);
+  
 }

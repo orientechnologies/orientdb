@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -87,7 +88,7 @@ public class OAlterClusterStatement extends ODDLStatement {
   }
 
   private List<com.orientechnologies.orient.core.storage.OCluster> getClusters(OCommandContext ctx) {
-    OStorage storage = ((ODatabaseDocumentTx) ctx.getDatabase()).getStorage();
+    OStorage storage = ((ODatabaseDocumentInternal) ctx.getDatabase()).getStorage();
     if (starred) {
       List<com.orientechnologies.orient.core.storage.OCluster> result = new ArrayList<>();
       for (String clusterName : storage.getClusterNames()) {
