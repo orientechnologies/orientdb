@@ -86,6 +86,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
     setupThreadOwner();
     activateOnCurrentThread();
     applyAttributes(config);
+    applyListeners(config);
     try {
 
       if (user != null && !user.getName().equals(iUserName))
@@ -128,6 +129,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
     }
   }
 
+  private void applyListeners(OrientDBConfig config) {
+    for (ODatabaseListener listener : config.getListeners()) {
+      registerListener(listener);
+    }
+  }
+
   /**
    * Opens a database using an authentication token received as an argument.
    *
@@ -152,6 +159,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentTx {
     this.status = STATUS.OPEN;
     // THIS IF SHOULDN'T BE NEEDED, CREATE HAPPEN ONLY IN EMBEDDED
     applyAttributes(config);
+    applyListeners(config);
     metadata = new OMetadataDefault(this);
     installHooksEmbedded();
     // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER

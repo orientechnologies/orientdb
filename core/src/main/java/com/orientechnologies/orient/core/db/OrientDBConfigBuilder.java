@@ -21,7 +21,9 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -31,6 +33,7 @@ public class OrientDBConfigBuilder {
 
   private OContextConfiguration   configurations = new OContextConfiguration();
   private Map<ATTRIBUTES, Object> attributes     = new HashMap<>();
+  private Set<ODatabaseListener>  listeners      = new HashSet<>();
 
   public OrientDBConfigBuilder fromGlobalMap(Map<OGlobalConfiguration, Object> values) {
     for (Map.Entry<OGlobalConfiguration, Object> entry : values.entrySet()) {
@@ -46,6 +49,10 @@ public class OrientDBConfigBuilder {
     return this;
   }
 
+  public void addListener(ODatabaseListener listener) {
+    listeners.add(listener);
+  }
+
   public OrientDBConfigBuilder addConfig(OGlobalConfiguration configuration, Object value) {
     configurations.setValue(configuration, value);
     return this;
@@ -57,6 +64,6 @@ public class OrientDBConfigBuilder {
   }
 
   public OrientDBConfig build() {
-    return new OrientDBConfig(configurations, attributes);
+    return new OrientDBConfig(configurations, attributes, listeners);
   }
 }

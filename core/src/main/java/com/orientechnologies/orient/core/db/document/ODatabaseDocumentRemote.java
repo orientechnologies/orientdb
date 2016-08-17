@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -123,6 +124,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
     boolean failure = true;
     setupThreadOwner();
     applyAttributes(config);
+    applyListeners(config);
     try {
 
       storage.open(user, password, config.getConfigurations());
@@ -181,5 +183,9 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
     initialized = true;
   }
   
-
+  private void applyListeners(OrientDBConfig config) {
+    for (ODatabaseListener listener : config.getListeners()) {
+      registerListener(listener);
+    }
+  }
 }
