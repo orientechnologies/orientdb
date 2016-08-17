@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 import java.util.Collections;
 import java.util.Map;
@@ -41,6 +42,8 @@ import java.util.Map.Entry;
  * Created by tglman on 30/06/16.
  */
 public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
+
+  private OrientDBConfig config;
 
   public ODatabaseDocumentRemote(final OStorage storage) {
     activateOnCurrentThread();
@@ -99,7 +102,15 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
   }
 
   public ODatabaseDocumentInternal copy() {
-    return null;
+    ODatabaseDocumentRemote database = new ODatabaseDocumentRemote(storage);
+    database.storage = ((OStorageProxy) storage).copy(this, database);
+    ((OStorageProxy) database.storage).addUser();
+    database.status = STATUS.OPEN;
+    database.applyAttributes(config);
+    database.initAtFirstOpen();
+    database.user = this.user; 
+    this.activateOnCurrentThread();
+    return database;
   }
 
   @Override
@@ -108,6 +119,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
   }
 
   public void internalOpen(String user, String password, OrientDBConfig config) {
+    this.config = config;
     boolean failure = true;
     setupThreadOwner();
     applyAttributes(config);
@@ -117,7 +129,9 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
 
       status = STATUS.OPEN;
 
-      initAtFirstOpen(user, password);
+      initAtFirstOpen();
+      this.user = new OImmutableUser(-1, new OUser(user, OUser.encryptPassword(password))
+          .addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
 
       // WAKE UP LISTENERS
       callOnOpenListeners();
@@ -141,7 +155,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
     }
   }
 
-  private void initAtFirstOpen(String iUserName, String iUserPassword) {
+  private void initAtFirstOpen() {
     if (initialized)
       return;
 
@@ -162,12 +176,10 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentTx {
     user = null;
 
     loadMetadata();
-
-    user = new OImmutableUser(-1, new OUser(iUserName, OUser.encryptPassword(iUserPassword))
-        .addRole(new ORole("passthrough", null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
     installHooksRemote();
 
     initialized = true;
   }
+  
 
 }

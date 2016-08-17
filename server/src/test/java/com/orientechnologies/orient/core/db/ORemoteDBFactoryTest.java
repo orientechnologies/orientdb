@@ -101,6 +101,21 @@ public class ORemoteDBFactoryTest {
     assertTrue(databases.contains("test"));
   }
 
+  @Test
+  public void testCopyOpenedDatabase() {
+    OrientDBFactory factory = OrientDBFactory.remote(new String[] { "localhost" }, null);
+    // OrientDBFactory factory = OrientDBFactory.fromUrl("local:.", null);
+
+    factory.create("test", "root", "root", OrientDBFactory.DatabaseType.MEMORY);
+    ODatabaseDocument db1;
+    try(ODatabaseDocumentInternal db = (ODatabaseDocumentInternal)factory.open("test", "admin", "admin")){
+      db1 =db.copy();
+    }
+    db1.activateOnCurrentThread();
+    assertFalse(db1.isClosed());
+    db1.close();
+  }
+  
   @After
   public void after() {
     server.shutdown();
