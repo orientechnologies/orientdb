@@ -19,23 +19,29 @@
   */
 package com.orientechnologies.orient.core;
 
+import com.orientechnologies.common.log.OLogManager;
+
 public class OrientShutdownHook extends Thread {
-	protected OrientShutdownHook() {
-		Runtime.getRuntime().addShutdownHook(this);
-	}
+  protected OrientShutdownHook() {
+    Runtime.getRuntime().addShutdownHook(this);
+  }
 
-	/**
-	 * Shutdown Orient engine.
-	 */
-	@Override
-	public void run() {
-		Orient.instance().shutdown();
-	}
+  /**
+   * Shutdown Orient engine.
+   */
+  @Override
+  public void run() {
+    try {
+      Orient.instance().shutdown();
+    } finally {
+      OLogManager.instance().shutdown();
+    }
+  }
 
-	public void cancel() {
-		try {
-			Runtime.getRuntime().removeShutdownHook(this);
-		} catch (IllegalStateException e) {
-		}
-	}
+  public void cancel() {
+    try {
+      Runtime.getRuntime().removeShutdownHook(this);
+    } catch (IllegalStateException e) {
+    }
+  }
 }

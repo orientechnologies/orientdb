@@ -319,7 +319,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       final String dbURL = databaseURL.substring(OEngineRemote.NAME.length() + 1);
       OServerAdmin serverAdmin = new OServerAdmin(dbURL).connect(userName, userPassword);
       serverAdmin.createDatabase(serverAdmin.getStorageName(), databaseType, storageType, backupPath).close();
-      connect(databaseURL, OUser.ADMIN, OUser.ADMIN);
+      connect(databaseURL, userName, userPassword);
 
     } else {
       // LOCAL CONNECTION

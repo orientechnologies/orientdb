@@ -43,6 +43,7 @@
         <argLine>
             -XX:MaxDirectMemorySize=512g
             -Dmemory.directMemory.trackMode=true
+            -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager
         </argLine>
     </properties>
 

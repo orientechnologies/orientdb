@@ -29,26 +29,22 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.logging.*;
 
 /**
  * Centralized Log Manager.
- * 
+ *
  * @author Luca Garulli
  */
 public class OLogManager {
   private static final String      DEFAULT_LOG                  = "com.orientechnologies";
   private static final String      ENV_INSTALL_CUSTOM_FORMATTER = "orientdb.installCustomFormatter";
   private static final OLogManager instance                     = new OLogManager();
-  private boolean                  debug                        = false;
-  private boolean                  info                         = true;
-  private boolean                  warn                         = true;
-  private boolean                  error                        = true;
-  private Level                    minimumLevel                 = Level.SEVERE;
+  private              boolean     debug                        = false;
+  private              boolean     info                         = true;
+  private              boolean     warn                         = true;
+  private              boolean     error                        = true;
+  private              Level       minimumLevel                 = Level.SEVERE;
 
   private final ConcurrentMap<String, Logger> loggersCache = new ConcurrentHashMap<String, Logger>();
 
@@ -100,8 +96,8 @@ public class OLogManager {
       final Object... iAdditionalArgs) {
     if (iMessage != null) {
       try {
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE != null
-            ? ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() : null;
+        final ODatabaseDocumentInternal db =
+            ODatabaseRecordThreadLocal.INSTANCE != null ? ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() : null;
         if (db != null && db.getStorage() != null && db.getStorage() instanceof OAbstractPaginatedStorage) {
           final String dbName = db.getStorage().getName();
           if (dbName != null)
@@ -299,4 +295,30 @@ public class OLogManager {
       }
     };
   }
+
+  /**
+   * Shutdowns this log manager.
+   */
+  public void shutdown() {
+    if (LogManager.getLogManager() instanceof DebugLogManager)
+      ((DebugLogManager) LogManager.getLogManager()).shutdown();
+  }
+
+  /**
+   * Inhibits the logs reset request which is typically done on shutdown. This allows to use JDK logging from shutdown hooks.
+   * -Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager must be passed to the JVM,
+   * to activate this log manager.
+   */
+  public static class DebugLogManager extends LogManager {
+
+    @Override
+    public void reset() {
+      // do nothing
+    }
+
+    private void shutdown() {
+      super.reset();
+    }
+  }
+
 }
