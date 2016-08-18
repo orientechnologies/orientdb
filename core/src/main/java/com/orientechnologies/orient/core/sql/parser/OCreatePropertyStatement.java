@@ -2,12 +2,24 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class OCreatePropertyStatement extends OStatement {
+public class OCreatePropertyStatement extends ODDLStatement {
   public OIdentifier className;
   public OIdentifier propertyName;
   public OIdentifier propertyType;
@@ -21,6 +33,48 @@ public class OCreatePropertyStatement extends OStatement {
 
   public OCreatePropertyStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+    executeInternal(ctx);
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "create class");
+    result.setProperty("className", className.getStringValue());
+    result.setProperty("propertyName", propertyName.getStringValue());
+    OInternalResultSet rs = new OInternalResultSet();
+    rs.add(result);
+    return rs;
+  }
+
+  private void executeInternal(OCommandContext ctx) {
+    ODatabase db = ctx.getDatabase();
+    OClassImpl clazz = (OClassImpl)db.getMetadata().getSchema().getClass(className.getStringValue());
+    if (clazz == null) {
+      throw new OCommandExecutionException("Class not found: " + className.getStringValue());
+    }
+    if (clazz.getProperty(propertyName.getStringValue()) != null) {
+      throw new OCommandExecutionException(
+          "Property " + className.getStringValue() + "." + propertyName.getStringValue() + " already exists");
+    }
+    OType type = OType.valueOf(propertyType.getStringValue().toUpperCase(Locale.ENGLISH));
+    if (type == null) {
+      throw new OCommandExecutionException("Invalid property type: " + propertyType.getStringValue());
+    }
+    OClass linkedClass = null;
+    OType linkedType = null;
+    if (this.linkedType != null) {
+      String linked = this.linkedType.getStringValue();
+      // FIRST SEARCH BETWEEN CLASSES
+      linkedClass = db.getMetadata().getSchema().getClass(linked);
+      if (linkedClass == null)
+        // NOT FOUND: SEARCH BETWEEN TYPES
+        linkedType = OType.valueOf(linked.toUpperCase(Locale.ENGLISH));
+    }
+    // CREATE IT LOCALLY
+    OPropertyImpl internalProp = clazz.addPropertyInternal(propertyName.getStringValue(), type, linkedType, linkedClass, unsafe);
+    for(OCreatePropertyAttributeStatement attr:attributes){
+      attr.setOnProperty(internalProp, ctx);
+    }
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
