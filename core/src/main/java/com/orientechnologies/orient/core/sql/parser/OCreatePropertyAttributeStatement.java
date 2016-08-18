@@ -66,7 +66,7 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
     return result;
   }
 
-  public void setOnProperty(OPropertyImpl internalProp, OCommandContext ctx) {
+  public Object setOnProperty(OPropertyImpl internalProp, OCommandContext ctx) {
     String attrName = settingName.getStringValue();
     Object attrValue = this.settingValue == null ? true : this.settingValue.execute((OIdentifiable) null, ctx);
     try {
@@ -96,6 +96,7 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
       throw OException.wrapException(
           new OCommandExecutionException("Cannot set attribute on property " + settingName.getStringValue() + " " + attrValue), e);
     }
+    return attrValue;
   }
 }
 /* JavaCC - OriginalChecksum=6a7964c2b9dad541ca962eecea00651b (do not edit this line) */

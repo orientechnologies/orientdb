@@ -36,19 +36,19 @@ public class OCreatePropertyStatement extends ODDLStatement {
   }
 
   @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
-    executeInternal(ctx);
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create class");
     result.setProperty("className", className.getStringValue());
     result.setProperty("propertyName", propertyName.getStringValue());
+    executeInternal(ctx, result);
     OInternalResultSet rs = new OInternalResultSet();
     rs.add(result);
     return rs;
   }
 
-  private void executeInternal(OCommandContext ctx) {
+  private void executeInternal(OCommandContext ctx, OResultInternal result) {
     ODatabase db = ctx.getDatabase();
-    OClassImpl clazz = (OClassImpl)db.getMetadata().getSchema().getClass(className.getStringValue());
+    OClassImpl clazz = (OClassImpl) db.getMetadata().getSchema().getClass(className.getStringValue());
     if (clazz == null) {
       throw new OCommandExecutionException("Class not found: " + className.getStringValue());
     }
@@ -72,8 +72,9 @@ public class OCreatePropertyStatement extends ODDLStatement {
     }
     // CREATE IT LOCALLY
     OPropertyImpl internalProp = clazz.addPropertyInternal(propertyName.getStringValue(), type, linkedType, linkedClass, unsafe);
-    for(OCreatePropertyAttributeStatement attr:attributes){
-      attr.setOnProperty(internalProp, ctx);
+    for (OCreatePropertyAttributeStatement attr : attributes) {
+      Object val = attr.setOnProperty(internalProp, ctx);
+      result.setProperty(attr.settingName.getStringValue(), val);
     }
   }
 
