@@ -2,9 +2,29 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import java.util.Map;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 
-public class OCreateLinkStatement extends OStatement {
+import java.util.*;
+
+public class OCreateLinkStatement extends OSimpleExecStatement {
 
   protected OIdentifier      name;
   protected OIdentifier      type;
@@ -16,12 +36,202 @@ public class OCreateLinkStatement extends OStatement {
   protected ORecordAttribute destRecordAttr;
   protected boolean inverse = false;
 
+  boolean breakExec = false;//for timeout
+
   public OCreateLinkStatement(int id) {
     super(id);
   }
 
   public OCreateLinkStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+    execute(ctx);
+    OInternalResultSet rs = new OInternalResultSet();
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "create link");
+    result.setProperty("name", name.getValue());
+    result.setProperty("fromClass", sourceClass.getStringValue());
+    result.setProperty("toClass", destClass.getStringValue());
+    rs.add(result);
+    return rs;
+  }
+
+  /**
+   * Execute the CREATE LINK.
+   */
+  private Object execute(OCommandContext ctx) {
+    if (destField == null)
+      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+
+    final ODatabaseDocumentInternal database = getDatabase();
+    if (!(database.getDatabaseOwner() instanceof ODatabaseDocument))
+      throw new OCommandSQLParsingException(
+          "This command supports only the database type ODatabaseDocumentTx and type '" + database.getClass() + "' was found");
+
+    final ODatabaseDocument db = (ODatabaseDocument) database.getDatabaseOwner();
+
+    final OClass sourceClass = database.getMetadata().getSchema().getClass(getSourceClass().getStringValue());
+    if (sourceClass == null)
+      throw new OCommandExecutionException("Source class '" + getSourceClass().getStringValue() + "' not found");
+
+    final OClass destClass = database.getMetadata().getSchema().getClass(getDestClass().getStringValue());
+    if (destClass == null)
+      throw new OCommandExecutionException("Destination class '" + getDestClass().getStringValue() + "' not found");
+
+    Object value;
+
+    String cmd = "select from ";
+    if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField)) {
+      cmd = "select from " + getDestClass() + " where " + destField + " = ";
+    }
+
+    List<ODocument> result;
+    ODocument target;
+    Object oldValue;
+    long total = 0;
+
+    String linkName = name == null ? sourceField.getStringValue() : name.getStringValue();
+
+    boolean multipleRelationship;
+    OType linkType = OType.valueOf(type.getStringValue().toUpperCase(Locale.ENGLISH));
+    if (linkType != null)
+      // DETERMINE BASED ON FORCED TYPE
+      multipleRelationship = linkType == OType.LINKSET || linkType == OType.LINKLIST;
+    else
+      multipleRelationship = false;
+
+    long totRecords = db.countClass(sourceClass.getName());
+    long currRecord = 0;
+
+    database.declareIntent(new OIntentMassiveInsert());
+    try {
+      // BROWSE ALL THE RECORDS OF THE SOURCE CLASS
+      for (ODocument doc : db.browseClass(sourceClass.getName())) {
+        if (breakExec) {
+          break;
+        }
+        value = doc.getProperty(sourceField.getStringValue());
+
+        if (value != null) {
+          if (value instanceof ODocument || value instanceof ORID) {
+            // ALREADY CONVERTED
+          } else if (value instanceof Collection<?>) {
+            // TODO
+          } else {
+            // SEARCH THE DESTINATION RECORD
+            target = null;
+
+            if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField) && value instanceof String)
+              if (((String) value).length() == 0)
+                value = null;
+              else
+                value = "'" + value + "'";
+
+            result = toList(database.query(cmd + value));
+
+            if (result == null || result.size() == 0)
+              value = null;
+            else if (result.size() > 1)
+              throw new OCommandExecutionException(
+                  "Cannot create link because multiple records was found in class '" + destClass.getName() + "' with value " + value
+                      + " in field '" + destField + "'");
+            else {
+              target = result.get(0);
+              value = target;
+            }
+
+            if (target != null && inverse) {
+              // INVERSE RELATIONSHIP
+              oldValue = target.getProperty(linkName);
+
+              if (oldValue != null) {
+                if (!multipleRelationship)
+                  multipleRelationship = true;
+
+                Collection<ODocument> coll;
+                if (oldValue instanceof Collection) {
+                  // ADD IT IN THE EXISTENT COLLECTION
+                  coll = (Collection<ODocument>) oldValue;
+                  target.setDirty();
+                } else {
+                  // CREATE A NEW COLLECTION FOR BOTH
+                  coll = new ArrayList<ODocument>(2);
+                  target.setProperty(linkName, coll);
+                  coll.add((ODocument) oldValue);
+                }
+                coll.add(doc);
+              } else {
+                if (linkType != null)
+                  if (linkType == OType.LINKSET) {
+                    value = new ORecordLazySet(target);
+                    ((Set<OIdentifiable>) value).add(doc);
+                  } else if (linkType == OType.LINKLIST) {
+                    value = new ORecordLazyList(target);
+                    ((ORecordLazyList) value).add(doc);
+                  } else
+                    // IGNORE THE TYPE, SET IT AS LINK
+                    value = doc;
+                else
+                  value = doc;
+
+                target.setProperty(linkName, value);
+              }
+              target.save();
+
+            } else {
+              // SET THE REFERENCE
+              doc.setProperty(linkName, value);
+              doc.save();
+            }
+
+            total++;
+          }
+        }
+      }
+
+      if (total > 0) {
+        if (inverse) {
+          // REMOVE THE OLD PROPERTY IF ANY
+          OProperty prop = destClass.getProperty(linkName);
+          if (prop != null)
+            destClass.dropProperty(linkName);
+
+          if (linkType == null)
+            linkType = multipleRelationship ? OType.LINKSET : OType.LINK;
+
+          // CREATE THE PROPERTY
+          destClass.createProperty(linkName, linkType, sourceClass);
+
+        } else {
+
+          // REMOVE THE OLD PROPERTY IF ANY
+          OProperty prop = sourceClass.getProperty(linkName);
+          if (prop != null)
+            sourceClass.dropProperty(linkName);
+
+          // CREATE THE PROPERTY
+          sourceClass.createProperty(linkName, OType.LINK, destClass);
+        }
+      }
+    } catch (Exception e) {
+      throw OException.wrapException(new OCommandExecutionException("Error on creation of links"), e);
+    } finally {
+      database.declareIntent(null);
+    }
+    return total;
+  }
+
+  private List<ODocument> toList(OTodoResultSet rs) {
+    if (!rs.hasNext()) {
+      return null;
+    }
+    List<ODocument> result = new ArrayList<>();
+    while (rs.hasNext()) {
+      result.add((ODocument) rs.next().getElement());
+    }
+    return result;
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
@@ -105,6 +315,42 @@ public class OCreateLinkStatement extends OStatement {
     result = 31 * result + (destRecordAttr != null ? destRecordAttr.hashCode() : 0);
     result = 31 * result + (inverse ? 1 : 0);
     return result;
+  }
+
+  public OIdentifier getName() {
+    return name;
+  }
+
+  public OIdentifier getType() {
+    return type;
+  }
+
+  public OIdentifier getSourceClass() {
+    return sourceClass;
+  }
+
+  public OIdentifier getSourceField() {
+    return sourceField;
+  }
+
+  public ORecordAttribute getSourceRecordAttr() {
+    return sourceRecordAttr;
+  }
+
+  public OIdentifier getDestClass() {
+    return destClass;
+  }
+
+  public OIdentifier getDestField() {
+    return destField;
+  }
+
+  public ORecordAttribute getDestRecordAttr() {
+    return destRecordAttr;
+  }
+
+  public boolean isInverse() {
+    return inverse;
   }
 }
 /* JavaCC - OriginalChecksum=de46c9bdaf3b36691764a78cd89d1c2b (do not edit this line) */
