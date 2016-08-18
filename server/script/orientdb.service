@@ -1,0 +1,16 @@
+[Unit]
+Description=OrientDB Server
+After=network.target
+After=syslog.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=forking
+User=orient
+Group=orient
+PIDFile=$ORIENTDB_HOME/bin/orient.pid
+ExecStart=$ORIENTDB_HOME/bin/orientdb-sysd.sh start
+ExecStop=$ORIENTDB_HOME/bin/orientdb-sysd.sh stop
+ExecStatus=$ORIENTDB_HOME/bin/orientdb-sysd.sh status
