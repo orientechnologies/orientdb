@@ -101,7 +101,9 @@ public interface ODatabaseDocumentInternal extends ODatabaseDocument, ODatabaseI
 
   void callOnCloseListeners();
 
-  <DB extends ODatabase> DB setCustom(final String name, final Object iValue);
+  void callOnDropListeners();
+  
+  public <DB extends ODatabase> DB setCustom(final String name, final Object iValue);
 
   void setPrefetchRecords(boolean prefetchRecords);
 

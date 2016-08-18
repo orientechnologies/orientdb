@@ -190,10 +190,11 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
     storage.getConfiguration().update();
 
-    try (final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage)) {
-      embedded.setSerializer(serializer);
-      embedded.internalCreate(config);
-    }
+    //No need to close
+    final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
+    embedded.setSerializer(serializer);
+    embedded.internalCreate(config);
+    
   }
 
   @Override

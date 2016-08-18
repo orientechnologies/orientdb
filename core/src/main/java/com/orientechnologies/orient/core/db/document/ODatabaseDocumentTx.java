@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -77,27 +78,29 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private final String                                  baseUrl;
   private final Map<String, Object>                     preopenProperties = new HashMap<>();
   private final Map<ATTRIBUTES, Object>                 preopenAttributes = new HashMap<>();
+  //TODO review for the case of browseListener before open.
+  private final Set<ODatabaseListener>                  preopenListener   = new HashSet<>();
   private ODatabaseInternal<?>                          databaseOwner;
   private OIntent                                       intent;
   private OStorage                                      delegateStorage;
-  
+
   public ODatabaseDocumentTx(String url) {
     if (url.endsWith("/"))
       url = url.substring(0, url.length() - 1);
     url = url.replace('\\', '/');
     this.url = url;
-    
+
     int typeIndex = url.indexOf(':');
     if (typeIndex <= 0)
       throw new OConfigurationException(
           "Error in database URL: the engine was not specified. Syntax is: " + Orient.URL_SYNTAX + ". URL was: " + url);
-    
+
     String remoteUrl = url.substring(typeIndex + 1);
     type = url.substring(0, typeIndex);
     if (!"remote".equals(type) && !"plocal".equals(type) && !"memory".equals(type))
       throw new OConfigurationException("Error on opening database: the engine '" + type + "' was not found. URL was: " + url
-          + ". Registered engines are: [\"memory\",\"remote\",\"plocal\"]" );
-    
+          + ". Registered engines are: [\"memory\",\"remote\",\"plocal\"]");
+
     int index = remoteUrl.lastIndexOf('/');
     if (index > 0) {
       baseUrl = remoteUrl.substring(0, index);
@@ -108,14 +111,14 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     }
   }
 
-  protected ODatabaseDocumentTx(ODatabaseDocumentInternal ref,String baseUrl) {
+  protected ODatabaseDocumentTx(ODatabaseDocumentInternal ref, String baseUrl) {
     url = ref.getURL();
     type = ref.getType();
     this.baseUrl = baseUrl;
     dbName = ref.getName();
     internal = ref;
   }
- 
+
   public static ORecordSerializer getDefaultSerializer() {
     return ODatabaseDocumentTxOrig.getDefaultSerializer();
   }
@@ -320,7 +323,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public void callOnCloseListeners() {
     checkOpeness();
-    internal.callOnOpenListeners();
+    internal.callOnCloseListeners();
   }
 
   @Override
@@ -357,7 +360,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
     while (current != null && current != this && current.getDatabaseOwner() != current)
       current = current.getDatabaseOwner();
-    if(current == null)
+    if (current == null)
       return this;
     return current;
   }
@@ -447,8 +450,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public OSecurityUser getUser() {
-    checkOpeness();
-    return internal.getUser();
+    if (internal != null)
+      return internal.getUser();
+    return null;
   }
 
   @Override
@@ -796,9 +800,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       OrientDBConfig config = buildConfig(null);
       internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
     }
-    if(databaseOwner != null)
+    if (databaseOwner != null)
       internal.setDatabaseOwner(databaseOwner);
-    if(intent != null)
+    if (intent != null)
       internal.declareIntent(intent);
     return (DB) this;
   }
@@ -828,7 +832,16 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         }
       }
       factory.create(dbName, null, null, OrientDBFactory.DatabaseType.MEMORY, config);
-      internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", config);
+      OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
+      internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
+      for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
+        internal.set(attr.getKey(), attr.getValue());
+      }
+
+      for (ODatabaseListener oDatabaseListener : preopenListener) {
+        internal.registerListener(oDatabaseListener);
+      }
+
 
     } else {
       synchronized (embedded) {
@@ -839,12 +852,20 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         }
       }
       factory.create(dbName, null, null, OrientDBFactory.DatabaseType.PLOCAL, config);
+      OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
+      internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
+      for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
+        internal.set(attr.getKey(), attr.getValue());
+      }
+
+      for (ODatabaseListener oDatabaseListener : preopenListener) {
+        internal.registerListener(oDatabaseListener);
+      }
       
-      internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", config);
     }
-    if(databaseOwner != null)
+    if (databaseOwner != null)
       internal.setDatabaseOwner(databaseOwner);
-    if(intent != null)
+    if (intent != null)
       internal.declareIntent(intent);
     return (DB) this;
   }
@@ -872,7 +893,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public void drop() {
     checkOpeness();
+    this.internal.callOnDropListeners();
     factory.drop(this.getName(), null, null);
+    this.internal = null;
   }
 
   @Override
@@ -1077,9 +1100,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public Object setProperty(String iName, Object iValue) {
-    if(internal != null)
+    if (internal != null)
       return internal.setProperty(iName, iValue);
-    else 
+    else
       return preopenProperties.put(iName, iValue);
   }
 
@@ -1117,8 +1140,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public void registerListener(ODatabaseListener iListener) {
-    checkOpeness();
-    internal.registerListener(iListener);
+    if (internal != null) {
+      internal.registerListener(iListener);
+    } else {
+      preopenListener.add(iListener);
+    }
   }
 
   @Override
@@ -1182,7 +1208,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return internal.query(query, args);
   }  
   
-  
   private OrientDBConfig buildConfig(final Map<OGlobalConfiguration, Object> iProperties) {
     Map<String, Object> pars = new HashMap<>(preopenProperties);
     if (iProperties != null) {
@@ -1194,27 +1219,30 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     final String connectionStrategy = pars != null ? (String) pars.get("connectionStrategy") : null;
     if (connectionStrategy != null)
       builder.addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, connectionStrategy);
-    
-    final String compressionMethod = pars != null
-        ? (String) pars.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey()) : null;
+
+    final String compressionMethod = pars != null ? (String) pars.get(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey())
+        : null;
     if (compressionMethod != null)
       // SAVE COMPRESSION METHOD IN CONFIGURATION
       builder.addConfig(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, compressionMethod);
 
-    final String encryptionMethod = pars != null
-        ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey()) : null;
+    final String encryptionMethod = pars != null ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey())
+        : null;
     if (encryptionMethod != null)
       // SAVE ENCRYPTION METHOD IN CONFIGURATION
       builder.addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD, encryptionMethod);
 
-    final String encryptionKey = pars != null
-        ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey()) : null;
+    final String encryptionKey = pars != null ? (String) pars.get(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey()) : null;
     if (encryptionKey != null)
       // SAVE ENCRYPTION KEY IN CONFIGURATION
       builder.addConfig(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY, encryptionKey);
 
     for (Map.Entry<ATTRIBUTES, Object> attr : preopenAttributes.entrySet()) {
       builder.addAttribute(attr.getKey(), attr.getValue());
+    }
+
+    for (ODatabaseListener oDatabaseListener : preopenListener) {
+      builder.addListener(oDatabaseListener);
     }
     
     return builder.build();
@@ -1234,6 +1262,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public <DB extends ODatabase> DB setCustom(String name, Object iValue) {
     return internal.setCustom(name, iValue);
+  }
+
+  @Override
+  public void callOnDropListeners() {
+    checkOpeness();
+    internal.callOnDropListeners();
   }
   
   @Override
