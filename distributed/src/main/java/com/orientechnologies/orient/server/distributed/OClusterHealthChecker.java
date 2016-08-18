@@ -58,7 +58,11 @@ public class OClusterHealthChecker extends TimerTask {
     } catch (HazelcastInstanceNotActiveException e) {
       // IGNORE IT
     } catch (Throwable t) {
-      OLogManager.instance().error(this, "Error on checking cluster health", t);
+      if (manager.getServerInstance().isActive())
+        OLogManager.instance().error(this, "Error on checking cluster health", t);
+      else
+        // SHUTDOWN IN PROGRESS
+        OLogManager.instance().debug(this, "Error on checking cluster health", t);
     } finally {
       OLogManager.instance().debug(this, "Cluster health checking completed");
     }
