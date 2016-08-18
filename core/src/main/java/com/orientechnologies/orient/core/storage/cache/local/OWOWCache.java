@@ -1522,11 +1522,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           } else {
             group.recencyBit = false;
 
-            if (weakLockMode) {
-              if (!pagePointer.tryAcquireSharedLock())
-                continue;
-            } else
-              pagePointer.acquireSharedLock();
+            if (!pagePointer.tryAcquireSharedLock())
+              continue;
 
             try {
               flushPage(entry.fileId, entry.pageIndex, pagePointer.getDataPointer());
@@ -1601,11 +1598,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
           } else {
             group.recencyBit = false;
 
-            if (weakLockMode) {
-              if (!pagePointer.tryAcquireSharedLock())
-                continue;
-            } else
-              pagePointer.acquireSharedLock();
+            if (!pagePointer.tryAcquireSharedLock())
+              continue;
 
             try {
               flushPage(pagedKey.fileId, pagedKey.pageIndex, pagePointer.getDataPointer());
