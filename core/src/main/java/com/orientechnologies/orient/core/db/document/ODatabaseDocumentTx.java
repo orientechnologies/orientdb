@@ -83,7 +83,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private ODatabaseInternal<?>                          databaseOwner;
   private OIntent                                       intent;
   private OStorage                                      delegateStorage;
-
+  private ORecordConflictStrategy                       conflictStrategy;
+  private ORecordSerializer                             serializer;
+  
   public ODatabaseDocumentTx(String url) {
     if (url.endsWith("/"))
       url = url.substring(0, url.length() - 1);
@@ -149,8 +151,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public ORecordSerializer getSerializer() {
-    if (internal == null)
+    if (internal == null) {
+      if (serializer != null)
+        return serializer;
       return ORecordSerializerFactory.instance().getDefaultRecordSerializer();
+    }
     return internal.getSerializer();
   }
 
@@ -274,15 +279,21 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public <DB extends ODatabase<?>> DB setConflictStrategy(String iStrategyName) {
-    checkOpeness();
-    internal.setConflictStrategy(iStrategyName);
+    if (internal != null) {
+      internal.setConflictStrategy(iStrategyName);
+    } else {
+      conflictStrategy = Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName);
+    }
     return (DB) this;
   }
 
   @Override
   public <DB extends ODatabase<?>> DB setConflictStrategy(ORecordConflictStrategy iResolver) {
-    checkOpeness();
-    internal.setConflictStrategy(iResolver);
+    if (internal != null) {
+      internal.setConflictStrategy(iResolver);
+    } else {
+      conflictStrategy = iResolver;
+    }
     return (DB) this;
   }
 
@@ -790,6 +801,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       }
       OrientDBConfig config = buildConfig(null);
       internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
+
     } else {
       synchronized (embedded) {
         factory = embedded.get(baseUrl);
@@ -805,6 +817,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       internal.setDatabaseOwner(databaseOwner);
     if (intent != null)
       internal.declareIntent(intent);
+    if(conflictStrategy != null)
+      internal.setConflictStrategy(conflictStrategy);
+    if (serializer != null)
+      internal.setSerializer(serializer);
     return (DB) this;
   }
 
@@ -867,6 +883,10 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       internal.setDatabaseOwner(databaseOwner);
     if (intent != null)
       internal.declareIntent(intent);
+    if(conflictStrategy != null)
+      internal.setConflictStrategy(conflictStrategy);
+    if (serializer != null)
+      internal.setSerializer(serializer);
     return (DB) this;
   }
 
@@ -1194,8 +1214,11 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   }
 
   public void setSerializer(ORecordSerializer serializer) {
-    checkOpeness();
-    ((ODatabaseDocumentTxOrig) internal).setSerializer(serializer);
+    if (internal != null) {
+      ((ODatabaseDocumentTxOrig) internal).setSerializer(serializer);
+    } else {
+      this.serializer = serializer;
+    }
   }
 
   @Override
