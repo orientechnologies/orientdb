@@ -76,6 +76,7 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   }
 
   private final String          databaseName;
+  private final String          fileConfigPath;
   private Set<String>           clusters         = new HashSet<String>();
   private volatile boolean      enable           = OGlobalConfiguration.COMMAND_CACHE_ENABLED.getValueAsBoolean();
   private OCommandCacheImplRefs cache            = new OCommandCacheImplRefs();
@@ -85,9 +86,13 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   private STRATEGY              evictStrategy    = STRATEGY
       .valueOf(OGlobalConfiguration.COMMAND_CACHE_EVICT_STRATEGY.getValueAsString());
 
-  public OCommandCacheSoftRefs(final String iDatabaseName) {
-    databaseName = iDatabaseName;
-
+  public OCommandCacheSoftRefs(final OStorage storage) {
+    databaseName = storage.getName();
+    if (storage instanceof OLocalPaginatedStorage) {
+      fileConfigPath = ((OLocalPaginatedStorage) storage).getStoragePath() + File.separator + CONFIG_FILE;
+    } else
+      fileConfigPath = null;
+    
     initCache();
 
   }
@@ -168,12 +173,9 @@ public class OCommandCacheSoftRefs implements OCommandCache {
   }
 
   private File getConfigFile() {
-    OStorage storage = Orient.instance().getStorage(databaseName);
-
-    if (storage instanceof OLocalPaginatedStorage) {
-      return new File(((OLocalPaginatedStorage) storage).getStoragePath() + File.separator + CONFIG_FILE);
+    if (fileConfigPath != null) {
+      return new File(fileConfigPath);
     }
-
     return null;
   }
 

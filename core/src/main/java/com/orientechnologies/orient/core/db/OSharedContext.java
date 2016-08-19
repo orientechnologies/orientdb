@@ -49,7 +49,7 @@ public class OSharedContext implements OCloseable {
     scheduler = new OSchedulerImpl();
     sequenceLibrary = new OSequenceLibraryImpl();
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
-    commandCache = new OCommandCacheSoftRefs(storage.getName());
+    commandCache = new OCommandCacheSoftRefs(storage);
     statementCache = new OStatementCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
   }
 
