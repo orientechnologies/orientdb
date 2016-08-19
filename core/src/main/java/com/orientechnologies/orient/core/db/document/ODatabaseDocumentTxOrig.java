@@ -115,7 +115,7 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
   protected ODatabaseInternal<?> databaseOwner;
   protected OMetadataDefault     metadata;
   protected OImmutableUser       user;
-  protected byte                 recordType;
+  protected final byte           recordType = ODocument.RECORD_TYPE;
   protected final Map<ORecordHook, ORecordHook.HOOK_POSITION> hooks         = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   protected       boolean                                     retainRecords = true;
   protected OLocalRecordCache                localCache;
@@ -173,7 +173,6 @@ public class ODatabaseDocumentTxOrig extends OListenerManger<ODatabaseListener> 
 
       unmodifiableHooks = Collections.unmodifiableMap(hooks);
 
-      recordType = ODocument.RECORD_TYPE;
       localCache = new OLocalRecordCache();
 
       mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();

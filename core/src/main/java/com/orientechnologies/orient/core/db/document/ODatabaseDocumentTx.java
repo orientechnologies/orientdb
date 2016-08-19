@@ -78,7 +78,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private final String                                  baseUrl;
   private final Map<String, Object>                     preopenProperties = new HashMap<>();
   private final Map<ATTRIBUTES, Object>                 preopenAttributes = new HashMap<>();
-  //TODO review for the case of browseListener before open.
+  // TODO review for the case of browseListener before open.
   private final Set<ODatabaseListener>                  preopenListener   = new HashSet<>();
   private ODatabaseInternal<?>                          databaseOwner;
   private OIntent                                       intent;
@@ -788,7 +788,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
           remote.put(baseUrl, factory);
         }
       }
-      internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword);
+      OrientDBConfig config = buildConfig(null);
+      internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
     } else {
       synchronized (embedded) {
         factory = embedded.get(baseUrl);
@@ -842,7 +843,6 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
         internal.registerListener(oDatabaseListener);
       }
 
-
     } else {
       synchronized (embedded) {
         factory = embedded.get(baseUrl);
@@ -861,7 +861,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       for (ODatabaseListener oDatabaseListener : preopenListener) {
         internal.registerListener(oDatabaseListener);
       }
-      
+
     }
     if (databaseOwner != null)
       internal.setDatabaseOwner(databaseOwner);
@@ -916,6 +916,8 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
 
   @Override
   public boolean exists() {
+    if (internal != null)
+      return true;
     if ("remote".equals(type)) {
       throw new UnsupportedOperationException();
     } else {
@@ -1244,7 +1246,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     for (ODatabaseListener oDatabaseListener : preopenListener) {
       builder.addListener(oDatabaseListener);
     }
-    
+
     return builder.build();
   }
 
