@@ -257,7 +257,7 @@ public class OWALPageChangesPortion implements OWALChanges {
       } else
         try {
           System.arraycopy(chunk, chunkOffset, data, read, rl);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
           OLogManager.instance().error(this,
               "System.arraycopy error: chunk.length = " + chunk.length + ", chunkOffset = " + chunkOffset + ", data.length = "
                   + data.length + ", read = " + read + ", rl = " + rl, e);
