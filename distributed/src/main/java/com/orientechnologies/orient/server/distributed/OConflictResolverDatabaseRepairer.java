@@ -253,6 +253,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
         final Set<String> nonLocalServers = new HashSet<String>(involvedServers);
         nonLocalServers.remove(dManager.getLocalNodeName());
 
+        if (nonLocalServers.isEmpty())
+          return;
+
         ODistributedServerLog.debug(this, dManager.getLocalNodeName(), involvedServers.toString(),
             ODistributedServerLog.DIRECTION.OUT, "Auto repairing cluster '%s' (%d) on servers %s (reqId=%s)...", clusterName,
             clusterId, involvedServers, requestId);
@@ -390,6 +393,9 @@ public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRe
         final Collection<String> involvedServers = dCfg.getServers(clusterNames);
         final Set<String> nonLocalServers = new HashSet<String>(involvedServers);
         nonLocalServers.remove(dManager.getLocalNodeName());
+
+        if (nonLocalServers.isEmpty())
+          return true;
 
         // CREATE LOCAL RESULT
         final OTxTaskResult localResult = new OTxTaskResult();

@@ -19,17 +19,18 @@
      */
 package com.orientechnologies.orient.server.distributed.impl.task;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OPaginatedClusterException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
@@ -56,7 +57,13 @@ public class OResurrectRecordTask extends OUpdateRecordTask {
         "resurrecting deleted record %s/%s v.%d", database.getName(), rid.toString(), version);
 
     try {
-      database.getStorage().recyclePosition(rid, content, version, recordType);
+      database.getStorage().recyclePosition(rid, new byte[] {}, version, recordType);
+
+      // CREATE A RECORD TO CALL ALL THE HOOKS (LIKE INDEXES FOR UNIQUE CONSTRAINTS)
+      final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+      ORecordInternal.fill(loadedRecordInstance, rid, version, content, true);
+      loadedRecordInstance.save();
+
       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
           "+-> resurrected deleted record");
       return Boolean.TRUE;
