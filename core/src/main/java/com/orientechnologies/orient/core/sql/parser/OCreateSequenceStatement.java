@@ -2,9 +2,17 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.sequence.OSequence;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
 import java.util.Map;
 
-public class OCreateSequenceStatement extends OStatement {
+public class OCreateSequenceStatement extends OSimpleExecStatement {
   public static final int TYPE_CACHED  = 0;
   public static final int TYPE_ORDERED = 1;
 
@@ -20,6 +28,65 @@ public class OCreateSequenceStatement extends OStatement {
 
   public OCreateSequenceStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+    checkNotExisting(ctx);
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "create sequence");
+    result.setProperty("name", name.getStringValue());
+
+    executeInternal(ctx, result);
+
+    OInternalResultSet rs = new OInternalResultSet();
+    rs.add(result);
+    return rs;
+  }
+
+  private void checkNotExisting(OCommandContext ctx) {
+    OSequence seq = ctx.getDatabase().getMetadata().getSequenceLibrary().getSequence(this.name.getStringValue());
+    if (seq != null) {
+      throw new OCommandExecutionException("Sequence " + name.getStringValue() + " already exists");
+    }
+  }
+
+  private void executeInternal(OCommandContext ctx, OResultInternal result) {
+    OSequence.CreateParams params = createParams(ctx, result);
+    OSequence.SEQUENCE_TYPE seqType = type == TYPE_CACHED ? OSequence.SEQUENCE_TYPE.CACHED : OSequence.SEQUENCE_TYPE.ORDERED;
+    result.setProperty("type", seqType.toString());
+    ctx.getDatabase().getMetadata().getSequenceLibrary().createSequence(this.name.getStringValue(), seqType, params);
+  }
+
+  private OSequence.CreateParams createParams(OCommandContext ctx, OResultInternal result) {
+    OSequence.CreateParams params = new OSequence.CreateParams();
+    if (start != null) {
+      Object o = start.execute((OIdentifiable) null, ctx);
+      if (o instanceof Number) {
+        params.setStart(((Number) o).longValue());
+        result.setProperty("start", o);
+      } else {
+        throw new OCommandExecutionException("Invalid start value: " + o);
+      }
+    }
+    if (increment != null) {
+      Object o = increment.execute((OIdentifiable) null, ctx);
+      if (o instanceof Number) {
+        params.setIncrement(((Number) o).intValue());
+        result.setProperty("increment", o);
+      } else {
+        throw new OCommandExecutionException("Invalid increment value: " + o);
+      }
+    }
+    if (cache != null) {
+      Object o = cache.execute((OIdentifiable) null, ctx);
+      if (o instanceof Number) {
+        params.setCacheSize(((Number) o).intValue());
+        result.setProperty("cacheSize", o);
+      } else {
+        throw new OCommandExecutionException("Invalid cache value: " + o);
+      }
+    }
+    return params;
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
