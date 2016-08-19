@@ -592,12 +592,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public boolean exists() {
-    try {
-      manager.getServerInstance().getStoragePath(databaseName);
-      return true;
-    } catch (OConfigurationException e) {
-      return false;
-    }
+    return manager.getServerInstance().existsDatabase(databaseName);
   }
 
   public ODistributedSyncConfiguration getSyncConfiguration() {
