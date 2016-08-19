@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
+# Copyright (c) OrientDB LTD (http://www.orientdb.com)
 #
 # HISTORY:
 # 2012-07-31: Added -w option

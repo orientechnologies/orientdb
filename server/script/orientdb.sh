@@ -1,7 +1,7 @@
 #!/bin/sh
 # OrientDB service script
 #
-# Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
+# Copyright (c) OrientDB LTD (http://http://orientdb.com/)
 
 # chkconfig: 2345 20 80
 # description: OrientDb init script
@@ -10,6 +10,7 @@
 # You have to SET the OrientDB installation directory here
 ORIENTDB_DIR="YOUR_ORIENTDB_INSTALLATION_PATH"
 ORIENTDB_USER="USER_YOU_WANT_ORIENTDB_RUN_WITH"
+LOG_DIR="../log"
 
 usage() {
 	echo "Usage: `basename $0`: <start|stop|status>"
@@ -25,7 +26,7 @@ start() {
 	fi
 	echo "Starting OrientDB server daemon..."
 	cd "$ORIENTDB_DIR/bin"
-	su $ORIENTDB_USER -c "cd \"$ORIENTDB_DIR/bin\"; /usr/bin/nohup ./server.sh 1>../log/orientdb.log 2>../log/orientdb.err &"
+	su $ORIENTDB_USER -c "cd \"$ORIENTDB_DIR/bin\"; /usr/bin/nohup ./server.sh 1>$LOG_DIR/orientdb.log 2>$LOG_DIR/orientdb.err &"
 }
 
 stop() {
@@ -37,7 +38,7 @@ stop() {
 	fi
 	echo "Stopping OrientDB server daemon..."
 	cd "$ORIENTDB_DIR/bin"
-	su $ORIENTDB_USER -c "cd \"$ORIENTDB_DIR/bin\"; /usr/bin/nohup ./shutdown.sh 1>>../log/orientdb.log 2>>../log/orientdb.err &"
+	su $ORIENTDB_USER -c "cd \"$ORIENTDB_DIR/bin\"; /usr/bin/nohup ./shutdown.sh 1>>$LOG_DIR/orientdb.log 2>>$LOG_DIR/orientdb.err &"
 }
 
 status() {
