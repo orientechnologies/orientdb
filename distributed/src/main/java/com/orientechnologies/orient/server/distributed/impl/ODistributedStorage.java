@@ -951,42 +951,51 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
               } else
                 localResult = null;
 
-              final Boolean localResultPayload = localResult != null ? localResult.getResult() : null;
+              if (nodes.isEmpty()) {
+                unlockCallback.call(null);
 
-              if (syncMode || localResult == null) {
-                // REPLICATE IT
-                try {
-                  final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
-                      dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
+                if (!executedLocally)
+                  throw new ODistributedException(
+                      "Cannot execute distributed delete on record " + iRecordId + " because no nodes are available");
+              } else {
 
-                  final Object payload = dResponse.getPayload();
+                final Boolean localResultPayload = localResult != null ? localResult.getResult() : null;
 
-                  if (payload instanceof Exception) {
-                    executeUndoOnLocalServer(dResponse.getRequestId(), task);
+                if (syncMode || localResult == null) {
+                  // REPLICATE IT
+                  try {
+                    final ODistributedResponse dResponse = dManager.sendRequest(getName(), clusterNames, nodes, task,
+                        dManager.getNextMessageIdCounter(), EXECUTION_MODE.RESPONSE, localResultPayload, unlockCallback);
 
-                    if (payload instanceof ONeedRetryException)
-                      throw (ONeedRetryException) payload;
+                    final Object payload = dResponse.getPayload();
 
-                    throw OException.wrapException(new ODistributedException("Error on execution distributed delete record"),
-                        (Exception) payload);
+                    if (payload instanceof Exception) {
+                      executeUndoOnLocalServer(dResponse.getRequestId(), task);
+
+                      if (payload instanceof ONeedRetryException)
+                        throw (ONeedRetryException) payload;
+
+                      throw OException.wrapException(new ODistributedException("Error on execution distributed delete record"),
+                          (Exception) payload);
+                    }
+
+                    return new OStorageOperationResult<Boolean>(true);
+
+                  } catch (RuntimeException e) {
+                    executeUndoOnLocalServer(null, task);
+                    throw e;
+                  } catch (Exception e) {
+                    executeUndoOnLocalServer(null, task);
+                    ODatabaseException.wrapException(new ODistributedException("Cannot execute distributed delete record"), e);
                   }
-
-                  return new OStorageOperationResult<Boolean>(true);
-
-                } catch (RuntimeException e) {
-                  executeUndoOnLocalServer(null, task);
-                  throw e;
-                } catch (Exception e) {
-                  executeUndoOnLocalServer(null, task);
-                  ODatabaseException.wrapException(new ODistributedException("Cannot execute distributed delete record"), e);
                 }
+
+                // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
+                if (!nodes.isEmpty())
+                  asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, task,
+                      dManager.getNextMessageIdCounter(), localResultPayload, unlockCallback, null));
+
               }
-
-              // ASYNCHRONOUS CALL: EXECUTE LOCALLY AND THEN DISTRIBUTE
-              if (!nodes.isEmpty())
-                asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes, task,
-                    dManager.getNextMessageIdCounter(), localResultPayload, unlockCallback, null));
-
               return localResult;
             }
           });

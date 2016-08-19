@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.server.OServer;
@@ -115,8 +114,13 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     switch (recordStatus) {
     case REMOVED:
       // RECYCLE THE RID AND OVERWRITE IT WITH THE NEW CONTENT
-      ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().recyclePosition(rid, content, version + 1, recordType);
-      return new OPlaceholder(rid, version);
+      ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().recyclePosition(rid, new byte[]{}, version, recordType);
+
+      // CREATE A RECORD TO CALL ALL THE HOOKS (LIKE INDEXES FOR UNIQUE CONSTRAINTS)
+      final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+      ORecordInternal.fill(loadedRecordInstance, rid, version, content, true);
+      loadedRecordInstance.save();
+      return new OPlaceholder(rid, loadedRecordInstance.getVersion());
 
     case ALLOCATED:
     case PRESENT:
@@ -125,14 +129,14 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
       if (loadedRecord.getResult() != null) {
         // ALREADY PRESENT
-        record = forceUpdate(loadedRecord);
+        record = forceUpdate(loadedRecord.getResult());
         return new OPlaceholder(record);
       }
 
       // GOES DOWN
 
     case NOT_EXISTENT:
-      try {
+//      try {
         ORecordId newRid;
         do {
           getRecord();
@@ -168,37 +172,36 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
         ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
             "+-> assigned new rid %s/%s v.%d reqId=%s", database.getName(), rid.toString(), record.getVersion(), requestId);
 
-      } catch (ORecordDuplicatedException e) {
-        // DUPLICATED INDEX ON THE TARGET: CREATE AN EMPTY RECORD JUST TO MAINTAIN THE RID AND LET TO THE FIX OPERATION TO SORT OUT
-        // WHAT HAPPENED
-        ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-            "+-> duplicated record %s (existent=%s), assigned new rid %s/%s v.%d reqId=%s", record, e.getRid(), database.getName(),
-            rid.toString(), record.getVersion(), requestId);
-
-        record.clear();
-        if (clusterId > -1)
-          record.save(database.getClusterNameById(clusterId), true);
-        else if (rid.getClusterId() != -1)
-          record.save(database.getClusterNameById(rid.getClusterId()), true);
-        else
-          record.save();
-
-        throw e;
-      }
+//      } catch (ORecordDuplicatedException e) {
+//        // DUPLICATED INDEX ON THE TARGET: CREATE AN EMPTY RECORD JUST TO MAINTAIN THE RID AND LET TO THE FIX OPERATION TO SORT OUT
+//        // WHAT HAPPENED
+//        ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
+//            "+-> duplicated record %s (existent=%s), assigned new rid %s/%s v.%d reqId=%s", record, e.getRid(), database.getName(),
+//            rid.toString(), record.getVersion(), requestId);
+//
+//        record.clear();
+//        if (clusterId > -1)
+//          record.save(database.getClusterNameById(clusterId), true);
+//        else if (rid.getClusterId() != -1)
+//          record.save(database.getClusterNameById(rid.getClusterId()), true);
+//        else
+//          record.save();
+//
+//        throw e;
+//      }
     }
 
     // IMPROVED TRANSPORT BY AVOIDING THE RECORD CONTENT, BUT JUST RID + VERSION
     return new OPlaceholder(record);
   }
 
-  protected ORecord forceUpdate(final OStorageOperationResult<ORawBuffer> loadedRecord) {
+  protected ORecord forceUpdate(final ORawBuffer loadedRecord) {
     // LOAD IT AS RECORD
-    final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager()
-        .newInstance(loadedRecord.getResult().recordType);
-    ORecordInternal.fill(loadedRecordInstance, rid, loadedRecord.getResult().version, loadedRecord.getResult().getBuffer(), false);
+    final ORecord loadedRecordInstance = Orient.instance().getRecordFactoryManager().newInstance(loadedRecord.recordType);
+    ORecordInternal.fill(loadedRecordInstance, rid, loadedRecord.version, loadedRecord.getBuffer(), false);
 
     // RECORD HAS BEEN ALREADY CREATED (PROBABLY DURING DATABASE SYNC) CHECKING COHERENCY
-    if (Arrays.equals(loadedRecord.getResult().getBuffer(), content))
+    if (Arrays.equals(loadedRecord.getBuffer(), content))
       // SAME CONTENT
       return loadedRecordInstance;
 
