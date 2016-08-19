@@ -39,10 +39,10 @@ import java.util.*;
 public class ORemoteDBFactory implements OrientDBFactory {
   private final Map<String, OStorage> storages = new HashMap<>();
   private final Set<OPool<?>>         pools    = new HashSet<>();
-  private final String[]         hosts;
-  private final OEngine          remote;
-  private final OrientDBConfig configurations;
-  private final Thread           shutdownThread;
+  private final String[]              hosts;
+  private final OEngine               remote;
+  private final OrientDBConfig        configurations;
+  private final Thread                shutdownThread;
 
   public ORemoteDBFactory(String[] hosts, OrientDBConfig configurations) {
     super();
@@ -52,7 +52,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
 
     shutdownThread = new Thread(() -> ORemoteDBFactory.this.internalClose());
-    
+
     Runtime.getRuntime().addShutdownHook(shutdownThread);
   }
 
@@ -63,13 +63,15 @@ public class ORemoteDBFactory implements OrientDBFactory {
   public ODatabaseDocument open(String name, String user, String password) {
     return open(name, user, password, null);
   }
-  
+
   @Override
   public synchronized ODatabaseDocument open(String name, String user, String password, OrientDBConfig config) {
     try {
-      OStorage storage = storages.get(name);
+      OStorage storage;
+      storage = storages.get(name);
       if (storage == null) {
         storage = remote.createStorage(buildUrl(name), new HashMap<>());
+        storages.put(name, storage);
       }
       ODatabaseDocumentRemote db = new ODatabaseDocumentRemote(storage);
       db.internalOpen(user, password, solveConfig(config));
@@ -80,10 +82,10 @@ public class ORemoteDBFactory implements OrientDBFactory {
   }
 
   @Override
-  public void create(String name, String user, String password, DatabaseType databaseType){
+  public void create(String name, String user, String password, DatabaseType databaseType) {
     create(name, user, password, databaseType, null);
   }
-  
+
   @Override
   public synchronized void create(String name, String user, String password, DatabaseType databaseType, OrientDBConfig config) {
     connectEndExecute(name, user, password, admin -> {
@@ -129,7 +131,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
   @Override
   public synchronized boolean exists(String name, String user, String password) {
     return connectEndExecute(name, user, password, admin -> {
-      //TODO: check for memory cases
+      // TODO: check for memory cases
       return admin.existsDatabase(name, null);
     });
   }
@@ -137,7 +139,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
   @Override
   public synchronized void drop(String name, String user, String password) {
     connectEndExecute(name, user, password, admin -> {
-      //TODO: check for memory cases
+      // TODO: check for memory cases
       return admin.dropDatabase(name, null);
     });
   }
@@ -145,7 +147,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
   @Override
   public Set<String> listDatabases(String user, String password) {
     return connectEndExecute("", user, password, admin -> {
-      //TODO: check for memory cases
+      // TODO: check for memory cases
       return admin.listDatabases().keySet();
     });
   }
@@ -153,7 +155,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
   public OPool<ODatabaseDocument> openPool(String name, String user, String password) {
     return openPool(name, user, password, null);
   }
-  
+
   @Override
   public OPool<ODatabaseDocument> openPool(String name, String user, String password, OrientDBConfig config) {
     ORemotePoolByFactory pool = new ORemotePoolByFactory(this, name, user, password, solveConfig(config));
@@ -170,7 +172,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
     internalClose();
     Runtime.getRuntime().removeShutdownHook(shutdownThread);
   }
-  
+
   public synchronized void internalClose() {
     final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
     for (OStorage stg : storagesCopy) {
@@ -186,7 +188,7 @@ public class ORemoteDBFactory implements OrientDBFactory {
     // SHUTDOWN ENGINES
     remote.shutdown();
   }
-  
+
   private OrientDBConfig solveConfig(OrientDBConfig config) {
     if (config != null) {
       config.setParent(this.configurations);
