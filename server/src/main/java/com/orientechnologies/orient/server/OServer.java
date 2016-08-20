@@ -1077,8 +1077,27 @@ public class OServer {
       }
       */
     for (OServerStorageConfiguration stg : configuration.storages) {
-      if (stg.loadOnStartup)
-        databases.initCustomStorage(stg.name, stg.path, stg.userName, stg.userPassword);
+      if (stg.loadOnStartup){
+        String url = stg.path;
+        if (url.endsWith("/"))
+          url = url.substring(0, url.length() - 1);
+        url = url.replace('\\', '/');
+
+        int typeIndex = url.indexOf(':');
+        if (typeIndex <= 0)
+          throw new OConfigurationException(
+              "Error in database URL: the engine was not specified. Syntax is: " + Orient.URL_SYNTAX + ". URL was: " + url);
+
+        String remoteUrl = url.substring(typeIndex + 1);
+        int index = remoteUrl.lastIndexOf('/');
+        String baseUrl;
+        if (index > 0) {
+          baseUrl = remoteUrl.substring(0, index);
+        } else {
+          baseUrl = "./";
+        }
+        databases.initCustomStorage(stg.name, baseUrl, stg.userName, stg.userPassword);
+      }
     }
     
   }
