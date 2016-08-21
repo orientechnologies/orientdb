@@ -36,6 +36,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * running distributed because there is no way to
  *
  * @param <T> Type of keys
+ *
  * @author Luca Garulli
  */
 public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
@@ -47,7 +48,14 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   protected final ConcurrentLinkedHashMap<T, CountableLock> map;
   private final   boolean                                   enabled;
   private final   int                                       amountOfCachedInstances;
-  private final static Object NULL_KEY = new Object();
+
+  private final static Comparable<Object> NULL_KEY = new Comparable<Object>() {
+    @SuppressWarnings("NullableProblems")
+    @Override
+    public int compareTo(Object o) {
+      return o == NULL_KEY ? 0 : -1;
+    }
+  };
 
   @SuppressWarnings("serial")
   private static class CountableLock {
@@ -100,9 +108,6 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   }
 
   public void acquireLock(final T iResourceId, final LOCK iLockType, long iTimeout) {
-    if (!enabled)
-      return;
-
     if (!enabled)
       return;
 
@@ -227,6 +232,8 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
     for (T value : values) {
       if (value instanceof Comparable) {
         comparables.add((Comparable) value);
+      } else if (value == null) {
+        comparables.add(NULL_KEY);
       } else {
         throw new IllegalArgumentException(
             "In order to lock value in batch it should implement " + Comparable.class.getName() + " interface");
@@ -252,6 +259,8 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
     for (T value : values) {
       if (value instanceof Comparable) {
         comparables.add((Comparable) value);
+      } else if (value == null) {
+        comparables.add(NULL_KEY);
       } else {
         throw new IllegalArgumentException(
             "In order to lock value in batch it should implement " + Comparable.class.getName() + " interface");

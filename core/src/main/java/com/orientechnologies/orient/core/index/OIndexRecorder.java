@@ -341,19 +341,19 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public void lockKeysForUpdateNoTx(Object... key) {
+  public void lockKeysForUpdate(Object... key) {
   }
 
   @Override
-  public void lockKeysForUpdateNoTx(Collection<Object> keys) {
+  public void lockKeysForUpdate(Collection<Object> keys) {
   }
 
   @Override
-  public void releaseKeysForUpdateNoTx(Object... key) {
+  public void releaseKeysForUpdate(Object... key) {
   }
 
   @Override
-  public void releaseKeysForUpdateNoTx(Collection<Object> keys) {
+  public void releaseKeysForUpdate(Collection<Object> keys) {
   }
 
   @Override
