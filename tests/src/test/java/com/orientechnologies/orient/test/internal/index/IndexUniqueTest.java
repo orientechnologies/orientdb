@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -35,20 +37,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Test
 public class IndexUniqueTest {
-  private final AtomicInteger[] propValues = new AtomicInteger[10];
-  private final Random          random     = new Random();
-  private static final int      ATTEMPTS   = 1000000;
+  private final        AtomicInteger[] propValues = new AtomicInteger[10];
+  private final        Random          random     = new Random();
+  private static final int             ATTEMPTS   = 100000;
 
-  private final Phaser          phaser     = new Phaser() {
-                                             @Override
-                                             protected boolean onAdvance(int phase, int registeredParties) {
-                                               for (AtomicInteger value : propValues) {
-                                                 value.set(random.nextInt());
-                                               }
+  private final Phaser phaser = new Phaser() {
+    @Override
+    protected boolean onAdvance(int phase, int registeredParties) {
+      for (AtomicInteger value : propValues) {
+        value.set(random.nextInt());
+      }
 
-                                               return super.onAdvance(phase, registeredParties);
-                                             }
-                                           };
+      return super.onAdvance(phase, registeredParties);
+    }
+  };
 
   public void indexUniqueTest() throws Exception {
     String[] indexNames = new String[10];
@@ -110,14 +112,14 @@ public class IndexUniqueTest {
     for (ODocument document : db.browseClass("indexTest")) {
       for (int i = 0; i < 10; i++) {
         Set<Integer> propValues = props[i];
-        Assert.assertTrue(propValues.add(document.<Integer> field("prop" + i)));
+        Assert.assertTrue(propValues.add(document.<Integer>field("prop" + i)));
       }
     }
 
   }
 
   public final class Populator implements Callable<Integer> {
-    private final String url;
+    private final String  url;
     private final boolean tx;
 
     public Populator(String url, boolean tx) {
@@ -150,6 +152,11 @@ public class IndexUniqueTest {
 
           success++;
         } catch (ORecordDuplicatedException e) {
+          for (int n = 0; n < 10; n++) {
+            OConcurrentResultSet result = db
+                .command(new OCommandSQL("select * from indexTest where prop" + n + " like " + propValues[n].get())).execute();
+            assert result.size() == 1;
+          }
         } catch (Exception e) {
           e.printStackTrace();
           throw e;

@@ -105,8 +105,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    *
    * <p>
    * If you want to lock several keys in single thread, you should pass all those keys in single method call. Several calls of this
-   * method in single thread are not allowed because it may lead to deadlocks. Lock is applied only in case if there are no
-   * transactions.
+   * method in single thread are not allowed because it may lead to deadlocks.
    * </p>
    *
    * This is internal method and cannot be used by end users.
@@ -114,7 +113,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param key
    *          Keys to lock.
    */
-  void lockKeysForUpdateNoTx(Object... key);
+  void lockKeysForUpdate(Object... key);
 
   /**
    * Applies exclusive lock on keys which prevents read/modification of this keys in following methods:
@@ -128,8 +127,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    *
    * <p>
    * If you want to lock several keys in single thread, you should pass all those keys in single method call. Several calls of this
-   * method in single thread are not allowed because it may lead to deadlocks. Lock is applied only in case if there are no
-   * transactions.
+   * method in single thread are not allowed because it may lead to deadlocks.
    * </p>
    *
    * This is internal method and cannot be used by end users.
@@ -137,7 +135,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param keys
    *          Keys to lock.
    */
-  void lockKeysForUpdateNoTx(Collection<Object> keys);
+  void lockKeysForUpdate(Collection<Object> keys);
 
   /**
    * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
@@ -154,7 +152,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param key
    *          Keys to unlock.
    */
-  void releaseKeysForUpdateNoTx(Object... key);
+  void releaseKeysForUpdate(Object... key);
 
   /**
    * Release exclusive lock on keys which prevents read/modification of this keys in following methods:
@@ -171,7 +169,7 @@ public interface OIndexInternal<T> extends OIndex<T> {
    * @param keys
    *          Keys to unlock.
    */
-  void releaseKeysForUpdateNoTx(Collection<Object> keys);
+  void releaseKeysForUpdate(Collection<Object> keys);
 
   OIndexMetadata loadMetadata(ODocument iConfig);
 

@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -220,8 +219,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     }
   }
 
-  private boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields,
-      final ODocument iRecord) {
+  private boolean processCompositeIndexDelete(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
     final OCompositeIndexDefinition indexDefinition = (OCompositeIndexDefinition) index.getDefinition();
 
     final String multiValueField = indexDefinition.getMultiValueField();
@@ -317,12 +315,14 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
       }
     }
 
-    for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
-      final OIndexInternal<?> index = entry.getKey().getInternal();
-      index.lockKeysForUpdateNoTx(entry.getValue());
-    }
+    if (noTx(record)) {
+      for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
+        final OIndexInternal<?> index = entry.getKey().getInternal();
+        index.lockKeysForUpdate(entry.getValue());
+      }
 
-    indexKeysMapQueue.push(indexKeysMap);
+      indexKeysMapQueue.push(indexKeysMap);
+    }
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
       final OIndex<?> index = entry.getKey();
@@ -360,12 +360,14 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
       }
     }
 
-    for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
-      final OIndexInternal<?> index = entry.getKey().getInternal();
-      index.lockKeysForUpdateNoTx(entry.getValue());
-    }
+    if (noTx(record)) {
+      for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
+        final OIndexInternal<?> index = entry.getKey().getInternal();
+        index.lockKeysForUpdate(entry.getValue());
+      }
 
-    indexKeysMapQueue.push(indexKeysMap);
+      indexKeysMapQueue.push(indexKeysMap);
+    }
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
       final OIndex<?> index = entry.getKey();
@@ -498,12 +500,14 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
         }
       }
 
-      for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
-        final OIndexInternal<?> index = entry.getKey().getInternal();
-        index.lockKeysForUpdateNoTx(entry.getValue());
-      }
+      if (noTx(iDocument)) {
+        for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
+          final OIndexInternal<?> index = entry.getKey().getInternal();
+          index.lockKeysForUpdate(entry.getValue());
+        }
 
-      indexKeysMapQueue.push(indexKeysMap);
+        indexKeysMapQueue.push(indexKeysMap);
+      }
     }
 
     return RESULT.RECORD_NOT_CHANGED;
@@ -610,17 +614,20 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
   @Override
   public void onRecordFinalizeUpdate(ODocument document) {
-    unlockKeys();
+    if (noTx(document))
+      unlockKeys();
   }
 
   @Override
   public void onRecordFinalizeCreation(ODocument document) {
-    unlockKeys();
+    if (noTx(document))
+      unlockKeys();
   }
 
   @Override
   public void onRecordFinalizeDeletion(ODocument document) {
-    unlockKeys();
+    if (noTx(document))
+      unlockKeys();
   }
 
   private void unlockKeys() {
@@ -635,7 +642,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeyMap.entrySet()) {
       final OIndexInternal<?> index = entry.getKey().getInternal();
       try {
-        index.releaseKeysForUpdateNoTx(entry.getValue());
+        index.releaseKeysForUpdate(entry.getValue());
       } catch (RuntimeException e) {
         OLogManager.instance().error(this, "Error during unlock of keys for index %s", e, index.getName());
       }
@@ -648,5 +655,9 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
   protected void removeFromIndex(OIndex<?> index, Object key, OIdentifiable value) {
     index.remove(key, value);
+  }
+
+  private static boolean noTx(ODocument document) {
+    return !document.getDatabase().getTransaction().isActive();
   }
 }

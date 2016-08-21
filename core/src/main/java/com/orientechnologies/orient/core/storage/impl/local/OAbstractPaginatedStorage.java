@@ -1284,8 +1284,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           makeStorageDirty();
           startStorageTx(clientTx);
 
-          lockIndexKeys(indexManager, indexesToCommit);
-          lockIndexes(indexesToCommit);
+          // Identity update may change the index keys to lock. So we lock the clusters first, allocate cluster positions,
+          // update the identity and then lock the index keys and the indexes.
           lockClusters(clustersToLock);
 
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
@@ -1321,6 +1321,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
               clientTx.updateIdentityAfterCommit(oldRID, rid);
             }
           }
+
+          lockIndexKeys(indexManager, indexesToCommit);
+          lockIndexes(indexesToCommit);
 
           for (ORecordOperation txEntry : entries) {
             commitEntry(txEntry, positions.get(txEntry), databaseRecord.getSerializer());
@@ -4137,9 +4140,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (index == null)
         throw new OTransactionException("Cannot find index '" + indexName + "' while committing transaction");
 
-      index.lockKeysForUpdateNoTx(changes.changesPerKey.keySet());
       if (!changes.nullKeyChanges.entries.isEmpty())
-        index.lockKeysForUpdateNoTx((Object) null);
+        index.lockKeysForUpdate((Object) null);
+      index.lockKeysForUpdate(changes.changesPerKey.keySet());
     }
   }
 
@@ -4149,9 +4152,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (index == null) // index may be unresolved at this point (and its keys are not locked) due to some failure
         continue;
 
-      index.releaseKeysForUpdateNoTx(changes.changesPerKey.keySet());
       if (!changes.nullKeyChanges.entries.isEmpty())
-        index.releaseKeysForUpdateNoTx((Object) null);
+        index.releaseKeysForUpdate((Object) null);
+      index.releaseKeysForUpdate(changes.changesPerKey.keySet());
     }
   }
 
