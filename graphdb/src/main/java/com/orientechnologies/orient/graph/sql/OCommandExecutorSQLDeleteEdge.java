@@ -36,18 +36,9 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -394,12 +385,29 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLSetAware
         : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
+  @Override
+  public Set<String> getInvolvedClusters() {
+    final HashSet<String> result = new HashSet<String>();
+    if (rids != null) {
+      final ODatabaseDocumentInternal database = getDatabase();
+      for (ORecordId rid : rids) {
+        result.add(database.getClusterNameById(rid.getClusterId()));
+      }
+    } else if (query != null) {
+      final OCommandExecutor executor = OCommandManager.instance().getExecutor((OCommandRequestInternal) query);
+      // COPY THE CONTEXT FROM THE REQUEST
+      executor.setContext(context);
+      executor.parse(query);
+      return executor.getInvolvedClusters();
+    }
+    return result;
+  }
+
   /**
    * setLimit() for DELETE EDGE is ignored. Please use LIMIT keyword in the SQL statement
    */
   public <RET extends OCommandExecutor> RET setLimit(final int iLimit) {
-    //do nothing
+    // do nothing
     return (RET) this;
   }
 }
-
