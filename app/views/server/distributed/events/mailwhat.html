@@ -52,7 +52,9 @@
               </div>
             </div>
             <div class="form-group">
-              <label class="col-sm-2 control-label">Subject:</label>
+              <label class="col-sm-2 control-label">Subject:
+
+              </label>
               <div class="col-sm-10">
                 <input type="text" id="subject" name="name" class="form-control" class="input-block-level"
                        placeholder="subject"
@@ -60,7 +62,15 @@
               </div>
             </div>
             <div class="form-group">
-              <label class="col-sm-2 control-label">Body:</label>
+              <label class="col-sm-2 control-label">Body:
+
+                <a href="javascript:void(0)" tabindex="1"
+                   data-trigger="focus" data-placement="right"
+                   data-container="body"
+                   data-content="{{ help |  translate:links }}" bs-popover>
+                  <i class="fa fa-question-circle"></i>
+                </a>
+              </label>
               <div class="col-sm-10">
                 <textarea rows="3" id="description" name="body" class="form-control"
                           style="height: 150px" placeholder="body" ng-model="eventWhat['body']" required></textarea>
@@ -72,7 +82,7 @@
       </div>
 
       <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" ng-disabled="mailwhatform.$invalid" ng-click="$hide()">Submit
+        <button type="submit" class="btn btn-primary" ng-disabled="mailwhatform.$invalid" ng-click="$hide()">Ok
         </button>
       </div>
     </div>

@@ -1361,12 +1361,21 @@ ee.controller('EventsController', function ($scope, Plugins, $modal, Cluster, Pr
 
     modalPromise.$promise.then(modalPromise.show);
   }
-  $scope.configureWhat = function (what) {
+  $scope.configureWhat = function (e) {
 
+    var what = e.what;
     var modalScope = $scope.$new(true);
-
+    switch (e.when.name) {
+      case "MetricWhen":
+        modalScope.help = "events.markersMetric";
+        break;
+      default:
+        modalScope.help = "events.markersStatus";
+    }
     modalScope.eventWhat = what;
     modalScope.profiles = $scope.profiles;
+
+
     var modalPromise = $modal({
       template: 'views/server/distributed/events/' + what.name.toLowerCase().trim() + '.html',
       scope: modalScope
