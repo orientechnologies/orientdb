@@ -170,40 +170,6 @@ public class OComparableLockManager<T extends  Comparable> {
       lock.readWriteLock.writeLock().unlock();
   }
 
-  public void acquireExclusiveLocksInBatch(final T... values) {
-    if (values == null || values.length == 0)
-      return;
-
-    final T[] sortedValues = OPartitionedLockManager.getOrderedValues(values);
-
-    for (int n = 0; n < sortedValues.length; n++) {
-      acquireLock(sortedValues[n], LOCK.EXCLUSIVE);
-    }
-  }
-
-  public void acquireExclusiveLocksInBatch(Collection<T> values) {
-    if (values == null || values.isEmpty())
-      return;
-
-    final Collection<T> valCopy = OPartitionedLockManager.getOrderedValues(values);
-
-    for (T val : valCopy) {
-      acquireExclusiveLock(val);
-    }
-  }
-
-  public void lockAllExclusive() {
-    for (CountableLock lock : map.values()) {
-      lock.readWriteLock.writeLock().lock();
-    }
-  }
-
-  public void unlockAllExclusive() {
-    for (CountableLock lock : map.values()) {
-      lock.readWriteLock.writeLock().unlock();
-    }
-  }
-
   // For tests purposes.
   public int getCountCurrentLocks() {
     return map.size();
