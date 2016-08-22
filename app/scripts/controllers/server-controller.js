@@ -276,7 +276,6 @@ ctrl.controller('SingleServerController', function ($scope, $rootScope, $locatio
 
       // RAM
 
-
       var maxMemory = realtime['statistics']['process.runtime.maxMemory'].last;
       var totalMemory = realtime['statistics']['process.runtime.totalMemory'].last;
       var availableMemory = realtime['statistics']['process.runtime.availableMemory'].last;
@@ -421,7 +420,13 @@ ctrl.controller("ServerDashboardController", ['$scope', '$routeParams', 'Aside',
     {name: "security", title: "Security", template: 'security', icon: 'fa-lock', wiki: "Security-Config.html"},
     {name: "teleporter", title: "Teleporter", template: 'teleporter', icon: 'fa-usb', wiki: "Studio-Teleporter.html"},
     {name: "plugins", title: "Plugins Management", template: 'plugins', icon: 'fa-plug'},
-    {name: "alerts", title: "Alerts Management", template: 'events', icon: 'fa-bell'}
+    {
+      name: "alerts",
+      title: "Alerts Management",
+      template: 'events',
+      icon: 'fa-bell',
+      wiki: "Studio-Alert-Management.html"
+    }
   ]
   if ($routeParams.tab) {
     $scope.menus.forEach(function (e) {

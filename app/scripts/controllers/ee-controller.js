@@ -51,6 +51,8 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
 
       $scope.server = $scope.servers[0];
 
+
+
       if ($scope.rid) {
         $scope.servers.forEach(function (e) {
           if (e.name === $scope.rid) {

@@ -157,198 +157,6 @@ graph.directive('aside', function ($http, $compile) {
 });
 
 
-graph.directive('c3chart', function ($http, $compile, $timeout, $rootScope) {
-
-  var linker = function (scope, element, attrs) {
-
-
-    var lastRecordCreate = null;
-    var lastRecordRead = null;
-    var lastRecordUpdate = null;
-    var lastRecordDelete = null;
-    var lastRecordScan = null;
-    var lastRecordConflict = null;
-    var lastTxCommit = null;
-    var lastTxRollback = null;
-    var lastDTxRetry = null;
-
-
-    scope.$watch("server", function (server) {
-
-      if (server) {
-        startChart();
-      }
-    })
-
-
-    var startChart = function () {
-      var counter = 0;
-      var length = 0;
-      var limit = 60;
-      var tail = 1;
-      element.id = scope.server.name;
-
-
-      scope.chart = c3.generate({
-        bindto: "#" + element.id,
-        data: {
-          x: 'x',
-          columns: [
-            ['x', new Date()],
-            ['Create', 0],
-            ['Read', 0],
-            ['Update', 0],
-            ['Delete', 0],
-          ]
-        },
-        point: {
-          show: false
-        },
-        size: {
-          height: 250
-        },
-        axis: {
-          x: {
-            type: 'timeseries',
-            tick: {
-              culling: {
-                max: 4 // the number of tick texts will be adjusted to less than this value
-              },
-              format: '%H:%M:%S',
-            }
-          },
-          y: {}
-        }
-      });
-
-      var countOps = function (array, regexp) {
-        var keys = Object.keys(array).filter(function (k) {
-          return k.match(regexp) != null;
-        })
-
-        var ops = 0;
-        keys.forEach(function (k) {
-          ops += array[k];
-        });
-        return ops;
-      }
-
-      var countOpsFromChronos = function (array, regexp) {
-        var keys = Object.keys(array).filter(function (k) {
-          return k.match(regexp) != null;
-        })
-
-        var ops = 0;
-        keys.forEach(function (k) {
-          ops += array[k].entries;
-        });
-        return ops;
-      }
-      $rootScope.$on('server:updated', function (evt, server) {
-        if (!server.name || server.name == scope.server.name) {
-
-          var recordCreateOps = countOps(server.realtime['counters'], /db.*createRecord/g);
-          var recordReadOps = countOps(server.realtime['counters'], /db.*readRecord/g);
-          var recordUpdateOps = countOps(server.realtime['counters'], /db.*updateRecord/g);
-          var recordDeleteOps = countOps(server.realtime['counters'], /db.*deleteRecord/g);
-          var recordScanOps = countOps(server.realtime['counters'], /db.*scanRecord/g);
-          var conflictsOps = countOps(server.realtime['counters'], /db.*conflictRecord/g);
-          var txCommitsOps = countOps(server.realtime['counters'], /db.*txCommit/g);
-          var txRollbacksOps = countOps(server.realtime['counters'], /db.*txRollback/g);
-          var dTxRetriesOps = countOps(server.realtime['counters'], /db.*distributedTxRetries/g);
-
-          var createOperation = 0;
-          var readOperation = 0;
-          var updateOperation = 0;
-          var deleteOperation = 0;
-          var scanOperation = 0;
-          var conflicts = 0;
-          var txCommits = 0;
-          var txRollbacks = 0;
-          var dTxRetries = 0;
-
-
-          if (lastRecordCreate != null) {
-            createOperation = Math.abs(lastRecordCreate - recordCreateOps) / (POLLING / 1000);
-          }
-          lastRecordCreate = recordCreateOps;
-
-          if (lastRecordRead != null) {
-            readOperation = Math.abs(lastRecordRead - recordReadOps) / (POLLING / 1000);
-          }
-          lastRecordRead = recordReadOps;
-
-          if (lastRecordUpdate != null) {
-            updateOperation = Math.abs(lastRecordUpdate - recordUpdateOps) / (POLLING / 1000);
-          }
-          lastRecordUpdate = recordUpdateOps;
-
-          if (lastRecordDelete != null) {
-            deleteOperation = Math.abs(lastRecordDelete - recordDeleteOps) / (POLLING / 1000);
-          }
-          lastRecordDelete = recordDeleteOps;
-
-          if (lastRecordScan != null) {
-            scanOperation = Math.abs(lastRecordScan - recordScanOps) / (POLLING / 1000);
-          }
-          lastRecordScan = recordScanOps;
-
-          if (lastRecordConflict != null) {
-            scanOperation = Math.abs(lastRecordConflict - conflicts) / (POLLING / 1000);
-          }
-          lastRecordConflict = conflicts;
-
-          if (lastTxCommit != null) {
-            scanOperation = Math.abs(lastTxCommit - txCommits) / (POLLING / 1000);
-          }
-          lastTxCommit = txCommits;
-
-          if (lastTxRollback != null) {
-            scanOperation = Math.abs(lastTxRollback - txRollbacks) / (POLLING / 1000);
-          }
-          lastTxRollback = txRollbacks;
-
-          if (lastDTxRetry != null) {
-            scanOperation = Math.abs(lastDTxRetry - dTxRetries) / (POLLING / 1000);
-          }
-          lastDTxRetry = dTxRetries;
-
-
-          if (counter == limit) {
-            length = tail;
-            counter -= tail;
-          } else {
-            length = 0;
-          }
-
-          scope.chart.flow({
-            columns: [
-              ['x', new Date()],
-              ['Create', Math.round(createOperation)],
-              ['Read', Math.round(readOperation)],
-              ['Update', Math.round(updateOperation)],
-              ['Delete', Math.round(deleteOperation)],
-              ['Scan', Math.round(scanOperation)],
-              ['Conflict', Math.round(conflicts)],
-              ['Tx Commit', Math.round(txCommits)],
-              ['Tx Rollback', Math.round(txRollbacks)],
-              ['Distributed Tx Retries', Math.round(dTxRetries)],
-            ],
-            length: length,
-            duration: 1500
-          })
-          counter++;
-        }
-      })
-    }
-  }
-  return {
-    restrict: 'A',
-    link: linker
-  }
-});
-
-
 graph.directive('serverChart', function ($http, $compile, $timeout, $rootScope) {
 
   var linker = function (scope, element, attrs) {
@@ -371,11 +179,7 @@ graph.directive('serverChart', function ($http, $compile, $timeout, $rootScope) 
 
 
       element[0].id = scope.server.name + "_" + Math.round(Math.random() * 1000);
-
-
       if (scope.headers) {
-
-
         var columns = [['x', new Date()]];
 
         scope.headers.forEach(function (h) {
@@ -429,7 +233,6 @@ graph.directive('serverChart', function ($http, $compile, $timeout, $rootScope) 
             } else {
               length = 0;
             }
-
 
 
             columns.unshift(['x', new Date()]);
