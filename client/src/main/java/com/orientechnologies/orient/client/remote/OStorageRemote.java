@@ -269,6 +269,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         }
       } while (true);
+      
+      configuration.load();
     } finally {
       stateLock.releaseWriteLock();
     }
