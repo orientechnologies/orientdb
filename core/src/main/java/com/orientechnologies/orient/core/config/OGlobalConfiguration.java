@@ -52,6 +52,9 @@ public enum OGlobalConfiguration {
       "Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management",
       Boolean.class, Boolean.TRUE),
 
+  ENVIRONMENT_LOCK_MANAGER_CONCURRENCY_LEVEL("environment.lockManager.concurrency.level", "Concurrency level of lock manager",
+      Integer.class, Runtime.getRuntime().availableProcessors() << 3, false),
+
   ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows the shutdown of the JVM, if needed/requested",
       Boolean.class, true, true),
 
@@ -73,8 +76,7 @@ public enum OGlobalConfiguration {
       "Activates the direct memory pool leak detector. This detector causes a large overhead and should be used for debugging "
           + "purposes only. It's also a good idea to pass the "
           + "-Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager switch to the JVM, "
-          + "if you use this mode, this will enable the logging from JVM shutdown hooks.",
-      Boolean.class, false),
+          + "if you use this mode, this will enable the logging from JVM shutdown hooks.", Boolean.class, false),
 
   DIRECT_MEMORY_ONLY_ALIGNED_ACCESS("memory.directMemory.onlyAlignedMemoryAccess",
       "Some architectures do not allow unaligned memory access or may suffer from speed degradation. For such platforms, this flag should be set to true",
@@ -185,6 +187,10 @@ public enum OGlobalConfiguration {
   WAL_CACHE_SIZE("storage.wal.cacheSize",
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) If set to 0, caching will be disabled", Integer.class,
       3000),
+
+  WAL_FILE_AUTOCLOSE_INTERVAL("storage.wal.fileAutoCloseInterval",
+      "Interval in seconds after which WAL file will be closed if there is no "
+          + "any IO operations on this file (in seconds), default value is 10", Integer.class, 10, false),
 
   WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single WAL segment (in megabytes)", Integer.class, 128),
 
@@ -652,22 +658,27 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.7
    */
-  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHAIN("distributed.conflictResolverRepairerChain", "Chain of conflict resolver implementation to use", String.class, "majority,content,version", false),
+  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHAIN("distributed.conflictResolverRepairerChain",
+      "Chain of conflict resolver implementation to use", String.class, "majority,content,version", false),
 
   /**
    * @Since 2.2.7
    */
-  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY("distributed.conflictResolverRepairerCheckEvery", "Time (in ms) when the conflict resolver auto-repairer checks for records/cluster to repair", Long.class, 5000, true),
+  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_CHECK_EVERY("distributed.conflictResolverRepairerCheckEvery",
+      "Time (in ms) when the conflict resolver auto-repairer checks for records/cluster to repair", Long.class, 5000, true),
 
   /**
    * @Since 2.2.7
    */
-  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH("distributed.conflictResolverRepairerBatch", "Number of record to repair in batch", Integer.class, 100, true),
+  DISTRIBUTED_CONFLICT_RESOLVER_REPAIRER_BATCH("distributed.conflictResolverRepairerBatch", "Number of record to repair in batch",
+      Integer.class, 100, true),
 
   /**
    * @Since 2.2.7
    */
-  DISTRIBUTED_TX_EXPIRE_TIMEOUT("distributed.txAliveTimeout", "Maximum timeout (in ms) a distributed transaction can be alive. This timeout is to rollback pending transactions after a while", Long.class, 30000l, true),
+  DISTRIBUTED_TX_EXPIRE_TIMEOUT("distributed.txAliveTimeout",
+      "Maximum timeout (in ms) a distributed transaction can be alive. This timeout is to rollback pending transactions after a while",
+      Long.class, 30000l, true),
 
   /**
    * @Since 2.2.6
@@ -677,28 +688,33 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.6
    */
-  DISTRIBUTED_RESPONSE_CHANNELS("distributed.responseChannels", "Number of network channels used to send responses", Integer.class, 1),
+  DISTRIBUTED_RESPONSE_CHANNELS("distributed.responseChannels", "Number of network channels used to send responses", Integer.class,
+      1),
 
   /**
    * @Since 2.2.5
    */
-  DISTRIBUTED_HEARTBEAT_TIMEOUT("distributed.heartbeatTimeout", "Maximum time in ms to wait for the heartbeat. If the server does not respond in time, it is put offline", Long.class, 10000l),
+  DISTRIBUTED_HEARTBEAT_TIMEOUT("distributed.heartbeatTimeout",
+      "Maximum time in ms to wait for the heartbeat. If the server does not respond in time, it is put offline", Long.class,
+      10000l),
 
   /**
    * @Since 2.2.5
    */
-  DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER("distributed.checkHealthCanOfflineServer", "In case a server does not respond to the heartbeat message, it is set offline", Boolean.class, false),
+  DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER("distributed.checkHealthCanOfflineServer",
+      "In case a server does not respond to the heartbeat message, it is set offline", Boolean.class, false),
 
   /**
    * @Since 2.2.5
    */
-  DISTRIBUTED_CHECK_HEALTH_EVERY("distributed.checkHealthEvery", "Time in ms to check the cluster health. Set to 0 to disable it", Long.class, 10000l),
+  DISTRIBUTED_CHECK_HEALTH_EVERY("distributed.checkHealthEvery", "Time in ms to check the cluster health. Set to 0 to disable it",
+      Long.class, 10000l),
 
   /**
    * Since 2.2.4
    */
   DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS("distributed.autoRemoveOfflineServers",
-      "This is the amount of time (in ms) to automatically remove a server from the distributed configuration after a while it's OFFLINE. -1 = never, 0 = immediately, >0 the actual time to wait",
+      "This is the amount of time (in ms) the server has to be OFFLINE, before it is automatically removed from the distributed configuration. -1 = never, 0 = immediately, >0 the actual time to wait",
       Long.class, -1),
 
   /**
@@ -744,7 +760,8 @@ public enum OGlobalConfiguration {
   /**
    * @Since 2.2.7
    */
-  @OApi(maturity = OApi.MATURITY.NEW) DISTRIBUTED_ATOMIC_LOCK_TIMEOUT("distributed.atomicLockTimeout", "Timeout (in ms) to acquire a distributed lock on a record. (0=infinite)", Integer.class, 500, true),
+  @OApi(maturity = OApi.MATURITY.NEW)DISTRIBUTED_ATOMIC_LOCK_TIMEOUT("distributed.atomicLockTimeout",
+      "Timeout (in ms) to acquire a distributed lock on a record. (0=infinite)", Integer.class, 300, true),
 
   /**
    * @Since 2.1

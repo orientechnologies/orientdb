@@ -40,11 +40,11 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
   private static final long serialVersionUID = 7975120282194559960L;
 
-  private final transient ODistributedCounter distributedCounter = new ODistributedCounter();
-  private final transient AtomicReference<WNode> tail = new AtomicReference<WNode>();
+  private final transient ODistributedCounter distributedCounter;
+  private final transient AtomicReference<WNode>          tail      = new AtomicReference<WNode>();
   private final transient ThreadLocal<OModifiableInteger> lockHolds = new InitOModifiableInteger();
 
-  private final transient ThreadLocal<WNode> myNode = new InitWNode();
+  private final transient ThreadLocal<WNode> myNode   = new InitWNode();
   private final transient ThreadLocal<WNode> predNode = new ThreadLocal<WNode>();
 
   public OReadersWriterSpinLock() {
@@ -52,6 +52,16 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     wNode.locked = false;
 
     tail.set(wNode);
+
+    distributedCounter = new ODistributedCounter();
+  }
+
+  public OReadersWriterSpinLock(int concurrencyLevel) {
+    final WNode wNode = new WNode();
+    wNode.locked = false;
+
+    tail.set(wNode);
+    distributedCounter = new ODistributedCounter(concurrencyLevel);
   }
 
   public void acquireReadLock() {

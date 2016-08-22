@@ -20,6 +20,8 @@
 
 package com.orientechnologies.common.concur.lock;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -30,45 +32,45 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Lock manager implementation that uses multipel partitions to increase the level of concurrency without having to keep one entry
  * per locked key, like for {@link OOneEntryPerKeyLockManager} implementation.
- * 
+ *
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/11/14
  */
 public class OPartitionedLockManager<T> implements OLockManager<T> {
-  private static final int               HASH_BITS         = 0x7fffffff;
+  private static final int HASH_BITS = 0x7fffffff;
 
-  private static final int               CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() << 6);
-  public static final int                MASK              = CONCURRENCY_LEVEL - 1;
+  private final int concurrencyLevel = closestInteger(
+      OGlobalConfiguration.ENVIRONMENT_LOCK_MANAGER_CONCURRENCY_LEVEL.getValueAsInteger());
+  private final int mask             = concurrencyLevel - 1;
 
   private final ReadWriteLock[]          locks;
   private final OReadersWriterSpinLock[] spinLocks;
 
-  private final boolean                  useSpinLock;
-  public static final Comparator         COMPARATOR        = new Comparator() {
-                                                             @Override
-                                                             public int compare(final Object one, final Object two) {
-                                                               // TODO: ORDER BY HASH INSTEAD TO MINIMIZE CALLING HASH FUNCTION
-                                                               final int indexOne;
-                                                               if (one == null)
-                                                                 indexOne = 0;
-                                                               else
-                                                                 indexOne = index(one.hashCode());
+  private final boolean useSpinLock;
+  private final Comparator comparator = new Comparator() {
+    @Override
+    public int compare(final Object one, final Object two) {
+      final int indexOne;
+      if (one == null)
+        indexOne = 0;
+      else
+        indexOne = index(one.hashCode());
 
-                                                               final int indexTwo;
-                                                               if (two == null)
-                                                                 indexTwo = 0;
-                                                               else
-                                                                 indexTwo = index(two.hashCode());
+      final int indexTwo;
+      if (two == null)
+        indexTwo = 0;
+      else
+        indexTwo = index(two.hashCode());
 
-                                                               if (indexOne > indexTwo)
-                                                                 return 1;
+      if (indexOne > indexTwo)
+        return 1;
 
-                                                               if (indexOne < indexTwo)
-                                                                 return -1;
+      if (indexOne < indexTwo)
+        return -1;
 
-                                                               return 0;
-                                                             }
-                                                           };
+      return 0;
+    }
+  };
 
   private static final class SpinLockWrapper implements Lock {
     private final boolean                readLock;
@@ -119,16 +121,17 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
 
   public OPartitionedLockManager(boolean useSpinLock) {
     this.useSpinLock = useSpinLock;
+
     if (useSpinLock) {
-      OReadersWriterSpinLock[] lcks = new OReadersWriterSpinLock[CONCURRENCY_LEVEL];
+      OReadersWriterSpinLock[] lcks = new OReadersWriterSpinLock[concurrencyLevel];
 
       for (int i = 0; i < lcks.length; i++)
-        lcks[i] = new OReadersWriterSpinLock();
+        lcks[i] = new OReadersWriterSpinLock(concurrencyLevel);
 
       spinLocks = lcks;
       locks = null;
     } else {
-      ReadWriteLock[] lcks = new ReadWriteLock[CONCURRENCY_LEVEL];
+      ReadWriteLock[] lcks = new ReadWriteLock[concurrencyLevel];
       for (int i = 0; i < lcks.length; i++)
         lcks[i] = new ReentrantReadWriteLock();
 
@@ -145,8 +148,8 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     return (int) (value ^ (value >>> 32));
   }
 
-  private static int index(int hashCode) {
-    return shuffleHashCode(hashCode) & MASK;
+  private int index(int hashCode) {
+    return shuffleHashCode(hashCode) & mask;
   }
 
   public static int shuffleHashCode(int h) {
@@ -465,7 +468,7 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
     lock.unlock();
   }
 
-  public static <T> T[] getOrderedValues(final T[] values) {
+  private <T> T[] getOrderedValues(final T[] values) {
     if (values.length < 2) {
       // OPTIMIZED VERSION WITH JUST 1 ITEM (THE MOST COMMON)
       return values;
@@ -473,19 +476,19 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
 
     final T[] copy = Arrays.copyOf(values, values.length);
 
-    Arrays.sort(copy, 0, copy.length, COMPARATOR);
+    Arrays.sort(copy, 0, copy.length, comparator);
 
     return copy;
   }
 
-  public static <T> Collection<T> getOrderedValues(final Collection<T> values) {
+  private <T> Collection<T> getOrderedValues(final Collection<T> values) {
     if (values.size() < 2) {
       // OPTIMIZED VERSION WITH JUST 1 ITEM (THE MOST COMMON)
       return values;
     }
 
     final List<T> valCopy = new ArrayList<T>(values);
-    Collections.sort(valCopy, COMPARATOR);
+    Collections.sort(valCopy, comparator);
 
     return valCopy;
   }
