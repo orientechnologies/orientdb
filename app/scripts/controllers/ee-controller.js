@@ -52,7 +52,6 @@ ee.controller('GeneralMonitorController', function ($scope, $location, $routePar
       $scope.server = $scope.servers[0];
 
 
-
       if ($scope.rid) {
         $scope.servers.forEach(function (e) {
           if (e.name === $scope.rid) {
@@ -1446,6 +1445,21 @@ ee.controller('MetricsController', function ($scope, Cluster, AgentService) {
           var obj = {};
           obj.name = k;
           obj.value = data.realtime.counters[k];
+          return obj
+        });
+
+        $scope.sizes = Object.keys(data.realtime.sizes).map(function (k) {
+          var obj = {};
+          obj.name = k;
+          obj.value = data.realtime.sizes[k];
+          return obj
+        });
+
+
+        $scope.texts = Object.keys(data.realtime.texts).map(function (k) {
+          var obj = {};
+          obj.name = k;
+          obj.value = data.realtime.texts[k];
           return obj
         });
       })

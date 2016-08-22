@@ -1,0 +1,42 @@
+<div class="col-md-12">
+  <div class="row row-space-2x">
+
+    <div class="col-md-6">
+      <form class="form-search">
+        <div class="input-group">
+          <input type="text" class="input-xxlarge form-control search-query" ng-model="query"
+                 placeholder="Search Hook Metric">
+                        <span class="input-group-btn">
+                        <button type="submit" class="btn" ng-click="">
+                          <i class="fa fa-search"></i>
+                        </button>
+                            </span>
+        </div>
+      </form>
+    </div>
+    <div class="col-md-6">
+
+    </div>
+  </div>
+
+  <div class="row row-space-2x">
+    <div class="col-md-12">
+      <div class="col-md-12">
+        <table st-table="sizes" class="table table-hover table-profiles">
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th st-sort="value">Value</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr ng-repeat="row in sizes | filter:query">
+            <td>{{row.name }}</td>
+            <td>{{row.value}}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

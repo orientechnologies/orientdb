@@ -22,13 +22,17 @@
   <div class="row row-space-2x">
     <div class="col-md-12">
       <div class="col-md-12">
-        <table st-table="counters" class="table table-hover table-profiles">
+        <table st-table="texts" class="table table-hover table-profiles">
           <thead>
           <tr>
             <th>Name</th>
             <th st-sort="value">Value</th>
           </tr>
           </thead>
+          <tr ng-repeat="row in texts | filter:query">
+            <td>{{row.name }}</td>
+            <td>{{row.value}}</td>
+          </tr>
           <tbody>
           </tbody>
         </table>
