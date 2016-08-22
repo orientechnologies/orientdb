@@ -87,7 +87,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
       final OContextConfiguration iConfiguration) throws IOException {
     configuration = iConfiguration;
-    registerStatelessCommands(iListener);
+
+    final boolean installDefaultCommands = iConfiguration.getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_INSTALL_DEFAULT_COMMANDS);
+    if (installDefaultCommands)
+      registerStatelessCommands(iListener);
 
     final String addHeaders = iConfiguration.getValueAsString("network.http.additionalResponseHeaders", null);
     if (addHeaders != null)
