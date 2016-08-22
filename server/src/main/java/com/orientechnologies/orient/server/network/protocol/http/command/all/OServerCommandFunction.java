@@ -19,15 +19,22 @@
     */
 package com.orientechnologies.orient.server.network.protocol.http.command.all;
 
-import java.io.IOException;
+import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 
- import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import java.io.IOException;
 
 public class OServerCommandFunction extends OServerCommandAbstractLogic {
    private static final String[] NAMES = { "GET|function/*", "POST|function/*" };
 
-   @Override
+  public OServerCommandFunction() {
+  }
+
+  public OServerCommandFunction(final OServerCommandConfiguration iConfig) {
+  }
+
+  @Override
    public String[] init(final OHttpRequest iRequest, final OHttpResponse iResponse) {
      final String[] parts = checkSyntax(iRequest.url, 3, "Syntax error: function/<database>/<name>[/param]*");
      iRequest.data.commandInfo = "Execute a function";

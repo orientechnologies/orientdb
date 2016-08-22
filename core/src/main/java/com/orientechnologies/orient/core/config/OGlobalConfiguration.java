@@ -73,7 +73,8 @@ public enum OGlobalConfiguration {
       "Activates the direct memory pool leak detector. This detector causes a large overhead and should be used for debugging "
           + "purposes only. It's also a good idea to pass the "
           + "-Djava.util.logging.manager=com.orientechnologies.common.log.OLogManager$DebugLogManager switch to the JVM, "
-          + "if you use this mode, this will enable the logging from JVM shutdown hooks.", Boolean.class, false),
+          + "if you use this mode, this will enable the logging from JVM shutdown hooks.",
+      Boolean.class, false),
 
   DIRECT_MEMORY_ONLY_ALIGNED_ACCESS("memory.directMemory.onlyAlignedMemoryAccess",
       "Some architectures do not allow unaligned memory access or may suffer from speed degradation. For such platforms, this flag should be set to true",
@@ -422,6 +423,12 @@ public enum OGlobalConfiguration {
       true),
 
   // HTTP
+
+  /**
+   * Since v2.2.8
+   */
+  NETWORK_HTTP_INSTALL_DEFAULT_COMMANDS("network.http.installDefaultCommands", "Installs the default HTTP commands", Boolean.class,
+      Boolean.TRUE, true),
 
   NETWORK_HTTP_SERVER_INFO("network.http.serverInfo",
       "Server info to send in HTTP responses. Change the default if you want to hide it is a OrientDB Server", String.class,
