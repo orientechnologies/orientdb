@@ -28,7 +28,7 @@ public abstract class OEventLogExecutor implements OEventExecutor {
 
     String levelType = when.field("type");
 
-    String message = source.field("message");
+    String message = source.field("status");
 
     if (levelType != null && !levelType.isEmpty()) {
       if (levelType.equalsIgnoreCase(message)) {
@@ -41,21 +41,6 @@ public abstract class OEventLogExecutor implements OEventExecutor {
   }
 
   protected Map<String, Object> fillMapResolve(ODocument source, ODocument when) {
-//    Map<String, Object> body2Name = new HashMap<String, Object>();
-//    String server = source.field("server");
-//
-//    Date date = source.field("date");
-//    body2Name.put("date", date);
-//    if (server != null) {
-//      body2Name.put("servername", server);
-//
-//    }
-//    String metricName = source.field("name");
-//    body2Name.put("metric", metricName);
-//
-//    String sourcelevel = (String) source.field("levelDescription");
-//    body2Name.put("logvalue", sourcelevel);
-
     return source.toMap();
   }
 }

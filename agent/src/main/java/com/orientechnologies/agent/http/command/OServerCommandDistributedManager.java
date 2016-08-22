@@ -161,15 +161,9 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       String realtime = Orient.instance().getProfiler().toJSON("realtime", "system.config.");
       ODocument cfg = new ODocument().fromJSON(realtime);
 
-      Map<String, Object> eval = (Map) cfg.eval("realtime.hookValues");
+      addConfiguration("realtime.sizes", member, cfg);
+      addConfiguration("realtime.texts", member, cfg);
 
-      ODocument configuration = new ODocument();
-      member.field("configuration", configuration);
-      for (String key : eval.keySet()) {
-        if (key.startsWith("system.config.")) {
-          configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
-        }
-      }
       for (OServerNetworkListener listener : server.getNetworkListeners()) {
         final Map<String, Object> listenerCfg = new HashMap<String, Object>();
         listeners.add(listenerCfg);
@@ -187,6 +181,22 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     return doc;
   }
 
+  private void addConfiguration(String path, ODocument member, ODocument cfg) {
+    Map<String, Object> eval = (Map) cfg.eval(path);
+
+    ODocument configuration = member.field("configuration");
+
+    if (configuration == null) {
+      configuration = new ODocument();
+      member.field("configuration", configuration);
+    }
+    for (String key : eval.keySet()) {
+      if (key.startsWith("system.config.")) {
+        configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
+      }
+    }
+  }
+
   private void enhanceStats(ODocument doc, ODocument clusterStats) {
 
     Collection<ODocument> documents = doc.field("members");
@@ -198,16 +208,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         Map<String, Object> profilerStats = clusterStats.field(name);
         ODocument dStat = new ODocument().fromMap(profilerStats);
 
-        Map<String, Object> eval = (Map) dStat.eval("realtime.hookValues");
-        if (eval != null) {
-          ODocument configuration = new ODocument();
-          document.field("configuration", configuration);
-          for (String key : eval.keySet()) {
-            if (key.startsWith("system.config.")) {
-              configuration.field(key.replace("system.config.", "").replace(".", "_"), eval.get(key));
-            }
-          }
-        }
+        addConfiguration("realtime.sizes", document, dStat);
+        addConfiguration("realtime.texts", document, dStat);
       }
     }
   }

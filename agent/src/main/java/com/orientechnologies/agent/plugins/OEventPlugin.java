@@ -168,14 +168,14 @@ public class OEventPlugin extends OServerPluginAbstract implements OServerPlugin
         public void onNodeJoined(String iNode) {
           if (isLeader(distributedManager))
             eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN,
-                new ODocument().field("server", iNode).field("message", "ONLINE").field("date", new Date()));
+                new ODocument().field("server", iNode).field("status", "ONLINE").field("date", new Date()));
         }
 
         @Override
         public void onNodeLeft(String iNode) {
           if (isLeader(distributedManager))
             eventController.broadcast(OEvent.EVENT_TYPE.LOG_WHEN,
-                new ODocument().field("server", iNode).field("message", "OFFLINE").field("date", new Date()));
+                new ODocument().field("server", iNode).field("status", "OFFLINE").field("date", new Date()));
         }
 
         @Override

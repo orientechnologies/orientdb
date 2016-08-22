@@ -164,7 +164,6 @@ public class OEventController extends Thread {
           metric.field("total", stat.total);
 
         }
-
       }
       metric.field("from", new Date(profilerData.getRecordingFrom()));
       metric.field("to", new Date(profilerData.getRecordingTo()));

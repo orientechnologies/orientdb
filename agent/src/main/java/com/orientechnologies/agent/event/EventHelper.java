@@ -22,13 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 import java.io.BufferedReader;
@@ -38,7 +32,10 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EventHelper {
 
@@ -151,66 +148,7 @@ public class EventHelper {
   }
 
   public static String replaceMarkers(String text) {
-//    if (text != null) {
-//      text = text.replaceAll("&", "&amp;");
-//      text = text.replaceAll("���", "&egrave;");
-//      text = text.replaceAll("���", "&eacute;");
-//      text = text.replaceAll("���", "&ograve;");
-//      text = text.replaceAll("���", "&agrave;");
-//      text = text.replaceAll("���", "&ugrave;");
-//      text = text.replaceAll("���", "&igrave;");
-//      text = text.replaceAll("<", "&lt;");
-//      text = text.replaceAll(">", "&gt;");
-//      text = text.replaceAll("\u2018", "&lsquo;");
-//      text = text.replaceAll("\u2019", "&rsquo;");
-//      text = text.replaceAll("'", "&rsquo;");
-//      text = text.replaceAll("\n", "<br/>");
-//    }
-
     return text;
-  }
-
-  public static ODocument findOrCreateMailUserConfiguration(ODatabaseDocument database) {
-    String sql = "select from UserConfiguration where user.name = 'admin'";
-    OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(sql);
-    final List<ODocument> response = database.query(osqlQuery);
-    ODocument configuration = null;
-    ODocument userconfiguration = null;
-
-    if (response.size() == 1) {
-      userconfiguration = response.get(0);
-      configuration = userconfiguration.field("mailProfile");
-    }
-    // mail = OServerMain.server().getPluginByClass(OMailPlugin.class);
-    if (configuration == null) {
-      configuration = new ODocument("OMailProfile");
-      configuration.field("user", "");
-      configuration.field("password", "");
-      configuration.field("enabled", true);
-      configuration.field("starttlsEnable", true);
-      configuration.field("auth", true);
-      configuration.field("port", 25);
-      configuration.field("host", "");
-      configuration.field("dateFormat", "yyyy-MM-dd HH:mm:ss");
-      configuration.field("@type", "d");
-
-      sql = "select from OUser where name = 'admin'";
-      osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(sql);
-      final List<ODocument> users = database.query(osqlQuery);
-      if (users.size() == 1) {
-        userconfiguration = new ODocument("UserConfiguration");
-        final ODocument ouserAdmin = users.get(0);
-        userconfiguration.field("user", ouserAdmin);
-        userconfiguration.field("mailProfile", configuration);
-        userconfiguration.field("orientdbSite", "http://www.orientechnologies.com/");
-        userconfiguration.save();
-      } else {
-        throw new OConfigurationException("user admin not found");
-      }
-    }
-
-    return configuration;
-
   }
 
   public static void executeHttpRequest(ODocument what) throws MalformedURLException {
