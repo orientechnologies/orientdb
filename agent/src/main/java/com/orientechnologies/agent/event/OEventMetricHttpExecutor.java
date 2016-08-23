@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.net.MalformedURLException;
 import java.util.Map;
 
-@EventConfig(when = "MetricWhen", what = "FunctionWhat")
+@EventConfig(when = "MetricWhen", what = "HttpWhat")
 public class OEventMetricHttpExecutor extends OEventMetricExecutor {
 
   public OEventMetricHttpExecutor() {
