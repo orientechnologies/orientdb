@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.graph.graphml.OGraphMLReader;
 import com.orientechnologies.orient.graph.graphml.OIgnoreGraphMLImportStrategy;
 import com.orientechnologies.orient.graph.graphml.ORenameGraphMLImportStrategy;
-import com.sun.mail.iap.ByteArray;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import org.junit.Assert;
 import org.junit.Test;
@@ -86,7 +85,7 @@ public class OGremlinConsoleTest {
   public void testGraphMLExport() {
     final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
     final String OUTPUT_FILE = "target/test/resources/graph-example-2.xml";
-    String dbUrl = "memory:testGraphMLImport";
+    String dbUrl = "memory:testGraphMLExport";
     StringBuilder builder = new StringBuilder();
     builder.append("create database " + dbUrl + ";\n");
     builder.append("import database " + INPUT_FILE + ";\n");

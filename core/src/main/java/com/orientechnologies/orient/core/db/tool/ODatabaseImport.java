@@ -412,7 +412,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         else if (tag.equals("clusters")) {
           importClusters();
           clustersImported = true;
-        }else if (tag.equals("schema"))
+        } else if (tag.equals("schema"))
           importSchema(clustersImported);
         else if (tag.equals("records"))
           importRecords();
@@ -420,6 +420,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           importIndexes();
         else if (tag.equals("manualIndexes"))
           importManualIndexes();
+        else
+          throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");
       }
 
       if (rebuildIndexes)
@@ -839,7 +841,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         if (cls != null) {
           if (cls.getDefaultClusterId() != classDefClusterId)
             cls.setDefaultClusterId(classDefClusterId);
-        } else if(clustersImported) {
+        } else if (clustersImported) {
           cls = (OClassImpl) database.getMetadata().getSchema().createClass(className, new int[] { classDefClusterId });
         } else if (className.equalsIgnoreCase("ORestricted")) {
           cls = (OClassImpl) database.getMetadata().getSchema().createAbstractClass(className);
@@ -1042,9 +1044,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       prop.setLinkedType(linkedType);
     if (collate != null)
       prop.setCollate(collate);
-    if(regexp != null)
+    if (regexp != null)
       prop.setRegexp(regexp);
-    if(defaultValue != null){
+    if (defaultValue != null) {
       prop.setDefaultValue(value);
     }
     if (customFields != null) {
@@ -1101,15 +1103,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (name != null)
         // CHECK IF THE CLUSTER IS INCLUDED
         if (includeClusters != null) {
-          if (!includeClusters.contains(name)) {
-            jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-            continue;
-          }
+        if (!includeClusters.contains(name)) {
+        jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+        continue;
+        }
         } else if (excludeClusters != null) {
-          if (excludeClusters.contains(name)) {
-            jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-            continue;
-          }
+        if (excludeClusters.contains(name)) {
+        jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+        continue;
+        }
         }
 
       int id;
@@ -1333,7 +1335,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           throw OException.wrapException(new ODatabaseImportException("Error on importing record"), e);
       }
 
-      //Incorrect record format , skip this record
+      // Incorrect record format , skip this record
       if (record == null || record.getIdentity() == null) {
         OLogManager.instance().warn(this, "Broken record was detected and will be skipped");
         return null;
@@ -1427,7 +1429,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     int n = 0;
     while (jsonReader.lastChar() != ']') {
       jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
-      if(jsonReader.lastChar() == ']'){
+      if (jsonReader.lastChar() == ']') {
         break;
       }
 
