@@ -1597,6 +1597,18 @@ ee.controller("HttpWhatController", function ($scope) {
   $scope.methods = ["GET", "POST"];
 
 
+  $scope.editorOptions = {
+    lineWrapping: true,
+    lineNumbers: true,
+    viewportMargin: 20,
+
+    onLoad: function (cm) {
+      $scope.cm = cm;
+      cm.setSize("100%", 150);
+    }
+  };
+
+
   $scope.addHeader = function () {
     if (!$scope.eventWhat.headers) {
       $scope.eventWhat.headers = []

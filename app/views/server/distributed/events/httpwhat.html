@@ -51,11 +51,22 @@
                 </div>
                 <div>
                   <div class="form-group">
-                    <label>Body:</label>
-                    <textarea type="text" rows="3" id="description" name="body" class="form-control"
-                              ng-disabled="checkMethod()"
-                              placeholder="{}"
-                              ng-model="eventWhat['body']"></textarea>
+                    <label>Body:
+                      <a href="javascript:void(0)" tabindex="1"
+                         data-trigger="focus" data-placement="right"
+                         data-container="body"
+                         data-content="{{ help |  translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                      </a>
+                    </label>
+
+                    <div class="col-md-12">
+                      <textarea ui-codemirror="editorOptions" ng-disabled="checkMethod()" ng-model="eventWhat['body']"></textarea>
+                    </div>
+                    <!--<textarea type="text" rows="3" id="description" name="body" class="form-control"-->
+                              <!--ng-disabled="checkMethod()"-->
+                              <!--placeholder="{}"-->
+                              <!--ng-model="eventWhat['body']"></textarea>-->
                   </div>
                 </div>
               </fieldset>
