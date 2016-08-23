@@ -89,8 +89,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.sql.query.OConcurrentResultSet;
-import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.*;
@@ -1461,36 +1459,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         final OCommandCache cmdCache = connection.getDatabase().getMetadata().getCommandCache();
         if (cmdCache.isEnabled())
           // CREATE E COLLECTOR OF RESULT IN RAM TO CACHE THE RESULT
-          cmdResultListener = new OAbstractCommandResultListener(cmdResultListener) {
-            private OResultSet collector = new OConcurrentResultSet<ORecord>();
-
-            @Override
-            public boolean isEmpty() {
-              return collector != null && collector.isEmpty();
-            }
-
-            @Override
-            public boolean result(final Object iRecord) {
-              if (collector != null) {
-                if (collector.currentSize() > cmdCache.getMaxResultsetSize()) {
-                  // TOO MANY RESULTS: STOP COLLECTING IT BECAUSE THEY WOULD NEVER CACHED
-                  collector = null;
-                } else if (iRecord != null && iRecord instanceof ORecord)
-                  collector.add(iRecord);
-              }
-              return true;
-            }
-
-            @Override
-            public Object getResult() {
-              return collector;
-            }
-
-            @Override
-            public void end() {
-              collector.setCompleted();
-            }
-          };
+          cmdResultListener = new OCommandCacheRemoteResultListener(cmdResultListener, cmdCache);
 
         listener = new OAsyncCommandResultListener(connection, this, clientTxId, cmdResultListener);
         command.setResultListener(listener);
@@ -1645,16 +1614,22 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   private void writeSimpleValue(OClientConnection connection, OAbstractCommandResultListener listener, Object result)
       throws IOException {
+      
     if (connection.getData().protocolVersion >= OChannelBinaryProtocol.PROTOCOL_VERSION_35) {
       channel.writeByte((byte) 'w');
       ODocument document = new ODocument();
       document.field("result", result);
       writeIdentifiable(connection, document);
+      if (listener != null)
+        listener.linkdedBySimpleValue(document);
     } else {
       channel.writeByte((byte) 'a');
       final StringBuilder value = new StringBuilder(64);
-      if (listener != null)
-        listener.result(result);
+      if (listener != null) {
+        ODocument document = new ODocument();
+        document.field("result", result);
+        listener.linkdedBySimpleValue(document);
+      }
       ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
       channel.writeString(value.toString());
     }

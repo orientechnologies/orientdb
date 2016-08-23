@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -227,5 +228,10 @@ public class OLiveCommandResultListener extends OAbstractCommandResultListener i
   public void writeBytes(DataOutputStream out, byte[] bytes) throws IOException {
     out.writeInt(bytes.length);
     out.write(bytes);
+  }
+  
+  @Override
+  public void linkdedBySimpleValue(ODocument doc) {
+    
   }
 }
