@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.fetch.OFetchPlan;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Abstract class to manage command results.
@@ -68,5 +69,7 @@ public abstract class OAbstractCommandResultListener implements OCommandResultLi
 
     return null;
   }
+  
+  public abstract void linkdedBySimpleValue(ODocument doc);
 
 }
