@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * Created by Enrico Risa on 09/07/15.
  */
-public class LuceneManualIndex extends BaseLuceneTest {
+public class LuceneManualIndexTest extends BaseLuceneTest {
 
   @Before
   public void init() {

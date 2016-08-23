@@ -50,7 +50,12 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.TrackingIndexWriter;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.ControlledRealTimeReopenThread;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
@@ -59,20 +64,23 @@ import org.apache.lucene.util.Version;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.INDEX;
-import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.QUERY;
+import static com.orientechnologies.lucene.analyzer.OLuceneAnalyzerFactory.AnalyzerKind.*;
 
 public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdaptiveExternal
     implements OLuceneIndexEngine, OOrientListener {
 
-  public static final String               RID              = "RID";
-  public static final String               KEY              = "KEY";
-  public static final String               STORED           = "_STORED";
+  public static final String RID    = "RID";
+  public static final String KEY    = "KEY";
+  public static final String STORED = "_STORED";
 
-  public static final String               OLUCENE_BASE_DIR = "luceneIndexes";
+  public static final String OLUCENE_BASE_DIR = "luceneIndexes";
 
   protected SearcherManager                searcherManager;
   protected OIndexDefinition               index;
@@ -83,13 +91,13 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   protected ControlledRealTimeReopenThread nrt;
   protected ODocument                      metadata;
   protected Version                        version;
-  protected Map<String, Boolean>           collectionFields = new HashMap<String, Boolean>();
-  protected TimerTask                      commitTask;
-  protected AtomicBoolean                  closed           = new AtomicBoolean(true);
-  private long                             reopenToken;
-  private Analyzer                         indexAnalyzer;
-  private Analyzer                         queryAnalyzer;
-  private Directory                        directory;
+  protected Map<String, Boolean> collectionFields = new HashMap<>();
+  protected TimerTask commitTask;
+  protected AtomicBoolean closed = new AtomicBoolean(true);
+  private long      reopenToken;
+  private Analyzer  indexAnalyzer;
+  private Analyzer  queryAnalyzer;
+  private Directory directory;
 
   public OLuceneIndexEngineAbstract(String indexName) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(),
@@ -323,7 +331,6 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
   @Override
   public void load(String indexName, OBinarySerializer valueSerializer, boolean isAutomatic, OBinarySerializer keySerializer,
       OType[] keyTypes, boolean nullPointerSupport, int keySize, Map<String, String> engineProperties) {
-    // initIndex(indexName, indexDefinition, isAutomatic, metadata);
   }
 
   @Override
@@ -409,14 +416,18 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
 
   protected void deleteDocument(Query query) {
     try {
+
       reopenToken = mgrWriter.deleteDocuments(query);
+
       if (!mgrWriter.getIndexWriter().hasDeletions()) {
-        OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index",
-            new OIndexException("Error deleting document"), query);
+        OLogManager.instance()
+            .error(this, "Error on deleting document by query '%s' to Lucene index", new OIndexException("Error deleting document"),
+                query);
       }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index", e, query);
     }
+
   }
 
   protected boolean isCollectionDelete() {

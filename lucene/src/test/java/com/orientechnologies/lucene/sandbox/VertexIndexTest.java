@@ -24,12 +24,12 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * Created by frank on 9/28/15.
  */
-public class TestVertexIndex {
+public class VertexIndexTest {
 
   @Test
   public void testFullTextIndexOnvertex() {

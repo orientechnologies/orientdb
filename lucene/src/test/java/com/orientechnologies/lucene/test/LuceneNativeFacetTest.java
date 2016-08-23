@@ -48,7 +48,7 @@ import java.util.List;
 /**
  * Shows simple usage of faceted indexing and search.
  */
-public class LuceneNativeFacet {
+public class LuceneNativeFacetTest {
 
   private final Directory    indexDir = new RAMDirectory();
   private final Directory    taxoDir  = new RAMDirectory();
@@ -57,7 +57,7 @@ public class LuceneNativeFacet {
   /**
    * Empty constructor
    */
-  public LuceneNativeFacet() {
+  public LuceneNativeFacetTest() {
     config.setHierarchical("Publish Date", true);
   }
 
@@ -67,7 +67,7 @@ public class LuceneNativeFacet {
   public static void main(String[] args) throws Exception {
     System.out.println("Facet counting example:");
     System.out.println("-----------------------");
-    LuceneNativeFacet example = new LuceneNativeFacet();
+    LuceneNativeFacetTest example = new LuceneNativeFacetTest();
     List<FacetResult> results1 = example.runFacetOnly();
     System.out.println("Author: " + results1.get(0));
     System.out.println("Publish Date: " + results1.get(1));

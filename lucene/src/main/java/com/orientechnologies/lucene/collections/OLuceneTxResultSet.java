@@ -38,7 +38,7 @@ import java.util.Iterator;
 public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
 
   private final String indexName;
-  protected int        deletedMatchCount = 0;
+  protected int deletedMatchCount = 0;
 
   public OLuceneTxResultSet(OLuceneIndexEngine manager, QueryContext queryContext) {
     super(manager, queryContext);
@@ -63,7 +63,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
 
   private class OLuceneResultSetIteratorTx implements Iterator<OIdentifiable> {
 
-    ScoreDoc[]  array;
+    ScoreDoc[] array;
     private int index;
     private int localIndex;
     private int totalHits;
@@ -154,8 +154,8 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case FILTER_SORT:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE,
-              queryContext.sort);
+          topDocs = queryContext.getSearcher()
+              .searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE, queryContext.sort);
           break;
         case FILTER:
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE);

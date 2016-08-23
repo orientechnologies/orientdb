@@ -30,7 +30,11 @@ import com.orientechnologies.lucene.tx.OLuceneTxChanges;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -41,7 +45,12 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.Directory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
@@ -115,15 +124,14 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   @Override
   public void put(Object key, Object value) {
     Collection<OIdentifiable> container = (Collection<OIdentifiable>) value;
+
     for (OIdentifiable oIdentifiable : container) {
-      Document doc = new Document();
-      doc.add(OLuceneIndexType
-          .createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
-      int i = 0;
+
+      Document doc;
       if (index.isAutomatic()) {
-        putInAutomaticIndex(key, doc, i);
+        doc = buildDocument(key, oIdentifiable);
       } else {
-        putInManualindex(key, doc);
+        doc = putInManualindex(key, oIdentifiable);
       }
 
       if (facetManager.supportsFacets()) {
@@ -145,7 +153,7 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
   }
 
   private void putInAutomaticIndex(Object key, Document doc, int i) {
-    for (String f : index.getFields()) {
+    for (String field : index.getFields()) {
 
       Object val = null;
       if (key instanceof OCompositeKey) {
@@ -155,28 +163,32 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
         val = key;
       }
       if (val != null) {
-        if (facetManager.supportsFacets() && facetManager.isFacetField(f)) {
-          doc.add(facetManager.buildFacetField(f, val));
+        if (facetManager.supportsFacets() && facetManager.isFacetField(field)) {
+          doc.add(facetManager.buildFacetField(field, val));
         } else {
 
-          if (isToStore(f).equals(Field.Store.YES)) {
-            doc.add(OLuceneIndexType.createField(f + STORED, val, Field.Store.YES, Field.Index.NOT_ANALYZED_NO_NORMS));
-          }
-          doc.add(OLuceneIndexType.createField(f, val, Field.Store.NO, Field.Index.ANALYZED));
+          //          if (isToStore(field).equals(Field.Store.YES)) {
+          //            doc.add(OLuceneIndexType.createField(field + STORED, val, Field.Store.YES));
+          //          }
+
+          doc.add(OLuceneIndexType.createField(field, val, Field.Store.YES));
         }
       }
 
     }
   }
 
-  private void putInManualindex(Object key, Document doc) {
+  private Document putInManualindex(Object key, OIdentifiable oIdentifiable) {
+    Document doc = new Document();
+    doc.add(OLuceneIndexType.createField(RID, oIdentifiable.getIdentity().toString(), Field.Store.YES));
+
     if (key instanceof OCompositeKey) {
 
       List<Object> keys = ((OCompositeKey) key).getKeys();
 
       int k = 0;
       for (Object o : keys) {
-        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
+        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO));
         k++;
       }
     } else if (key instanceof Collection) {
@@ -184,12 +196,13 @@ public class OLuceneFullTextIndexEngine extends OLuceneIndexEngineAbstract {
 
       int k = 0;
       for (Object o : keys) {
-        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO, Field.Index.ANALYZED));
+        doc.add(OLuceneIndexType.createField("k" + k, o, Field.Store.NO));
         k++;
       }
     } else {
-      doc.add(OLuceneIndexType.createField("k0", key, Field.Store.NO, Field.Index.ANALYZED));
+      doc.add(OLuceneIndexType.createField("k0", key, Field.Store.NO));
     }
+    return doc;
   }
 
   @Override

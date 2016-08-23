@@ -39,11 +39,6 @@ import java.util.Collection;
 // Renable when solved killing issue
 public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
 
-  public LuceneInsertIntegrityRemoteTest() {
-    super();
-    //super(true);
-  }
-
   @Before
   public void init() {
     initDB();
@@ -111,9 +106,8 @@ public class LuceneInsertIntegrityRemoteTest extends BaseLuceneTest {
     Assert.assertEquals(coll.size(), 1);
 
     Thread.sleep(1000);
-    kill(false);
 
-    initDB(false);
+    initDB();
 
     doc = databaseDocumentTx.load(doc.getIdentity(), null, true);
 
