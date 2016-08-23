@@ -21,6 +21,8 @@
 package com.orientechnologies.orient.graph.graphml;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.tinkerpop.blueprints.Edge;
@@ -60,6 +62,7 @@ public class OGraphMLReader {
   private int                                 batchSize           = 1000;
   private Map<String, OGraphMLImportStrategy> vertexPropsStrategy = new HashMap<String, OGraphMLImportStrategy>();
   private Map<String, OGraphMLImportStrategy> edgePropsStrategy   = new HashMap<String, OGraphMLImportStrategy>();
+  private OCommandOutputListener              output;
 
   /**
    * @param graph
@@ -204,6 +207,9 @@ public class OGraphMLReader {
 
       int bufferCounter = 0;
 
+      long importedVertices = 0;
+      long importedEdges = 0;
+
       while (reader.hasNext()) {
 
         Integer eventType = reader.next();
@@ -259,6 +265,8 @@ public class OGraphMLReader {
                   mapId(vertexMappedIdMap, vertexIds[i], (ORID) edgeEndVertices[i].getId());
                 }
                 bufferCounter++;
+                importedVertices++;
+                printStatus(reader, importedVertices, importedEdges);
               }
             }
 
@@ -325,6 +333,10 @@ public class OGraphMLReader {
               if (vertexIdKey != null)
                 mapId(vertexMappedIdMap, vertexId, v.getIdentity());
               bufferCounter++;
+
+              importedVertices++;
+              printStatus(reader, importedVertices, importedEdges);
+
             } else {
               // UPDATE IT
               final OrientVertex v = graph.getVertex(currentVertex);
@@ -339,6 +351,9 @@ public class OGraphMLReader {
             Edge currentEdge = ((OrientVertex) edgeEndVertices[0]).addEdge(null, (OrientVertex) edgeEndVertices[1], edgeLabel, null,
                 edgeProps);
             bufferCounter++;
+
+            importedEdges++;
+            printStatus(reader, importedVertices, importedEdges);
 
             edgeId = null;
             edgeLabel = null;
@@ -499,5 +514,23 @@ public class OGraphMLReader {
       return Long.valueOf(value);
     else
       return value;
+  }
+
+  public OCommandOutputListener getOutput() {
+    return output;
+  }
+
+  public OGraphMLReader setOutput(final OCommandOutputListener output) {
+    this.output = output;
+    return this;
+  }
+
+  protected void printStatus(final XMLStreamReader input, final long importedVertices, final long importedEdges) {
+    if (output != null && (importedVertices + importedEdges) % 50000 == 0) {
+      final long parsed = input.getTextStart();
+
+      output.onMessage(String.format("Imported %d graph elements: %d vertices and %d edges. Parsed %s (uncompressed)",
+          importedVertices + importedEdges, importedVertices, importedEdges, OFileUtils.getSizeAsString(parsed)));
+    }
   }
 }

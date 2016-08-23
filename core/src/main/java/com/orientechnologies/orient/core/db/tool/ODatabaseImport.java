@@ -420,6 +420,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           importIndexes();
         else if (tag.equals("manualIndexes"))
           importManualIndexes();
+        else
+          throw new ODatabaseImportException("Invalid format. Found unsupported tag '" + tag + "'");
       }
 
       if (rebuildIndexes)
@@ -1101,15 +1103,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (name != null)
         // CHECK IF THE CLUSTER IS INCLUDED
         if (includeClusters != null) {
-          if (!includeClusters.contains(name)) {
-            jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-            continue;
-          }
+        if (!includeClusters.contains(name)) {
+        jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+        continue;
+        }
         } else if (excludeClusters != null) {
-          if (excludeClusters.contains(name)) {
-            jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-            continue;
-          }
+        if (excludeClusters.contains(name)) {
+        jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+        continue;
+        }
         }
 
       int id;
@@ -1333,7 +1335,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           throw OException.wrapException(new ODatabaseImportException("Error on importing record"), e);
       }
 
-      //Incorrect record format , skip this record
+      // Incorrect record format , skip this record
       if (record == null || record.getIdentity() == null) {
         OLogManager.instance().warn(this, "Broken record was detected and will be skipped");
         return null;
