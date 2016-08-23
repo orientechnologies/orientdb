@@ -22,6 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.net.MalformedURLException;
+import java.util.Map;
 
 @EventConfig(when = "LogWhen", what = "HttpWhat")
 public class OEventLogHttpExecutor extends OEventLogExecutor {
@@ -36,18 +37,18 @@ public class OEventLogHttpExecutor extends OEventLogExecutor {
     // pre-conditions
     if (canExecute(source, when)) {
       try {
-        fillMapResolve(source, when);
-        executeHttp(what);
+        Map<String, Object> fillMapResolve = fillMapResolve(source, when);
+        executeHttp(what,fillMapResolve);
       } catch (MalformedURLException e) {
         e.printStackTrace();
       }
     }
   }
 
-  private void executeHttp(ODocument what) throws MalformedURLException {
+  private void executeHttp(ODocument what, Map<String, Object> fillMapResolve) throws MalformedURLException {
     OLogManager.instance().info(this, "HTTP executing: %s", what);
 
-    EventHelper.executeHttpRequest(what);
+    EventHelper.executeHttpRequest(what,fillMapResolve);
 
   }
 }

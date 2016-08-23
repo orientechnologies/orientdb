@@ -151,12 +151,15 @@ public class EventHelper {
     return text;
   }
 
-  public static void executeHttpRequest(ODocument what) throws MalformedURLException {
+  public static void executeHttpRequest(ODocument what, Map<String, Object> params) throws MalformedURLException {
 
     String url = what.field("url");
     String method = what.field("method"); // GET POST
     String body = what.field("body"); // parameters
 
+    if (body != null) {
+      body = replaceText(params, body);
+    }
     try {
       HttpURLConnection con = null;
       URL obj = new URL(url);
