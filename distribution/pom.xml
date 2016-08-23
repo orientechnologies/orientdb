@@ -181,6 +181,46 @@
                     </resources>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.10</version>
+                <executions>
+                    <execution>
+                        <id>pick-orientdb-jars</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeGroupIds>com.orientechnologies</includeGroupIds>
+                            <outputDirectory>${project.build.directory}/tattletale/orientdb</outputDirectory>
+                            <silent>true</silent>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.jboss.tattletale</groupId>
+                <artifactId>tattletale-maven</artifactId>
+                <version>1.1.2.Final</version>
+                <configuration>
+                    <source>${project.build.directory}/tattletale/orientdb</source>
+                    <destination>${project.build.directory}/tattletale/report</destination>
+                    <reports>jar,multiplejarspackage,osgi</reports>
+                    <failOnError>true</failOnError>
+                    <failOnWarn>true</failOnWarn>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>tattletale</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
