@@ -1,6 +1,6 @@
 @echo off
 rem
-rem Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
+rem Copyright (c) OrientDB LTD (http://www.orientdb.com)
 rem
 
 echo            .                                          
