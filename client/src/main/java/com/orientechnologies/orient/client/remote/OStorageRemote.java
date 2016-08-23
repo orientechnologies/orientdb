@@ -384,11 +384,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           } finally {
             endResponse(network);
           }
+          configuration.load(new HashMap<String,Object>());
           return null;
         } finally {
           stateLock.releaseWriteLock();
         }
-
       }
     }, "Error on reloading database information");
   }
