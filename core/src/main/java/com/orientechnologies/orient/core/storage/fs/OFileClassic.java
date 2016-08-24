@@ -69,8 +69,6 @@ public class OFileClassic implements OFile, OClosableItem {
   private volatile boolean headerDirty = false;
   private int version;
 
-  public volatile StackTraceElement[] openTrace;
-
   private boolean failCheck = true;
   private volatile long size;                                                                                // PART OF
   // HEADER (4
@@ -614,8 +612,6 @@ public class OFileClassic implements OFile, OClosableItem {
           setVersion(CURRENT_VERSION);
           version = CURRENT_VERSION;
         }
-
-        openTrace = Thread.currentThread().getStackTrace();
       } catch (IOException e) {
         throw OException.wrapException(new OIOException("Error during file open"), e);
       }
@@ -657,7 +653,6 @@ public class OFileClassic implements OFile, OClosableItem {
         accessFile = null;
       }
 
-      openTrace = null;
     } catch (Exception e) {
       final String message = "Error on closing file " + osFile.getAbsolutePath();
       OLogManager.instance().error(this, message, e);
@@ -688,8 +683,6 @@ public class OFileClassic implements OFile, OClosableItem {
             throw new IOException("Cannot delete file " + osFile.getAbsolutePath() + ". Retry limit exceeded");
         }
       }
-
-      openTrace = null;
     } finally {
       releaseWriteLock();
     }

@@ -353,10 +353,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
     emptyBuffers();
 
     final OClosableEntry<K, V> entry = data.get(key);
-    if (entry == null)
-      return true;
-
-    if (entry.makeClosed()) {
+    if (entry != null && entry.makeClosed()) {
       return true;
     }
 
@@ -691,7 +688,7 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
   }
 
   private void evict() {
-    final long start = Orient.instance().getProfiler().startChrono();
+    final long start =  Orient.instance().getProfiler().startChrono();
 
     final int initialSize = lruList.size();
     int closedFiles = 0;
@@ -717,14 +714,13 @@ public class OClosableLinkedContainer<K, V extends OClosableItem> {
         break;
     }
 
-    if (closedFiles > 0) {
+    if( closedFiles > 0) {
       OLogManager.instance().debug(this,
           "Reached maximum of opened files %d (max=%d), closed %d files. Consider to raise this limit by increasing the global setting '%s' and the OS limit on opened files per processor",
           initialSize, openLimit, closedFiles, OGlobalConfiguration.OPEN_FILES_LIMIT.getKey());
     }
 
-    Orient.instance().getProfiler()
-        .stopChrono("disk.closeFiles", "Close the opened files because reached the configured limit", start);
+    Orient.instance().getProfiler().stopChrono("disk.closeFiles", "Close the opened files because reached the configured limit", start);
   }
 
   private class LogAdd implements Runnable {
