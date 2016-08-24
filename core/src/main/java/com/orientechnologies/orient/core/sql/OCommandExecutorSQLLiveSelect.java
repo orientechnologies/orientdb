@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -35,18 +34,18 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
-import com.orientechnologies.orient.core.query.live.OLiveQueryListener;
+import com.orientechnologies.orient.core.query.live.OLiveQueryValidateListener;
+import com.orientechnologies.orient.core.query.live.ORecordLiveOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OLiveResultListener;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
-
 import java.util.Map;
 import java.util.Random;
 
 /**
  * @author Luigi Dell'Aquila
  */
-public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect implements OLiveQueryListener {
+public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect implements OLiveQueryValidateListener {
   public static final String KEYWORD_LIVE_SELECT = "LIVE SELECT";
   private ODatabaseDocument execDb;
   private int               token;
@@ -101,28 +100,6 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
 
   public void onLiveResult(final ORecordOperation iOp) {
 
-    ODatabaseDocumentInternal oldThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    execDb.activateOnCurrentThread();
-
-    try {
-      final OIdentifiable value = iOp.getRecord();
-
-      if (!matchesTarget(value)) {
-        return;
-      }
-      if (!matchesFilters(value)) {
-        return;
-      }
-      if (!checkSecurity(value)) {
-        return;
-      }
-    } finally {
-      if (oldThreadLocal == null) {
-        ODatabaseRecordThreadLocal.INSTANCE.remove();
-      } else {
-        ODatabaseRecordThreadLocal.INSTANCE.set(oldThreadLocal);
-      }
-    }
     final OCommandResultListener listener = request.getResultListener();
     if (listener instanceof OLiveResultListener) {
       execInSeparateDatabase(new OCallable() {
@@ -158,14 +135,14 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     return true;
   }
 
-  private boolean matchesFilters(OIdentifiable value) {
+  private boolean matchesFilters(OIdentifiable value, boolean isLive) {
     if (this.compiledFilter == null || this.compiledFilter.getRootCondition() == null) {
       return true;
     }
     if (!(value instanceof ODocument)) {
       value = value.getRecord();
     }
-    return !(Boolean.FALSE.equals(compiledFilter.evaluate((ODocument) value, (ODocument) value, getContext())));
+    return isLive ?   !(Boolean.FALSE.equals(compiledFilter.evaluateLive((ODocument) value, (ODocument) value, getContext()))):  !(Boolean.FALSE.equals(compiledFilter.evaluate((ODocument) value, (ODocument) value, getContext())));
   }
 
   private boolean matchesTarget(OIdentifiable value) {
@@ -241,4 +218,59 @@ public class OCommandExecutorSQLLiveSelect extends OCommandExecutorSQLSelect imp
     return QUORUM_TYPE.NONE;
   }
 
+
+    @Override
+    public void validate(ORecordLiveOperation row) {
+        ODatabaseDocumentInternal oldThreadLocal = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+        execDb.activateOnCurrentThread();
+        try {
+            if (row.type == ORecordOperation.UPDATED) {
+                if (isMatchedUpdatedRow(row.before)) {
+                    if (isMatchedRow(row.record)) {
+                        this.onLiveResult(new ORecordOperation(handleProjection(row.record), row.type));
+                    } else {
+                        this.onLiveResult(new ORecordOperation(handleProjection(row.before), ORecordOperation.DELETED));
+                    }
+                } else {
+                    if (isMatchedRow(row.record)) {
+                        this.onLiveResult(new ORecordOperation(handleProjection(row.record), ORecordOperation.CREATED));
+                    }
+                }
+            } else {
+                if (isMatchedRow(row.record)) {
+                    this.onLiveResult(new ORecordOperation(handleProjection(row.record), row.type));
+                }
+            }
+
+        } finally {
+            if (oldThreadLocal == null) {
+                ODatabaseRecordThreadLocal.INSTANCE.remove();
+            } else {
+                ODatabaseRecordThreadLocal.INSTANCE.set(oldThreadLocal);
+            }
+        }
+    }
+
+    private boolean isMatchedUpdatedRow(OIdentifiable value) {
+
+        final boolean result = matchesFilters(value, true);
+        return result;
+
+    }
+
+    private boolean isMatchedRow(OIdentifiable value) {
+
+        if (!matchesTarget(value)) {
+            return false;
+        }
+        if (!matchesFilters(value, false)) {
+            return false;
+        }
+        return !(!checkSecurity(value));
+
+    }
+
+    private OIdentifiable handleProjection(OIdentifiable row) {
+        return this.getProjections() != null && !this.getProjections().isEmpty() ? ORuntimeResult.getProjectionResult(1, getProjections(), getContext(), row) : row;
+    }
 }

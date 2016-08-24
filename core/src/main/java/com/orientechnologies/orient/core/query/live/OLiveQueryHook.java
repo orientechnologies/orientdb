@@ -29,21 +29,19 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by luigidellaquila on 16/03/15.
  */
 public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseListener {
+    private ODocument before;
 
   public static class OLiveQueryOps implements OCloseable {
 
@@ -190,23 +188,39 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
 
   }
 
+    @Override
+    public RESULT onRecordBeforeUpdate(ODocument iDocument) {
+
+         this.before = new ODocument();
+        for (String field : iDocument.fieldNames()) {            
+            this.before.field(field, (Object)iDocument.field(field));
+        }
+        for (String field : iDocument.getDirtyFields()) {
+            Object value = iDocument.getOriginalValue(field);
+            this.before.field(field, value);
+        }
+        return RESULT.RECORD_NOT_CHANGED;
+    }
   @Override
   public void onRecordAfterCreate(ODocument iDocument) {
-    addOp(iDocument, ORecordOperation.CREATED);
+    addOp(before, iDocument, ORecordOperation.CREATED);
+    this.before = null; 
   }
 
   @Override
   public void onRecordAfterUpdate(ODocument iDocument) {
-    addOp(iDocument, ORecordOperation.UPDATED);
+    addOp(before, iDocument, ORecordOperation.UPDATED);
+    this.before = null; 
   }
 
   @Override
   public RESULT onRecordBeforeDelete(ODocument iDocument) {
-    addOp(iDocument, ORecordOperation.DELETED);
+    addOp(before, iDocument, ORecordOperation.DELETED);
+    this.before = null; 
     return RESULT.RECORD_NOT_CHANGED;
   }
 
-  protected void addOp(ODocument iDocument, byte iType) {
+  protected void addOp(ODocument update, ODocument iDocument, byte iType) {
     if(Boolean.FALSE.equals(database.getConfiguration().getValue(OGlobalConfiguration.QUERY_LIVE_SUPPORT)))
       return ;
     ODatabaseDocument db = database;
@@ -216,11 +230,11 @@ public class OLiveQueryHook extends ODocumentHookAbstract implements ODatabaseLi
     if (db.getTransaction() == null || !db.getTransaction().isActive()) {
 
       // TODO synchronize
-      ORecordOperation op = new ORecordOperation(iDocument.copy(), iType);
+      ORecordOperation op = new ORecordLiveOperation(before, iDocument.copy(), iType);
       ops.queueThread.enqueue(op);
       return;
     }
-    ORecordOperation result = new ORecordOperation(iDocument, iType);
+    ORecordOperation result = new ORecordLiveOperation(before, iDocument, iType);
     synchronized (ops.pendingOps) {
       List<ORecordOperation> list = ops.pendingOps.get(db);
       if (list == null) {

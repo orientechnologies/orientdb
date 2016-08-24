@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.query.live;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -32,75 +31,79 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class OLiveQueryQueueThread extends Thread {
 
-  private final BlockingQueue<ORecordOperation>            queue;
-  private final ConcurrentMap<Integer, OLiveQueryListener> subscribers;
-  private boolean                                          stopped = false;
+    private final BlockingQueue<ORecordOperation> queue;
+    private final ConcurrentMap<Integer, OLiveQueryListener> subscribers;
+    private boolean stopped = false;
 
-  private OLiveQueryQueueThread(BlockingQueue<ORecordOperation> queue, ConcurrentMap<Integer, OLiveQueryListener> subscribers) {
-    this.queue = queue;
-    this.subscribers = subscribers;
-  }
+    private OLiveQueryQueueThread(BlockingQueue<ORecordOperation> queue, ConcurrentMap<Integer, OLiveQueryListener> subscribers) {
+        this.queue = queue;
+        this.subscribers = subscribers;
+    }
 
-  public OLiveQueryQueueThread() {
-    this(new LinkedBlockingQueue<ORecordOperation>(), new ConcurrentHashMap<Integer, OLiveQueryListener>());
-    setName("LiveQueryQueueThread");
-    this.setDaemon(true);
-  }
+    public OLiveQueryQueueThread() {
+        this(new LinkedBlockingQueue<ORecordOperation>(), new ConcurrentHashMap<Integer, OLiveQueryListener>());
+        setName("LiveQueryQueueThread");
+        this.setDaemon(true);
+    }
 
-  public OLiveQueryQueueThread clone() {
-    return new OLiveQueryQueueThread(this.queue, this.subscribers);
-  }
+    public OLiveQueryQueueThread clone() {
+        return new OLiveQueryQueueThread(this.queue, this.subscribers);
+    }
 
-  @Override
-  public void run() {
-    while (!stopped) {
-      ORecordOperation next = null;
-      try {
-        next = queue.take();
-      } catch (InterruptedException e) {
-        break;
-      }
-      if (next == null) {
-        continue;
-      }
-      for (OLiveQueryListener listener : subscribers.values()) {
-        // TODO filter data
-        try {
-          listener.onLiveResult(next);
-        } catch (Exception e) {
-          OLogManager.instance().warn(this, "Error executing live query subscriber.", e);
+    @Override
+    public void run() {
+        while (!stopped) {
+            ORecordOperation next = null;
+            try {
+                next = queue.take();
+            } catch (InterruptedException e) {
+                break;
+            }
+            if (next == null) {
+                continue;
+            }
+            for (OLiveQueryListener listener : subscribers.values()) {
+                // TODO filter data
+                try {
+                    if (listener instanceof OLiveQueryValidateListener) {
+                        ((OLiveQueryValidateListener)listener).validate((ORecordLiveOperation)next);
+                    } else {
+                        listener.onLiveResult(next);
+                    }
+                } catch (Exception e) {
+                    OLogManager.instance().warn(this, "Error executing live query subscriber.", e);
+                }
+
+            }
         }
-
-      }
     }
-  }
 
-  public void stopExecution() {
-    this.stopped = true;
-    this.interrupt();
-  }
-
-  public void enqueue(ORecordOperation item) {
-    queue.offer(item);
-  }
-
-  public Integer subscribe(Integer id, OLiveQueryListener iListener) {
-    subscribers.put(id, iListener);
-    return id;
-  }
-
-  public void unsubscribe(Integer id) {
-    OLiveQueryListener res = subscribers.remove(id);
-    if (res != null) {
-      res.onLiveResultEnd();
+    public void stopExecution() {
+        this.stopped = true;
+        this.interrupt();
     }
-  }
 
-  public boolean hasListeners() {
-    return !subscribers.isEmpty();
-  }
+    public void enqueue(ORecordOperation item) {
+        queue.offer(item);
+    }
 
-  public boolean hasToken(Integer key) {
-    return subscribers.containsKey(key);
-  }
+    public Integer subscribe(Integer id, OLiveQueryListener iListener) {
+        subscribers.put(id, iListener);
+        return id;
+    }
+
+    public void unsubscribe(Integer id) {
+        OLiveQueryListener res = subscribers.remove(id);
+        if (res != null) {
+            res.onLiveResultEnd();
+        }
+    }
+
+    public boolean hasListeners() {
+        return !subscribers.isEmpty();
+    }
+
+    public boolean hasToken(Integer key) {
+        return subscribers.containsKey(key);
+    }
 }

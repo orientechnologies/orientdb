@@ -102,6 +102,13 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
 
     return rootCondition.evaluate(iRecord, iCurrentResult, iContext);
   }
+public Object evaluateLive(final OIdentifiable iRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
+    if (rootCondition == null) {
+      return true;
+    }
+
+    return rootCondition.evaluateLive(iRecord, iCurrentResult, iContext);
+  }
 
   public OSQLFilterCondition getRootCondition() {
     return rootCondition;
