@@ -53,10 +53,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OPerformanceStatisticManager;
 import com.orientechnologies.orient.core.storage.impl.local.statistic.OSessionStoragePerformanceStatistic;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -870,8 +867,25 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       else
         removeCachedPages(intId);
 
-      if (!files.close(fileId))
-        throw new OStorageException("Can not close file with id " + internalFileId(fileId) + " because it is still in use");
+      if (!files.close(fileId)) {
+        final OFileClassic fileClassic = files.get(fileId);
+
+        final StringWriter sw = new StringWriter();
+
+        if (fileClassic != null) {
+          final StackTraceElement[] stackTraceElements = fileClassic.openTrace;
+          if (stackTraceElements != null) {
+            for (StackTraceElement sel : stackTraceElements) {
+              sw.append(sel.toString()).append("\r\n");
+            }
+          }
+        }
+
+        sw.append("Can not close file with id ").append(String.valueOf(internalFileId(fileId)))
+            .append(" because it is still in use");
+
+        throw new OStorageException(sw.toString());
+      }
     } finally {
       filesLock.releaseWriteLock();
     }
