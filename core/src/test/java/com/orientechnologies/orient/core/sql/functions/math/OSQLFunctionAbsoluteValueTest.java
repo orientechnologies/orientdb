@@ -165,10 +165,7 @@ public class OSQLFunctionAbsoluteValueTest {
     List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select abs(-45.4)"));
     ODocument r = result.get(0);
     assertEquals(result.size(), 1);
-    //    assertEquals(r.field("abs"), 45.4D);
-
-    assertThat(r.<Double>field("abs")).isEqualTo(45.4D);
-
+    assertThat(r.<Float>field("abs")).isEqualTo(45.4F);
     db.close();
   }
 }
