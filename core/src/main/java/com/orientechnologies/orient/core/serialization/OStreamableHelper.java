@@ -23,6 +23,10 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 
 import java.io.*;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Helper class to serialize OStreamable objects.
@@ -40,6 +44,17 @@ public class OStreamableHelper {
   final static byte SHORT        = 12;
   final static byte LONG         = 13;
   final static byte BOOLEAN      = 14;
+
+  // uses weak references to avoid holding onto types when their defining module is unloaded
+  // (we only expect a few types, so keep it simple and don't bother to evict dangling keys)
+  private static final Map<String, Reference<Class<?>>> streamableTypes = new ConcurrentHashMap<>();
+
+  /**
+   * Use this to register {@link OStreamable} types belonging to non-core OrientDB modules.
+   */
+  public static void registerType(final Class<? extends OStreamable> type) {
+    streamableTypes.put(type.getName(), new WeakReference<>(type));
+  }
 
   public static void toStream(final DataOutput out, final Object object) throws IOException {
     if (object == null)
@@ -92,7 +107,11 @@ public class OStreamableHelper {
     case STREAMABLE:
       final String payloadClassName = in.readUTF();
       try {
-        object = Class.forName(payloadClassName).newInstance();
+        if (streamableTypes.containsKey(payloadClassName)) {
+          object = streamableTypes.get(payloadClassName).get().newInstance();
+        } else {
+          object = Class.forName(payloadClassName).newInstance();
+        }
         ((OStreamable) object).fromStream(in);
       } catch (Exception e) {
         OException.wrapException(new OSerializationException("Cannot unmarshall object from distributed request"), e);

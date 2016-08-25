@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OStreamableHelper;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
@@ -190,6 +191,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract
       return;
 
     Orient.instance().addDbLifecycleListener(this);
+
+    // streamable types used for distributed protocol
+    OStreamableHelper.registerType(ODistributedRequestId.class);
+    OStreamableHelper.registerType(ODistributedDatabaseChunk.class);
+    OStreamableHelper.registerType(OTxTaskResult.class);
   }
 
   @Override
