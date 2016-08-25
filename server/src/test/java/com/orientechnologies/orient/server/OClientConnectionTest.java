@@ -28,9 +28,17 @@ public class OClientConnectionTest {
   @Mock
   private ONetworkProtocolBinary    protocol;
 
+  @Mock
+  private OClientConnectionManager  manager;
+
+  @Mock
+  private OServer                   server;
+
   @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
+    Mockito.when(protocol.getServer()).thenReturn(server);
+    Mockito.when(server.getClientConnectionManager()).thenReturn(manager);
     db = new ODatabaseDocumentTx("memory:" + OClientConnectionTest.class.getSimpleName());
     db.create();
   }
@@ -61,7 +69,7 @@ public class OClientConnectionTest {
     OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.setValue(sessionTimeout);
     byte[] tokenBytes = handler.getSignedBinaryToken(db, db.getUser(), conn.getData());
     Thread.sleep(1);
-    conn.validateSession(tokenBytes, handler, null);
+    conn.validateSession(tokenBytes, handler, protocol);
 
   }
 
@@ -70,7 +78,7 @@ public class OClientConnectionTest {
     OClientConnection conn = new OClientConnection(1, null);
     OTokenHandler handler = new OTokenHandlerImpl(null);
     byte[] tokenBytes = new byte[120];
-    conn.validateSession(tokenBytes, handler, null);
+    conn.validateSession(tokenBytes, handler, protocol);
 
   }
 
@@ -83,7 +91,7 @@ public class OClientConnectionTest {
     assertTrue(conn.getTokenBased());
     assertEquals(tokenBytes, conn.getTokenBytes());
     assertNotNull(conn.getToken());
-    //second validation don't need token
+    // second validation don't need token
     conn.validateSession(null, handler, protocol);
     assertTrue(conn.getTokenBased());
     assertEquals(tokenBytes, conn.getTokenBytes());
@@ -95,7 +103,7 @@ public class OClientConnectionTest {
   public void testNotAlreadyAuthenticated() throws IOException {
     OClientConnection conn = new OClientConnection(1, null);
     OTokenHandler handler = new OTokenHandlerImpl(null);
-    //second validation don't need token
+    // second validation don't need token
     conn.validateSession(null, handler, protocol);
   }
 
@@ -108,7 +116,7 @@ public class OClientConnectionTest {
     assertTrue(conn.getTokenBased());
     assertEquals(tokenBytes, conn.getTokenBytes());
     assertNotNull(conn.getToken());
-    //second validation don't need token
+    // second validation don't need token
     ONetworkProtocolBinary otherConn = Mockito.mock(ONetworkProtocolBinary.class);
     conn.validateSession(null, handler, otherConn);
 

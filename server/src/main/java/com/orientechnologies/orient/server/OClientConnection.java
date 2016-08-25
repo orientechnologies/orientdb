@@ -172,10 +172,12 @@ public class OClientConnection {
       }
       if (token == null || !token.getIsVerified()) {
         cleanSession();
+        protocol.getServer().getClientConnectionManager().disconnect(this);
         throw new OTokenSecurityException("The token provided is not a valid token, signature does not match");
       }
       if (!handler.validateBinaryToken(token)) {
         cleanSession();
+        protocol.getServer().getClientConnectionManager().disconnect(this);
         throw new OTokenSecurityException("The token provided is expired");
       }
       if (tokenBased == null) {
@@ -196,6 +198,7 @@ public class OClientConnection {
     }
     database = null;
     protocols.clear();
+    
   }
 
   public void endOperation() {
