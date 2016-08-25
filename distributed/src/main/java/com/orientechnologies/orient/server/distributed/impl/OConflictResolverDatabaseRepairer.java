@@ -17,7 +17,7 @@
  *  * For more information: http://www.orientechnologies.com
  *
  */
-package com.orientechnologies.orient.server.distributed;
+package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -32,8 +32,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.conflict.ODistributedConflictResolver;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedTransactionManager;
 import com.orientechnologies.orient.server.distributed.impl.task.*;
 
 import java.io.IOException;
