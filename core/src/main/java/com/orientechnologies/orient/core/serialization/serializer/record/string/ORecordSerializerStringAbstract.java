@@ -326,7 +326,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
     // CHECK IF THE DECIMAL NUMBER IS A FLOAT OR DOUBLE
     final double dou = Double.parseDouble(iValue);
-    if ((dou <= Float.MAX_VALUE || dou >= Float.MIN_VALUE) && Double.toString(dou).equals(Float.toString((float) dou))) {
+    if ((dou <= Float.MAX_VALUE || dou >= Float.MIN_VALUE) && Double.toString(dou).equals(Float.toString((float) dou))
+        && new Double(new Double(dou).floatValue()).doubleValue() == dou) {
       return OType.FLOAT;
     } else if (!new Double(dou).toString().equals(iValue)) {
       return OType.DECIMAL;
