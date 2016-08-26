@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.util.OCollections;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexFactory;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -131,7 +130,7 @@ public final class OIndexes {
   }
 
   /**
-   * @param database
+   * @param storage TODO
    * @param name
    * @param indexType
    *          index type
@@ -143,14 +142,14 @@ public final class OIndexes {
    * @throws OIndexException
    *           if index type does not exist
    */
-  public static OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String name, String indexType, String algorithm,
+  public static OIndexInternal<?> createIndex(OStorage storage, String name, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException, OIndexException {
     if (indexType.equalsIgnoreCase(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.name())
         || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.name())
         || indexType.equalsIgnoreCase(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name()))
       algorithm = OHashIndexFactory.HASH_INDEX_ALGORITHM;
 
-    return findFactoryByAlgorithmAndType(algorithm, indexType).createIndex(name, database, indexType, algorithm,
+    return findFactoryByAlgorithmAndType(algorithm, indexType).createIndex(name, storage, indexType, algorithm,
         valueContainerAlgorithm, metadata, version);
 
   }

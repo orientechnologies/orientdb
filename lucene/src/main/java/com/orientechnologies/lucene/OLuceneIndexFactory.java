@@ -20,7 +20,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.engine.OLuceneIndexEngineDelegator;
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -83,21 +82,16 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public OIndexInternal<?> createIndex(String name,
-      ODatabaseDocumentInternal database,
-      String indexType,
-      String algorithm,
-      String valueContainerAlgorithm,
-      ODocument metadata,
-      int version) throws OConfigurationException {
+  public OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
+      String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
 
-    OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
+    OAbstractPaginatedStorage pagStorage = (OAbstractPaginatedStorage) storage.getUnderlying();
 
     if (metadata == null)
       metadata = new ODocument().field("analyzer", StandardAnalyzer.class.getName());
 
     if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
-      return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, version, storage, valueContainerAlgorithm, metadata);
+      return new OLuceneFullTextIndex(name, indexType, LUCENE_ALGORITHM, version, pagStorage, valueContainerAlgorithm, metadata);
     }
 
     throw new OConfigurationException("Unsupported type : " + algorithm);

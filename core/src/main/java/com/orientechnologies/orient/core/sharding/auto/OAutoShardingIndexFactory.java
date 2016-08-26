@@ -20,7 +20,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
@@ -87,7 +86,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
     return ALGORITHMS;
   }
 
-  public OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
+  public OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException {
     if (valueContainerAlgorithm == null)
       valueContainerAlgorithm = NONE_VALUE_CONTAINER;
@@ -97,7 +96,7 @@ public class OAutoShardingIndexFactory implements OIndexFactory {
 
     if (AUTOSHARDING_ALGORITHM.equals(algorithm))
       return createShardedIndex(name, indexType, valueContainerAlgorithm, metadata,
-          (OAbstractPaginatedStorage) database.getStorage().getUnderlying(), version);
+          (OAbstractPaginatedStorage) storage.getUnderlying(), version);
 
     throw new OConfigurationException("Unsupported type: " + indexType);
   }

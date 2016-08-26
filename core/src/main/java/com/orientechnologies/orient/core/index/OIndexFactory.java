@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -45,7 +44,7 @@ public interface OIndexFactory {
    * Creates an index.
    * 
    * @param name
-   * @param database
+   * @param storage TODO
    * @param indexType
    *          index type
    * @param algorithm
@@ -54,7 +53,7 @@ public interface OIndexFactory {
    * @throws OConfigurationException
    *           if index creation failed
    */
-  OIndexInternal<?> createIndex(String name, ODatabaseDocumentInternal database, String indexType, String algorithm,
+  OIndexInternal<?> createIndex(String name, OStorage storage, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata, int version) throws OConfigurationException;
 
   OIndexEngine createIndexEngine(String algorithm, String name, Boolean durableInNonTxMode, OStorage storage, int version,

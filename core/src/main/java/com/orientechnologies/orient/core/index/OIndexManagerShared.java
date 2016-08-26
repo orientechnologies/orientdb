@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -153,7 +154,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
           metadata.field("trackMode", "FULL");
       }
 
-      index = OIndexes.createIndex(getDatabase(), iName, type, algorithm, valueContainerAlgorithm, metadata, -1);
+      index = OIndexes.createIndex(getStorage(), iName, type, algorithm, valueContainerAlgorithm, metadata, -1);
       if (progressListener == null)
         // ASSIGN DEFAULT PROGRESS LISTENER
         progressListener = new OIndexRebuildOutputListener(index);
@@ -316,10 +317,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
       final ODocument doc = new ODocument();
       document.copyTo(doc);
 
-      // USE A NEW DB INSTANCE
-      final ODatabaseDocumentInternal newDb = database.copy();
 
-      Runnable recreateIndexesTask = new RecreateIndexesTask(newDb, doc);
+      Runnable recreateIndexesTask = new RecreateIndexesTask(getStorage(), doc);
 
       recreateIndexesThread = new Thread(recreateIndexesTask, "OrientDB rebuild indexes");
       recreateIndexesThread.start();
@@ -399,7 +398,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
                 (String) d.field(OIndexInternal.CONFIG_TYPE), (String) d.field(OIndexInternal.ALGORITHM),
                 d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
 
-            index = OIndexes.createIndex(getDatabase(), newIndexMetadata.getName(), newIndexMetadata.getType(),
+            index = OIndexes.createIndex(getStorage(), newIndexMetadata.getName(), newIndexMetadata.getType(),
                 newIndexMetadata.getAlgorithm(), newIndexMetadata.getValueContainerAlgorithm(),
                 (ODocument) d.field(OIndexInternal.METADATA), indexVersion);
 
@@ -502,12 +501,14 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
   private class RecreateIndexesTask implements Runnable {
     private final ODatabaseDocumentInternal newDb;
+    private final OStorage                  storage;
     private final ODocument                 doc;
-    private       int                       ok;
-    private       int                       errors;
+    private int                             ok;
+    private int                             errors;
 
-    public RecreateIndexesTask(ODatabaseDocumentInternal newDb, ODocument doc) {
-      this.newDb = newDb;
+    public RecreateIndexesTask(OStorage storage, ODocument doc) {
+      newDb = new ODatabaseDocumentEmbedded(storage);
+      this.storage = storage;
       this.doc = doc;
     }
 
@@ -518,7 +519,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
 
         final Collection<ODocument> idxs = getConfiguration();
 
-        final OStorage storage = newDb.getStorage().getUnderlying();
 
         if (storage instanceof OAbstractPaginatedStorage) {
           final OAbstractPaginatedStorage abstractPaginatedStorage = (OAbstractPaginatedStorage) storage;
@@ -533,8 +533,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
             abstractPaginatedStorage.getAtomicOperationsManager().switchOffUnsafeMode();
             abstractPaginatedStorage.synch();
           }
+          newDb.close();
         }
-
+        
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error when attempt to restore indexes after crash was performed", e);
       }
@@ -649,7 +650,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract {
         throw new OIndexException("Index type is null, will process other record. Index configuration: " + idx.toString());
       }
 
-      return OIndexes.createIndex(newDb, indexName, indexType, algorithm, valueContainerAlgorithm, metadata, -1);
+      return OIndexes.createIndex(storage, indexName, indexType, algorithm, valueContainerAlgorithm, metadata, -1);
     }
 
     private Collection<ODocument> getConfiguration() {
