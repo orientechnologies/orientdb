@@ -250,9 +250,9 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   }
 
   @Override
-  public void acquireExclusiveLocksInBatch(Collection<T> values) {
+  public Lock[] acquireExclusiveLocksInBatch(Collection<T> values) {
     if (values == null || values.isEmpty())
-      return;
+      return new Lock[0];
 
     final List<Comparable> comparables = new ArrayList<Comparable>();
 
@@ -269,9 +269,12 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
 
     Collections.sort(comparables);
 
+    final Lock[] locks = new Lock[comparables.size()];
+    int i = 0;
     for (Comparable value : comparables) {
-      acquireExclusiveLock((T) value);
+      locks[i++] = acquireExclusiveLock((T) value);
     }
+    return locks;
   }
 
   @Override

@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import java.util.*;
+import java.util.concurrent.locks.Lock;
 
 import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
 import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
@@ -48,7 +49,7 @@ import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPD
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract implements OOrientStartupListener, OOrientShutdownListener {
-  private Deque<TreeMap<OIndex<?>, List<Object>>> lockedKeys = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
+  private Deque<List<Lock[]>> lockedKeys = new ArrayDeque<List<Lock[]>>();
 
   public OClassIndexManager(ODatabaseDocument database) {
     super(database);
@@ -65,7 +66,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   @Override
   public void onStartup() {
     if (lockedKeys == null)
-      lockedKeys = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
+      lockedKeys = new ArrayDeque<List<Lock[]>>();
   }
 
   private void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
@@ -92,10 +93,10 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
           final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
 
           if (!indexDefinition.isNullValuesIgnored() || origValue != null)
-            removeFromIndex(index,origValue,iRecord);
+            removeFromIndex(index, origValue, iRecord);
 
           if (!indexDefinition.isNullValuesIgnored() || newValue != null)
-            putInIndex(index,newValue,iRecord.getIdentity());
+            putInIndex(index, newValue, iRecord.getIdentity());
         } else {
           final OMultiValueChangeTimeLine<?, ?> multiValueChangeTimeLine = iRecord.getCollectionTimeLine(multiValueField);
           if (multiValueChangeTimeLine == null) {
@@ -121,10 +122,10 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
               }
 
               for (final Object keyToRemove : keysToRemove.keySet())
-                removeFromIndex(index,keyToRemove,iRecord);
+                removeFromIndex(index, keyToRemove, iRecord);
 
               for (final Object keyToAdd : keysToAdd.keySet())
-                putInIndex(index,keyToAdd,iRecord.getIdentity());
+                putInIndex(index, keyToAdd, iRecord.getIdentity());
             } else {
               final OTrackedMultiValue fieldValue = iRecord.field(multiValueField);
               final Object restoredMultiValue = fieldValue
@@ -169,7 +170,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
         removeFromIndex(index, keyToRemove, iRecord);
 
       for (final Object keyToAdd : keysToAdd.keySet())
-        putInIndex(index,keyToAdd,iRecord.getIdentity());
+        putInIndex(index, keyToAdd, iRecord.getIdentity());
 
     } else {
       final Object origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
@@ -192,13 +193,13 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
 
       for (final Object valueToRemove : valuesToRemove) {
         if (!indexDefinition.isNullValuesIgnored() || valueToRemove != null) {
-          removeFromIndex(index,valueToRemove,iRecord);
+          removeFromIndex(index, valueToRemove, iRecord);
         }
       }
 
       for (final Object valueToAdd : valuesToAdd) {
         if (!indexDefinition.isNullValuesIgnored() || valueToAdd != null) {
-          putInIndex(index,valueToAdd,iRecord);
+          putInIndex(index, valueToAdd, iRecord);
         }
       }
     } else {
@@ -297,8 +298,6 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   private ODocument checkIndexedPropertiesOnCreation(final ODocument record, final Collection<OIndex<?>> indexes) {
     ODocument replaced = null;
 
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
-
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
     for (final OIndex<?> index : indexes) {
@@ -311,12 +310,14 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     }
 
     if (noTx(record)) {
+      final List<Lock[]> locks = new ArrayList<Lock[]>(indexKeysMap.size());
+
       for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
         final OIndexInternal<?> index = entry.getKey().getInternal();
-        index.lockKeysForUpdate(entry.getValue());
+        locks.add(index.lockKeysForUpdate(entry.getValue()));
       }
 
-      indexKeysMapQueue.push(indexKeysMap);
+      lockedKeys.push(locks);
     }
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
@@ -337,8 +338,6 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   }
 
   private void checkIndexedPropertiesOnUpdate(final ODocument record, final Collection<OIndex<?>> indexes) {
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
-
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
     final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(record.getDirtyFields()));
@@ -356,12 +355,14 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     }
 
     if (noTx(record)) {
+      final List<Lock[]> locks = new ArrayList<Lock[]>(indexKeysMap.size());
+
       for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
         final OIndexInternal<?> index = entry.getKey().getInternal();
-        index.lockKeysForUpdate(entry.getValue());
+        locks.add(index.lockKeysForUpdate(entry.getValue()));
       }
 
-      indexKeysMapQueue.push(indexKeysMap);
+      lockedKeys.push(locks);
     }
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
@@ -484,7 +485,6 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
     if (class_ != null) {
       final Collection<OIndex<?>> indexes = class_.getIndexes();
 
-      final Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
       final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
       for (final OIndex<?> index : indexes) {
         if (index.getInternal() instanceof OIndexUnique) {
@@ -496,12 +496,14 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
       }
 
       if (noTx(iDocument)) {
+        final List<Lock[]> locks = new ArrayList<Lock[]>(indexKeysMap.size());
+
         for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
           final OIndexInternal<?> index = entry.getKey().getInternal();
-          index.lockKeysForUpdate(entry.getValue());
+          locks.add(index.lockKeysForUpdate(entry.getValue()));
         }
 
-        indexKeysMapQueue.push(indexKeysMap);
+        lockedKeys.push(locks);
       }
     }
 
@@ -626,21 +628,20 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
   }
 
   private void unlockKeys() {
-    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys;
-    if (indexKeysMapQueue == null)
+    if (lockedKeys == null)
       return;
 
-    final TreeMap<OIndex<?>, List<Object>> indexKeyMap = indexKeysMapQueue.poll();
-    if (indexKeyMap == null)
+    final List<Lock[]> lockList = lockedKeys.poll();
+    if (lockList == null)
       return;
 
-    for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeyMap.entrySet()) {
-      final OIndexInternal<?> index = entry.getKey().getInternal();
-      try {
-        index.releaseKeysForUpdate(entry.getValue());
-      } catch (RuntimeException e) {
-        OLogManager.instance().error(this, "Error during unlock of keys for index %s", e, index.getName());
-      }
+    for (Lock[] locks : lockList) {
+      for (Lock lock : locks)
+        try {
+          lock.unlock();
+        } catch (RuntimeException e) {
+          OLogManager.instance().error(this, "Error during unlock of index key");
+        }
     }
   }
 
