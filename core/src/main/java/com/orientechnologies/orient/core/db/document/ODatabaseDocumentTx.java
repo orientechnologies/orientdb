@@ -14,6 +14,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -55,6 +56,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -85,7 +87,32 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   private OStorage                                      delegateStorage;
   private ORecordConflictStrategy                       conflictStrategy;
   private ORecordSerializer                             serializer;
-  
+
+  static {
+    Orient.instance().registerOrientStartupListener(() -> Orient.instance().addShutdownHandler(new OShutdownHandler() {
+      @Override
+      public void shutdown() throws Exception {
+        closeAll();
+      }
+
+      @Override
+      public int getPriority() {
+        return 10000;
+      }
+    }));
+  }
+
+  public static void closeAll() {
+    for (OrientDBFactory factory : embedded.values()) {
+      factory.close();
+    }
+    embedded.clear();
+    for (OrientDBFactory factory : remote.values()) {
+      factory.close();
+    }
+    remote.clear();
+  }
+
   public ODatabaseDocumentTx(String url) {
     if (url.endsWith("/"))
       url = url.substring(0, url.length() - 1);
@@ -817,7 +844,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       internal.setDatabaseOwner(databaseOwner);
     if (intent != null)
       internal.declareIntent(intent);
-    if(conflictStrategy != null)
+    if (conflictStrategy != null)
       internal.setConflictStrategy(conflictStrategy);
     if (serializer != null)
       internal.setSerializer(serializer);
@@ -883,7 +910,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       internal.setDatabaseOwner(databaseOwner);
     if (intent != null)
       internal.declareIntent(intent);
-    if(conflictStrategy != null)
+    if (conflictStrategy != null)
       internal.setConflictStrategy(conflictStrategy);
     if (serializer != null)
       internal.setSerializer(serializer);
