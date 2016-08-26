@@ -38,6 +38,7 @@ import com.orientechnologies.orient.server.distributed.impl.task.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -47,20 +48,20 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class OConflictResolverDatabaseRepairer implements ODistributedDatabaseRepairer {
-  private final ODistributedServerManager       dManager;
-  private final String                          databaseName;
+  private final ODistributedServerManager    dManager;
+  private final String                       databaseName;
 
-  private final AtomicLong                      recordProcessed     = new AtomicLong(0);
-  private final AtomicLong                      recordCanceled      = new AtomicLong(0);
-  private final AtomicLong                      totalTimeProcessing = new AtomicLong(0);
-  private final boolean                         active;
+  private final AtomicLong                   recordProcessed     = new AtomicLong(0);
+  private final AtomicLong                   recordCanceled      = new AtomicLong(0);
+  private final AtomicLong                   totalTimeProcessing = new AtomicLong(0);
+  private final boolean                      active;
 
-  private ConcurrentHashMap<ORecordId, Boolean> records             = new ConcurrentHashMap<ORecordId, Boolean>();
-  private ConcurrentHashMap<Integer, Boolean>   clusters            = new ConcurrentHashMap<Integer, Boolean>();
+  private ConcurrentMap<ORecordId, Boolean>  records             = new ConcurrentHashMap<ORecordId, Boolean>();
+  private ConcurrentMap<Integer, Boolean>    clusters            = new ConcurrentHashMap<Integer, Boolean>();
 
-  private final TimerTask                       checkTask;
+  private final TimerTask                    checkTask;
 
-  private List<ODistributedConflictResolver>    conflictResolvers   = new ArrayList<ODistributedConflictResolver>();
+  private List<ODistributedConflictResolver> conflictResolvers   = new ArrayList<ODistributedConflictResolver>();
 
   public OConflictResolverDatabaseRepairer(final ODistributedServerManager manager, final String databaseName) {
     this.dManager = manager;
