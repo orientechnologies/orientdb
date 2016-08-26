@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.core.encryption.impl;
 
 import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -37,12 +36,12 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
   public void testONothingEncryptedCompression() {
     testEncryption(ONothingEncryption.NAME, "T1JJRU5UREI=");
   }
-
+  
   @Test
   public void testCreatedNothingEncryptedDatabase() {
     OFileUtils.deleteRecursively(new File("target/" + DBNAME_DATABASETEST));
 
-    final ODatabase db = new ODatabaseDocumentTx("plocal:target/" + DBNAME_DATABASETEST);
+    final ODatabaseInternal db = new ODatabaseDocumentTx("plocal:target/" + DBNAME_DATABASETEST);
 
     db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD.getKey(), "des");
     db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
@@ -60,7 +59,7 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
       db.open("admin", "admin");
       db.close();
 
-      Orient.instance().getStorage(DBNAME_DATABASETEST).close(true, false);
+      db.getStorage().close(true, false);
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
       db.open("admin", "admin");
@@ -68,7 +67,7 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
       Assert.assertEquals(result.size(), 1);
       db.close();
 
-      Orient.instance().getStorage(DBNAME_DATABASETEST).close(true, false);
+      db.getStorage().close(true, false);
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "invalidPassword");
       try {
@@ -79,7 +78,7 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
       } finally {
         db.activateOnCurrentThread();
         db.close();
-        Orient.instance().getStorage(DBNAME_DATABASETEST).close(true, false);
+        db.getStorage().close(true, false);
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA=-");
@@ -91,7 +90,7 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
       } finally {
         db.activateOnCurrentThread();
         db.close();
-        Orient.instance().getStorage(DBNAME_DATABASETEST).close(true, false);
+        db.getStorage().close(true, false);
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
@@ -109,7 +108,7 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
   public void testCreatedNothingEncryptedCluster() {
     OFileUtils.deleteRecursively(new File("target/" + DBNAME_CLUSTERTEST));
 
-    final ODatabase db = new ODatabaseDocumentTx("plocal:target/" + DBNAME_CLUSTERTEST);
+    final ODatabaseInternal db = new ODatabaseDocumentTx("plocal:target/" + DBNAME_CLUSTERTEST);
 
     db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
 
@@ -127,7 +126,7 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
       db.open("admin", "admin");
       db.close();
 
-      Orient.instance().getStorage(DBNAME_CLUSTERTEST).close(true, false);
+      db.getStorage().close(true, false);
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
       db.open("admin", "admin");
@@ -135,7 +134,7 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
       Assert.assertEquals(result.size(), 1);
       db.close();
 
-      Orient.instance().getStorage(DBNAME_CLUSTERTEST).close(true, false);
+      db.getStorage().close(true, false);
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "invalidPassword");
 
@@ -148,7 +147,7 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
 
       } finally {
         db.close();
-        Orient.instance().getStorage(DBNAME_CLUSTERTEST).close(true, false);
+        db.getStorage().close(true, false);
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA=-");
@@ -157,7 +156,7 @@ public class ONothingEncryptionTest extends AbstractEncryptionTest {
         db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
       } finally {
         db.close();
-        Orient.instance().getStorage(DBNAME_CLUSTERTEST).close(true, false);
+        db.getStorage().close(true, false);
       }
 
       db.setProperty(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.getKey(), "T1JJRU5UREJfSVNfQ09PTA==");
