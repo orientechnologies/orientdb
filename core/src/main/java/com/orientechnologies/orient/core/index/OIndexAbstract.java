@@ -56,6 +56,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Handles indexing when records change. The underlying lock manager for keys can be the {@link OPartitionedLockManager}, the
@@ -535,11 +536,11 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   }
 
   @Override
-  public void lockKeysForUpdate(final Collection<Object> keys) {
+  public Lock[] lockKeysForUpdate(final Collection<Object> keys) {
     if (keys == null || keys.isEmpty())
-      return;
+      return new Lock[0];
 
-    keyLockManager.acquireExclusiveLocksInBatch(keys);
+    return keyLockManager.acquireExclusiveLocksInBatch(keys);
   }
 
   @Override
@@ -548,15 +549,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       return;
 
     for (Object k : key)
-      keyLockManager.releaseExclusiveLock(k);
-  }
-
-  @Override
-  public void releaseKeysForUpdate(final Collection<Object> keys) {
-    if (keys == null || keys.isEmpty())
-      return;
-
-    for (Object k : keys)
       keyLockManager.releaseExclusiveLock(k);
   }
 

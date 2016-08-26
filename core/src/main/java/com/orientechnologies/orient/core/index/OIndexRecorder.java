@@ -27,20 +27,17 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.locks.Lock;
 
 @SuppressFBWarnings("EQ_COMPARETO_USE_OBJECT_EQUALS")
 public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OIdentifiable> {
+  private static final Lock[] NO_LOCKS = new Lock[0];
+
   private final OIndexInternal<OIdentifiable> delegate;
 
-  private final Set<Object>                   removedKeys = new HashSet<Object>();
-  private final Map<Object, OIdentifiable>    updatedKeys = new HashMap<Object, OIdentifiable>();
+  private final Set<Object>                removedKeys = new HashSet<Object>();
+  private final Map<Object, OIdentifiable> updatedKeys = new HashMap<Object, OIdentifiable>();
 
   public OIndexRecorder(OIndexInternal<OIdentifiable> delegate) {
     this.delegate = delegate;
@@ -286,7 +283,8 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  @Override public int getIndexId() {
+  @Override
+  public int getIndexId() {
     return delegate.getIndexId();
   }
 
@@ -340,15 +338,12 @@ public class OIndexRecorder implements OIndex<OIdentifiable>, OIndexInternal<OId
   }
 
   @Override
-  public void lockKeysForUpdate(Collection<Object> keys) {
+  public Lock[] lockKeysForUpdate(Collection<Object> keys) {
+    return NO_LOCKS;
   }
 
   @Override
   public void releaseKeysForUpdate(Object... key) {
-  }
-
-  @Override
-  public void releaseKeysForUpdate(Collection<Object> keys) {
   }
 
   @Override
