@@ -41,6 +41,15 @@ public class OStreamableHelper {
   final static byte LONG         = 13;
   final static byte BOOLEAN      = 14;
 
+  private static ClassLoader streamableClassLoader;
+
+  /**
+   * Set the preferred {@link ClassLoader} used to load streamable types.
+   */
+  public static void setStreamableClassLoader(/* @Nullable */final ClassLoader streamableClassLoader) {
+    OStreamableHelper.streamableClassLoader = streamableClassLoader;
+  }
+
   public static void toStream(final DataOutput out, final Object object) throws IOException {
     if (object == null)
       out.writeByte(NULL);
@@ -92,7 +101,11 @@ public class OStreamableHelper {
     case STREAMABLE:
       final String payloadClassName = in.readUTF();
       try {
-        object = Class.forName(payloadClassName).newInstance();
+        if (streamableClassLoader != null) {
+          object = streamableClassLoader.loadClass(payloadClassName).newInstance();
+        } else {
+          object = Class.forName(payloadClassName).newInstance();
+        }
         ((OStreamable) object).fromStream(in);
       } catch (Exception e) {
         OException.wrapException(new OSerializationException("Cannot unmarshall object from distributed request"), e);
@@ -102,7 +115,17 @@ public class OStreamableHelper {
       final byte[] buffer = new byte[in.readInt()];
       in.readFully(buffer);
       final ByteArrayInputStream mem = new ByteArrayInputStream(buffer);
-      final ObjectInputStream ois = new ObjectInputStream(mem);
+      final ObjectInputStream ois;
+      if (streamableClassLoader != null) {
+        ois = new ObjectInputStream(mem) {
+          @Override
+          protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+            return streamableClassLoader.loadClass(desc.getName());
+          }
+        };
+      } else {
+        ois = new ObjectInputStream(mem);
+      }
       try {
         try {
           object = ois.readObject();
