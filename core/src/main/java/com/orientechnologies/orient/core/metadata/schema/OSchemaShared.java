@@ -143,7 +143,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     for (int i = 0; i < nameSize; ++i) {
       final char c = iName.charAt(i);
-      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '%' || c == '=')
+      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '=')
         // INVALID CHARACTER
         return c;
     }
