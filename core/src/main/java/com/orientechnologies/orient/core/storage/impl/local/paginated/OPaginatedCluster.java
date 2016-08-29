@@ -1933,54 +1933,56 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   private FindFreePageResult findFreePage(int contentSize, OAtomicOperation atomicOperation) throws IOException {
-    final OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, pinnedStateEntryIndex, true);
-    pinnedStateEntry.acquireSharedLock();
-    try {
-      while (true) {
-        int freePageIndex = contentSize / ONE_KB;
-        freePageIndex -= PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
-        if (freePageIndex < 0)
-          freePageIndex = 0;
+    while (true) {
+      int freePageIndex = contentSize / ONE_KB;
+      freePageIndex -= PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
+      if (freePageIndex < 0)
+        freePageIndex = 0;
 
+      long pageIndex;
+
+      final OCacheEntry pinnedStateEntry = loadPage(atomicOperation, fileId, pinnedStateEntryIndex, true);
+      pinnedStateEntry.acquireSharedLock();
+      try {
         OPaginatedClusterState freePageLists = new OPaginatedClusterState(pinnedStateEntry);
-        long pageIndex;
         do {
           pageIndex = freePageLists.getFreeListPage(freePageIndex);
           freePageIndex++;
         } while (pageIndex < 0 && freePageIndex < FREE_LIST_SIZE);
 
-        if (pageIndex < 0)
-          pageIndex = getFilledUpTo(atomicOperation, fileId);
-        else
-          freePageIndex--;
+      } finally {
+        pinnedStateEntry.releaseSharedLock();
+        releasePage(atomicOperation, pinnedStateEntry);
+      }
 
-        if (freePageIndex < FREE_LIST_SIZE) {
-          OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
-          cacheEntry.acquireSharedLock();
-          int realFreePageIndex;
-          try {
-            OClusterPage localPage = new OClusterPage(cacheEntry, false);
-            realFreePageIndex = calculateFreePageIndex(localPage);
-          } finally {
-            cacheEntry.releaseSharedLock();
-            releasePage(atomicOperation, cacheEntry);
-          }
+      if (pageIndex < 0)
+        pageIndex = getFilledUpTo(atomicOperation, fileId);
+      else
+        freePageIndex--;
 
-          if (realFreePageIndex != freePageIndex) {
-            OLogManager.instance()
-                .warn(this, "Page in file %s with index %d was placed in wrong free list, this error will be fixed automatically",
-                    getFullName(), pageIndex);
-
-            updateFreePagesIndex(freePageIndex, pageIndex, atomicOperation);
-            continue;
-          }
+      if (freePageIndex < FREE_LIST_SIZE) {
+        OCacheEntry cacheEntry = loadPage(atomicOperation, fileId, pageIndex, false);
+        cacheEntry.acquireSharedLock();
+        int realFreePageIndex;
+        try {
+          OClusterPage localPage = new OClusterPage(cacheEntry, false);
+          realFreePageIndex = calculateFreePageIndex(localPage);
+        } finally {
+          cacheEntry.releaseSharedLock();
+          releasePage(atomicOperation, cacheEntry);
         }
 
-        return new FindFreePageResult(pageIndex, freePageIndex);
+        if (realFreePageIndex != freePageIndex) {
+          OLogManager.instance()
+              .warn(this, "Page in file %s with index %d was placed in wrong free list, this error will be fixed automatically",
+                  getFullName(), pageIndex);
+
+          updateFreePagesIndex(freePageIndex, pageIndex, atomicOperation);
+          continue;
+        }
       }
-    } finally {
-      pinnedStateEntry.releaseSharedLock();
-      releasePage(atomicOperation, pinnedStateEntry);
+
+      return new FindFreePageResult(pageIndex, freePageIndex);
     }
   }
 
