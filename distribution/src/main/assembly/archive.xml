@@ -53,6 +53,21 @@
             <filtered>true</filtered>
         </fileSet>
         <!--
+         | copy service scripts
+        -->
+        <fileSet>
+            <directory>${basedir}/../server/script</directory>
+            <outputDirectory>bin</outputDirectory>
+            <includes>
+                <include>orientdb.service</include>
+                <include>orientdb.upstart</include>
+            </includes>
+            <fileMode>755</fileMode>
+            <filtered>true</filtered>
+        </fileSet>
+
+
+        <!--
          | copy etl scripts
         -->
         <fileSet>
