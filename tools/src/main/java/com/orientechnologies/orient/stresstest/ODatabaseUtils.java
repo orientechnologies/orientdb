@@ -32,14 +32,22 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 public class ODatabaseUtils {
 
   public static void createDatabase(final ODatabaseIdentifier databaseIdentifier) throws Exception {
+    ODatabaseDocumentTx db;
+
     switch (databaseIdentifier.getMode()) {
     case PLOCAL:
     case MEMORY:
-      new ODatabaseDocumentTx(databaseIdentifier.getUrl()).create();
+      db = new ODatabaseDocumentTx(databaseIdentifier.getUrl());
+      if (!db.exists())
+        db.create();
       break;
+
     case REMOTE:
-      new OServerAdmin(databaseIdentifier.getUrl()).connect("root", databaseIdentifier.getPassword())
-          .createDatabase(databaseIdentifier.getName(), "document", "plocal");
+      final OServerAdmin adm = new OServerAdmin(databaseIdentifier.getUrl()).connect("root", databaseIdentifier.getPassword());
+
+      if (!adm.existsDatabase()) {
+        adm.createDatabase(databaseIdentifier.getName(), "document", "plocal");
+
       break;
     }
   }
