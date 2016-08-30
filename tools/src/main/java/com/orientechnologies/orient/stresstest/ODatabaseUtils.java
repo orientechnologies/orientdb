@@ -45,9 +45,8 @@ public class ODatabaseUtils {
     case REMOTE:
       final OServerAdmin adm = new OServerAdmin(databaseIdentifier.getUrl()).connect("root", databaseIdentifier.getPassword());
 
-      if (!adm.existsDatabase()) {
+      if (!adm.existsDatabase())
         adm.createDatabase(databaseIdentifier.getName(), "document", "plocal");
-
       break;
     }
   }
