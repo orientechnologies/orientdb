@@ -19,9 +19,10 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import org.junit.Test;
+
 import com.orientechnologies.orient.stresstest.OStressTester;
 import com.orientechnologies.orient.stresstest.OStressTesterCommandLineParser;
-import org.junit.Test;
 
 /**
  * INtegration Tests for stress test workloads.
@@ -60,8 +61,8 @@ public class StressTestWorkloadTest {
 
   @Test
   public void testGraphShortestPath() throws Exception {
-    final OStressTester stressTester = OStressTesterCommandLineParser
-        .getStressTester(new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-w", "GINSERT:V100F3,GSP:L3" });
+    final OStressTester stressTester = OStressTesterCommandLineParser.getStressTester(
+        new String[] { "-m", "plocal", "-c", "8", "-tx", "3", "-lb", "ROUND_ROBIN_CONNECT", "-w", "GINSERT:V100F3,GSP:L3" });
     stressTester.execute();
   }
 }
