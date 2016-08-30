@@ -46,9 +46,7 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleter;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.*;
 import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -1292,6 +1290,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
           startStorageTx(clientTx);
 
           lockClusters(clustersToLock);
+          lockRidBags(clustersToLock, indexesToCommit);
           lockIndexes(indexesToCommit);
 
           Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<ORecordOperation, OPhysicalPosition>();
@@ -4146,6 +4145,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       if (index == null)
         throw new OTransactionException("Cannot find index '" + indexName + "' while committing transaction");
 
+      if (!(index instanceof OIndexUnique))
+        continue;
+
       if (!changes.nullKeyChanges.entries.isEmpty())
         index.lockKeysForUpdate((Object) null);
       lockList.add(index.lockKeysForUpdate(changes.changesPerKey.keySet()));
@@ -4157,6 +4159,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
       final OIndexInternal<?> index = changes.getAssociatedIndex();
       if (index == null) // index may be unresolved at this point (and its keys are not locked) due to failure in lockIndexKeys
         break;
+
+      if (!(index instanceof OIndexUnique))
+        continue;
 
       if (!changes.nullKeyChanges.entries.isEmpty())
         index.releaseKeysForUpdate((Object) null);
@@ -4198,6 +4203,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract
   private void lockClusters(final TreeMap<Integer, OCluster> clustersToLock) {
     for (OCluster cluster : clustersToLock.values())
       cluster.acquireAtomicExclusiveLock();
+  }
+
+  private void lockRidBags(final TreeMap<Integer, OCluster> clusters, final TreeMap<String, OTransactionIndexChanges> indexes) {
+    final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+
+    for (Integer clusterId : clusters.keySet())
+      atomicOperationsManager
+          .acquireExclusiveLockTillOperationComplete(atomicOperation, OSBTreeCollectionManagerAbstract.generateLockName(clusterId));
+
+    for (Map.Entry<String, OTransactionIndexChanges> entry : indexes.entrySet()) {
+      final String indexName = entry.getKey();
+      final OIndexInternal<?> index = entry.getValue().getAssociatedIndex();
+
+      if (!index.isUnique())
+        atomicOperationsManager
+            .acquireExclusiveLockTillOperationComplete(atomicOperation, OIndexRIDContainerSBTree.generateLockName(indexName));
+    }
   }
 
   private class UncompletedCommit implements OUncompletedCommit<List<ORecordOperation>> {

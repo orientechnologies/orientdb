@@ -453,12 +453,18 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     return new UncompletedCommit(operation, operation.initiateCommit(useWal() ? writeAheadLog : null));
   }
 
-  private void acquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String fullName) {
-    if (operation.containsInLockedObjects(fullName))
+  /**
+   * Acquires exclusive lock with the given lock name in the given atomic operation.
+   *
+   * @param operation the atomic operation to acquire the lock in.
+   * @param lockName  the lock name to acquire.
+   */
+  public void acquireExclusiveLockTillOperationComplete(OAtomicOperation operation, String lockName) {
+    if (operation.containsInLockedObjects(lockName))
       return;
 
-    lockManager.acquireLock(fullName, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
-    operation.addLockedObject(fullName);
+    lockManager.acquireLock(lockName, OOneEntryPerKeyLockManager.LOCK.EXCLUSIVE);
+    operation.addLockedObject(lockName);
   }
 
   /**

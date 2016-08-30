@@ -153,17 +153,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   }
 
   public ORecordOperation getRecordEntry(ORID rid) {
-    ORecordOperation e = allEntries.get(rid);
-    if (e != null)
-      return e;
-
-    if (!updatedRids.isEmpty()) {
-      ORID r = updatedRids.get(rid);
-      if (r != null)
-        return allEntries.get(r);
-    }
-
-    return null;
+    return allEntries.get(translateRid(rid));
   }
 
   public ORecord getRecord(final ORID rid) {
@@ -361,7 +351,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
     final ORecordOperation rec = getRecordEntry(oldRid);
     if (rec != null) {
-      updatedRids.put(newRid, oldRid.copy());
+      updatedRids.put(newRid.copy(), oldRid.copy());
 
       if (!rec.getRecord().getIdentity().equals(newRid)) {
         ORecordInternal.onBeforeIdentityChanged(rec.getRecord());
@@ -385,7 +375,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
     // Update the indexes.
 
-    final List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(oldRid);
+    final List<OTransactionRecordIndexOperation> transactionIndexOperations = recordIndexOperations.get(translateRid(oldRid));
     if (transactionIndexOperations != null) {
       for (final OTransactionRecordIndexOperation indexOperation : transactionIndexOperations) {
         OTransactionIndexChanges indexEntryChanges = indexEntries.get(indexOperation.index);
@@ -472,6 +462,18 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   @Override
   public Object getCustomData(String iName) {
     return userData.get(iName);
+  }
+
+  private ORID translateRid(ORID rid) {
+    while (true) {
+      final ORID translatedRid = updatedRids.get(rid);
+      if (translatedRid == null)
+        break;
+
+      rid = translatedRid;
+    }
+
+    return rid;
   }
 
   private static Dependency[] getIndexFieldRidDependencies(OIndex<?> index) {
