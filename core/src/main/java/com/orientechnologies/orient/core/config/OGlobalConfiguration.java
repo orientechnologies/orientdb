@@ -715,14 +715,14 @@ public enum OGlobalConfiguration {
    */
   DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS("distributed.autoRemoveOfflineServers",
       "This is the amount of time (in ms) the server has to be OFFLINE, before it is automatically removed from the distributed configuration. -1 = never, 0 = immediately, >0 the actual time to wait",
-      Long.class, -1),
+      Long.class, -1, true),
 
   /**
    * @Since 2.2.0
    */
   DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY("distributed.publishNodeStatusEvery",
       "Time in ms to publish the node status on distributed map. Set to 0 to disable such refresh of node configuration",
-      Long.class, 5000l),
+      Long.class, 5000l, true),
 
   /**
    * @Since 2.2.0
