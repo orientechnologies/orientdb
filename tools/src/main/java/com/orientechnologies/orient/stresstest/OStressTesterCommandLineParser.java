@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.stresstest;
 
+import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.stresstest.workload.OWorkload;
 
 import java.io.Console;
@@ -43,6 +44,7 @@ public class OStressTesterCommandLineParser {
   public final static String OPTION_KEEP_DATABASE_AFTER_TEST                     = "k";
   public final static String OPTION_OUTPUT_FILE                                  = "o";
   public static final String OPTION_PLOCAL_PATH                                  = "d";
+  public final static String OPTION_LOAD_BALANCING                               = "lb";
   public final static String OPTION_CHECK_DATABASE                               = "chk";
   public final static String OPTION_ROOT_PASSWORD                                = "root-password";
   public static final String ERROR_OPENING_CONSOLE                               = "An error has occurred opening the console. Please supply the root password as the -"
@@ -55,7 +57,7 @@ public class OStressTesterCommandLineParser {
 
   public final static String MAIN_OPTIONS                                        = OPTION_MODE + OPTION_CONCURRENCY
       + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH + OPTION_KEEP_DATABASE_AFTER_TEST
-      + OPTION_CHECK_DATABASE;
+      + OPTION_CHECK_DATABASE + OPTION_LOAD_BALANCING;
 
   public static final String SYNTAX                                              = "StressTester "
       + "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" + "\n\t-w workloads" + "\n\t-c concurrency-level"
@@ -103,6 +105,8 @@ public class OStressTesterCommandLineParser {
         ? Boolean.parseBoolean(options.get(OPTION_KEEP_DATABASE_AFTER_TEST)) : false;
     settings.remotePort = 2424;
     settings.checkDatabase = Boolean.parseBoolean(options.get(OPTION_CHECK_DATABASE));
+    if (options.get(OPTION_LOAD_BALANCING) != null)
+      settings.loadBalancing = OStorageRemote.CONNECTION_STRATEGY.valueOf(options.get(OPTION_LOAD_BALANCING).toUpperCase());
 
     if (settings.plocalPath != null) {
       if (settings.plocalPath.endsWith(File.separator)) {

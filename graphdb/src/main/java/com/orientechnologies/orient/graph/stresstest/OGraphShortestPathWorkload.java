@@ -89,6 +89,8 @@ public class OGraphShortestPathWorkload extends OBaseGraphWorkload {
 
   @Override
   public void execute(final OStressTesterSettings settings, final ODatabaseIdentifier databaseIdentifier) {
+    connectionStrategy = settings.loadBalancing;
+
     // RETRIEVE THE STARTING VERTICES
     final OrientGraphNoTx g = getGraphNoTx(databaseIdentifier);
     try {

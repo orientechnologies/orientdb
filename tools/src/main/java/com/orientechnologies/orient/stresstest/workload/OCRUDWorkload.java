@@ -110,6 +110,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
   @Override
   public void execute(final OStressTesterSettings settings, final ODatabaseIdentifier databaseIdentifier) {
     createSchema(databaseIdentifier);
+    connectionStrategy =  settings.loadBalancing;
 
     // PREALLOCATE THE LIST TO AVOID CONCURRENCY ISSUES
     final ORID[] records = new ORID[createsResult.total];
