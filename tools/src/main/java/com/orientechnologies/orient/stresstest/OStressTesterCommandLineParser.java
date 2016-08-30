@@ -45,6 +45,7 @@ public class OStressTesterCommandLineParser {
   public final static String OPTION_OUTPUT_FILE                                  = "o";
   public static final String OPTION_PLOCAL_PATH                                  = "d";
   public final static String OPTION_LOAD_BALANCING                               = "lb";
+  public final static String OPTION_DBNAME                                       = "db";
   public final static String OPTION_CHECK_DATABASE                               = "chk";
   public final static String OPTION_ROOT_PASSWORD                                = "root-password";
   public static final String ERROR_OPENING_CONSOLE                               = "An error has occurred opening the console. Please supply the root password as the -"
@@ -57,13 +58,13 @@ public class OStressTesterCommandLineParser {
 
   public final static String MAIN_OPTIONS                                        = OPTION_MODE + OPTION_CONCURRENCY
       + OPTION_WORKLOAD + OPTION_TRANSACTIONS + OPTION_OUTPUT_FILE + OPTION_PLOCAL_PATH + OPTION_KEEP_DATABASE_AFTER_TEST
-      + OPTION_CHECK_DATABASE + OPTION_LOAD_BALANCING;
+      + OPTION_CHECK_DATABASE + OPTION_LOAD_BALANCING + OPTION_DBNAME;
 
   public static final String SYNTAX                                              = "StressTester "
       + "\n\t-m mode (can be any of these: [plocal|memory|remote|distributed] )" + "\n\t-w workloads" + "\n\t-c concurrency-level"
       + "\n\t-x operations-per-transaction" + "\n\t-o result-output-file" + "\n\t-d database-directory" + "\n\t-k true|false"
       + "\n\t-chk true|false" + "\n\t--root-password rootPassword" + "\n\t--remote-ip ipOrHostname" + "\n\t--remote-port portNumber"
-      + "\n";
+      + "\n\t-lb load-balancing-strategy" + "\n\t-db db-name" + "\n";
 
   static final String        COMMAND_LINE_PARSER_INVALID_NUMBER                  = "Invalid %s number [%s].";
   static final String        COMMAND_LINE_PARSER_LESSER_THAN_ZERO_NUMBER         = "The %s value must be greater than 0.";
@@ -92,6 +93,9 @@ public class OStressTesterCommandLineParser {
     final OStressTesterSettings settings = new OStressTesterSettings();
 
     settings.dbName = TEMP_DATABASE_NAME + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+    if (options.get(OPTION_DBNAME) != null)
+      settings.dbName = options.get(OPTION_DBNAME);
+
     settings.mode = OStressTester.OMode.valueOf(options.get(OPTION_MODE).toUpperCase());
     settings.rootPassword = options.get(OPTION_ROOT_PASSWORD);
     settings.resultOutputFile = options.get(OPTION_OUTPUT_FILE);
