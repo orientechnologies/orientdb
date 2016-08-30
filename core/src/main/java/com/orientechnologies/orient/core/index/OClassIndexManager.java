@@ -640,7 +640,7 @@ public class OClassIndexManager extends ODocumentHookAbstract implements OOrient
         try {
           lock.unlock();
         } catch (RuntimeException e) {
-          OLogManager.instance().error(this, "Error during unlock of index key");
+          OLogManager.instance().error(this, "Error during unlock of index key", e);
         }
     }
   }

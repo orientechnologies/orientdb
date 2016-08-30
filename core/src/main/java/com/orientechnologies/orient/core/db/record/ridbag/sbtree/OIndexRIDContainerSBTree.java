@@ -20,11 +20,6 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.orient.core.Orient;
@@ -37,16 +32,33 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
- * 
+ *
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
-  public static final String                         INDEX_FILE_EXTENSION = ".irs";
+  public static final String INDEX_FILE_EXTENSION = ".irs";
+
+  /**
+   * Generates a lock name for the given index name.
+   *
+   * @param indexName the index name to generate the lock name for.
+   *
+   * @return the generated lock name.
+   */
+  public static String generateLockName(String indexName) {
+    return indexName + INDEX_FILE_EXTENSION;
+  }
+
   private OSBTreeBonsaiLocal<OIdentifiable, Boolean> tree;
 
-  protected static final OProfiler                   PROFILER             = Orient.instance().getProfiler();
+  protected static final OProfiler PROFILER = Orient.instance().getProfiler();
 
   public OIndexRIDContainerSBTree(long fileId, OAbstractPaginatedStorage storage) {
     String fileName;
@@ -206,8 +218,8 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   }
 
   private static class TreeKeyIterator implements Iterator<OIdentifiable> {
-    private final boolean                                   autoConvertToRecord;
-    private OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator;
+    private final boolean                                         autoConvertToRecord;
+    private       OSBTreeMapEntryIterator<OIdentifiable, Boolean> entryIterator;
 
     public TreeKeyIterator(OTreeInternal<OIdentifiable, Boolean> tree, boolean autoConvertToRecord) {
       entryIterator = new OSBTreeMapEntryIterator<OIdentifiable, Boolean>(tree);
