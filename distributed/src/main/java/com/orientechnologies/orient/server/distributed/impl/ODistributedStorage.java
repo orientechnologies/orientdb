@@ -1806,7 +1806,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
       if (!(clSel instanceof OLocalClusterStrategy))
         throw new ODistributedException("Cannot install local cluster strategy on class '" + cls.getName() + "'");
 
-      OLogManager.instance().info(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
+      OLogManager.instance().info(this, "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName
           + "' (it is '" + ownerNode + "'). Reloading distributed configuration for database '" + getName() + "'");
 
       dbCfg = ((OLocalClusterStrategy) clSel).readConfiguration();
@@ -1816,14 +1816,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorageComponent
 
       // FORCE THE RETRY OF THE OPERATION
       throw new ODistributedConfigurationChangedException(
-          "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName + "' (it is '" + ownerNode + "')");
+          "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName + "' (it is '" + ownerNode + "')");
     }
 
     if (!ownerNode.equals(localNodeName))
       throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '" + localNodeName
           + "' is not the master of it, but it is '" + ownerNode + "'");
 
-    OLogManager.instance().info(this, "Local node '" + localNodeName + "' is not the master for cluster '" + clusterName
+    OLogManager.instance().info(this, "Local node '" + localNodeName + "' is not the owner for cluster '" + clusterName
         + "' (it is '" + ownerNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
 
     // OVERWRITE CLUSTER
