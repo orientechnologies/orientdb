@@ -31,12 +31,12 @@ import org.apache.tinkerpop.gremlin.structure.io.Io;
 import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
+
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
@@ -521,6 +521,16 @@ public final class OrientGraph implements Graph {
                 OLogManager.instance().error(this, "Error during context close for db " + url, e);
             }
         }
+    }
+
+    public void createVertexLabel(final String label){
+        String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
+        createVertexClass(className);
+    }
+
+    public void createEdgeLabel(final String label){
+        String className = labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
+        createEdgeClass(className);
     }
 
     public void createVertexClass(final String className) {
