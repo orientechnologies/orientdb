@@ -285,7 +285,7 @@ public class Orient extends OListenerManger<OOrientListener> {
    */
   private void initShutdownQueue() {
     addShutdownHandler(new OShutdownWorkersHandler());
-    addShutdownHandler(new OShutdownEnginesHandler());
+//    addShutdownHandler(new OShutdownEnginesHandler());
     addShutdownHandler(new OShutdownPendingThreadsHandler());
     addShutdownHandler(new OShutdownProfilerHandler());
     addShutdownHandler(new OShutdownCallListenersHandler());
