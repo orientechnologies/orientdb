@@ -88,6 +88,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     hazelcastConfig = config;
   }
 
+  // Must be set before config() is called.
+  public void setNodeName(String nodeName) {
+    this.nodeName = nodeName;
+  }
+
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
     super.config(iServer, iParams);
