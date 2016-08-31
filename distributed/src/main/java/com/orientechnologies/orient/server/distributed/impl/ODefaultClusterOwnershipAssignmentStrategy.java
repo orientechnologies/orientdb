@@ -63,10 +63,12 @@ public class ODefaultClusterOwnershipAssignmentStrategy implements OClusterOwner
     final Set<String> clusterNames = new HashSet<String>(clusterIds.length);
     for (int clusterId : clusterIds) {
       final String clusterName = iDatabase.getClusterNameById(clusterId);
-      clusterNames.add(clusterName);
-      if (clustersToReassign.remove(clusterName))
-        // MOVE THE CLUSTER TO THE REASSIGNMENT FOR THIS CLASS
-        clustersOfClassToReassign.add(clusterName);
+      if( clusterName != null ) {
+        clusterNames.add(clusterName);
+        if (clustersToReassign.remove(clusterName))
+          // MOVE THE CLUSTER TO THE REASSIGNMENT FOR THIS CLASS
+          clustersOfClassToReassign.add(clusterName);
+      }
     }
 
     if (!rebalance && clustersOfClassToReassign.isEmpty())
