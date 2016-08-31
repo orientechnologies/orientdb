@@ -133,7 +133,7 @@ public class ODistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void unlock() {
+  public synchronized void unlock() {
     if (!acquiredLocks.isEmpty()) {
       for (ORID lockedRID : acquiredLocks)
         db.unlockRecord(lockedRID, reqId);
