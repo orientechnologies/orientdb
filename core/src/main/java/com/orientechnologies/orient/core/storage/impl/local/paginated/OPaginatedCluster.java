@@ -21,6 +21,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGI
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.orientechnologies.common.exception.OException;
@@ -31,8 +32,6 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.compression.OCompression;
-import com.orientechnologies.orient.core.compression.OCompressionFactory;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
@@ -77,7 +76,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   private static final int    RECORD_POSITION_MASK     = 0xFFFF;
   private static final int    ONE_KB                   = 1024;
 
-  private volatile OCompression                          compression;
   private volatile OEncryption                           encryption;
   private final    boolean                               systemCluster;
   private          OClusterPositionMap                   clusterPositionMap;
@@ -133,7 +131,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true,
             OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-            cfgCompression, cfgEncryption, cfgEncryptionKey, null, OStorageClusterConfiguration.STATUS.ONLINE);
+            cfgEncryption, cfgEncryptionKey, null, OStorageClusterConfiguration.STATUS.ONLINE);
         config.name = clusterName;
 
         init((OAbstractPaginatedStorage) storage, config);
@@ -330,14 +328,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         case RECORD_OVERFLOW_GROW_FACTOR:
           setRecordOverflowGrowFactorInternal(stringValue);
           break;
-        case COMPRESSION:
-          if (getEntries() > 0)
-            throw new IllegalArgumentException(
-                "Cannot change compression setting on cluster '" + getName() + "' because it is not empty");
-          setCompressionInternal(stringValue,
-              ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getContextConfiguration()
-                  .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY));
-          break;
         case CONFLICTSTRATEGY:
           setRecordConflictStrategy(stringValue);
           break;
@@ -396,16 +386,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public String compression() {
-    acquireSharedLock();
-    try {
-      return config.compression;
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
   public String encryption() {
     acquireSharedLock();
     try {
@@ -446,7 +426,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     if (statistic != null)
       statistic.startRecordCreationTimer();
     try {
-      content = compression.compress(content);
       content = encryption.encrypt(content);
 
       OAtomicOperation atomicOperation = startAtomicOperation(true);
@@ -671,7 +650,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           final int readContentSize = OIntegerSerializer.INSTANCE.deserializeNative(fullContent, fullContentPosition);
           fullContentPosition += OIntegerSerializer.INT_SIZE;
 
-          byte[] recordContent = compression.uncompress(fullContent, fullContentPosition, readContentSize);
+          byte[] recordContent = Arrays.copyOfRange(fullContent, fullContentPosition, fullContentPosition + readContentSize);
           recordContent = encryption.decrypt(recordContent);
 
           return new ORawBuffer(recordContent, recordVersion, recordType);
@@ -884,7 +863,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     if (statistic != null)
       statistic.startRecordUpdateTimer();
     try {
-      content = compression.compress(content);
       content = encryption.encrypt(content);
 
       OAtomicOperation atomicOperation = startAtomicOperation(true);
@@ -1136,7 +1114,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           throw new OPaginatedClusterException("Record with rid " + new ORecordId(id, clusterPosition) + " was not deleted", this);
         }
 
-        content = compression.compress(content);
         content = encryption.encrypt(content);
 
         int entryContentLength = getEntryContentLength(content.length);
@@ -1733,7 +1710,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     OFileUtils.checkValidName(config.getName());
 
     this.config = (OStoragePaginatedClusterConfiguration) config;
-    this.compression = OCompressionFactory.INSTANCE.getCompression(this.config.compression, null);
     this.encryption = OEncryptionFactory.INSTANCE.getEncryption(this.config.encryption, this.config.encryptionKey);
 
     if (((OStoragePaginatedClusterConfiguration) config).conflictStrategy != null)
@@ -1745,17 +1721,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     this.id = config.getId();
 
     clusterPositionMap = new OClusterPositionMap(storage, getName(), getFullName());
-  }
-
-  private void setCompressionInternal(final String iCompressionMethod, final String iCompressionOptions) {
-    try {
-      compression = OCompressionFactory.INSTANCE.getCompression(iCompressionMethod, iCompressionOptions);
-      config.compression = iCompressionMethod;
-      storageLocal.getConfiguration().update();
-    } catch (IllegalArgumentException e) {
-      throw OException.wrapException(
-          new OPaginatedClusterException("Invalid value for " + OCluster.ATTRIBUTES.COMPRESSION + " attribute", this), e);
-    }
   }
 
   private void setEncryptionInternal(final String iMethod, final String iKey) {

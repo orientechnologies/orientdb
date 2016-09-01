@@ -230,11 +230,6 @@ public class OClusterRemote implements OCluster {
   }
 
   @Override
-  public String compression() {
-    throw new UnsupportedOperationException("compression()");
-  }
-
-  @Override
   public boolean hideRecord(long position) {
     throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
   }

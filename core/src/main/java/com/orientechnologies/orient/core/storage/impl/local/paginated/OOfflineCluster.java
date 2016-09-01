@@ -218,11 +218,6 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public String compression() {
-    return null;
-  }
-
-  @Override
   public boolean isHashBased() {
     return false;
   }

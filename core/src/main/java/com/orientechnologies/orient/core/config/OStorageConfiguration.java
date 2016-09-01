@@ -272,8 +272,6 @@ public class OStorageConfiguration implements OSerializableStream {
     // PREPARE THE LIST OF CLUSTERS
     clusters.clear();
 
-    String determineStorageCompression = null;
-
     for (int i = 0; i < size; ++i) {
       final int clusterId = Integer.parseInt(read(values[index++]));
 
@@ -291,12 +289,9 @@ public class OStorageConfiguration implements OSerializableStream {
         final boolean cc = Boolean.valueOf(read(values[index++]));
         final float bb = Float.valueOf(read(values[index++]));
         final float aa = Float.valueOf(read(values[index++]));
-        final String clusterCompression = read(values[index++]);
 
-        if (determineStorageCompression == null)
-          // TRY TO DETERMINE THE STORAGE COMPRESSION. BEFORE VERSION 11 IT WASN'T STORED IN STORAGE CFG, SO GET FROM THE FIRST
-          // CLUSTER
-          determineStorageCompression = clusterCompression;
+        //cluster compression, removed in 3.0 version
+        read(values[index++]);
 
         String clusterEncryption = null;
         if (version >= 15)
@@ -307,8 +302,7 @@ public class OStorageConfiguration implements OSerializableStream {
         OStorageClusterConfiguration.STATUS status = OStorageClusterConfiguration.STATUS.ONLINE;
         status = OStorageClusterConfiguration.STATUS.valueOf(read(values[index++]));
 
-        currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
-            clusterCompression, clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
+        currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa, clusterEncryption, configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
             clusterConflictStrategy, status);
 
       } else if (clusterType.equals("p"))
@@ -471,7 +465,10 @@ public class OStorageConfiguration implements OSerializableStream {
         write(buffer, paginatedClusterConfiguration.useWal);
         write(buffer, paginatedClusterConfiguration.recordOverflowGrowFactor);
         write(buffer, paginatedClusterConfiguration.recordGrowFactor);
-        write(buffer, paginatedClusterConfiguration.compression);
+
+        //cluster compression , removed in version 3.0 and placeholder is put
+        write(buffer, "");
+
         if (iNetworkVersion >= 31)
           write(buffer, paginatedClusterConfiguration.encryption);
         if (iNetworkVersion > 24)
