@@ -148,8 +148,11 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
 
             lastVertex = ((OWorkLoadContext) context).lastVertexToConnect;
           } catch (ONeedRetryException e) {
-            lastVertex.reload();
-            ((OWorkLoadContext) context).lastVertexToConnect.reload();
+            if (lastVertex.getIdentity().isPersistent())
+              lastVertex.reload();
+
+            if (((OWorkLoadContext) context).lastVertexToConnect.getIdentity().isPersistent())
+              ((OWorkLoadContext) context).lastVertexToConnect.reload();
           }
       }
     } finally {
@@ -158,7 +161,8 @@ public class OGraphInsertWorkload extends OBaseGraphWorkload {
   }
 
   protected void manageNeedRetryException(OBaseWorkLoadContext context, ONeedRetryException e) {
-    ((OWorkLoadContext) context).lastVertexToConnect.reload();
+    if (((OWorkLoadContext) context).lastVertexToConnect.getIdentity().isPersistent())
+      ((OWorkLoadContext) context).lastVertexToConnect.reload();
   }
 
   @Override
