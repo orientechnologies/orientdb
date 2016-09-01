@@ -195,7 +195,9 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   @Override
   public void fullCheckpointMade(OAbstractPaginatedStorage storage) {
 
-    if (storage.getStatus().equals(OStorage.STATUS.OPEN)) {
+    boolean existsResource = storage.existsResource(OIndexManager.class.getSimpleName());
+
+    if (storage.getStatus().equals(OStorage.STATUS.OPEN) && existsResource) {
       OIndexManager indexManager = storage.getResource(OIndexManager.class.getSimpleName(), new Callable<OIndexManager>() {
         @Override
         public OIndexManager call() throws Exception {
