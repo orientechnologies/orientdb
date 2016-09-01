@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.storage.cache.local;
 
 import com.orientechnologies.common.collection.closabledictionary.OClosableEntry;
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
-import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -59,6 +58,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.CRC32;
 
@@ -93,9 +93,9 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   private final OClosableLinkedContainer<Long, OFileClassic> files;
   private final ConcurrentSkipListMap<PageKey, PageGroup> writeCachePages         = new ConcurrentSkipListMap<PageKey, PageGroup>();
   private final ConcurrentSkipListSet<PageKey>            exclusiveWritePages     = new ConcurrentSkipListSet<PageKey>();
-  private final ODistributedCounter                       writeCacheSize          = new ODistributedCounter();
-  private final ODistributedCounter                       exclusiveWriteCacheSize = new ODistributedCounter();
-  private final ODistributedCounter                       cacheOverflowCount      = new ODistributedCounter();
+  private final LongAdder                                 writeCacheSize          = new LongAdder();
+  private final LongAdder                                 exclusiveWriteCacheSize = new LongAdder();
+  private final LongAdder                                 cacheOverflowCount      = new LongAdder();
 
   private final OBinarySerializer<String> stringSerializer;
   private final boolean                   syncOnPageFlush;
@@ -583,7 +583,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
         lockManager.releaseLock(groupLock);
       }
 
-      if (exclusiveWriteCacheSize.get() > writeCacheMaxSize) {
+      if (exclusiveWriteCacheSize.sum() > writeCacheMaxSize) {
         cacheOverflowCount.increment();
         future = commitExecutor.submit(new PeriodicFlushTask());
       }
@@ -722,7 +722,7 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   public long getExclusiveWriteCachePagesSize() {
-    return exclusiveWriteCacheSize.get();
+    return exclusiveWriteCacheSize.sum();
   }
 
   public void deleteFile(final long fileId) throws IOException {
@@ -1033,15 +1033,15 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
   }
 
   public long getCacheOverflowCount() {
-    return cacheOverflowCount.get();
+    return cacheOverflowCount.sum();
   }
 
   public long getWriteCacheSize() {
-    return writeCacheSize.get();
+    return writeCacheSize.sum();
   }
 
   public long getExclusiveWriteCacheSize() {
-    return exclusiveWriteCacheSize.get();
+    return exclusiveWriteCacheSize.sum();
   }
 
   private void openFile(final OFileClassic fileClassic) throws IOException {
@@ -1423,8 +1423,8 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
 
         int writePagesToFlush = 0;
 
-        final long wcs = exclusiveWriteCacheSize.get();
-        final long cs = writeCacheSize.get();
+        final long wcs = exclusiveWriteCacheSize.sum();
+        final long cs = writeCacheSize.sum();
 
         assert wcs >= 0;
         assert cs >= 0;

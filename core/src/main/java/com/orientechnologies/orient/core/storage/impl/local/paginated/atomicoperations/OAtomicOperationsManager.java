@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
-import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
 import com.orientechnologies.common.exception.OException;
@@ -55,10 +54,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -72,7 +68,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
 
   private final AtomicBoolean mbeanIsRegistered = new AtomicBoolean();
 
-  private final ODistributedCounter atomicOperationsCount = new ODistributedCounter();
+  private final LongAdder atomicOperationsCount = new LongAdder();
 
   private final AtomicInteger freezeRequests = new AtomicInteger();
 
@@ -88,7 +84,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   /**
    * Flag which indicates whether we work in unsafe mode for current thread. Unsafe mode means that all operations in this thread
    * may violate violate ACID properties but system performance will be faster.
-   *
+   * <p>
    * <p>To start unsafe mode call {@link #switchOnUnsafeMode()}, to stop unsafe mode call {@link #switchOffUnsafeMode()}.
    */
   private static final ThreadLocal<Boolean> unsafeMode = new ThreadLocal<Boolean>() {
@@ -147,13 +143,13 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    * Starts atomic operation inside of current thread. If atomic operation has been already started, current atomic operation
    * instance will be returned. All durable components have to call this method at the beginning of any data modification
    * operation.
-   *
+   * <p>
    * <p>In current implementation of atomic operation, each component which is participated in atomic operation is hold under
    * exclusive lock till atomic operation will not be completed (committed or rollbacked).
-   *
+   * <p>
    * <p>If other thread is going to read data from component it has to acquire read lock inside of atomic operation manager {@link
    * #acquireReadLock(ODurableComponent)}, otherwise data consistency will be compromised.
-   *
+   * <p>
    * <p>Atomic operation may be delayed if start of atomic operations is prohibited by call of {@link
    * #freezeAtomicOperations(Class, String)} method. If mentioned above method is called then execution of current method will be
    * stopped till call of {@link #releaseAtomicOperations(long)} method or exception will be thrown. Concrete behaviour depends on
@@ -164,7 +160,6 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
    *                             During storage restore procedure this record is monitored and if given record is present then
    *                             rebuild of all indexes is performed.
    * @param lockName             Name of lock (usually name of component) which is going participate in atomic operation.
-   *
    * @return Instance of active atomic operation.
    */
   public OAtomicOperation startAtomicOperation(String lockName, boolean trackNonTxOperations) throws IOException {
@@ -224,7 +219,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
   /**
    * Switch off unsafe mode. During this mode it is not guaranteed that operations will support ACID properties but system
    * performance will be faster.
-   *
+   * <p>
    * <p>To switch off unsafe mode call {@link #switchOffUnsafeMode()}
    */
   public void switchOnUnsafeMode() {
@@ -302,7 +297,7 @@ public class OAtomicOperationsManager implements OAtomicOperationsMangerMXBean {
     freezeRequests.incrementAndGet();
     freezeParametersIdMap.put(id, new FreezeParameters(message, exceptionClass));
 
-    while (atomicOperationsCount.get() > 0) {
+    while (atomicOperationsCount.sum() > 0) {
       Thread.yield();
     }
 

@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.cache.local.twoq;
 
-import com.orientechnologies.common.concur.lock.ODistributedCounter;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
@@ -44,6 +43,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -87,7 +87,7 @@ public class O2QCache implements OReadCache {
   /**
    * Counts how much time we warned user that limit of amount of pinned pages is reached.
    */
-  private final ODistributedCounter pinnedPagesWarningCounter = new ODistributedCounter();
+  private final LongAdder pinnedPagesWarningCounter = new LongAdder();
 
   /**
    * Cache of value which is contained inside of {@link #pinnedPagesWarningCounter}. It is used to speed up calculation of warnings.
@@ -207,7 +207,7 @@ public class O2QCache implements OReadCache {
       if (pinnedPagesWarningsCache < MAX_PERCENT_OF_PINED_PAGES) {
         pinnedPagesWarningCounter.increment();
 
-        final long warnings = pinnedPagesWarningCounter.get();
+        final long warnings = pinnedPagesWarningCounter.sum();
         if (warnings < MAX_PERCENT_OF_PINED_PAGES) {
           pinnedPagesWarningsCache = (int) warnings;
 

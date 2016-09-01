@@ -126,7 +126,7 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
       OReadersWriterSpinLock[] lcks = new OReadersWriterSpinLock[concurrencyLevel];
 
       for (int i = 0; i < lcks.length; i++)
-        lcks[i] = new OReadersWriterSpinLock(concurrencyLevel);
+        lcks[i] = new OReadersWriterSpinLock();
 
       spinLocks = lcks;
       locks = null;
