@@ -480,7 +480,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       long documentTotal = 0;
 
       for (final String cluster : clustersToIndex)
-        documentTotal += getDatabase().countClusterElements(cluster);
+        documentTotal += storage.count(storage.getClusterIdByName(cluster));
 
       if (iProgressListener != null)
         iProgressListener.onBegin(this, documentTotal, rebuild);
