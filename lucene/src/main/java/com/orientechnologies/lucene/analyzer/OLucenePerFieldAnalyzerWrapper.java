@@ -2,6 +2,7 @@ package com.orientechnologies.lucene.analyzer;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.DelegatingAnalyzerWrapper;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +40,8 @@ public class OLucenePerFieldAnalyzerWrapper extends DelegatingAnalyzerWrapper {
     if (fieldAnalyzers != null && !fieldAnalyzers.isEmpty()) {
       this.fieldAnalyzers.putAll(fieldAnalyzers);
     }
+
+    this.fieldAnalyzers.put("RID", new KeywordAnalyzer());
   }
 
   @Override
