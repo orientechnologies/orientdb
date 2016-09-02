@@ -285,16 +285,16 @@ public class OrientGraphTest {
     }
 
     @Test
-    public void checkClassNameConstruction(){
+    public void checkClassNameConstruction() {
         String edgeLabel = "edge_label";
         String vertexLabel = "vertex_label";
         OrientGraphFactory factory = new OrientGraphFactory("memory:myGraph");
         OrientGraph graph = factory.getNoTx();
 
-        graph.createVertexLabel(vertexLabel);
-        graph.createEdgeLabel(edgeLabel);
+        graph.createVertexClass(vertexLabel);
+        graph.createEdgeClass(edgeLabel);
 
-        graph.database().browseClass(OImmutableClass.VERTEX_CLASS_NAME + "_" +vertexLabel);
+        graph.database().browseClass(OImmutableClass.VERTEX_CLASS_NAME + "_" + vertexLabel);
         graph.database().browseClass(OImmutableClass.EDGE_CLASS_NAME + "_" + edgeLabel);
     }
 }
