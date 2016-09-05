@@ -60,6 +60,15 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
     return (List) steps;
   }
 
+  public void setSteps(List<OExecutionStepInternal> steps) {
+    this.steps = steps;
+    if (steps.size() > 0) {
+      lastStep = steps.get(steps.size() - 1);
+    } else {
+      lastStep = null;
+    }
+  }
+
   @Override public OResult toResult() {
     return new OResultInternal();
   }
