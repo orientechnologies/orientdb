@@ -31,12 +31,12 @@ import org.apache.tinkerpop.gremlin.structure.io.Io;
 import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
+
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
@@ -184,8 +184,7 @@ public final class OrientGraph implements Graph {
             if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
             String label = ElementHelper.getLabelValue(keyValues).orElse(OImmutableClass.VERTEX_CLASS_NAME);
-            String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
-            OrientVertex vertex = new OrientVertex(this, className);
+            OrientVertex vertex = new OrientVertex(this, label);
             vertex.property(keyValues);
 
             vertex.save();
@@ -523,14 +522,18 @@ public final class OrientGraph implements Graph {
         }
     }
 
-    public void createVertexClass(final String className) {
+    public String createVertexClass(final String label) {
         makeActive();
+        String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
         createClass(className, OImmutableClass.VERTEX_CLASS_NAME);
+        return className;
     }
 
-    public void createEdgeClass(final String className) {
+    public String createEdgeClass(final String label) {
         makeActive();
+        String className = labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
         createClass(className, OImmutableClass.EDGE_CLASS_NAME);
+        return className;
     }
 
     public void createClass(final String className, final String superClassName) {
@@ -595,13 +598,13 @@ public final class OrientGraph implements Graph {
 
     public <E extends Element> void createVertexIndex(final String key, final String label, final Configuration configuration) {
         String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
-        createVertexClass(className);
+        createVertexClass(label);
         createIndex(key, className, configuration);
     }
 
     public <E extends Element> void createEdgeIndex(final String key, final String label, final Configuration configuration) {
         String className = labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
-        createEdgeClass(className);
+        createEdgeClass(label);
         createIndex(key, className, configuration);
     }
 

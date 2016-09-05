@@ -1,25 +1,5 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Strings.isNullOrEmpty;
-import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Property;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.VertexProperty;
-import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
-import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
-
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -31,6 +11,25 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Property;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
+import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
 public final class OrientVertex extends OrientElement implements Vertex {
     public static final String CONNECTION_OUT_PREFIX = OrientGraphUtils.CONNECTION_OUT + "_";
@@ -41,12 +40,12 @@ public final class OrientVertex extends OrientElement implements Vertex {
         super(graph, rawElement);
     }
 
-    public OrientVertex(OrientGraph graph, String className) {
-        this(graph, createRawElement(graph, className));
+    public OrientVertex(OrientGraph graph, String label) {
+        this(graph, createRawElement(graph, label));
     }
 
-    protected static ODocument createRawElement(OrientGraph graph, String className) {
-        graph.createVertexClass(className);
+    protected static ODocument createRawElement(OrientGraph graph, String label) {
+        String className = graph.createVertexClass(label);
         return new ODocument(className);
     }
 
@@ -152,8 +151,8 @@ public final class OrientVertex extends OrientElement implements Vertex {
             throw new IllegalStateException("label cannot be null");
 
         // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
-        String className = graph.labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
-        edge = new OrientEdge(graph, className, outDocument, inDocument, label);
+        //String className = graph.labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
+        edge = new OrientEdge(graph, label, outDocument, inDocument, label);
         edge.property(keyValues);
 
         edge.getRawDocument().fields(OrientGraphUtils.CONNECTION_OUT, rawElement, OrientGraphUtils.CONNECTION_IN, inDocument);
