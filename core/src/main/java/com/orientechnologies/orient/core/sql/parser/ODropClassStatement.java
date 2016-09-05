@@ -2,9 +2,17 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
 import java.util.Map;
 
-public class ODropClassStatement extends OStatement {
+public class ODropClassStatement extends ODDLStatement {
 
   public OIdentifier name;
   public boolean unsafe = false;
@@ -15,6 +23,35 @@ public class ODropClassStatement extends OStatement {
 
   public ODropClassStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+    OSchema schema = ctx.getDatabase().getMetadata().getSchema();
+    OClass clazz = schema.getClass(name.getStringValue());
+    if (clazz == null) {
+      throw new OCommandExecutionException("Class " + name.getStringValue() + " does not exist");
+    }
+
+    if (!unsafe && clazz.count() > 0) {
+      //check vertex or edge
+      if (clazz.isVertexType()) {
+        throw new OCommandExecutionException("'DROP CLASS' command cannot drop class '" + name.getStringValue()
+            + "' because it contains Vertices. Use 'DELETE VERTEX' command first to avoid broken edges in a database, or apply the 'UNSAFE' keyword to force it");
+      } else if (clazz.isEdgeType()) {
+        // FOUND EDGE CLASS
+        throw new OCommandExecutionException("'DROP CLASS' command cannot drop class '" + name.getStringValue()
+            + "' because it contains Edges. Use 'DELETE EDGE' command first to avoid broken vertices in a database, or apply the 'UNSAFE' keyword to force it");
+      }
+    }
+
+    schema.dropClass(name.getStringValue());
+
+    OInternalResultSet rs = new OInternalResultSet();
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "drop class");
+    result.setProperty("className", name.getStringValue());
+    rs.add(result);
+    return rs;
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
