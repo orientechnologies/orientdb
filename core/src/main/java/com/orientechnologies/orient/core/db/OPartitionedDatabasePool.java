@@ -83,7 +83,7 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   private final String password;
   private final int    maxPartitonSize;
   private final AtomicBoolean poolBusy      = new AtomicBoolean();
-  private final int           maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
+  private int           maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
   private final Semaphore connectionsCounter;
   private volatile ThreadLocal<PoolData> poolData = new ThreadPoolData();
   private volatile PoolPartition[] partitions;
@@ -98,14 +98,16 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     this.url = url;
     this.userName = userName;
     this.password = password;
-    this.maxPartitonSize = maxPartitionSize;
     if (maxPoolSize > 0) {
       connectionsCounter = new Semaphore(maxPoolSize);
+      this.maxPartitions = 1;
+      this.maxPartitonSize = maxPoolSize;
     } else {
+      this.maxPartitonSize = maxPartitionSize;
       connectionsCounter = null;
     }
 
-    final PoolPartition[] pts = new PoolPartition[2];
+    final PoolPartition[] pts = new PoolPartition[maxPartitions];
 
     for (int i = 0; i < pts.length; i++) {
       final PoolPartition partition = new PoolPartition();
