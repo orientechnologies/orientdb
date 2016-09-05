@@ -98,7 +98,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstract {
+public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstract implements OTemporaryRidGenerator {
   public static final String  KEYWORD_SELECT                = "SELECT";
   public static final String  KEYWORD_ASC                   = "ASC";
   public static final String  KEYWORD_DESC                  = "DESC";
@@ -676,8 +676,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * @param iContext
    * @return Serial as integer
    */
-  protected int getTemporaryRIDCounter(final OCommandContext iContext) {
-    final OCommandExecutorSQLSelect parentQuery = (OCommandExecutorSQLSelect) iContext.getVariable("parentQuery");
+  public int getTemporaryRIDCounter(final OCommandContext iContext) {
+    final OTemporaryRidGenerator parentQuery = (OTemporaryRidGenerator) iContext.getVariable("parentQuery");
     return parentQuery != null && parentQuery != this ? parentQuery.getTemporaryRIDCounter(iContext)
         : serialTempRID.getAndIncrement();
   }
