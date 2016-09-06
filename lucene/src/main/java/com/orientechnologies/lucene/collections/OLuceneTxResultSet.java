@@ -48,7 +48,7 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
   }
 
   private int calculateDeletedMatch() {
-    return (int) queryContext.changes().deletedDocs(query, queryContext.filter);
+    return (int) queryContext.changes().deletedDocs(query);
   }
 
   @Override
@@ -154,11 +154,10 @@ public class OLuceneTxResultSet extends OLuceneAbstractResultSet {
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case FILTER_SORT:
-          topDocs = queryContext.getSearcher()
-              .searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE, queryContext.sort);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);
           break;
         case FILTER:
-          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, queryContext.filter, PAGE_SIZE);
+          topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE);
           break;
         case SORT:
           topDocs = queryContext.getSearcher().searchAfter(array[array.length - 1], query, PAGE_SIZE, queryContext.sort);

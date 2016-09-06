@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import org.apache.lucene.facet.FacetsConfig;
 import org.apache.lucene.facet.taxonomy.TaxonomyReader;
 import org.apache.lucene.index.MultiReader;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
@@ -37,7 +36,7 @@ public class QueryContext {
 
   public final    OCommandContext context;
   public final    Query           query;
-  public final    Filter          filter;
+  //  public final    Query           filter;
   public final    Sort            sort;
   protected final IndexSearcher   searcher;
   public          QueryContextCFG cfg;
@@ -50,32 +49,24 @@ public class QueryContext {
   private   String           drillDownQuery;
 
   public QueryContext(OCommandContext context, IndexSearcher searcher, Query query) {
-    this(context, searcher, query, null, null);
+    this(context, searcher, query, null);
   }
 
-  public QueryContext(OCommandContext context, IndexSearcher searcher, Query query, Filter filter) {
-    this(context, searcher, query, filter, null);
-  }
-
-  public QueryContext(OCommandContext context, IndexSearcher searcher, Query query, Filter filter, Sort sort) {
+  public QueryContext(OCommandContext context, IndexSearcher searcher, Query query, Sort sort) {
     this.context = context;
     this.searcher = searcher;
     this.query = query;
-    this.filter = filter;
+    //    this.filter = filter;
     this.sort = sort;
     initCFG();
+
   }
 
   private void initCFG() {
-    if (filter != null && sort != null) {
-      cfg = QueryContextCFG.FILTER_SORT;
-    } else if (filter == null && sort == null) {
-      cfg = QueryContextCFG.NO_FILTER_NO_SORT;
-    } else if (filter != null) {
-      cfg = QueryContextCFG.FILTER;
-    } else {
+    if (sort != null)
       cfg = QueryContextCFG.SORT;
-    }
+    else
+      cfg = QueryContextCFG.FILTER;
   }
 
   public QueryContext setFacet(boolean facet) {
@@ -140,7 +131,5 @@ public class QueryContext {
   public enum QueryContextCFG {
     NO_FILTER_NO_SORT, FILTER_SORT, FILTER, SORT
   }
-
-
 
 }
