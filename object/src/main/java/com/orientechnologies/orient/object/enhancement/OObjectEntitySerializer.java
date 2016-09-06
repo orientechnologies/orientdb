@@ -1006,7 +1006,7 @@ public class OObjectEntitySerializer {
     if (f.getType().isArray() || Collection.class.isAssignableFrom(f.getType()) || Map.class.isAssignableFrom(f.getType())) {
       Class<?> genericMultiValueType = OReflectionHelper.getGenericMultivalueType(f);
       if (f.getType().isArray()) {
-        if (genericMultiValueType.isPrimitive() && Byte.class.isAssignableFrom(genericMultiValueType)) {
+        if (byte.class.isAssignableFrom(genericMultiValueType)) {
           return OType.BINARY;
         } else {
           if (isSerializedType(f) || OObjectEntitySerializer.isEmbeddedField(iClass, fieldName) || (genericMultiValueType != null
@@ -1212,10 +1212,9 @@ public class OObjectEntitySerializer {
             }
           }
         }
-
+        
         fieldValue = typeToStream(fieldValue, fieldType, db, iRecord);
-
-        iRecord.field(fieldName, fieldValue, fieldType);
+        OObjectFieldHandler.getStrategy().store(iRecord, fieldName, fieldValue, fieldType);
       }
 
       currentClass = currentClass.getSuperclass();

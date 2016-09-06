@@ -248,6 +248,7 @@ public enum OGlobalConfiguration {
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only! It saves objects bound to dirty records", Boolean.class,
       false, true),
+  OBJECT_BINARY_MAPPING("object.binaryMapping", "Mapping approach for binary fields", Integer.class, 0),
 
   // DATABASE
   DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
