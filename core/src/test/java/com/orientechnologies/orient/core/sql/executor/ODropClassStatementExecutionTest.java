@@ -17,7 +17,7 @@ public class ODropClassStatementExecutionTest {
   static ODatabaseDocument db;
 
   @BeforeClass public static void beforeClass() {
-    db = new ODatabaseDocumentTx("memory:OCreateClassStatementExecutionTest");
+    db = new ODatabaseDocumentTx("memory:ODropClassStatementExecutionTest");
     db.create();
     OClass v = db.getMetadata().getSchema().getClass("V");
     if (v == null) {
