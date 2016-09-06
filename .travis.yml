@@ -4,8 +4,9 @@ os:
   - linux
 jdk:
   - oraclejdk8
-sudo: required
-dist: trusty
+ 
+before_script:
+  - echo "MAVEN_OPTS='-Xmx3g -XX:MaxDirectMemorySize=2g'" > ~/.mavenrc
 
 install:
   - mvn install dependency:go-offline -Pskip-formatter -DskipTests=true -q -f driver/pom.xml -Dfailsafe.timeout=0
