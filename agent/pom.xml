@@ -149,10 +149,5 @@
             <artifactId>aws-java-sdk-s3</artifactId>
             <version>1.10.65</version>
         </dependency>
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-distributed</artifactId>
-            <version>${orientdb.version}</version>
-        </dependency>
     </dependencies>
 </project>

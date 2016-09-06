@@ -46,16 +46,14 @@ public class OBackupManager implements OServerLifecycleListener {
   protected Map<String, OBackupTask> tasks = new ConcurrentHashMap<String, OBackupTask>();
 
   public OBackupManager() {
-
     this(OServerMain.server());
   }
 
-  public OBackupManager(OServer server) {
+  public OBackupManager(final OServer server) {
     this(server, new OBackupConfig().load());
   }
 
   private void initTasks() {
-
     Collection<ODocument> backups = config.backups();
     for (ODocument backup : backups) {
       OBackupStrategy strategy = config.strategy(backup, logger);
@@ -71,11 +69,14 @@ public class OBackupManager implements OServerLifecycleListener {
     }
   }
 
-  public OBackupManager(OServer server, OBackupConfig config) {
+  public OBackupManager(final OServer server, final OBackupConfig config) {
     this.config = config;
-
     this.server = server;
     server.registerLifecycleListener(this);
+  }
+
+  public void shutdown() {
+    server.unregisterLifecycleListener(this);
   }
 
   public ODocument getConfiguration() {

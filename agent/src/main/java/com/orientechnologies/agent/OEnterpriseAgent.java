@@ -41,7 +41,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
-import com.orientechnologies.orient.server.plugin.OPluginLifecycleListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
@@ -49,7 +48,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import java.util.Map;
 import java.util.UUID;
 
-public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener, OPluginLifecycleListener {
+public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener {
   public static final String  EE                         = "ee.";
   private static final String ORIENDB_ENTERPRISE_VERSION = "2.2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
   public OServer              server;
@@ -81,8 +80,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
         license = p.value;
     }
 
-    if (oServer.getPluginManager() != null)
-      oServer.getPluginManager().registerLifecycleListener(this);
+    if (oServer.getPluginManager() != null) {
+//      oServer.getPluginManager().registerLifecycleListener(this);
+    }
   }
 
   @Override
@@ -140,28 +140,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     }
   }
 
-  private void installBackupManager() {
-
-    backupManager = new OBackupManager(server);
-  }
-
-  private void installPlugins() {
-
-    OEventPlugin eventPlugin = new OEventPlugin();
-
-    eventPlugin.config(server, null);
-    eventPlugin.startup();
-    server.getPluginManager()
-        .registerPlugin(new OServerPluginInfo(eventPlugin.getName(), null, null, null, eventPlugin, null, 0, null));
-  }
-
-  private void installComponents() {
-
-    if (server.getDistributedManager() != null) {
-      server.getDistributedManager().setDistributedStrategy(new OEnterpriseDistributedStrategy());
-    }
-  }
-
   @Override
   public void shutdown() {
     if (enabled) {
@@ -169,8 +147,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       uninstallCommands();
       uninstallProfiler();
 
-      if (server.getPluginManager() != null)
-        server.getPluginManager().unregisterLifecycleListener(this);
+      if (server.getPluginManager() != null) {
+//        server.getPluginManager().unregisterLifecycleListener(this);
+      }
 
       Orient.instance().removeDbLifecycleListener(this);
     }
@@ -343,8 +322,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     }
   }
 
-  // OPluginLifecycleListener  
-  public void onBeforeConfig(final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {    
+  // OPluginLifecycleListener not available yet in develop
+
+  // OPluginLifecycleListener
+  public void onBeforeConfig(final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {
   }
 
   public void onAfterConfig(final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {
