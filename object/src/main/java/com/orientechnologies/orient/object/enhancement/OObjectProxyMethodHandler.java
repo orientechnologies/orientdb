@@ -394,18 +394,12 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       return doc.field(fieldName);
     else {
       OType expected = OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName);
-      if (doc.fieldType(fieldName) != expected)
-        doc.field(fieldName, doc.field(fieldName), expected);
-
-      return doc.field(fieldName);
+      return OObjectFieldHandler.getStrategy().load(doc, fieldName, expected);
     }
   }
 
   protected Object setDocFieldValue(final String fieldName, final Object value, final OType type) {
-    if (doc.getSchemaClass().existsProperty(fieldName))
-      return doc.field(fieldName, value);
-    else
-      return doc.field(fieldName, value, type);
+    return OObjectFieldHandler.getStrategy().store(doc, fieldName, value, type);
   }
 
   protected Object manageObjectCollections(final Object self, final String fieldName, Object value)
