@@ -2,6 +2,9 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.sql.executor.OUpdateExecutionPlan;
+
 import java.util.stream.Collectors;
 
 public class OUpdateEdgeStatement extends OUpdateStatement {
@@ -15,6 +18,10 @@ public class OUpdateEdgeStatement extends OUpdateStatement {
 
   protected String getStatementType() {
     return "UPDATE EDGE ";
+  }
+
+  @Override public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx) {
+    throw new UnsupportedOperationException();
   }
 
   /**
@@ -38,7 +45,6 @@ public class OUpdateEdgeStatement extends OUpdateStatement {
     result.timeout = timeout == null ? null : timeout.copy();
     return result;
   }
-
 
 }
 /* JavaCC - OriginalChecksum=496f32976ee84e3a3a89d1410dc134c5 (do not edit this line) */
