@@ -31,11 +31,12 @@ import org.apache.tinkerpop.gremlin.structure.io.Io;
 import org.apache.tinkerpop.gremlin.structure.io.Io.Builder;
 import org.apache.tinkerpop.gremlin.structure.util.ElementHelper;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
+
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.apache.tinkerpop.gremlin.orientdb.StreamUtils.asStream;
 
@@ -89,7 +90,7 @@ public final class OrientGraph implements Graph {
         if (config.containsKey(CONFIG_POOL_SIZE))
             if (config.containsKey(CONFIG_MAX_PARTITION_SIZE))
             factory.setupPool(config.getInt(CONFIG_MAX_PARTITION_SIZE), config.getInt(CONFIG_POOL_SIZE));
-        else
+            else
                 factory.setupPool(config.getInt(CONFIG_POOL_SIZE));
 
         return factory.getNoTx();
@@ -183,8 +184,7 @@ public final class OrientGraph implements Graph {
             if (ElementHelper.getIdValue(keyValues).isPresent()) throw Vertex.Exceptions.userSuppliedIdsNotSupported();
 
             String label = ElementHelper.getLabelValue(keyValues).orElse(OImmutableClass.VERTEX_CLASS_NAME);
-            String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
-            OrientVertex vertex = new OrientVertex(this, className);
+            OrientVertex vertex = new OrientVertex(this, label);
             vertex.property(keyValues);
 
             vertex.save();
@@ -261,32 +261,42 @@ public final class OrientGraph implements Graph {
         return iValue;
     }
 
-    public Stream<OrientVertex> getIndexedVertices(OIndex<Object> index, Optional<Object> valueOption) {
+    public Stream<OrientVertex> getIndexedVertices(OIndex<Object> index, Iterator<Object> valueIter) {
+        return getIndexedElements(index, valueIter, OrientVertex::new);
+    }
+
+    public Stream<OrientEdge> getIndexedEdges(OIndex<Object> index, Iterator<Object> valueIter) {
+        return getIndexedElements(index, valueIter, OrientEdge::new);
+    }
+
+    private <ElementType extends OrientElement> Stream<ElementType> getIndexedElements(
+            OIndex<Object> index,
+            Iterator<Object> valuesIter,
+            BiFunction<OrientGraph, OIdentifiable, ElementType> newElement) {
         return executeWithConnectionCheck(() -> {
             makeActive();
 
             if (index == null) {
-                // NO INDEX
-                return Collections.<OrientVertex> emptyList().stream();
+                return Collections.<ElementType> emptyList().stream();
             } else {
-                if (!valueOption.isPresent()) {
-                    return index.cursor().toValues().stream().map(id -> new OrientVertex(this, id));
+                if (!valuesIter.hasNext()) {
+                    return index.cursor().toValues().stream().map(id -> newElement.apply(this, id));
                 } else {
-                    Object value = convertValue(index, valueOption.get());
-                    Object indexValue = index.get(value);
-                    if (indexValue == null) {
-                        return Collections.<OrientVertex> emptyList().stream();
-                    } else if (!(indexValue instanceof Iterable<?>)) {
-                        indexValue = Collections.singletonList(indexValue);
-                    }
-                    @SuppressWarnings("unchecked")
-                    Iterable<ORecordId> iterableIds = (Iterable<ORecordId>) indexValue;
-                    Stream<ORecordId> ids = StreamSupport.stream(iterableIds.spliterator(), false);
-                    Stream<ORecord> records = ids.map(id -> (ORecord) id.getRecord()).filter(r -> r != null);
-                    return records.map(r -> new OrientVertex(this, getRawDocument(r)));
+                    Stream<Object> convertedValues = StreamUtils.asStream(valuesIter).map(value -> convertValue(index, value));
+                    Stream<OIdentifiable> ids = convertedValues.flatMap(v -> lookupInIndex(index, v)).filter(r -> r != null);
+                    Stream<ORecord> records = ids.map(id -> id.getRecord());
+                    return records.map(r -> newElement.apply(this, getRawDocument(r)));
                 }
             }
         });
+    }
+
+    private Stream<OIdentifiable> lookupInIndex(OIndex<Object> index, Object value) {
+        Object fromIndex = index.get(value);
+        if (fromIndex instanceof Iterable)
+            return StreamUtils.asStream(((Iterable) fromIndex).iterator());
+        else
+            return Stream.of((OIdentifiable) fromIndex);
     }
 
     private OIndexManager getIndexManager() {
@@ -512,14 +522,18 @@ public final class OrientGraph implements Graph {
         }
     }
 
-    public void createVertexClass(final String className) {
+    public String createVertexClass(final String label) {
         makeActive();
+        String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
         createClass(className, OImmutableClass.VERTEX_CLASS_NAME);
+        return className;
     }
 
-    public void createEdgeClass(final String className) {
+    public String createEdgeClass(final String label) {
         makeActive();
+        String className = labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
         createClass(className, OImmutableClass.EDGE_CLASS_NAME);
+        return className;
     }
 
     public void createClass(final String className, final String superClassName) {
@@ -584,13 +598,13 @@ public final class OrientGraph implements Graph {
 
     public <E extends Element> void createVertexIndex(final String key, final String label, final Configuration configuration) {
         String className = labelToClassName(label, OImmutableClass.VERTEX_CLASS_NAME);
-        createVertexClass(className);
+        createVertexClass(label);
         createIndex(key, className, configuration);
     }
 
     public <E extends Element> void createEdgeIndex(final String key, final String label, final Configuration configuration) {
         String className = labelToClassName(label, OImmutableClass.EDGE_CLASS_NAME);
-        createEdgeClass(className);
+        createEdgeClass(label);
         createIndex(key, className, configuration);
     }
 

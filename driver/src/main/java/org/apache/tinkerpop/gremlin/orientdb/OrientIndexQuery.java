@@ -1,18 +1,20 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
 import com.orientechnologies.orient.core.index.OIndex;
+
+import java.util.Iterator;
 import java.util.Optional;
 
 public class OrientIndexQuery {
-    public final Optional<Object> value;
+    public final Iterator<Object> values;
     public final OIndex index;
 
-    public OrientIndexQuery(OIndex index, Optional<Object> value) {
+    public OrientIndexQuery(OIndex index, Iterator<Object> values) {
         this.index = index;
-        this.value = value;
+        this.values = values;
     }
 
     public String toString() {
-        return "OrientIndexQuery(index=" + index + ", value=" + value + ")";
+        return "OrientIndexQuery(index=" + index + ")";
     }
 }

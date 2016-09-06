@@ -4,19 +4,18 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.util.StringFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public final class OrientEdge extends OrientElement implements Edge {
 
@@ -33,8 +32,8 @@ public final class OrientEdge extends OrientElement implements Edge {
         label = checkNotNull(iLabel, "label on edge " + rawElement);
     }
 
-    public OrientEdge(OrientGraph graph, String className, final OIdentifiable out, final OIdentifiable in, final String iLabel) {
-        this(graph, createRawElement(graph, className), out, in, iLabel);
+    public OrientEdge(OrientGraph graph, String label, final OIdentifiable out, final OIdentifiable in, final String iLabel) {
+        this(graph, createRawElement(graph, label), out, in, iLabel);
     }
 
     public OrientEdge(OrientGraph graph, final OIdentifiable out, final OIdentifiable in, final String iLabel) {
@@ -49,12 +48,16 @@ public final class OrientEdge extends OrientElement implements Edge {
         this(graph, rawDocument, rawDocument.getClassName());
     }
 
+    public OrientEdge(final OrientGraph graph, final OIdentifiable rawElement) {
+        this(graph, (rawElement instanceof ODocument) ? ((ODocument) rawElement) : new ODocument(rawElement.getIdentity()));
+    }
+
     public static OIdentifiable getConnection(final ODocument iEdgeRecord, final Direction iDirection) {
         return iEdgeRecord.rawField(iDirection == Direction.OUT ? OrientGraphUtils.CONNECTION_OUT : OrientGraphUtils.CONNECTION_IN);
     }
 
-    protected static ODocument createRawElement(OrientGraph graph, String className) {
-        graph.createEdgeClass(className);
+    protected static ODocument createRawElement(OrientGraph graph, String label) {
+        String className = graph.createEdgeClass(label);
         return new ODocument(className);
     }
 

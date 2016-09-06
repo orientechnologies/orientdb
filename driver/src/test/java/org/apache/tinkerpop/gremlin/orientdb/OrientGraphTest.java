@@ -1,5 +1,19 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Edge;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+import org.apache.tinkerpop.gremlin.structure.Property;
+import org.apache.tinkerpop.gremlin.structure.Transaction;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.VertexProperty;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.Iterator;
+import java.util.Map;
+
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.tinkerpop.gremlin.structure.Transaction.CLOSE_BEHAVIOR.COMMIT;
@@ -13,23 +27,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-
-import java.util.Iterator;
-import java.util.Map;
-
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
-import org.apache.tinkerpop.gremlin.structure.Direction;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Graph;
-import org.apache.tinkerpop.gremlin.structure.Property;
-import org.apache.tinkerpop.gremlin.structure.Transaction;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.apache.tinkerpop.gremlin.structure.VertexProperty;
-import org.hamcrest.Matchers;
-import org.junit.Assert;
-import org.junit.Test;
-
-import com.google.common.collect.Lists;
 
 public class OrientGraphTest {
 
@@ -287,4 +284,17 @@ public class OrientGraphTest {
         }
     }
 
+    @Test
+    public void checkClassNameConstruction() {
+        String edgeLabel = "edge_label";
+        String vertexLabel = "vertex_label";
+        OrientGraphFactory factory = new OrientGraphFactory("memory:myGraph");
+        OrientGraph graph = factory.getNoTx();
+
+        graph.createVertexClass(vertexLabel);
+        graph.createEdgeClass(edgeLabel);
+
+        graph.database().browseClass(OImmutableClass.VERTEX_CLASS_NAME + "_" + vertexLabel);
+        graph.database().browseClass(OImmutableClass.EDGE_CLASS_NAME + "_" + edgeLabel);
+    }
 }
