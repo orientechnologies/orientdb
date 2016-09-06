@@ -109,7 +109,7 @@ public class OCommandExecutorSQLTruncateClass extends OCommandExecutorSQLAbstrac
     if (schemaClass == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final long recs = schemaClass.count();
+    final long recs = schemaClass.count(deep);
     if (recs > 0 && !unsafe) {
       if (schemaClass.isSubClassOf("V")) {
         throw new OCommandExecutionException(
