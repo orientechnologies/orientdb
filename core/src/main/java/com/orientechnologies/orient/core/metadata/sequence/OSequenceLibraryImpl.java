@@ -22,9 +22,9 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
   @Override
   public void create() {
-    
+
   }
-  
+
   public void create(ODatabaseDocumentInternal database) {
     init(database);
   }
@@ -48,7 +48,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
       }
     }
   }
-  
+
   @Override
   public void close() {
     sequences.clear();
@@ -72,7 +72,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
 
     return sequences.get(iName.toUpperCase());
   }
-  
+
   @Override
   public OSequence getSequence(String iName) {
       throw new UnsupportedOperationException();
@@ -82,7 +82,7 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   public OSequence createSequence(String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params) {
     throw new UnsupportedOperationException("use api with database for internal");
   }
-  
+
   public OSequence createSequence(ODatabaseDocumentInternal database, String iName, SEQUENCE_TYPE sequenceType, OSequence.CreateParams params) {
     init(database);
 
@@ -100,15 +100,14 @@ public class OSequenceLibraryImpl implements OSequenceLibrary {
   public void dropSequence(String iName) {
     throw new UnsupportedOperationException();
   }
-  
+
   public void dropSequence(ODatabaseDocumentInternal database, String iName) {
-    // TODO Auto-generated method stub
- 
-    OSequence seq = getSequence(database,iName);
+    String seqName = iName.toUpperCase();
+    OSequence seq = getSequence(database, seqName);
 
     if (seq != null) {
       seq.getDocument().delete();
-      sequences.remove(iName);
+      sequences.remove(seqName);
     }
   }
 
