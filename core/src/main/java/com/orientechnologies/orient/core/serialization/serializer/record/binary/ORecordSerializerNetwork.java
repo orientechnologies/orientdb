@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 
@@ -64,6 +65,9 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     else if (iRecord instanceof OBlob) {
       iRecord.fromStream(iSource);
       return iRecord;
+    } else if (iRecord instanceof ORecordFlat) {
+      iRecord.fromStream(iSource);
+      return iRecord;
     }
 
     BytesContainer container = new BytesContainer(iSource);
@@ -85,6 +89,8 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   @Override
   public byte[] toStream(final ORecord iSource, final boolean iOnlyDelta) {
     if (iSource instanceof OBlob) {
+      return iSource.toStream();
+    } else if (iSource instanceof ORecordFlat) {
       return iSource.toStream();
     } else {
       final BytesContainer container = new BytesContainer();
