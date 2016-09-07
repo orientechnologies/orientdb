@@ -51,6 +51,9 @@ public class OFindReferencesStatementExecutionTest {
     }
 
     OTodoResultSet result = db.query("find references " + linked.getIdentity());
+
+    printExecutionPlan(result);
+
     for (int i = 0; i < 5; i++) {
       Assert.assertTrue(result.hasNext());
       OResult next = result.next();
@@ -60,6 +63,18 @@ public class OFindReferencesStatementExecutionTest {
     Assert.assertFalse(result.hasNext());
     Assert.assertTrue(ridsToMatch.isEmpty());
     result.close();
+  }
+
+  private void printExecutionPlan(OTodoResultSet result) {
+    printExecutionPlan(null, result);
+  }
+
+  private void printExecutionPlan(String query, OTodoResultSet result) {
+    if (query != null) {
+      System.out.println(query);
+    }
+    result.getExecutionPlan().ifPresent(x -> System.out.println(x.prettyPrint(0, 3)));
+    System.out.println();
   }
 
 }

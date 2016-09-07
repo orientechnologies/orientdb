@@ -256,4 +256,24 @@ public class FindReferencesStep extends AbstractExecutionStep {
     }
     return result;
   }
+
+  @Override public String prettyPrint(int depth, int indent) {
+    String spaces = OExecutionStepInternal.getIndent(depth, indent);
+    StringBuilder result = new StringBuilder();
+    result.append(spaces);
+    result.append("+ FIND REFERENCES\n");
+    result.append(spaces);
+
+    if ((this.classes == null || this.classes.isEmpty()) && (this.clusters == null || this.clusters.isEmpty())) {
+      result.append("  (all db)");
+    } else {
+      if (this.classes != null && this.classes.size() > 0) {
+        result.append("  classes: " + this.classes);
+      }
+      if (this.clusters != null && this.clusters.size() > 0) {
+        result.append("  classes: " + this.clusters);
+      }
+    }
+    return result.toString();
+  }
 }
