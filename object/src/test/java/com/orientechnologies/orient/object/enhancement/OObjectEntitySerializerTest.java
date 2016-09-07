@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.object.enhancement;
 
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import org.testng.annotations.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author LomakiA <a href="mailto:Andrey.Lomakin@exigenservices.com">Andrey Lomakin</a>
@@ -11,37 +13,37 @@ import static org.testng.Assert.assertTrue;
  */
 public class OObjectEntitySerializerTest {
 
-	private OObjectDatabaseTx databaseTx;
+  private OObjectDatabaseTx databaseTx;
 
-	@BeforeClass
-	protected void setUp() throws Exception {
-		databaseTx = new OObjectDatabaseTx("memory:OObjectEntitySerializerTest");
-		databaseTx.create();
+  @Before
+  public void setUp() throws Exception {
+    databaseTx = new OObjectDatabaseTx("memory:OObjectEntitySerializerTest");
+    databaseTx.create();
 
-		databaseTx.getEntityManager().registerEntityClass(ExactEntity.class);
+    databaseTx.getEntityManager().registerEntityClass(ExactEntity.class);
 
-	}
+  }
 
-	@AfterClass
-	protected void tearDown() {
-		databaseTx.drop();
-	}
+  @After
+  public void tearDown() {
+    databaseTx.drop();
+  }
 
-	@Test
+  @Test
   public void testCallbacksHierarchy() {
-		ExactEntity entity = new ExactEntity();
-		databaseTx.save(entity);
+    ExactEntity entity = new ExactEntity();
+    databaseTx.save(entity);
 
     assertTrue(entity.callbackExecuted());
   }
 
-	@Test
-	public void testCallbacksHierarchyUpdate() {
-		ExactEntity entity = new ExactEntity();
-		entity = databaseTx.save(entity);
+  @Test
+  public void testCallbacksHierarchyUpdate() {
+    ExactEntity entity = new ExactEntity();
+    entity = databaseTx.save(entity);
 
-		entity.reset();
-		databaseTx.save(entity);
-		assertTrue(entity.callbackExecuted());
-	}
+    entity.reset();
+    databaseTx.save(entity);
+    assertTrue(entity.callbackExecuted());
+  }
 }
