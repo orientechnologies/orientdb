@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.OTemporaryRidGenerator;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.parser.OIfStatement;
@@ -53,6 +54,7 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import javax.script.*;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Executes Script Commands.
@@ -60,10 +62,11 @@ import java.util.*;
  * @author Luca Garulli
  * @see OCommandScript
  */
-public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest {
+public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest, OTemporaryRidGenerator {
   private static final int             MAX_DELAY     = 100;
   protected OCommandScript             request;
   protected DISTRIBUTED_EXECUTION_MODE executionMode = DISTRIBUTED_EXECUTION_MODE.LOCAL;
+  protected AtomicInteger              serialTempRID = new AtomicInteger(0);
 
   public OCommandExecutorScript() {
   }
@@ -208,6 +211,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
     int maxRetry = 1;
 
     context.setVariable("transactionRetries", 0);
+    context.setVariable("parentQuery", this);
 
     for (int retry = 1; retry <= maxRetry; retry++) {
       try {
@@ -622,5 +626,10 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   @Override
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.WRITE;
+  }
+
+  @Override
+  public int getTemporaryRIDCounter(OCommandContext iContext) {
+    return serialTempRID.incrementAndGet();
   }
 }

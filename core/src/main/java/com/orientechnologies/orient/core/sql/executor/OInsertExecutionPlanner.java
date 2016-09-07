@@ -11,13 +11,17 @@ import java.util.List;
  */
 public class OInsertExecutionPlanner {
 
-  private final OIdentifier      targetClass;
-  private final OIdentifier      targetClusterName;
-  private final OCluster         targetCluster;
-  private final OIndexIdentifier targetIndex;
-  private final OInsertBody      insertBody;
-  private final OProjection      returnStatement;
-  private final OSelectStatement selectStatement;
+  protected OIdentifier      targetClass;
+  protected OIdentifier      targetClusterName;
+  protected OCluster         targetCluster;
+  protected OIndexIdentifier targetIndex;
+  protected OInsertBody      insertBody;
+  protected OProjection      returnStatement;
+  protected OSelectStatement selectStatement;
+
+  public OInsertExecutionPlanner() {
+
+  }
 
   public OInsertExecutionPlanner(OInsertStatement statement) {
     this.targetClass = statement.getTargetClass() == null ? null : statement.getTargetClass().copy();

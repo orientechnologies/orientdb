@@ -2,9 +2,17 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
 import java.util.Map;
 
-public class ODropClusterStatement extends OStatement {
+public class ODropClusterStatement extends ODDLStatement {
   protected OIdentifier name;
   protected OInteger    id;
 
@@ -14,6 +22,45 @@ public class ODropClusterStatement extends OStatement {
 
   public ODropClusterStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeDDL(OCommandContext ctx) {
+    ODatabaseInternal database = (ODatabaseInternal) ctx.getDatabase();
+    // CHECK IF ANY CLASS IS USING IT
+    final int clusterId;
+    if (id != null) {
+      clusterId = id.getValue().intValue();
+    } else {
+      clusterId = database.getStorage().getClusterIdByName(name.getStringValue());
+      if (clusterId < 0) {
+        throw new OCommandExecutionException("Cluster not found: " + name);
+      }
+    }
+    for (OClass iClass : database.getMetadata().getSchema().getClasses()) {
+      for (int i : iClass.getClusterIds()) {
+        if (i == clusterId) {
+          // IN USE
+          throw new OCommandExecutionException(
+              "Cannot drop cluster " + clusterId + " because it's used by class " + iClass.getName());
+        }
+      }
+    }
+
+    // REMOVE CACHE OF COMMAND RESULTS IF ACTIVE
+    String clusterName = database.getClusterNameById(clusterId);
+    if (clusterName == null) {
+      throw new OCommandExecutionException("Cluster not found: " + clusterId);
+    }
+    database.getMetadata().getCommandCache().invalidateResultsOfCluster(clusterName);
+
+    database.dropCluster(clusterId, true);
+
+    OInternalResultSet rs = new OInternalResultSet();
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "drop cluster");
+    result.setProperty("clusterName", name.getStringValue());
+    rs.add(result);
+    return rs;
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {

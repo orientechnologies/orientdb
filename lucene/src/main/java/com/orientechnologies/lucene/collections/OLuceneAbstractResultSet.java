@@ -65,10 +65,10 @@ public abstract class OLuceneAbstractResultSet implements Set<OIdentifiable> {
         topDocs = queryContext.getSearcher().search(query, PAGE_SIZE);
         break;
       case FILTER_SORT:
-        topDocs = queryContext.getSearcher().search(query, queryContext.filter, PAGE_SIZE, queryContext.sort);
+        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE, queryContext.sort);
         break;
       case FILTER:
-        topDocs = queryContext.getSearcher().search(query, queryContext.filter, PAGE_SIZE);
+        topDocs = queryContext.getSearcher().search(query, PAGE_SIZE);
         break;
       case SORT:
         topDocs = queryContext.getSearcher().search(query, PAGE_SIZE, queryContext.sort);

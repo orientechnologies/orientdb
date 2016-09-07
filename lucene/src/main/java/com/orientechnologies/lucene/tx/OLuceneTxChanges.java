@@ -20,7 +20,6 @@ package com.orientechnologies.lucene.tx;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
@@ -32,20 +31,19 @@ import java.util.Set;
  */
 public interface OLuceneTxChanges {
 
-  public void put(Object key, OIdentifiable value, Document doc) throws IOException;
+  void put(Object key, OIdentifiable value, Document doc) throws IOException;
 
-  public void remove(Object key, OIdentifiable value) throws IOException;
+  void remove(Object key, OIdentifiable value) throws IOException;
 
-  public IndexSearcher searcher() throws IOException;
+  IndexSearcher searcher() throws IOException;
 
-  public long numDocs();
+  long numDocs();
 
-  public Set<Document> getDeletedDocs();
+  Set<Document> getDeletedDocs();
 
-  public boolean isDeleted(Document document, Object key, OIdentifiable value);
+  boolean isDeleted(Document document, Object key, OIdentifiable value);
 
-  public boolean isUpdated(Document document, Object key, OIdentifiable value);
+  boolean isUpdated(Document document, Object key, OIdentifiable value);
 
-
-  public long deletedDocs(Query query, Filter filter);
+  long deletedDocs(Query query);
 }
