@@ -422,6 +422,14 @@ public final class OrientGraph implements Graph {
     }
 
     /**
+     * (Blueprints Extension) Drops the database
+     */
+    public void drop() {
+        makeActive();
+        getRawDatabase().drop();
+    }
+
+    /**
      * Checks if the Graph has been closed.
      *
      * @return True if it is closed, otherwise false

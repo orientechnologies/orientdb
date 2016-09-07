@@ -1,5 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
@@ -296,5 +297,20 @@ public class OrientGraphTest {
 
         graph.database().browseClass(OImmutableClass.VERTEX_CLASS_NAME + "_" + vertexLabel);
         graph.database().browseClass(OImmutableClass.EDGE_CLASS_NAME + "_" + edgeLabel);
+    }
+
+    @Test
+    public void checkMemoryDrop() {
+
+        OrientGraphFactory factory = new OrientGraphFactory("memory:_dropDB");
+
+        OrientGraph graph = factory.getNoTx();
+
+        Assert.assertNotNull(Orient.instance().getStorage("_dropDB"));
+
+        graph.drop();
+
+        Assert.assertNull(Orient.instance().getStorage("_dropDB"));
+
     }
 }
