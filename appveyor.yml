@@ -14,3 +14,4 @@ install:
 
 build_script:
   - mvn clean install -P travis -B -f driver/pom.xml -Dfailsafe.timeout=0
+  - cd tests-scala & sbt test
