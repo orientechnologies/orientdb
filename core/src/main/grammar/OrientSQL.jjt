@@ -3726,10 +3726,9 @@ OFindReferencesStatement FindReferencesStatement():
     [
     	<LBRACKET> { jjtThis.targets = new ArrayList<SimpleNode>(); }
     	(
-    	    LOOKAHEAD(IndexIdentifier())
-    		lastTarget = IndexIdentifier()
+    	    lastTarget = Identifier()
             |
-    		lastTarget = Identifier()
+            lastTarget = Cluster()
     	){ jjtThis.targets.add(lastTarget); }
     	(
     		<COMMA>
