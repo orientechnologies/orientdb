@@ -1,24 +1,12 @@
 package org.apache.tinkerpop.gremlin.orientdb.gremlintest;
 
-import static java.util.Arrays.asList;
-import static org.junit.Assume.assumeFalse;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-
+import com.google.common.collect.Sets;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.AbstractGraphProvider;
 import org.apache.tinkerpop.gremlin.LoadGraphWith;
-import org.apache.tinkerpop.gremlin.orientdb.OrientEdge;
-import org.apache.tinkerpop.gremlin.orientdb.OrientElement;
-import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
-import org.apache.tinkerpop.gremlin.orientdb.OrientProperty;
-import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
-import org.apache.tinkerpop.gremlin.orientdb.OrientVertexProperty;
+import org.apache.tinkerpop.gremlin.orientdb.*;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.FeatureSupportTest.GraphFunctionalityTest;
 import org.apache.tinkerpop.gremlin.structure.Graph;
@@ -26,9 +14,11 @@ import org.apache.tinkerpop.gremlin.structure.GraphTest;
 import org.apache.tinkerpop.gremlin.structure.SerializationTest.GryoTest;
 import org.junit.AssumptionViolatedException;
 
-import com.google.common.collect.Sets;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
+import java.io.File;
+import java.util.*;
+
+import static java.util.Arrays.asList;
+import static org.junit.Assume.assumeFalse;
 
 public class OrientGraphProvider extends AbstractGraphProvider {
 
@@ -88,8 +78,13 @@ public class OrientGraphProvider extends AbstractGraphProvider {
 
     @Override
     public void clear(Graph graph, Configuration configuration) throws Exception {
-        if (graph != null)
-            graph.close();
+        if (graph != null) {
+            OrientGraph g = (OrientGraph) graph;
+            if (!g.isClosed()) {
+                g.drop();
+            }
+        }
+
     }
 
     @Override
