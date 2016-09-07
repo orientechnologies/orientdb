@@ -217,7 +217,7 @@ public abstract class OLuceneIndexEngineAbstract<V> extends OSharedResourceAdapt
     directory = directoryFactory.createDirectory(getDatabase(), name, metadata);
     final IndexWriter indexWriter = createIndexWriter(directory);
     mgrWriter = new TrackingIndexWriter(indexWriter);
-    searcherManager = new SearcherManager(indexWriter, true, null);
+    searcherManager = new SearcherManager(indexWriter, true, true, null);
 
     if (nrt != null) {
       nrt.close();

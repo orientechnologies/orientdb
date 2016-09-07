@@ -21,11 +21,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FloatField;
-import org.apache.lucene.document.IntField;
-import org.apache.lucene.document.LongField;
+import org.apache.lucene.document.LegacyDoubleField;
+import org.apache.lucene.document.LegacyFloatField;
+import org.apache.lucene.document.LegacyIntField;
+import org.apache.lucene.document.LegacyLongField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.Term;
@@ -34,7 +34,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.search.LegacyNumericRangeQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
@@ -56,16 +56,16 @@ public class OLuceneIndexType {
     if (value instanceof Number) {
       Number number = (Number) value;
       if (value instanceof Long)
-        return new LongField(fieldName, number.longValue(), store);
+        return new LegacyLongField(fieldName, number.longValue(), store);
       else if (value instanceof Float)
-        return new FloatField(fieldName, number.floatValue(), store);
+        return new LegacyFloatField(fieldName, number.floatValue(), store);
       else if (value instanceof Double)
-        return new DoubleField(fieldName, number.doubleValue(), store);
+        return new LegacyDoubleField(fieldName, number.doubleValue(), store);
 
-      return new IntField(fieldName, number.intValue(), store);
+      return new LegacyIntField(fieldName, number.intValue(), store);
 
     } else if (value instanceof Date) {
-      return new LongField(fieldName, ((Date) value).getTime(), store);
+      return new LegacyLongField(fieldName, ((Date) value).getTime(), store);
     }
 
     if (fieldName.equalsIgnoreCase(OLuceneIndexEngineAbstract.RID)) {
@@ -175,8 +175,8 @@ public class OLuceneIndexType {
 
   public static Sort sort(Query query, OIndexDefinition index, boolean ascSortOrder) {
     String key = index.getFields().iterator().next();
-    Number number = ((NumericRangeQuery) query).getMin();
-    number = number != null ? number : ((NumericRangeQuery) query).getMax();
+    Number number = ((LegacyNumericRangeQuery<Number>) query).getMin();
+    number = number != null ? number : ((LegacyNumericRangeQuery<Number>) query).getMax();
     SortField.Type fieldType = SortField.Type.INT;
     if (number instanceof Long) {
       fieldType = SortField.Type.LONG;

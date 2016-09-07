@@ -25,7 +25,6 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.util.QueryBuilder;
 
 import java.io.IOException;
 
@@ -49,7 +48,7 @@ public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
   public IndexSearcher searcher() {
     // TODO optimize
     try {
-      return new IndexSearcher(DirectoryReader.open(writer, true));
+      return new IndexSearcher(DirectoryReader.open(writer, true, true));
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error during searcher instantiation", e);
     }
@@ -61,15 +60,15 @@ public abstract class OLuceneTxChangesAbstract implements OLuceneTxChanges {
   public long deletedDocs(Query query) {
 
     try {
-      IndexSearcher indexSearcher = new IndexSearcher(DirectoryReader.open(deletedIdx, true));
+      IndexSearcher indexSearcher = new IndexSearcher(DirectoryReader.open(deletedIdx, true, true));
 
-//      if (filter != null) {
-//        TopDocs search = indexSearcher.search(query, filter, Integer.MAX_VALUE);
-//        return search.totalHits;
-//      } else {
-        TopDocs search = indexSearcher.search(query, Integer.MAX_VALUE);
-        return search.totalHits;
-//      }
+      //      if (filter != null) {
+      //        TopDocs search = indexSearcher.search(query, filter, Integer.MAX_VALUE);
+      //        return search.totalHits;
+      //      } else {
+      TopDocs search = indexSearcher.search(query, Integer.MAX_VALUE);
+      return search.totalHits;
+      //      }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error during searcher instantiation", e);
     }
