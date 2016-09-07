@@ -55,14 +55,14 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   private final OEngine                                memory;
   private final OEngine                                disk;
   private final Thread                                 shutdownThread;
+  private final Orient                                 orient;
 
-  public OEmbeddedDBFactory(String directoryPath, OrientDBConfig configurations) {
+  public OEmbeddedDBFactory(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
-
-    memory = Orient.instance().getEngine("memory");
-    memory.startup();
-    disk = Orient.instance().getEngine("plocal");
-    disk.startup();
+    this.orient = orient;
+    orient.onEmbeddedFactoryInit(this);
+    memory = orient.getEngine("memory");
+    disk = orient.getEngine("plocal");
 
     this.basePath = new java.io.File(directoryPath).getAbsolutePath();
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
@@ -255,9 +255,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     }
     storages.clear();
 
-    // SHUTDOWN ENGINES
-    memory.shutdown();
-    disk.shutdown();
+    orient.onEmbeddedFactoryClose(this);
   }
 
   public OrientDBConfig getConfigurations() {

@@ -19,6 +19,36 @@
  */
 package com.orientechnologies.orient.core;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
@@ -35,6 +65,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
+import com.orientechnologies.orient.core.db.OEmbeddedDBFactory;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
@@ -42,16 +73,6 @@ import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.shutdown.OShutdownHandler;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
   public static final String                                                         ORIENTDB_HOME                 = "ORIENTDB_HOME";
@@ -94,11 +115,14 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   private final OLocalRecordCacheFactory                                             localRecordCache              = new OLocalRecordCacheFactoryImpl();
 
+  private Set<OEmbeddedDBFactory>                                                    factories                     = Collections
+      .newSetFromMap(new ConcurrentHashMap<>());
+
   static {
     instance.startup();
   }
 
-  private final String os;
+  private final String                   os;
 
   private volatile Timer                 timer;
   private volatile ORecordFactoryManager recordFactoryManager = new ORecordFactoryManager();
@@ -268,8 +292,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Add handler which will be executed during {@link #shutdown()} call.
    *
-   * @param shutdownHandler
-   *          Shutdown handler instance.
+   * @param shutdownHandler Shutdown handler instance.
    */
   public void addShutdownHandler(OShutdownHandler shutdownHandler) {
     engineLock.writeLock().lock();
@@ -285,7 +308,7 @@ public class Orient extends OListenerManger<OOrientListener> {
    */
   private void initShutdownQueue() {
     addShutdownHandler(new OShutdownWorkersHandler());
-//    addShutdownHandler(new OShutdownEnginesHandler());
+    // addShutdownHandler(new OShutdownEnginesHandler());
     addShutdownHandler(new OShutdownPendingThreadsHandler());
     addShutdownHandler(new OShutdownProfilerHandler());
     addShutdownHandler(new OShutdownCallListenersHandler());
@@ -376,7 +399,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public void closeAllStorages() {
-   shutdownAllStorages();
+    shutdownAllStorages();
   }
 
   private void shutdownAllStorages() {
@@ -464,9 +487,8 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (!engine.isRunning()) {
         final List<String> knownEngines = new ArrayList<String>(engines.keySet());
         if (!startEngine(engine))
-          throw new OConfigurationException(
-              "Error on opening database: the engine '" + engineName + "' was unable to start. URL was: " + iURL
-                  + ". Registered engines was: " + knownEngines);
+          throw new OConfigurationException("Error on opening database: the engine '" + engineName
+              + "' was unable to start. URL was: " + iURL + ". Registered engines was: " + knownEngines);
       }
 
       // SEARCH FOR DB-NAME
@@ -565,8 +587,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Returns the engine by its name.
    *
-   * @param engineName
-   *          Engine name to retrieve
+   * @param engineName Engine name to retrieve
    * @return OEngine instance of found, otherwise null
    */
   public OEngine getEngine(final String engineName) {
@@ -595,8 +616,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   /**
-   * Obtains a {@link OEngine#isRunning() running} {@link OEngine engine} instance with the given {@code engineName}.
-   * If engine is not running, starts it.
+   * Obtains a {@link OEngine#isRunning() running} {@link OEngine engine} instance with the given {@code engineName}. If engine is
+   * not running, starts it.
    *
    * @param engineName the name of the engine to obtain.
    * @return the obtained running engine instance, never {@code null}.
@@ -1024,5 +1045,27 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public void setRunningDistributed(final boolean runningDistributed) {
     this.runningDistributed = runningDistributed;
+  }
+
+  public void onEmbeddedFactoryInit(OEmbeddedDBFactory embeddedFactory) {
+    OEngine memory = engines.get("memory");
+    if (!memory.isRunning())
+      memory.startup();
+    OEngine disc = engines.get("plocal");
+    if (!disc.isRunning())
+      disc.startup();
+    factories.add(embeddedFactory);
+  }
+
+  public void onEmbeddedFactoryClose(OEmbeddedDBFactory embeddedFactory) {
+    factories.remove(embeddedFactory);
+    if (factories.isEmpty()) {
+      OEngine memory = engines.get("memory");
+      if (memory.isRunning())
+        memory.shutdown();
+      OEngine disc = engines.get("plocal");
+      if (disc.isRunning())
+        disc.shutdown();
+    }
   }
 }

@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
@@ -68,8 +69,8 @@ public interface OrientDBFactory extends AutoCloseable {
 
     try {
       Class<?> kass = Class.forName("com.orientechnologies.orient.core.db.ORemoteDBFactory");
-      Constructor<?> constructor = kass.getConstructor(String[].class, OrientDBConfig.class);
-      factory = (OrientDBFactory) constructor.newInstance(hosts, configuration);
+      Constructor<?> constructor = kass.getConstructor(String[].class, OrientDBConfig.class, Orient.class);
+      factory = (OrientDBFactory) constructor.newInstance(hosts, configuration, Orient.instance());
     } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException e) {
       throw new ODatabaseException("OrientDB client API missing");
     } catch (InvocationTargetException e) {
@@ -86,7 +87,7 @@ public interface OrientDBFactory extends AutoCloseable {
    * @return a new embedded databases factory
    */
   static OEmbeddedDBFactory embedded(String directoryPath, OrientDBConfig config) {
-    return new OEmbeddedDBFactory(directoryPath, config);
+    return new OEmbeddedDBFactory(directoryPath, config, Orient.instance());
   }
 
   /**

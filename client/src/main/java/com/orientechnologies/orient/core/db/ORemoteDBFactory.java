@@ -43,11 +43,13 @@ public class ORemoteDBFactory implements OrientDBFactory {
   private final OEngine               remote;
   private final OrientDBConfig        configurations;
   private final Thread                shutdownThread;
+  private final Orient                orient;
 
-  public ORemoteDBFactory(String[] hosts, OrientDBConfig configurations) {
+  public ORemoteDBFactory(String[] hosts, OrientDBConfig configurations, Orient orient) {
     super();
     this.hosts = hosts;
-    remote = Orient.instance().getEngine("remote");
+    this.orient = orient;
+    remote = orient.getEngine("remote");
 
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
 
