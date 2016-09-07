@@ -6,7 +6,7 @@ jdk:
   - oraclejdk8
  
 before_script:
-  - echo "MAVEN_OPTS='-Xmx3g -XX:MaxDirectMemorySize=1024g'" > ~/.mavenrc
+  - echo "MAVEN_OPTS='-Xmx3g'" > ~/.mavenrc
 
 install:
   - mvn install dependency:go-offline -Pskip-formatter -DskipTests=true -q -f driver/pom.xml -Dfailsafe.timeout=0
