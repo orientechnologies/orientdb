@@ -68,7 +68,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     user = iUser;
     password = iPassword;
     if (createPool)
-      pool = new OPartitionedDatabasePool(url, user, password, 64, Runtime.getRuntime().availableProcessors()).setAutoCreate(true);
+      pool = new OPartitionedDatabasePool(url, user, password, 8, -1).setAutoCreate(true);
   }
 
   /**
@@ -216,7 +216,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
       pool.close();
     }
 
-    pool = new OPartitionedDatabasePool(url, user, password, 64, iMax).setAutoCreate(true);
+    pool = new OPartitionedDatabasePool(url, user, password, 8, iMax).setAutoCreate(true);
 
     for (Map.Entry<String, Object> entry : properties.entrySet()) {
       pool.setProperty(entry.getKey(), entry.getValue());

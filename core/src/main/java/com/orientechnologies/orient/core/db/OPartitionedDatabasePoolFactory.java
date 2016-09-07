@@ -113,7 +113,7 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
       poolStore.remove(poolIdentity, pool);
 
     while (true) {
-      pool = new OPartitionedDatabasePool(url, userName, userPassword, 64, maxPoolSize);
+      pool = new OPartitionedDatabasePool(url, userName, userPassword, 8, maxPoolSize);
 
       final OPartitionedDatabasePool oldPool = poolStore.putIfAbsent(poolIdentity, pool);
 
