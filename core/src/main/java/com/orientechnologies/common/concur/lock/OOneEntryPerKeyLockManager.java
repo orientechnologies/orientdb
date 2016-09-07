@@ -50,13 +50,7 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   private final   boolean                                   enabled;
   private final   int                                       amountOfCachedInstances;
 
-  private final static Comparable<Object> NULL_KEY = new Comparable<Object>() {
-    @SuppressWarnings("NullableProblems")
-    @Override
-    public int compareTo(Object o) {
-      return o == NULL_KEY ? 0 : -1;
-    }
-  };
+  private final static Object NULL_KEY = new Object();
 
   @SuppressWarnings("serial")
   private static class CountableLock {
@@ -230,11 +224,12 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
 
     final List<Comparable> comparables = new ArrayList<Comparable>();
 
+    int seenNulls = 0;
     for (T value : values) {
       if (value instanceof Comparable) {
         comparables.add((Comparable) value);
       } else if (value == null) {
-        comparables.add(NULL_KEY);
+        ++seenNulls;
       } else {
         throw new IllegalArgumentException(
             "In order to lock value in batch it should implement " + Comparable.class.getName() + " interface");
@@ -243,11 +238,14 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
 
     Collections.sort(comparables);
 
-    for (Comparable value : comparables) {
-      acquireExclusiveLock((T) value);
-    }
+    final Lock[] locks = new Lock[comparables.size() + seenNulls];
+    int i = 0;
+    for (int j = 0; j < seenNulls; ++j)
+      locks[i++] = acquireExclusiveLock((T) NULL_KEY);
+    for (Comparable value : comparables)
+      locks[i++] = acquireExclusiveLock((T) value);
 
-    return null;
+    return locks;
   }
 
   @Override
@@ -257,11 +255,12 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
 
     final List<Comparable> comparables = new ArrayList<Comparable>();
 
+    int seenNulls = 0;
     for (T value : values) {
       if (value instanceof Comparable) {
         comparables.add((Comparable) value);
       } else if (value == null) {
-        comparables.add(NULL_KEY);
+        ++seenNulls;
       } else {
         throw new IllegalArgumentException(
             "In order to lock value in batch it should implement " + Comparable.class.getName() + " interface");
@@ -270,11 +269,13 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
 
     Collections.sort(comparables);
 
-    final Lock[] locks = new Lock[comparables.size()];
+    final Lock[] locks = new Lock[comparables.size() + seenNulls];
     int i = 0;
-    for (Comparable value : comparables) {
+    for (int j = 0; j < seenNulls; ++j)
+      locks[i++] = acquireExclusiveLock((T) NULL_KEY);
+    for (Comparable value : comparables)
       locks[i++] = acquireExclusiveLock((T) value);
-    }
+
     return locks;
   }
 
@@ -306,7 +307,7 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
   }
 
   @SuppressWarnings("NullableProblems")
-  private static class CountableLockWrapper implements Lock {
+  /* internal */ static class CountableLockWrapper implements Lock {
 
     private final CountableLock countableLock;
     private final boolean       read;
@@ -314,6 +315,10 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
     public CountableLockWrapper(CountableLock countableLock, boolean read) {
       this.countableLock = countableLock;
       this.read = read;
+    }
+
+    /* internal */ int getLockCount() { // for testing purposes
+      return countableLock.countLocks.get();
     }
 
     @Override
