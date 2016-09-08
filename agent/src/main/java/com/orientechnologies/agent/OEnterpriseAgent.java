@@ -41,6 +41,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.plugin.OPluginLifecycleListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
@@ -48,7 +49,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import java.util.Map;
 import java.util.UUID;
 
-public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener {
+public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabaseLifecycleListener, OPluginLifecycleListener {
   public static final String  EE                         = "ee.";
   private static final String ORIENDB_ENTERPRISE_VERSION = "2.2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
   public OServer              server;
@@ -81,7 +82,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
     }
 
     if (oServer.getPluginManager() != null) {
-//      oServer.getPluginManager().registerLifecycleListener(this);
+      oServer.getPluginManager().registerLifecycleListener(this);
     }
   }
 
@@ -148,7 +149,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract implements ODatabase
       uninstallProfiler();
 
       if (server.getPluginManager() != null) {
-//        server.getPluginManager().unregisterLifecycleListener(this);
+        server.getPluginManager().unregisterLifecycleListener(this);
       }
 
       Orient.instance().removeDbLifecycleListener(this);
