@@ -9,7 +9,6 @@ import gremlin.scala._
 
 class OrientReconnect extends WordSpec with ShouldMatchers {
 
-
   def startServer: Unit =
     OServerMain.create(false).startup().activate()
 
@@ -40,19 +39,20 @@ class OrientReconnect extends WordSpec with ShouldMatchers {
       createDb
       val graph = getGraph
 
-      graph.addVertex("label")
-      graph.V.count.head
+      graph.addVertex("label1")
+      graph.V.count.head shouldBe 1
 
       stopServer
 
-      intercept[OException] {
-        graph.V.count.head
+      intercept[Exception] {
+        graph.addVertex("label2")
       }
 
       startServer
 
-      graph.addVertex("label")
+      graph.addVertex("label3")
       graph.V.count.head
+      graph.V.count.head shouldBe 2
     }
   }
 }
