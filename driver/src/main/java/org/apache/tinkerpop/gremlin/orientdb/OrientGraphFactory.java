@@ -1,13 +1,13 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
-import com.orientechnologies.orient.core.db.ODatabaseFactory;
+import org.apache.commons.configuration.BaseConfiguration;
+import org.apache.commons.configuration.Configuration;
+import org.apache.tinkerpop.gremlin.structure.Graph;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import org.apache.commons.configuration.BaseConfiguration;
-import org.apache.commons.configuration.Configuration;
-import org.apache.tinkerpop.gremlin.structure.Graph;
 
 public final class OrientGraphFactory {
     public static String ADMIN = "admin";
@@ -120,7 +120,7 @@ public final class OrientGraphFactory {
      *            if true automatically opens the database
      */
     protected ODatabaseDocumentTx getDatabase(boolean create, boolean open) {
-        final ODatabaseDocumentTx db = new ODatabaseFactory().createDatabase("graph", url);
+        final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
         if (!db.getURL().startsWith("remote:") && !db.exists()) {
             if (create)
                 db.create();

@@ -152,7 +152,7 @@ public final class OrientGraph implements Graph {
                     this.pool.reCreatePool();
                     this.database = this.pool.acquire();
                 } else {
-                    ODatabaseDocumentTx replaceDb = new ODatabaseDocumentTx(this.database.getURL(), this.database.isKeepStorageOpen());
+                    ODatabaseDocumentTx replaceDb = new ODatabaseDocumentTx(this.database.getURL());
                     replaceDb.open(user, password);
                     this.database = replaceDb;
                 }
@@ -520,7 +520,7 @@ public final class OrientGraph implements Graph {
             throw e;
         } catch (Exception e) {
             OLogManager.instance().error(this, "Error during context close for db " + url, e);
-            throw new OException("Error during context close for db " + url, e);
+            throw new RuntimeException("Error during context close for db " + url, e);
         } finally {
             try {
                 database.close();
