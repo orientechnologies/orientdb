@@ -2,12 +2,19 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.sql.executor.OInternalResultSet;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
+import com.orientechnologies.orient.core.sql.executor.OTodoResultSet;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class OGrantStatement extends OStatement {
+public class OGrantStatement extends OSimpleExecStatement {
   protected OPermission permission;
   protected List<OResourcePathItem> resourceChain = new ArrayList<OResourcePathItem>();
   protected OIdentifier actor;
@@ -18,6 +25,60 @@ public class OGrantStatement extends OStatement {
 
   public OGrantStatement(OrientSql p, int id) {
     super(p, id);
+  }
+
+  @Override public OTodoResultSet executeSimple(OCommandContext ctx) {
+    ORole role = getDatabase().getMetadata().getSecurity().getRole(actor.getStringValue());
+    if (role == null)
+      throw new OCommandExecutionException("Invalid role: " + actor.getStringValue());
+
+    String resourcePath = toResourcePath(resourceChain, ctx);
+    role.grant(resourcePath, toPrivilege(permission.permission));
+    role.save();
+
+    OInternalResultSet rs = new OInternalResultSet();
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "grant");
+    result.setProperty("role", actor.getStringValue());
+    result.setProperty("permission", permission.toString());
+    result.setProperty("resource", resourcePath);
+    rs.add(result);
+    return rs;
+  }
+
+  private String toResourcePath(List<OResourcePathItem> resourceChain, OCommandContext ctx) {
+    Map<Object, Object> params = ctx.getInputParameters();
+    StringBuilder builder = new StringBuilder();
+    boolean first = true;
+    for (OResourcePathItem res : resourceChain) {
+      if (!first) {
+        builder.append(".");
+      }
+      res.toString(params, builder);
+      first = false;
+    }
+    return builder.toString();
+  }
+
+  protected int toPrivilege(String privilegeName) {
+    int privilege;
+    if ("CREATE".equals(privilegeName))
+      privilege = ORole.PERMISSION_CREATE;
+    else if ("READ".equals(privilegeName))
+      privilege = ORole.PERMISSION_READ;
+    else if ("UPDATE".equals(privilegeName))
+      privilege = ORole.PERMISSION_UPDATE;
+    else if ("DELETE".equals(privilegeName))
+      privilege = ORole.PERMISSION_DELETE;
+    else if ("EXECUTE".equals(privilegeName))
+      privilege = ORole.PERMISSION_EXECUTE;
+    else if ("ALL".equals(privilegeName))
+      privilege = ORole.PERMISSION_ALL;
+    else if ("NONE".equals(privilegeName))
+      privilege = ORole.PERMISSION_NONE;
+    else
+      throw new OCommandExecutionException("Unrecognized privilege '" + privilegeName + "'");
+    return privilege;
   }
 
   @Override public void toString(Map<Object, Object> params, StringBuilder builder) {
