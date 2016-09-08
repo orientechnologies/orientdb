@@ -154,7 +154,7 @@ public class OByteBufferPool implements OByteBufferPoolMXBean {
       pagesPerArea = closestPowerOfTwo(pagesPerArea);
 
       // we need not the biggest value, it may cause buffer overflow, but biggest after that.
-      while ((long) pagesPerArea * pageSize > maxChunkSize) {
+      while ((long) pagesPerArea * pageSize >= maxChunkSize) {
         pagesPerArea = pagesPerArea >>> 1;
       }
 
