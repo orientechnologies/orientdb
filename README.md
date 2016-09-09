@@ -30,7 +30,7 @@ You might want to use [orientdb-migrations](https://github.com/springnz/orientdb
 * commit on branch, create PR
 * final test before deploying: 
   * driver: mvn install -P release
-  * tests-scala: sbt test
+  * tests-scala: sbt clean test
 * merge PR
 * mvn clean deploy -Prelease
 * git tag
