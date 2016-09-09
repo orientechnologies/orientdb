@@ -407,11 +407,8 @@ public class OClientConnectionManager {
           OLogManager.instance().info(this, "Timeout on sending updated cluster configuration to the remote client %s",
               c.getRemoteAddress());
         }
-      } catch (IOException e) {
-        disconnect(c);
       } catch (Exception e) {
         OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
-        disconnect(c);
       }
     }
   }
