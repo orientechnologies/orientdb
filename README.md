@@ -33,7 +33,7 @@ You might want to use [orientdb-migrations](https://github.com/springnz/orientdb
   * tests-scala: sbt clean test
 * merge PR
 * mvn clean deploy -Prelease
-* git tag
+* git tag VERSION
 * bump versions to next SNAPSHOT (pom.xml, build.sbt)
 * git push
 * git push --tags
