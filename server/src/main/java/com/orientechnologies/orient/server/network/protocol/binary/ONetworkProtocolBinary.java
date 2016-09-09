@@ -408,7 +408,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           // THIS IS THE CASE OF A TOKEN OPERATION WITHOUT HANDSHAKE ON THIS CONNECTION.
           connection = server.getClientConnectionManager().connect(this);
           connection.setDisconnectOnAfter(true);
-          throw new ODatabaseException("It should never arrive here");
         }
         if (connection == null) {
           throw new OTokenSecurityException("missing session and token");
