@@ -349,8 +349,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     try {
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_REOPEN) {
         if (clientTxId >= 0 && connection == null
-            && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN)) {
-          //THIS EXCEPTION SHULD HAPPEN IN ANY CASE OF OPEN/CONNECT WITH SESSIONID >= 0, BUT FOR COMPATIBILITY IT'S ONLY IF THERE IS NO CONNECTION
+            && (requestType == OChannelBinaryProtocol.REQUEST_DB_OPEN || requestType == OChannelBinaryProtocol.REQUEST_CONNECT)) {
+          // THIS EXCEPTION SHULD HAPPEN IN ANY CASE OF OPEN/CONNECT WITH SESSIONID >= 0, BUT FOR COMPATIBILITY IT'S ONLY IF THERE
+          // IS NO CONNECTION
           shutdown();
           throw new OIOException("Found unknown session " + clientTxId);
         }
@@ -409,6 +410,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         if (connection == null && bytes != null && bytes.length > 0) {
           // THIS IS THE CASE OF A TOKEN OPERATION WITHOUT HANDSHAKE ON THIS CONNECTION.
           connection = server.getClientConnectionManager().connect(this);
+          connection.setDisconnectOnAfter(true);
         }
         if (connection == null) {
           throw new OTokenSecurityException("missing session and token");
@@ -457,6 +459,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     if (connection != null) {
       connection.endOperation();
+      if (connection.isDisconnectOnAfter()) {
+        server.getClientConnectionManager().disconnect(connection);
+      }
     }
     setDataCommandInfo(connection, "Listening");
   }
