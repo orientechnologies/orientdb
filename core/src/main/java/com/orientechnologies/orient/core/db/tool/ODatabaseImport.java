@@ -889,7 +889,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
               if (jsonReader.lastChar() == '}')
                 jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
             }
-            jsonReader.readNext(OJSONReader.END_OBJECT);
+            jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
           } else if (value.equals("\"customFields\"")) {
             Map<String, String> customFields = importCustomFields();
             for (Entry<String, String> entry : customFields.entrySet()) {
@@ -900,12 +900,12 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             cls.setClusterSelection(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
           }
         }
-
+        
         classImported++;
 
         jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
       } while (jsonReader.lastChar() == ',');
-
+      
       // REBUILD ALL THE INHERITANCE
       for (Map.Entry<OClass, List<String>> entry : superClasses.entrySet())
         for (String s : entry.getValue()) {
