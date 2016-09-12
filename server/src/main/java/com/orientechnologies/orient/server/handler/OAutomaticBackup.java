@@ -92,8 +92,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
 
         final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
         if (!f.exists())
-          throw new OConfigurationException("Automatic Backup configuration file '" + configFile
-              + "' not found. Automatic Backup will be disabled");
+          throw new OConfigurationException(
+              "Automatic Backup configuration file '" + configFile + "' not found. Automatic Backup will be disabled");
         break;
 
         // LEGACY <v2.2: CONVERT ALL SETTINGS IN JSON
@@ -227,8 +227,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
         final String configurationContent = OIOUtils.readFileAsString(f);
         configuration = new ODocument().fromJSON(configurationContent);
       } catch (IOException e) {
-        throw OException.wrapException(new OConfigurationException("Cannot load Automatic Backup configuration file '" + configFile
-            + "'. Automatic Backup will be disabled"), e);
+        throw OException.wrapException(new OConfigurationException(
+            "Cannot load Automatic Backup configuration file '" + configFile + "'. Automatic Backup will be disabled"), e);
       }
 
     } else {
@@ -240,8 +240,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
 
         OLogManager.instance().info(this, "Automatic Backup: migrated configuration to file '%s'", f);
       } catch (IOException e) {
-        throw OException.wrapException(new OConfigurationException("Cannot create Automatic Backup configuration file '" + configFile
-            + "'. Automatic Backup will be disabled"), e);
+        throw OException.wrapException(new OConfigurationException(
+            "Cannot create Automatic Backup configuration file '" + configFile + "'. Automatic Backup will be disabled"), e);
       }
     }
 
@@ -266,18 +266,20 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
             firstTime = cal.getTime();
           }
         } catch (ParseException e) {
-          throw OException.wrapException(
-              new OConfigurationException("Parameter 'firstTime' has invalid format, expected: HH:mm:ss"), e);
+          throw OException
+              .wrapException(new OConfigurationException("Parameter 'firstTime' has invalid format, expected: HH:mm:ss"), e);
         }
       } else if (settingName.equalsIgnoreCase("targetDirectory"))
         targetDirectory = settingValueAsString;
-      else if (settingName.equalsIgnoreCase("dbInclude") && settingValueAsString.trim().length() > 0)
-        for (String db : settingValueAsString.split(","))
+      else if (settingName.equalsIgnoreCase("dbInclude")) {
+        String[] included = getDbsList(settingName, settingValueAsString);
+        for (String db : included)
           includeDatabases.add(db);
-      else if (settingName.equalsIgnoreCase("dbExclude") && settingValueAsString.trim().length() > 0)
-        for (String db : settingValueAsString.split(","))
+      } else if (settingName.equalsIgnoreCase("dbExclude") && settingValueAsString.trim().length() > 0) {
+        String[] excluded = getDbsList(settingName, settingValueAsString);
+        for (String db : excluded)
           excludeDatabases.add(db);
-      else if (settingName.equalsIgnoreCase("targetFileName"))
+      } else if (settingName.equalsIgnoreCase("targetFileName"))
         targetFileName = settingValueAsString;
       else if (settingName.equalsIgnoreCase("bufferSize"))
         bufferSize = (Integer) settingValue;
@@ -290,7 +292,27 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     }
   }
 
-  protected void incrementalBackupDatabase(final String dbURL, String iPath, final ODatabaseDocumentInternal db) throws IOException {
+  private String[] getDbsList(String settingName, String settingValueAsString) {
+    String[] included = null;
+    Object val = configuration.field(settingName);
+    if (val instanceof Collection) {
+      Collection dbs = (Collection) val;
+      included = new String[dbs.size()];
+      int i = 0;
+      for (Object o : dbs) {
+        included[i] = o.toString();
+        i++;
+      }
+    } else {
+      if (settingValueAsString.trim().length() > 0) {
+        included = settingValueAsString.split(",");
+      }
+    }
+    return included;
+  }
+
+  protected void incrementalBackupDatabase(final String dbURL, String iPath, final ODatabaseDocumentInternal db)
+      throws IOException {
     // APPEND DB NAME TO THE DIRECTORY NAME
     if (!iPath.endsWith("/"))
       iPath += "/";
@@ -355,7 +377,6 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   public ODocument getConfig() {
     return configuration;
   }
-
 
   // TODO change current config and restart the automatic backup plugin
   @Override
