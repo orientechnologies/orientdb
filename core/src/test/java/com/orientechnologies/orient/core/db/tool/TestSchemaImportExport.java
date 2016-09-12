@@ -1,16 +1,17 @@
 package com.orientechnologies.orient.core.db.tool;
 
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import org.junit.Assert;
-import org.junit.Test;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class TestSchemaImportExport {
 
@@ -21,6 +22,7 @@ public class TestSchemaImportExport {
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     try {
       OClass clazz = db.getMetadata().getSchema().createClass("Test");
+      clazz.createProperty("some", OType.STRING);
       clazz.setCustom("testcustom", "test");
       ODatabaseExport exp = new ODatabaseExport(db, output, new MockOutputListener());
       exp.exportDatabase();
