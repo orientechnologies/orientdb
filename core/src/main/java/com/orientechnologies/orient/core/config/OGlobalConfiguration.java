@@ -435,7 +435,7 @@ public enum OGlobalConfiguration {
   NETWORK_HTTP_MAX_CONTENT_LENGTH("network.http.maxLength", "TCP/IP max content length (in bytes) for HTTP requests", Integer.class,
       1000000, true),
 
-  NETWORK_HTTP_STREAMING("network.http.streaming", "Enable Http chunked streaming for json responses", Boolean.class, true, true),
+  NETWORK_HTTP_STREAMING("network.http.streaming", "Enable Http chunked streaming for json responses", Boolean.class, true, false),
 
   NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8", true),
 

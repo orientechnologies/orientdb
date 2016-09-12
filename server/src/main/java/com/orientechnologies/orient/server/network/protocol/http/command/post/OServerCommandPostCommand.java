@@ -129,6 +129,9 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
         additionalContent.put("warnings", tips);
       }
 
+      if (iRequest.getHeader("TE") != null)
+        iResponse.setStreaming(true);
+      
       iResponse.writeResult(response, format, accept, additionalContent, mode);
 
     } finally {
