@@ -321,7 +321,7 @@ public class OHttpResponse {
         iFormat = JSON_FORMAT + "," + iFormat;
 
       final String sendFormat = iFormat;
-      if (streaming) {
+      if (streaming ) {
         sendStream(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, null, new OCallable<Void, OChunkedResponse>() {
           @Override
           public Void call(OChunkedResponse iArgument) {
@@ -600,4 +600,8 @@ public class OHttpResponse {
     return "" + key;
   }
 
+  public void setStreaming(boolean streaming) {
+    this.streaming = streaming;
+  }
+  
 }
