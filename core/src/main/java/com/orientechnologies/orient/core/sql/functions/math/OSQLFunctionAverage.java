@@ -94,7 +94,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object mergeDistributedResult(List<Object> resultsToMerge) {
+  public Object mergeDistributedResult(final List<Object> resultsToMerge) {
     if (returnDistributedResult()) {
       Number dSum = null;
       int dTotal = 0;
@@ -111,7 +111,10 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
       return computeAverage(dSum, dTotal);
     }
 
-    return resultsToMerge.get(0);
+    if (!resultsToMerge.isEmpty())
+      return resultsToMerge.get(0);
+
+    return null;
   }
 
   @Override
