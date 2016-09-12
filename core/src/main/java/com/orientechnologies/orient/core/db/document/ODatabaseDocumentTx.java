@@ -14,7 +14,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.orientechnologies.orient.core.OOrientListener;
 import com.orientechnologies.orient.core.OUncompletedCommit;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -27,6 +26,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.OEmbeddedDBFactory;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
@@ -111,6 +111,31 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       factory.close();
     }
     remote.clear();
+  }
+  
+  protected OrientDBFactory getOrCreateRemoteFactory(String baseUrl) {
+    OrientDBFactory factory;
+    synchronized (remote) {
+      factory = remote.get(baseUrl);
+      if (factory == null) {
+        factory = OrientDBFactory.fromUrl("remote:" + baseUrl, null);
+        remote.put(baseUrl, factory);
+      }
+    }
+    return factory;
+  }
+
+
+  protected static OEmbeddedDBFactory getOrCreateEmbeddedFactory(String baseUrl, OrientDBConfig config) {
+    OEmbeddedDBFactory factory;
+    synchronized (embedded) {
+      factory = (OEmbeddedDBFactory) embedded.get(baseUrl);
+      if (factory == null) {
+        factory = (OEmbeddedDBFactory) OrientDBFactory.fromUrl("embedded:" + baseUrl, config);
+        embedded.put(baseUrl, factory);
+      }
+    }
+    return factory;
   }
 
   public ODatabaseDocumentTx(String url) {
@@ -819,24 +844,12 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
   @Override
   public <DB extends ODatabase> DB open(String iUserName, String iUserPassword) {
     if ("remote".equals(type)) {
-      synchronized (remote) {
-        factory = remote.get(baseUrl);
-        if (factory == null) {
-          factory = OrientDBFactory.fromUrl("remote:" + baseUrl, null);
-          remote.put(baseUrl, factory);
-        }
-      }
+      factory = getOrCreateRemoteFactory(baseUrl);
       OrientDBConfig config = buildConfig(null);
       internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
 
     } else {
-      synchronized (embedded) {
-        factory = embedded.get(baseUrl);
-        if (factory == null) {
-          factory = OrientDBFactory.fromUrl("embedded:" + baseUrl, null);
-          embedded.put(baseUrl, factory);
-        }
-      }
+      factory = getOrCreateEmbeddedFactory(baseUrl, null);
       OrientDBConfig config = buildConfig(null);
       internal = (ODatabaseDocumentInternal) factory.open(dbName, iUserName, iUserPassword, config);
     }
@@ -868,13 +881,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     if ("remote".equals(type)) {
       throw new UnsupportedOperationException();
     } else if ("memory".equals(type)) {
-      synchronized (embedded) {
-        factory = embedded.get(baseUrl);
-        if (factory == null) {
-          factory = OrientDBFactory.fromUrl("embedded:" + baseUrl, null);
-          embedded.put(baseUrl, factory);
-        }
-      }
+      factory = getOrCreateEmbeddedFactory(baseUrl, null);
       factory.create(dbName, null, null, OrientDBFactory.DatabaseType.MEMORY, config);
       OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
       internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
@@ -887,13 +894,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       }
 
     } else {
-      synchronized (embedded) {
-        factory = embedded.get(baseUrl);
-        if (factory == null) {
-          factory = OrientDBFactory.fromUrl("embedded:" + baseUrl, null);
-          embedded.put(baseUrl, factory);
-        }
-      }
+      factory = getOrCreateEmbeddedFactory(baseUrl, null);
       factory.create(dbName, null, null, OrientDBFactory.DatabaseType.PLOCAL, config);
       OrientDBConfig openConfig = OrientDBConfig.builder().fromContext(config.getConfigurations()).build();
       internal = (ODatabaseDocumentInternal) factory.open(dbName, "admin", "admin", openConfig);
@@ -968,13 +969,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     if ("remote".equals(type)) {
       throw new UnsupportedOperationException();
     } else {
-      synchronized (embedded) {
-        factory = embedded.get(baseUrl);
-        if (factory == null) {
-          factory = OrientDBFactory.fromUrl("embedded:" + baseUrl, null);
-          embedded.put(baseUrl, factory);
-        }
-      }
+      factory = getOrCreateEmbeddedFactory(baseUrl, null);
       return factory.exists(dbName, null, null);
     }
   }

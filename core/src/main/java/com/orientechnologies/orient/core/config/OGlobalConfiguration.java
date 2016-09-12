@@ -620,6 +620,9 @@ public enum OGlobalConfiguration {
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
       "Dumps the full stack trace of the exception sent to the client", Boolean.class, Boolean.FALSE, true),
 
+  SERVER_BACKWARD_COMPATIBILITY("server.backwardCompatibility",
+      "guarantee that the server use global context for search the database instance", Boolean.class, Boolean.FALSE, true, false),
+  
   // DISTRIBUTED
 
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout", "Maximum timeout (in ms) to wait for CRUD remote tasks",

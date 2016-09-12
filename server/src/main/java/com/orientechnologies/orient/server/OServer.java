@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -325,7 +326,12 @@ public class OServer {
     if (!databaseDirectory.endsWith("/"))
       databaseDirectory += "/";
 
-    databases = OrientDBFactory.embedded(this.databaseDirectory, OrientDBConfig.builder().fromContext(contextConfiguration).build());
+    OrientDBConfig config = OrientDBConfig.builder().fromContext(contextConfiguration).build();
+    if (OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.getValueAsBoolean()) {
+      databases = OrientDBFactory.embedded(this.databaseDirectory, config);
+    } else {
+      databases = ODatabaseDocumentTxInternal.getOrCreateEmbeddedFactory(this.databaseDirectory, config);
+    }
     
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
@@ -510,7 +516,9 @@ public class OServer {
       } finally {
         lock.unlock();
       }
-      databases.close();
+      if (!OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.getValueAsBoolean()) {
+        databases.close();
+      }
       if (shutdownEngineOnExit && !Orient.isRegisterDatabaseByPath())
         try {
           OLogManager.instance().info(this, "Shutting down databases:");
