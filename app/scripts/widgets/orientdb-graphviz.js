@@ -143,7 +143,7 @@ var OrientGraph = (function () {
         self.config.classes[clazz].iconSize = val;
         d3.selectAll('g.vertex-' + clazz.toLowerCase())
           .selectAll('.vlabel-icon')
-          .style("font-size", self.config.classes[clazz].iconSize || 10);
+          .style("font-size", self.config.classes[clazz].iconSize || 30);
 
       }
 
@@ -166,7 +166,7 @@ var OrientGraph = (function () {
           .selectAll('.vlabel-icon')
           .attr('y', function (d) {
             var iconPadding = self.getClazzConfigVal(getClazzName(d), "iconVPadding");
-            return iconPadding || 0;
+            return iconPadding || 10;
           })
 
       }
@@ -923,7 +923,7 @@ var OrientGraph = (function () {
         .attr('x', 0)
         .attr('y', function (d) {
           var iconPadding = self.getClazzConfigVal(getClazzName(d), "iconVPadding");
-          return iconPadding || 0;
+          return iconPadding || 10;
         })
         .attr('class', function (d) {
           var name = self.getClazzConfigVal(getClazzName(d), "icon");
@@ -932,7 +932,7 @@ var OrientGraph = (function () {
         })
         .style("font-size", function (d) {
           var size = self.getClazzConfigVal(getClazzName(d), "iconSize");
-          return size || 10;
+          return size || 30;
         })
         .text(bindIcon);
 
