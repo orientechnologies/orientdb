@@ -49,14 +49,19 @@ public class OrientGraphFactoryEncryptionTest {
     ODatabaseDocumentInternal db = graphFactory.getDatabase();
 
     assertThat(db.getProperty(STORAGE_ENCRYPTION_KEY.getKey())).isEqualTo("T1JJRU5UREJfSVNfQ09PTA==");
+    db.close();
 
     db = graphFactory.getNoTx().getDatabase();
 
     assertThat(db.getProperty(STORAGE_ENCRYPTION_KEY.getKey())).isEqualTo("T1JJRU5UREJfSVNfQ09PTA==");
+    db.close();
 
     db = graphFactory.getNoTx().getRawGraph();
 
     assertThat(db.getProperty(STORAGE_ENCRYPTION_KEY.getKey())).isEqualTo("T1JJRU5UREJfSVNfQ09PTA==");
+    db.close();
+    
+    graphFactory.close();
 
   }
 
@@ -78,6 +83,8 @@ public class OrientGraphFactoryEncryptionTest {
     assertThat(result).hasSize(1);
     db.close();
 
+    graphFactory.close();
+    
   }
 
   @Test
@@ -125,6 +132,7 @@ public class OrientGraphFactoryEncryptionTest {
 
     assertThat(result).hasSize(1);
     db.close();
+    graphFactory.close();
 
   }
 
@@ -183,6 +191,7 @@ public class OrientGraphFactoryEncryptionTest {
     db = fc.getDatabase();
     result = db.query(new OSQLSynchQuery<ODocument>("select from TestEncryption"));
     Assert.assertEquals(result.size(), 1);
+    db.close();
 
   }
 
@@ -195,6 +204,8 @@ public class OrientGraphFactoryEncryptionTest {
 
     ODatabaseDocumentTx db = graphFactory.getDatabase();
     //    verifyClusterEncryption(db, "des");
+    db.close();
+    graphFactory.close();
   }
 
 }
