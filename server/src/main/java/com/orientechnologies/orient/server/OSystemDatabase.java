@@ -60,13 +60,13 @@ public class OSystemDatabase {
     final ODatabaseDocumentInternal currentDB = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
       final ODatabaseDocumentInternal sysdb = openSystemDatabase();
-      
+
       if (!sysdb.existsCluster(clusterName)) {
         OSchema schema = sysdb.getMetadata().getSchema();
         OClass cls = schema.getClass(className);
 
         if (cls != null) {
-        	cls.addCluster(clusterName);
+          cls.addCluster(clusterName);
         } else {
           OLogManager.instance().error(this, "createCluster() Class name %s does not exist", className);
         }
@@ -86,9 +86,8 @@ public class OSystemDatabase {
   }
 
   /**
-   * Opens the System Database and returns an ODatabaseDocumentInternal object.
-   * The caller is responsible for retrieving any ThreadLocal-stored database before openSystemDatabase()
-   * is called and restoring it after the database is closed.
+   * Opens the System Database and returns an ODatabaseDocumentInternal object. The caller is responsible for retrieving any
+   * ThreadLocal-stored database before openSystemDatabase() is called and restoring it after the database is closed.
    */
   public ODatabaseDocumentInternal openSystemDatabase() {
     return server.openDatabase(getSystemDatabaseName(), "OSuperUser", "", null, true);
@@ -101,7 +100,7 @@ public class OSystemDatabase {
       final ODatabase<?> db = openSystemDatabase();
       try {
         final Object result = db.command(new OCommandSQL(sql)).execute(args);
-        
+
         if (callback != null)
           return callback.call(result);
         else
@@ -129,10 +128,10 @@ public class OSystemDatabase {
       // BYPASS SECURITY
       final ODatabaseDocumentInternal db = openSystemDatabase();
       try {
-        if(clusterName != null)
+        if (clusterName != null)
           return (ODocument) db.save(document, clusterName);
         else
-        return (ODocument) db.save(document);
+          return (ODocument) db.save(document);
       } finally {
         db.close();
       }
@@ -146,7 +145,8 @@ public class OSystemDatabase {
   }
 
   private void init() {
-    final ODatabaseDocumentInternal oldDbInThread = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseRecordThreadLocal tl = ODatabaseRecordThreadLocal.INSTANCE;
+    final ODatabaseDocumentInternal oldDbInThread = tl != null ? tl.getIfDefined() : null;
     try {
 
       ODatabaseDocument sysDB = new ODatabaseDocumentTx("plocal:" + getSystemDatabasePath());

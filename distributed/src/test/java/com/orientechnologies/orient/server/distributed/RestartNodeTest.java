@@ -79,7 +79,7 @@ public class RestartNodeTest extends AbstractServerClusterTxTest {
 
         @Override
         public void onNodeLeft(String iNode) {
-          nodeReJoined.clear();
+          nodeReJoined.remove(iNode);
           nodeLefts.incrementAndGet();
         }
 

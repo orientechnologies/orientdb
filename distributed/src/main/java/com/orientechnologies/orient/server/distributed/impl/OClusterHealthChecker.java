@@ -76,18 +76,25 @@ public class OClusterHealthChecker extends TimerTask {
         ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
             "Server '%s' was not found in the list of registered servers. Reloading configuration from cluster...", server);
 
-        ((OHazelcastPlugin) manager).reloadRegisteredNodes();
+        ((OHazelcastPlugin) manager).reloadRegisteredNodes(null);
         id = manager.getNodeIdByName(server);
         if (id == -1) {
-          ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-              "Server '%s' was not found in the list of registered servers after the update, setting the server as OFFLINE...",
-              server);
-
-          try {
-            ((OHazelcastPlugin) manager).restartNode(server);
-          } catch (IOException e) {
+          if (server.equals(manager.getLocalNodeName())) {
+            // LOCAL NODE
             ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                "Error on restarting server '%s' (error=%s)", server, e);
+                "Local server was not found in the list of registered servers after the update", server);
+
+          } else {
+            // REMOTE NODE
+            ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                "Server '%s' was not found in the list of registered servers after the update, restarting the server...", server);
+
+            try {
+              ((OHazelcastPlugin) manager).restartNode(server);
+            } catch (IOException e) {
+              ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                  "Error on restarting server '%s' (error=%s)", server, e);
+            }
           }
         }
         break;
@@ -158,7 +165,7 @@ public class OClusterHealthChecker extends TimerTask {
         final ODistributedResponse response = manager.sendRequest(dbName, null, servers, new OHeartbeatTask(),
             manager.getNextMessageIdCounter(), ODistributedRequest.EXECUTION_MODE.RESPONSE, null, null);
 
-        final Object payload = response.getPayload();
+        final Object payload = response != null ? response.getPayload() : null;
         if (payload instanceof Map) {
           final Map<String, Object> responses = (Map<String, Object>) payload;
           servers.removeAll(responses.keySet());
