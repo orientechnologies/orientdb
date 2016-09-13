@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.db.document;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -112,7 +113,7 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     }
     remote.clear();
   }
-  
+
   protected OrientDBFactory getOrCreateRemoteFactory(String baseUrl) {
     OrientDBFactory factory;
     synchronized (remote) {
@@ -125,8 +126,9 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
     return factory;
   }
 
-
   protected static OEmbeddedDBFactory getOrCreateEmbeddedFactory(String baseUrl, OrientDBConfig config) {
+    if (!baseUrl.endsWith("/"))
+      baseUrl += "/";
     OEmbeddedDBFactory factory;
     synchronized (embedded) {
       factory = (OEmbeddedDBFactory) embedded.get(baseUrl);
@@ -149,20 +151,27 @@ public class ODatabaseDocumentTx implements ODatabaseDocumentInternal {
       throw new OConfigurationException(
           "Error in database URL: the engine was not specified. Syntax is: " + Orient.URL_SYNTAX + ". URL was: " + url);
 
-    String remoteUrl = url.substring(typeIndex + 1);
+    String databaseReference = url.substring(typeIndex + 1);
     type = url.substring(0, typeIndex);
     if (!"remote".equals(type) && !"plocal".equals(type) && !"memory".equals(type))
       throw new OConfigurationException("Error on opening database: the engine '" + type + "' was not found. URL was: " + url
           + ". Registered engines are: [\"memory\",\"remote\",\"plocal\"]");
 
-    int index = remoteUrl.lastIndexOf('/');
+    int index = databaseReference.lastIndexOf('/');
+    String path;
     if (index > 0) {
-      baseUrl = remoteUrl.substring(0, index);
-      dbName = remoteUrl.substring(index + 1);
+      path = databaseReference.substring(0, index);
+      dbName = databaseReference.substring(index + 1);
     } else {
-      baseUrl = "./";
-      dbName = remoteUrl;
+      path = "./";
+      dbName = databaseReference;
     }
+    if ("plocal".equals(type) || "memory".equals(type)) {
+      baseUrl = new File(path).getAbsolutePath();
+    } else {
+      baseUrl = path;
+    }
+
   }
 
   protected ODatabaseDocumentTx(ODatabaseDocumentInternal ref, String baseUrl) {

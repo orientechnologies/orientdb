@@ -68,12 +68,13 @@ public class OIncrementalServerSync {
    * <li>Binary presentation of the record, only if record is not deleted - length of content is provided in above entity</li>
    * </ol>
    */
-  public void importDelta(final OServer serverInstance, final ODatabaseDocumentInternal db, final FileInputStream in,
+  public void importDelta(final OServer serverInstance, String databaseName, final FileInputStream in,
       final String iNode) throws IOException {
     final String nodeName = serverInstance.getDistributedManager().getLocalNodeName();
 
     try {
-      serverInstance.openDatabase(db);
+      
+      final ODatabaseDocumentInternal db = serverInstance.openDatabase(databaseName);
 
       OScenarioThreadLocal.executeAsDistributed(new Callable<Object>() {
         @Override
@@ -272,16 +273,16 @@ public class OIncrementalServerSync {
         }
       });
 
-      db.activateOnCurrentThread();
-
+      db.close();
+      
     } catch (Exception e) {
       // FORCE FULL DATABASE SYNC
       ODistributedServerLog.error(this, nodeName, iNode, DIRECTION.IN,
-          "Error while applying changes of database delta sync on '%s': forcing full database sync...", e, db.getName());
+          "Error while applying changes of database delta sync on '%s': forcing full database sync...", e, databaseName);
       throw OException
           .wrapException(
               new ODistributedDatabaseDeltaSyncException(
-                  "Error while applying changes of database delta sync on '" + db.getName() + "': forcing full database sync..."),
+                  "Error while applying changes of database delta sync on '" + databaseName + "': forcing full database sync..."),
               e);
     }
   }
