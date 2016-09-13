@@ -21,7 +21,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.TimeZone;
 
 public class OrientDbCreationHelper {
 
@@ -154,8 +159,8 @@ public class OrientDbCreationHelper {
         article.field("date", time, OType.DATE);
 
         article.field("uuid", articleSerial++);
-        article.field("title", "the title");
-        article.field("content", "the content");
+        article.field("title", "the title for article " + articleSerial);
+        article.field("content", "the content for article " + articleSerial);
         article.field("attachment", loadFile(db, "./src/test/resources/file.pdf"));
 
         articles.add(article);
