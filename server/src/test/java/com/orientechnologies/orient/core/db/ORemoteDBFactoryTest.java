@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -25,6 +26,7 @@ public class ORemoteDBFactoryTest {
 
   @Before
   public void before() throws Exception {
+    OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY.setValue(false);
     server = new OServer();
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(
