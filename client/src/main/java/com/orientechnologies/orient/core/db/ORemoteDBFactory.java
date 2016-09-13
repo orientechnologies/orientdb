@@ -171,8 +171,8 @@ public class ORemoteDBFactory implements OrientDBFactory {
 
   @Override
   public synchronized void close() {
-    internalClose();
     Runtime.getRuntime().removeShutdownHook(shutdownThread);
+    internalClose();
   }
 
   public synchronized void internalClose() {

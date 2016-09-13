@@ -54,7 +54,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
   private final String                                 basePath;
   private final OEngine                                memory;
   private final OEngine                                disk;
-  private final Thread                                 shutdownThread;
+  private volatile Thread                              shutdownThread;
   private final Orient                                 orient;
 
   public OEmbeddedDBFactory(String directoryPath, OrientDBConfig configurations, Orient orient) {
@@ -177,7 +177,7 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     } else
       throw new OStorageExistsException("Cannot create new storage '" + name + "' because it already exists");
   }
-  
+
   private void internalCreate(OrientDBConfig config, OAbstractPaginatedStorage storage) {
     storage.create(config.getConfigurations());
     ORecordSerializer serializer = ORecordSerializerFactory.instance().getDefaultRecordSerializer();
@@ -190,11 +190,11 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
     storage.getConfiguration().update();
 
-    //No need to close
+    // No need to close
     final ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
     embedded.setSerializer(serializer);
     embedded.internalCreate(config);
-    
+
   }
 
   @Override
@@ -239,8 +239,8 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
 
   @Override
   public synchronized void close() {
+    removeShutdownHook();
     internalClose();
-    Runtime.getRuntime().removeShutdownHook(shutdownThread);
   }
 
   private synchronized void internalClose() {
@@ -300,6 +300,13 @@ public class OEmbeddedDBFactory implements OrientDBFactory {
     }
     storages.put(name, storage);
 
+  }
+
+  public synchronized void removeShutdownHook() {
+    if (shutdownThread != null) {
+      Runtime.getRuntime().removeShutdownHook(shutdownThread);
+      shutdownThread = null;
+    }
   }
 
 }

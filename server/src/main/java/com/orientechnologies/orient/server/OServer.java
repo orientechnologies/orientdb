@@ -332,6 +332,7 @@ public class OServer {
     } else {
       databases = ODatabaseDocumentTxInternal.getOrCreateEmbeddedFactory(this.databaseDirectory, config);
     }
+    databases.removeShutdownHook();
     
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
