@@ -193,6 +193,7 @@ public class OServer {
     try {
       shutdown();
     } finally {
+      startup();
       startup(serverCfg.getConfiguration());
       activate();
     }

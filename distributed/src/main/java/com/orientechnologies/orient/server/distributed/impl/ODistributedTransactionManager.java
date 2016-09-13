@@ -667,7 +667,7 @@ public class ODistributedTransactionManager {
 
       // if this the the last retry (and it failed), we don't need to wait anymore
       if (autoRetryDelay > 0 && !isLastRetry)
-        Thread.sleep(autoRetryDelay);
+        Thread.sleep(autoRetryDelay / 2 + new Random().nextInt(autoRetryDelay));
 
       // acquireMultipleRecordLocks(iTx, maxAutoRetry, autoRetryDelay, eventListener, ctx);
 
