@@ -39,8 +39,11 @@ public class OSoftRefsHashMap<K, V> extends AbstractMap<K, V> implements Seriali
 
     Reference<? extends V> sv;
     while ((sv = refQueue.poll()) != null) {
-      hashCodes.remove(reverseLookup.remove(sv));
-      evicted++;
+      final K key = reverseLookup.remove(sv);
+      if (key != null) {
+        hashCodes.remove(key);
+        evicted++;
+      }
     }
 
     if (evicted > 0)
