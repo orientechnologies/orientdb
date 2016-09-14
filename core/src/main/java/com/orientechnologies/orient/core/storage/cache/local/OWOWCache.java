@@ -293,6 +293,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
       final File storageDir = new File(storagePath);
 
       final long freeSpace = storageDir.getFreeSpace();
+      //we work with virtual devices which have "unlimited" amount of free space
+      if (freeSpace < 0) {
+        return;
+      }
 
       if (freeSpace < freeSpaceLimit)
         callLowSpaceListeners(new OLowDiskSpaceInformation(freeSpace, freeSpaceLimit));
@@ -502,6 +506,10 @@ public class OWOWCache extends OAbstractWriteCache implements OWriteCache, OCach
     final File storageDir = new File(storagePath);
 
     final long freeSpace = storageDir.getFreeSpace();
+    //system has unlimited amount of free space
+    if (freeSpace < 0)
+      return true;
+
     return freeSpace < freeSpaceLimit;
   }
 
