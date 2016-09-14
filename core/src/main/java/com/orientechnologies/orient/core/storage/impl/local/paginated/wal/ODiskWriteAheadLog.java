@@ -934,6 +934,10 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   public void checkFreeSpace() {
     final long freeSpace = walLocation.getFreeSpace();
+    //system has unlimited amount of free space
+    if (freeSpace < 0)
+      return;
+
     if (freeSpace < freeSpaceLimit) {
       for (WeakReference<OLowDiskSpaceListener> listenerWeakReference : lowDiskSpaceListeners) {
         final OLowDiskSpaceListener lowDiskSpaceListener = listenerWeakReference.get();
