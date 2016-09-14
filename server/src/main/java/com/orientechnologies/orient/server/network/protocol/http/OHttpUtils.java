@@ -57,7 +57,7 @@ public class OHttpUtils {
   public static final String HEADER_CONTENT_ENCODING             = "Accept-Encoding: ";
   public static final String HEADER_ETAG                         = "ETag: ";
   public static final String HEADER_AUTHENTICATE_NEGOTIATE       = "WWW-Authenticate: Negotiate";
-
+  
   public static final String AUTHORIZATION_BEARER                = "Bearer";
   public static final String AUTHORIZATION_BASIC                 = "Basic";
   public static final String AUTHORIZATION_NEGOTIATE             = "Negotiate";
@@ -80,7 +80,6 @@ public class OHttpUtils {
   public static final String CONTENT_JAVASCRIPT                  = "text/javascript";
   public static final String CONTENT_GZIP                        = "application/x-gzip";
   public static final String CONTENT_ACCEPT_GZIP_ENCODED         = "gzip";
-  public static final String CONTENT_ACCEPT_DEFLATE_ENCODED      = "deflate";
 
   public static final String CALLBACK_PARAMETER_NAME             = "callback";
 

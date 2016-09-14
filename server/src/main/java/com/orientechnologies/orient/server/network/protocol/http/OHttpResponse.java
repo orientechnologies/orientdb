@@ -33,7 +33,6 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -105,7 +104,6 @@ public class OHttpResponse {
     } else {
       writeStatus(empty && iCode == 200 ? 204 : iCode, iReason);
     }
-
     writeHeaders(contentType, keepAlive);
 
     if (iHeaders != null) {
@@ -117,21 +115,8 @@ public class OHttpResponse {
 
     byte[] binaryContent = null;
     if (!empty) {
-      if (contentEncoding != null) {
-	      if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_DEFLATE_ENCODED)) {
-            binaryContent = deflate(content);
-	      } else if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
-            binaryContent = compress(content);
-	      } else {
-	        throw new OHttpRequestException("Not supported content encoding: " + contentEncoding);
-          }
-
-	      if (binaryContent == null) {
-            contentType = null;
-            binaryContent = content.getBytes(utf8);
-
-            OLogManager.instance().error(this, "Could not encode content with " + contentEncoding);
-          }
+      if (contentEncoding != null && contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
+        binaryContent = compress(content);
       } else {
         binaryContent = content.getBytes(utf8);
       }
@@ -341,25 +326,9 @@ public class OHttpResponse {
           @Override
           public Void call(OChunkedResponse iArgument) {
             try {
-              OutputStream outputStream;
-
-              if (contentEncoding != null) {
-                if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_DEFLATE_ENCODED)) {
-                  outputStream = new DeflaterOutputStream(iArgument);
-                } else if (contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
-                  outputStream = new GZIPOutputStream(iArgument);
-                } else {
-                  throw new OHttpRequestException("Not supported content encoding: " + contentEncoding);
-                }
-              } else {
-                outputStream = iArgument;
-              }
-
-              OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+              OutputStreamWriter writer = new OutputStreamWriter(iArgument);
               writeRecordsOnStream(iFetchPlan, sendFormat, iAdditionalProperties, it, writer);
               writer.flush();
-              outputStream.close();
-
             } catch (IOException e) {
               e.printStackTrace();
             }
@@ -517,7 +486,6 @@ public class OHttpResponse {
   public void sendStream(final int iCode, final String iReason, final String iContentType, final String iFileName,
       final OCallable<Void, OChunkedResponse> iWriter) throws IOException {
     writeStatus(iCode, iReason);
-
     writeHeaders(iContentType);
     writeLine("Content-Transfer-Encoding: binary");
     writeLine("Transfer-Encoding: chunked");
@@ -535,71 +503,33 @@ public class OHttpResponse {
     flush();
   }
 
-  public byte[] deflate(String jsonStr) {
-    if (jsonStr == null || jsonStr.length() == 0) {
-      return null;
-    }
-
-    ByteArrayOutputStream byteArrayOutputStream = null;
-    DeflaterOutputStream deflaterOutputStream = null;
-
-    try {
-	  byteArrayOutputStream = new ByteArrayOutputStream();
-	  deflaterOutputStream = new DeflaterOutputStream(byteArrayOutputStream);
-	  deflaterOutputStream.write(jsonStr.getBytes(utf8));
-	  deflaterOutputStream.flush();
-      deflaterOutputStream.close();
-
-	  return byteArrayOutputStream.toByteArray();
-    }  catch (IOException ex) {
-      OLogManager.instance().error(this, "Error on compressing HTTP response", ex);
-
-      try {
-        if (byteArrayOutputStream != null) {
-          byteArrayOutputStream.close();
-        }
-
-        if (deflaterOutputStream != null) {
-          deflaterOutputStream.close();
-        }
-      } catch (Exception ignore) {}
-    }
-
-    return null;
-  }
-
   // Compress content string
   public byte[] compress(String jsonStr) {
     if (jsonStr == null || jsonStr.length() == 0) {
       return null;
     }
-
-    GZIPOutputStream gzipOutputStream = null;
-    ByteArrayOutputStream byteArrayOutputStream = null;
-
+    GZIPOutputStream gout = null;
+    ByteArrayOutputStream baos = null;
     try {
-      byteArrayOutputStream = new ByteArrayOutputStream();
-      gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);
-
-      gzipOutputStream.write(jsonStr.getBytes(utf8));
-      gzipOutputStream.flush();
-      gzipOutputStream.close();
-
-      return byteArrayOutputStream.toByteArray();
-    } catch(IOException ex){
+      byte[] incoming = jsonStr.getBytes("UTF-8");
+      baos = new ByteArrayOutputStream();
+      gout = new GZIPOutputStream(baos, 16384); // 16KB
+      gout.write(incoming);
+      gout.finish();
+      return baos.toByteArray();
+    } catch (Exception ex) {
       OLogManager.instance().error(this, "Error on compressing HTTP response", ex);
-
+    } finally {
       try {
-        if (gzipOutputStream != null) {
-          gzipOutputStream.close();
+        if (gout != null) {
+          gout.close();
         }
-
-        if (byteArrayOutputStream != null) {
-          byteArrayOutputStream.close();
+        if (baos != null) {
+          baos.close();
         }
-      } catch (Exception ignore) {}
+      } catch (Exception ex) {
+      }
     }
-
     return null;
   }
 
